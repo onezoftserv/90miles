@@ -10,10 +10,10 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 2. Theme and title
 
-- [ ] 2.1 Import both fonts crisp, add `game_theme.tres` with the tracked Kenney 9-slices (license, CREDITS row) as the project theme, and verify GUT tests that the theme is set, uses the two fonts at their sizes and only references tracked art
-- [ ] 2.2 Add `TitleScreen` (buttons, focus description, animated sea, version) and verify GUT tests for the button list, first focus, the description of each button and its signals
-- [ ] 2.3 Render the title at 1× and send the screenshot to the user for early feedback
-- [ ] 2.4 Verify the import, smoke run and GUT pass with zero error lines
+- [x] 2.1 Import both fonts crisp, add `game_theme.tres` with the tracked Kenney 9-slices (license, CREDITS row) as the project theme, and verify GUT tests that the theme is set, uses the two fonts at their sizes and only references tracked art
+- [x] 2.2 Add `TitleScreen` (buttons, focus description, animated sea, version) and verify GUT tests for the button list, first focus, the description of each button and its signals
+- [x] 2.3 Render the title at 1× and send the screenshot to the user for early feedback
+- [x] 2.4 Verify the import, smoke run and GUT pass with zero error lines
 
 ## 3. Shell flow
 
