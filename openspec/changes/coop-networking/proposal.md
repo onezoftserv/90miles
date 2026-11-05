@@ -21,13 +21,22 @@ Milestone A is "two players on a handmade island" (`TASKS.md` §3). `player-move
 2. **Difficulty scaling is not implemented here.** It has no consumer until `island-generation` and `guardacostas-stealth`, and review item 27 says ×0.8 per extra player makes co-op harder than solo. The requirement stays in the spec as it is. **Question:** keep ×0.8 per extra player, or switch to the review's per-head scaling? Also, "+1 patrol per 2 players" can be read as ⌊n/2⌋ (2 players → +1) or ⌊(n−1)/2⌋ (2 players → +0); both give +1 for 3 players.
 3. **Reconnects (review item 40): a client that reconnects is a new player.** Its old body stays downed until the 90 s removal; there is no stable player id yet. **Question:** add a join handshake with a stable player id so a reconnect within 90 s reclaims the body? And does a removed player count as dead for endings and Experiencia? (Undecided: the removal is only announced.)
 4. **Platforms (review item 40): Windows and Linux desktop.** ENet does not exist on Web, so the web-export rationale in the project-skeleton design no longer holds. No UPnP: the host forwards UDP 7777 by hand (documented in the playground and the design).
-5. **Solo uses Godot's offline peer**, not an ENet server with joining refused, so solo never opens a socket or triggers a firewall prompt.
-6. **Rate limits:** intents at most 90 per second with a burst of 30, and at most 1 s of simulated time per real second with 0.25 s of slack (an intent's own time step is capped at 0.1 s); quick chat at most 3 in a burst, then one every 2 s. Excess messages are dropped silently.
+5. **Solo uses Godot's offline peer**, not an ENet server with joining refused, so solo never opens a socket or triggers a firewall prompt. A run that neither hosts nor joins is solo; nothing waits for a second peer, and the solo player (the host's own player) is never predicted, corrected or intent-rate-limited (user requirement, 2026-11-05: the game must be fully playable by 1 player).
+6. **Rate limits (clients only):** intents at most 90 per second with a burst of 30, and at most 1 s of simulated time per real second with 0.25 s of slack; each intent counts at least one 1/60 s frame (so tiny claimed steps cannot buy extra interaction presses) and at most 0.1 s. Quick chat at most 3 in a burst, then one every 2 s, for every player. Excess messages are dropped silently. The 0.25 s slack also means a host stall longer than that drops some of a client's backlog (a small correction); it is one constant to raise if play shows it.
 7. **Prediction snaps.** A correction moves the client's player straight to the corrected position (no visual smoothing); remote players are drawn 100 ms behind the newest snapshot.
 8. **Voice clips for quick chat arrive with Milestone G.** The bubble shows now; the clip plays when a file exists for the phrase's line id, and nothing plays until then. The spec delta says so.
 9. **Quick-chat English lines** keep the slang: "¡Dale!", "Water!", "Not that way!", "Shark!", "Patrol!", "Help!", "Food here!", "¡Vámonos!". `content-batch-10` may rewrite them; this change only needs the file to exist.
 10. **World state on join** is a small dictionary (`island_seed`, `weather`, `time_of_day_s`) filled by the level. The dev playground sends fixed dev values until `island-generation` and `weather-daynight` own them.
 11. **No pause in co-op** (review item 24 stays open): this change adds no pause, save or resume rule.
+12. **A dropped player does not hold a place in the cap.** Its body waits out the 90 s, but a reconnect (a new peer) or another joiner can take the slot.
+
+**Rules that only make sense with 2+ players (questions for the solo rule):**
+- **Solo pause (review item 24):** with one player nothing else is waiting, so a solo pause could freeze the simulation. Should solo pause freeze it (and co-op not pause at all)? No pause exists yet.
+- **Opening a solo run to others:** solo is offline (no port), so nobody can join it later; to play together a player hosts from the start. Should a solo run be able to open to joiners mid-run?
+- **Disconnect handling and the player cap** have no solo case (no client to drop, no host to lose). The spec says so; nothing to decide unless the answer above changes.
+- **Difficulty scaling** is defined per player beyond the first, so solo is the baseline (×1 resources, +0 patrols). Whether that baseline is right is review item 27 (decision 2).
+- **Quick chat in solo** shows the bubble over the solo player, which is harmless but says nothing to anyone. Keep the wheel in solo, or hide it?
+- **Downed and dragged rules** (player-movement, survival-meters) need a teammate; survival-meters already says a solo player dies at once at 0 health, and this change adds nothing that needs a second player.
 
 ## Capabilities
 
@@ -37,7 +46,7 @@ None.
 
 ### Modified Capabilities
 
-- `coop-networking`: "Host and join" adds the offline solo path, the four-player cap and the world-state message on join. "Host authority" adds client prediction with reconciliation and interpolation of other players. "Disconnect handling" makes the removal an announcement other systems hook into and keeps the "host lost" screen. "Quick chat" makes phrases content, validated by the host, with voice clips deferred. One requirement is added: intent RPC rules with per-peer rate limits.
+- `coop-networking`: "Host and join" adds the offline solo path (nothing waits for a second peer), the four-player cap and the world-state message on join. "Host authority" adds client prediction with reconciliation and interpolation of other players, and says the host's own (solo) player is never predicted. "Disconnect handling" makes the removal an announcement other systems hook into, frees a dropped player's place in the cap, keeps the "host lost" screen and states that none of it applies solo. "Quick chat" makes phrases content, validated by the host, with voice clips deferred and the solo case stated. Two requirements are added: intent RPC rules, and per-client rate limits that never limit the solo player.
 
 ## Impact
 

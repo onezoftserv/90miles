@@ -51,6 +51,13 @@ Each group is written test-first: its tests are committed failing (RED), then th
 - [x] 7.2 Run a host and a client as two local processes on the playground and verify from their logs that the client joins, both see two players and neither logs an error
 - [x] 7.3 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero error lines
 
+## 8. Solo first-class and review fixes
+
+- [x] 8.1 Add `test_solo_play.gd` (offline peer, no second peer, spawns at once, 10 s of running is 60 tiles and 5 energy, identical to a body with no session, never predicted or corrected, 120 frames at once all applied, interacts) and verify it fails before the host's own player skips the intent limits and passes after
+- [x] 8.2 Count only connected players toward the cap, add peers that connected before `start()`, charge each intent at least one 1/60 s frame, ignore non-finite host states and spawn positions, forget unacknowledged intents when going down, and ignore a q typed into a text field; verify each with a GUT test that failed first (reconnect into a full session over ENet included)
+- [x] 8.3 State the solo case in every requirement of the spec delta, add the solo scenarios, and list the rules that only make sense with 2+ players as questions in proposal.md; verify `openspec validate coop-networking --type change --strict`
+- [x] 8.4 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero error lines
+
 ## Workflow follow-up
 
 - Review with the ECC reviewers and fix what survives verification.
