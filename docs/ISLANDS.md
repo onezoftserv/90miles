@@ -228,3 +228,47 @@ Scripted mini-situations the generator can drop onto any island, max one per isl
 - **The signal fire someone else lit:** a fire on the far point is already drawing a patrol. Put it out or use the distraction.
 - **The turtle nest:** eggs in the sand; taking them gives food but Vieja will never follow you.
 - **The message in the bottle, returned:** a bottle note that is a reply to one you wrote on an earlier island (AI).
+
+---
+
+# Expansion — chain variants and more set pieces
+
+## Chain variants (9 chains → 18 playable layouts)
+
+Each chain has two variants. The generator picks one per visit; a run rarely sees both. Variants share the chain's POI table and swap the layout rule, the signature POI and the threat mix.
+
+| Chain | Variant A | Variant B |
+| --- | --- | --- |
+| Sandbar | **Crescent**: one beach, hut on the point, flotsam on the inside curve | **Twin bars**: two bars with a channel between; stingrays in the channel; players may start on different bars |
+| Coast cay | **The bunker**: observation post on a point, lagoon behind | **The village**: three abandoned fishermen's houses, a rusted well (brackish), a dock, other balseros always present |
+| Mangrove | **The maze**: channels, the tourist wreck, the repairable skiff | **The river mouth**: brackish river with bull sharks, the hardwood hammock upstream, a half-sunk ferry |
+| Reef | **The traps**: lobster traps, ghost net, cave | **The blue hole**: a deep hole with the outboard, a lionfish ring, no cave (shade is the problem) |
+| Rocky key | **The colony**: birds and cliffs | **The quarry**: an abandoned stone quarry with a flooded pit (fresh water, 20 cups) and scorpions |
+| Lighthouse | **Caridad's**: the standard | **The dark lighthouse**: Caridad has died this run; her list, her lamp and a letter remain; Alfredo may be there instead; no well water (pump broken; Papo fixes it) |
+| Storm key | **The family**: the Bahamian Cubans | **The abandoned resort**: a half-built hotel from 2008 with a pool (green water, boil it), feral dogs, a generator (fuel!) |
+| Shipwreck reef | **The freighter**: the standard dungeon | **The yacht graveyard**: six small wrecks on a flat, each a one-room vault; pick three to dive, the tiger shark circles all |
+| Final approach | **The sandbar**: the standard | **The buoy**: no land at all; a weather buoy to cling to for one tide; the Miami fisherman's VHF channel is painted on it |
+
+## Set pieces (6 → 15)
+
+| # | Set piece | Where | What happens |
+| --- | --- | --- | --- |
+| 1 | The floating cooler | Any | A sealed cooler 6 tiles out, sharks circling |
+| 2 | The other raft | Any beach | 3 NPC balseros need a mechanic; you need their tubes |
+| 3 | The patrol dinghy | Coast | Unattended during a squad search; steal it, Rodríguez remembers |
+| 4 | Someone else's signal fire | Any | A fire on the far point already drawing a patrol |
+| 5 | The turtle nest | Sandbar, reef | Eggs = food, but Vieja never follows you |
+| 6 | The reply bottle | Later island | A reply to a note you wrote (AI) |
+| 7 | **La cola** | Village cay | Other balseros queuing at the well for a "turn"; cut the line (fight), wait (a phase), or organize it (Maestro: morale +10 all) |
+| 8 | **El apagón** | Lighthouse, resort | The generator/lamp dies at the worst moment; fix it in the dark with the crocodile or dogs around |
+| 9 | **The drone** | Far chains, 10% | A US Coast Guard drone passes; wave (Miami fisherman odds ×2) or hide (nothing) |
+| 10 | **The bale** | Any crossing, 5% | A floating bale of something wrapped in plastic. Take it: smugglers come looking (rob or trade). Leave it: nothing |
+| 11 | **The radio contest** | Rock cave | El loco's radio picks up a Miami station giving away a prize to "the first balsero who calls"; the VHF is the only way |
+| 12 | **The dominoes night** | Any camp, 2+ players | Dominoes found; a full night of play restores morale to 100 for all, costs the night, crabs eat everything unsealed |
+| 13 | **The funeral** | Any island after a companion dies | Their body washes up; bury it (shovel, a phase, morale +15) or leave it (morale −15, gulls) |
+| 14 | **The patrol that stops** | Coast | Rodríguez's boat anchors offshore for a full day phase: his crew is swimming. Steal from the boat, or be seen |
+| 15 | **The wedding** | Village cay, rare | Two NPC balseros marry on the beach before leaving; attend (morale +30, a day) and they join the ending credits |
+
+## Density after expansion
+
+18 layouts, 15 set pieces, ~45 POI types, 35 creatures, 97 items, 8 companions. A 7-island run uses roughly a third of the pool.

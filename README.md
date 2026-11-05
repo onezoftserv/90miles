@@ -12,9 +12,12 @@ Spanish is the original language. The writing is full of Cuban slang, political 
 | `docs/CHARACTERS.md` | Every NPC with backstory, role, quests and voice |
 | `docs/BESTIARY.md` | Every threat with lore, behavior and counters |
 | `docs/ISLANDS.md` | Island chains, resource places and set pieces |
+| `docs/ITEMS.md` | Every item: water, food, plants, tools, wearables, texts |
+| `docs/CONTENT_MANIFEST.md` | Every `.tres` resource to create, as a checklist |
 | `docs/ASSETS.md` | Free assets to download and where they go |
 | `openspec/` | OpenSpec project context and capability specs |
 | `TASKS.md` | Ordered task list, from tooling to first playable |
+| `START.md` | The prompt to paste when starting a coding session |
 | `CLAUDE.md` | Conventions Claude Code follows in this repo |
 
 ## Prerequisites

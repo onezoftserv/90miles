@@ -85,7 +85,7 @@ Voice notes are for the Chatterbox clones and for the Haiku prompt. Satire targe
 
 ### Rescued balseros (companions, AI)
 
-Rescued balseros join the party as AI companions. Each one has a need, a skill, and a line in the ending. One to three appear per run.
+Rescued balseros join the party as AI companions. Each one has a need, a skill, and a line in the ending. Eight exist; one to three appear per run, rolled from chains not yet used for a companion, so a run with Marisol and a run with Tomás play very differently.
 
 #### Dayana — AI
 
@@ -98,6 +98,27 @@ Rescued balseros join the party as AI companions. Each one has a need, a skill, 
 #### El Chino — AI
 
 **Age:** 34. Not Chinese; from Chinatown in Havana, nickname since school. Sold black-market internet cards (*las tarjetas*) and knows every slogan ironically. Found on a mangrove island hiding from a patrol. **Skill:** stealth; patrols take longer to spot the party. **Need:** paranoid; refuses fire at night, which fights the party's heat and morale needs. **Ending:** if saved, he narrates the *Todos* ending credits. **Voice:** fastest talker in the game, ironic slogans, calls everyone *socio*.
+
+#### Marisol — AI
+
+**Age:** 24. Seven months pregnant, from Cienfuegos; her husband was on the raft and did not surface. Found on a sandbar under a palm, rationing one coconut a day. **Skill:** none while pregnant, but every NPC in the game softens toward a party with her (Rodríguez releases a party with Marisol on the first capture, once). **Need:** thirst ×1.5, cannot swim at all, cannot climb; must ride a raft or boat. Morale −15 to everyone if she is left behind. **Ending:** in *Todos* the credits say the baby's name. **Voice:** quiet, very funny when she decides to be, calls the baby *el polizón* (the stowaway).
+
+#### Doctor Alfredo — AI
+
+**Age:** 67. Left in 1994, lived in Hialeah for 25 years, came back in 2019 to bury his mother and could not get out again when the borders closed. Found on the lighthouse key arguing with Caridad about Martí. **Skill:** full Médico (identifies every plant, heals 2× Dayana's rate, reads expired medicine). **Need:** heart condition: cannot run or swim; needs a pill each day from the expired-medicine pool or health −20 per day. **Ending:** in *Los que llegamos* he is the one who speaks at the pier if he made it; if he died, his bag of pills is on the empty chair. **Voice:** Spanglish; says "en Hialeah" every third sentence; swears in English, prays in Spanish.
+
+#### Yusnavy — AI
+
+**Age:** 31. Left-handed pitcher, had a tryout with a Dominican academy and never got the visa. Found on the rocky key throwing stones at gulls with frightening accuracy. **Skill:** thrown weapons do 3× damage (rocks, coconuts, the baseball); throws rope to a swimmer 10 tiles out. **Need:** his arm: swimming more than 20 tiles injures it (−skill until rested a night). **Ending:** if he reaches land, the *Pelota firmada* keepsake unlocks for everyone in the party. **Voice:** counts everything in innings; describes sharks as batters.
+
+#### Tania, la bloguera — AI
+
+**Age:** 27. Wrote a blog about the queues (*las colas*) and the blackouts until someone knocked on her door. Found hiding in the observation post on the coast cay, writing on the walls. **Skill:** finds found texts at 2× rate; reads the patrol logbook and predicts the next loop. **Need:** she will not be captured: if a squad lands, she runs into the water (sharks). **Ending:** if she makes it, *El Chino* and Tania narrate the credits together. If she dies, her last wall text is the final screen. **Voice:** fast, precise, every sentence has a hashtag she says out loud.
+
+#### El Viejo Tomás — AI
+
+**Age:** 80. Was on a raft in 1994 and was returned; tried again in 2005 and was returned; this is the third time. Found on the shipwreck reef, sitting in the hull camp like it is his living room. **Skill:** knows every chain: reveals all routes on arrival at any island he has been to (all of them). **Need:** walks at half speed; thirst ×1.3; refuses rafts (he has seen three break) and will only cross by boat, turtle, or dolphins. **Ending:** he does not want to reach land: on the final approach he asks to stay on the sandbar. The party can insist (morale −20, he comes) or let him (he waves from the sandbar in every ending). **Voice:** the slowest speaker; every story starts with a year; swears like a sailor and apologizes to Marisol's belly.
+
 
 ---
 

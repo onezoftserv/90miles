@@ -2,6 +2,8 @@
 
 Paste this file, or point Claude Code at it, to start a coding session. It says what the project is, what exists, what to do first, and how to work.
 
+Shortcut: `START.md` holds the exact prompt to paste.
+
 ## 1. What you are building
 
 A 1–4 player co-op survival roguelite in Godot 4 (GDScript). Cuban balseros island-hop across the Florida Straits. Each island is a level cleared by finding an escape route; a scrolling-sea crossing links islands; sharks, weather and the guardacostas are the threats; rescued NPCs change the ending. Hard from run 1; dying carries over a percentage of skills, knowledge and NPC trust, and eases the world slightly (capped). Spanish first, Cuban slang, political satire, swearing.
@@ -12,7 +14,7 @@ Read in this order: `CLAUDE.md` → `docs/GAME_DESIGN.md` → `openspec/project.
 
 | Path | State |
 | --- | --- |
-| `docs/*.md` | Complete design: game, characters, bestiary, islands, assets |
+| `docs/*.md` | Complete design: game, characters (24 NPCs), bestiary (40), islands (18 layouts, 15 set pieces), items (97), content manifest (~280 resources), assets |
 | `openspec/project.md` + `openspec/specs/*/spec.md` | 13 capability specs with requirements and scenarios |
 | `CLAUDE.md` | Conventions and don'ts |
 | `TASKS.md` | Ordered task list, milestones 0–9 |

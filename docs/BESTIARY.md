@@ -188,3 +188,59 @@ Difficulty scales by **distance** (islands 1–2: coast, 3–5: mid, 6–8: far)
 | Rip current (reef shallows) | Pulls swimmers out 1 tile/s | Swim parallel to shore |
 | Hurricane — storm-key boss | A full night: wind pushes everything, water rises 3 tiles, structures break | Dig in behind the dune, tie everything down, keep the kid inside |
 | The Florida Straits — final boss | Night, Gulf Stream, a squall, a patrol, sharks. Every system at once | Everything you learned; the lighthouse beam if Caridad lit it |
+
+---
+
+# Expansion — creatures 16–35
+
+Added to reach reference-game density (~35 creature types). Each follows the same resource + behavior-id pattern; most reuse an existing state machine with different numbers.
+
+## Sea (added)
+
+| # | Creature | Chain | Behavior | Numbers | Counter | Lore line |
+| --- | --- | --- | --- | --- | --- | --- |
+| 16 | **Bull shark** (*tiburón toro*) | Mangrove, lagoon | `patrol_circle_strike` but in brackish and shallow water, strikes without blood if you are alone | 30 dmg, speed 4 | Never swim the lagoon alone; noise scares it 20 s | The only shark that comes up the rivers in Cuba. It does not care that the water is brown. |
+| 17 | **Stingray** (*raya*) | Sandbar, reef flats | `static_hazard` buried in sand; stepping on it = tail strike | 20 dmg + bleeding + speed −30% for 30 s | Shuffle (crouch-walk) in shallows; a Pescador sees the outline | Every Cuban kid knows the shuffle. Every tourist learns it. |
+| 18 | **Sea urchin field** (*erizos*) | Reef flats | `static_hazard`, cluster of 6–10 | 5 dmg + bleeding per step | Sandals (craft: tire + rope) or the long way | Black pincushions. The spines break off inside. |
+| 19 | **Lionfish** (*pez león*) | Reef, wreck holds | `hidden_ambush`, stationary; venomous when touched or speared badly | 15 dmg + heat ×1.5 for 60 s | Spear from 2 tiles; it is good eating (food 25) | Invasive, beautiful, and the reef's fault is nobody's. |
+| 20 | **Remora** (*rémora*) | Any crossing | Attaches to the raft; `night_thief` variant that eats bait and fish on lines | Steals 1 fish per 2 min | Knock it off (interact) | It thinks the raft is a whale. It is not wrong about the smell. |
+| 21 | **Jellyfish bloom** (*medusas*) | Mid/far crossings, calm weather | `gas_cloud` on water: a drifting field | 3 dmg/s + paralysis 1 s on entry | Steer around; Navigation sees it 10 tiles out | The sea turns pink and you stop rowing. |
+| 22 | **Needlefish** (*agujón*) | Night, near lights | `swoop_steal` variant: leaps at light sources on the water | 10 dmg, 20% chance per minute a fire is lit on the raft | No fire on the raft at night; or a torch held away as a decoy | They jump at the lantern and sometimes at the face holding it. |
+| 23 | **Sea snake** (*serpiente de mar*) | Far reefs | `hidden_ambush` in coral | 25 dmg poison over 60 s | Médico identifies; antidote = aloe + noni | Striped like a warning. It is a warning. |
+| 24 | **Hammerhead** (*cornuda*) | Far crossings | `patrol_circle_strike`, follows the raft for a full crossing, strikes only if someone falls in | 40 dmg | Nobody falls in | It escorts you. Politely. For ninety minutes. |
+| 25 | **Sperm whale** (*cachalote*) | Far crossings, rare (5%) | Non-hostile set piece; surfaces, breathes, dives; wake rocks the raft | Raft −10 integrity from the wake | None; +20 morale to everyone who sees it | The first thing in days that was not trying to kill you. |
+
+## Land (added)
+
+| # | Creature | Chain | Behavior | Numbers | Counter | Lore line |
+| --- | --- | --- | --- | --- | --- | --- |
+| 26 | **Hutía** (*jutía*) | Far cays, mangroves | Passive; flees; food 25 if caught (trap or thrown rock) | 4 health, speed 5 | Snare (rope + stick); a Pescador's trap works too | The Cuban tree rat. Grandparents ate it in the 90s and will tell you how. |
+| 27 | **Iguana** (*iguana*) | Rock, storm key | Passive by day; bites if cornered; food 30 | 10 health, 8 dmg | Approach from behind at noon when it is sluggish | The Bahamas kind. It has seen more rafts than you have. |
+| 28 | **Feral dogs** (*perros jíbaros*) | Storm key | `pack_swarm` on land, 3–5; hunt at night; steal meat | 6 dmg each | Fire scares them; a Músico calms them (song); the family on the key feeds them | Somebody's dogs from a boat that never came back. |
+| 29 | **Sand fleas** (*pulgas de arena*) | Any beach, dusk | `gas_cloud` on sand, low | Morale −0.5/s inside; no damage | Sleep on the raft or on rock | They are not fleas. They itch like fleas. |
+| 30 | **Boa** (*majá de Santa María*) | Lighthouse garden, hardwood hammock | `hidden_ambush` in trees; constrict | 10 dmg/s grab for 5 s; teammates hit twice to free | Caridad warns you; walk the path | Cuba's only big snake. Harmless, she says. It does not feel harmless. |
+| 31 | **Rats** (*ratones del barco*) | Shipwreck holds | `night_thief` indoors, day and night | Steal food; 3 health | Seal food; the galley pot is a rat trap | Three generations born in the hull. They own it. |
+| 32 | **Pelican** (*pelícano*) | Any cove | Passive; dives on fish you are reeling in | Steals the catch 30% | Reel fast; it is a tell that fish are there | He fishes better than you. Nobody argues. |
+| 33 | **Scorpion** (*alacrán*) | Rock cave, bunker | `static_hazard` under rocks and in boots left out | 15 dmg + energy −30 | Shake out boots; a stick under rocks | Check your shoes. Check them again. |
+
+## Human (added)
+
+| # | Threat | Chain | Behavior | Counter | Lore line |
+| --- | --- | --- | --- | --- | --- |
+| 34 | **Jet-ski patrol** (*la moto*) | Coast, day | Fast (speed 8), loud (heard 20 tiles), short loop (90 s), no searchlight; spots swimmers in open water by day | Stay out of open water at midday; the noise is the warning | Two kids with sunglasses and a radio. They are bored. That makes them look harder. |
+| 35 | **Smugglers** (*los lancheros*) | Far chains, night, rare | A go-fast boat; will carry you for everything you own, or rob you; 50/50 | Negotiate with a Músico or El Chino present; or hide | Nine thousand dollars a head in Havana. Here the price is whatever you are holding. |
+
+## Weather and environment (added)
+
+| Event | Where | Effect | Counter |
+| --- | --- | --- | --- |
+| **Waterspout** (*tromba*) | Mid crossings, squalls | A moving column; raft −60 if touched; 20 s warning | Steer perpendicular |
+| **Red tide** (*marea roja*) | Reef, 1 in 5 runs | Fish and oysters are 60% poison for two days; the water smells | Eat coconuts, crabs, eggs; wait |
+| **King tide** (*marea viva*) | Sandbar, full moon | The whole cay floods for a half day; stashes wash away | Hang everything in the palms; climb |
+| **Heat dome** (*el calorón*) | Any, far chains | Three days of scorching calm; thirst ×2.5 | Still + rain catcher; dig a shade pit |
+| **Sargassum raft** (*sargazo*) | Crossings | A floating mat; slows the raft to half; hides remoras and a small fish bounty | Pole through; fish it |
+| **Lightning** (*rayos*) | Squalls | Strikes the tallest point (mast, palm, you) | Lower the mast; stay low |
+
+## Density check
+
+With these additions: 35 creature types, 5 bosses, 11 weather events. Per island the generator picks 3–5 creature types from the chain's list, so a 7-island run shows ~20 and two runs rarely repeat the same mix.

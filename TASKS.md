@@ -93,6 +93,21 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [ ] Challenges, seeds, daily run
 - [ ] Steam/relay joining (post-v1)
 
+## 10. Content batches (data entry, parallel to milestones C–E)
+
+Source: `docs/CONTENT_MANIFEST.md` (~280 `.tres` files). Each batch is one OpenSpec change, max 30 files, must load in Godot.
+
+- [ ] content-batch-1: creatures 1–20
+- [ ] content-batch-2: creatures 21–40
+- [ ] content-batch-3: items water, food, plants
+- [ ] content-batch-4: items tools, materials, wearables
+- [ ] content-batch-5: items oddities, keepsakes, texts; recipes
+- [ ] content-batch-6: NPCs, companions, animals; AI profiles in `backend/prompts/npcs/`
+- [ ] content-batch-7: chains (18), weather (11)
+- [ ] content-batch-8: POIs (~45)
+- [ ] content-batch-9: set pieces (15), routes (8), backgrounds (6)
+- [ ] content-batch-10: handwritten dialogue (minor NPCs, beats, endings, quick-chat, death lines)
+
 ## Done
 
 (move finished items here with the date)
