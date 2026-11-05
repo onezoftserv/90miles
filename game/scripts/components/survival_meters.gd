@@ -11,6 +11,9 @@ signal energy_changed(value: float)
 signal sunstroke_changed(active: bool)
 signal hallucinating_changed(active: bool)
 signal downed_changed(is_downed: bool)
+signal last_stand_changed(active: bool)
+## A free revive (the Medalla) stood the player up at 0 health.
+signal free_revive_used
 signal died
 
 ## One-off morale changes other systems report; the amounts are in the tuning.
@@ -27,10 +30,17 @@ const ALL_METERS: Array[DataEnums.Meter] = [
 
 ## Rates and thresholds. The numbers live in the .tres, never in code.
 @export var tuning: SurvivalTuning = preload("res://resources/survival_tuning.tres")
-## A one-player run: health 0 kills at once instead of downing. Set by whoever spawns players.
+## No other living player in the run (a one-player run or the last one alive): health 0 starts a
+## last stand instead of downing. PlayerBody derives it on the host every tick.
 @export var solo: bool = false
+## Seconds added to the downed timer and to a solo last stand: Experiencia levels and the point
+## boost. endings-progression sets it; the meters never compute it.
+@export var downed_bonus_s: float = 0.0
+## Unused free revives this run (the Medalla de la Caridad's holder gets 1). The keepsake system
+## sets it; each one stands the player at revive_health once instead of going down or dying.
+@export var free_revives: int = 0
 
-## Seconds a downed player has left before dying.
+## Seconds left before dying while downed or in a last stand.
 var downed_time_left_s: float = 0.0
 
 var thirst: float = MAX_VALUE:
@@ -108,6 +118,14 @@ var downed: bool = false:
 		downed = value
 		downed_changed.emit(downed)
 
+## A solo player at 0 health with time left to save themselves: lying still, not downed.
+var last_stand: bool = false:
+	set(value):
+		if value == last_stand:
+			return
+		last_stand = value
+		last_stand_changed.emit(last_stand)
+
 ## Permadeath for the run. Set once; emits died.
 var dead: bool = false:
 	set(value):
@@ -125,7 +143,7 @@ var _timed: Array[MeterOverTime] = []
 func tick(delta: float, context: MeterContext) -> void:
 	if dead or delta < 0.0:
 		return
-	if downed:
+	if downed or last_stand:
 		downed_time_left_s = maxf(downed_time_left_s - delta, 0.0)
 		if downed_time_left_s <= EMPTY_EPSILON:
 			dead = true
@@ -178,11 +196,12 @@ func morale_event(event: MoraleEvent) -> void:
 ## Stands a downed player up at revive_health (the cup's own effects are the caller's). Returns
 ## false, changing nothing, unless the player is downed and alive.
 func revive() -> bool:
-	if not downed or dead:
+	if not (downed or last_stand) or dead:
 		return false
 	health = tuning.revive_health
 	downed_time_left_s = 0.0
 	downed = false
+	last_stand = false
 	_update_states()
 	return true
 
@@ -284,12 +303,27 @@ func _update_states() -> void:
 	elif heat < tuning.sunstroke_ends_below:
 		sunstroke = false
 	hallucinating = morale < tuning.hallucinate_below
-	if health <= 0.0 and not downed and not dead:
-		if solo:
-			dead = true
-		else:
-			downed_time_left_s = tuning.downed_s
-			downed = true
+	if health <= 0.0 and not downed and not last_stand and not dead:
+		_on_health_empty()
+
+
+## Health just reached 0: a free revive, else co-op downed, else a solo last stand or death.
+func _on_health_empty() -> void:
+	if free_revives > 0:
+		free_revives -= 1
+		health = tuning.revive_health
+		free_revive_used.emit()
+		return
+	if not solo:
+		downed_time_left_s = tuning.downed_s + downed_bonus_s
+		downed = true
+		return
+	var window_s: float = tuning.solo_last_stand_s + downed_bonus_s
+	if window_s <= EMPTY_EPSILON:
+		dead = true
+		return
+	downed_time_left_s = window_s
+	last_stand = true
 
 
 func _morale_amount(event: MoraleEvent) -> float:

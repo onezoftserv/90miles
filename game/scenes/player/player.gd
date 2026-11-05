@@ -45,6 +45,7 @@ func _ready() -> void:
 	player_input.enabled = is_local
 	add_to_group(GROUP)
 	meters.downed_changed.connect(set_downed)
+	meters.last_stand_changed.connect(_on_last_stand_changed)
 	meters.died.connect(_on_died)
 
 
@@ -119,6 +120,13 @@ func _near_lit_fire(within_px: float) -> bool:
 		if fire != null and global_position.distance_to(fire.global_position) <= within_px:
 			return true
 	return false
+
+
+## A solo last stand: lie where you fell like a downed player, but nobody can drag you.
+func _on_last_stand_changed(active: bool) -> void:
+	set_downed(active)
+	if active:
+		drag_handle.enabled = false
 
 
 func _on_died() -> void:

@@ -55,6 +55,8 @@ extends Resource
 @export var hallucinate_below: float
 
 @export_group("Health")
-## Seconds a downed co-op player waits for a revive before dying.
+## Seconds a downed co-op player waits for a revive before dying, before downed-timer bonuses.
 @export var downed_s: float
 @export var revive_health: float
+## Seconds a solo player's last stand lasts before downed-timer bonuses (0: death at once).
+@export var solo_last_stand_s: float

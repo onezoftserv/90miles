@@ -30,3 +30,4 @@ morale_text_read = 10.0
 hallucinate_below = 20.0
 downed_s = 90.0
 revive_health = 30.0
+solo_last_stand_s = 0.0
