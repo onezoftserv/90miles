@@ -1,0 +1,243 @@
+class_name DataEnums
+extends RefCounted
+## Enums shared by more than one data class. Never instantiated.
+##
+## Enum values are saved in .tres files as integers, so every enum here is APPEND-ONLY:
+## add new values at the end, never reorder, rename for meaning, or remove one.
+
+enum Meter {
+	NONE,
+	THIRST,
+	HUNGER,
+	HEAT,
+	ENERGY,
+	MORALE,
+	HEALTH,
+}
+
+enum Status {
+	NONE,
+	BLEEDING,
+	BURNING,
+	POISON,
+	PARALYZED,
+	SLOWED,
+	STUNG,
+	SUNBURN,
+	HALLUCINATING,
+}
+
+enum DayPhase {
+	DAWN,
+	DAY,
+	DUSK,
+	NIGHT,
+}
+
+enum Tide {
+	ANY,
+	LOW,
+	HIGH,
+}
+
+enum DistanceBand {
+	COAST,
+	MID,
+	FAR,
+	FINAL,
+}
+
+enum ChainFamily {
+	SANDBAR,
+	COAST,
+	MANGROVE,
+	REEF,
+	ROCK,
+	LIGHTHOUSE,
+	STORM,
+	SHIPWRECK,
+	FINAL,
+}
+
+enum SceneContext {
+	ISLAND,
+	CROSSING,
+	BOTH,
+}
+
+enum Skill {
+	NONE,
+	FISHING,
+	BUILDING,
+	MEDICINE,
+	NAVIGATION,
+	MORALE,
+	STEALTH,
+	COMBAT,
+}
+
+enum Perk {
+	NONE,
+	READS_TIDE,
+	STEERS_CURRENT,
+	SPOTS_ISLANDS,
+	PLAYS_SONGS,
+	IDENTIFIES_UNKNOWN_PLANTS,
+}
+
+enum ItemTag {
+	FOOD,
+	WATER,
+	TOOL,
+	WEAPON,
+	MATERIAL,
+	WEARABLE,
+	SHINY,
+	KEEPSAKE,
+	TEXT,
+	CONTAINER,
+	FUEL,
+	MEDICINE,
+	UNKNOWN,
+	TINDER,
+	MEAT,
+}
+
+enum Capability {
+	NONE,
+	OPEN_COCONUT,
+	OPEN_CAN,
+	CUT_NET,
+	CUT_PATH,
+	CRAFT_BLADE,
+	SPEAR_FISH,
+	LINE_FISH,
+	NET_FISH,
+	TRAP,
+	PRY_NAILS,
+	REPAIR,
+	SPOT_ISLANDS,
+	REVEAL_ROUTES,
+	STEER,
+	NAVIGATE_STREAM,
+	REVEAL_LAYOUT,
+	SIGNAL_DAY,
+	SIGNAL_NIGHT,
+	LIGHT_FIRE,
+	DIG,
+	BURY_STASH,
+	ROW,
+	TIE_DOWN,
+	HAND_PROTECTION,
+	GLARE_PROTECTION,
+	FLOAT_AT_ZERO_ENERGY,
+	POWER_SOURCE,
+}
+
+enum CreatureTag {
+	SHARK,
+	PATROL,
+}
+
+enum Sense {
+	SIGHT,
+	HEARING,
+	SMELL_BLOOD,
+	LIGHT,
+	SMOKE,
+}
+
+enum Vessel {
+	RAFT,
+	BOAT,
+	TURTLE,
+	SWIMMERS,
+	DOLPHIN_POD,
+}
+
+enum Terrain {
+	DEEP,
+	SHALLOWS,
+	BRACKISH,
+	BEACH,
+	DUNE,
+	MANGROVE,
+	ROCK,
+	SCRUB,
+	SHINGLE,
+	HAMMOCK,
+	CASUARINA,
+	REEF_FLAT,
+	CORAL,
+	CLIFF,
+	WRECK_INTERIOR,
+}
+
+enum TerrainFeature {
+	NONE,
+	LAGOON,
+	CHANNELS,
+	CLIFF_EDGES,
+	REEF_RING,
+	REEF_FLATS,
+	RIVER,
+	SAND_SPIT,
+	ROCKY_POINT,
+	BAR_CHANNEL,
+	FLOODED_PIT,
+	DUNE_RIDGE,
+	WRECK_HULL,
+	DEEP_HOLE,
+}
+
+enum Placement {
+	ANY_LAND,
+	BEACH,
+	DUNE,
+	INTERIOR,
+	POINT,
+	SHORELINE,
+	SHALLOWS,
+	MANGROVE_EDGE,
+	REEF_FLAT,
+	CHANNEL,
+	LAGOON_EDGE,
+	CLIFF_TOP,
+	OFFSHORE,
+	WRECK_INTERIOR,
+}
+
+enum EnvHazard {
+	NO_SHADE,
+	CLIFF_FALL,
+	ROTTEN_DECKS,
+	RIP_CURRENT,
+}
+
+enum RespawnTrigger {
+	NEVER,
+	SQUALL,
+	NIGHT,
+	DAILY,
+	RAIN,
+	HURRICANE,
+}
+
+enum Ending {
+	TODOS,
+	LOS_QUE_LLEGAMOS,
+	SOLO,
+	DEVUELTO,
+	EL_NINO,
+}
+
+enum Emotion {
+	NEUTRAL,
+	HAPPY,
+	SAD,
+	ANGRY,
+	SCARED,
+	JOKING,
+	TIRED,
+	TENDER,
+}

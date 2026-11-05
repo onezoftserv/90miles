@@ -5,11 +5,11 @@ const ROOT := "user://test_content_validator"
 
 
 func before_each() -> void:
-	TestFs.remove_tree(ROOT)
+	FsHelpers.remove_tree(ROOT)
 
 
 func after_all() -> void:
-	TestFs.remove_tree(ROOT)
+	FsHelpers.remove_tree(ROOT)
 
 
 func _catalog() -> ContentCatalog:
@@ -31,7 +31,7 @@ func _recipe(id: StringName) -> FixtureRecipeData:
 
 
 func _save(folder: String, file_id: String, res: Resource) -> void:
-	assert_eq(TestFs.save_content(ROOT, folder, file_id, res), OK, "saved %s/%s" % [folder, file_id])
+	assert_eq(FsHelpers.save_content(ROOT, folder, file_id, res), OK, "saved %s/%s" % [folder, file_id])
 
 
 func _errors() -> PackedStringArray:

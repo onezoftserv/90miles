@@ -4,6 +4,9 @@ extends RefCounted
 ## folder's type, its id equals its file name, it has a Spanish name, and every id it
 ## references exists. Returns one readable message per problem; empty means valid.
 
+## Guards against runaway nesting (and cycles) in embedded parts.
+const MAX_PART_DEPTH := 16
+
 
 static func validate(catalog: ContentCatalog) -> PackedStringArray:
 	var errors: PackedStringArray = []
@@ -44,25 +47,44 @@ static func _validate_type(catalog: ContentCatalog, type: StringName) -> PackedS
 	return errors
 
 
-static func _check_references(catalog: ContentCatalog, where: String, data: ContentData) -> PackedStringArray:
+## Checks the references `obj` declares (a ContentData entry or an embedded DataPart), then
+## recurses into every DataPart it holds, alone or in an array. `path` prefixes field names in
+## messages ("parts[1].children[0]."), so nested problems say exactly where they are.
+static func _check_references(catalog: ContentCatalog, where: String, obj: Resource, path: String = "", depth: int = 0) -> PackedStringArray:
 	var errors: PackedStringArray = []
-	var refs := data.get_reference_fields()
+	if depth > MAX_PART_DEPTH:
+		errors.append("%s: %sparts are nested deeper than %d levels" % [where, path, MAX_PART_DEPTH])
+		return errors
+	var refs: Dictionary[StringName, StringName] = obj.call(&"get_reference_fields")
 	for field: StringName in refs:
 		var target: StringName = refs[field]
-		if not field in data:
-			errors.append("%s: reference field %s does not exist" % [where, field])
+		var label := path + String(field)
+		if not field in obj:
+			errors.append("%s: reference field %s does not exist" % [where, label])
 			continue
 		if not catalog.has_type(target):
-			errors.append("%s: %s points at unknown content type %s" % [where, field, target])
+			errors.append("%s: %s points at unknown content type %s" % [where, label, target])
 			continue
 		var ids: Array[StringName] = []
-		var unsupported := _collect_ids(data.get(field), ids)
+		var unsupported := _collect_ids(obj.get(field), ids)
 		if not unsupported.is_empty():
-			errors.append("%s: %s holds unsupported type %s (use an id, an array of ids or a dictionary keyed by id)" % [where, field, unsupported])
+			errors.append("%s: %s holds unsupported type %s (use an id, an array of ids or a dictionary keyed by id)" % [where, label, unsupported])
 			continue
 		for ref_id: StringName in ids:
 			if not catalog.has_entry(target, ref_id):
-				errors.append("%s: %s references missing %s/%s" % [where, field, target, ref_id])
+				errors.append("%s: %s references missing %s/%s" % [where, label, target, ref_id])
+	for prop: Dictionary in obj.get_property_list():
+		if not int(prop["usage"]) & PROPERTY_USAGE_STORAGE:
+			continue
+		var prop_name: String = prop["name"]
+		var value: Variant = obj.get(prop_name)
+		if value is DataPart:
+			errors.append_array(_check_references(catalog, where, value, "%s%s." % [path, prop_name], depth + 1))
+		elif value is Array:
+			var items: Array = value
+			for i: int in items.size():
+				if items[i] is DataPart:
+					errors.append_array(_check_references(catalog, where, items[i], "%s%s[%d]." % [path, prop_name, i], depth + 1))
 	return errors
 
 

@@ -1,4 +1,4 @@
-class_name TestFs
+class_name FsHelpers
 extends RefCounted
 ## File helpers for tests that build throwaway content under user://.
 

@@ -5,11 +5,11 @@ const ROOT := "user://test_content_catalog"
 
 
 func before_each() -> void:
-	TestFs.remove_tree(ROOT)
+	FsHelpers.remove_tree(ROOT)
 
 
 func after_all() -> void:
-	TestFs.remove_tree(ROOT)
+	FsHelpers.remove_tree(ROOT)
 
 
 func _catalog() -> ContentCatalog:
@@ -24,7 +24,7 @@ func _item(id: StringName, name_es: String = "Cosa") -> FixtureItemData:
 
 
 func _save(id: StringName) -> void:
-	assert_eq(TestFs.save_content(ROOT, "things", String(id), _item(id)), OK, "saved fixture %s" % id)
+	assert_eq(FsHelpers.save_content(ROOT, "things", String(id), _item(id)), OK, "saved fixture %s" % id)
 
 
 func test_lists_ids_from_file_names_sorted() -> void:
