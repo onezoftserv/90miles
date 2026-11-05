@@ -81,3 +81,19 @@ func test_ignores_non_resource_files_and_subfolders() -> void:
 
 func test_folder_path_joins_root_and_type() -> void:
 	assert_eq(_catalog().folder_path(&"things"), ROOT.path_join("things"))
+
+
+# Windows file systems ignore case but Linux CI and exported builds do not, so ids must match
+# file names exactly everywhere.
+func test_lookup_is_case_sensitive() -> void:
+	_save(&"rope")
+	var catalog := _catalog()
+	assert_false(catalog.has_entry(&"things", &"Rope"))
+	assert_null(catalog.get_entry(&"things", &"Rope"))
+	assert_true(catalog.has_entry(&"things", &"rope"))
+
+
+func test_lists_folders_that_are_not_registered_types() -> void:
+	_save(&"rope")
+	DirAccess.make_dir_recursive_absolute(ROOT.path_join("stuff"))
+	assert_eq(_catalog().unregistered_folders(), PackedStringArray(["stuff"]))

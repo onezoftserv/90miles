@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Download the CC0 Kenney packs and OFL pixel fonts listed in docs/ASSETS.md.
 
-Usage: python -I tools/fetch_assets.py [--dest game/assets]
+Usage: python -I tools/fetch_assets.py [--dest <repo>/game/assets]
 
 Kenney pack pages carry a data-download-id; the site exchanges it at
 https://kenney.nl/download-link/<id> for a short-lived signed zip URL, using the
@@ -71,10 +71,12 @@ def extract(data: bytes, out: pathlib.Path) -> None:
         root = tmp.resolve()
         with zipfile.ZipFile(io.BytesIO(data)) as zf:
             for member in zf.infolist():
-                # guard against zip-slip
+                # zip-slip: a member that would land outside the pack folder fails the whole pack
                 if not (tmp / member.filename).resolve().is_relative_to(root):
-                    continue
+                    raise RuntimeError(f"unsafe path in archive: {member.filename}")
                 zf.extract(member, tmp)
+        if not any(p.is_file() for p in tmp.rglob("*")):
+            raise RuntimeError("archive contained no files")
         tmp.rename(out)
     except BaseException:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -120,7 +122,7 @@ def fetch_fonts(opener: urllib.request.OpenerDirector, root: pathlib.Path, faile
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dest", default="game/assets")
+    ap.add_argument("--dest", default=str(pathlib.Path(__file__).resolve().parent.parent / "game" / "assets"))
     args = ap.parse_args()
     root = pathlib.Path(args.dest)
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))

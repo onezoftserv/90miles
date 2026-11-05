@@ -7,6 +7,8 @@ extends RefCounted
 
 static func validate(catalog: ContentCatalog) -> PackedStringArray:
 	var errors: PackedStringArray = []
+	for folder: String in catalog.unregistered_folders():
+		errors.append("%s: folder is not a registered content type, so its files are never checked" % folder)
 	for type: StringName in catalog.types():
 		errors.append_array(_validate_type(catalog, type))
 	return errors
@@ -31,6 +33,9 @@ static func _validate_type(catalog: ContentCatalog, type: StringName) -> PackedS
 			errors.append("%s: expected %s, found %s" % [where, _script_name(expected), _resource_type_name(res)])
 			continue
 		var data := res as ContentData
+		if data == null:
+			errors.append("%s: %s is not a ContentData type" % [where, _script_name(expected)])
+			continue
 		if data.id != file_id:
 			errors.append("%s: id is %s but the file name is %s" % [where, data.id, file_id])
 		if data.requires_name() and data.name_es.strip_edges().is_empty():
@@ -50,26 +55,39 @@ static func _check_references(catalog: ContentCatalog, where: String, data: Cont
 		if not catalog.has_type(target):
 			errors.append("%s: %s points at unknown content type %s" % [where, field, target])
 			continue
-		for ref_id: StringName in _ids_in(data.get(field)):
+		var ids: Array[StringName] = []
+		var unsupported := _collect_ids(data.get(field), ids)
+		if not unsupported.is_empty():
+			errors.append("%s: %s holds unsupported type %s (use an id, an array of ids or a dictionary keyed by id)" % [where, field, unsupported])
+			continue
+		for ref_id: StringName in ids:
 			if not catalog.has_entry(target, ref_id):
 				errors.append("%s: %s references missing %s/%s" % [where, field, target, ref_id])
 	return errors
 
 
-## Ids held by a reference field: a single id, an array of ids, or dictionary keys.
-static func _ids_in(value: Variant) -> Array[StringName]:
-	var ids: Array[StringName] = []
+## Appends the ids held by a reference field to `ids`: a single id, an array of ids, or
+## dictionary keys. Returns the name of the first unsupported value type, or "" if none.
+static func _collect_ids(value: Variant, ids: Array[StringName]) -> String:
 	match typeof(value):
 		TYPE_STRING_NAME, TYPE_STRING:
 			if not String(value).is_empty():
 				ids.append(StringName(value))
 		TYPE_ARRAY, TYPE_PACKED_STRING_ARRAY:
 			for item: Variant in value:
-				ids.append_array(_ids_in(item))
+				if typeof(item) != TYPE_STRING_NAME and typeof(item) != TYPE_STRING:
+					return type_string(typeof(item))
+				ids.append(StringName(item))
 		TYPE_DICTIONARY:
 			for key: Variant in value:
-				ids.append_array(_ids_in(key))
-	return ids
+				if typeof(key) != TYPE_STRING_NAME and typeof(key) != TYPE_STRING:
+					return type_string(typeof(key))
+				ids.append(StringName(key))
+		TYPE_NIL:
+			pass
+		_:
+			return type_string(typeof(value))
+	return ""
 
 
 static func _script_name(script: Script) -> String:

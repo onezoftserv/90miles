@@ -82,13 +82,29 @@ func get_entry(type: StringName, entry_id: StringName) -> ContentData:
 	return entry
 
 
+## Folders under the root that are not registered content types (their files are never
+## validated or loaded, so they are reported instead of silently ignored).
+func unregistered_folders() -> PackedStringArray:
+	var stray: PackedStringArray = []
+	if not DirAccess.dir_exists_absolute(_root):
+		return stray
+	for folder: String in DirAccess.get_directories_at(_root):
+		if not folder.begins_with(".") and not has_type(StringName(folder)):
+			stray.append(folder)
+	stray.sort()
+	return stray
+
+
+# Matches against the exact listed file names, not ResourceLoader.exists(): Windows file systems
+# ignore case, so "Rope" would resolve locally and then fail on Linux CI and in exports.
 func _path_for(type: StringName, entry_id: StringName) -> String:
 	if not has_type(type) or String(entry_id).is_empty():
 		return ""
+	var files := list_files(type)
 	for ext: String in EXTENSIONS:
-		var path := folder_path(type).path_join("%s.%s" % [entry_id, ext])
-		if ResourceLoader.exists(path):
-			return path
+		var file := "%s.%s" % [entry_id, ext]
+		if files.has(file):
+			return folder_path(type).path_join(file)
 	return ""
 
 

@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Only superseded PR runs are cancelled; every push to main gets a result.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   GODOT_VERSION: "4.7.2"
@@ -63,11 +64,27 @@ jobs:
             exit 1
           fi
 
+      # Godot can exit 0 after logging errors, so these two steps also fail on any error line.
       - name: Import project
-        run: timeout 300 "$GODOT" --headless --path game --import
+        run: |
+          set -o pipefail
+          timeout 300 "$GODOT" --headless --path game --import 2>&1 | tee import.log
+          if sed 's/\x1b\[[0-9;]*m//g' import.log | grep -E '^(ERROR|SCRIPT ERROR):'; then
+            echo "::error::errors during import"; exit 1
+          fi
 
       - name: Smoke run
-        run: timeout 120 "$GODOT" --headless --path game -s res://tests/smoke.gd
+        run: timeout 60 "$GODOT" --headless --path game -s res://tests/smoke.gd
+
+      # Runs the real game loop (autoloads first, then the main scene) to catch runtime errors in
+      # autoload _ready, which happen before the smoke script can register its error logger.
+      - name: Run the game headless
+        run: |
+          set -o pipefail
+          timeout 120 "$GODOT" --headless --path game --quit-after 300 2>&1 | tee run.log
+          if sed 's/\x1b\[[0-9;]*m//g' run.log | grep -E '^(ERROR|SCRIPT ERROR):'; then
+            echo "::error::errors while running the game"; exit 1
+          fi
 
       - name: Unit tests (GUT)
         run: timeout 300 "$GODOT" --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit

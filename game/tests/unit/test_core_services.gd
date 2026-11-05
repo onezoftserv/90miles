@@ -45,6 +45,43 @@ func test_every_service_is_in_the_tree() -> void:
 		assert_not_null(get_tree().root.get_node_or_null(NodePath(service)), "%s is in the tree" % service)
 
 
+func test_each_service_is_a_singleton_running_its_registered_script() -> void:
+	for service: StringName in SPEC_SERVICES:
+		var setting: String = ProjectSettings.get_setting("autoload/%s" % service, "")
+		assert_true(setting.begins_with("*"), "%s is registered as a singleton" % service)
+		var node: Node = get_tree().root.get_node_or_null(NodePath(service))
+		var script := node.get_script() as Script if node else null
+		assert_not_null(script, "%s has a script" % service)
+		if script:
+			assert_eq(script.resource_path, setting.trim_prefix("*"), "%s runs its registered script" % service)
+
+
+func test_entry_check_names_wrong_registrations() -> void:
+	var node := Node.new()
+	node.set_script(load("res://scripts/autoload/audio_manager.gd"))
+	assert_eq(CoreServices.check_entry(&"AudioManager", "*res://scripts/autoload/audio_manager.gd", node), PackedStringArray())
+	assert_string_contains("\n".join(CoreServices.check_entry(&"AudioManager", "res://scripts/autoload/audio_manager.gd", node)), "not a singleton")
+	assert_string_contains("\n".join(CoreServices.check_entry(&"AudioManager", "*res://scripts/autoload/net_manager.gd", node)), "runs res://scripts/autoload/audio_manager.gd")
+	node.free()
+
+
+# core-services: "Services hold no content data". Content values belong in .tres files, so a
+# service script declares no constants and no exported (designer-tunable) properties.
+func test_services_hold_no_content_values() -> void:
+	for service: StringName in SPEC_SERVICES:
+		var path: String = String(ProjectSettings.get_setting("autoload/%s" % service, "")).trim_prefix("*")
+		var script := load(path) as Script
+		assert_not_null(script, "%s script loads" % service)
+		if script == null:
+			continue
+		assert_eq(script.get_script_constant_map().size(), 0, "%s declares no constants" % service)
+		var exported: PackedStringArray = []
+		for prop: Dictionary in script.get_script_property_list():
+			if int(prop["usage"]) & PROPERTY_USAGE_EDITOR:
+				exported.append(String(prop["name"]))
+		assert_eq(exported, PackedStringArray(), "%s exports no tunable values" % service)
+
+
 func test_game_state_owns_the_content_catalog() -> void:
 	var game_state: Node = get_tree().root.get_node_or_null(^"GameState")
 	assert_not_null(game_state)

@@ -124,3 +124,47 @@ func test_english_name_falls_back_to_spanish() -> void:
 	coco.name_en = "Coconut"
 	assert_eq(coco.get_display_name("en"), "Coconut")
 	assert_eq(coco.get_display_name("es"), "Coco")
+
+
+func test_unregistered_content_folder_is_reported() -> void:
+	_save("things", "rope", _item(&"rope"))
+	_save("stuff", "rope", _item(&"rope"))
+	_assert_one_error_containing(["stuff", "not a registered content type"])
+
+
+func test_duplicate_id_across_tres_and_res_is_reported() -> void:
+	_save("things", "rope", _item(&"rope"))
+	assert_eq(ResourceSaver.save(_item(&"rope"), ROOT.path_join("things/rope.res")), OK)
+	_assert_one_error_containing(["things/rope", "duplicate id"])
+
+
+func test_type_that_is_not_content_is_reported_not_crashed() -> void:
+	var plain := FixturePlainResource.new()
+	plain.id = &"a"
+	_save("plains", "a", plain)
+	var errors := ContentValidator.validate(ContentCatalog.new(ROOT, {&"plains": FixturePlainResource}))
+	assert_eq(errors.size(), 1, "one error: %s" % [errors])
+	if errors.size() == 1:
+		assert_string_contains(errors[0], "FixturePlainResource")
+		assert_string_contains(errors[0], "not a ContentData type")
+
+
+func test_broken_reference_declarations_are_reported() -> void:
+	var broken := FixtureBrokenRefsData.new()
+	broken.id = &"b"
+	broken.name_es = "Roto"
+	_save("broken", "b", broken)
+	var errors := ContentValidator.validate(ContentCatalog.new(ROOT, {&"broken": FixtureBrokenRefsData, &"things": FixtureItemData}))
+	var joined := "\n".join(errors)
+	assert_eq(errors.size(), 3, "three errors: %s" % [errors])
+	assert_string_contains(joined, "count holds unsupported type int")
+	assert_string_contains(joined, "reference field ghost does not exist")
+	assert_string_contains(joined, "tool points at unknown content type nowhere")
+
+
+func test_reference_check_is_case_sensitive() -> void:
+	_save("things", "rope", _item(&"rope"))
+	var raft := _recipe(&"raft")
+	raft.tool = &"Rope"
+	_save("recipes", "raft", raft)
+	_assert_one_error_containing(["recipes/raft", "tool", "things/Rope"])
