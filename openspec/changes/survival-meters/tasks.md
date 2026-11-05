@@ -29,8 +29,8 @@
 ## 6. Docs and integration
 
 - [x] 6.1 Update `docs/GAME_DESIGN.md` §4 (numbers, heat row, morale below 20, health drains) and §5 (the clock) to match the spec; verify every number there matches `survival_tuning.tres`
-- [ ] 6.2 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero `ERROR:` or `SCRIPT ERROR:` lines, including resources in use at exit
-- [ ] 6.3 Tick the `survival-meters` line in `TASKS.md` §3 and add a Done entry naming the provisional numbers; verify `openspec validate survival-meters --type change --strict` passes
+- [x] 6.2 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero `ERROR:` or `SCRIPT ERROR:` lines, including resources in use at exit
+- [x] 6.3 Tick the `survival-meters` line in `TASKS.md` §3 and add a Done entry naming the provisional numbers; verify `openspec validate survival-meters --type change --strict` passes
 
 ## Workflow follow-up
 
