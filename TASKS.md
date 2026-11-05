@@ -7,9 +7,9 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] Install Godot 4.7.2 and open it once
 - [x] Install Claude Code: `npm install -g @anthropic-ai/claude-code`
 - [x] Install ECC: `/plugin marketplace add https://github.com/affaan-m/ECC` then `/plugin install ecc@ecc`
-- [ ] Copy ECC common rules to `~/.claude/rules/ecc/` (see README §2)
+- [x] Copy ECC common rules to `~/.claude/rules/ecc/` (see README §2)
 - [x] Install OpenSpec: `npm install -g @fission-ai/openspec`, then `openspec init` in the repo (pick Claude Code)
-- [ ] Build and register the Godot MCP (`Coding-Solo/godot-mcp`), confirm `claude mcp list` shows it
+- [x] Build and register the Godot MCP (`Coding-Solo/godot-mcp`), confirm `claude mcp list` shows it
 - [ ] Register the AWS and GitHub MCP servers; export `AWS_PROFILE` and `GITHUB_PERSONAL_ACCESS_TOKEN`
 - [x] Clone the GitHub repo (`onezoftserv/90miles`); it already exists, so no `git init`
 - [x] `./tools/clone_references.sh` (reference games into git-ignored `reference/`)
@@ -114,3 +114,4 @@ Source: `docs/CONTENT_MANIFEST.md` (~280 `.tres` files). Each batch is one OpenS
 - 2026-11-05: Assets: 9 Kenney packs (CC0) and both OFL pixel fonts via the fixed `tools/fetch_assets.py`; `game/assets/CREDITS.md`; Spanish glyph coverage tested. Manual downloads still open.
 - 2026-11-05: `project-skeleton` change: project, 5 autoload stubs, content catalog and validator, 34 data classes for the 11 content folders, GUT 9.7.1, smoke run, CI workflow (not yet run on GitHub). Open design questions: `data-model-questions.md` in the project-skeleton change; repo review: `docs/reviews/2026-11-05-repo-review.md`.
 - 2026-11-05: `player-movement` change implemented test-first (GUT 178/178, smoke and a 300-frame run clean); provisional choices confirmed; archived with `project-skeleton` after the first CI run passed. Decided: host authority with prediction, heat rises with retuned drains, 16×16 characters.
+- 2026-11-05: ECC common rules copied to `~/.claude/rules/ecc/`; Godot MCP built and registered (user scope, Godot 4.7.2 console binary); AWS MCP connected after `aws login --profile control-plane-test` (that profile is a full-access role). GitHub MCP still open: it needs the user's fine-grained token (README §5).
