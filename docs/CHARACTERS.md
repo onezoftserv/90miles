@@ -60,7 +60,7 @@ Voice notes are for the Chatterbox clones and for the Haiku prompt. Satire targe
 
 **Mechanics.** He eats half rations, cannot swim far, and panics near sharks (morale −10 to everyone). He is small enough to ride the turtle with one adult. He fits anywhere.
 
-**Changes the ending.** If Yunior reaches land, the secret ending *El Niño* plays. If he dies, every ending is colder and *Solo* is unlocked even if others survived.
+**Changes the ending.** If Yunior reaches land, the secret ending *El Niño* plays. If he dies, every ending is colder; his death does not select an ending (*Solo* plays only when exactly one person survives).
 
 **Voice.** Fast, loud, Havana kid slang (*asere, qué volá, candela, tremendo*). Swears, then apologizes, then swears again. Explains the offside rule to sharks. Haiku profile: `backend/prompts/npcs/yunior.md`.
 

@@ -117,7 +117,7 @@ The turtle's two-seat limit and the swimmer's energy cost are intentional: a 4-p
 
 ## 8. The crossing
 
-A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cuba and weather: reef sharks follow blood; a squall line forces you to tie down; searchlights sweep from a cutter on the early chains; the Gulf Stream pushes east and the navigator must correct. Falling in the water costs energy and attracts sharks. The raft takes damage; at 0 it breaks and everyone swims the rest or drowns.
+A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cuba and weather: reef sharks follow blood; a squall line forces you to tie down; searchlights sweep from a cutter on the early chains; the Gulf Stream pushes east: anyone aboard slows the drift to 0.25 tile/s, and a *Maestro*, Navigation 2 or a compass with charts cancels it. Drift pushes you sideways (up to 40 tiles, then you overshoot to a harder chain) but never makes the crossing longer. Falling in the water costs energy and attracts sharks; a swimmer climbs back aboard alone by holding interact for 3 s at the edge, or a teammate pulls them in 2 s. The raft takes damage; at 0 it breaks and everyone swims the rest or drowns.
 
 ## 9. Threats
 
@@ -140,7 +140,7 @@ Full lore and behavior specs in `BESTIARY.md`. Summary:
 
 ### Guardacostas and stealth
 
-The human threat on the first two or three islands, fading as you head north. Patrol boats run fixed routes; at night a searchlight cone sweeps beach and water. Smoke or fire draws a shore squad that searches the island for three minutes. A caught player is taken aboard: teammates can free them by sneaking onto the boat at the dock; a solo player loses their items and restarts the previous island. Stealth is a skill: crouching in brush, diving, hiding in mangroves and putting out fires all count.
+The human threat on the first two or three islands, fading as you head north. Patrol boats run fixed routes; at night a searchlight cone sweeps beach and water. Smoke or fire draws a shore squad that searches the island for three minutes. A caught player is taken aboard: teammates can free them by sneaking onto the boat at the dock. When the last free player is caught (a solo player always is), *La captura* plays with Rodríguez: a persuasive party is released at the next cay; otherwise it restarts the previous island, regenerated from the run seed, keeping its items except fire sources (keepsakes always stay). On island 1 the party restarts island 1 the same way. Caught on the final crossing, the run ends: *Devuelto*. Stealth is a skill: crouching in brush, diving, hiding in mangroves and putting out fires all count.
 
 ## 10. Characters and co-op
 
@@ -157,7 +157,7 @@ Each player picks a background at the start; it sets starting items and a skill 
 | Músico | A guitar with two strings | Morale: songs restore the party, dolphins come closer |
 | Ex-militar | Machete | Stealth and combat: quieter, hits harder |
 
-Any player can do anything; backgrounds do it better. In solo, the player picks one and the game is tuned for it.
+Any player can do anything; backgrounds do it better. Solo uses the same base numbers as co-op, and any background can finish a run: every island set up for one living player has at least one escape route that needs no background skill and no starting item.
 
 ### Co-op rules
 
@@ -184,11 +184,13 @@ Decided: multiple endings, based on who you saved and how.
 
 | Outcome | Ending |
 | --- | --- |
-| Everyone you met made it | *Todos.* The whole group walks up the beach together. |
-| Your party made it, NPCs lost | *Los que llegamos.* Reunion on the pier; a chair stays empty. |
-| Only one survivor | *Solo.* A long silent walk. A phone call home. |
-| Captured on the final crossing | *Devuelto.* Fade on the deck of the cutter. Unlocks a keepsake. |
+| Everyone you met made it (at least one companion met) | *Todos.* The whole group walks up the beach together. |
+| Two or more survivors, but not *Todos* (someone you met was lost, or nobody was met) | *Los que llegamos.* Reunion on the pier; a chair stays empty. |
+| Only one survivor (any party size, solo included) | *Solo.* A long silent walk. A phone call home. |
+| Whole party captured on the final crossing | *Devuelto.* Fade on the deck of the cutter. Ends the run as a loss (counts as a death) and unlocks a keepsake. |
 | Secret: Yunior reaches land | *El Niño.* A different voice reads the credits. |
+
+Survivors are the players and companions who reach land. The first match wins, in this order: *Devuelto*, *El Niño*, *Solo*, *Todos*, *Los que llegamos*. A solo player who met nobody gets *Solo*; one who brings a companion to land can get *Todos*.
 
 ## 14. Roguelite progression
 
@@ -198,7 +200,7 @@ Permadeath per run. Between runs you unlock **memories**: keepsakes you can star
 | --- | --- | --- |
 | Foto de la familia | Morale drains 30% slower | Finish any run |
 | Cuchillo del abuelo | Start with a knife | Kill a shark |
-| Medalla de la Caridad | One free revive | Save La Vieja's quest |
+| Medalla de la Caridad | One free revive per run, solo included (`survival-meters` defines how) | Save La Vieja's quest |
 | Nudo del pescador | Rafts 25% stronger | Cross 3 times by raft |
 | Pedazo de mapa | Reveals one route on island 1 | Reach the storm key |
 | Cassette de Los Van Van | Music works without a Músico | Finish with a Músico |
@@ -224,7 +226,9 @@ Rules:
 - Skills cap at level 5 per background skill and level 3 for the others; carry-over never pushes a skill above level 3 without a run that earned it.
 - Each run also grants **1 Experiencia point** per island reached, spent at the start of the next run on small permanent boosts: +10 max thirst, +1 inventory slot, +10 s downed timer, start with a known plant, start with 1 rope. Max 12 points banked; spending is the only way to use them.
 - **The world eases a little per death, capped.** Each death adds one "Experiencia level" (max 8). Per level: thirst and hunger drain −3%, patrol period +10 s, one extra driftwood and one extra coconut per island, downed timer +5 s. At the cap that is drains −24%, patrols at 4:20 instead of 3:00, and 8 extra materials per island: enough to feel the game meet you halfway, not enough to remove the pressure.
+- **Downed-timer rewards in solo.** For a player with no other living player (solo, or the last one alive), the downed timer is a last-stand window with a 0 s base, so a first solo run stays brutal. The +5 s per Experiencia level and the +10 s boost lengthen that window (for example 30 s at level 4 with the boost); `survival-meters` defines what the player can do in it and the Medalla revive that shares it.
 - Winning a run removes 2 Experiencia levels (the game gets harder again for a champion) and unlocks a keepsake.
+- *Devuelto* is a loss: it counts as a death (one Experiencia level added, the death carry-over above) and removes no levels. It unlocks a keepsake whose name and effect are still open.
 - Seeded and daily runs earn Experiencia but do not spend it.
 
 Challenges (optional hard modes): no fire, permanent storm season, sinking raft from the start, patrols on every island.
