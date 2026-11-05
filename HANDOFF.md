@@ -57,6 +57,7 @@ Run from the repo root. Do not skip ahead to code.
 - Heat rises 0 → 100 with sunstroke at 100; meter drains get retuned in `survival-meters` so thirst empties in about 1–1.5 in-game days (2026-11-05)
 - Characters are 16×16 (Kenney CC0 bases) for now (2026-11-05)
 - The seven provisional `player-movement` choices (crawl 1 tile/s, free treading, drag on press, per-interactable holds, 16×16 placeholder, 1 tile/s east current, dives need >10 energy) are confirmed (2026-11-05)
+- Solo is first-class (every feature works and is winnable with 1 player); the solo-play rules and their six details (3 s self-climb, island 1 capture restarts island 1, final-crossing capture goes straight to Devuelto, crocodile deep-water death roll 20 + bleeding, "starting item" means anything a player starts with, 1 tile/s drift with nobody aboard) are confirmed (2026-11-05)
 - Multiple endings by who you saved; secret ending if Yunior lives
 - AI dialogue: Claude Haiku 4.5 on Bedrock for important NPCs and recurring texts only; Nova Micro as cheap fallback
 - Voice: Chatterbox clones for handwritten lines; Kokoro runtime TTS is a stretch goal
