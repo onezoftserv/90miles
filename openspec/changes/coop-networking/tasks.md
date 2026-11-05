@@ -47,9 +47,9 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 7. Dev playground and checks
 
-- [ ] 7.1 Add `scenes/dev/coop_playground.tscn` (movement playground terrain, session, `--host`/`--join`/`--solo` arguments, Host/Join panel with the port-forwarding note, host-lost screen) and verify it loads in the smoke run and a GUT test that the arguments parse
-- [ ] 7.2 Run a host and a client as two local processes on the playground and verify from their logs that the client joins, both see two players and neither logs an error
-- [ ] 7.3 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero error lines
+- [x] 7.1 Add `scenes/dev/coop_playground.tscn` (movement playground terrain, session, `--host`/`--join`/`--solo` arguments, Host/Join panel with the port-forwarding note, host-lost screen) and verify it loads in the smoke run and a GUT test that the arguments parse
+- [x] 7.2 Run a host and a client as two local processes on the playground and verify from their logs that the client joins, both see two players and neither logs an error
+- [x] 7.3 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero error lines
 
 ## Workflow follow-up
 
