@@ -1,0 +1,34 @@
+# Godot
+game/.godot/
+game/export/
+*.import.tmp
+
+# Reference games — cloned locally for study only (GPL, never copied)
+reference/
+
+# Assets downloaded by tools/fetch_assets.py (large; re-fetchable)
+game/assets/kenney/
+game/assets/oga/
+game/assets/itch/
+game/assets/audio/ambience/
+
+# Backend
+backend/.env
+backend/.aws-sam/
+backend/samconfig.toml
+game/config/backend.cfg
+
+# Voice generation outputs and models
+tools/voice_models/
+tools/voice_out/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
