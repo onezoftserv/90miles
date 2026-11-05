@@ -6,9 +6,66 @@
 [ext_resource type="Texture2D" path="res://assets/art/characters/player_placeholder.png" id="4_sprite"]
 
 [ext_resource type="Script" path="res://scripts/interaction/drag_handle.gd" id="5_drag"]
+[ext_resource type="Script" path="res://scripts/net/player_net.gd" id="6_net"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 6.0
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_state"]
+properties/0/path = NodePath("PlayerNet:net_position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath("PlayerNet:net_energy")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath("PlayerNet:net_ack_seq")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+properties/3/path = NodePath("PlayerNet:net_model_state")
+properties/3/spawn = true
+properties/3/replication_mode = 1
+properties/4/path = NodePath("PlayerNet:net_movement")
+properties/4/spawn = true
+properties/4/replication_mode = 1
+properties/5/path = NodePath("PlayerNet:net_stealth")
+properties/5/spawn = true
+properties/5/replication_mode = 1
+properties/6/path = NodePath("PlayerNet:net_downed")
+properties/6/spawn = true
+properties/6/replication_mode = 1
+properties/7/path = NodePath("SurvivalMeters:thirst")
+properties/7/spawn = true
+properties/7/replication_mode = 1
+properties/8/path = NodePath("SurvivalMeters:hunger")
+properties/8/spawn = true
+properties/8/replication_mode = 1
+properties/9/path = NodePath("SurvivalMeters:heat")
+properties/9/spawn = true
+properties/9/replication_mode = 1
+properties/10/path = NodePath("SurvivalMeters:morale")
+properties/10/spawn = true
+properties/10/replication_mode = 1
+properties/11/path = NodePath("SurvivalMeters:health")
+properties/11/spawn = true
+properties/11/replication_mode = 1
+properties/12/path = NodePath("SurvivalMeters:downed_time_left_s")
+properties/12/spawn = true
+properties/12/replication_mode = 1
+properties/13/path = NodePath("SurvivalMeters:sunstroke")
+properties/13/spawn = true
+properties/13/replication_mode = 1
+properties/14/path = NodePath("SurvivalMeters:hallucinating")
+properties/14/spawn = true
+properties/14/replication_mode = 1
+properties/15/path = NodePath("SurvivalMeters:downed")
+properties/15/spawn = true
+properties/15/replication_mode = 1
+properties/16/path = NodePath("SurvivalMeters:last_stand")
+properties/16/spawn = true
+properties/16/replication_mode = 1
+properties/17/path = NodePath("SurvivalMeters:dead")
+properties/17/spawn = true
+properties/17/replication_mode = 1
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
@@ -32,3 +89,10 @@ script = ExtResource("3_input")
 
 [node name="DragHandle" type="Node2D" parent="."]
 script = ExtResource("5_drag")
+
+[node name="PlayerNet" type="Node" parent="."]
+script = ExtResource("6_net")
+
+[node name="StateSync" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.05
+replication_config = SubResource("SceneReplicationConfig_state")

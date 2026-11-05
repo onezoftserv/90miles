@@ -19,3 +19,8 @@ static func create(move_direction: Vector2 = Vector2.ZERO, running: bool = false
 	intent.crouch = crouching
 	intent.interact_held = interacting
 	return intent
+
+
+## An independent copy (the network keeps intents after the input code has moved on).
+func copy() -> MoveIntent:
+	return MoveIntent.create(direction, run, crouch, interact_held)

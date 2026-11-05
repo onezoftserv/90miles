@@ -30,12 +30,16 @@ var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
 ## downed state; a dead player stays down and cannot be dragged.
 var downed: bool = false
 var interaction_hold: InteractionHold = InteractionHold.new()
+## False once coop-networking drives the body: PlayerNet then steps it per intent (host),
+## predicts it (owning client) or draws it from host states (other clients).
+var auto_advance: bool = true
 var _interact_was_held: bool = false
 
 @onready var meters: SurvivalMeters = $SurvivalMeters
 @onready var camera: Camera2D = $Camera
 @onready var player_input: PlayerInput = $PlayerInput
 @onready var drag_handle: DragHandle = $DragHandle
+@onready var net: PlayerNet = $PlayerNet
 
 
 func _ready() -> void:
@@ -50,13 +54,36 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if auto_advance:
+		advance(delta)
+	# Once per host frame, after this frame's movement: PlayerNet may have advanced the body once
+	# per queued intent, or not at all while a client's intents stall.
+	_tick_meters(delta)
+
+
+# Meters are host state: only the host ticks them, and clients show what it replicates. The
+# energy a client's movement spends in advance() is local prediction that PlayerNet reconciles.
+func _tick_meters(delta: float) -> void:
+	if not is_inside_tree() or not multiplayer.is_server():
+		return
+	# Solo: nobody else alive in the run (a one-player run or the last one alive), so health 0
+	# kills instead of waiting for a revive nobody can give.
+	meters.solo = not _has_living_teammate(INF)
+	meters.tick(delta, _meter_context())
+
+
+## One simulation step from the current intent. Interactions run only where the world is
+## authoritative (the host, or offline); a client predicting its own player passes false.
+func advance(delta: float, with_interaction: bool = true) -> void:
 	var result: MovementStep
 	if downed:
-		_interact_was_held = false
-		interaction_hold.update(false, delta, self, null)
+		if with_interaction:
+			_interact_was_held = false
+			interaction_hold.update(false, delta, self, null)
 		result = _dragged_step(delta)
 	else:
-		_update_interaction(delta)
+		if with_interaction:
+			_update_interaction(delta)
 		var cell := cell()
 		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, intent, delta, meters.speed_factor())
 		meters.spend_energy(result.energy_spent)
@@ -64,13 +91,6 @@ func _physics_process(delta: float) -> void:
 	stealth_state = result.stealth
 	velocity = result.velocity * TILE_SIZE
 	_move(velocity * delta)
-	# Meters are host state: only the host ticks them, and clients show what it replicates. The
-	# energy a client's movement spends above is local prediction for coop-networking to reconcile.
-	if is_inside_tree() and multiplayer.is_server():
-		# Solo: nobody else alive in the run (a one-player run or the last one alive), so health 0
-		# kills instead of waiting for a revive nobody can give.
-		meters.solo = not _has_living_teammate(INF)
-		meters.tick(delta, _meter_context())
 
 
 func set_downed(value: bool) -> void:

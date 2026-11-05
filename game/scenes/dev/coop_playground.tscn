@@ -1,0 +1,78 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/dev/coop_playground.gd" id="1_playground"]
+[ext_resource type="PackedScene" path="res://scenes/net/coop_session.tscn" id="2_session"]
+[ext_resource type="PackedScene" path="res://scenes/ui/quick_chat_wheel.tscn" id="3_wheel"]
+[ext_resource type="FontFile" path="res://assets/fonts/PixelifySans[wght].ttf" id="4_font"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="5_pause"]
+[ext_resource type="PackedScene" path="res://scenes/ui/meters_hud.tscn" id="6_hud"]
+
+[sub_resource type="Theme" id="Theme_panel"]
+default_font = ExtResource("4_font")
+default_font_size = 8
+
+[node name="CoopPlayground" type="Node2D"]
+script = ExtResource("1_playground")
+
+[node name="Session" parent="." instance=ExtResource("2_session")]
+
+[node name="Hud" type="CanvasLayer" parent="."]
+
+[node name="MetersHud" parent="Hud" instance=ExtResource("6_hud")]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Panel" type="PanelContainer" parent="UI"]
+unique_name_in_owner = true
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 248.0
+offset_bottom = 104.0
+theme = SubResource("Theme_panel")
+
+[node name="Rows" type="VBoxContainer" parent="UI/Panel"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="UI/Panel/Rows"]
+layout_mode = 2
+text = "Co-op de prueba"
+
+[node name="Address" type="LineEdit" parent="UI/Panel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "127.0.0.1"
+placeholder_text = "IP del anfitrión"
+
+[node name="Buttons" type="HBoxContainer" parent="UI/Panel/Rows"]
+layout_mode = 2
+
+[node name="Host" type="Button" parent="UI/Panel/Rows/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Hospedar"
+
+[node name="Join" type="Button" parent="UI/Panel/Rows/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Unirse"
+
+[node name="Solo" type="Button" parent="UI/Panel/Rows/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Solo"
+
+[node name="Note" type="Label" parent="UI/Panel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(232, 0)
+layout_mode = 2
+text = "Por internet, el anfitrión abre el puerto UDP 7777 en su router."
+autowrap_mode = 2
+
+[node name="Status" type="Label" parent="UI/Panel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Wheel" parent="UI" instance=ExtResource("3_wheel")]
+unique_name_in_owner = true
+
+[node name="PauseMenu" parent="." instance=ExtResource("5_pause")]

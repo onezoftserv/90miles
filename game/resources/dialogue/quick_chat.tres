@@ -1,0 +1,83 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/dialogue_data.gd" id="1_xoo4x"]
+[ext_resource type="Script" path="res://scripts/data/dialogue_state_data.gd" id="2_vqugv"]
+[ext_resource type="Script" path="res://scripts/data/choice_data.gd" id="3_1ycry"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="4_rmjay"]
+[ext_resource type="Script" path="res://scripts/data/dialogue_line_data.gd" id="5_utn4j"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="6_qoqxd"]
+
+[sub_resource type="Resource" id="Resource_5kifv"]
+script = ExtResource("5_utn4j")
+id = &"quick_chat_dale"
+speaker_id = &"player"
+text_es = "¡Dale!"
+text_en = "¡Dale!"
+emotion = 1
+
+[sub_resource type="Resource" id="Resource_l2dks"]
+script = ExtResource("5_utn4j")
+id = &"quick_chat_agua"
+speaker_id = &"player"
+text_es = "¡Agua!"
+text_en = "Water!"
+emotion = 6
+
+[sub_resource type="Resource" id="Resource_gy1f7"]
+script = ExtResource("5_utn4j")
+id = &"quick_chat_palla_no"
+speaker_id = &"player"
+text_es = "¡Pa'llá no!"
+text_en = "Not that way!"
+emotion = 4
+
+[sub_resource type="Resource" id="Resource_uysap"]
+script = ExtResource("5_utn4j")
+id = &"quick_chat_tiburon"
+speaker_id = &"player"
+text_es = "¡Tiburón!"
+text_en = "Shark!"
+emotion = 4
+
+[sub_resource type="Resource" id="Resource_4ns0l"]
+script = ExtResource("5_utn4j")
+id = &"quick_chat_patrulla"
+speaker_id = &"player"
+text_es = "¡Patrulla!"
+text_en = "Patrol!"
+emotion = 4
+
+[sub_resource type="Resource" id="Resource_xlxe3"]
+script = ExtResource("5_utn4j")
+id = &"quick_chat_ayuda"
+speaker_id = &"player"
+text_es = "¡Ayuda!"
+text_en = "Help!"
+emotion = 4
+
+[sub_resource type="Resource" id="Resource_t41t4"]
+script = ExtResource("5_utn4j")
+id = &"quick_chat_comida_aqui"
+speaker_id = &"player"
+text_es = "¡Comida aquí!"
+text_en = "Food here!"
+emotion = 1
+
+[sub_resource type="Resource" id="Resource_34qqb"]
+script = ExtResource("5_utn4j")
+id = &"quick_chat_vamonos"
+speaker_id = &"player"
+text_es = "¡Vámonos!"
+text_en = "¡Vámonos!"
+emotion = 1
+
+[sub_resource type="Resource" id="Resource_jrt57"]
+script = ExtResource("2_vqugv")
+state = &"quick_chat"
+lines = Array[ExtResource("5_utn4j")]([SubResource("Resource_5kifv"), SubResource("Resource_l2dks"), SubResource("Resource_gy1f7"), SubResource("Resource_uysap"), SubResource("Resource_4ns0l"), SubResource("Resource_xlxe3"), SubResource("Resource_t41t4"), SubResource("Resource_34qqb")])
+
+[resource]
+script = ExtResource("1_xoo4x")
+kind = 3
+states = Array[ExtResource("2_vqugv")]([SubResource("Resource_jrt57")])
+id = &"quick_chat"
