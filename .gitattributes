@@ -1,0 +1,19 @@
+# Text files use LF everywhere so Godot files, scripts and CI (Linux) see the same bytes.
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.gd text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.godot text eol=lf
+*.import text eol=lf
+*.uid text eol=lf
+
+*.png binary
+*.jpg binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
+*.zip binary

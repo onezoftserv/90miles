@@ -32,3 +32,6 @@ Thumbs.db
 __pycache__/
 *.pyc
 .venv/
+
+# Git Bash crash dumps
+*.stackdump
