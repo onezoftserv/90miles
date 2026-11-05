@@ -33,6 +33,9 @@ A value at or below 1e-6 counts as empty and snaps to 0, as `MovementModel` does
 ### Downed moves to the meters; the body follows
 `PlayerBody` connects `downed_changed` to its existing `set_downed`, so dragging and `DragHandle` work unchanged, and on `died` it stays down with the drag handle disabled. The body ticks the meters after movement, only when `multiplayer.is_server()` (true offline), and keeps ticking while downed so thirst still drains. Energy spending stays where it is.
 
+### Solo is derived from the run, and fire is company
+`PlayerBody` sets `meters.solo` on every host tick: true when no other player in the `players` group is alive (dead teammates do not count, downed ones do). A one-player run and the last survivor of a co-op run therefore die at 0 health instead of waiting 90 s for a revive nobody can give. `MeterContext.near_fire` stops the night drain like a teammate does; the body sets it when a node in the `lit_fires` group is within `company_radius_tiles`. Nothing adds itself to that group yet: crafting-inventory's fire will join it while lit, so the rule already works end to end (a test stands a `Node2D` in for the fire). Alternatives: `solo` set once by run setup (rejected: nothing sets it today, and it would miss the last-one-alive case), or exempting solo runs from the night drain (rejected: it removes the night's pressure instead of giving the player something to do about it).
+
 ### Sunstroke slows through a speed factor
 `MovementModel.step` gains a trailing `speed_factor: float = 1.0` that scales the player's own speed (walk, run, crouch, crawl, swim), not the water current or a drag. `SurvivalMeters.speed_factor()` returns 0.6 during sunstroke. The parameter is optional, so existing callers and tests are untouched.
 

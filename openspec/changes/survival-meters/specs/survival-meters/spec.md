@@ -102,7 +102,7 @@ Energy SHALL drain per activity (swim 3/s, build 1/s, run 0.5/s) and restore +50
 - **THEN** energy is 70
 
 ### Requirement: Morale
-Morale SHALL drain −30 on an ally's death and −10 per squall (both hit every player), −5/min alone at night, and restore +2/min with a teammate within 5 tiles, +5 per fire lit, +15 per song (Músico), +10 per found text read. Below 20 the player is hallucinating: the systems that own islands and dialogue show fake island silhouettes and fake voice lines, never fake resources. (Threshold changed from 0 in `docs/GAME_DESIGN.md` §4.)
+Morale SHALL drain −30 on an ally's death and −10 per squall (both hit every player), −5/min at night with no teammate and no lit fire within 5 tiles, and restore +2/min with a teammate within 5 tiles, +5 per fire lit, +15 per song (Músico), +10 per found text read. Below 20 the player is hallucinating: the systems that own islands and dialogue show fake islands and fake voices, never fake resources. (Threshold changed from 0 in `docs/GAME_DESIGN.md` §4.)
 
 #### Scenario: Ally dies
 - GIVEN a player with morale 45
@@ -124,8 +124,13 @@ Morale SHALL drain −30 on an ally's death and −10 per squall (both hit every
 - **WHEN** they light a fire
 - **THEN** morale is 20 and they are no longer hallucinating
 
+#### Scenario: A fire keeps a lone player company
+- **GIVEN** a player with morale 50, no teammate within 5 tiles and a lit fire 3 tiles away at night
+- **WHEN** 60 s pass
+- **THEN** morale is 50
+
 ### Requirement: Health and downed state
-Health SHALL drop from attacks, thirst and poison. At 0 a co-op player is downed for 90 s: immobile, draggable, and still losing thirst and hunger. Giving water (a cup whose item revives) brings them up at 30 health. If the timer ends, the player dies (permadeath for the run). Solo players (a one-player run) die immediately at 0.
+Health SHALL drop from attacks, thirst and poison. At 0 a player with another living player in the run is downed for 90 s: immobile, draggable, and still losing thirst and hunger. Giving water (a cup whose item revives) brings them up at 30 health. If the timer ends, the player dies (permadeath for the run). A player with no other living player (a one-player run, or the last one alive) dies immediately at 0.
 
 #### Scenario: Revive
 - GIVEN a downed player with 40 s left
@@ -142,12 +147,30 @@ Health SHALL drop from attacks, thirst and poison. At 0 a co-op player is downed
 - **WHEN** their health reaches 0
 - **THEN** they die at once, without a downed timer
 
+#### Scenario: Last one alive
+- **GIVEN** a co-op player whose only teammate has died
+- **WHEN** their health reaches 0
+- **THEN** they die at once, without a downed timer
+
 #### Scenario: Poison
 - **GIVEN** a player with health 100
 - **WHEN** they are poisoned
 - **THEN** health is 90 after 15 s and 80 after 30 s
 
 ## ADDED Requirements
+
+### Requirement: Solo play
+Every meter rule SHALL work for a single player: no meter needs a teammate to recover. A player with no living teammate is never downed, so being revived, fed or dragged by a teammate never applies to them. A lit fire keeps a lone player company at night. Drinking, eating, sleeping, fires, songs and found texts all work alone, and the drains leave one player able to survive 3 days on the sandbar on its coconuts.
+
+#### Scenario: A night alone by the fire
+- **GIVEN** a solo player with morale 40 at dusk
+- **WHEN** they light a fire and stay within 5 tiles of it through the night
+- **THEN** morale is 45 at dawn and they never hallucinate
+
+#### Scenario: Three solo days on the sandbar
+- **GIVEN** one player starting full at dawn with 10 coconuts (+15 thirst, +5 hunger each), spending half of each day phase in the sun and each night by a fire
+- **WHEN** they drink a coconut whenever thirst drops below 15, for 3 in-game days
+- **THEN** thirst and hunger never reach 0, at most 10 coconuts are used and morale never drops below 20
 
 ### Requirement: HUD bars
 The local player's screen SHALL show six labelled bars in Spanish (Sed, Hambre, Calor, Energía, Ánimo, Salud), each filled to its meter's value out of 100 and updated when the value changes, readable at 640×360 in the committed pixel font. Heat fills as it rises. While the local player has sunstroke, their screen is blurred.
