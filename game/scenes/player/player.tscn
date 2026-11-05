@@ -5,6 +5,8 @@
 [ext_resource type="Script" path="res://scripts/player/player_input.gd" id="3_input"]
 [ext_resource type="Texture2D" path="res://assets/art/characters/player_placeholder.png" id="4_sprite"]
 
+[ext_resource type="Script" path="res://scripts/interaction/drag_handle.gd" id="5_drag"]
+
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 6.0
 
@@ -27,3 +29,6 @@ script = ExtResource("2_meters")
 script = ExtResource("3_input")
 
 [node name="Camera" type="Camera2D" parent="."]
+
+[node name="DragHandle" type="Node2D" parent="."]
+script = ExtResource("5_drag")

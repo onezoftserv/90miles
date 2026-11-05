@@ -16,10 +16,15 @@ var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
 ## True when this body belongs to the local peer: it gets the camera and local input.
 ## Set before the body enters the tree.
 var local_player: bool = true
+## Downed players cannot act; a teammate can drag them (DragHandle). The flag is a plain
+## property until survival-meters owns it.
+var downed: bool = false
+var interaction_hold: InteractionHold = InteractionHold.new()
 
 @onready var meters: SurvivalMeters = $SurvivalMeters
 @onready var camera: Camera2D = $Camera
 @onready var player_input: PlayerInput = $PlayerInput
+@onready var drag_handle: DragHandle = $DragHandle
 
 
 func _ready() -> void:
@@ -30,18 +35,50 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	var cell := cell()
-	var result := model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, intent, delta)
+	var result: MovementStep
+	if downed:
+		interaction_hold.update(false, delta, self, null)
+		result = _dragged_step(delta)
+	else:
+		_update_interaction(delta)
+		var cell := cell()
+		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, intent, delta)
+		meters.spend_energy(result.energy_spent)
 	movement_state = result.movement
 	stealth_state = result.stealth
-	meters.spend_energy(result.energy_spent)
 	velocity = result.velocity * TILE_SIZE
 	_move(velocity * delta)
+
+
+func set_downed(value: bool) -> void:
+	downed = value
+	drag_handle.enabled = value
+	if not value:
+		drag_handle.dragger = null
 
 
 ## The terrain cell under the body.
 func cell() -> Vector2i:
 	return Vector2i(floori(position.x / TILE_SIZE), floori(position.y / TILE_SIZE))
+
+
+func _dragged_step(delta: float) -> MovementStep:
+	var dragger: Node2D = drag_handle.dragger
+	if dragger == null or not is_instance_valid(dragger):
+		return MovementStep.new()
+	return model.drag_step((dragger.global_position - global_position) / TILE_SIZE, delta)
+
+
+func _update_interaction(delta: float) -> void:
+	var candidate: Interactable = null
+	if intent.interact_held and interaction_hold.target == null:
+		var nearby: Array[Interactable] = []
+		for node: Node in get_tree().get_nodes_in_group(Interactable.GROUP):
+			var interactable := node as Interactable
+			if interactable != null:
+				nearby.append(interactable)
+		candidate = InteractionPicker.pick(global_position, nearby, self)
+	interaction_hold.update(intent.interact_held, delta, self, candidate)
 
 
 # move_and_slide() takes its time step from the engine, which makes hand-stepped tests inexact;

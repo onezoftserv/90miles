@@ -14,8 +14,8 @@
 
 ## 3. Interaction
 
-- [ ] 3.1 Add `Interactable`, `InteractionPicker` and `InteractionHold` and verify tests for nearest-within-1-tile, instant use, a 2 s hold, and release-cancels
-- [ ] 3.2 Add the `DragHandle` on downed players and verify a test that a held drag moves the downed player at 2 tiles/s until released
+- [x] 3.1 Add `Interactable`, `InteractionPicker` and `InteractionHold` and verify tests for nearest-within-1-tile, instant use, a 2 s hold, and release-cancels
+- [x] 3.2 Add the `DragHandle` on downed players and verify a test that a held drag moves the downed player at 2 tiles/s until released
 
 ## 4. Playground and checks
 

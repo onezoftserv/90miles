@@ -70,7 +70,7 @@ func test_children_of_the_excluded_node_are_skipped() -> void:
 # --- interactable ------------------------------------------------------------------------
 
 func test_default_hold_time_is_2_seconds() -> void:
-	assert_eq(Interactable.new().hold_time_s, 2.0)
+	assert_eq(autofree(Interactable.new()).hold_time_s, 2.0)
 	assert_eq(Interactable.DEFAULT_HOLD_TIME_S, 2.0)
 
 
