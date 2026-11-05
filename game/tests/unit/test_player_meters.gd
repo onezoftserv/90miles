@@ -118,8 +118,16 @@ func test_running_out_of_energy_leaves_the_body_crawling() -> void:
 	assert_eq(body.movement_state, MovementStep.Move.CRAWL)
 
 
-func test_meters_going_down_put_the_body_down_and_revive_stands_it_up() -> void:
+## A body with a teammate far away, both stepped once so the host has seen the party.
+func _co_op_body() -> PlayerBody:
 	var body := _spawn()
+	var teammate := _spawn(Vector2(400.0, 0.0))
+	_step([body, teammate], DT)
+	return body
+
+
+func test_meters_going_down_put_the_body_down_and_revive_stands_it_up() -> void:
+	var body := _co_op_body()
 	body.meters.add(M.HEALTH, -100.0)
 	assert_true(body.downed)
 	assert_true(body.drag_handle.enabled)
@@ -129,7 +137,7 @@ func test_meters_going_down_put_the_body_down_and_revive_stands_it_up() -> void:
 
 
 func test_dead_body_stays_down_and_cannot_be_dragged() -> void:
-	var body := _spawn()
+	var body := _co_op_body()
 	body.meters.add(M.HEALTH, -100.0)
 	_step([body], 90.0, LONG_DT)
 	assert_true(body.meters.dead)
@@ -137,11 +145,69 @@ func test_dead_body_stays_down_and_cannot_be_dragged() -> void:
 	assert_false(body.drag_handle.enabled)
 
 
+func test_a_lone_body_dies_at_0_health_without_a_downed_timer() -> void:
+	var body := _spawn()
+	_step([body], DT)
+	assert_true(body.meters.solo, "no other player in the run")
+	body.meters.add(M.HEALTH, -100.0)
+	assert_true(body.meters.dead)
+	assert_false(body.meters.downed, "no timer nobody could answer")
+	assert_true(body.downed, "the body stays down")
+	assert_false(body.drag_handle.enabled)
+
+
+func test_the_last_one_alive_dies_at_0_health() -> void:
+	var survivor := _spawn()
+	var fallen := _spawn(Vector2(32.0, 0.0))
+	fallen.meters.dead = true
+	_step([survivor], DT)
+	assert_true(survivor.meters.solo)
+	survivor.meters.add(M.HEALTH, -100.0)
+	assert_true(survivor.meters.dead)
+
+
+func test_a_downed_teammate_still_makes_it_co_op() -> void:
+	var a := _spawn()
+	var b := _spawn(Vector2(32.0, 0.0))
+	_step([a, b], DT)
+	b.meters.add(M.HEALTH, -100.0)
+	_step([a, b], DT)
+	assert_false(a.meters.solo, "B is down, not dead")
+	a.meters.add(M.HEALTH, -100.0)
+	assert_true(a.meters.downed)
+	assert_false(a.meters.dead)
+
+
+func test_a_lit_fire_within_5_tiles_stops_the_night_drain() -> void:
+	var body := _spawn()
+	body.climate = _climate(P.NIGHT)
+	body.meters.morale = 50.0
+	var fire := Node2D.new()
+	fire.position = Vector2(3.0 * TILE, 0.0)
+	add_child_autofree(fire)
+	fire.add_to_group(PlayerBody.FIRE_GROUP)
+	_step([body], 60.0, LONG_DT)
+	assert_eq(body.meters.morale, 50.0)
+
+
+func test_a_fire_6_tiles_away_is_too_far() -> void:
+	var body := _spawn()
+	body.climate = _climate(P.NIGHT)
+	body.meters.morale = 50.0
+	var fire := Node2D.new()
+	fire.position = Vector2(6.0 * TILE, 0.0)
+	add_child_autofree(fire)
+	fire.add_to_group(PlayerBody.FIRE_GROUP)
+	_step([body], 60.0, LONG_DT)
+	assert_almost_eq(body.meters.morale, 45.0, 0.01)
+
+
 func test_a_body_that_dies_while_dragged_stops_following() -> void:
 	var helper := _spawn(Vector2(12.0, 0.0))
 	var downed := _spawn(Vector2.ZERO)
-	downed.meters.add(M.HEALTH, -100.0)
 	var both: Array[PlayerBody] = [helper, downed]
+	_step(both, DT)
+	downed.meters.add(M.HEALTH, -100.0)
 	helper.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
 	_step(both, 0.2)
 	assert_eq(downed.drag_handle.dragger, helper, "the drag started")
@@ -158,7 +224,7 @@ func test_a_body_that_dies_while_dragged_stops_following() -> void:
 
 
 func test_downed_body_keeps_losing_thirst() -> void:
-	var body := _spawn()
+	var body := _co_op_body()
 	body.climate = _climate(P.DAWN)
 	body.meters.add(M.HEALTH, -100.0)
 	_step([body], 10.0, LONG_DT)
