@@ -35,7 +35,7 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 5. Rate limits in the session
 
-- [ ] 5.1 Wire the three per-peer buckets into the intent and quick-chat handlers with the session clock, and verify GUT tests for "client claims extra time" (at most 5 tiles) and an intent flood over 30 at once being cut to the burst
+- [ ] 5.1 Wire the intent-count and simulated-time buckets into the intent handler with the session clock, and verify GUT tests for "client claims extra time" (at most 5 tiles) and an intent flood over 30 at once being cut to the burst (the quick-chat bucket is wired and tested with the quick-chat handler in 6.3)
 - [ ] 5.2 Verify the import, smoke run and GUT pass with zero error lines
 
 ## 6. Quick chat
