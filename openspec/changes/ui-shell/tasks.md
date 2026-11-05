@@ -4,9 +4,9 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 1. Display and settings
 
-- [ ] 1.1 Add `DisplayFit` and `GameSettings` (name cleaning, fullscreen, scale, a ConfigFile at an injectable path) and verify GUT tests for 1080p windowed (2×), fullscreen (3×), fixed scale, a reload of saved settings and the name cleaning
-- [ ] 1.2 Add the `toggle_fullscreen` action (F11, Alt+Enter) and verify a GUT test of its events
-- [ ] 1.3 Verify the import, smoke run and GUT pass with zero error lines
+- [x] 1.1 Add `DisplayFit` and `GameSettings` (name cleaning, fullscreen, scale, a ConfigFile at an injectable path) and verify GUT tests for 1080p windowed (2×), fullscreen (3×), fixed scale, a reload of saved settings and the name cleaning
+- [x] 1.2 Add the `toggle_fullscreen` action (F11, Alt+Enter) and verify a GUT test of its events
+- [x] 1.3 Verify the import, smoke run and GUT pass with zero error lines
 
 ## 2. Theme and title
 
