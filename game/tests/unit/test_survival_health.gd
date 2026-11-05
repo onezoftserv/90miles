@@ -73,6 +73,7 @@ func test_empty_thirst_eventually_downs_the_player() -> void:
 
 
 func test_revive_with_a_rain_cup_stands_up_at_30_health_and_plus_25_thirst() -> void:
+	meters.thirst = 30.0
 	_go_down()
 	_run(50.0)
 	assert_eq(meters.downed_time_left_s, 40.0)

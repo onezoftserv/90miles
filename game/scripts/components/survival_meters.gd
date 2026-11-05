@@ -27,6 +27,11 @@ const ALL_METERS: Array[DataEnums.Meter] = [
 
 ## Rates and thresholds. The numbers live in the .tres, never in code.
 @export var tuning: SurvivalTuning = preload("res://resources/survival_tuning.tres")
+## A one-player run: health 0 kills at once instead of downing. Set by whoever spawns players.
+@export var solo: bool = false
+
+## Seconds a downed player has left before dying.
+var downed_time_left_s: float = 0.0
 
 var thirst: float = MAX_VALUE:
 	set(value):
@@ -120,6 +125,11 @@ var _timed: Array[MeterOverTime] = []
 func tick(delta: float, context: MeterContext) -> void:
 	if dead or delta < 0.0:
 		return
+	if downed:
+		downed_time_left_s = maxf(downed_time_left_s - delta, 0.0)
+		if downed_time_left_s <= EMPTY_EPSILON:
+			dead = true
+			return
 	_advance_timed(delta)
 	thirst -= SurvivalRules.thirst_drain(context, tuning) * delta
 	hunger -= SurvivalRules.hunger_drain(context, tuning) * delta
@@ -163,6 +173,18 @@ func sleep_night() -> void:
 
 func morale_event(event: MoraleEvent) -> void:
 	add(DataEnums.Meter.MORALE, _morale_amount(event))
+
+
+## Stands a downed player up at revive_health (the cup's own effects are the caller's). Returns
+## false, changing nothing, unless the player is downed and alive.
+func revive() -> bool:
+	if not downed or dead:
+		return false
+	health = tuning.revive_health
+	downed_time_left_s = 0.0
+	downed = false
+	_update_states()
+	return true
 
 
 ## Multiplier on the player's own movement speed.
@@ -262,6 +284,12 @@ func _update_states() -> void:
 	elif heat < tuning.sunstroke_ends_below:
 		sunstroke = false
 	hallucinating = morale < tuning.hallucinate_below
+	if health <= 0.0 and not downed and not dead:
+		if solo:
+			dead = true
+		else:
+			downed_time_left_s = tuning.downed_s
+			downed = true
 
 
 func _morale_amount(event: MoraleEvent) -> float:

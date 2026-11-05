@@ -12,8 +12,8 @@
 
 ## 3. Health and downed state
 
-- [ ] 3.1 Add GUT tests for poison (90 after 15 s, 80 after 30 s), nobody comes (dead after 90 s), solo (dead at once), revive (health 30 and thirst +25 with 40 s left, refused when not downed), thirst still draining while downed, and dead meters not ticking; verify they fail (RED)
-- [ ] 3.2 Add the downed timer, `revive`, `solo` and `died` to `SurvivalMeters`; verify the 3.1 tests pass, and the import, smoke run and GUT pass (GREEN)
+- [x] 3.1 Add GUT tests for poison (90 after 15 s, 80 after 30 s), nobody comes (dead after 90 s), solo (dead at once), revive (health 30 and thirst +25 with 40 s left, refused when not downed), thirst still draining while downed, and dead meters not ticking; verify they fail (RED)
+- [x] 3.2 Add the downed timer, `revive`, `solo` and `died` to `SurvivalMeters`; verify the 3.1 tests pass, and the import, smoke run and GUT pass (GREEN)
 
 ## 4. Player body
 
