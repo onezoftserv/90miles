@@ -17,6 +17,7 @@ Kenney packs are fetched by `python -I tools/fetch_assets.py` and are git-ignore
 | Interface Sounds | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/interface-sounds | `kenney/audio_sfx/interface-sounds/` |
 | Impact Sounds | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/impact-sounds | `kenney/audio_sfx/impact-sounds/` |
 | Particle Pack | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/particle-pack | `kenney/particles/particle-pack/` |
+| Player placeholder sprite (Tiny Dungeon, tile_0097, 16x16) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/tiny-dungeon | `art/characters/player_placeholder.png` (tracked copy; license: `art/characters/License.txt`) |
 
 ## Fonts
 

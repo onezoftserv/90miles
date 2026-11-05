@@ -8,9 +8,9 @@
 
 ## 2. Player body
 
-- [ ] 2.1 Add `PlayerBody` (`scenes/player/player.tscn`) applying the model with 16 px tiles, and verify an integration test that steps the body for 10 s of running on sand ends 60 tiles away with energy 45
-- [ ] 2.2 Add `PlayerInput` and the named input actions in `project.godot`, and verify a test that a full right stick or D key gives an east intent of strength 1
-- [ ] 2.3 Add the local-only `Camera2D` and the committed 16×16 placeholder sprite with its license, and verify the smoke run passes with no dependency on git-ignored assets
+- [x] 2.1 Add `PlayerBody` (`scenes/player/player.tscn`) applying the model with 16 px tiles, and verify an integration test that steps the body for 10 s of running on sand ends 60 tiles away with energy 45
+- [x] 2.2 Add `PlayerInput` and the named input actions in `project.godot`, and verify a test that a full right stick or D key gives an east intent of strength 1
+- [x] 2.3 Add the local-only `Camera2D` and the committed 16×16 placeholder sprite with its license, and verify the smoke run passes with no dependency on git-ignored assets
 
 ## 3. Interaction
 

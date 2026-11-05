@@ -26,6 +26,7 @@ func _stick(axis: int, value: float) -> void:
 	event.axis = axis
 	event.axis_value = value
 	Input.parse_input_event(event)
+	Input.flush_buffered_events()
 
 
 func _has_key(action: StringName, keycode: Key) -> bool:
