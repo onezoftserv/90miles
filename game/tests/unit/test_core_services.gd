@@ -6,16 +6,19 @@ extends GutTest
 const SPEC_SERVICES: Array[StringName] = [&"AudioManager", &"DialogueService", &"GameState", &"NetManager", &"WeatherManager"]
 
 
+# Array[StringName].sort() does not sort by text, so compare sorted strings instead.
+func _sorted(names: Array[StringName]) -> PackedStringArray:
+	var texts := PackedStringArray(names)
+	texts.sort()
+	return texts
+
+
 func test_code_list_matches_the_spec() -> void:
-	var names: Array[StringName] = CoreServices.NAMES.duplicate()
-	names.sort()
-	assert_eq(names, SPEC_SERVICES)
+	assert_eq(_sorted(CoreServices.NAMES), _sorted(SPEC_SERVICES))
 
 
 func test_project_registers_exactly_the_spec_services() -> void:
-	var registered: Array[StringName] = CoreServices.registered_autoloads()
-	registered.sort()
-	assert_eq(registered, SPEC_SERVICES)
+	assert_eq(_sorted(CoreServices.registered_autoloads()), _sorted(SPEC_SERVICES))
 
 
 func test_check_reports_nothing_for_the_project() -> void:

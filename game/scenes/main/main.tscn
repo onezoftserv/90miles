@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/main/main.gd" id="1_main"]
+[ext_resource type="FontFile" path="res://assets/fonts/PixelifySans[wght].ttf" id="2_font"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font = ExtResource("2_font")
+font_size = 16
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Title" type="Label" parent="."]
+offset_top = 168.0
+offset_right = 640.0
+offset_bottom = 192.0
+text = "90 Millas"
+label_settings = SubResource("LabelSettings_title")
+horizontal_alignment = 1

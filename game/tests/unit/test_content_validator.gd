@@ -111,6 +111,11 @@ func test_unloadable_file_is_reported() -> void:
 	assert_eq(errors.size(), 1, "exactly one error: %s" % [errors])
 	if errors.size() == 1:
 		assert_string_contains(errors[0], "things/broken")
+	# Loading the broken file makes the engine log a parse error plus loader follow-ups;
+	# they are what this test provokes, so they must not fail it.
+	assert_engine_error("broken.tres")
+	for tracked: Variant in get_errors():
+		tracked.handled = true
 
 
 func test_english_name_falls_back_to_spanish() -> void:
