@@ -10,8 +10,10 @@ context: |
 rules:
   tasks:
     - End every task group with the import, smoke run and GUT commands passing.
+    - Every change that touches player-facing behaviour includes at least one test with exactly 1 player, offline.
   specs:
     - When a requirement changes a number from docs/GAME_DESIGN.md or another design doc, name the doc section it changes.
+    - Every requirement that involves players states what happens with exactly 1 player (solo, offline); a rule that needs a teammate gives the solo alternative.
 
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.

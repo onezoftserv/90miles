@@ -12,6 +12,7 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 - Use the Godot MCP to run the project and read errors after every change. A feature is not done until the project runs clean.
 - Keep `TASKS.md` current: tick tasks as they ship, add new ones below the current milestone.
 - Small PRs, one capability each. Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`).
+- Solo is a first-class mode: every feature must work, be winnable and be tested with exactly 1 player, offline (no hosting, no port, no second peer). A rule that needs a teammate (revive, drag, pooled materials, shared seats) must state its solo alternative in the spec, and each change adds at least one 1-player test.
 
 ## Godot conventions
 
