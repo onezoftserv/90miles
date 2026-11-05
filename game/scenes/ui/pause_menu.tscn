@@ -7,10 +7,6 @@
 font = ExtResource("2_font")
 font_size = 16
 
-[sub_resource type="Theme" id="Theme_menu"]
-default_font = ExtResource("2_font")
-default_font_size = 8
-
 [node name="PauseMenu" type="CanvasLayer"]
 layer = 9
 script = ExtResource("1_menu")
@@ -35,7 +31,6 @@ offset_right = 64.0
 offset_bottom = 32.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = SubResource("Theme_menu")
 alignment = 1
 
 [node name="Title" type="Label" parent="Box"]

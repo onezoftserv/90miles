@@ -23,6 +23,7 @@ const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/dev_island.tscn")
 const LOBBY_SCENE: PackedScene = preload("res://scenes/shell/lobby_screen.tscn")
 const HOST_LOST_SCENE: PackedScene = preload("res://scenes/ui/host_lost_screen.tscn")
+const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 
 ## Where the settings live; tests point it elsewhere.
 @export var settings_path: String = GameSettings.DEFAULT_PATH
@@ -30,6 +31,8 @@ const HOST_LOST_SCENE: PackedScene = preload("res://scenes/ui/host_lost_screen.t
 @export var port: int = NetPeers.DEFAULT_PORT
 ## Shown after the host goes away, or null.
 var host_lost_screen: HostLostScreen
+## The run's HUD, or null outside a run.
+var hud: RunHud
 
 var settings: GameSettings
 var flow: Flow = Flow.TITLE
@@ -207,14 +210,22 @@ func _build_run() -> void:
 
 
 func _enter_run() -> void:
+	if flow == Flow.RUN:
+		return
 	_close_screen()
 	flow = Flow.RUN
 	_run_started_s = clock.call()
+	hud = HUD_SCENE.instantiate() as RunHud
+	add_child(hud)
+	hud.bind(session, session.multiplayer.get_unique_id(), session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer)
 
 
 # Freed at once, before the peer is closed: closing a peer under live synchronizers logs
 # engine errors.
 func _end_run() -> void:
+	if hud != null:
+		hud.free()
+		hud = null
 	if session != null:
 		session.free()
 		session = null

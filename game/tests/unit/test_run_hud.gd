@@ -119,7 +119,8 @@ func test_no_quick_chat_in_solo() -> void:
 	watch_signals(session)
 	Input.action_press(QuickChatWheel.ACTION)
 	for node: Node in hud.get_children():
-		node._process(0.0)
+		if node.has_method(&"_process"):
+			node.call(&"_process", 0.0)
 	Input.action_release(QuickChatWheel.ACTION)
 	assert_signal_not_emitted(session, "quick_chat_shown")
 	assert_null(session.body(1).get_node_or_null(^"SpeechBubble"))

@@ -219,6 +219,11 @@ func _physics_process(delta: float) -> void:
 			_remove_player(peer_id)
 
 
+## Host: whether `peer_id` dropped and its player is waiting out the countdown.
+func is_dropped(peer_id: int) -> bool:
+	return _dropped.has(peer_id)
+
+
 ## Host: seconds before a dropped client's player is removed (0 if it is not dropped).
 func disconnect_time_left(peer_id: int) -> float:
 	return _dropped.get(peer_id, 0.0)
