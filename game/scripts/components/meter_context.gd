@@ -17,6 +17,8 @@ var swimming: bool = false
 var crafting: bool = false
 ## A living teammate within company_radius_tiles.
 var teammate_nearby: bool = false
+## A lit fire within company_radius_tiles: keeps a lone player company at night.
+var near_fire: bool = false
 ## Weather multiplier on heat gain: 2 in scorching calm.
 var heat_factor: float = 1.0
 

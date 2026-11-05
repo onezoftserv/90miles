@@ -7,6 +7,9 @@ extends CharacterBody2D
 
 ## Every player body, for teammate checks.
 const GROUP: StringName = &"players"
+## Lit fires (Node2D) join this group; one within the company radius keeps a player company at
+## night. crafting-inventory's fire joins it while lit.
+const FIRE_GROUP: StringName = &"lit_fires"
 const TILE_SIZE: float = 16.0
 ## Leeway beyond the 1 tile reach before a timed press is dropped.
 const REACH_SLACK_PX: float = 2.0
@@ -63,6 +66,9 @@ func _physics_process(delta: float) -> void:
 	# Meters are host state: only the host ticks them, and clients show what it replicates. The
 	# energy a client's movement spends above is local prediction for coop-networking to reconcile.
 	if is_inside_tree() and multiplayer.is_server():
+		# Solo: nobody else alive in the run (a one-player run or the last one alive), so health 0
+		# kills instead of waiting for a revive nobody can give.
+		meters.solo = not _has_living_teammate(INF)
 		meters.tick(delta, _meter_context())
 
 
@@ -89,18 +95,28 @@ func _meter_context() -> MeterContext:
 	context.shaded = terrain.is_shaded(here)
 	context.in_water = TerrainQuery.is_water(terrain.terrain_at(here))
 	context.swimming = movement_state == MovementStep.Move.SWIM or movement_state == MovementStep.Move.DIVE
-	context.teammate_nearby = _teammate_nearby()
+	var radius_px: float = meters.tuning.company_radius_tiles * TILE_SIZE
+	context.teammate_nearby = _has_living_teammate(radius_px)
+	context.near_fire = _near_lit_fire(radius_px)
 	return context
 
 
-## Another living player within the company radius.
-func _teammate_nearby() -> bool:
-	var radius_px: float = meters.tuning.company_radius_tiles * TILE_SIZE
+## Another player who is not dead (downed counts) within `within_px`.
+func _has_living_teammate(within_px: float) -> bool:
 	for node: Node in get_tree().get_nodes_in_group(GROUP):
 		var other := node as PlayerBody
 		if other == null or other == self or other.meters.dead:
 			continue
-		if global_position.distance_to(other.global_position) <= radius_px:
+		if global_position.distance_to(other.global_position) <= within_px:
+			return true
+	return false
+
+
+## A lit fire within `within_px`.
+func _near_lit_fire(within_px: float) -> bool:
+	for node: Node in get_tree().get_nodes_in_group(FIRE_GROUP):
+		var fire := node as Node2D
+		if fire != null and global_position.distance_to(fire.global_position) <= within_px:
 			return true
 	return false
 

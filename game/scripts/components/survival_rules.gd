@@ -32,10 +32,11 @@ static func next_heat(heat: float, context: MeterContext, tuning: SurvivalTuning
 	return heat - tuning.heat_fall_per_s * delta
 
 
-## Morale change per second: company restores, being alone at night drains.
+## Morale change per second: a teammate restores; at night, having neither a teammate nor a lit
+## fire nearby drains. A fire only stops the drain, so one player can hold morale alone.
 static func morale_rate(context: MeterContext, tuning: SurvivalTuning) -> float:
 	if context.teammate_nearby:
 		return tuning.morale_company_per_s
-	if context.phase == DataEnums.DayPhase.NIGHT:
+	if context.phase == DataEnums.DayPhase.NIGHT and not context.near_fire:
 		return -tuning.morale_alone_night_per_s
 	return 0.0
