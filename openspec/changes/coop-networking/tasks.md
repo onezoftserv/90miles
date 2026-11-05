@@ -29,9 +29,9 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 4. Disconnects
 
-- [ ] 4.1 Add the disconnect countdown and removal announcement, and verify an integration test that a dropped client's body is downed, still present after 89.9 s, removed from every peer after 90 s, and announced with its last position
-- [ ] 4.2 Add the host-lost path and `scenes/ui/host_lost_screen.tscn`, and verify an integration test that a client whose host closes emits `host_lost`, frees its players and logs no engine error
-- [ ] 4.3 Verify the import, smoke run and GUT pass with zero error lines
+- [x] 4.1 Add the disconnect countdown and removal announcement, and verify an integration test that a dropped client's body is downed, still present after 89.9 s, removed from every peer after 90 s, and announced with its last position
+- [x] 4.2 Add the host-lost path and `scenes/ui/host_lost_screen.tscn`, and verify an integration test that a client whose host closes emits `host_lost`, frees its players and logs no engine error
+- [x] 4.3 Verify the import, smoke run and GUT pass with zero error lines
 
 ## 5. Rate limits in the session
 

@@ -15,10 +15,19 @@ extends Node2D
 signal player_spawned(peer_id: int, body: PlayerBody)
 ## Client: the host's world state arrived.
 signal world_state_received(state: Dictionary)
+## Host: a client dropped; its player is now downed for DISCONNECT_DOWNED_S.
+signal player_disconnected(peer_id: int)
+## Host: a dropped player was removed. Its inventory is dropped at `last_position` (session
+## coordinates) once players carry inventories (crafting-inventory).
+signal player_removed(peer_id: int, last_position: Vector2)
+## Client: the host went away; the session has ended and its players are gone.
+signal host_lost
 
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const HOST_ID: int = 1
 const MAX_PLAYERS: int = 4
+## A dropped client's player stays downed this long before it is removed.
+const DISCONNECT_DOWNED_S: float = 90.0
 ## An intent may claim at most this much time (one slow frame).
 const MAX_INTENT_DELTA_S: float = 0.1
 ## Squared length an intent's direction may reach (1 plus float slack).
@@ -38,6 +47,8 @@ var terrain: TerrainQuery = TerrainQuery.new()
 var world_state: Dictionary = {}
 
 var _bodies: Dictionary[int, PlayerBody] = {}
+## Host: seconds left before each dropped client's player is removed.
+var _dropped: Dictionary[int, float] = {}
 var _joined: int = 0
 var _started: bool = false
 
@@ -59,7 +70,26 @@ func start() -> void:
 	_started = true
 	if multiplayer.is_server():
 		multiplayer.peer_connected.connect(_on_peer_connected)
+		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 		_add_player(multiplayer.get_unique_id())
+	else:
+		multiplayer.server_disconnected.connect(_on_server_disconnected)
+
+
+# Host: counts down the dropped players and removes each one when its time is up.
+func _physics_process(delta: float) -> void:
+	for peer_id: int in _dropped.keys():
+		var left: float = _dropped[peer_id] - delta
+		if left > 0.0:
+			_dropped[peer_id] = left
+		else:
+			_dropped.erase(peer_id)
+			_remove_player(peer_id)
+
+
+## Host: seconds before a dropped client's player is removed (0 if it is not dropped).
+func disconnect_time_left(peer_id: int) -> float:
+	return _dropped.get(peer_id, 0.0)
 
 
 ## The body of `peer_id`'s player in this session, or null.
@@ -131,6 +161,38 @@ func _on_peer_connected(peer_id: int) -> void:
 	_add_player(peer_id)
 	if body(peer_id) != null:
 		receive_world_state.rpc_id(peer_id, world_state)
+
+
+# The player stays in the world, downed (draggable), until the countdown removes it. A client
+# that reconnects gets a new peer id and so a new player.
+func _on_peer_disconnected(peer_id: int) -> void:
+	var dropped := body(peer_id)
+	if dropped == null or _dropped.has(peer_id):
+		return
+	dropped.set_downed(true)
+	_dropped[peer_id] = DISCONNECT_DOWNED_S
+	player_disconnected.emit(peer_id)
+
+
+func _remove_player(peer_id: int) -> void:
+	var leaving := body(peer_id)
+	if leaving == null:
+		return
+	var last_position: Vector2 = leaving.position
+	_bodies.erase(peer_id)
+	player_removed.emit(peer_id, last_position)
+	# Freed on the host; the spawner removes it on every client.
+	leaving.queue_free()
+
+
+# Client: the session is over. Players and entities go; the level shows the host-lost screen.
+func _on_server_disconnected() -> void:
+	_bodies.clear()
+	for child: Node in players.get_children():
+		child.queue_free()
+	for child: Node in entities.get_children():
+		child.queue_free()
+	host_lost.emit()
 
 
 func _add_player(peer_id: int) -> void:

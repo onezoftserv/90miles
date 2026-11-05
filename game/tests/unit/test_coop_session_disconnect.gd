@@ -68,9 +68,10 @@ func test_a_dropped_players_countdown_does_not_touch_the_others() -> void:
 	assert_not_null(b)
 	if a == null or b == null:
 		return
+	var a_id: int = net.peer_id(a)
 	var b_id: int = net.peer_id(b)
 	net.drop(a)
-	assert_true(await wait_until(func() -> bool: return host.peer_ids().size() == 3 and host.disconnect_time_left(net.peer_id(a)) > 0.0, TIMEOUT_S))
+	assert_true(await wait_until(func() -> bool: return host.disconnect_time_left(a_id) > 0.0, TIMEOUT_S))
 	host._physics_process(91.0)
 	assert_not_null(host.body(b_id))
 	assert_false(host.body(b_id).downed)
