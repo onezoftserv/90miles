@@ -12,7 +12,8 @@ var _meters: SurvivalMeters = null
 @onready var _blur: ColorRect = $Blur
 
 
-## Shows `meters` from now on and stops following the node bound before. null shows nothing new.
+## Shows `meters` from now on and stops following the node bound before. With null the bars keep
+## their last values and the blur is hidden.
 func bind(meters: SurvivalMeters) -> void:
 	_unbind()
 	_meters = meters

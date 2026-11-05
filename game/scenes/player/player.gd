@@ -60,7 +60,8 @@ func _physics_process(delta: float) -> void:
 	stealth_state = result.stealth
 	velocity = result.velocity * TILE_SIZE
 	_move(velocity * delta)
-	# Meters are host state: clients show what the host replicates and never simulate them.
+	# Meters are host state: only the host ticks them, and clients show what it replicates. The
+	# energy a client's movement spends above is local prediction for coop-networking to reconcile.
 	if is_inside_tree() and multiplayer.is_server():
 		meters.tick(delta, _meter_context())
 
@@ -107,6 +108,8 @@ func _teammate_nearby() -> bool:
 func _on_died() -> void:
 	set_downed(true)
 	drag_handle.enabled = false
+	# Stop now, not when the helper's hold next notices the handle is disabled.
+	drag_handle.dragger = null
 
 
 func _dragged_step(delta: float) -> MovementStep:
