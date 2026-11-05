@@ -7,8 +7,8 @@
 
 ## 2. Drains, restores and states
 
-- [ ] 2.1 Add GUT tests stepping `tick` with a context for the thirst scenarios (working in the sun, swimming does not add the sun, a day in the shade, dry, seawater), hunger (crafting doubles hunger, starving caps energy), heat (midday sun, scorching calm, sunstroke lingers, night resets heat), energy (a meal, a night's sleep) and morale (ally dies, alone at night, company, a fire ends the hallucinations); verify they fail (RED)
-- [ ] 2.2 Add `MeterContext`, `SurvivalRules`, `MeterOverTime`, `tick`, the event methods and the sunstroke and hallucinating states; verify the 2.1 tests pass, and the import, smoke run and GUT pass (GREEN)
+- [x] 2.1 Add GUT tests stepping `tick` with a context for the thirst scenarios (working in the sun, swimming does not add the sun, a day in the shade, dry, seawater), hunger (crafting doubles hunger, starving caps energy), heat (midday sun, scorching calm, sunstroke lingers, night resets heat), energy (a meal, a night's sleep) and morale (ally dies, alone at night, company, a fire ends the hallucinations); verify they fail (RED)
+- [x] 2.2 Add `MeterContext`, `SurvivalRules`, `MeterOverTime`, `tick`, the event methods and the sunstroke and hallucinating states; verify the 2.1 tests pass, and the import, smoke run and GUT pass (GREEN)
 
 ## 3. Health and downed state
 
