@@ -65,6 +65,12 @@ Each group is written test-first: its tests are committed failing (RED), then th
 - [x] 9.3 Put both rules and "solo uses the same base numbers" in the spec delta, record the decisions in proposal.md and design.md, and verify `openspec validate coop-networking --type change --strict`
 - [x] 9.4 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero error lines
 
+## 10. Merge with survival-meters
+
+- [x] 10.1 Merge main (survival-meters) and keep both sides of `TASKS.md`; verify the merge leaves no conflict markers
+- [x] 10.2 Tick meters once per host frame instead of once per intent, replicate the shown meters through `StateSync`, hand the session's climate to players and give the co-op playground the meters HUD; verify GUT tests that failed first (stalled client still ticks, eight intents tick once, clients show host values over ENet, the playground HUD)
+- [x] 10.3 Verify the import, smoke run, GUT, a 300-frame game run and a two-process host and client run all pass with zero error lines
+
 ## Workflow follow-up
 
 - Review with the ECC reviewers and fix what survives verification.
