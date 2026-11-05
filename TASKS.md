@@ -109,6 +109,17 @@ Source: `docs/CONTENT_MANIFEST.md` (~280 `.tres` files). Each batch is one OpenS
 - [ ] content-batch-9: set pieces (15), routes (8), backgrounds (6)
 - [ ] content-batch-10: handwritten dialogue (minor NPCs, beats, endings, quick-chat, death lines)
 
+## 11. Lore, stories and asset review (start alongside the content batches; finish before Milestone G)
+
+Each review is its own OpenSpec change; findings go back into the docs and the affected `.tres` files.
+
+- [ ] History and lore review: every historical claim in the lore, found texts, item descriptions and loading tips is checked against its sources; nothing names real people or puts invented words in real politicians' mouths; deaths are treated with respect while the satire stays aimed at the system
+- [ ] Background stories review: every NPC backstory in `docs/CHARACTERS.md`, the six backgrounds and the companions are checked for consistency with the history, the timeline (the canonical present year) and each other, and for the Cuban voice
+- [ ] Asset audit, one row per content entry (creatures, items, NPCs, companions, POIs, vessels such as the car-boat and surfboard, set pieces, UI, ambient birds like the head-sitting seagull): the asset found or missing, its source, license, resolution (16×16 tiles and characters) and fit; packs with the wrong size or style are flagged
+- [ ] Decide character height: 16×16 (today's Kenney bases) or 16×24 (same 16×16 tiles, taller characters with room for faces and expressions). Compare side-by-side mockups at 1920×1080 (3×) and 1366×768 (2×), as in the 2026-11-05 fullscreen previews, then update `CLAUDE.md`, `docs/ASSETS.md` and the placeholder sprite to the choice
+- [ ] Decide per missing or poor-fit asset: a better free asset (CC0 preferred, CC-BY credited) or our own pixel art, with a shared palette and an animation list (walk cycles at the chosen character height)
+- [ ] Create or commission the "make it ourselves" art, commit it to tracked folders with its license, and update `game/assets/CREDITS.md` and `docs/ASSETS.md`
+
 ## Done
 
 - 2026-11-05: Tooling: Godot 4.7.2 (winget), ECC plugin, OpenSpec 1.16 (`openspec init`, Claude Code), reference games cloned. Still open: ECC rules copy, Godot MCP build and registration, AWS and GitHub MCPs (each needs the user).
