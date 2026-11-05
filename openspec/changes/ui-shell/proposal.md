@@ -82,4 +82,6 @@ The user asked to take the best-fitting ideas from the three reference games; de
   - the existing screens drop their own theme overrides
   - `MovementPlayground`'s terrain moves into a shared builder
   - `game/assets/CREDITS.md`
+- **Removed:** `game/scenes/main/` (the placeholder title scene; the shell is the main scene now).
+- **Docs:** `docs/ui-shell/` (pixel filter captures).
 - **Tests:** GUT for display fit, settings, the flow, the lobby over ENet, the HUD and solo. A two-process run goes through the shell (title → host → lobby → start; title → join).
