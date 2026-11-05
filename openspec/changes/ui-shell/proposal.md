@@ -18,6 +18,7 @@ The user asked to take the best-fitting ideas from the three reference games; de
   - The game keeps its 640×360 view with whole-number scaling.
   - At start the window opens at the largest multiple that fits the screen: 2× on a 1080p desktop, 3× in fullscreen.
   - F11 or Alt+Enter toggles fullscreen. A scale setting (auto, 1× to 4×) and the fullscreen choice are saved per install.
+  - A "Filtro de píxeles" setting (the user's request, 2026-11-05): Nítido (default, today's look) or Suave, a Scale2x-style smoothing of the enlarged world only. The HUD and menus stay sharp, the base and whole-number scale stay, and the choice is per install and never synced.
 - **One game theme** for every screen, set project-wide:
   - Fonts: Pixelify Sans at 16 and 32 px for buttons and titles, and Press Start 2P at 8 px for small text and the HUD. Both are imported crisp: no antialiasing, hinting or subpixel positioning.
   - Panels and buttons use a tracked copy of a few CC0 Kenney Pixel UI 9-slices: tan sand for dialogs, sea blue for buttons, sun yellow for focus. HUD panels are dark and see-through.
@@ -27,7 +28,7 @@ The user asked to take the best-fitting ideas from the three reference games; de
   - "Unirse" opens a join screen: address with an optional `:port`, connecting status and a failure message.
   - "Hospedar" and a successful join open the lobby. Solo goes straight to the run.
   - The run shows the HUD. When every player is dead, a run summary card appears (DCSS, Brogue), then the title.
-  - "Ajustes" holds the player name, fullscreen and scale.
+  - "Ajustes" holds the player name, fullscreen, scale and pixel filter.
   - The host-lost screen is restyled into the flow.
 - **The lobby is a phase of the co-op session.** Each client sends its player name once when it joins. The host sees the roster (up to four) and starts the run, and players spawn when it starts. A client that joins during a run spawns at once, as today. Solo has no lobby.
 - **HUD within a 640×360 budget** (Brogue, DCSS, SPD):
@@ -63,6 +64,8 @@ The user asked to take the best-fitting ideas from the three reference games; de
   - "Host and join" adds the lobby phase: players spawn when the host starts the run, and joiners during a run spawn at once.
   - "Quick chat" hides the wheel in solo.
   - "Intents reach only the host and act only for their sender" now also covers the join request that carries a player's name.
+- `player-movement`:
+  - "Camera and viewport" keeps nearest filtering by default and allows the optional smooth pixel filter setting.
 
 ## Impact
 

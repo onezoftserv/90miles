@@ -66,6 +66,19 @@ Godot's integer `stretch` then draws at that scale with black bars. The `toggle_
 
 The dev playgrounds keep the project's 1280×720 window, which is 2×.
 
+### Pixel filter: the world in its own 640×360 view, smoothed only when asked
+
+- **The world renders in a 640×360 `SubViewport`.** The shell's `World` lives inside it, shown by a `SubViewportContainer` (`WorldView`) at the top-left of the 640×360 canvas.
+  - A SubViewport does not take the project's render settings, so it sets them itself: 2D transform snapping, nearest default filter, an opaque clear in the project colour, and a redraw every frame.
+  - The HUD, the screens and the host-lost screen stay outside it, on the root canvas.
+- **Nítido (default)** keeps the root window in `viewport` stretch mode: the whole 640×360 picture is enlarged by the window with nearest filtering, exactly as before. The capture script checks that this is pixel-identical to the picture before the change.
+- **Suave** switches the root to `canvas_items` stretch mode, still with integer scaling and black bars. The world view is then drawn at the window's resolution, and its material runs `scale2x.gdshader` per screen pixel:
+  - It takes the world texel under the pixel and its four edge neighbours, and applies the Scale2x/EPX rules to pick the colour of the texel's quarter.
+  - At 3× and 4× each quarter is more than one pixel, so it is Scale2x enlarged with nearest.
+  - The shader is written from the published rules (Eric Johnston's EPX, Andrea Mazzoleni's Scale2x description); no reference code was used, so it needs no CREDITS row.
+- **What gets smoothed:** world-space marks (name tags, speech bubbles) are part of the world, so Suave smooths them too. The HUD and menus never are.
+- `PixelFilter` (`scripts/ui/pixel_filter.gd`) maps a mode to the root stretch mode and the world view's material. The shell applies it on start and whenever a setting changes. The stretch mode is skipped headless, as the window is.
+
 ### Settings: one ConfigFile per install
 `GameSettings` loads and saves `user://settings.cfg`; tests inject the path. Fields:
 - `player_name`, cleaned by `GameSettings.clean_name()`: control characters stripped, 16 characters at most, "Balsero" when blank;
@@ -137,6 +150,8 @@ When every player in the session is dead (`SurvivalMeters.dead`), the host annou
 - **The spawn timing change could break the coop-networking ENet suites.** → `start()` defaults to RUN, which keeps every current caller and test on today's behaviour; only the shell asks for the lobby.
 - **Removing per-scene themes changes how the playgrounds and the existing screens look.** → Their tests check text and behaviour, not pixels; screenshots are reviewed.
 - **The fixed 640×360 view leaves black bars at sizes that are not multiples** (1366×768 shows 2× with bars). → That is the cost of crisp pixels; the fullscreen toggle helps.
+- **Suave renders the root canvas at the window's resolution**, so the HUD's text is drawn by the font at the enlarged size instead of being enlarged afterwards. → With crisp font imports the result matches Nítido; the capture script compares the HUD strip of both modes.
+- **Moving `World` into a SubViewport changes the node path of every networked node.** → Host and client both run the shell, so the paths still match. The two-process run through the shell checks it.
 - **Two fonts.** → Each is used where it is crisp (Pixelify at 16 and 32, Press Start 2P at 8), and the rendered comparison is in the PR.
 - **A joiner refused because the lobby or run is full sees "host lost"** (the host drops the peer, and the client cannot tell why). → Accepted for now. coop-reconnect's handshake adds a refusal reason ("partida llena") before the disconnect.
 - **A peer that connects but never sends its join request holds a slot without appearing in the lobby.** → It spawns as "Balsero N" when the run starts. coop-reconnect's handshake times out peers that never identify.

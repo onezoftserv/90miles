@@ -7,7 +7,7 @@ The player-facing shell of 90 Millas: how the game fills the screen, the shared 
 ## ADDED Requirements
 
 ### Requirement: Display scaling
-The game SHALL draw its 640×360 view at the largest whole-number scale that fits the window, with nearest filtering and black bars for the rest. At launch the window opens at the largest multiple that fits the usable screen, or fullscreen if the player chose it, unless a fixed scale (1× to 4×) is set. F11 or Alt+Enter toggles fullscreen at any time. Solo and co-op behave the same.
+The game SHALL draw its 640×360 view at the largest whole-number scale that fits the window, with black bars for the rest, and with nearest filtering unless the pixel filter is Suave. At launch the window opens at the largest multiple that fits the usable screen, or fullscreen if the player chose it, unless a fixed scale (1× to 4×) is set. F11 or Alt+Enter toggles fullscreen at any time. Solo and co-op behave the same.
 
 #### Scenario: Launch on a 1080p desktop
 - **GIVEN** a 1920×1080 screen whose usable area is 1920×1040
@@ -22,6 +22,24 @@ The game SHALL draw its 640×360 view at the largest whole-number scale that fit
 - **GIVEN** the scale setting is 1×
 - **WHEN** the game launches windowed
 - **THEN** the window is 640×360
+
+### Requirement: Pixel filter
+The settings screen SHALL offer "Filtro de píxeles" with two modes: Nítido (the default) draws the enlarged world with nearest filtering; Suave smooths it with a Scale2x-family pixel-art filter. Both keep the 640×360 base and the whole-number scale with black bars; only the enlarged world picture changes. The HUD and menus stay sharp in both modes. The setting is per install, kept with the other settings and never synced; each player picks their own, in solo and in co-op.
+
+#### Scenario: Sharp by default
+- **GIVEN** a fresh install
+- **WHEN** a run starts
+- **THEN** the pixel filter is Nítido and the world looks as it did before the setting existed
+
+#### Scenario: Smooth chosen and kept
+- **GIVEN** a solo player, offline, who picks Suave and restarts the game
+- **WHEN** a run starts at 2×
+- **THEN** the world's diagonal edges are smoothed, the window is still 1280×720 and the HUD's text is still sharp
+
+#### Scenario: Each player's own choice
+- **GIVEN** a host with Suave and a client with Nítido
+- **WHEN** they play together
+- **THEN** each sees their own choice and neither changes the other's
 
 ### Requirement: Shared theme
 Every screen SHALL use one theme: Pixelify Sans at 16 or 32 px for titles and buttons, Press Start 2P at 8 px for small text, both drawn without smoothing; tan panels, sea-blue buttons with a sun-yellow focus frame, and see-through dark panels over the world. Player-facing text is Spanish first. Keyboard and gamepad move the focus on every screen.
@@ -109,7 +127,7 @@ During a run the HUD SHALL keep to a 640×360 budget. The six meters sit top-lef
 - **THEN** Papo's row reads "Caído" with his health, and his name and health strip show over his head
 
 ### Requirement: Settings
-The settings screen SHALL hold the player name, fullscreen and the scale (automatic or 1× to 4×), and keep them per install across launches. Esc and the gamepad back button return to the previous screen from every menu screen, except the host's lobby: closing it ends the lobby for everyone, so only "Salir" does that.
+The settings screen SHALL hold the player name, fullscreen, the scale (automatic or 1× to 4×) and the pixel filter, and keep them per install across launches. Esc and the gamepad back button return to the previous screen from every menu screen, except the host's lobby: closing it ends the lobby for everyone, so only "Salir" does that.
 
 #### Scenario: Name kept
 - **GIVEN** a player who sets the name "Dayana" and closes the game

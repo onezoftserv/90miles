@@ -112,3 +112,39 @@ func test_names_lose_direction_and_invisible_marks() -> void:
 	assert_eq(GameSettings.clean_name("Pa" + zero_width + "po" + isolate + bom), "Papo", "no zero-width or isolate marks")
 	assert_eq(GameSettings.clean_name(String.chr(0x200f) + String.chr(0x200e)), "Balsero")
 	assert_eq(GameSettings.clean_name("Yusim" + String.chr(0xed) + " " + String.chr(0xd1) + "ico"), "Yusim" + String.chr(0xed) + " " + String.chr(0xd1) + "ico", "accents stay")
+
+
+func test_the_pixel_filter_is_sharp_by_default() -> void:
+	assert_eq(GameSettings.new(PATH).pixel_filter, PixelFilter.Mode.SHARP)
+	assert_eq(GameSettings.load_from("user://does_not_exist_ui_shell.cfg").pixel_filter, PixelFilter.Mode.SHARP)
+
+
+func test_the_pixel_filter_is_kept() -> void:
+	var settings := GameSettings.new(PATH)
+	settings.pixel_filter = PixelFilter.Mode.SMOOTH
+	assert_eq(settings.save(), OK)
+	assert_eq(GameSettings.load_from(PATH).pixel_filter, PixelFilter.Mode.SMOOTH)
+	var config := ConfigFile.new()
+	config.load(PATH)
+	assert_eq(config.get_value("display", "pixel_filter"), 1, "stored with the display settings")
+
+
+func test_a_bad_pixel_filter_falls_back_to_sharp() -> void:
+	var config := ConfigFile.new()
+	config.set_value("display", "pixel_filter", "suave")
+	config.save(PATH)
+	assert_eq(GameSettings.load_from(PATH).pixel_filter, PixelFilter.Mode.SHARP)
+	config.set_value("display", "pixel_filter", 7)
+	config.save(PATH)
+	assert_eq(GameSettings.load_from(PATH).pixel_filter, PixelFilter.Mode.SHARP)
+
+
+func test_each_pixel_filter_mode_picks_its_presentation() -> void:
+	assert_eq(PixelFilter.LABELS, ["Nítido", "Suave"] as Array[String])
+	assert_eq(PixelFilter.stretch_mode(PixelFilter.Mode.SHARP), Window.CONTENT_SCALE_MODE_VIEWPORT, "the window enlarges the base picture")
+	assert_eq(PixelFilter.stretch_mode(PixelFilter.Mode.SMOOTH), Window.CONTENT_SCALE_MODE_CANVAS_ITEMS, "drawn at the window's resolution")
+	assert_null(PixelFilter.material_for(PixelFilter.Mode.SHARP), "nearest, no shader")
+	var smooth := PixelFilter.material_for(PixelFilter.Mode.SMOOTH) as ShaderMaterial
+	assert_not_null(smooth)
+	if smooth != null:
+		assert_eq(smooth.shader.resource_path, "res://scenes/shell/scale2x.gdshader")
