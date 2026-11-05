@@ -71,6 +71,19 @@ If a client disconnects, its player SHALL stay in the world as downed for 90 s, 
 - **WHEN** the host disconnects
 - **THEN** the client's session ends and it shows the "host lost" screen
 
+### Requirement: Difficulty scaling
+Resource spawn rates SHALL multiply by 0.8 per player beyond the first; patrol count adds 1 per 2 players. With one player (solo) resource spawn rates are ×1 and the patrol count is unchanged.
+
+#### Scenario: Three players
+- GIVEN a session with 3 players
+- WHEN an island is set up
+- THEN resource spawn rates are ×0.64 (0.8 × 0.8) and patrol count is +1
+
+#### Scenario: Solo island
+- **GIVEN** a solo session
+- **WHEN** an island is set up
+- **THEN** resource spawn rates are ×1 and the patrol count is unchanged
+
 ### Requirement: Quick chat
 Players SHALL have a radial quick-chat, opened by holding the quick-chat button, with 8 phrases (¡Dale!, ¡Agua!, ¡Pa'llá no!, ¡Tiburón!, ¡Patrulla!, ¡Ayuda!, ¡Comida aquí!, ¡Vámonos!). The phrases are content data. A picked phrase goes through the host, which shows it to every player as a speech bubble over the speaker. Each phrase also plays its short voice clip once that clip exists; recorded voice lines arrive with Milestone G. In solo the wheel works the same and the bubble shows over the solo player.
 
