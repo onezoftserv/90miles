@@ -22,6 +22,7 @@ const LOG_PREFIX: String = "coop:"
 @onready var note: Label = %Note
 @onready var status_label: Label = %Status
 @onready var wheel: QuickChatWheel = %Wheel
+@onready var pause_menu: PauseMenu = $PauseMenu
 
 
 ## Reads `--host[=port]`, `--join=address[:port]` or `--solo`. Anything else, or a bad port
@@ -64,6 +65,7 @@ func _ready() -> void:
 	wheel.phrases = session.phrases
 	wheel.rebuild()
 	wheel.phrase_picked.connect(session.say)
+	pause_menu.session = session
 	(%Host as Button).pressed.connect(func() -> void: start(parse_args(PackedStringArray(["--host"]))))
 	(%Join as Button).pressed.connect(_on_join_pressed)
 	(%Solo as Button).pressed.connect(func() -> void: start(parse_args(PackedStringArray(["--solo"]))))

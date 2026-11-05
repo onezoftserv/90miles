@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://scenes/net/coop_session.tscn" id="2_session"]
 [ext_resource type="PackedScene" path="res://scenes/ui/quick_chat_wheel.tscn" id="3_wheel"]
 [ext_resource type="FontFile" path="res://assets/fonts/PixelifySans[wght].ttf" id="4_font"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="5_pause"]
 
 [sub_resource type="Theme" id="Theme_panel"]
 default_font = ExtResource("4_font")
@@ -68,3 +69,5 @@ layout_mode = 2
 
 [node name="Wheel" parent="UI" instance=ExtResource("3_wheel")]
 unique_name_in_owner = true
+
+[node name="PauseMenu" parent="." instance=ExtResource("5_pause")]

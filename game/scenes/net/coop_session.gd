@@ -24,6 +24,8 @@ signal player_removed(peer_id: int, last_position: Vector2)
 signal host_lost
 ## A quick-chat phrase is shown over `peer_id`'s player (on every peer).
 signal quick_chat_shown(peer_id: int, slot: int)
+## The solo pause started or ended.
+signal paused_changed(paused: bool)
 
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const SPEECH_BUBBLE_SCENE: PackedScene = preload("res://scenes/ui/speech_bubble.tscn")
@@ -112,6 +114,44 @@ func _physics_process(delta: float) -> void:
 ## Host: seconds before a dropped client's player is removed (0 if it is not dropped).
 func disconnect_time_left(peer_id: int) -> float:
 	return _dropped.get(peer_id, 0.0)
+
+
+## Host: the difficulty for an island set up now, from the living, connected players (dropped
+## players do not count). `alive` decides who is alive; by default every connected player is,
+## until the meters say a player is dead.
+func island_difficulty(alive: Callable = Callable()) -> DifficultyScaling:
+	var living: int = 0
+	for peer_id: int in peer_ids():
+		if _dropped.has(peer_id):
+			continue
+		var player := body(peer_id)
+		var counts: bool = alive.call(player) if alive.is_valid() else is_alive(player)
+		if counts:
+			living += 1
+	return DifficultyScaling.for_players(living)
+
+
+## Whether a player is alive: true unless its meters report it dead (survival-meters adds
+## SurvivalMeters.dead; until then every player is alive).
+static func is_alive(player: PlayerBody) -> bool:
+	var dead: Variant = player.meters.get(&"dead") if player.meters != null else null
+	return not (dead is bool and dead)
+
+
+## Whether this session may pause: only solo (the offline peer, one player). Co-op, and a host
+## waiting alone for joiners, never pause.
+func can_pause() -> bool:
+	return multiplayer.multiplayer_peer is OfflineMultiplayerPeer and peer_ids().size() <= 1
+
+
+## Pauses or resumes the whole simulation (every node that inherits the tree's pause: players,
+## meters, creatures, patrols, weather and clock). Returns false when pausing is not allowed.
+func set_paused(value: bool) -> bool:
+	if value and not can_pause():
+		return false
+	get_tree().paused = value
+	paused_changed.emit(value)
+	return true
 
 
 ## The body of `peer_id`'s player in this session, or null.
