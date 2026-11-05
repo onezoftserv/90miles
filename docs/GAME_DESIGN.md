@@ -54,11 +54,13 @@ Rates are per real minute (one in-game hour is 30 real seconds, see §5). The nu
 | Heat | 0 (cool) → 100 (rises; decided 2026-11-05) | Rises 45/min in direct sun between 10:00 and 16:00, ×2 in scorching calm | Falls 45/min in shade, in water or outside 10:00–16:00; 0 at night | At 100, sunstroke until heat drops below 60: blurred screen, speed −40% |
 | Energy | 100 | Swimming 3/s, building 1/s, running 0.5/s | Sleep (+50 per night in shelter), meals (+10); nothing else | Collapse: can only crawl |
 | Morale | 100 | Loss of ally −30, squall −10 (both hit every player), −5/min at night with no teammate and no lit fire within 5 tiles | Teammate within 5 tiles +2/min, fire +5, song +15, found text +10, keepsake | Below 20: hallucinations: fake islands, fake voices |
-| Health | 100 | Attacks, thirst, poison (−20 over 30 s) | Aloe, rest, noni | Downed (solo: dead) |
+| Health | 100 | Attacks, thirst, poison (−20 over 30 s) | Aloe, rest, noni | Downed (solo: last stand) |
 
 What that means for one player starting full at dawn: thirst lasts 1.15 days (≈ 14 min) working in the sun all day, 1.4 days half in the shade, 1.75 days resting in the shade. Hunger lasts 2–2.8 days. Standing in the midday sun brings sunstroke after 133 s (67 s in scorching calm); half sun, half shade never does on a normal day. Heat never costs health (provisional).
 
-**Downed, not dead.** A player at 0 health is downed for 90 s, still losing thirst and hunger. Teammates can drag them to shade and give water to revive them at 30 health. A player with no other living player in the run (solo, or the last one alive) dies at 0, as does an unrevived player: permadeath for the run.
+**Downed, not dead.** A player at 0 health is downed for 90 s plus their downed-timer bonuses (Experiencia +5 s per level, the +10 s point boost), still losing thirst and hunger. Teammates can drag them to shade and give water to revive them at 30 health. An unrevived player dies: permadeath for the run.
+
+**Last stand (solo).** A player with no other living player in the run (solo, or the last one alive) is not downed at 0 health: they get a last stand of 0 s plus the same bonuses, lying where they fell, and can drink a reviving cup they carry to stand at 30 health. On run 1, with no bonus, that is death at once. The Medalla de la Caridad's one free revive per run stands its holder at 30 health instead of going down, a last stand or death, solo or not.
 
 **Alone.** Every meter works for one player (provisional numbers). A lit fire within 5 tiles keeps a lone player company at night, so the night drain stops; a fire also shows to patrols. One player playing half in the sun gets through 3 days on the sandbar on 9 of its 10 coconuts, and a week with a fire every night and a squall every day still ends at morale 65.
 

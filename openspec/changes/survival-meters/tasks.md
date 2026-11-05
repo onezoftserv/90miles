@@ -42,7 +42,7 @@
 
 - [x] 8.1 Add GUT tests: the shipped tuning has a 0 s solo last stand; a solo player on run 1 with no bonus dies at once; with 15 s of bonus they are in a last stand, alive after 14 s and dead after 15 s; with the +10 s boost it lasts 10 s; a cup used on themselves during it stands them at 30 with thirst +25; a co-op player with 10 s of bonus is downed for 100 s; the Medalla's free revive saves a solo player once (stand at 30, revive used up) and the second time they die, and saves a co-op player from going down; at the body level a last stand lies the body down undraggable and a self-revive stands it up; verify they fail (RED)
 - [x] 8.2 Add `solo_last_stand_s` to the tuning, `downed_bonus_s`, `free_revives`, `last_stand` and their signals to `SurvivalMeters`, and the last-stand wiring in `PlayerBody`; verify the 8.1 tests and every earlier test pass, and the import, smoke run and GUT pass (GREEN)
-- [ ] 8.3 Update `docs/GAME_DESIGN.md` §4 (last stand, free revive), the `TASKS.md` Done entry and the PR description; verify `openspec validate survival-meters --type change --strict` passes
+- [x] 8.3 Update `docs/GAME_DESIGN.md` §4 (last stand, free revive), the `TASKS.md` Done entry and the PR description; verify `openspec validate survival-meters --type change --strict` passes
 
 ## Workflow follow-up
 
