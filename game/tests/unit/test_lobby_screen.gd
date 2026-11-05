@@ -108,3 +108,21 @@ func test_host_lost() -> void:
 	assert_not_null(shell.host_lost_screen)
 	shell.host_lost_screen.back_requested.emit()
 	assert_eq(shell.flow, GameShell.Flow.TITLE)
+
+
+func _cancel_event() -> InputEventAction:
+	var event := InputEventAction.new()
+	event.action = &"ui_cancel"
+	event.pressed = true
+	return event
+
+
+func test_esc_leaves_a_client_lobby_but_never_closes_the_host_lobby() -> void:
+	var client := _lobby(false)
+	watch_signals(client)
+	client._unhandled_input(_cancel_event())
+	assert_signal_emitted(client, "back_requested")
+	var host := _lobby(true)
+	watch_signals(host)
+	host._unhandled_input(_cancel_event())
+	assert_signal_not_emitted(host, "back_requested", "closing the lobby for everyone takes Salir")

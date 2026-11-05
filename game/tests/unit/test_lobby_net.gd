@@ -133,3 +133,12 @@ func test_only_the_host_can_start() -> void:
 func test_a_malformed_roster_is_cleaned() -> void:
 	var cleaned := CoopSession.clean_roster({1: "Yuni", "x": "Papo", 2: 7, 3: "\u0001Dayana"})
 	assert_eq(cleaned, {1: "Yuni", 3: "Dayana"} as Dictionary[int, String])
+
+
+func test_a_blank_name_gets_a_free_number() -> void:
+	var roster: Dictionary[int, String] = {1: "Yuni", 5: "Papo"}
+	assert_eq(CoopSession.default_name(roster), "Balsero 3")
+	roster = {1: "Yuni", 5: "Balsero 3", 6: "Papo"}
+	assert_eq(CoopSession.default_name(roster), "Balsero 4", "never a name already in the lobby")
+	roster = {1: "Yuni", 5: "Balsero 4", 6: "Balsero 3"}
+	assert_eq(CoopSession.default_name(roster), "Balsero 5")

@@ -100,3 +100,15 @@ func test_fullscreen_is_f11_and_alt_enter() -> void:
 			keys.append("%s%d" % ["alt+" if key.alt_pressed else "", key.physical_keycode])
 	keys.sort()
 	assert_eq(keys, ["%d" % KEY_F11, "alt+%d" % KEY_ENTER] as Array[String])
+
+
+func test_names_lose_direction_and_invisible_marks() -> void:
+	var rlo := String.chr(0x202e)
+	var pdf := String.chr(0x202c)
+	var zero_width := String.chr(0x200b)
+	var isolate := String.chr(0x2066)
+	var bom := String.chr(0xfeff)
+	assert_eq(GameSettings.clean_name(rlo + "Yuni" + pdf), "Yuni", "no right-to-left override")
+	assert_eq(GameSettings.clean_name("Pa" + zero_width + "po" + isolate + bom), "Papo", "no zero-width or isolate marks")
+	assert_eq(GameSettings.clean_name(String.chr(0x200f) + String.chr(0x200e)), "Balsero")
+	assert_eq(GameSettings.clean_name("Yusim" + String.chr(0xed) + " " + String.chr(0xd1) + "ico"), "Yusim" + String.chr(0xed) + " " + String.chr(0xd1) + "ico", "accents stay")

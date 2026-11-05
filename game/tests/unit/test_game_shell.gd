@@ -124,3 +124,28 @@ func test_a_run_summary_formats_its_length() -> void:
 	assert_eq(SummaryScreen.format_length(185.4), "3:05")
 	assert_eq(SummaryScreen.format_length(3725.0), "62:05")
 	assert_eq(SummaryScreen.format_length(-3.0), "0:00")
+
+
+func test_a_run_ends_when_the_last_living_teammate_is_removed() -> void:
+	# A dropped teammate keeps the run open until they are removed; the removal ends it.
+	var shell := _shell()
+	(shell.screen as TitleScreen).solo_requested.emit()
+	shell.session._add_player(7)
+	shell.session.body(1).meters.dead = true
+	assert_eq(shell.flow, GameShell.Flow.RUN, "a teammate is still in the run")
+	shell.session._remove_player(7)
+	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
+
+
+func test_enter_while_connecting_does_not_join_twice() -> void:
+	var shell := _shell()
+	(shell.screen as TitleScreen).join_requested.emit()
+	var screen := shell.screen as JoinScreen
+	var asked: Array[String] = []
+	for connection: Dictionary in screen.connect_requested.get_connections():
+		screen.connect_requested.disconnect(connection["callable"])
+	screen.connect_requested.connect(func(address: String, _port: int) -> void: asked.append(address))
+	screen.address_field.text = "192.168.1.20"
+	screen.address_field.text_submitted.emit(screen.address_field.text)
+	screen.address_field.text_submitted.emit(screen.address_field.text)
+	assert_eq(asked, ["192.168.1.20"] as Array[String], "one attempt at a time")

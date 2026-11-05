@@ -130,3 +130,15 @@ func test_the_hud_has_a_pause_menu_on_its_session() -> void:
 	var session := _session()
 	var hud := _hud(session, true)
 	assert_eq(hud.pause_menu.session, session)
+
+
+func test_a_late_name_reaches_the_tag() -> void:
+	# A peer spawned before its join request arrived is tagged with the fallback, then renamed.
+	var session := _session([7] as Array[int])
+	session.roster.erase(7)
+	_hud(session, false)
+	var tag := session.body(7).get_node(^"NameTag") as NameTag
+	assert_eq(tag.label.text, GameSettings.DEFAULT_NAME)
+	session.roster[7] = "Papo"
+	session.roster_updated.emit()
+	assert_eq(tag.label.text, "Papo")
