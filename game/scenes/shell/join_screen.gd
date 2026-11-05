@@ -51,6 +51,8 @@ func show_failed() -> void:
 
 
 func _try() -> void:
+	if connect_button.disabled:
+		return
 	var parsed := parse_address(address_field.text)
 	if not String(parsed["error"]).is_empty():
 		status.text = parsed["error"]

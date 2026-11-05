@@ -35,7 +35,7 @@ Every screen SHALL use one theme: Pixelify Sans at 16 or 32 px for titles and bu
 - **THEN** its pixels are whole (no smoothing between font pixels)
 
 ### Requirement: Screen flow
-The game SHALL open on the title screen. Solo goes straight to a run, with no lobby and nothing waiting for another player. Hosting opens the lobby; joining opens the join screen, then the lobby, or the run if one is under way. When every player is dead the run summary shows, then the title. Losing the host shows the host-lost screen, then the title.
+The game SHALL open on the title screen. Solo goes straight to a run, with no lobby and nothing waiting for another player. Hosting opens the lobby; joining opens the join screen, then the lobby, or the run if one is under way. When every player still in the run is dead the run summary shows, then the title; a disconnected player keeps the run open until they are removed. Losing the host shows the host-lost screen, then the title.
 
 #### Scenario: Solo from the title
 - **GIVEN** the title screen
@@ -109,16 +109,29 @@ During a run the HUD SHALL keep to a 640×360 budget. The six meters sit top-lef
 - **THEN** Papo's row reads "Caído" with his health, and his name and health strip show over his head
 
 ### Requirement: Settings
-The settings screen SHALL hold the player name (up to 16 characters, default "Balsero"), fullscreen and the scale (automatic or 1× to 4×), and keep them per install across launches. A blank or unprintable name falls back to "Balsero". Esc and the gamepad back button return to the previous screen from every menu screen.
+The settings screen SHALL hold the player name, fullscreen and the scale (automatic or 1× to 4×), and keep them per install across launches. Esc and the gamepad back button return to the previous screen from every menu screen, except the host's lobby: closing it ends the lobby for everyone, so only "Salir" does that.
 
 #### Scenario: Name kept
 - **GIVEN** a player who sets the name "Dayana" and closes the game
 - **WHEN** the game starts again
 - **THEN** the name is "Dayana" and it is the name the lobby shows
 
+#### Scenario: Esc in the host's lobby
+- **GIVEN** a host in the lobby with a joined player
+- **WHEN** the host presses Esc
+- **THEN** the lobby stays open; a client pressing Esc in its lobby leaves it
+
+### Requirement: Player name
+The player name SHALL be at most 16 characters, default "Balsero". Cleaning removes control characters and the marks that change text direction or draw nothing (zero-width characters, bidi overrides and isolates). A blank or unprintable name falls back to "Balsero".
+
 #### Scenario: Name cleaned
 - **WHEN** the player enters a 30-character name with control characters
 - **THEN** the control characters are removed and the name is cut to 16 characters
+
+#### Scenario: A name with a right-to-left override
+- **GIVEN** a name that wraps "Yuni" in a right-to-left override
+- **WHEN** it is cleaned
+- **THEN** it reads "Yuni", with no direction marks left
 
 ### Requirement: Run summary
 The run summary SHALL list each player of the run with their name, whether they died, and how long the run lasted, then offer "Volver al inicio". In solo it lists the one player.

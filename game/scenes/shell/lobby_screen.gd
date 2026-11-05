@@ -40,8 +40,9 @@ func _ready() -> void:
 	_refresh_role()
 
 
+# Esc leaves a client's lobby. The host's lobby closes for everyone, so only Salir does that.
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"ui_cancel"):
+	if event.is_action_pressed(&"ui_cancel") and not is_host:
 		back_requested.emit()
 		if is_inside_tree():
 			get_viewport().set_input_as_handled()

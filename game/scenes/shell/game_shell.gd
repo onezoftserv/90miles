@@ -205,6 +205,7 @@ func _build_run() -> void:
 	session.climate = island.climate
 	session.spawn_points = DevIsland.SPAWN_POINTS.duplicate()
 	session.player_spawned.connect(_on_player_spawned)
+	session.player_removed.connect(_on_player_removed)
 	session.host_lost.connect(_on_host_lost)
 	_world.add_child(session)
 
@@ -234,6 +235,10 @@ func _end_run() -> void:
 		island = null
 
 
+func _on_player_removed(_peer_id: int, _last_position: Vector2) -> void:
+	_check_run_over()
+
+
 func _on_player_spawned(_peer_id: int, body: PlayerBody) -> void:
 	body.meters.died.connect(_check_run_over)
 	# The camera stays over the island, never past its edge.
@@ -243,7 +248,8 @@ func _on_player_spawned(_peer_id: int, body: PlayerBody) -> void:
 	body.camera.limit_bottom = DevIsland.BOUNDS.end.y
 
 
-# The run ends when every player in it is dead.
+# The run ends when every player in it is dead. A dropped player keeps it open until they are
+# removed (they may come back); the removal checks again.
 func _check_run_over() -> void:
 	if flow != Flow.RUN or session == null:
 		return

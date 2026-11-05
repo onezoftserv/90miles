@@ -63,6 +63,7 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	pause_menu.session = session
 	add_child(pause_menu)
 	session.player_spawned.connect(func(peer_id: int, _body: PlayerBody) -> void: _follow(peer_id))
+	session.roster_updated.connect(_rename_tags)
 	for peer_id: int in session.peer_ids():
 		_follow(peer_id)
 	refresh()
@@ -100,6 +101,15 @@ func teammate_rows() -> Array[String]:
 	for child: Node in _teammates.get_children():
 		texts.append((child as Label).text)
 	return texts
+
+
+# A name can arrive after its player spawned (a join during the run): the tags follow the roster.
+func _rename_tags() -> void:
+	for peer_id: int in session.peer_ids():
+		var player := session.body(peer_id)
+		var tag := player.get_node_or_null(NodePath(TAG_NAME)) as NameTag if player != null else null
+		if tag != null:
+			tag.player_name = session.player_name(peer_id)
 
 
 # The local player's meters fill the meters panel; every other player gets a name tag.

@@ -6,7 +6,12 @@ extends Node2D
 const OFFSET: Vector2 = Vector2(0.0, -22.0)
 const STRIP_WIDTH: float = 16.0
 
-var player_name: String = ""
+## Set again when the name reaches the host after the spawn (a join during the run).
+var player_name: String = "":
+	set(value):
+		player_name = value
+		if label != null:
+			label.text = player_name
 var meters: SurvivalMeters
 
 @onready var label: Label = $Label

@@ -159,7 +159,7 @@ func request_join(player_name: String) -> void:
 	var sender := multiplayer.get_remote_sender_id()
 	if sender == HOST_ID or roster.has(sender) or not multiplayer.get_peers().has(sender):
 		return
-	roster[sender] = GameSettings.clean_name(player_name, "%s %d" % [GameSettings.DEFAULT_NAME, roster.size() + 1])
+	roster[sender] = GameSettings.clean_name(player_name, default_name(roster))
 	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN)
 	_share_roster(sender)
 
@@ -187,6 +187,15 @@ func run_begun() -> void:
 		return
 	phase = Phase.RUN
 	run_started.emit()
+
+
+## The name for a player who gave none: "Balsero N" with the first N from the lobby's size up
+## that nobody in the lobby already has.
+static func default_name(current: Dictionary[int, String]) -> String:
+	var number := current.size() + 1
+	while current.values().has("%s %d" % [GameSettings.DEFAULT_NAME, number]):
+		number += 1
+	return "%s %d" % [GameSettings.DEFAULT_NAME, number]
 
 
 ## The int → cleaned-name pairs of a roster that arrived over the network; anything else is

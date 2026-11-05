@@ -43,7 +43,7 @@ Players SHALL have a radial quick-chat, opened by holding the quick-chat button,
 - **THEN** no wheel opens and no bubble shows
 
 ### Requirement: Intents reach only the host and act only for their sender
-A client SHALL send intents only to the host. The host SHALL ignore intents that arrive anywhere but on the host and SHALL apply each intent only to the sending peer's own player, whatever the intent contains. Messages from the host to clients SHALL be accepted only from the host, and clients SHALL NOT relay messages to each other. The host's own (and the solo) player's intents take the same path. A client's join request, which carries its player name, is accepted once per peer; later ones are ignored, and the name is cleaned (unprintable characters removed, at most 16 characters, "Balsero N" when empty).
+A client SHALL send intents only to the host. The host SHALL ignore intents that arrive anywhere but on the host and SHALL apply each intent only to the sending peer's own player, whatever the intent contains. Messages from the host to clients SHALL be accepted only from the host, and clients SHALL NOT relay messages to each other. The host's own (and the solo) player's intents take the same path. A client's join request, which carries its player name, is accepted once per peer; later ones are ignored, and the name is cleaned (unprintable, direction and invisible characters removed, at most 16 characters; when empty, "Balsero N" with the first N from the lobby's size up that no one in the lobby has).
 
 #### Scenario: Client acts as a teammate
 - **GIVEN** a session with clients A and B

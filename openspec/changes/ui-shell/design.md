@@ -138,3 +138,5 @@ When every player in the session is dead (`SurvivalMeters.dead`), the host annou
 - **Removing per-scene themes changes how the playgrounds and the existing screens look.** → Their tests check text and behaviour, not pixels; screenshots are reviewed.
 - **The fixed 640×360 view leaves black bars at sizes that are not multiples** (1366×768 shows 2× with bars). → That is the cost of crisp pixels; the fullscreen toggle helps.
 - **Two fonts.** → Each is used where it is crisp (Pixelify at 16 and 32, Press Start 2P at 8), and the rendered comparison is in the PR.
+- **A joiner refused because the lobby or run is full sees "host lost"** (the host drops the peer, and the client cannot tell why). → Accepted for now. coop-reconnect's handshake adds a refusal reason ("partida llena") before the disconnect.
+- **A peer that connects but never sends its join request holds a slot without appearing in the lobby.** → It spawns as "Balsero N" when the run starts. coop-reconnect's handshake times out peers that never identify.

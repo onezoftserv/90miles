@@ -7,6 +7,12 @@ extends RefCounted
 const DEFAULT_PATH: String = "user://settings.cfg"
 const DEFAULT_NAME: String = "Balsero"
 const MAX_NAME_LENGTH: int = 16
+## Code points a name never keeps: zero-width spaces and joiners, direction marks, bidi
+## embeddings and overrides, invisible operators and isolates, and the BOM.
+const HIDDEN_RANGES: Array[Vector2i] = [
+	Vector2i(0x200B, 0x200F), Vector2i(0x202A, 0x202E), Vector2i(0x2060, 0x206F),
+	Vector2i(0xFEFF, 0xFEFF),
+]
 ## 0 is automatic; 1 to MAX_SCALE is fixed.
 const MAX_SCALE: int = 4
 
@@ -49,13 +55,24 @@ func save() -> Error:
 	return config.save(path)
 
 
-## A name with control characters removed, trimmed and cut to MAX_NAME_LENGTH; `fallback` when
-## nothing printable is left.
+## A name with control, text-direction and invisible characters removed, trimmed and cut to
+## MAX_NAME_LENGTH; `fallback` when nothing printable is left.
 static func clean_name(raw: String, fallback: String = DEFAULT_NAME) -> String:
 	var kept := ""
 	for i: int in raw.length():
-		var code := raw.unicode_at(i)
-		if code >= 32 and not (code >= 127 and code < 160):
+		if is_printable(raw.unicode_at(i)):
 			kept += raw[i]
 	kept = kept.strip_edges().left(MAX_NAME_LENGTH).strip_edges()
 	return fallback if kept.is_empty() else kept
+
+
+## False for control characters and for marks that change text direction or draw nothing
+## (zero-width spaces and joiners, bidi embeddings, overrides and isolates, the BOM): a name
+## must not garble its neighbours or pass for someone else's.
+static func is_printable(code: int) -> bool:
+	if code < 32 or (code >= 127 and code < 160):
+		return false
+	for hidden: Vector2i in HIDDEN_RANGES:
+		if code >= hidden.x and code <= hidden.y:
+			return false
+	return true
