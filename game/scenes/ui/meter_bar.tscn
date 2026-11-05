@@ -1,0 +1,26 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/meter_bar.gd" id="1_bar"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_track"]
+bg_color = Color(0.1, 0.1, 0.12, 0.9)
+
+[node name="MeterBar" type="HBoxContainer"]
+mouse_filter = 2
+theme_override_constants/separation = 3
+script = ExtResource("1_bar")
+
+[node name="Label" type="Label" parent="."]
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Bar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(48, 6)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_track")
+step = 0.0
+value = 100.0
+show_percentage = false

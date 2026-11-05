@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="SurvivalTuning" format=3]
+
+[ext_resource type="Script" path="res://scripts/components/survival_tuning.gd" id="1_tuning"]
+
+[resource]
+script = ExtResource("1_tuning")
+thirst_per_s = 0.1
+thirst_sun_factor = 2.0
+thirst_swim_factor = 3.0
+thirst_night_factor = 0.5
+dry_health_per_s = 2.0
+hunger_per_s = 0.05
+hunger_work_factor = 2.0
+starving_energy_cap = 50.0
+heat_rise_per_s = 0.75
+heat_fall_per_s = 0.75
+sunstroke_at = 100.0
+sunstroke_ends_below = 60.0
+sunstroke_speed_factor = 0.6
+meal_energy = 10.0
+sleep_energy = 50.0
+morale_alone_night_per_s = 0.08333333333333333
+morale_company_per_s = 0.03333333333333333
+company_radius_tiles = 5.0
+morale_ally_died = -30.0
+morale_squall = -10.0
+morale_fire_lit = 5.0
+morale_song = 15.0
+morale_text_read = 10.0
+hallucinate_below = 20.0
+downed_s = 90.0
+revive_health = 30.0
+solo_last_stand_s = 0.0
