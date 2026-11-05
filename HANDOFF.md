@@ -69,7 +69,7 @@ Run from the repo root. Do not skip ahead to code.
 ## 7. Session end checklist
 
 - [ ] Project runs clean through the Godot MCP
-- [ ] Tests pass (`godot --headless -s tests/smoke.gd`, GUT)
+- [ ] Tests pass (`godot --headless --path game -s res://tests/smoke.gd`, then GUT; see CLAUDE.md Testing)
 - [ ] OpenSpec change archived or left clearly in progress in `openspec/changes/`
 - [ ] `TASKS.md` updated, including "Done"
 - [ ] Commit with a conventional message; push

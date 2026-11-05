@@ -133,10 +133,15 @@ The game reads the API URL from `game/config/backend.cfg`. Never put AWS keys in
 90-millas/
   game/                 Godot 4 project
     project.godot
-    scenes/             player, islands, enemies, ui
-    scripts/            autoloads (TurnlessGameState, WeatherManager, NetManager)
-    resources/          .tres data: items, creatures, npcs, recipes
+    scenes/             one folder per area: main, player, islands, enemies, ui
+    scripts/
+      autoload/         GameState, NetManager, WeatherManager, DialogueService, AudioManager
+      content/          ContentCatalog (finds .tres by folder), ContentValidator
+      data/             Resource classes for every content folder
+    resources/          .tres data, one folder per content type (see docs/CONTENT_MANIFEST.md)
     assets/             sprites, audio, fonts (see docs/ASSETS.md)
+    addons/gut/         GUT 9.7.1 test framework (vendored)
+    tests/              smoke.gd and unit/test_*.gd
     config/             backend.cfg, build settings
   backend/              AWS SAM app: dialogue Lambda calling Bedrock
   docs/                 design docs (this folder)
