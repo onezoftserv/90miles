@@ -22,8 +22,8 @@
 
 ## 5. HUD
 
-- [ ] 5.1 Add GUT tests: the HUD scene has six bars labelled Sed, Hambre, Calor, Energía, Ánimo, Salud in the committed font; bars follow the meters (thirst 40 shows 40 of 100); heat 75 fills three quarters; values set directly on the node, as a synchronizer would, show up; only the bound player's sunstroke shows the blur; rebinding stops following the old node; verify they fail (RED)
-- [ ] 5.2 Add `scenes/ui/meter_bar.tscn`, `scenes/ui/meters_hud.tscn` and the blur shader; verify the 5.1 tests pass, and the import, smoke run and GUT pass (GREEN)
+- [x] 5.1 Add GUT tests: the HUD scene has six bars labelled Sed, Hambre, Calor, Energía, Ánimo, Salud in the committed font; bars follow the meters (thirst 40 shows 40 of 100); heat 75 fills three quarters; values set directly on the node, as a synchronizer would, show up; only the bound player's sunstroke shows the blur; rebinding stops following the old node; verify they fail (RED)
+- [x] 5.2 Add `scenes/ui/meter_bar.tscn`, `scenes/ui/meters_hud.tscn` and the blur shader; verify the 5.1 tests pass, and the import, smoke run and GUT pass (GREEN)
 - [ ] 5.3 Add the HUD, a shaded hut and a midday climate to the movement playground; verify the smoke run loads it and a windowed screenshot at 640×360 shows six readable bars
 
 ## 6. Docs and integration

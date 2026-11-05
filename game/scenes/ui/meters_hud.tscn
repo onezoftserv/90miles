@@ -1,0 +1,88 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/meters_hud.gd" id="1_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/meter_bar.tscn" id="2_bar"]
+[ext_resource type="Theme" path="res://scenes/ui/hud_theme.tres" id="3_theme"]
+[ext_resource type="Shader" path="res://scenes/ui/sunstroke_blur.gdshader" id="4_blur"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_blur"]
+shader = ExtResource("4_blur")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.04, 0.06, 0.09, 0.6)
+content_margin_left = 3.0
+content_margin_top = 3.0
+content_margin_right = 3.0
+content_margin_bottom = 3.0
+
+[node name="MetersHud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("3_theme")
+script = ExtResource("1_hud")
+
+[node name="Blur" type="ColorRect" parent="."]
+visible = false
+material = SubResource("ShaderMaterial_blur")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 4.0
+offset_bottom = 4.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Bars" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Thirst" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 1
+label_text = "Sed"
+fill_color = Color(0.29, 0.64, 0.87, 1)
+
+[node name="Hunger" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 2
+label_text = "Hambre"
+fill_color = Color(0.79, 0.54, 0.29, 1)
+
+[node name="Heat" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 3
+label_text = "Calor"
+fill_color = Color(1, 0.42, 0.24, 1)
+
+[node name="Energy" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 4
+label_text = "Energía"
+fill_color = Color(0.91, 0.77, 0.28, 1)
+
+[node name="Morale" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 5
+label_text = "Ánimo"
+fill_color = Color(0.65, 0.49, 0.88, 1)
+
+[node name="Health" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 6
+label_text = "Salud"
+fill_color = Color(0.36, 0.75, 0.36, 1)
