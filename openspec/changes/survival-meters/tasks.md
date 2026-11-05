@@ -17,8 +17,8 @@
 
 ## 4. Player body
 
-- [ ] 4.1 Add GUT tests: a body on land in a midday climate loses thirst at 0.2/s; a swimming body uses ×3; a body on a shaded cell gets no sun; a teammate within 5 tiles restores morale; sunstroke slows walking to 2.4 tiles/s; running out of energy at the body level; meters going down puts the body down with its drag handle enabled, and a death keeps it down with the handle disabled; a body that is not the host does not advance its meters; verify they fail (RED)
-- [ ] 4.2 Add `TerrainQuery.is_shaded` with a shaded set in `GridTerrain`, `ClimateState`, the optional `speed_factor` in `MovementModel.step`, and the host-only meters tick and downed wiring in `PlayerBody`; verify the 4.1 tests and all player-movement tests pass, and the import, smoke run and GUT pass (GREEN)
+- [x] 4.1 Add GUT tests: a body on land in a midday climate loses thirst at 0.2/s; a swimming body uses ×3; a body on a shaded cell gets no sun; a teammate within 5 tiles restores morale; sunstroke slows walking to 2.4 tiles/s; running out of energy at the body level; meters going down puts the body down with its drag handle enabled, and a death keeps it down with the handle disabled; a body that is not the host does not advance its meters; verify they fail (RED)
+- [x] 4.2 Add `TerrainQuery.is_shaded` with a shaded set in `GridTerrain`, `ClimateState`, the optional `speed_factor` in `MovementModel.step`, and the host-only meters tick and downed wiring in `PlayerBody`; verify the 4.1 tests and all player-movement tests pass, and the import, smoke run and GUT pass (GREEN)
 
 ## 5. HUD
 

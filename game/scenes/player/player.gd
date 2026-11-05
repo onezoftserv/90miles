@@ -2,8 +2,11 @@ class_name PlayerBody
 extends CharacterBody2D
 ## A player's body. It applies the MovementModel to the current MoveIntent with 16 px tiles
 ## and spends the energy the model asks for. It never reads Input: PlayerInput (local) or
-## coop-networking (remote) sets `intent`.
+## coop-networking (remote) sets `intent`. On the host it also ticks its SurvivalMeters and
+## follows their downed state.
 
+## Every player body, for teammate checks.
+const GROUP: StringName = &"players"
 const TILE_SIZE: float = 16.0
 ## Leeway beyond the 1 tile reach before a timed press is dropped.
 const REACH_SLACK_PX: float = 2.0
@@ -12,14 +15,16 @@ const REACH_SLACK_PX: float = 2.0
 var intent: MoveIntent = MoveIntent.new()
 ## Ground and current under the body. Replaced by the island once it exists.
 var terrain: TerrainQuery = TerrainQuery.new()
+## Clock and weather for the meters. Replaced by weather-daynight once it exists.
+var climate: ClimateState = ClimateState.new()
 var model: MovementModel = MovementModel.new()
 var movement_state: MovementStep.Move = MovementStep.Move.WALK
 var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
 ## True when this body belongs to the local peer: it gets the camera and local input.
 ## Set before the body enters the tree.
 @export var local_player: bool = true
-## Downed players cannot act; a teammate can drag them (DragHandle). The flag is a plain
-## property until survival-meters owns it.
+## Downed players cannot act; a teammate can drag them (DragHandle). Follows the meters'
+## downed state; a dead player stays down and cannot be dragged.
 var downed: bool = false
 var interaction_hold: InteractionHold = InteractionHold.new()
 var _interact_was_held: bool = false
@@ -35,6 +40,9 @@ func _ready() -> void:
 	var is_local: bool = local_player and is_multiplayer_authority()
 	camera.enabled = is_local
 	player_input.enabled = is_local
+	add_to_group(GROUP)
+	meters.downed_changed.connect(set_downed)
+	meters.died.connect(_on_died)
 
 
 func _physics_process(delta: float) -> void:
@@ -46,12 +54,15 @@ func _physics_process(delta: float) -> void:
 	else:
 		_update_interaction(delta)
 		var cell := cell()
-		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, intent, delta)
+		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, intent, delta, meters.speed_factor())
 		meters.spend_energy(result.energy_spent)
 	movement_state = result.movement
 	stealth_state = result.stealth
 	velocity = result.velocity * TILE_SIZE
 	_move(velocity * delta)
+	# Meters are host state: clients show what the host replicates and never simulate them.
+	if is_inside_tree() and multiplayer.is_server():
+		meters.tick(delta, _meter_context())
 
 
 func set_downed(value: bool) -> void:
@@ -65,6 +76,37 @@ func set_downed(value: bool) -> void:
 ## The terrain cell under the body.
 func cell() -> Vector2i:
 	return Vector2i(floori(position.x / TILE_SIZE), floori(position.y / TILE_SIZE))
+
+
+## What the meters need to know about this body right now.
+func _meter_context() -> MeterContext:
+	var here := cell()
+	var context := MeterContext.new()
+	context.phase = climate.phase
+	context.midday = climate.midday
+	context.heat_factor = climate.heat_factor
+	context.shaded = terrain.is_shaded(here)
+	context.in_water = TerrainQuery.is_water(terrain.terrain_at(here))
+	context.swimming = movement_state == MovementStep.Move.SWIM or movement_state == MovementStep.Move.DIVE
+	context.teammate_nearby = _teammate_nearby()
+	return context
+
+
+## Another living player within the company radius.
+func _teammate_nearby() -> bool:
+	var radius_px: float = meters.tuning.company_radius_tiles * TILE_SIZE
+	for node: Node in get_tree().get_nodes_in_group(GROUP):
+		var other := node as PlayerBody
+		if other == null or other == self or other.meters.dead:
+			continue
+		if global_position.distance_to(other.global_position) <= radius_px:
+			return true
+	return false
+
+
+func _on_died() -> void:
+	set_downed(true)
+	drag_handle.enabled = false
 
 
 func _dragged_step(delta: float) -> MovementStep:
