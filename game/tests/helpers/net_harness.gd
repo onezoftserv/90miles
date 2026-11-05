@@ -20,14 +20,21 @@ func _init(test: GutTest) -> void:
 	_test = test
 
 
-## Adds the host branch and starts its session. `setup` gets the session before start().
-func add_host(setup: Callable = Callable()) -> CoopSession:
+## Adds the host branch and (unless `started` is false) starts its session. `setup` gets the
+## session before start().
+func add_host(setup: Callable = Callable(), started: bool = true) -> CoopSession:
 	var session := _add_branch("Host", setup)
 	var peer := NetPeers.create_server(0)
 	port = NetPeers.bound_port(peer)
 	apis[0].multiplayer_peer = peer
-	session.start()
+	if started:
+		session.start()
 	return session
+
+
+## Waits until `session`'s peer is connected.
+func wait_connected(session: CoopSession) -> bool:
+	return await _test.wait_until(func() -> bool: return _connected(session), TIMEOUT_S)
 
 
 ## Adds a client branch pointed at the host and starts its session, without waiting.

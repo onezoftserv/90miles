@@ -261,6 +261,31 @@ func test_a_revived_player_is_predicted_again() -> void:
 	assert_almost_eq(body.position.x, 32.0 + 4.0 * DT * TILE, 0.00001)
 
 
+func test_going_down_forgets_unacknowledged_intents() -> void:
+	var body := _spawn(7, Role.PREDICTED)
+	body.intent = MoveIntent.create(EAST)
+	_frames(body, 3)
+	_host_state(body, Vector2(16.0, 0.0), 0, SurvivalMeters.MAX_ENERGY, true)
+	assert_eq(body.net.buffer.size(), 0, "nothing is left to replay on revive")
+	_host_state(body, Vector2(64.0, 0.0), 0, SurvivalMeters.MAX_ENERGY, false)
+	assert_eq(body.position, Vector2(64.0, 0.0), "revived exactly where the host has it")
+
+
+func test_a_non_finite_host_state_is_ignored_by_the_owner() -> void:
+	var body := _spawn(7, Role.PREDICTED, Vector2(10.0, 20.0))
+	_host_state(body, Vector2(NAN, 0.0), 0)
+	assert_eq(body.position, Vector2(10.0, 20.0))
+	_host_state(body, Vector2(30.0, 20.0), 0, INF)
+	assert_eq(body.position, Vector2(10.0, 20.0))
+	assert_eq(body.meters.energy, SurvivalMeters.MAX_ENERGY)
+
+
+func test_a_non_finite_host_state_is_ignored_for_teammates() -> void:
+	var body := _spawn(1, Role.REMOTE)
+	_host_state(body, Vector2(INF, 0.0), 0)
+	assert_eq(body.net.interpolator.size(), 0)
+
+
 # --- remote (other clients' view) --------------------------------------------------------
 
 func test_remote_player_is_drawn_between_host_states() -> void:

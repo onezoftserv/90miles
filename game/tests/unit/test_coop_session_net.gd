@@ -86,6 +86,19 @@ func test_a_late_joiner_receives_every_player() -> void:
 	assert_eq(net.own_body(b).position, SPAWNS[2])
 
 
+func test_a_peer_that_connected_before_the_host_started_still_gets_a_player() -> void:
+	var host := net.add_host(_island, false)
+	var client := net.add_client(_client)
+	assert_true(await net.wait_connected(client))
+	var id: int = net.peer_id(client)
+	var host_knows_it := func() -> bool: return host.multiplayer.get_peers().has(id)
+	assert_true(await wait_until(host_knows_it, TIMEOUT_S), "the host has the peer before start()")
+	await wait_process_frames(5)
+	host.start()
+	var spawned := func() -> bool: return host.body(id) != null and client.body(id) != null
+	assert_true(await wait_until(spawned, TIMEOUT_S), "the early peer is added at start()")
+
+
 func test_fifth_player_is_refused() -> void:
 	var host := net.add_host(_island)
 	for i: int in 3:

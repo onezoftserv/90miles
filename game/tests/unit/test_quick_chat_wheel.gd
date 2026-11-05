@@ -65,6 +65,25 @@ func test_releasing_in_the_center_picks_nothing() -> void:
 	assert_signal_not_emitted(wheel, "phrase_picked")
 
 
+func test_holding_the_button_opens_the_wheel() -> void:
+	var wheel := _wheel()
+	Input.action_press(QuickChatWheel.ACTION)
+	wheel._process(0.0)
+	Input.action_release(QuickChatWheel.ACTION)
+	assert_true(wheel.visible)
+
+
+func test_typing_a_q_in_a_text_field_does_not_open_the_wheel() -> void:
+	var wheel := _wheel()
+	var field := LineEdit.new()
+	add_child_autofree(field)
+	field.grab_focus()
+	Input.action_press(QuickChatWheel.ACTION)
+	wheel._process(0.0)
+	Input.action_release(QuickChatWheel.ACTION)
+	assert_false(wheel.visible)
+
+
 func test_the_quick_chat_button_is_q_and_the_right_shoulder() -> void:
 	assert_true(InputMap.has_action(&"quick_chat"))
 	var keys: Array[int] = []

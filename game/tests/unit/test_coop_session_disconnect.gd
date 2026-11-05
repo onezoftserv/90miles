@@ -79,6 +79,27 @@ func test_a_dropped_players_countdown_does_not_touch_the_others() -> void:
 	assert_eq(host.disconnect_time_left(b_id), 0.0)
 
 
+func test_a_reconnecting_client_joins_as_a_new_player_while_its_old_body_is_downed() -> void:
+	var host := net.add_host(_island)
+	var joined: Array[CoopSession] = []
+	for i: int in 3:
+		var client := await net.join()
+		assert_not_null(client, "client %d joined" % (i + 1))
+		if client == null:
+			return
+		joined.append(client)
+	var dropped_id: int = net.peer_id(joined[2])
+	net.drop(joined[2])
+	assert_true(await wait_until(func() -> bool: return host.disconnect_time_left(dropped_id) > 0.0, TIMEOUT_S))
+	var again := await net.join()
+	assert_not_null(again, "a full session takes a new player while a dropped one waits")
+	if again == null:
+		return
+	assert_eq(host.peer_ids().size(), 5, "four connected players and the downed one")
+	assert_true(host.body(dropped_id).downed)
+	assert_false(host.body(net.peer_id(again)).downed)
+
+
 func test_host_drops() -> void:
 	var host := net.add_host(_island)
 	var a := await net.join()

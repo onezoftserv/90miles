@@ -56,6 +56,20 @@ func test_unknown_peers_have_no_body() -> void:
 	assert_null(session.body(42))
 
 
+func test_a_world_state_not_sent_by_the_host_is_ignored() -> void:
+	var session := _solo()
+	session.receive_world_state({"island_seed": 5})
+	assert_eq(session.world_state, {})
+
+
+func test_a_spawn_with_a_non_finite_position_lands_at_the_origin() -> void:
+	var session := _solo()
+	var spawned := session._spawn_player({"peer": 9, "position": Vector2(NAN, 0.0)}) as PlayerBody
+	assert_eq(spawned.position, Vector2.ZERO)
+	spawned.free()
+	assert_null(session.body(9))
+
+
 func test_a_direct_call_outside_an_rpc_has_no_sender_and_is_ignored() -> void:
 	# The handler acts for the RPC's sender; called directly there is none (id 0).
 	var session := _solo()
