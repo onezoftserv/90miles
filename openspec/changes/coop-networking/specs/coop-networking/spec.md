@@ -72,7 +72,7 @@ If a client disconnects, its player SHALL stay in the world as downed for 90 s, 
 - **THEN** the client's session ends and it shows the "host lost" screen
 
 ### Requirement: Difficulty scaling
-Resource spawn rates SHALL multiply by 0.8 per player beyond the first; patrol count adds 1 per 2 players. With one player (solo) resource spawn rates are ×1 and the patrol count is unchanged.
+Difficulty SHALL be counted from the living, connected players when each island is set up: resource spawn rates multiply by 0.8 per such player beyond the first, and patrol count adds 1 per 2 such players, rounded down. Dropped and dead players do not count. One player (solo, or the last survivor of a party) gets ×1 and +0 patrols. Solo uses the same base numbers as co-op; there is no separate solo tuning.
 
 #### Scenario: Three players
 - GIVEN a session with 3 players
@@ -82,6 +82,11 @@ Resource spawn rates SHALL multiply by 0.8 per player beyond the first; patrol c
 #### Scenario: Solo island
 - **GIVEN** a solo session
 - **WHEN** an island is set up
+- **THEN** resource spawn rates are ×1 and the patrol count is unchanged
+
+#### Scenario: Last survivor of four
+- **GIVEN** a 4-player run in which 3 players are dead
+- **WHEN** the next island is set up
 - **THEN** resource spawn rates are ×1 and the patrol count is unchanged
 
 ### Requirement: Quick chat
@@ -110,6 +115,19 @@ A client SHALL send intents only to the host. The host SHALL ignore intents that
 - **GIVEN** a session with clients A and B
 - **WHEN** client A sends a message only the host may send, such as showing a quick-chat bubble
 - **THEN** no peer shows the bubble
+
+### Requirement: Pause
+In a solo session (one player, offline) the pause button SHALL open the pause menu and freeze the whole simulation (clock, meters, creatures, patrols, weather) until the player resumes. Co-op has no pause: with other players, or while hosting, the pause button does nothing. Save-and-quit is out of scope.
+
+#### Scenario: Solo pause
+- **GIVEN** a solo player
+- **WHEN** they press pause
+- **THEN** the pause menu shows and nothing in the simulation advances, and when they resume it runs again from where it stopped
+
+#### Scenario: No pause in co-op
+- **GIVEN** a host with a client
+- **WHEN** either player presses pause
+- **THEN** nothing pauses and no pause menu shows
 
 ### Requirement: Per-peer rate limits
 The host SHALL limit each client to 90 intents per second with a burst of 30, and to 1 s of simulated movement per second of real time with 0.25 s of slack, each intent counting at least one 1/60 s frame and at most 0.1 s. Every player, solo included, gets 3 quick-chat phrases in a burst, then one every 2 s. Over-limit messages are dropped. The host's own (solo) player's intents are never limited.

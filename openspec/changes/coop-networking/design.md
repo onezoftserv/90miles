@@ -10,7 +10,7 @@ A spike on Godot 4.7.2 confirmed the test harness this design depends on: two `S
 
 **Goals:** two to four players on one island with the host authoritative; a client's own player responds on the frame it presses a key; every spec scenario has a GUT test with exact numbers; the RPC rules hold for every handler.
 
-**Non-Goals:** lobby, title or join menus beyond a dev panel (review item 23); inventories, item pick-up effects, creatures or NPC scenes (the entity spawner is ready for them); difficulty scaling (proposal decision 2); reconnect reclaim and player identity (decision 3); host migration; voice clips (decision 8); visual smoothing of corrections (decision 7); pause and save (decision 11).
+**Non-Goals:** lobby, title or join menus beyond a dev panel (review item 23); inventories, item pick-up effects, creatures or NPC scenes (the entity spawner is ready for them); applying the difficulty numbers to an island (island-generation does that); reconnect reclaim and player identity (decision 3); host migration; voice clips (decision 8); visual smoothing of corrections (decision 7); save-and-quit (decision 11).
 
 ## Decisions
 
@@ -65,6 +65,11 @@ Solo needs nothing else: `start()` on the offline peer spawns the host's own pla
 
 ### Quick chat
 Phrases are the lines of state `quick_chat` in `game/resources/dialogue/quick_chat.tres` (`DialogueData`, kind QUICK_CHAT), in wheel order, ids `quick_chat_<phrase>`. `QuickChatWheel` (`scenes/ui/`) is shown while `quick_chat` (Q, gamepad right shoulder) is held; the slot comes from the mouse offset from the wheel's center or the right stick: 8 sectors of 45° clockwise from north, with a dead zone (`slot_for(direction)` is pure). Releasing over a slot calls `session.rpc_id(1, "request_quick_chat", slot)` (`any_peer`, `call_local`, reliable): the host checks the sender's body, the index and the bucket, then calls `show_quick_chat(peer_id, slot)` (`authority`, `call_local`, reliable) on everyone. Each peer adds a `SpeechBubble` over that body for 2.5 s with the line in the current locale (Spanish first) and plays `res://assets/audio/voice/<line id>.ogg` from the bubble if the file exists. No autoload changes.
+
+### Difficulty scaling and the solo pause
+`DifficultyScaling.for_players(n)` (pure) gives `resource_multiplier = 0.8^(n−1)` and `extra_patrols = ⌊n/2⌋`, with n at least 1. `CoopSession.island_difficulty(alive)` counts the session's players that are connected (not in the disconnect countdown) and alive. By default `CoopSession.is_alive()` reads `SurvivalMeters.dead`, which survival-meters adds; until then every connected player counts as alive. Tests pass their own `alive` callable for the "3 of 4 dead" case. Nothing calls `island_difficulty()` yet: island-generation and guardacostas-stealth read it when an island is set up.
+
+`CoopSession.can_pause()` is true only on the offline peer with one player. `set_paused(true)` sets `SceneTree.paused`, which stops every node that inherits the tree's pause: players, meters, creatures, patrols, and the WeatherManager clock and weather. `PauseMenu` (`scenes/ui/pause_menu.tscn`, `PROCESS_MODE_ALWAYS`) opens on the `pause` action (Esc, gamepad Start), shows "Pausa" and "Seguir", and refuses to open in co-op. Pausing the tree is enough because no gameplay node opts out of the pause; anything added later that must run while paused (menus) sets its own process mode.
 
 ### Co-op dev playground
 `scenes/dev/coop_playground.tscn` reuses the movement playground's terrain, holds a `CoopSession`, and starts from command-line user arguments (`-- --host[=port]`, `-- --join=address[:port]`, `-- --solo`) or a small Host/Join panel. Hosting over the internet needs UDP 7777 forwarded by hand (no UPnP, proposal decision 4); the panel says so. The main scene never hosts on its own, so the headless 300-frame run opens no socket.

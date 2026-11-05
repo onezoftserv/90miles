@@ -58,6 +58,13 @@ Each group is written test-first: its tests are committed failing (RED), then th
 - [x] 8.3 State the solo case in every requirement of the spec delta, add the solo scenarios, and list the rules that only make sense with 2+ players as questions in proposal.md; verify `openspec validate coop-networking --type change --strict`
 - [x] 8.4 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero error lines
 
+## 9. Difficulty scaling and solo pause (approved 2026-11-05)
+
+- [x] 9.1 Add `DifficultyScaling` and `CoopSession.island_difficulty()` (living, connected players; dropped and dead ones not counted) and verify GUT tests for 1 to 4 players, "solo island", "last survivor of four" and dropped players, failing before the code exists
+- [x] 9.2 Add `CoopSession.can_pause()`/`set_paused()`, the `pause` action (Esc, gamepad Start) and `PauseMenu`, and verify GUT tests that solo pause freezes the players, the session, the weather clock and run state while the menu keeps running, that resuming runs them again, and that co-op and a host waiting alone cannot pause
+- [x] 9.3 Put both rules and "solo uses the same base numbers" in the spec delta, record the decisions in proposal.md and design.md, and verify `openspec validate coop-networking --type change --strict`
+- [x] 9.4 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero error lines
+
 ## Workflow follow-up
 
 - Review with the ECC reviewers and fix what survives verification.
