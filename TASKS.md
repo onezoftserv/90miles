@@ -32,7 +32,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 ## 3. Milestone A — Two players on a handmade island
 
 - [x] `player-movement`: walk, run, crouch, swim, dive, interact
-- [ ] `coop-networking`: host/join, spawner, synchronizer, quick chat
+- [x] `coop-networking`: host/join, spawner, synchronizer, quick chat
 - [ ] `survival-meters`: all six meters with the §4 numbers, HUD bars
 - [ ] Handmade sandbar scene: hut, 6 palms, flotsam line, tide pools
 - [ ] `crafting-inventory`: inventory, pick-up, coconut, rain cup, workbench, fire
