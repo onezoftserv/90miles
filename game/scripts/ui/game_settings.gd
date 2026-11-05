@@ -1,7 +1,7 @@
 class_name GameSettings
 extends RefCounted
 ## ui-shell "Settings": what each install keeps across launches (player name, fullscreen,
-## scale), in one ConfigFile. Values read from the file are checked; anything malformed falls
+## scale, pixel filter), in one ConfigFile. Nothing here is synced to other players. Values read from the file are checked; anything malformed falls
 ## back to its default.
 
 const DEFAULT_PATH: String = "user://settings.cfg"
@@ -24,6 +24,7 @@ var fullscreen: bool = false
 var ui_scale: int = 0:
 	set(value):
 		ui_scale = clampi(value, 0, MAX_SCALE)
+var pixel_filter: PixelFilter.Mode = PixelFilter.Mode.SHARP
 
 
 func _init(file_path: String = DEFAULT_PATH) -> void:
@@ -44,6 +45,9 @@ static func load_from(file_path: String = DEFAULT_PATH) -> GameSettings:
 	var scale_value: Variant = config.get_value("display", "ui_scale", 0)
 	if scale_value is int and scale_value >= 0 and scale_value <= MAX_SCALE:
 		settings.ui_scale = scale_value
+	var filter_value: Variant = config.get_value("display", "pixel_filter", PixelFilter.Mode.SHARP)
+	if filter_value is int and PixelFilter.Mode.values().has(filter_value):
+		settings.pixel_filter = filter_value as PixelFilter.Mode
 	return settings
 
 
@@ -52,6 +56,7 @@ func save() -> Error:
 	config.set_value("player", "name", player_name)
 	config.set_value("display", "fullscreen", fullscreen)
 	config.set_value("display", "ui_scale", ui_scale)
+	config.set_value("display", "pixel_filter", pixel_filter)
 	return config.save(path)
 
 

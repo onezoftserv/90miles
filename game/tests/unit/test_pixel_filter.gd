@@ -15,6 +15,7 @@ func before_each() -> void:
 func after_each() -> void:
 	NetManager.leave()
 	get_tree().root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
+	get_tree().root.oversampling = true
 	if FileAccess.file_exists(SETTINGS_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
 
@@ -59,6 +60,7 @@ func test_smooth_from_the_settings() -> void:
 	assert_eq(root.content_scale_size, DisplayFit.BASE_SIZE, "the same 640×360 base")
 	assert_eq(root.content_scale_stretch, Window.CONTENT_SCALE_STRETCH_INTEGER, "whole-number scale")
 	assert_eq(root.content_scale_aspect, Window.CONTENT_SCALE_ASPECT_KEEP, "black bars")
+	assert_false(root.oversampling, "the HUD's 8 px fonts are enlarged, not redrawn bigger")
 
 
 func test_the_settings_screen_switches_the_filter() -> void:

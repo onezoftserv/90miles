@@ -35,9 +35,9 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 6. Pixel filter
 
-- [ ] 6.1 Add the pixel filter to `GameSettings` (`[display] pixel_filter`, Nítido by default) and its option on the settings screen, and verify GUT tests for "setting persists" and "settings screen offers both modes"
-- [ ] 6.2 Move `World` into a 640×360 `SubViewport` with `PixelFilter` picking the stretch mode and material, write `scale2x.gdshader` from the published rules, and verify GUT tests for "presenter picks the material in each mode" and "solo run in Suave"
-- [ ] 6.3 Add `tests/manual/capture_pixel_filter.tscn`, capture Nítido before and after (pixel-identical) and Suave, and save the captures in `docs/ui-shell/`
+- [x] 6.1 Add the pixel filter to `GameSettings` (`[display] pixel_filter`, Nítido by default) and its option on the settings screen, and verify GUT tests for "setting persists" and "settings screen offers both modes"
+- [x] 6.2 Move `World` into a 640×360 `SubViewport` with `PixelFilter` picking the stretch mode and material, write `scale2x.gdshader` from the published rules, and verify GUT tests for "presenter picks the material in each mode" and "solo run in Suave"
+- [x] 6.3 Add `tests/manual/capture_pixel_filter.tscn`, capture Nítido before and after (pixel-identical) and Suave, and save the captures in `docs/ui-shell/`
 - [ ] 6.4 Verify the import, smoke run, GUT and a two-process host and client run through the shell pass with zero error lines
 
 ## Workflow follow-up

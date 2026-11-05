@@ -77,7 +77,11 @@ The dev playgrounds keep the project's 1280×720 window, which is 2×.
   - At 3× and 4× each quarter is more than one pixel, so it is Scale2x enlarged with nearest.
   - The shader is written from the published rules (Eric Johnston's EPX, Andrea Mazzoleni's Scale2x description); no reference code was used, so it needs no CREDITS row.
 - **What gets smoothed:** world-space marks (name tags, speech bubbles) are part of the world, so Suave smooths them too. The HUD and menus never are.
-- `PixelFilter` (`scripts/ui/pixel_filter.gd`) maps a mode to the root stretch mode and the world view's material. The shell applies it on start and whenever a setting changes. The stretch mode is skipped headless, as the window is.
+- `PixelFilter` (`scripts/ui/pixel_filter.gd`) maps a mode to the root stretch mode, root font oversampling and the world view's material. The shell applies it on start and whenever a setting changes, headless too, so tests check it.
+- **Checked by capture** (`tests/manual/capture_pixel_filter.tscn`, 2× window, solo run on the dev island):
+  - Nítido after the change against Nítido before it: 0 of 921,600 pixels differ.
+  - Suave against Nítido: only world pixels differ (corners and the player's outline); the HUD is identical.
+  - The captures are in `docs/ui-shell/`.
 
 ### Settings: one ConfigFile per install
 `GameSettings` loads and saves `user://settings.cfg`; tests inject the path. Fields:
@@ -150,7 +154,7 @@ When every player in the session is dead (`SurvivalMeters.dead`), the host annou
 - **The spawn timing change could break the coop-networking ENet suites.** → `start()` defaults to RUN, which keeps every current caller and test on today's behaviour; only the shell asks for the lobby.
 - **Removing per-scene themes changes how the playgrounds and the existing screens look.** → Their tests check text and behaviour, not pixels; screenshots are reviewed.
 - **The fixed 640×360 view leaves black bars at sizes that are not multiples** (1366×768 shows 2× with bars). → That is the cost of crisp pixels; the fullscreen toggle helps.
-- **Suave renders the root canvas at the window's resolution**, so the HUD's text is drawn by the font at the enlarged size instead of being enlarged afterwards. → With crisp font imports the result matches Nítido; the capture script compares the HUD strip of both modes.
+- **Suave renders the root canvas at the window's resolution.** With font oversampling on, the HUD's text would be redrawn by the font at the enlarged size, and its 1 px shadows come out thinner. → Suave turns oversampling off on the root (`PixelFilter.font_oversampling`), so the 8 px glyphs are enlarged like every other HUD pixel. The captures show the HUD pixel-identical in both modes.
 - **Moving `World` into a SubViewport changes the node path of every networked node.** → Host and client both run the shell, so the paths still match. The two-process run through the shell checks it.
 - **Two fonts.** → Each is used where it is crisp (Pixelify at 16 and 32, Press Start 2P at 8), and the rendered comparison is in the PR.
 - **A joiner refused because the lobby or run is full sees "host lost"** (the host drops the peer, and the client cannot tell why). → Accepted for now. coop-reconnect's handshake adds a refusal reason ("partida llena") before the disconnect.

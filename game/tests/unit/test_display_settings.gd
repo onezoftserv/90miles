@@ -144,6 +144,8 @@ func test_each_pixel_filter_mode_picks_its_presentation() -> void:
 	assert_eq(PixelFilter.stretch_mode(PixelFilter.Mode.SHARP), Window.CONTENT_SCALE_MODE_VIEWPORT, "the window enlarges the base picture")
 	assert_eq(PixelFilter.stretch_mode(PixelFilter.Mode.SMOOTH), Window.CONTENT_SCALE_MODE_CANVAS_ITEMS, "drawn at the window's resolution")
 	assert_null(PixelFilter.material_for(PixelFilter.Mode.SHARP), "nearest, no shader")
+	assert_true(PixelFilter.font_oversampling(PixelFilter.Mode.SHARP))
+	assert_false(PixelFilter.font_oversampling(PixelFilter.Mode.SMOOTH), "HUD fonts enlarged like the rest of the HUD")
 	var smooth := PixelFilter.material_for(PixelFilter.Mode.SMOOTH) as ShaderMaterial
 	assert_not_null(smooth)
 	if smooth != null:

@@ -14,9 +14,9 @@ script = ExtResource("1_settings")
 [node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 0
 offset_left = 176.0
-offset_top = 84.0
+offset_top = 64.0
 offset_right = 464.0
-offset_bottom = 276.0
+offset_bottom = 296.0
 
 [node name="Rows" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
@@ -54,6 +54,15 @@ theme_type_variation = &"PanelLabel"
 text = "Escala"
 
 [node name="Scale" type="OptionButton" parent="Panel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="FilterLabel" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+text = "Filtro de píxeles"
+
+[node name="PixelFilter" type="OptionButton" parent="Panel/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
 

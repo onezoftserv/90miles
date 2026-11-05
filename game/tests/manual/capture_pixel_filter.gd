@@ -4,7 +4,8 @@ extends Node
 ## what the window shows plus a close-up of the player:
 ##   godot --path game res://tests/manual/capture_pixel_filter.tscn -- --filter=sharp --out=<dir>
 ##   godot --path game res://tests/manual/capture_pixel_filter.tscn -- --filter=smooth --out=<dir>
-## Writes <dir>/pixel_filter_<filter>.png and <dir>/pixel_filter_<filter>_player.png.
+## Writes <dir>/pixel_filter_<filter>.png and <dir>/pixel_filter_<filter>_player.png. With
+## --settings it saves the settings screen instead, as <dir>/pixel_filter_<filter>_settings.png.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://capture_pixel_filter.cfg"
@@ -16,6 +17,7 @@ const CLOSE_UP_ZOOM: int = 3
 
 var _filter: String = "sharp"
 var _out_dir: String = ""
+var _settings_screen: bool = false
 
 
 func _ready() -> void:
@@ -24,6 +26,8 @@ func _ready() -> void:
 			_filter = arg.trim_prefix("--filter=")
 		elif arg.begins_with("--out="):
 			_out_dir = arg.trim_prefix("--out=")
+		elif arg == "--settings":
+			_settings_screen = true
 	if _out_dir.is_empty() or not (_filter == "sharp" or _filter == "smooth"):
 		push_error("capture_pixel_filter: pass --filter=sharp|smooth and --out=<dir>")
 		get_tree().quit(1)
@@ -33,6 +37,12 @@ func _ready() -> void:
 	shell.settings_path = SETTINGS_PATH
 	add_child(shell)
 	await _frames(5)
+	if _settings_screen:
+		shell.show_settings()
+		await _frames(SETTLE_FRAMES)
+		_save_window("pixel_filter_%s_settings.png" % _filter)
+		get_tree().quit()
+		return
 	shell.start_solo()
 	for peer_id: int in shell.session.peer_ids():
 		shell.session.body(peer_id).player_input.enabled = false
@@ -59,12 +69,7 @@ func _frames(count: int) -> void:
 # size in Smooth; both are saved at the window size.
 func _save(shell: GameShell) -> void:
 	var window_size := DisplayFit.window_size(SCALE)
-	var image := get_viewport().get_texture().get_image()
-	if image.get_size() != window_size:
-		image.resize(window_size.x, window_size.y, Image.INTERPOLATE_NEAREST)
-	var path := _out_dir.path_join("pixel_filter_%s.png" % _filter)
-	var saved := image.save_png(path)
-	print("capture_pixel_filter: %s -> %s (%s)" % [_filter, path, error_string(saved)])
+	var image := _save_window("pixel_filter_%s.png" % _filter)
 	var player := shell.session.body(shell.session.peer_ids()[0])
 	var centre := Vector2i(player.get_global_transform_with_canvas().origin) * SCALE
 	var side := CLOSE_UP_BASE_PX * SCALE
@@ -72,3 +77,14 @@ func _save(shell: GameShell) -> void:
 	var close_up := image.get_region(Rect2i(corner, Vector2i(side, side)))
 	close_up.resize(side * CLOSE_UP_ZOOM, side * CLOSE_UP_ZOOM, Image.INTERPOLATE_NEAREST)
 	close_up.save_png(_out_dir.path_join("pixel_filter_%s_player.png" % _filter))
+
+
+func _save_window(file_name: String) -> Image:
+	var window_size := DisplayFit.window_size(SCALE)
+	var image := get_viewport().get_texture().get_image()
+	if image.get_size() != window_size:
+		image.resize(window_size.x, window_size.y, Image.INTERPOLATE_NEAREST)
+	var path := _out_dir.path_join(file_name)
+	var saved := image.save_png(path)
+	print("capture_pixel_filter: %s -> %s (%s)" % [_filter, path, error_string(saved)])
+	return image

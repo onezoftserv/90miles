@@ -45,7 +45,10 @@ var island: DevIsland
 var clock: Callable
 var _run_started_s: float = 0.0
 
-@onready var _world: Node2D = $World
+## The world's own 640×360 view (ui-shell "Pixel filter"); the HUD and screens are outside it.
+@onready var world_view: SubViewportContainer = $WorldView
+@onready var world_viewport: SubViewport = $WorldView/Viewport
+@onready var _world: Node2D = $WorldView/Viewport/World
 @onready var _screens: Control = $Screens/Root
 @onready var _backdrop: ColorRect = $Screens/Root/Backdrop
 
@@ -58,6 +61,7 @@ func _ready() -> void:
 	settings = GameSettings.load_from(settings_path)
 	NetManager.join_failed.connect(_on_join_failed)
 	apply_display()
+	apply_pixel_filter()
 	show_title()
 
 
@@ -85,6 +89,14 @@ func apply_display() -> void:
 	DisplayServer.window_set_position(usable.position + (usable.size - size) / 2)
 
 
+## Nítido: the window enlarges the whole 640×360 picture with nearest filtering. Suave: the root
+## canvas is drawn at the window's resolution and the world view runs the Scale2x shader.
+func apply_pixel_filter() -> void:
+	world_view.material = PixelFilter.material_for(settings.pixel_filter)
+	get_window().content_scale_mode = PixelFilter.stretch_mode(settings.pixel_filter)
+	get_window().oversampling = PixelFilter.font_oversampling(settings.pixel_filter)
+
+
 func show_title() -> void:
 	var title := _show(TITLE_SCENE, Flow.TITLE) as TitleScreen
 	title.solo_requested.connect(start_solo)
@@ -98,7 +110,12 @@ func show_settings() -> void:
 	var settings_screen := _show(SETTINGS_SCENE, Flow.SETTINGS) as SettingsScreen
 	settings_screen.bind(settings)
 	settings_screen.back_requested.connect(show_title)
-	settings_screen.display_changed.connect(apply_display)
+	settings_screen.display_changed.connect(_on_display_changed)
+
+
+func _on_display_changed() -> void:
+	apply_display()
+	apply_pixel_filter()
 
 
 func show_join() -> void:
