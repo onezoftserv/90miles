@@ -236,6 +236,11 @@ func _end_run() -> void:
 
 func _on_player_spawned(_peer_id: int, body: PlayerBody) -> void:
 	body.meters.died.connect(_check_run_over)
+	# The camera stays over the island, never past its edge.
+	body.camera.limit_left = DevIsland.BOUNDS.position.x
+	body.camera.limit_top = DevIsland.BOUNDS.position.y
+	body.camera.limit_right = DevIsland.BOUNDS.end.x
+	body.camera.limit_bottom = DevIsland.BOUNDS.end.y
 
 
 # The run ends when every player in it is dead.

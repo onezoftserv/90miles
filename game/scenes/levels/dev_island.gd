@@ -7,6 +7,9 @@ const SPAWN_POINTS: Array[Vector2] = [
 	Vector2(40.0, 200.0), Vector2(72.0, 200.0), Vector2(40.0, 232.0), Vector2(72.0, 232.0),
 ]
 
+## The island in pixels: the run camera stays inside it.
+const BOUNDS: Rect2i = Rect2i(0, 0, 48 * DevIslandTerrain.TILE, 24 * DevIslandTerrain.TILE)
+
 var terrain: GridTerrain = DevIslandTerrain.build()
 var climate: ClimateState = ClimateState.new()
 

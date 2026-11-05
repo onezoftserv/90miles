@@ -14,9 +14,9 @@ script = ExtResource("1_lobby")
 [node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 0
 offset_left = 176.0
-offset_top = 72.0
+offset_top = 84.0
 offset_right = 464.0
-offset_bottom = 288.0
+offset_bottom = 240.0
 
 [node name="Box" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
