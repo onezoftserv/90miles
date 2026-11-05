@@ -36,7 +36,7 @@
 
 - [x] 7.1 Add GUT tests: a lit fire keeps a lone player company at night (morale 50 stays 50), a night alone by the fire (40 at dusk, 45 at dawn, never hallucinating), three solo days on the sandbar (10 coconuts, half sun, fire each night: thirst and hunger never 0, at most 10 coconuts, morale never below 20); at the body level a lone body dies at 0 health with no downed timer, the last one alive does too, a body with a living teammate is downed, and a node in `lit_fires` within 5 tiles stops the night drain; verify they fail (RED)
 - [x] 7.2 Add `MeterContext.near_fire`, the fire rule in `SurvivalRules.morale_rate`, and in `PlayerBody` the derived `solo` flag and the `lit_fires` check; verify the 7.1 tests and every earlier test pass, and the import, smoke run and GUT pass (GREEN)
-- [ ] 7.3 Update `docs/GAME_DESIGN.md` §4 (fire as company, solo death, solo budget) and the `TASKS.md` Done entry; verify `openspec validate survival-meters --type change --strict` passes
+- [x] 7.3 Update `docs/GAME_DESIGN.md` §4 (fire as company, solo death, solo budget) and the `TASKS.md` Done entry; verify `openspec validate survival-meters --type change --strict` passes
 
 ## Workflow follow-up
 
