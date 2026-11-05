@@ -24,6 +24,6 @@ GPL-licensed. Study only; never copy code into game/.
 | --- | --- | --- |
 | shattered-pixel-dungeon | Actor/turn system, level builders + painters, items, buffs, hero classes | core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/{actors,levels,items} |
 | BrogueCE | Dungeon features, Dijkstra maps, monster AI, stealth and noise, machines | src/brogue/{Architect.c,Monsters.c,Movement.c,Dijkstra.c} |
-| crawl | Data-driven monsters/items, skills trained by use, branches | crawl-ref/source/{mon-data.h,item-prop.cc,skills.cc,branch-data.h} |
+| crawl | Data-driven monsters/items, skills trained by use, branches | crawl-ref/source/{dat/mons/*.yaml,item-prop.cc,skills.cc,branch-data.h} |
 EOF
 echo "done -> reference/"
