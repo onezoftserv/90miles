@@ -120,3 +120,7 @@ func test_downed_lasts_90_s() -> void:
 
 func test_revive_stands_up_at_30_health() -> void:
 	assert_eq(tuning.revive_health, 30.0)
+
+
+func test_solo_last_stand_is_0_s_before_downed_timer_bonuses() -> void:
+	assert_eq(tuning.solo_last_stand_s, 0.0)

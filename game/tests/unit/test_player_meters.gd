@@ -156,6 +156,22 @@ func test_a_lone_body_dies_at_0_health_without_a_downed_timer() -> void:
 	assert_false(body.drag_handle.enabled)
 
 
+func test_a_lone_body_in_a_last_stand_lies_down_undraggable_until_it_saves_itself() -> void:
+	var body := _spawn()
+	body.meters.downed_bonus_s = 10.0
+	_step([body], DT)
+	body.meters.add(M.HEALTH, -100.0)
+	assert_true(body.meters.last_stand)
+	assert_true(body.downed, "the body lies where it fell")
+	assert_false(body.drag_handle.enabled, "nobody to drag it")
+	body.intent = MoveIntent.create(Vector2.RIGHT)
+	var where_it_fell: Vector2 = body.position
+	_step([body], 1.0)
+	assert_eq(body.position, where_it_fell, "immobile")
+	assert_true(body.meters.revive())
+	assert_false(body.downed)
+
+
 func test_the_last_one_alive_dies_at_0_health() -> void:
 	var survivor := _spawn()
 	var fallen := _spawn(Vector2(32.0, 0.0))
