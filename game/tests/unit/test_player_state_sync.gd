@@ -11,6 +11,19 @@ const SHADOW_FIELDS: Array[String] = [
 	"PlayerNet:net_movement",
 	"PlayerNet:net_position",
 	"PlayerNet:net_stealth",
+	# survival-meters values the client only shows (energy travels as net_energy, because the
+	# client's prediction spends it).
+	"SurvivalMeters:dead",
+	"SurvivalMeters:downed",
+	"SurvivalMeters:downed_time_left_s",
+	"SurvivalMeters:hallucinating",
+	"SurvivalMeters:health",
+	"SurvivalMeters:heat",
+	"SurvivalMeters:hunger",
+	"SurvivalMeters:last_stand",
+	"SurvivalMeters:morale",
+	"SurvivalMeters:sunstroke",
+	"SurvivalMeters:thirst",
 ]
 
 

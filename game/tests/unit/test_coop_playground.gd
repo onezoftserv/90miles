@@ -56,6 +56,16 @@ func test_solo_spawns_one_player_on_the_beach_terrain() -> void:
 	assert_eq(body.terrain.terrain_at(body.cell()), DataEnums.Terrain.BEACH)
 
 
+func test_the_hud_shows_the_local_players_meters() -> void:
+	var playground := PLAYGROUND_SCENE.instantiate() as CoopPlayground
+	add_child_autofree(playground)
+	playground.start({"mode": "solo", "address": "", "port": NetPeers.DEFAULT_PORT})
+	var body := playground.session.body(1)
+	assert_eq(body.climate, playground.climate, "the playground's midday sun reaches the player")
+	body.meters.thirst = 40.0
+	assert_almost_eq(playground.hud.bar_for(DataEnums.Meter.THIRST).fill_ratio(), 0.4, 0.0001)
+
+
 func test_the_wheel_says_through_the_session() -> void:
 	var playground := PLAYGROUND_SCENE.instantiate() as CoopPlayground
 	add_child_autofree(playground)
