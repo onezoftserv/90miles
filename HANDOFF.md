@@ -53,6 +53,10 @@ Run from the repo root. Do not skip ahead to code.
 
 - Engine Godot 4, GDScript, 2D top-down pixel art, 16×16 tiles, 640×360
 - Real-time (not turn-based), host-and-join co-op, 1–4 players
+- Movement sync: host authority with client prediction and reconciliation, driven by `MoveIntent` (2026-11-05)
+- Heat rises 0 → 100 with sunstroke at 100; meter drains get retuned in `survival-meters` so thirst empties in about 1–1.5 in-game days (2026-11-05)
+- Characters are 16×16 (Kenney CC0 bases) for now (2026-11-05)
+- The seven provisional `player-movement` choices (crawl 1 tile/s, free treading, drag on press, per-interactable holds, 16×16 placeholder, 1 tile/s east current, dives need >10 energy) are confirmed (2026-11-05)
 - Multiple endings by who you saved; secret ending if Yunior lives
 - AI dialogue: Claude Haiku 4.5 on Bedrock for important NPCs and recurring texts only; Nova Micro as cheap fallback
 - Voice: Chatterbox clones for handwritten lines; Kokoro runtime TTS is a stretch goal

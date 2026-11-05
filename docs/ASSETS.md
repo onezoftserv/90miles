@@ -1,6 +1,6 @@
 # 90 Millas — Free Assets
 
-Every asset source is free for commercial use. Keep each pack's license file next to its files in `game/assets/<source>/`. The art direction is 16×16 tiles and 32×32 characters, top-down, Caribbean palette (sand, turquoise, mangrove green, rust).
+Every asset source is free for commercial use. Keep each pack's license file next to its files in `game/assets/<source>/`. The art direction is 16×16 tiles and 16×16 characters (decided 2026-11-05), top-down, Caribbean palette (sand, turquoise, mangrove green, rust).
 
 `tools/fetch_assets.py` downloads the packs marked **auto**; the rest need a manual download because the site requires a login or a click.
 
@@ -8,7 +8,7 @@ Every asset source is free for commercial use. Keep each pack's license file nex
 
 | Asset | Source | License | Where it goes | How |
 | --- | --- | --- | --- | --- |
-| Top-down character bases | Kenney "Roguelike Characters" / "Tiny Dungeon" (both are 16×16 single-frame sprites, not 32×32 walk cycles; character size is an open decision) | CC0 | `assets/kenney/characters/` | auto |
+| Top-down character bases | Kenney "Roguelike Characters" / "Tiny Dungeon" (both are 16×16 single-frame sprites; characters are 16×16, decided 2026-11-05; walk cycles need custom frames later) | CC0 | `assets/kenney/characters/` | auto |
 | Beach, water, sand, rock tiles (16×16) | Kenney "Roguelike / RPG pack" | CC0 | `assets/kenney/tiles/` | auto |
 | Shark, crab, fish, bird sprites | OpenGameArt "LPC Animals" / itch.io "Pixel Sea Creatures" (CC0 only) | CC0 / CC-BY | `assets/oga/creatures/` | manual, check license per pack |
 | Items: rope, jug, coconut, knife, tarp, bottle | Kenney "Generic Items" (there is no Kenney "Roguelike Items" pack) | CC0 | `assets/kenney/items/` | auto |

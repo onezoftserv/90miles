@@ -20,14 +20,14 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 | 12 | medium | creatures/ holds entries that no behavior covers or that are not creatures (passive prey, whale, patrols, jet-ski, smugglers, hurricane, Straits) | Open |
 | 13 | medium | Weather resources mix the five exclusive states with multi-day and overlapping events that weather-daynight cannot run | Addressed by the data model |
 | 14 | medium | Escape routes: ISLANDS uses routes outside the 8 route resources, repair-wreck is defined two ways, and RouteData fields are undefined | Addressed by the data model |
-| 15 | medium | Host-authoritative movement with 20 Hz sync and no prediction or interpolation, decided before player-movement is built | Open |
+| 15 | medium | Host-authoritative movement with 20 Hz sync and no prediction or interpolation, decided before player-movement is built | Decided 2026-11-05 |
 | 16 | medium | Split parties require the host to run several islands and a crossing at once, but networking, weather and scene specs assume one live island | Open |
 | 17 | medium | The RPC convention @rpc("any_peer", "call_local") leaves out the rules that make host authority hold | Open |
-| 18 | medium | Survival meters: the in-game clock is undefined, drain rates are about 5–10× too slow for the run length, sunstroke can never trigger, and heat runs in opposite directions | Open |
+| 18 | medium | Survival meters: the in-game clock is undefined, drain rates are about 5–10× too slow for the run length, sunstroke can never trigger, and heat runs in opposite directions | Decided 2026-11-05 |
 | 19 | medium | Swimming drains 100 energy in 33 s against a 60–120 s crossing, and two specs disagree on what happens at 0 energy in water | Open |
 | 20 | medium | Input is only 'WASD/left stick' plus one overloaded interact button; most player verbs have no action, and hold durations contradict | Open |
 | 21 | medium | Kenney art is git-ignored and fetched by an unpinned scraper, so CI and release builds have no art and the first sprite breaks build-verification | Open |
-| 22 | medium | Asset docs do not match the packs: characters are 16×16 single frames, not 32×32 walk cycles, two listed packs return 404, and destinations differ | Factual parts fixed in 481c7c2 (missing packs, 16×16 note) |
+| 22 | medium | Asset docs do not match the packs: characters are 16×16 single frames, not 32×32 walk cycles, two listed packs return 404, and destinations differ | Decided 2026-11-05 |
 | 23 | medium | No spec or task owns the player-facing shell: title, host/join lobby, run setup, HUD layout, inventory and map screens | Open |
 | 24 | medium | Session lifecycle is undefined: no pause rule, no rule for panels open during real-time co-op, no decision on saving a 60–90 minute run | Open |
 | 25 | medium | Setup docs are stale: Godot 4.4+ vs the 4.7 the skeleton needs, wrong autoload names and layout, wrong Node/Python floors, wrong repo URL, 'empty repo' state | Fixed in 481c7c2 |
@@ -48,7 +48,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 | 40 | low | Join-by-IP over ENet is hard-wired: no peer abstraction, no stable identity for reconnects, and no target-platform list (web rationale conflicts with ENet) | Open |
 | 41 | low | .gitignore misses root .env and local junk, and there is no .gitattributes for Godot text resources | Fixed |
 | 42 | low | No export preset or filters: the 'Exported build' scenario cannot be verified, test classes and GUT would ship, and backend.cfg would be left out | Open |
-| 43 | low | The CI gate has never run and does not bind: commits are unpushed and main is unprotected | Open |
+| 43 | low | The CI gate has never run and does not bind: commits are unpushed and main is unprotected | Fixed 2026-11-05 |
 | 44 | low | The documented smoke-test command fails as written: no --path game and no import step | Fixed in 77cacd3 |
 | 45 | low | Spanish-first localization has no path beyond names, and 'English keeps the slang' cannot be told apart from 'not translated yet' | Open |
 | 46 | low | Run structure and boss placement contradict across docs: branch point, distance bands, 'one boss per chain', tiger shark's chain, the cutter's crossing | Open |
@@ -239,7 +239,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 15. Host-authoritative movement with 20 Hz sync and no prediction or interpolation, decided before player-movement is built
 
-**Severity:** medium · **Dimensions:** architecture, export-platform-input-ui-shell · **Status:** Open: needs a design decision.
+**Severity:** medium · **Dimensions:** architecture, export-platform-input-ui-shell · **Status:** Decided 2026-11-05: host authority with client prediction and reconciliation, driven by MoveIntent (CLAUDE.md). Implemented in coop-networking.
 
 **Files:** `CLAUDE.md`, `openspec/specs/coop-networking/spec.md`, `openspec/specs/player-movement/spec.md`, `TASKS.md`
 
@@ -275,7 +275,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 18. Survival meters: the in-game clock is undefined, drain rates are about 5–10× too slow for the run length, sunstroke can never trigger, and heat runs in opposite directions
 
-**Severity:** medium · **Dimensions:** consistency, specs-vs-design, balance-math, content-data-schema · **Status:** Open: needs a design decision.
+**Severity:** medium · **Dimensions:** consistency, specs-vs-design, balance-math, content-data-schema · **Status:** Decided 2026-11-05: heat rises 0 to 100 with sunstroke at 100 (GAME_DESIGN §4 updated); drains are retuned in survival-meters so thirst empties in about 1-1.5 in-game days.
 
 **Files:** `docs/GAME_DESIGN.md`, `openspec/specs/survival-meters/spec.md`, `openspec/specs/weather-daynight/spec.md`, `openspec/specs/escape-routes/spec.md`, `docs/ITEMS.md`, `docs/BESTIARY.md`, `docs/CHARACTERS.md`, `HANDOFF.md`, `TASKS.md`
 
@@ -323,7 +323,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 22. Asset docs do not match the packs: characters are 16×16 single frames, not 32×32 walk cycles, two listed packs return 404, and destinations differ
 
-**Severity:** medium · **Dimensions:** setup-tooling, legal-content · **Status:** Factual parts fixed in 481c7c2 (missing packs, 16×16 note). The character size itself is open.
+**Severity:** medium · **Dimensions:** setup-tooling, legal-content · **Status:** Decided 2026-11-05: characters are 16×16 (Kenney CC0 bases) for now; CLAUDE.md and ASSETS.md updated.
 
 **Files:** `docs/ASSETS.md`, `CLAUDE.md`, `README.md`, `tools/fetch_assets.py`
 
@@ -575,7 +575,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 43. The CI gate has never run and does not bind: commits are unpushed and main is unprotected
 
-**Severity:** low · **Dimensions:** project-skeleton-code-tests-ci · **Status:** Open: needs a push and, optionally, a branch ruleset (your call).
+**Severity:** low · **Dimensions:** project-skeleton-code-tests-ci · **Status:** Fixed 2026-11-05: main pushed and the first CI run passed (run 42053690396).
 
 **Files:** `.github/workflows/ci.yml`, `openspec/changes/project-skeleton/specs/build-verification/spec.md`, `CLAUDE.md`
 

@@ -49,7 +49,7 @@ Thirst is the main pressure; everything else makes it harder to manage.
 | --- | --- | --- | --- | --- |
 | Thirst | 100 | 1/min base, ×2 in sun, ×3 swimming | Coconut 15, rain cup 25, still 40 | Health drains 2/s |
 | Hunger | 100 | 0.5/min, ×2 while working | Crab 20, fish 30, eggs 10, sea grapes 5 | Energy cap halves |
-| Heat | 100 (cool) → 0 | Midday sun 2/min, no shade | Shade, night, water | Sunstroke: blurred screen, speed −40% |
+| Heat | 0 (cool) → 100 (rises; decided 2026-11-05) | Rises in midday sun with no shade (rate retuned in `survival-meters`) | Shade, night, water lower it | At 100, sunstroke: blurred screen, speed −40% |
 | Energy | 100 | Swimming 3/s, building 1/s, running 0.5/s | Sleep (+50 per night), food | Collapse: can only crawl |
 | Morale | 100 | Loss of ally −30, storm −10, alone at night −5/min | Teammate nearby +2/min, fire +5, keepsake, music | Hallucinations: fake islands, fake voices |
 | Health | 100 | Attacks, thirst, heat | Aloe, rest, noni | Downed |

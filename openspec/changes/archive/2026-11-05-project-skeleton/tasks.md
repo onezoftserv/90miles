@@ -23,7 +23,7 @@
 
 - [x] 4.1 Add `game/tests/smoke.gd` and verify it exits 0 on the project and 1 on scratch copies with a parse error, a mismatched content id, an untyped declaration, a scene depending on a git-ignored asset, a broken test file and an unregistered content folder
 - [x] 4.2 Add `test_suite_integrity.gd` and verify GUT exits non-zero when a test file does not compile, does not extend `GutTest`, has no tests or sits outside `tests/unit/`
-- [ ] 4.3 Add `.github/workflows/ci.yml` (pinned Godot download and actions, version check, import, smoke, game run, GUT) and verify the first GitHub Actions run passes
+- [x] 4.3 Add `.github/workflows/ci.yml` (pinned Godot download and actions, version check, import, smoke, game run, GUT) and verify the first GitHub Actions run passes
 
 ## 5. Docs
 

@@ -23,7 +23,8 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 - Components over inheritance: `SurvivalMeters`, `Swimmer`, `Inventory`, `Stealth` are child nodes, not base classes.
 - Multiplayer: the host is authoritative. State lives on the host and syncs through `MultiplayerSynchronizer`; clients send intents through RPCs marked `@rpc("any_peer", "call_local")`. Never trust client-reported positions or inventory.
 - Pathfinding: `AStarGrid2D` on the island grid. Field of view: shadowcasting in `scripts/fov.gd`.
-- Pixel art: 16×16 tiles, 32×32 characters, viewport 640×360 scaled, `texture_filter = nearest`.
+- Pixel art: 16×16 tiles and 16×16 characters (Kenney CC0 bases; decided 2026-11-05, custom art may replace them later), viewport 640×360 scaled, `texture_filter = nearest`.
+- Movement sync (decided 2026-11-05): the host simulates every player from `MoveIntent`s; each client predicts its own player locally and reconciles to the host's state. Remote players are interpolated.
 
 ## Writing and dialogue
 

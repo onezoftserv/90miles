@@ -27,7 +27,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] Create `game/project.godot` (640×360, integer scale, GDScript, GUT addon)
 - [x] Autoloads: `GameState`, `NetManager`, `WeatherManager`, `DialogueService`, `AudioManager` (stubs)
 - [x] Folder layout from README; `tests/smoke.gd` that boots and quits
-- [ ] CI: GitHub Action running the headless smoke test and GUT
+- [x] CI: GitHub Action running the headless smoke test and GUT
 
 ## 3. Milestone A — Two players on a handmade island
 
@@ -113,4 +113,4 @@ Source: `docs/CONTENT_MANIFEST.md` (~280 `.tres` files). Each batch is one OpenS
 - 2026-11-05: Tooling: Godot 4.7.2 (winget), ECC plugin, OpenSpec 1.16 (`openspec init`, Claude Code), reference games cloned. Still open: ECC rules copy, Godot MCP build and registration, AWS and GitHub MCPs (each needs the user).
 - 2026-11-05: Assets: 9 Kenney packs (CC0) and both OFL pixel fonts via the fixed `tools/fetch_assets.py`; `game/assets/CREDITS.md`; Spanish glyph coverage tested. Manual downloads still open.
 - 2026-11-05: `project-skeleton` change: project, 5 autoload stubs, content catalog and validator, 34 data classes for the 11 content folders, GUT 9.7.1, smoke run, CI workflow (not yet run on GitHub). Open design questions: `data-model-questions.md` in the project-skeleton change; repo review: `docs/reviews/2026-11-05-repo-review.md`.
-- 2026-11-05: `player-movement` change implemented test-first (GUT 178/178, smoke and a 300-frame run clean). Not archived: seven provisional decisions in its proposal.md await confirmation.
+- 2026-11-05: `player-movement` change implemented test-first (GUT 178/178, smoke and a 300-frame run clean); provisional choices confirmed; archived with `project-skeleton` after the first CI run passed. Decided: host authority with prediction, heat rises with retuned drains, 16×16 characters.
