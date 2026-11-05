@@ -62,3 +62,11 @@ These need code (a system, a generator or a hand-built scene) rather than fields
 - Entries that cannot be valid until missing items or routes exist: recipes solar_still (rock), rain_catcher (stick), snare (stick), flint_steel (rock), resin (casuarina sap), bandage (output); quests caridad_el_queroseno (fuel), caridad_la_carta and rodriguez_el_trato (carta_caridad), ramon_la_foto (photo, fuel); ahogado (watch); Dayana's cure (bandage); starting items for medico, maestro and musico; START_ROUTE targets for Ramón's boat, the rowboat, the family boat, the patrol dinghy and the smugglers' boat.
 - Pescador de Miami 'for a fee, a favor, or free': no currency and no defined favor. El turista 'a satellite phone with one bar': no effect. El Chino 'refuses fire at night': no consequence. Marisol 'the credits say the baby's name': no name source. La lista 'adds a line about the previous run's dead': the previous run's dead are not in the carry-over list.
 - Cassette 'Músico songs without a Músico': only PLAYS_SONGS and SONG_MORALE are expressed. Músico-only effects ('dolphins come closer', 'a Músico calms them') use PERK_PRESENT or BACKGROUND_PRESENT, and which one applies to the cassette is undefined. Life vest '+buoyancy' is undefined beyond FLOAT_AT_ZERO_ENERGY and swim −20%.
+
+## Found while integrating the classes
+
+- `ConditionData.NPC_STATE_IS` puts the NPC id in `ref_id` but has no field for the state it tests (`EffectData` has `param`; conditions do not). Add a `param` field or a `state` field before NPC state checks are authored.
+- `KeepsakeData` and `TextData` inherit `ItemData.category` and `tags`, and a subclass cannot change an inherited default, so every keepsake and text `.tres` must set them; nothing checks this yet.
+- `KeepsakeData` unlocks of kind `QUEST_COMPLETED` name a quest, and quest ids have no folder (see item 2), so they are not validated.
+- `ConditionData.children` is typed `Array[DataPart]`, not `Array[ConditionData]`: a self-typed array keeps the script alive and Godot 4.7 reports "resources still in use at exit", which fails CI. It still holds only conditions.
+- The enum-keyed dictionaries round-trip through `.tres` on 4.7.2 (item 3); whether the inspector edits them well can only be checked in the editor.

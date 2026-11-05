@@ -6,7 +6,7 @@ The repo held design docs and specs only; `game/` and `backend/` were empty (see
 
 Facts checked against the real 4.7.2 binary before deciding (throwaway projects in the session scratchpad):
 
-- Autoloads are in the tree and have run `_ready` when a `SceneTree` script runs with `-s`.
+- Autoloads exist under a `SceneTree` script run with `-s`, but they are inside the tree and have run `_ready` only from the first frame, so the smoke run checks them in `_process`; its error logger is registered in `_init`, before they are constructed.
 - `class_name` types are not registered on a fresh checkout (no `.godot/`) until `godot --import` has run once.
 - `ResourceLoader.list_directory()` exists and lists resource files; it is the export-safe way to enumerate `res://` folders.
 - `OS.add_logger()` with a `Logger` subclass receives engine and script errors, so a headless run can count them.

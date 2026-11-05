@@ -77,7 +77,7 @@ jobs:
         run: timeout 60 "$GODOT" --headless --path game -s res://tests/smoke.gd
 
       # Runs the real game loop (autoloads first, then the main scene) to catch runtime errors in
-      # autoload _ready, which happen before the smoke script can register its error logger.
+      # autoloads and scenes outside the smoke script, and resource leaks reported at exit.
       - name: Run the game headless
         run: |
           set -o pipefail

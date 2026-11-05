@@ -5,8 +5,22 @@ extends RefCounted
 ## code changes, in the editor and in exported builds.
 
 const DEFAULT_ROOT := "res://resources"
-## Content type (folder name) -> the script every file in that folder must use.
-const DEFAULT_TYPES: Dictionary[StringName, Script] = {}
+## Content type (folder name) -> the script every file in that folder must use. Subclasses
+## pass too, so keepsakes (KeepsakeData) and texts (TextData) live in items/. Preloaded,
+## because a global class name is not a constant expression in a const initializer.
+const DEFAULT_TYPES: Dictionary[StringName, Script] = {
+	&"creatures": preload("res://scripts/data/creature_data.gd"),
+	&"items": preload("res://scripts/data/item_data.gd"),
+	&"recipes": preload("res://scripts/data/recipe_data.gd"),
+	&"npcs": preload("res://scripts/data/npc_data.gd"),
+	&"dialogue": preload("res://scripts/data/dialogue_data.gd"),
+	&"chains": preload("res://scripts/data/chain_data.gd"),
+	&"pois": preload("res://scripts/data/poi_data.gd"),
+	&"set_pieces": preload("res://scripts/data/set_piece_data.gd"),
+	&"routes": preload("res://scripts/data/route_data.gd"),
+	&"backgrounds": preload("res://scripts/data/background_data.gd"),
+	&"weather": preload("res://scripts/data/weather_data.gd"),
+}
 const EXTENSIONS: Array[String] = ["tres", "res"]
 
 var _root: String

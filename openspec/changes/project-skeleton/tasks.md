@@ -11,7 +11,7 @@
 - [x] 2.1 Add `ContentData` and `ContentCatalog` (folder discovery with `ResourceLoader.list_directory`, exact-name lookups, unregistered-folder listing) and verify `test_content_catalog.gd` passes
 - [x] 2.2 Add `ContentValidator` (folder type, id equals file name, duplicate ids, Spanish name, references as id / id array / id-keyed dictionary, unknown fields and types) and verify `test_content_validator.gd` passes
 - [x] 2.3 Add `DataEnums` and the `DataPart` base, make the validator recurse into embedded parts with path-qualified messages, and verify `test_content_parts.gd` passes
-- [ ] 2.4 Add the data classes for the 11 manifest folders and their embedded parts, register the folders in `ContentCatalog.DEFAULT_TYPES`, and verify `test_data_classes.gd` passes (instantiation, reference declarations for every kind, `.tres` round trips, validation of real classes)
+- [x] 2.4 Add the data classes for the 11 manifest folders and their embedded parts, register the folders in `ContentCatalog.DEFAULT_TYPES`, and verify `test_data_classes.gd` passes (instantiation, reference declarations for every kind, `.tres` round trips, validation of real classes)
 - [x] 2.5 Record the data model's open questions in `data-model-questions.md` and verify each class's choice is named there
 
 ## 3. Core services and main scene

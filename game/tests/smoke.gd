@@ -49,8 +49,13 @@ var _failures: PackedStringArray = []
 var _frames: int = 0
 
 
-func _initialize() -> void:
+# Registered in _init, before the autoloads are constructed, so errors raised while they are
+# built are collected too (_initialize runs after that).
+func _init() -> void:
 	OS.add_logger(_collector)
+
+
+func _initialize() -> void:
 	var scripts_checked: int = 0
 	for script_root: String in SCRIPT_ROOTS:
 		if not DirAccess.dir_exists_absolute(script_root):
@@ -67,19 +72,25 @@ func _initialize() -> void:
 	for resource_root: String in RESOURCE_ROOTS:
 		_failures.append_array(_check_resources(resource_root))
 	_boot_main_scene()
+
+
+func _process(_delta: float) -> bool:
+	_frames += 1
+	if _frames == 1:
+		_check_services_and_content()
+	if _frames == RUN_FRAMES:
+		_finish()
+	return false
+
+
+# Runs on the first frame: by then the autoloads are inside the tree and have run _ready.
+func _check_services_and_content() -> void:
 	_failures.append_array(CoreServices.check(root))
 	var game_state: Node = root.get_node_or_null(^"GameState")
 	if game_state != null and game_state.get(&"content") is ContentCatalog:
 		_failures.append_array(ContentValidator.validate(game_state.get(&"content")))
 	else:
 		_failures.append("GameState.content is not a ContentCatalog")
-
-
-func _process(_delta: float) -> bool:
-	_frames += 1
-	if _frames == RUN_FRAMES:
-		_finish()
-	return false
 
 
 func _boot_main_scene() -> void:
