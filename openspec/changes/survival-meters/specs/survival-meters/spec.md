@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Meter component
-Each player SHALL have a `SurvivalMeters` node holding six floats (0–100): thirst, hunger, energy, morale and health start full and drain; heat starts at 0 and rises toward sunstroke at 100. Values are host-authoritative and synced: only the host advances them and clients show what the host sent. Every rate and threshold lives in one tuning resource in real seconds; one in-game hour is 30 real seconds (`docs/GAME_DESIGN.md` §4, §5).
+Each player SHALL have a `SurvivalMeters` node holding six floats (0–100): thirst, hunger, energy, morale and health start full and drain; heat starts at 0 and rises toward sunstroke at 100. Values are host-authoritative and synced: only the host advances them and clients show what the host sent; offline solo play is its own host. Every rate and threshold lives in one tuning resource in real seconds; one in-game hour is 30 real seconds (`docs/GAME_DESIGN.md` §4, §5).
 
 #### Scenario: Client shows host values
 - GIVEN a client's player whose thirst is 40 on the host
