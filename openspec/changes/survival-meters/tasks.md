@@ -2,8 +2,8 @@
 
 ## 1. Six meters and the tuning file
 
-- [ ] 1.1 Add GUT tests for a fresh player (thirst, hunger, energy, morale, health 100; heat 0), clamping and `meter_changed` for all six meters, the shipped tuning holding every number in the spec, and the existing energy API; verify the new ones fail (RED)
-- [ ] 1.2 Add `SurvivalTuning` with `game/resources/survival_tuning.tres` and extend `SurvivalMeters` to six properties and signals; verify the 1.1 tests and the existing energy tests pass, and the import, smoke run and GUT pass (GREEN)
+- [x] 1.1 Add GUT tests for a fresh player (thirst, hunger, energy, morale, health 100; heat 0), clamping and `meter_changed` for all six meters, the shipped tuning holding every number in the spec, and the existing energy API; verify the new ones fail (RED)
+- [x] 1.2 Add `SurvivalTuning` with `game/resources/survival_tuning.tres` and extend `SurvivalMeters` to six properties and signals; verify the 1.1 tests and the existing energy tests pass, and the import, smoke run and GUT pass (GREEN)
 
 ## 2. Drains, restores and states
 
