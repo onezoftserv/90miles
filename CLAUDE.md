@@ -43,7 +43,7 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 ## Testing
 
 - GUT (Godot Unit Test) for pure logic: generation, meters, recipes, pathfinding. Tests live in `game/tests/unit/test_*.gd`.
-- The project lives in `game/`, so every command passes `--path game`. On a fresh checkout run the import once so `class_name` types resolve:
+- The project lives in `game/`, so every command passes `--path game`. On a fresh checkout run the import twice so `class_name` types resolve (the first pass prints load errors for the project theme, which loads before its fonts and textures are imported; the second must be clean):
   - `godot --headless --path game --import`
   - `godot --headless --path game -s res://tests/smoke.gd` (smoke run; must pass in CI)
   - `godot --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit` (GUT)
