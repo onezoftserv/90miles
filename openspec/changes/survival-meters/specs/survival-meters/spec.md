@@ -130,7 +130,7 @@ Morale SHALL drain −30 on an ally's death and −10 per squall (both hit every
 - **THEN** morale is 50
 
 ### Requirement: Health and downed state
-Health SHALL drop from attacks, thirst and poison. At 0 a player with another living player in the run is downed for 90 s: immobile, draggable, and still losing thirst and hunger. Giving water (a cup whose item revives) brings them up at 30 health. If the timer ends, the player dies (permadeath for the run). A player with no other living player (a one-player run, or the last one alive) dies immediately at 0.
+Health SHALL drop from attacks, thirst and poison. At 0 a player with another living player in the run is downed for 90 s plus their downed-timer bonuses: immobile, draggable, and still losing thirst and hunger. Giving water (a cup whose item revives) brings them up at 30 health. If the timer ends, the player dies (permadeath for the run). A player with no other living player (a one-player run, or the last one alive) is not downed: they get a last stand instead.
 
 #### Scenario: Revive
 - GIVEN a downed player with 40 s left
@@ -143,14 +143,19 @@ Health SHALL drop from attacks, thirst and poison. At 0 a player with another li
 - **THEN** the player is dead
 
 #### Scenario: Solo
-- **GIVEN** a solo player
+- **GIVEN** a solo player on run 1 with no downed-timer bonus
 - **WHEN** their health reaches 0
 - **THEN** they die at once, without a downed timer
 
 #### Scenario: Last one alive
-- **GIVEN** a co-op player whose only teammate has died
+- **GIVEN** a co-op player with no downed-timer bonus whose only teammate has died
 - **WHEN** their health reaches 0
 - **THEN** they die at once, without a downed timer
+
+#### Scenario: Experiencia lengthens the downed timer
+- **GIVEN** a co-op player with 10 s of downed-timer bonus
+- **WHEN** their health reaches 0
+- **THEN** they are downed for 100 s
 
 #### Scenario: Poison
 - **GIVEN** a player with health 100
@@ -171,6 +176,32 @@ Every meter rule SHALL work for a single player: no meter needs a teammate to re
 - **GIVEN** one player starting full at dawn with 10 coconuts (+15 thirst, +5 hunger each), spending half of each day phase in the sun and each night by a fire
 - **WHEN** they drink a coconut whenever thirst drops below 15, for 3 in-game days
 - **THEN** thirst and hunger never reach 0, at most 10 coconuts are used and morale never drops below 20
+
+### Requirement: Solo last stand
+At 0 health a player with no other living player SHALL get a last stand lasting 0 s plus their downed-timer bonuses (Experiencia levels and the point boost; endings-progression owns those numbers). They lie where they fell, still losing thirst and hunger, and can use a cup whose item revives on themselves to stand at 30 health. When the last stand ends they die; with no bonus (run 1) they die at once.
+
+#### Scenario: Last stand with Experiencia
+- **GIVEN** a solo player with 15 s of downed-timer bonus (3 Experiencia levels)
+- **WHEN** their health reaches 0
+- **THEN** they are in a last stand, alive after 14 s and dead after 15 s
+
+#### Scenario: Saving yourself
+- **GIVEN** a solo player in a last stand with 5 s left and a rain cup
+- **WHEN** they use the rain cup on themselves
+- **THEN** they stand with health 30 and thirst +25
+
+### Requirement: Free revive
+A player holding an unused free revive (the Medalla de la Caridad keepsake: one per run) SHALL, when their health reaches 0, stand at 30 health instead of going down, starting a last stand or dying, and the free revive is used up. It needs no reviver, so it works solo.
+
+#### Scenario: The Medalla saves a solo player once
+- **GIVEN** a solo player on run 1 holding the Medalla with its revive unused
+- **WHEN** their health reaches 0, and later reaches 0 again
+- **THEN** the first time they stand at 30 health and the revive is used up; the second time they die
+
+#### Scenario: The Medalla in co-op
+- **GIVEN** a co-op player holding the Medalla with its revive unused
+- **WHEN** their health reaches 0
+- **THEN** they stand at 30 health instead of going down
 
 ### Requirement: HUD bars
 The local player's screen SHALL show six labelled bars in Spanish (Sed, Hambre, Calor, Energía, Ánimo, Salud), each filled to its meter's value out of 100 and updated when the value changes, readable at 640×360 in the committed pixel font. Heat fills as it rises. While the local player has sunstroke, their screen is blurred.

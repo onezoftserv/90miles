@@ -42,10 +42,17 @@ Thirst is meant to be the main pressure of a 60–90 minute run, but the §4 num
 5. A meal (+10 energy) is anything that restores hunger, so a coconut counts (data-model question 32).
 6. Hunger reaching 0 lowers energy above 50 to 50 at once.
 7. Downed players keep losing thirst and hunger; a downed teammate still counts as company for morale.
-8. "Solo" means no other living player in the run: a one-player run, or the last one alive after every teammate died. A solo player dies at 0 health with no downed timer (nobody could answer it). A co-op player whose teammates are only down (not dead) still gets the 90 s.
+8. A co-op player whose teammates are only down (not dead) is not solo and still gets the 90 s. (What "solo" means is a user decision below.)
 9. Energy never regenerates on its own: only sleep (+50 per night in shelter) and meals (+10).
 10. Heat never costs health: §4 listed heat as a health drain with no number, and the spec's sunstroke only blurs and slows. Give a number if sunstroke should also hurt.
 11. A lit fire within 5 tiles counts as company at night: it stops the −5/min "alone at night" drain (it does not give the +2/min of a teammate). Without it, one player can never stop the night drain: one fire a night (+5) still nets −20 per night, so a solo player would hallucinate around night 5 of a 5–7 night run. Fire is visible to patrols, so it stays a trade-off.
+
+12. During a solo last stand the player lies still (immobile, not draggable) and can use a reviving cup they carry on themselves; without that, the window would only delay death. The downed-timer bonuses also lengthen a co-op player's 90 s, as endings-progression already says ("each player's own level applies to their downed timer").
+
+**Decided by the user (2026-11-05), implemented here:**
+- "Solo" means a player with no other living player: a one-player run, or the last one alive in co-op.
+- Solo last stand: at 0 health a solo player is not downed; they get a last stand of 0 s base (run 1 stays brutal: death at once) plus the downed-timer bonuses: Experiencia +5 s per level and the +10 s point boost. endings-progression owns those numbers; the meters read one bonus value.
+- Medalla de la Caridad, "one free revive per run": when the holder would go down or die with it unused, they stand at 30 health instead and it is used up. It fires by itself, so it works solo.
 
 **Solo play** (the game must be fully playable by one player). Nothing in the meters needs a teammate: a solo player is never downed (decision 8), so revive, feeding and dragging never apply to them, and decision 11 lets them hold morale. Solo budget on the sandbar: one player playing half in the sun loses 3 × 72 = 216 thirst in 3 days. Minus the 100 they start with, that leaves 116 to find, and ten coconuts give 150, so the sandbar's coconuts alone are enough (9 used if they drink below 15 thirst). A solo week with a fire every night and a squall every day ends at morale 65.
 

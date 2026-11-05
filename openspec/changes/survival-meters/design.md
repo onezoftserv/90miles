@@ -36,6 +36,16 @@ A value at or below 1e-6 counts as empty and snaps to 0, as `MovementModel` does
 ### Solo is derived from the run, and fire is company
 `PlayerBody` sets `meters.solo` on every host tick: true when no other player in the `players` group is alive (dead teammates do not count, downed ones do). A one-player run and the last survivor of a co-op run therefore die at 0 health instead of waiting 90 s for a revive nobody can give. `MeterContext.near_fire` stops the night drain like a teammate does; the body sets it when a node in the `lit_fires` group is within `company_radius_tiles`. Nothing adds itself to that group yet: crafting-inventory's fire will join it while lit, so the rule already works end to end (a test stands a `Node2D` in for the fire). Alternatives: `solo` set once by run setup (rejected: nothing sets it today, and it would miss the last-one-alive case), or exempting solo runs from the night drain (rejected: it removes the night's pressure instead of giving the player something to do about it).
 
+### Last stand and free revive are hooks other systems set
+Health reaching 0 goes through one place, in this order:
+1. An unused free revive (`SurvivalMeters.free_revives`, an int the keepsake system sets to 1 for the Medalla's holder) stands the player at `revive_health` and counts down (`free_revive_used` signal).
+2. Otherwise a co-op player is downed for `tuning.downed_s + downed_bonus_s`.
+3. Otherwise a solo player gets a last stand (`last_stand`, `last_stand_changed`) of `tuning.solo_last_stand_s` (0) `+ downed_bonus_s`, or dies at once when that is 0.
+
+`downed_bonus_s` is the Experiencia hook: endings-progression sets it from the player's level and boosts, and the meters never compute it. The last stand reuses `downed_time_left_s` and `revive()`, so a cup the player uses on themselves stands them up exactly like a teammate's cup. `PlayerBody` lies the body down during a last stand with its drag handle disabled.
+
+Alternative: modelling the last stand as `downed` with a different timer. Rejected because "downed" means a teammate can drag or revive, and the HUD and body would have to ask "but is anyone there?" everywhere.
+
 ### Sunstroke slows through a speed factor
 `MovementModel.step` gains a trailing `speed_factor: float = 1.0` that scales the player's own speed (walk, run, crouch, crawl, swim), not the water current or a drag. `SurvivalMeters.speed_factor()` returns 0.6 during sunstroke. The parameter is optional, so existing callers and tests are untouched.
 
