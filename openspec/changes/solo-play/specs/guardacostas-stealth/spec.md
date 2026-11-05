@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Free a captive
-A teammate touching a captive with no soldier within 3 tiles SHALL free them. Captives on the docked boat can be freed by sneaking aboard. When no other player is free (always so in a 1-player run), nobody is left to free the captive: the capture is a whole-party capture and follows Capture outcome at once.
+A teammate touching a captive with no soldier within 3 tiles SHALL free them. Captives on the docked boat can be freed by sneaking aboard. When no other living player is free (always so in a 1-player run), nobody is left to free the captive: the capture is a whole-party capture and follows Capture outcome at once.
 
 #### Scenario: Unguarded captive
 - GIVEN a captive with the nearest soldier 4 tiles away
@@ -16,7 +16,7 @@ A teammate touching a captive with no soldier within 3 tiles SHALL free them. Ca
 - THEN the player is not held on the boat for 3 minutes; `la_captura` plays at once
 
 ### Requirement: Capture outcome
-If every player is captured (in a 1-player run, the only player), the `la_captura` scene SHALL play with Rodríguez; a persuasion check (morale ≥ 60 and a Maestro or Médico present) releases the party at the next cay; otherwise the party restarts the previous island with inventory intact minus fire sources, keepsakes always kept. A single captive left aboard when the boat departs, while another player is still free, respawns on the previous island with no items. (Changes docs/GAME_DESIGN.md §9.)
+If every living player is captured (solo: the only player), `la_captura` SHALL play with Rodríguez; a persuasion check (morale ≥ 60 and a Maestro or Médico present) releases the party at the next cay; otherwise the party restarts the previous island with inventory intact minus fire sources, keepsakes always kept. A single captive left aboard when the boat departs, while another player is still free, respawns on the previous island with no items. (Changes docs/GAME_DESIGN.md §9.)
 
 #### Scenario: Persuasion succeeds
 - GIVEN every player is captured, morale is 65 and a Médico is in the party
@@ -36,7 +36,7 @@ If every player is captured (in a 1-player run, the only player), the `la_captur
 ## ADDED Requirements
 
 ### Requirement: Previous island after capture
-When a capture sends the party back, the previous island SHALL be regenerated from the run seed as on its first arrival, and the party SHALL restart on its landing beach. On island 1, which has no previous island, the party SHALL restart island 1, regenerated from the run seed the same way, with the same inventory rule (minus fire sources, keepsakes kept).
+When a capture sends the party back, the previous island SHALL be regenerated from the run seed and set up again for the living, connected players at that moment (Resource spawns, Escape routes), and the party SHALL restart on its landing beach. On island 1, which has no previous island, the party SHALL restart island 1, regenerated from the run seed the same way, with the same inventory rule (minus fire sources, keepsakes kept).
 
 #### Scenario: Previous island is fresh
 - GIVEN a 1-player run whose player used all the driftwood on island 2 for a raft and was then captured on island 3 with persuasion failing

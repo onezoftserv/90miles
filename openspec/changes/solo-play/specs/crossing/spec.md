@@ -6,7 +6,7 @@
 The Gulf Stream SHALL push the vessel east at 1 tile/s on mid and far crossings. Any player aboard steers against it with no held station, cutting drift to 0.25 tile/s; a Maestro, a player with Navigation ≥ 2 or anyone with compass+charts aboard cancels drift. With nobody aboard, drift stays 1 tile/s. Drift is a lateral offset capped at 40 tiles and never lengthens the crossing; a crossing whose offset reached the cap skips to a harder chain. (Changes docs/GAME_DESIGN.md §8.)
 
 #### Scenario: No one steers
-- GIVEN a mid crossing with every player in the water and nobody aboard the vessel
+- GIVEN a mid crossing with no Maestro and no compass+charts aboard
 - WHEN the Gulf Stream pushes the vessel 20 tiles east
 - THEN the drift offset is 20 tiles and the crossing's length is unchanged
 
@@ -21,9 +21,9 @@ The Gulf Stream SHALL push the vessel east at 1 tile/s on mid and far crossings.
 - THEN the drift offset is 0 tiles
 
 #### Scenario: Offset reaches the cap
-- GIVEN a 1-player run on a 90 s mid crossing whose player fell in at 10 s and stayed in the water, with nobody aboard
-- WHEN 40 more seconds pass
-- THEN the offset is 40 tiles and grows no further, the crossing still ends at 90 s, and the party arrives on a harder chain
+- GIVEN a 1-player run on a 120 s far crossing whose player, at energy 100, falls in at 20 s and climbs back aboard at 40 s, with nobody aboard in between
+- WHEN the crossing runs to its end
+- THEN the offset is 25 tiles at 40 s, reaches 40 tiles at 100 s and grows no further, the crossing still ends at 120 s, and the party arrives on a harder chain
 
 ### Requirement: Fall in and rescue
 A player who falls in SHALL swim alongside; a teammate can pull them aboard with a 2 s interact. A player in the water within 1 tile of the vessel's edge, while the vessel is intact (integrity above 0), SHALL also be able to climb aboard alone by holding interact for 3 s, so the teammate's pull stays faster but is never required. Sharks target swimmers who are bleeding or below 20 energy.

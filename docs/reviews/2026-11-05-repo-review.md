@@ -34,7 +34,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 | 26 | medium | MCP setup installs an archived GitHub server and a superseded AWS server, omits uv, and gives the agent write access with the developer's credentials | Fixed in 481c7c2 (setup docs) |
 | 27 | medium | Co-op resource scaling shrinks total supply as the party grows, and the 'always buildable' raft cannot be built from the sandbar's listed materials | Open |
 | 28 | medium | Specs depend on backgrounds and skill levels nobody defines (no XP curve, a 'Combat' skill that doesn't exist), and profile.cfg has no schema or co-op trust model | Open |
-| 29 | medium | The crossing model doesn't close: unsteered drift always overshoots, vessel speed and base duration are undefined, and raft integrity mixes percent and points with no repair cost | Open |
+| 29 | medium | The crossing model doesn't close: unsteered drift always overshoots, vessel speed and base duration are undefined, and raft integrity mixes percent and points with no repair cost | Partly decided 2026-11-05: drift is a capped lateral offset that never lengthens the crossing (solo-play change); the rest is open |
 | 30 | medium | Capture rules contradict each other and leave cases unhandled; getting caught on purpose skips crossings and the coast boss | Decided 2026-11-05: one outcome for every party size (solo-play change) |
 | 31 | medium | The searchlight's 2 s dwell equals the spot timer, so any stealth level makes a player standing still in the open unspottable | Open |
 | 32 | medium | The final crossing (the Straits boss) has no owning requirement, and its patrol is excluded by the crossing event list | Open |
@@ -407,7 +407,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 29. The crossing model doesn't close: unsteered drift always overshoots, vessel speed and base duration are undefined, and raft integrity mixes percent and points with no repair cost
 
-**Severity:** medium · **Dimensions:** specs-vs-design, balance-math · **Status:** Open: needs a design decision.
+**Severity:** medium · **Dimensions:** specs-vs-design, balance-math · **Status:** Partly decided 2026-11-05: in the solo-play change, anyone aboard steers at 0.25 tile/s; a Maestro, Navigation ≥ 2 or compass + charts cancel drift; drift is a lateral offset capped at 40 tiles that never lengthens the crossing. Still open: vessel speed, base duration per band, integrity units, the raft repair cost, and where the cap's harder-chain skip lands in the branch graph.
 
 **Files:** `openspec/specs/crossing/spec.md`, `openspec/specs/crafting-inventory/spec.md`, `openspec/specs/endings-progression/spec.md`, `docs/BESTIARY.md`, `docs/ITEMS.md`, `docs/GAME_DESIGN.md`, `docs/ISLANDS.md`
 
