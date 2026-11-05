@@ -40,10 +40,10 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 6. Quick chat
 
-- [ ] 6.1 Add `game/resources/dialogue/quick_chat.tres` (8 lines, Spanish and English) and verify a GUT test of its phrases and order and a clean content validation in the smoke run
-- [ ] 6.2 Add the `quick_chat` input action and `QuickChatWheel` with `slot_for()`, and verify GUT tests for the 8 sectors, the dead zone and the wheel showing the phrase file's text
-- [ ] 6.3 Add the quick-chat RPCs and `SpeechBubble`, and verify integration tests for "shark warning" (bubble over the speaker on every peer, voice clip looked up by line id), "quick-chat spam" (3 then one after 2 s) and "rewording a phrase"
-- [ ] 6.4 Verify the import, smoke run and GUT pass with zero error lines
+- [x] 6.1 Add `game/resources/dialogue/quick_chat.tres` (8 lines, Spanish and English) and verify a GUT test of its phrases and order and a clean content validation in the smoke run
+- [x] 6.2 Add the `quick_chat` input action and `QuickChatWheel` with `slot_for()`, and verify GUT tests for the 8 sectors, the dead zone and the wheel showing the phrase file's text
+- [x] 6.3 Add the quick-chat RPCs and `SpeechBubble`, and verify integration tests for "shark warning" (bubble over the speaker on every peer, voice clip looked up by line id), "quick-chat spam" (3 then one after 2 s) and "rewording a phrase"
+- [x] 6.4 Verify the import, smoke run and GUT pass with zero error lines
 
 ## 7. Dev playground and checks
 

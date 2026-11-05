@@ -22,8 +22,12 @@ signal player_disconnected(peer_id: int)
 signal player_removed(peer_id: int, last_position: Vector2)
 ## Client: the host went away; the session has ended and its players are gone.
 signal host_lost
+## A quick-chat phrase is shown over `peer_id`'s player (on every peer).
+signal quick_chat_shown(peer_id: int, slot: int)
 
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
+const SPEECH_BUBBLE_SCENE: PackedScene = preload("res://scenes/ui/speech_bubble.tscn")
+const BUBBLE_NAME: StringName = &"SpeechBubble"
 const HOST_ID: int = 1
 const MAX_PLAYERS: int = 4
 ## A dropped client's player stays downed this long before it is removed.
@@ -47,6 +51,10 @@ var terrain: TerrainQuery = TerrainQuery.new()
 var world_state: Dictionary = {}
 ## Host time in seconds for the rate limits. Tests replace it.
 var clock: Callable
+## The quick-chat phrases (the quick-chat content file unless a level or test sets others).
+var phrases: QuickChatPhrases
+## Language of bubble text; Spanish first until a settings screen exists.
+var locale: String = "es"
 
 var _bodies: Dictionary[int, PlayerBody] = {}
 ## Host: each peer's rate limits.
@@ -68,6 +76,8 @@ func _init() -> void:
 
 func _ready() -> void:
 	player_spawner.spawn_function = _spawn_player
+	if phrases == null:
+		phrases = QuickChatPhrases.from_catalog(GameState.content)
 
 
 ## Starts the session on the branch's current peer. The host (or solo) spawns its own player
@@ -137,6 +147,49 @@ func submit_intent(seq: int, direction: Vector2, run: bool, crouch: bool, intera
 func accept_intent(peer_id: int, delta: float) -> bool:
 	var limits: PeerLimits = _limits.get(peer_id)
 	return limits != null and limits.allow_intent(delta, clock.call())
+
+
+## This peer's player says the quick-chat phrase in `slot` (the wheel calls it).
+func say(slot: int) -> void:
+	request_quick_chat.rpc_id(HOST_ID, slot)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func request_quick_chat(slot: int) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender := multiplayer.get_remote_sender_id()
+	if body(sender) == null or slot < 0 or slot >= phrases.size():
+		return
+	var limits: PeerLimits = _limits.get(sender)
+	if limits == null or not limits.allow_quick_chat(clock.call()):
+		return
+	show_quick_chat.rpc(sender, slot)
+
+
+@rpc("authority", "call_local", "reliable")
+func show_quick_chat(peer_id: int, slot: int) -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID:
+		return
+	var speaker := body(peer_id)
+	if speaker == null or slot < 0 or slot >= phrases.size():
+		return
+	show_bubble(speaker, phrases.text(slot, locale), phrases.voice(slot))
+	quick_chat_shown.emit(peer_id, slot)
+
+
+## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.
+func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> SpeechBubble:
+	var old := speaker.get_node_or_null(NodePath(BUBBLE_NAME))
+	if old != null:
+		speaker.remove_child(old)
+		old.queue_free()
+	var bubble := SPEECH_BUBBLE_SCENE.instantiate() as SpeechBubble
+	bubble.name = BUBBLE_NAME
+	bubble.text = text
+	bubble.voice = voice
+	speaker.add_child(bubble)
+	return bubble
 
 
 @rpc("authority", "call_remote", "reliable")

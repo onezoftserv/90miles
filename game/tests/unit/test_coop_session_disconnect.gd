@@ -89,7 +89,7 @@ func test_host_drops() -> void:
 	net.drop(host)
 	assert_true(await wait_until(func() -> bool: return a.peer_ids().is_empty(), TIMEOUT_S), "the client's session ends")
 	assert_signal_emitted(a, "host_lost")
-	await wait_frames(2)
+	await wait_process_frames(2)
 	assert_eq(a.players.get_child_count(), 0, "its players are gone")
 
 
