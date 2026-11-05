@@ -15,7 +15,7 @@ var movement_state: MovementStep.Move = MovementStep.Move.WALK
 var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
 ## True when this body belongs to the local peer: it gets the camera and local input.
 ## Set before the body enters the tree.
-var local_player: bool = true
+@export var local_player: bool = true
 ## Downed players cannot act; a teammate can drag them (DragHandle). The flag is a plain
 ## property until survival-meters owns it.
 var downed: bool = false

@@ -19,8 +19,8 @@
 
 ## 4. Playground and checks
 
-- [ ] 4.1 Add `scenes/dev/movement_playground.tscn` (land, brush, shallow and deep water drawn without textures, one interactable, two players) and verify it loads in the smoke run
-- [ ] 4.2 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero error lines
+- [x] 4.1 Add `scenes/dev/movement_playground.tscn` (land, brush, shallow and deep water drawn without textures, one interactable, two players) and verify it loads in the smoke run
+- [x] 4.2 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero error lines
 
 ## Workflow follow-up
 
