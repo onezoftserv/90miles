@@ -45,7 +45,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 | 37 | medium | Per-install API keys issued at first launch make 'per-player' rate limits bypassable, and there is no global cap on Bedrock spend | Open |
 | 38 | medium | Client-supplied context goes into the system prompt and the shared 30-day cache key drops most prompt inputs, so one client can poison lines for everyone; which co-op peer calls the backend is unspecified | Open |
 | 39 | medium | The 3 s client timeout cannot fit the backend design (6 s Lambda, in-Lambda retry, fetch when the player starts talking), and 100 ms offline needs a health state | Open |
-| 40 | low | Join-by-IP over ENet is hard-wired: no peer abstraction, no stable identity for reconnects, and no target-platform list (web rationale conflicts with ENet) | Open |
+| 40 | low | Join-by-IP over ENet is hard-wired: no peer abstraction, no stable identity for reconnects, and no target-platform list (web rationale conflicts with ENet) | Decided 2026-11-05 |
 | 41 | low | .gitignore misses root .env and local junk, and there is no .gitattributes for Godot text resources | Fixed |
 | 42 | low | No export preset or filters: the 'Exported build' scenario cannot be verified, test classes and GUT would ship, and backend.cfg would be left out | Open |
 | 43 | low | The CI gate has never run and does not bind: commits are unpushed and main is unprotected | Fixed 2026-11-05 |
@@ -56,7 +56,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 | 48 | low | The set of AI-voiced NPCs and texts is 7 and 4 in some docs and 12 and 6 in others | Open |
 | 49 | low | Smaller number and lore contradictions: dominoes, expired medicine odds, manchineel identification, and the Rodríguez–Caridad timeline | Open |
 | 50 | low | Seeded generation inputs are incomplete, so the hash check scope and shared/daily seed rules are undefined | Open |
-| 51 | low | Revive works with any cup, including seawater, and the downed-timer boosts do nothing in solo | Decided 2026-11-05: solo last-stand window (solo-play and survival-meters changes) |
+| 51 | low | Revive works with any cup, including seawater, and the downed-timer boosts do nothing in solo | Decided 2026-11-05 |
 | 52 | low | OpenSpec 1.x ignores openspec/project.md and config.yaml has no context, so /opsx planning never sees the glossary | Fixed in 481c7c2 (openspec/config |
 | 53 | low | The Bedrock model ID in CLAUDE.md and the spec cannot be invoked on bedrock-runtime | Open |
 | 54 | low | No release plan for live AI text: no output moderation, report trail, AI disclosure or privacy and retention policy | Open |
@@ -539,7 +539,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 40. Join-by-IP over ENet is hard-wired: no peer abstraction, no stable identity for reconnects, and no target-platform list (web rationale conflicts with ENet)
 
-**Severity:** low · **Dimensions:** architecture, export-platform-input-ui-shell · **Status:** Open: needs a design decision.
+**Severity:** low · **Dimensions:** architecture, export-platform-input-ui-shell · **Status:** Decided 2026-11-05: Windows + Linux desktop, ENet with manual port forwarding (no UPnP, no web build); reconnects use a stable player id that reclaims the downed body within 90 s; a removed player counts as dead.
 
 **Files:** `openspec/specs/coop-networking/spec.md`, `openspec/changes/project-skeleton/design.md`, `openspec/specs/endings-progression/spec.md`, `docs/GAME_DESIGN.md`, `TASKS.md`
 
@@ -671,7 +671,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 51. Revive works with any cup, including seawater, and the downed-timer boosts do nothing in solo
 
-**Severity:** low · **Dimensions:** balance-math · **Status:** Decided 2026-11-05: for a player with no other living player the downed-timer rewards lengthen a solo last-stand window: 0 s base on run 1, +5 s per Experiencia level and +10 s from the point boost, shared with the Medalla revive. The survival-meters change implements the window (and which cups revive); endings-progression states the Experiencia side (solo-play change).
+**Severity:** low · **Dimensions:** balance-math · **Status:** Decided 2026-11-05: only fresh-water cups revive (not seawater or rum); in solo the downed-timer rewards lengthen the solo last stand (survival-meters, endings-progression).
 
 **Files:** `openspec/specs/survival-meters/spec.md`, `openspec/specs/endings-progression/spec.md`, `docs/ITEMS.md`, `docs/GAME_DESIGN.md`
 

@@ -34,7 +34,7 @@ Thirst is meant to be the main pressure of a 60–90 minute run, but the §4 num
 - HUD: six labelled bars (Sed, Hambre, Calor, Energía, Ánimo, Salud) for the local player at 640×360 with the committed pixel font, plus the sunstroke blur. No ui-shell owns the HUD budget yet (review item 23), so this is a self-contained widget in the top-left corner that a later layout can move.
 - `docs/GAME_DESIGN.md` §4 and §5 are updated to the same numbers and the clock.
 
-**Provisional decisions to confirm** (each is one value or one rule):
+**Provisional decisions, all confirmed by the user 2026-11-05** (each is one value or one rule). Also decided: only fresh-water cups (coconut, rain, still, well) revive, not seawater or rum; crafting-inventory applies it per item.
 1. Every number in the table above, and the dawn-at-06:00 anchor.
 2. Swimming ×3 replaces sun ×2 instead of stacking with it (no ×6); night ×0.5 multiplies whichever applies, so swimming at night is ×1.5 (there is no sun at night).
 3. Outside 10:00–16:00 heat falls everywhere, not only in shade or water.
