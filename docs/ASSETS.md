@@ -8,10 +8,10 @@ Every asset source is free for commercial use. Keep each pack's license file nex
 
 | Asset | Source | License | Where it goes | How |
 | --- | --- | --- | --- | --- |
-| Top-down character bases (32×32, 4-direction walk) | Kenney "Roguelike Characters" / "Tiny Dungeon" | CC0 | `assets/kenney/characters/` | auto |
-| Beach, water, sand, rock tiles (16×16) | Kenney "Roguelike / RPG pack" + "Pixel Platformer Industrial" water tiles | CC0 | `assets/kenney/tiles/` | auto |
+| Top-down character bases | Kenney "Roguelike Characters" / "Tiny Dungeon" (both are 16×16 single-frame sprites, not 32×32 walk cycles; character size is an open decision) | CC0 | `assets/kenney/characters/` | auto |
+| Beach, water, sand, rock tiles (16×16) | Kenney "Roguelike / RPG pack" | CC0 | `assets/kenney/tiles/` | auto |
 | Shark, crab, fish, bird sprites | OpenGameArt "LPC Animals" / itch.io "Pixel Sea Creatures" (CC0 only) | CC0 / CC-BY | `assets/oga/creatures/` | manual, check license per pack |
-| Items: rope, jug, coconut, knife, tarp, bottle | Kenney "Generic Items" + "Roguelike Items" | CC0 | `assets/kenney/items/` | auto |
+| Items: rope, jug, coconut, knife, tarp, bottle | Kenney "Generic Items" (there is no Kenney "Roguelike Items" pack) | CC0 | `assets/kenney/items/` | auto |
 | UI: panels, bars, buttons, cursor | Kenney "UI Pack" + "Pixel UI Pack" | CC0 | `assets/kenney/ui/` | auto |
 | Pixel font (Spanish accents and ñ required) | Google Fonts "Press Start 2P" (Latin) or "Pixelify Sans" | OFL | `assets/fonts/` | auto |
 | Sea ambience, waves, wind, rain | freesound.org (CC0 filter) / Kenney "Audio" packs | CC0 | `assets/audio/ambience/` | manual |

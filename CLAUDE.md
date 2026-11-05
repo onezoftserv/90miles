@@ -15,7 +15,7 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 
 ## Godot conventions
 
-- Godot 4.4+, GDScript with static typing on every variable, parameter and return (`var hp: int = 10`, `func take(amount: float) -> void`).
+- Godot 4.7 (CI pins 4.7.2), GDScript with static typing on every variable, parameter and return (`var hp: int = 10`, `func take(amount: float) -> void`).
 - Scenes: one scene per entity in `game/scenes/<area>/<name>.tscn`, script beside it with the same name.
 - Node names in PascalCase, files in snake_case, signals in past tense (`died`, `item_picked_up`).
 - Data, not code: items, creatures, NPCs, recipes and islands are `Resource` subclasses saved as `.tres` in `game/resources/`. Adding a crab must never require editing a script.
@@ -51,7 +51,7 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 
 ## Don'ts
 
-- No copied code from Shattered Pixel Dungeon, Brogue or DCSS (GPL). Ideas and structure only. They live in `reference/` (git-ignored, `./tools/clone_references.sh`); read there, write here.
+- No copied code from Shattered Pixel Dungeon or DCSS (GPL) or Brogue CE (AGPL-3.0). Ideas and structure only. They live in `reference/` (git-ignored, `./tools/clone_references.sh`); read there, write here.
 - No AWS keys, tokens or `.env` files committed.
 - No new autoloads without a spec change.
 - No copyrighted characters, logos or real people in assets or dialogue.

@@ -14,7 +14,7 @@ A 1–4 player co-op survival roguelite. Real-time, 2D top-down pixel art, built
 | --- | --- |
 | Genre | Survival roguelite, island-hopping crawler |
 | Players | 1–4 online co-op (host and join); solo is the same game |
-| Engine | Godot 4.4+, GDScript |
+| Engine | Godot 4.7, GDScript |
 | View | 2D top-down pixel art, 16×16 tiles |
 | Time model | Real-time, Don't Starve Together pace; a full day is 12 real minutes |
 | Run length | 6–8 islands, 60–90 minutes |
@@ -294,7 +294,7 @@ Claude Haiku 4.5 on Amazon Bedrock generates dialogue for **important NPCs and t
 
 ### Reference use
 
-All three references are GPL, so they are used for ideas and structure, never copied code.
+All three references are copyleft (Shattered Pixel Dungeon and DCSS GPL, Brogue CE AGPL-3.0), so they are used for ideas and structure, never copied code.
 
 ## 18. Review notes
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Clone the three reference games into reference/ (git-ignored).
-# They are GPL: read them for ideas and structure, never copy code into game/.
+# They are GPL (Brogue CE is AGPL-3.0): read them for ideas and structure, never copy code into game/
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p reference
@@ -18,7 +18,7 @@ clone https://github.com/crawl/crawl.git crawl
 cat > reference/README.md <<'EOF'
 # Reference games (git-ignored)
 
-GPL-licensed. Study only; never copy code into game/.
+GPL-licensed (Brogue CE: AGPL-3.0). Study only; never copy code into game/
 
 | Repo | Study for | Start at |
 | --- | --- | --- |

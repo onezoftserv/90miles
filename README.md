@@ -24,10 +24,11 @@ Spanish is the original language. The writing is full of Cuban slang, political 
 
 | Tool | Version | Notes |
 | --- | --- | --- |
-| Godot | 4.4+ (standard build, GDScript) | https://godotengine.org/download |
+| Godot | 4.7.2 (standard build, GDScript; CI pins this release) | https://godotengine.org/download |
 | Git + GitHub account | any | Repo lives on GitHub |
-| Node.js | 20.19+ | Needed by OpenSpec and the Godot MCP server |
-| Python | 3.11+ | Asset scripts and the AWS Lambda |
+| Node.js | 22.12+ | Needed by OpenSpec 1.x and the Godot MCP server |
+| Python | 3.12+ | Asset scripts and the AWS Lambda (Python 3.12 runtime) |
+| uv | any | Runs the AWS MCP server (`uvx`) |
 | AWS account | — | Bedrock (Claude Haiku 4.5), Lambda, API Gateway |
 | Claude Code | latest | `npm install -g @anthropic-ai/claude-code` |
 
@@ -36,8 +37,8 @@ Spanish is the original language. The writing is full of Cuban slang, political 
 ### 1. Clone and open
 
 ```bash
-git clone git@github.com:<you>/90-millas.git
-cd 90-millas
+git clone https://github.com/onezoftserv/90miles.git
+cd 90miles
 ```
 
 Open `game/project.godot` in Godot once so it imports assets, then close it.
@@ -97,13 +98,15 @@ Optional: the `cc-godot` plugin (https://github.com/Zate/cc-godot) wraps the sam
 ### 5. Install the AWS and GitHub MCP servers
 
 ```bash
-# AWS (Lambda, IAM, Bedrock)
-claude mcp add aws-api -- uvx awslabs.aws-api-mcp-server@latest
-# GitHub (issues, PRs)
-claude mcp add github -- npx -y @modelcontextprotocol/server-github
+# AWS: the AWS MCP Server through AWS's proxy; it uses your AWS CLI credentials
+claude mcp add aws-mcp -- uvx mcp-proxy-for-aws@latest https://aws-mcp.us-east-1.api.aws/mcp
+# GitHub: GitHub's remote MCP server; authenticate with /mcp inside Claude Code
+claude mcp add --transport http github https://api.githubcopilot.com/mcp/
 ```
 
-Set `AWS_PROFILE` and `GITHUB_PERSONAL_ACCESS_TOKEN` in your shell before starting Claude Code.
+The older `@modelcontextprotocol/server-github` package is archived and `awslabs.aws-api-mcp-server` is superseded. Give the agent least privilege: an AWS profile limited to this project's resources, and a fine-grained GitHub token scoped to this repo if you use one instead of OAuth. The `gh` CLI covers issues and PRs without an MCP server.
+
+Set `AWS_PROFILE` for the project profile before starting Claude Code. Keep tokens out of shell profiles and dotfiles.
 
 ### 6. Clone the reference games
 
@@ -111,11 +114,11 @@ Set `AWS_PROFILE` and `GITHUB_PERSONAL_ACCESS_TOKEN` in your shell before starti
 ./tools/clone_references.sh
 ```
 
-This clones Shattered Pixel Dungeon, Brogue CE and Dungeon Crawl Stone Soup into `reference/`, which is git-ignored. They are GPL: read them to understand a mechanism, then write it in GDScript from scratch. `reference/README.md` lists where to start in each.
+This clones Shattered Pixel Dungeon, Brogue CE and Dungeon Crawl Stone Soup into `reference/`, which is git-ignored. They are GPL (Brogue CE is AGPL-3.0): read them to understand a mechanism, then write it in GDScript from scratch. `reference/README.md` lists where to start in each.
 
 ### 7. Download free assets
 
-Follow `docs/ASSETS.md`. The script `tools/fetch_assets.py` downloads the Kenney and Quaternius packs that have direct links; Mixamo and itch.io packs need a manual download.
+Follow `docs/ASSETS.md`. The script `tools/fetch_assets.py` downloads the Kenney packs and the two OFL pixel fonts; OpenGameArt, itch.io and freesound assets need a manual download.
 
 ### 8. AWS backend
 

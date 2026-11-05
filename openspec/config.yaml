@@ -1,5 +1,18 @@
 schema: spec-driven
 
+context: |
+  90 Millas: a Godot 4.7 GDScript co-op survival roguelite (1-4 players, host-authoritative). The Godot project lives in game/, so every engine command passes --path game. docs/ holds the gameplay design (source of truth for numbers); openspec/project.md holds the domain glossary (island, chain, POI, crossing, meters, backgrounds) - read it before writing specs.
+  Development is on Windows with Git Bash; CI is Linux. A change is done only when these pass: godot --headless --path game --import; godot --headless --path game -s res://tests/smoke.gd; godot --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit.
+  Content is data: creatures, items, recipes, NPCs, dialogue, chains, POIs, set pieces, routes, backgrounds and weather are .tres files in game/resources/<folder>/ using the classes in game/scripts/data/. Adding one must never need a script edit. Unresolved design contradictions found while modelling the data are listed in the archived project-skeleton change's data-model-questions.md; do not silently pick an answer in a spec - surface it.
+  reference/ holds Shattered Pixel Dungeon and DCSS (GPL) and Brogue CE (AGPL-3.0): study mechanisms there, never copy code.
+  Spanish first in all player-facing text.
+
+rules:
+  tasks:
+    - End every task group with the import, smoke run and GUT commands passing.
+  specs:
+    - When a requirement changes a number from docs/GAME_DESIGN.md or another design doc, name the doc section it changes.
+
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.
 # Include constraints an agent cannot infer by reading the code.

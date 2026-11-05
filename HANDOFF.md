@@ -27,12 +27,12 @@ Read in this order: `CLAUDE.md` → `docs/GAME_DESIGN.md` → `openspec/project.
 Run from the repo root. Do not skip ahead to code.
 
 1. **Tooling** (TASKS §0)
-   - Confirm Godot 4.4+ is installed; note its path.
+   - Confirm Godot 4.7.2 is installed; note its path.
    - In Claude Code: `/plugin marketplace add https://github.com/affaan-m/ECC` and `/plugin install ecc@ecc`. Copy rules: `git clone https://github.com/affaan-m/ECC.git /tmp/ecc && mkdir -p ~/.claude/rules/ecc && cp -R /tmp/ecc/rules/common ~/.claude/rules/ecc/`.
    - `npm install -g @fission-ai/openspec && openspec init` → choose Claude Code. Keep the existing `openspec/` files when it asks.
    - Godot MCP: `git clone https://github.com/Coding-Solo/godot-mcp.git ~/tools/godot-mcp && cd ~/tools/godot-mcp && npm install && npm run build`, then `claude mcp add godot -e GODOT_PATH=<path> -- node ~/tools/godot-mcp/build/index.js`. Restart Claude Code. Verify with `claude mcp list`.
    - AWS and GitHub MCPs (README §5). Verify both respond.
-   - `git init && git add -A && git commit -m "chore: design docs and specs"`; create the GitHub repo; push.
+   - The repo already exists on GitHub (`onezoftserv/90miles`): clone it rather than running `git init`.
    - `./tools/clone_references.sh` → `reference/` (git-ignored).
 2. **Assets** (TASKS §1): `python -I tools/fetch_assets.py`, then the manual downloads in `docs/ASSETS.md`. Write `game/assets/CREDITS.md`.
 3. **Skeleton** (TASKS §2): `/opsx:propose project-skeleton`, review, `/opsx:apply`. Run the project through the Godot MCP; it must open and quit clean. `/opsx:archive`.
@@ -58,7 +58,7 @@ Run from the repo root. Do not skip ahead to code.
 - Voice: Chatterbox clones for handwritten lines; Kokoro runtime TTS is a stretch goal
 - Difficulty: brutal on run 1; Experiencia carry-over (50% skills/trust on death, 100% on win) plus capped world easing (8 levels max)
 - No faith/religion mechanic
-- Reference games are GPL and are never copied
+- Reference games are GPL (Brogue CE: AGPL-3.0) and are never copied
 
 ## 6. Open questions to settle during the first playtest
 

@@ -4,14 +4,14 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 
 ## 0. Tooling (one-time, ~1 hour)
 
-- [ ] Install Godot 4.4+ and open it once
+- [ ] Install Godot 4.7.2 and open it once
 - [ ] Install Claude Code: `npm install -g @anthropic-ai/claude-code`
 - [ ] Install ECC: `/plugin marketplace add https://github.com/affaan-m/ECC` then `/plugin install ecc@ecc`
 - [ ] Copy ECC common rules to `~/.claude/rules/ecc/` (see README §2)
 - [ ] Install OpenSpec: `npm install -g @fission-ai/openspec`, then `openspec init` in the repo (pick Claude Code)
 - [ ] Build and register the Godot MCP (`Coding-Solo/godot-mcp`), confirm `claude mcp list` shows it
 - [ ] Register the AWS and GitHub MCP servers; export `AWS_PROFILE` and `GITHUB_PERSONAL_ACCESS_TOKEN`
-- [ ] `git init`, first commit, create the GitHub repo, push
+- [ ] Clone the GitHub repo (`onezoftserv/90miles`); it already exists, so no `git init`
 - [ ] `./tools/clone_references.sh` (reference games into git-ignored `reference/`)
 
 ## 1. Assets (~2 hours)

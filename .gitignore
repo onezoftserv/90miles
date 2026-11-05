@@ -35,3 +35,12 @@ __pycache__/
 
 # Git Bash crash dumps
 *.stackdump
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Claude Code local state
+.claude/worktrees/
+.claude/settings.local.json

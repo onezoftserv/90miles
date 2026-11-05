@@ -6,7 +6,7 @@ A 1–4 player co-op survival roguelite in Godot 4. Cuban balseros island-hop ac
 
 ## Tech stack
 
-- Godot 4.4+, GDScript with static typing
+- Godot 4.7 (CI pins 4.7.2), GDScript with static typing
 - Godot high-level multiplayer (ENet), host-authoritative
 - GUT for tests
 - AWS: API Gateway + Lambda (Python 3.12) + Bedrock (Claude Haiku 4.5) for AI dialogue
@@ -16,7 +16,7 @@ A 1–4 player co-op survival roguelite in Godot 4. Cuban balseros island-hop ac
 
 See `CLAUDE.md`. In short: data in `.tres` resources, components over inheritance, thin autoloads, host authority, Spanish-first writing, no copied GPL code from the reference games.
 
-## Reference games (ideas only, GPL)
+## Reference games (ideas only; GPL, Brogue CE AGPL-3.0)
 
 Cloned into `reference/` (git-ignored):
 
