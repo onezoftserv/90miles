@@ -12,11 +12,11 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 2. Player body and its net component
 
-- [ ] 2.1 Split `PlayerBody._physics_process` into `advance(delta, with_interaction)` behind `auto_advance`, and verify every player-movement test still passes plus a test that `advance(delta, false)` moves the body without starting an interaction
-- [ ] 2.2 Add `PlayerNet` with `role_for()` and the HOST role (queued intents stepped one by one with their own deltas, acknowledged seq, downed bodies advancing per frame), and verify GUT tests for the role table, the queue and the shadow fields
-- [ ] 2.3 Add the PREDICTED and REMOTE roles against a recording stand-in session, and verify GUT tests for "own player responds at once", "correction from the host" (exact replay of unacknowledged intents), "downed player is not predicted" and remote interpolation
-- [ ] 2.4 Add `PlayerNet` and the `StateSync` synchronizer to `player.tscn` and verify a GUT test that it replicates the seven shadow fields at 0.05 s, with authority set by the spawn rule, and that the movement playground still behaves as before
-- [ ] 2.5 Verify the import, smoke run and GUT pass with zero error lines
+- [x] 2.1 Split `PlayerBody._physics_process` into `advance(delta, with_interaction)` behind `auto_advance`, and verify every player-movement test still passes plus a test that `advance(delta, false)` moves the body without starting an interaction
+- [x] 2.2 Add `PlayerNet` with `role_for()` and the HOST role (queued intents stepped one by one with their own deltas, acknowledged seq, downed bodies advancing per frame), and verify GUT tests for the role table, the queue and the shadow fields
+- [x] 2.3 Add the PREDICTED and REMOTE roles against a recording stand-in session, and verify GUT tests for "own player responds at once", "correction from the host" (exact replay of unacknowledged intents), "downed player is not predicted" and remote interpolation
+- [x] 2.4 Add `PlayerNet` and the `StateSync` synchronizer to `player.tscn` and verify a GUT test that it replicates the seven shadow fields at 0.05 s, with authority set by the spawn rule, and that the movement playground still behaves as before
+- [x] 2.5 Verify the import, smoke run and GUT pass with zero error lines
 
 ## 3. NetManager and the session over ENet
 

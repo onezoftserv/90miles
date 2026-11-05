@@ -22,12 +22,16 @@ var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
 ## property until survival-meters owns it.
 var downed: bool = false
 var interaction_hold: InteractionHold = InteractionHold.new()
+## False once coop-networking drives the body: PlayerNet then steps it per intent (host),
+## predicts it (owning client) or draws it from host states (other clients).
+var auto_advance: bool = true
 var _interact_was_held: bool = false
 
 @onready var meters: SurvivalMeters = $SurvivalMeters
 @onready var camera: Camera2D = $Camera
 @onready var player_input: PlayerInput = $PlayerInput
 @onready var drag_handle: DragHandle = $DragHandle
+@onready var net: PlayerNet = $PlayerNet
 
 
 func _ready() -> void:
@@ -38,13 +42,22 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if auto_advance:
+		advance(delta)
+
+
+## One simulation step from the current intent. Interactions run only where the world is
+## authoritative (the host, or offline); a client predicting its own player passes false.
+func advance(delta: float, with_interaction: bool = true) -> void:
 	var result: MovementStep
 	if downed:
-		_interact_was_held = false
-		interaction_hold.update(false, delta, self, null)
+		if with_interaction:
+			_interact_was_held = false
+			interaction_hold.update(false, delta, self, null)
 		result = _dragged_step(delta)
 	else:
-		_update_interaction(delta)
+		if with_interaction:
+			_update_interaction(delta)
 		var cell := cell()
 		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, intent, delta)
 		meters.spend_energy(result.energy_spent)
