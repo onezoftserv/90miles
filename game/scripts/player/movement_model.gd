@@ -29,10 +29,12 @@ var _dive_time_s: float = 0.0
 var _dive_locked: bool = false
 
 
-func step(terrain: DataEnums.Terrain, current: Vector2, energy: float, intent: MoveIntent, delta: float) -> MovementStep:
+## `speed_factor` scales the player's own speed (sunstroke: 0.6), never the current or a drag.
+func step(terrain: DataEnums.Terrain, current: Vector2, energy: float, intent: MoveIntent, delta: float, speed_factor: float = 1.0) -> MovementStep:
 	var result := MovementStep.new()
 	var direction: Vector2 = intent.direction.limit_length(1.0)
 	var moving: bool = direction.length_squared() > 0.0
+	var stride: Vector2 = direction * speed_factor
 	var brush: bool = TerrainQuery.is_brush(terrain)
 	var cost: float = 0.0
 
@@ -43,7 +45,7 @@ func step(terrain: DataEnums.Terrain, current: Vector2, energy: float, intent: M
 			result.velocity = current
 		else:
 			result.movement = MovementStep.Move.SWIM
-			result.velocity = direction * SWIM_SPEED
+			result.velocity = stride * SWIM_SPEED
 			if moving:
 				cost += SWIM_ENERGY_PER_S * delta
 			cost += _update_dive(result, energy, intent.crouch, delta)
@@ -52,17 +54,17 @@ func step(terrain: DataEnums.Terrain, current: Vector2, energy: float, intent: M
 		_dive_locked = false
 		if energy <= EXHAUSTED_EPSILON:
 			result.movement = MovementStep.Move.CRAWL
-			result.velocity = direction * CRAWL_SPEED
+			result.velocity = stride * CRAWL_SPEED
 		elif intent.crouch:
 			result.movement = MovementStep.Move.CROUCH
-			result.velocity = direction * CROUCH_SPEED
+			result.velocity = stride * CROUCH_SPEED
 		elif intent.run and moving:
 			result.movement = MovementStep.Move.RUN
-			result.velocity = direction * RUN_SPEED
+			result.velocity = stride * RUN_SPEED
 			cost += RUN_ENERGY_PER_S * delta
 		else:
 			result.movement = MovementStep.Move.WALK
-			result.velocity = direction * WALK_SPEED
+			result.velocity = stride * WALK_SPEED
 		if intent.crouch and brush:
 			result.stealth = MovementStep.Stealth.HIDDEN
 

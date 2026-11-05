@@ -45,22 +45,30 @@ A 1–4 player co-op survival roguelite. Real-time, 2D top-down pixel art, built
 
 Thirst is the main pressure; everything else makes it harder to manage.
 
+Rates are per real minute (one in-game hour is 30 real seconds, see §5). The numbers were retuned in the `survival-meters` change and are provisional until the Milestone A playtest; `game/resources/survival_tuning.tres` holds them, per real second.
+
 | Meter | Max | Drains from | Restored by | At zero |
 | --- | --- | --- | --- | --- |
-| Thirst | 100 | 1/min base, ×2 in sun, ×3 swimming | Coconut 15, rain cup 25, still 40 | Health drains 2/s |
-| Hunger | 100 | 0.5/min, ×2 while working | Crab 20, fish 30, eggs 10, sea grapes 5 | Energy cap halves |
-| Heat | 0 (cool) → 100 (rises; decided 2026-11-05) | Rises in midday sun with no shade (rate retuned in `survival-meters`) | Shade, night, water lower it | At 100, sunstroke: blurred screen, speed −40% |
-| Energy | 100 | Swimming 3/s, building 1/s, running 0.5/s | Sleep (+50 per night), food | Collapse: can only crawl |
-| Morale | 100 | Loss of ally −30, storm −10, alone at night −5/min | Teammate nearby +2/min, fire +5, keepsake, music | Hallucinations: fake islands, fake voices |
-| Health | 100 | Attacks, thirst, heat | Aloe, rest, noni | Downed |
+| Thirst | 100 | 6/min at rest; ×2 in direct sun (day phase, on land, no shade), ×3 swimming instead of the sun, ×0.5 at night | Coconut 15, rain cup 25, still 40, well 30 | Health drains 2/s |
+| Hunger | 100 | 3/min, ×2 while crafting or swimming | Crab 20, fish 30, eggs 10, sea grapes 5 | Energy capped at 50 |
+| Heat | 0 (cool) → 100 (rises; decided 2026-11-05) | Rises 45/min in direct sun between 10:00 and 16:00, ×2 in scorching calm | Falls 45/min in shade, in water or outside 10:00–16:00; 0 at night | At 100, sunstroke until heat drops below 60: blurred screen, speed −40% |
+| Energy | 100 | Swimming 3/s, building 1/s, running 0.5/s | Sleep (+50 per night in shelter), meals (+10); nothing else | Collapse: can only crawl |
+| Morale | 100 | Loss of ally −30, squall −10 (both hit every player), −5/min at night with no teammate and no lit fire within 5 tiles | Teammate within 5 tiles +2/min, fire +5, song +15, found text +10, keepsake | Below 20: hallucinations: fake islands, fake voices |
+| Health | 100 | Attacks, thirst, poison (−20 over 30 s) | Aloe, rest, noni | Downed (solo: last stand) |
 
-**Downed, not dead.** A player at 0 health is downed for 90 s. Teammates can drag them to shade and give water to revive. Solo players, or an unrevived player, die: permadeath for the run.
+What that means for one player starting full at dawn: thirst lasts 1.15 days (≈ 14 min) working in the sun all day, 1.4 days half in the shade, 1.75 days resting in the shade. Hunger lasts 2–2.8 days. Standing in the midday sun brings sunstroke after 133 s (67 s in scorching calm); half sun, half shade never does on a normal day. Heat never costs health (provisional).
+
+**Downed, not dead.** A player at 0 health is downed for 90 s plus their downed-timer bonuses (Experiencia +5 s per level, the +10 s point boost), still losing thirst and hunger. Teammates can drag them to shade and give water to revive them at 30 health. An unrevived player dies: permadeath for the run.
+
+**Last stand (solo).** A player with no other living player in the run (solo, or the last one alive) is not downed at 0 health: they get a last stand of 0 s plus the same bonuses, lying where they fell, and can drink a reviving cup they carry to stand at 30 health. On run 1, with no bonus, that is death at once. The Medalla de la Caridad's one free revive per run stands its holder at 30 health instead of going down, a last stand or death, solo or not.
+
+**Alone.** Every meter works for one player (provisional numbers). A lit fire within 5 tiles keeps a lone player company at night, so the night drain stops; a fire also shows to patrols. One player playing half in the sun gets through 3 days on the sandbar on 9 of its 10 coconuts, and a week with a fire every night and a squall every day still ends at morale 65.
 
 **Drinking seawater** restores 10 thirst, then drains 30 over the next two minutes. Desperate players will do it anyway. That is the point.
 
 ## 5. Weather and time
 
-A day is 12 real minutes: dawn (1), day (5), dusk (1), night (5).
+A day is 12 real minutes: dawn (1), day (5), dusk (1), night (5). One in-game hour is 30 real seconds and the clock reads 06:00 when dawn starts, so the day phase runs 08:00–18:00, dusk 18:00–20:00 and night 20:00–06:00 (provisional, `survival-meters`). Midday, 10:00–16:00, is the middle 3 real minutes of the day phase.
 
 | Weather | Effect | Tell |
 | --- | --- | --- |
@@ -117,7 +125,7 @@ The turtle's two-seat limit and the swimmer's energy cost are intentional: a 4-p
 
 ## 8. The crossing
 
-A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cuba and weather: reef sharks follow blood; a squall line forces you to tie down; searchlights sweep from a cutter on the early chains; the Gulf Stream pushes east and the navigator must correct. Falling in the water costs energy and attracts sharks. The raft takes damage; at 0 it breaks and everyone swims the rest or drowns.
+A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cuba and weather: reef sharks follow blood; a squall line forces you to tie down; searchlights sweep from a cutter on the early chains; the Gulf Stream pushes east: anyone aboard slows the drift to 0.25 tile/s, and a *Maestro*, Navigation 2 or a compass with charts cancels it. Drift pushes you sideways (up to 40 tiles, then you overshoot to a harder chain) but never makes the crossing longer. Falling in the water costs energy and attracts sharks; a swimmer climbs back aboard alone by holding interact for 3 s at the edge, or a teammate pulls them in 2 s. The raft takes damage; at 0 it breaks and everyone swims the rest or drowns.
 
 ## 9. Threats
 
@@ -140,7 +148,7 @@ Full lore and behavior specs in `BESTIARY.md`. Summary:
 
 ### Guardacostas and stealth
 
-The human threat on the first two or three islands, fading as you head north. Patrol boats run fixed routes; at night a searchlight cone sweeps beach and water. Smoke or fire draws a shore squad that searches the island for three minutes. A caught player is taken aboard: teammates can free them by sneaking onto the boat at the dock; a solo player loses their items and restarts the previous island. Stealth is a skill: crouching in brush, diving, hiding in mangroves and putting out fires all count.
+The human threat on the first two or three islands, fading as you head north. Patrol boats run fixed routes; at night a searchlight cone sweeps beach and water. Smoke or fire draws a shore squad that searches the island for three minutes. A caught player is taken aboard: teammates can free them by sneaking onto the boat at the dock. When the last free player is caught (a solo player always is), *La captura* plays with Rodríguez: a persuasive party is released at the next cay; otherwise it restarts the previous island, regenerated from the run seed, keeping its items except fire sources (keepsakes always stay). On island 1 the party restarts island 1 the same way. Caught on the final crossing, the run ends: *Devuelto*. Stealth is a skill: crouching in brush, diving, hiding in mangroves and putting out fires all count.
 
 ## 10. Characters and co-op
 
@@ -157,7 +165,7 @@ Each player picks a background at the start; it sets starting items and a skill 
 | Músico | A guitar with two strings | Morale: songs restore the party, dolphins come closer |
 | Ex-militar | Machete | Stealth and combat: quieter, hits harder |
 
-Any player can do anything; backgrounds do it better. In solo, the player picks one and the game is tuned for it.
+Any player can do anything; backgrounds do it better. Solo uses the same base numbers as co-op, and any background can finish a run: every island set up for one living player has at least one escape route that needs no background skill and no starting item.
 
 ### Co-op rules
 
@@ -184,11 +192,13 @@ Decided: multiple endings, based on who you saved and how.
 
 | Outcome | Ending |
 | --- | --- |
-| Everyone you met made it | *Todos.* The whole group walks up the beach together. |
-| Your party made it, NPCs lost | *Los que llegamos.* Reunion on the pier; a chair stays empty. |
-| Only one survivor | *Solo.* A long silent walk. A phone call home. |
-| Captured on the final crossing | *Devuelto.* Fade on the deck of the cutter. Unlocks a keepsake. |
+| Everyone you met made it (at least one companion met) | *Todos.* The whole group walks up the beach together. |
+| Two or more survivors, but not *Todos* (someone you met was lost, or nobody was met) | *Los que llegamos.* Reunion on the pier; a chair stays empty. |
+| Only one survivor (any party size, solo included) | *Solo.* A long silent walk. A phone call home. |
+| Whole party captured on the final crossing | *Devuelto.* Fade on the deck of the cutter. Ends the run as a loss (counts as a death) and unlocks a keepsake. |
 | Secret: Yunior reaches land | *El Niño.* A different voice reads the credits. |
+
+Survivors are the players and companions who reach land. The first match wins, in this order: *Devuelto*, *El Niño*, *Solo*, *Todos*, *Los que llegamos*. A solo player who met nobody gets *Solo*; one who brings a companion to land can get *Todos*.
 
 ## 14. Roguelite progression
 
@@ -198,7 +208,7 @@ Permadeath per run. Between runs you unlock **memories**: keepsakes you can star
 | --- | --- | --- |
 | Foto de la familia | Morale drains 30% slower | Finish any run |
 | Cuchillo del abuelo | Start with a knife | Kill a shark |
-| Medalla de la Caridad | One free revive | Save La Vieja's quest |
+| Medalla de la Caridad | One free revive per run, solo included (`survival-meters` defines how) | Save La Vieja's quest |
 | Nudo del pescador | Rafts 25% stronger | Cross 3 times by raft |
 | Pedazo de mapa | Reveals one route on island 1 | Reach the storm key |
 | Cassette de Los Van Van | Music works without a Músico | Finish with a Músico |
@@ -224,7 +234,9 @@ Rules:
 - Skills cap at level 5 per background skill and level 3 for the others; carry-over never pushes a skill above level 3 without a run that earned it.
 - Each run also grants **1 Experiencia point** per island reached, spent at the start of the next run on small permanent boosts: +10 max thirst, +1 inventory slot, +10 s downed timer, start with a known plant, start with 1 rope. Max 12 points banked; spending is the only way to use them.
 - **The world eases a little per death, capped.** Each death adds one "Experiencia level" (max 8). Per level: thirst and hunger drain −3%, patrol period +10 s, one extra driftwood and one extra coconut per island, downed timer +5 s. At the cap that is drains −24%, patrols at 4:20 instead of 3:00, and 8 extra materials per island: enough to feel the game meet you halfway, not enough to remove the pressure.
+- **Downed-timer rewards in solo.** For a player with no other living player (solo, or the last one alive), the downed timer is a last-stand window with a 0 s base, so a first solo run stays brutal. The +5 s per Experiencia level and the +10 s boost lengthen that window (for example 30 s at level 4 with the boost); `survival-meters` defines what the player can do in it, and the Medalla revive, which fires at 0 health before the window starts, so it saves a solo player even on run 1.
 - Winning a run removes 2 Experiencia levels (the game gets harder again for a champion) and unlocks a keepsake.
+- *Devuelto* is a loss: it counts as a death (one Experiencia level added, the death carry-over above) and removes no levels. It unlocks a keepsake whose name and effect are still open.
 - Seeded and daily runs earn Experiencia but do not spend it.
 
 Challenges (optional hard modes): no fire, permanent storm season, sinking raft from the start, patrols on every island.

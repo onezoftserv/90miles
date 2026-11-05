@@ -68,6 +68,30 @@ func test_a_player_can_walk_from_land_into_the_water() -> void:
 	assert_lt(swimmer.meters.energy, 100.0)
 
 
+func test_hud_shows_the_local_players_meters() -> void:
+	var hud := playground.get_node("Hud/MetersHud") as MetersHud
+	assert_not_null(hud)
+	var local := _players()[0]
+	assert_true(local.local_player)
+	local.meters.thirst = 40.0
+	assert_eq(hud.bar_for(DataEnums.Meter.THIRST).bar.value, 40.0)
+	_players()[1].meters.thirst = 10.0
+	assert_eq(hud.bar_for(DataEnums.Meter.THIRST).bar.value, 40.0, "not the teammate's")
+
+
+func test_has_a_shaded_hut_on_land() -> void:
+	assert_false(playground.terrain.shaded.is_empty())
+	for cell: Vector2i in playground.terrain.shaded:
+		assert_false(TerrainQuery.is_water(playground.terrain.terrain_at(cell)), "hut cell %s" % cell)
+
+
+func test_players_share_a_midday_climate() -> void:
+	assert_eq(playground.climate.phase, DataEnums.DayPhase.DAY)
+	assert_true(playground.climate.midday)
+	for body: PlayerBody in _players():
+		assert_eq(body.climate, playground.climate)
+
+
 func test_scene_draws_without_textures() -> void:
 	for dependency: String in ResourceLoader.get_dependencies(PLAYGROUND_PATH):
 		assert_false(dependency.get_extension() in ["png", "jpg", "webp", "svg"], dependency)

@@ -34,11 +34,11 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 | 26 | medium | MCP setup installs an archived GitHub server and a superseded AWS server, omits uv, and gives the agent write access with the developer's credentials | Fixed in 481c7c2 (setup docs) |
 | 27 | medium | Co-op resource scaling shrinks total supply as the party grows, and the 'always buildable' raft cannot be built from the sandbar's listed materials | Open |
 | 28 | medium | Specs depend on backgrounds and skill levels nobody defines (no XP curve, a 'Combat' skill that doesn't exist), and profile.cfg has no schema or co-op trust model | Open |
-| 29 | medium | The crossing model doesn't close: unsteered drift always overshoots, vessel speed and base duration are undefined, and raft integrity mixes percent and points with no repair cost | Open |
-| 30 | medium | Capture rules contradict each other and leave cases unhandled; getting caught on purpose skips crossings and the coast boss | Open |
+| 29 | medium | The crossing model doesn't close: unsteered drift always overshoots, vessel speed and base duration are undefined, and raft integrity mixes percent and points with no repair cost | Partly decided 2026-11-05: drift is a capped lateral offset that never lengthens the crossing (solo-play change); the rest is open |
+| 30 | medium | Capture rules contradict each other and leave cases unhandled; getting caught on purpose skips crossings and the coast boss | Decided 2026-11-05: one outcome for every party size (solo-play change) |
 | 31 | medium | The searchlight's 2 s dwell equals the spot timer, so any stealth level makes a player standing still in the open unspottable | Open |
 | 32 | medium | The final crossing (the Straits boss) has no owning requirement, and its patrol is excluded by the crossing event list | Open |
-| 33 | medium | Ending selection cannot be computed from the flags the specs emit: common co-op outcomes match no ending, Solo never plays solo, and Devuelto is unreachable | Open |
+| 33 | medium | Ending selection cannot be computed from the flags the specs emit: common co-op outcomes match no ending, Solo never plays solo, and Devuelto is unreachable | Decided 2026-11-05: survivor-based ending order, Devuelto is a loss (solo-play change) |
 | 34 | medium | Experiencia carry-over contradicts other specs: plant-ID scope, easing formula and totals, co-op death, and uncapped permanent boosts | Open |
 | 35 | medium | Keepsake effects and unlocks contradict each other across GAME_DESIGN §14, ITEMS and CHARACTERS, and the spec points at the incomplete §14 table | Open |
 | 36 | medium | 'Found every run' texts and 'any island' NPCs are tied to chains a run can skip, and 5 of 8 companions have no spawn POI | Open |
@@ -56,7 +56,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 | 48 | low | The set of AI-voiced NPCs and texts is 7 and 4 in some docs and 12 and 6 in others | Open |
 | 49 | low | Smaller number and lore contradictions: dominoes, expired medicine odds, manchineel identification, and the Rodríguez–Caridad timeline | Open |
 | 50 | low | Seeded generation inputs are incomplete, so the hash check scope and shared/daily seed rules are undefined | Open |
-| 51 | low | Revive works with any cup, including seawater, and the downed-timer boosts do nothing in solo | Open |
+| 51 | low | Revive works with any cup, including seawater, and the downed-timer boosts do nothing in solo | Decided 2026-11-05: solo last-stand window (solo-play and survival-meters changes) |
 | 52 | low | OpenSpec 1.x ignores openspec/project.md and config.yaml has no context, so /opsx planning never sees the glossary | Fixed in 481c7c2 (openspec/config |
 | 53 | low | The Bedrock model ID in CLAUDE.md and the spec cannot be invoked on bedrock-runtime | Open |
 | 54 | low | No release plan for live AI text: no output moderation, report trail, AI disclosure or privacy and retention policy | Open |
@@ -407,7 +407,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 29. The crossing model doesn't close: unsteered drift always overshoots, vessel speed and base duration are undefined, and raft integrity mixes percent and points with no repair cost
 
-**Severity:** medium · **Dimensions:** specs-vs-design, balance-math · **Status:** Open: needs a design decision.
+**Severity:** medium · **Dimensions:** specs-vs-design, balance-math · **Status:** Partly decided 2026-11-05: in the solo-play change, anyone aboard steers at 0.25 tile/s; a Maestro, Navigation ≥ 2 or compass + charts cancel drift; drift is a lateral offset capped at 40 tiles that never lengthens the crossing. Still open: vessel speed, base duration per band, integrity units, the raft repair cost, and where the cap's harder-chain skip lands in the branch graph.
 
 **Files:** `openspec/specs/crossing/spec.md`, `openspec/specs/crafting-inventory/spec.md`, `openspec/specs/endings-progression/spec.md`, `docs/BESTIARY.md`, `docs/ITEMS.md`, `docs/GAME_DESIGN.md`, `docs/ISLANDS.md`
 
@@ -419,7 +419,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 30. Capture rules contradict each other and leave cases unhandled; getting caught on purpose skips crossings and the coast boss
 
-**Severity:** medium · **Dimensions:** consistency, specs-vs-design, balance-math · **Status:** Open: needs a design decision.
+**Severity:** medium · **Dimensions:** consistency, specs-vs-design, balance-math · **Status:** Decided 2026-11-05: in the solo-play change, one capture outcome for every party size, and a solo player is a party of one: `la_captura`, then the persuasion check; on failure the party restarts the previous island, regenerated from the run seed, with its inventory minus fire sources and keepsakes always kept. On island 1 the party restarts island 1 the same way. A whole-party capture on the final crossing ends the run with Devuelto (no check). Still to settle in the guardacostas-stealth build: a per-run release limit, capture at sea, a partial captive rejoining the party, Marisol and the letter, companions during capture.
 
 **Files:** `openspec/specs/guardacostas-stealth/spec.md`, `openspec/specs/crossing/spec.md`, `docs/GAME_DESIGN.md`, `docs/BESTIARY.md`, `docs/CHARACTERS.md`, `docs/ISLANDS.md`
 
@@ -455,7 +455,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 33. Ending selection cannot be computed from the flags the specs emit: common co-op outcomes match no ending, Solo never plays solo, and Devuelto is unreachable
 
-**Severity:** medium · **Dimensions:** specs-vs-design, balance-math · **Status:** Open: needs a design decision.
+**Severity:** medium · **Dimensions:** specs-vs-design, balance-math · **Status:** Decided 2026-11-05: in the solo-play change, survivors are the players and companions who reach land; order `devuelto` → `el_nino` → `solo` (exactly one survivor, any party size) → `todos` (at least one companion met, every met companion and NPC ally alive) → `los_que_llegamos` (any other outcome), so every cell has one ending. Yunior's death no longer selects Solo. Devuelto ends the run as a loss: it counts as a death (+1 Experiencia level, 50% carry-over) and unlocks its keepsake. Still needed: the final-crossing patrol (item 32), the met and left-behind flags in npcs-dialogue, and the Devuelto keepsake's name.
 
 **Files:** `openspec/specs/endings-progression/spec.md`, `openspec/specs/npcs-dialogue/spec.md`, `openspec/specs/guardacostas-stealth/spec.md`, `openspec/specs/crossing/spec.md`, `docs/CHARACTERS.md`, `docs/GAME_DESIGN.md`
 
@@ -671,7 +671,7 @@ Status is as of commit 481c7c2. "Open" items are design or architecture choices 
 
 ### 51. Revive works with any cup, including seawater, and the downed-timer boosts do nothing in solo
 
-**Severity:** low · **Dimensions:** balance-math · **Status:** Open: needs a design decision.
+**Severity:** low · **Dimensions:** balance-math · **Status:** Decided 2026-11-05: for a player with no other living player the downed-timer rewards lengthen a solo last-stand window: 0 s base on run 1, +5 s per Experiencia level and +10 s from the point boost, shared with the Medalla revive. The survival-meters change implements the window (and which cups revive); endings-progression states the Experiencia side (solo-play change).
 
 **Files:** `openspec/specs/survival-meters/spec.md`, `openspec/specs/endings-progression/spec.md`, `docs/ITEMS.md`, `docs/GAME_DESIGN.md`
 

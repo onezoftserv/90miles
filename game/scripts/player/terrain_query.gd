@@ -17,6 +17,11 @@ func current_at(_cell: Vector2i) -> Vector2:
 	return DEFAULT_CURRENT
 
 
+## True under a roof, a tarp or a palm canopy: no direct sun (survival-meters).
+func is_shaded(_cell: Vector2i) -> bool:
+	return false
+
+
 static func is_water(terrain: DataEnums.Terrain) -> bool:
 	return terrain == DataEnums.Terrain.DEEP or terrain == DataEnums.Terrain.SHALLOWS or terrain == DataEnums.Terrain.BRACKISH
 

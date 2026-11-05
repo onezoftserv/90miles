@@ -1,0 +1,52 @@
+# Tasks
+
+## 1. Six meters and the tuning file
+
+- [x] 1.1 Add GUT tests for a fresh player (thirst, hunger, energy, morale, health 100; heat 0), clamping and `meter_changed` for all six meters, the shipped tuning holding every number in the spec, and the existing energy API; verify the new ones fail (RED)
+- [x] 1.2 Add `SurvivalTuning` with `game/resources/survival_tuning.tres` and extend `SurvivalMeters` to six properties and signals; verify the 1.1 tests and the existing energy tests pass, and the import, smoke run and GUT pass (GREEN)
+
+## 2. Drains, restores and states
+
+- [x] 2.1 Add GUT tests stepping `tick` with a context for the thirst scenarios (working in the sun, swimming does not add the sun, a day in the shade, dry, seawater), hunger (crafting doubles hunger, starving caps energy), heat (midday sun, scorching calm, sunstroke lingers, night resets heat), energy (a meal, a night's sleep) and morale (ally dies, alone at night, company, a fire ends the hallucinations); verify they fail (RED)
+- [x] 2.2 Add `MeterContext`, `SurvivalRules`, `MeterOverTime`, `tick`, the event methods and the sunstroke and hallucinating states; verify the 2.1 tests pass, and the import, smoke run and GUT pass (GREEN)
+
+## 3. Health and downed state
+
+- [x] 3.1 Add GUT tests for poison (90 after 15 s, 80 after 30 s), nobody comes (dead after 90 s), solo (dead at once), revive (health 30 and thirst +25 with 40 s left, refused when not downed), thirst still draining while downed, and dead meters not ticking; verify they fail (RED)
+- [x] 3.2 Add the downed timer, `revive`, `solo` and `died` to `SurvivalMeters`; verify the 3.1 tests pass, and the import, smoke run and GUT pass (GREEN)
+
+## 4. Player body
+
+- [x] 4.1 Add GUT tests: a body on land in a midday climate loses thirst at 0.2/s; a swimming body uses ×3; a body on a shaded cell gets no sun; a teammate within 5 tiles restores morale; sunstroke slows walking to 2.4 tiles/s; running out of energy at the body level; meters going down puts the body down with its drag handle enabled, and a death keeps it down with the handle disabled; a body that is not the host does not advance its meters; verify they fail (RED)
+- [x] 4.2 Add `TerrainQuery.is_shaded` with a shaded set in `GridTerrain`, `ClimateState`, the optional `speed_factor` in `MovementModel.step`, and the host-only meters tick and downed wiring in `PlayerBody`; verify the 4.1 tests and all player-movement tests pass, and the import, smoke run and GUT pass (GREEN)
+
+## 5. HUD
+
+- [x] 5.1 Add GUT tests: the HUD scene has six bars labelled Sed, Hambre, Calor, Energía, Ánimo, Salud in the committed font; bars follow the meters (thirst 40 shows 40 of 100); heat 75 fills three quarters; values set directly on the node, as a synchronizer would, show up; only the bound player's sunstroke shows the blur; rebinding stops following the old node; verify they fail (RED)
+- [x] 5.2 Add `scenes/ui/meter_bar.tscn`, `scenes/ui/meters_hud.tscn` and the blur shader; verify the 5.1 tests pass, and the import, smoke run and GUT pass (GREEN)
+- [x] 5.3 Add the HUD, a shaded hut and a midday climate to the movement playground; verify the smoke run loads it and a windowed screenshot at 640×360 shows six readable bars
+
+## 6. Docs and integration
+
+- [x] 6.1 Update `docs/GAME_DESIGN.md` §4 (numbers, heat row, morale below 20, health drains) and §5 (the clock) to match the spec; verify every number there matches `survival_tuning.tres`
+- [x] 6.2 Verify the import, smoke run, GUT and a 300-frame game run all pass with zero `ERROR:` or `SCRIPT ERROR:` lines, including resources in use at exit
+- [x] 6.3 Tick the `survival-meters` line in `TASKS.md` §3 and add a Done entry naming the provisional numbers; verify `openspec validate survival-meters --type change --strict` passes
+
+## 7. Solo play
+
+- [x] 7.1 Add GUT tests: a lit fire keeps a lone player company at night (morale 50 stays 50), a night alone by the fire (40 at dusk, 45 at dawn, never hallucinating), three solo days on the sandbar (10 coconuts, half sun, fire each night: thirst and hunger never 0, at most 10 coconuts, morale never below 20); at the body level a lone body dies at 0 health with no downed timer, the last one alive does too, a body with a living teammate is downed, and a node in `lit_fires` within 5 tiles stops the night drain; verify they fail (RED)
+- [x] 7.2 Add `MeterContext.near_fire`, the fire rule in `SurvivalRules.morale_rate`, and in `PlayerBody` the derived `solo` flag and the `lit_fires` check; verify the 7.1 tests and every earlier test pass, and the import, smoke run and GUT pass (GREEN)
+- [x] 7.3 Update `docs/GAME_DESIGN.md` §4 (fire as company, solo death, solo budget) and the `TASKS.md` Done entry; verify `openspec validate survival-meters --type change --strict` passes
+
+## 8. Solo last stand and free revive (user decisions, 2026-11-05)
+
+- [x] 8.1 Add GUT tests: the shipped tuning has a 0 s solo last stand; a solo player on run 1 with no bonus dies at once; with 15 s of bonus they are in a last stand, alive after 14 s and dead after 15 s; with the +10 s boost it lasts 10 s; a cup used on themselves during it stands them at 30 with thirst +25; a co-op player with 10 s of bonus is downed for 100 s; the Medalla's free revive saves a solo player once (stand at 30, revive used up) and the second time they die, and saves a co-op player from going down; at the body level a last stand lies the body down undraggable and a self-revive stands it up; verify they fail (RED)
+- [x] 8.2 Add `solo_last_stand_s` to the tuning, `downed_bonus_s`, `free_revives`, `last_stand` and their signals to `SurvivalMeters`, and the last-stand wiring in `PlayerBody`; verify the 8.1 tests and every earlier test pass, and the import, smoke run and GUT pass (GREEN)
+- [x] 8.3 Update `docs/GAME_DESIGN.md` §4 (last stand, free revive), the `TASKS.md` Done entry and the PR description; verify `openspec validate survival-meters --type change --strict` passes
+
+## Workflow follow-up
+
+- The "Pescador eats raw fish" scenario is item data (the raw fish's poison effect carries a background condition) and is tested by crafting-inventory, which interprets item effects; the revive scenario is tested here at the meter level (revive plus the cup's +25 thirst).
+- Review with the ECC reviewers and fix what survives verification.
+- Rebase on `main`, open the PR, and wait for CI to pass.
+- Archive the change after the PR review; the provisional numbers stay listed in proposal.md for the user to confirm.

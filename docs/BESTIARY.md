@@ -2,7 +2,7 @@
 
 Every threat, with lore, behavior spec, numbers for the first balance pass, and the reference-game behavior it adapts. Creatures are `.tres` resources; behaviors are state machines in `game/scripts/ai/`.
 
-Difficulty scales by **distance** (islands 1–2: coast, 3–5: mid, 6–8: far) and by **party size** (patrols +1 per 2 players, spawn rates ×1.2 per extra player).
+Difficulty scales by **distance** (islands 1–2: coast, 3–5: mid, 6–8: far) and by **party size**, the living, connected players when the island is set up (patrols +1 per 2 players, spawn rates ×1.2 per extra player).
 
 ---
 
@@ -76,9 +76,9 @@ Difficulty scales by **distance** (islands 1–2: coast, 3–5: mid, 6–8: far)
 
 **Lore.** The American crocodile lives in the brackish mangroves and does not care about borders. The old one in the mangrove chain is five meters and has a nest on the repairable boat.
 
-**Behavior.** `submerged → lunge → death roll`. Invisible in still brackish water (no ripples). Lunges at anything within 2 tiles of the water edge at night or in fog: 40 damage and **grab**: the player is dragged one tile per second toward deep water; teammates must hit it (any weapon) three times in 5 s to make it release. Solo: mash to escape, 50% chance per second, each second costs 10 health.
+**Behavior.** `submerged → lunge → death roll`. Invisible in still brackish water (no ripples). Lunges at anything within 2 tiles of the water edge at night or in fog: 40 damage and **grab**: the player is dragged one tile per second toward deep water; teammates must hit it (any weapon) three times in 5 s to make it release. The grabbed player can always mash to escape, solo or not: 50% chance per second, rolled first, and only a failed second costs 10 health. If the drag reaches deep water it death-rolls: 20 damage and bleeding, then it lets go.
 
-**Old crocodile (mangrove boss).** Same but 80 damage, needs 6 hits, and it guards the boat. Trick: it leaves the nest at dusk to hunt. Players have 90 s to clear the nest, which makes it return early; or feed it a whole cooked crab pile (5) and it sleeps for a full night.
+**Old crocodile (mangrove boss).** Same but 80 damage, needs 6 hits, and it guards the boat. One tuning for every party size: a solo player takes the same 80 and mashes the same way. Trick: it leaves the nest at dusk to hunt. Players have 90 s to clear the nest, which makes it return early; or feed it a whole cooked crab pile (5) and it sleeps for a full night.
 
 **Counters.** Avoid still water at night. Throw a crab to see if it lunges. Travel in pairs in the mangroves.
 
@@ -166,7 +166,7 @@ Difficulty scales by **distance** (islands 1–2: coast, 3–5: mid, 6–8: far)
 
 **Behavior.** Three soldiers land from the patrol boat and search for 3 minutes: they walk to the fire, then toward last known positions, then random. They do not fight; they **capture** (touch for 2 s). Captured players are walked to the boat; a teammate who touches the captive while no soldier is within 3 tiles frees them. The squad leaves when the timer ends or all players are caught.
 
-**On capture.** If everyone is caught: *La captura* scene with Rodríguez (see `CHARACTERS.md`). Otherwise the captured player is held on the boat at the dock until freed or until the boat leaves (3 min), after which that player respawns on the previous island with no items.
+**On capture.** If everyone is caught (a solo player always is): *La captura* scene with Rodríguez (see `CHARACTERS.md` and `GAME_DESIGN.md` §9). Otherwise the captured player is held on the boat at the dock until freed or until the boat leaves (3 min), after which that player respawns on the previous island with no items.
 
 ---
 
@@ -199,7 +199,7 @@ Added to reach reference-game density (~35 creature types). Each follows the sam
 
 | # | Creature | Chain | Behavior | Numbers | Counter | Lore line |
 | --- | --- | --- | --- | --- | --- | --- |
-| 16 | **Bull shark** (*tiburón toro*) | Mangrove, lagoon | `patrol_circle_strike` but in brackish and shallow water, strikes without blood if you are alone | 30 dmg, speed 4 | Never swim the lagoon alone; noise scares it 20 s | The only shark that comes up the rivers in Cuba. It does not care that the water is brown. |
+| 16 | **Bull shark** (*tiburón toro*) | Mangrove, lagoon | `patrol_circle_strike` but in brackish and shallow water, strikes without blood if you are alone (no other player or living companion within 5 tiles) | 30 dmg, speed 4 | Swim with someone (a companion counts); any noise that reaches it scares it off for 20 s, solo too | The only shark that comes up the rivers in Cuba. It does not care that the water is brown. |
 | 17 | **Stingray** (*raya*) | Sandbar, reef flats | `static_hazard` buried in sand; stepping on it = tail strike | 20 dmg + bleeding + speed −30% for 30 s | Shuffle (crouch-walk) in shallows; a Pescador sees the outline | Every Cuban kid knows the shuffle. Every tourist learns it. |
 | 18 | **Sea urchin field** (*erizos*) | Reef flats | `static_hazard`, cluster of 6–10 | 5 dmg + bleeding per step | Sandals (craft: tire + rope) or the long way | Black pincushions. The spines break off inside. |
 | 19 | **Lionfish** (*pez león*) | Reef, wreck holds | `hidden_ambush`, stationary; venomous when touched or speared badly | 15 dmg + heat ×1.5 for 60 s | Spear from 2 tiles; it is good eating (food 25) | Invasive, beautiful, and the reef's fault is nobody's. |
@@ -218,7 +218,7 @@ Added to reach reference-game density (~35 creature types). Each follows the sam
 | 27 | **Iguana** (*iguana*) | Rock, storm key | Passive by day; bites if cornered; food 30 | 10 health, 8 dmg | Approach from behind at noon when it is sluggish | The Bahamas kind. It has seen more rafts than you have. |
 | 28 | **Feral dogs** (*perros jíbaros*) | Storm key | `pack_swarm` on land, 3–5; hunt at night; steal meat | 6 dmg each | Fire scares them; a Músico calms them (song); the family on the key feeds them | Somebody's dogs from a boat that never came back. |
 | 29 | **Sand fleas** (*pulgas de arena*) | Any beach, dusk | `gas_cloud` on sand, low | Morale −0.5/s inside; no damage | Sleep on the raft or on rock | They are not fleas. They itch like fleas. |
-| 30 | **Boa** (*majá de Santa María*) | Lighthouse garden, hardwood hammock | `hidden_ambush` in trees; constrict | 10 dmg/s grab for 5 s; teammates hit twice to free | Caridad warns you; walk the path | Cuba's only big snake. Harmless, she says. It does not feel harmless. |
+| 30 | **Boa** (*majá de Santa María*) | Lighthouse garden, hardwood hammock | `hidden_ambush` in trees; constrict | 10 dmg/s grab for 5 s; teammates hit twice to free; the grabbed player mashes to escape, 50% per second rolled before the damage, solo too | Caridad warns you; walk the path | Cuba's only big snake. Harmless, she says. It does not feel harmless. |
 | 31 | **Rats** (*ratones del barco*) | Shipwreck holds | `night_thief` indoors, day and night | Steal food; 3 health | Seal food; the galley pot is a rat trap | Three generations born in the hull. They own it. |
 | 32 | **Pelican** (*pelícano*) | Any cove | Passive; dives on fish you are reeling in | Steals the catch 30% | Reel fast; it is a tell that fish are there | He fishes better than you. Nobody argues. |
 | 33 | **Scorpion** (*alacrán*) | Rock cave, bunker | `static_hazard` under rocks and in boots left out | 15 dmg + energy −30 | Shake out boots; a stick under rocks | Check your shoes. Check them again. |
