@@ -20,6 +20,8 @@ const DIVE_ENERGY_COST: float = 10.0
 const DIVE_MAX_S: float = 5.0
 ## Energy at or below this counts as empty: repeated float subtraction leaves crumbs like 2e-15.
 const EXHAUSTED_EPSILON: float = 0.000001
+## Length of get_state(): diving, dive time, locked.
+const STATE_SIZE: int = 3
 
 var _diving: bool = false
 var _dive_time_s: float = 0.0
@@ -107,6 +109,25 @@ func _update_dive(result: MovementStep, energy: float, crouching: bool, delta: f
 ## Forgets the dive in progress (the player went down).
 func reset() -> void:
 	_end_dive(false)
+
+
+## The dive bookkeeping as [diving, dive time in s, locked]: the host sends it so a client
+## replays its unacknowledged intents from the same state (coop-networking).
+func get_state() -> PackedFloat64Array:
+	return PackedFloat64Array([1.0 if _diving else 0.0, _dive_time_s, 1.0 if _dive_locked else 0.0])
+
+
+## Restores what get_state() returned. Refuses (and changes nothing) for a malformed state.
+func set_state(state: PackedFloat64Array) -> bool:
+	if state.size() != STATE_SIZE:
+		return false
+	for value: float in state:
+		if not is_finite(value):
+			return false
+	_diving = state[0] != 0.0
+	_dive_time_s = maxf(state[1], 0.0)
+	_dive_locked = state[2] != 0.0
+	return true
 
 
 func _end_dive(lock: bool) -> void:

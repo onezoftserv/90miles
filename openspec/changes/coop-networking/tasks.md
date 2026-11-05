@@ -4,11 +4,11 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 1. Pure building blocks
 
-- [ ] 1.1 Add `RateLimiter` (token bucket with an injected clock) and verify GUT tests for burst, refill, fractional amounts and the "60 intents of 0.1 s within 1 s → 1.2 s accepted" case
-- [ ] 1.2 Add `PredictionBuffer` (numbered intents with their deltas, acknowledge up to a seq) and verify GUT tests for numbering, acknowledging, out-of-order acknowledgements and the stored intent being a copy
-- [ ] 1.3 Add `SnapshotInterpolator` and verify the spec scenario (states at 0 s → x 0 and 0.05 s → x 1 tile, sampled 100 ms behind 125 ms → x 0.5 tiles) plus clamping before the first and after the last state
-- [ ] 1.4 Add `MovementModel.get_state()`/`set_state()` and verify a GUT test that a model restored mid-dive continues the dive exactly like the original
-- [ ] 1.5 Verify the import, smoke run and GUT pass with zero error lines
+- [x] 1.1 Add `RateLimiter` (token bucket with an injected clock) and verify GUT tests for burst, refill, fractional amounts and the "60 intents of 0.1 s within 1 s → 1.2 s accepted" case
+- [x] 1.2 Add `PredictionBuffer` (numbered intents with their deltas, acknowledge up to a seq) and verify GUT tests for numbering, acknowledging, out-of-order acknowledgements and the stored intent being a copy
+- [x] 1.3 Add `SnapshotInterpolator` and verify the spec scenario (states at 0 s → x 0 and 0.05 s → x 1 tile, sampled 100 ms behind 125 ms → x 0.5 tiles) plus clamping before the first and after the last state
+- [x] 1.4 Add `MovementModel.get_state()`/`set_state()` and verify a GUT test that a model restored mid-dive continues the dive exactly like the original
+- [x] 1.5 Verify the import, smoke run and GUT pass with zero error lines
 
 ## 2. Player body and its net component
 
