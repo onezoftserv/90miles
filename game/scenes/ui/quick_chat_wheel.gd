@@ -83,7 +83,9 @@ func release() -> int:
 
 
 func _process(_delta: float) -> void:
-	var held: bool = Input.is_action_pressed(ACTION)
+	# A "q" typed into a text field is not the quick-chat button.
+	var typing: bool = get_viewport().gui_get_focus_owner() is LineEdit
+	var held: bool = Input.is_action_pressed(ACTION) and not typing
 	if held and not visible:
 		open()
 	elif not held and visible:

@@ -29,7 +29,8 @@ const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const SPEECH_BUBBLE_SCENE: PackedScene = preload("res://scenes/ui/speech_bubble.tscn")
 const BUBBLE_NAME: StringName = &"SpeechBubble"
 const HOST_ID: int = 1
-const MAX_PLAYERS: int = 4
+## Connected players at most (dropped players waiting to be removed do not count).
+const MAX_PLAYERS: int = NetPeers.MAX_PLAYERS
 ## A dropped client's player stays downed this long before it is removed.
 const DISCONNECT_DOWNED_S: float = 90.0
 ## An intent may claim at most this much time (one slow frame).
@@ -90,6 +91,9 @@ func start() -> void:
 		multiplayer.peer_connected.connect(_on_peer_connected)
 		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 		_add_player(multiplayer.get_unique_id())
+		# Peers that connected before start() get their player now.
+		for peer_id: int in multiplayer.get_peers():
+			_on_peer_connected(peer_id)
 	else:
 		multiplayer.server_disconnected.connect(_on_server_disconnected)
 
@@ -112,8 +116,8 @@ func disconnect_time_left(peer_id: int) -> float:
 
 ## The body of `peer_id`'s player in this session, or null.
 func body(peer_id: int) -> PlayerBody:
-	var found: PlayerBody = _bodies.get(peer_id)
-	return found if is_instance_valid(found) else null
+	var found: Variant = _bodies.get(peer_id)
+	return found as PlayerBody if is_instance_valid(found) else null
 
 
 ## Peer ids with a player in this session, sorted.
@@ -135,18 +139,25 @@ func send_intent(seq: int, intent: MoveIntent, delta: float) -> void:
 func submit_intent(seq: int, direction: Vector2, run: bool, crouch: bool, interact: bool, delta: float) -> void:
 	if not multiplayer.is_server():
 		return
-	var sender := multiplayer.get_remote_sender_id()
+	_receive_intent(multiplayer.get_remote_sender_id(), seq, direction, run, crouch, interact, delta)
+
+
+## Host: whether `peer_id` may have one more intent claiming `delta` seconds now (its intent
+## count and simulated-time limits). The host's own player is trusted and never limited, so a
+## solo player never loses input. Over-limit intents are dropped without a log line.
+func accept_intent(peer_id: int, delta: float) -> bool:
+	if peer_id == HOST_ID:
+		return true
+	var limits: PeerLimits = _limits.get(peer_id)
+	return limits != null and limits.allow_intent(delta, clock.call())
+
+
+# Host: an intent from `sender` (resolved from the RPC, never from its payload).
+func _receive_intent(sender: int, seq: int, direction: Vector2, run: bool, crouch: bool, interact: bool, delta: float) -> void:
 	var target := body(sender)
 	if target == null or not is_valid_intent(direction, delta) or not accept_intent(sender, delta):
 		return
 	target.net.enqueue(seq, MoveIntent.create(direction, run, crouch, interact), delta)
-
-
-## Host: whether `peer_id` may have one more intent claiming `delta` seconds now (its intent
-## count and simulated-time limits). Over-limit intents are dropped without a log line.
-func accept_intent(peer_id: int, delta: float) -> bool:
-	var limits: PeerLimits = _limits.get(peer_id)
-	return limits != null and limits.allow_intent(delta, clock.call())
 
 
 ## This peer's player says the quick-chat phrase in `slot` (the wheel calls it).
@@ -268,7 +279,9 @@ func _on_server_disconnected() -> void:
 func _add_player(peer_id: int) -> void:
 	if _bodies.has(peer_id):
 		return
-	if _bodies.size() >= MAX_PLAYERS:
+	# Dropped players keep their body until removed but not their place: a reconnect is a new
+	# peer and must fit (ENet also refuses a fourth client).
+	if _bodies.size() - _dropped.size() >= MAX_PLAYERS:
 		multiplayer.multiplayer_peer.disconnect_peer(peer_id)
 		return
 	var spot: Vector2 = Vector2.ZERO
@@ -284,6 +297,8 @@ func _spawn_player(data: Variant) -> Node:
 	var info: Dictionary = data if data is Dictionary else {}
 	var peer_id: int = info.get("peer", 0) if info.get("peer", 0) is int else 0
 	var spot: Vector2 = info.get("position") if info.get("position") is Vector2 else Vector2.ZERO
+	if not spot.is_finite():
+		spot = Vector2.ZERO
 	var new_body := PLAYER_SCENE.instantiate() as PlayerBody
 	new_body.name = str(peer_id)
 	new_body.position = spot

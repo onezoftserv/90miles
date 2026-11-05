@@ -100,11 +100,16 @@ func enqueue(seq: int, intent: MoveIntent, delta: float) -> bool:
 	return true
 
 
-## Client: takes the host state just received (StateSync.synchronized).
+## Client: takes the host state just received (StateSync.synchronized). A state that is not
+## finite is ignored.
 func apply_host_state() -> void:
+	if not net_position.is_finite() or not is_finite(net_energy):
+		return
 	match role:
 		Role.PREDICTED:
 			if net_downed:
+				# Nothing to replay once the player is down: the host acks only what it queued.
+				buffer.clear()
 				_take_drawn_state()
 			else:
 				if _body().downed:
