@@ -81,6 +81,8 @@ func attach(peer_id: int, net_role: Role, send: Callable) -> void:
 	_send = send
 	var body := _body()
 	body.auto_advance = false
+	# A fresh body's state, so a host state sent before the host's first frame is right.
+	net_position = body.position
 	body.set_multiplayer_authority(peer_id)
 	var sync := body.get_node_or_null(^"StateSync") as MultiplayerSynchronizer
 	if sync != null:

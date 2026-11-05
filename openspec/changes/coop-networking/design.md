@@ -17,7 +17,7 @@ A spike on Godot 4.7.2 confirmed the test harness this design depends on: two `S
 ### A session scene owns the networking, not the autoload
 `CoopSession` (`scenes/net/coop_session.tscn`, script beside it) holds `Players` and its `PlayerSpawner`, `Entities` and its `EntitySpawner`, the RPC handlers, the disconnect timers and the per-peer rate limiters. It uses only `multiplayer` (the API its branch resolves), never `get_tree().get_multiplayer()`. A level instances it, sets `terrain`, `spawn_points` and `world_state`, then calls `start()` once the peer is in place.
 
-`NetManager` stays thin: `create_server_peer(port)` and `create_client_peer(address, port)` are the only places that name ENet (review item 40: Steam relay or WebRTC replace these two); `host()`, `join()`, `start_solo()` and `leave()` set the default API's peer, turn `server_relay` off and emit `hosted`, `joined`, `join_failed` and `host_lost`.
+`NetPeers` (`scripts/net/net_peers.gd`, static) is the only place that names ENet: `create_server(port)` and `create_client(address, port)` (review item 40: Steam relay or WebRTC replace these two), plus `DEFAULT_PORT` and `MAX_PLAYERS`, which cannot live in the autoload because core-services forbids constants in service scripts. `NetManager` stays thin: `host()`, `join()`, `start_solo()` and `leave()` set the default API's peer from `NetPeers`, turn `server_relay` off and emit `hosted`, `joined`, `join_failed` and `host_lost`.
 
 Alternative: all logic in `NetManager`. Rejected: one autoload means one multiplayer API, so a host and a client cannot run in one test process, and autoloads are meant to stay thin.
 

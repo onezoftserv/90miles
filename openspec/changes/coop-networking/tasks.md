@@ -20,12 +20,12 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 3. NetManager and the session over ENet
 
-- [ ] 3.1 Add `tests/helpers/net_harness.gd` (one `SceneMultiplayer` branch per peer, ENet on port 0, ordered teardown) and verify a GUT test that a host and a client connect and tear down with no engine error
-- [ ] 3.2 Fill `NetManager` (peer factory, `host`, `join`, `start_solo`, `leave`, signals, relay off) and verify GUT tests that solo opens no port, hosting binds the requested port and joining a closed port emits `join_failed`
-- [ ] 3.3 Add `CoopSession` (players and entity spawners, spawn points, world state on join, the four-player cap) and verify integration tests for "second player joins mid-island", a late joiner receiving existing bodies and a registered entity, and "fifth player refused"
-- [ ] 3.4 Add the intent RPC with its host-only guard and sender mapping, and verify integration tests that a client's intents move its body on the host, that "client acts as a teammate" moves only the sender's body, that "client claims an item it is not near" leaves the coconut, and that a client's prediction equals the host's state exactly after idle and after a forced correction
-- [ ] 3.5 Add the host-to-client authority checks and verify the "client forges a host message" integration test
-- [ ] 3.6 Verify the import, smoke run and GUT pass with zero error lines
+- [x] 3.1 Add `tests/helpers/net_harness.gd` (one `SceneMultiplayer` branch per peer, ENet on port 0, ordered teardown) and verify a GUT test that a host and a client connect and tear down with no engine error
+- [x] 3.2 Add `NetPeers` (the ENet factory, the default port and the player cap; autoloads hold no constants) and fill `NetManager` (`host`, `join`, `start_solo`, `leave`, signals, relay off), and verify GUT tests that solo opens no port, a server binds the requested port, hosting turns relay off and reports the port, and joining refuses a blank address or a bad port (a closed port only fails after ENet's connect timeout, too slow for a unit test)
+- [x] 3.3 Add `CoopSession` (players and entity spawners, spawn points, world state on join, the four-player cap) and verify integration tests for "second player joins mid-island", a late joiner receiving existing bodies and a registered entity, and "fifth player refused"
+- [x] 3.4 Add the intent RPC with its host-only guard and sender mapping, and verify integration tests that a client's intents move its body on the host, that "client acts as a teammate" moves only the sender's body, that "client claims an item it is not near" leaves the coconut, and that a client's prediction equals the host's state exactly after idle and after a forced correction
+- [x] 3.5 Add the host-to-client authority checks and verify the "client forges a host message" integration test
+- [x] 3.6 Verify the import, smoke run and GUT pass with zero error lines
 
 ## 4. Disconnects
 
