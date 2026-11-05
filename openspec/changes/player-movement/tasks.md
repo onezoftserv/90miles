@@ -4,7 +4,7 @@
 
 - [x] 1.1 Add GUT tests for every player-movement scenario against `MovementModel` (running on sand, crouching in brush, crawling at zero energy, exhausted swimmer, diving, same intent same result) and verify they fail before the model exists
 - [x] 1.2 Add `MoveIntent`, `TerrainQuery`, `GridTerrain` and `MovementModel` and verify the tests from 1.1 pass
-- [ ] 1.3 Add `SurvivalMeters` with energy only and verify spending, clamping at 0 and the change signal in a unit test
+- [x] 1.3 Add `SurvivalMeters` with energy only and verify spending, clamping at 0 and the change signal in a unit test
 
 ## 2. Player body
 
