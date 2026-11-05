@@ -1,0 +1,72 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/shell/lobby_screen.gd" id="1_lobby"]
+
+[node name="LobbyScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lobby")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 176.0
+offset_top = 72.0
+offset_right = 464.0
+offset_bottom = 288.0
+
+[node name="Box" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="Panel/Box"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_colors/font_color = Color(0.23, 0.16, 0.09, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+text = "A bordo"
+horizontal_alignment = 1
+
+[node name="Rows" type="VBoxContainer" parent="Panel/Box"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Note" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(270, 0)
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+text = "Los demás se unen por IP en el puerto UDP 7777. Por internet, abre ese puerto en tu router."
+autowrap_mode = 2
+
+[node name="Addresses" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+
+[node name="Waiting" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+text = "Esperando al anfitrión…"
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="Panel/Box"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Start" type="Button" parent="Panel/Box/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Empezar viaje"
+
+[node name="Leave" type="Button" parent="Panel/Box/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Salir"

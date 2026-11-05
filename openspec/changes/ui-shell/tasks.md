@@ -23,8 +23,8 @@ Each group is written test-first: its tests are committed failing (RED), then th
 ## 4. Lobby
 
 - [x] 4.1 Add the CoopSession lobby phase, `request_join`, the roster and `begin_run`, and verify ENet tests for "players spawn when the run starts", "two players meet", "client renames itself over and over", a join during a run, and that the existing coop-networking suites still pass
-- [ ] 4.2 Add `LobbyScreen` and the host/join paths through the shell, and verify GUT tests for "host and start" and "host lost"
-- [ ] 4.3 Verify the import, smoke run and GUT pass with zero error lines
+- [x] 4.2 Add `LobbyScreen` and the host/join paths through the shell, and verify GUT tests for "host and start" and "host lost"
+- [x] 4.3 Verify the import, smoke run and GUT pass with zero error lines
 
 ## 5. HUD
 
