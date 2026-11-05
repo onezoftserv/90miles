@@ -47,7 +47,7 @@ func test_valid_nested_parts_pass() -> void:
 	var holder := _holder()
 	holder.main = _part(&"rope")
 	var outer := _part(&"rope")
-	outer.children = [_part(&"rope")] as Array[FixturePartData]
+	outer.children = [_part(&"rope")] as Array[DataPart]
 	holder.parts = [_part(&"rope"), outer] as Array[FixturePartData]
 	assert_eq(_validate(holder), PackedStringArray())
 
@@ -66,7 +66,7 @@ func test_missing_id_deep_in_an_array_names_its_path() -> void:
 	_save_rope()
 	var holder := _holder()
 	var outer := _part(&"rope")
-	outer.children = [_part(&"rope"), _part(&"ghost")] as Array[FixturePartData]
+	outer.children = [_part(&"rope"), _part(&"ghost")] as Array[DataPart]
 	holder.parts = [_part(&"rope"), outer] as Array[FixturePartData]
 	var errors := _validate(holder)
 	assert_eq(errors.size(), 1, "one error: %s" % [errors])
