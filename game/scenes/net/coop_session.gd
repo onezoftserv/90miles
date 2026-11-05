@@ -45,8 +45,12 @@ const WORLD_STATE_TYPES: Dictionary[String, int] = {
 var terrain: TerrainQuery = TerrainQuery.new()
 ## Host: what each joiner receives (island seed, weather, time of day). Client: what arrived.
 var world_state: Dictionary = {}
+## Host time in seconds for the rate limits. Tests replace it.
+var clock: Callable
 
 var _bodies: Dictionary[int, PlayerBody] = {}
+## Host: each peer's rate limits.
+var _limits: Dictionary[int, PeerLimits] = {}
 ## Host: seconds left before each dropped client's player is removed.
 var _dropped: Dictionary[int, float] = {}
 var _joined: int = 0
@@ -56,6 +60,10 @@ var _started: bool = false
 @onready var player_spawner: MultiplayerSpawner = $PlayerSpawner
 @onready var entities: Node2D = $Entities
 @onready var entity_spawner: MultiplayerSpawner = $EntitySpawner
+
+
+func _init() -> void:
+	clock = _ticks_s
 
 
 func _ready() -> void:
@@ -117,10 +125,18 @@ func send_intent(seq: int, intent: MoveIntent, delta: float) -> void:
 func submit_intent(seq: int, direction: Vector2, run: bool, crouch: bool, interact: bool, delta: float) -> void:
 	if not multiplayer.is_server():
 		return
-	var target := body(multiplayer.get_remote_sender_id())
-	if target == null or not is_valid_intent(direction, delta):
+	var sender := multiplayer.get_remote_sender_id()
+	var target := body(sender)
+	if target == null or not is_valid_intent(direction, delta) or not accept_intent(sender, delta):
 		return
 	target.net.enqueue(seq, MoveIntent.create(direction, run, crouch, interact), delta)
+
+
+## Host: whether `peer_id` may have one more intent claiming `delta` seconds now (its intent
+## count and simulated-time limits). Over-limit intents are dropped without a log line.
+func accept_intent(peer_id: int, delta: float) -> bool:
+	var limits: PeerLimits = _limits.get(peer_id)
+	return limits != null and limits.allow_intent(delta, clock.call())
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -170,6 +186,7 @@ func _on_peer_disconnected(peer_id: int) -> void:
 	if dropped == null or _dropped.has(peer_id):
 		return
 	dropped.set_downed(true)
+	_limits.erase(peer_id)
 	_dropped[peer_id] = DISCONNECT_DOWNED_S
 	player_disconnected.emit(peer_id)
 
@@ -205,6 +222,7 @@ func _add_player(peer_id: int) -> void:
 	if not spawn_points.is_empty():
 		spot = spawn_points[_joined % spawn_points.size()]
 	_joined += 1
+	_limits[peer_id] = PeerLimits.new()
 	player_spawner.spawn({"peer": peer_id, "position": spot})
 
 
@@ -232,3 +250,7 @@ func _on_body_ready(peer_id: int, spawned: PlayerBody) -> void:
 func _on_body_exiting(peer_id: int, leaving: PlayerBody) -> void:
 	if _bodies.get(peer_id) == leaving:
 		_bodies.erase(peer_id)
+
+
+func _ticks_s() -> float:
+	return Time.get_ticks_usec() / 1000000.0
