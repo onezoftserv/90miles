@@ -137,6 +137,26 @@ func test_dead_body_stays_down_and_cannot_be_dragged() -> void:
 	assert_false(body.drag_handle.enabled)
 
 
+func test_a_body_that_dies_while_dragged_stops_following() -> void:
+	var helper := _spawn(Vector2(12.0, 0.0))
+	var downed := _spawn(Vector2.ZERO)
+	downed.meters.add(M.HEALTH, -100.0)
+	var both: Array[PlayerBody] = [helper, downed]
+	helper.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	_step(both, 0.2)
+	assert_eq(downed.drag_handle.dragger, helper, "the drag started")
+	# The helper walks away faster than a drag, so the body is mid-drag when it dies.
+	helper.intent = MoveIntent.create(Vector2.RIGHT, false, false, true)
+	_step(both, 0.5)
+	downed.meters.dead = true
+	var where_it_died: Vector2 = downed.position
+	# The dead body steps first: it must not wait for the helper's hold to notice the death.
+	var dead_first: Array[PlayerBody] = [downed, helper]
+	_step(dead_first, 1.0)
+	assert_null(downed.drag_handle.dragger)
+	assert_eq(downed.position, where_it_died)
+
+
 func test_downed_body_keeps_losing_thirst() -> void:
 	var body := _spawn()
 	body.climate = _climate(P.DAWN)
