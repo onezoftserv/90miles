@@ -30,8 +30,8 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 - [x] 5.1 Re-lay `MetersHud` with labels inside the bars and the critical pulse, add the phase label, the teammate list and `NameTag`, and verify GUT tests for "solo HUD", "critical thirst" and "teammate down"
 - [x] 5.2 Hide quick chat in solo and verify "no quick chat in solo" with one offline player
-- [ ] 5.3 Remove the per-scene theme overrides, render the lobby and run HUD at 1×, and verify the playground tests still pass
-- [ ] 5.4 Verify the import, smoke run, GUT, a 300-frame run and a two-process host and client run through the shell pass with zero error lines
+- [x] 5.3 Remove the per-scene theme overrides, render the lobby and run HUD at 1×, and verify the playground tests still pass
+- [x] 5.4 Verify the import, smoke run, GUT, a 300-frame run and a two-process host and client run through the shell pass with zero error lines
 
 ## Workflow follow-up
 
