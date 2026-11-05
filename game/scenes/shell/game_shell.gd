@@ -99,7 +99,7 @@ func show_join() -> void:
 func start_solo() -> void:
 	NetManager.start_solo()
 	_build_run()
-	session.roster[CoopSession.HOST_ID] = settings.player_name
+	session.local_name = settings.player_name
 	session.start()
 	_enter_run()
 
