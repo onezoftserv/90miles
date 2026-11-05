@@ -28,7 +28,7 @@
 ## 5. Docs
 
 - [x] 5.1 Correct the test commands in `CLAUDE.md` and `HANDOFF.md` and the layout in `README.md`, and verify the documented commands run as written
-- [ ] 5.2 Tick `TASKS.md` §2 and verify each ticked line matches a passing check
+- [x] 5.2 Tick `TASKS.md` §2 and verify each ticked line matches a passing check
 
 ## Workflow follow-up
 

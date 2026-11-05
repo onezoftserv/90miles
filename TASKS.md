@@ -4,29 +4,29 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 
 ## 0. Tooling (one-time, ~1 hour)
 
-- [ ] Install Godot 4.7.2 and open it once
-- [ ] Install Claude Code: `npm install -g @anthropic-ai/claude-code`
-- [ ] Install ECC: `/plugin marketplace add https://github.com/affaan-m/ECC` then `/plugin install ecc@ecc`
+- [x] Install Godot 4.7.2 and open it once
+- [x] Install Claude Code: `npm install -g @anthropic-ai/claude-code`
+- [x] Install ECC: `/plugin marketplace add https://github.com/affaan-m/ECC` then `/plugin install ecc@ecc`
 - [ ] Copy ECC common rules to `~/.claude/rules/ecc/` (see README §2)
-- [ ] Install OpenSpec: `npm install -g @fission-ai/openspec`, then `openspec init` in the repo (pick Claude Code)
+- [x] Install OpenSpec: `npm install -g @fission-ai/openspec`, then `openspec init` in the repo (pick Claude Code)
 - [ ] Build and register the Godot MCP (`Coding-Solo/godot-mcp`), confirm `claude mcp list` shows it
 - [ ] Register the AWS and GitHub MCP servers; export `AWS_PROFILE` and `GITHUB_PERSONAL_ACCESS_TOKEN`
-- [ ] Clone the GitHub repo (`onezoftserv/90miles`); it already exists, so no `git init`
-- [ ] `./tools/clone_references.sh` (reference games into git-ignored `reference/`)
+- [x] Clone the GitHub repo (`onezoftserv/90miles`); it already exists, so no `git init`
+- [x] `./tools/clone_references.sh` (reference games into git-ignored `reference/`)
 
 ## 1. Assets (~2 hours)
 
-- [ ] `python -I tools/fetch_assets.py` for the Kenney packs
+- [x] `python -I tools/fetch_assets.py` for the Kenney packs
 - [ ] Manually download the OpenGameArt sea creatures, beach/boat tiles and freesound ambience listed in `docs/ASSETS.md`
-- [ ] Download "Press Start 2P" or "Pixelify Sans" (check ñ and accents render)
-- [ ] Create `game/assets/CREDITS.md` with every pack, author, license, URL
-- [ ] Import everything in Godot; set `texture_filter = nearest` project-wide
+- [x] Download "Press Start 2P" or "Pixelify Sans" (check ñ and accents render)
+- [x] Create `game/assets/CREDITS.md` with every pack, author, license, URL
+- [x] Import everything in Godot; set `texture_filter = nearest` project-wide
 
 ## 2. Project skeleton (change: `project-skeleton`)
 
-- [ ] Create `game/project.godot` (640×360, integer scale, GDScript, GUT addon)
-- [ ] Autoloads: `GameState`, `NetManager`, `WeatherManager`, `DialogueService`, `AudioManager` (stubs)
-- [ ] Folder layout from README; `tests/smoke.gd` that boots and quits
+- [x] Create `game/project.godot` (640×360, integer scale, GDScript, GUT addon)
+- [x] Autoloads: `GameState`, `NetManager`, `WeatherManager`, `DialogueService`, `AudioManager` (stubs)
+- [x] Folder layout from README; `tests/smoke.gd` that boots and quits
 - [ ] CI: GitHub Action running the headless smoke test and GUT
 
 ## 3. Milestone A — Two players on a handmade island
@@ -110,4 +110,6 @@ Source: `docs/CONTENT_MANIFEST.md` (~280 `.tres` files). Each batch is one OpenS
 
 ## Done
 
-(move finished items here with the date)
+- 2026-11-05: Tooling: Godot 4.7.2 (winget), ECC plugin, OpenSpec 1.16 (`openspec init`, Claude Code), reference games cloned. Still open: ECC rules copy, Godot MCP build and registration, AWS and GitHub MCPs (each needs the user).
+- 2026-11-05: Assets: 9 Kenney packs (CC0) and both OFL pixel fonts via the fixed `tools/fetch_assets.py`; `game/assets/CREDITS.md`; Spanish glyph coverage tested. Manual downloads still open.
+- 2026-11-05: `project-skeleton` change: project, 5 autoload stubs, content catalog and validator, 34 data classes for the 11 content folders, GUT 9.7.1, smoke run, CI workflow (not yet run on GitHub). Open design questions: `data-model-questions.md` in the project-skeleton change; repo review: `docs/reviews/2026-11-05-repo-review.md`.
