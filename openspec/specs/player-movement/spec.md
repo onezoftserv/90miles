@@ -31,3 +31,8 @@ The player SHALL interact with the nearest interactable within 1 tile via a sing
 
 ### Requirement: Camera and viewport
 The game SHALL render at 640×360 with integer scaling and nearest filtering. In co-op each client follows its own player; the host sees the same.
+
+#### Scenario: Two players apart
+- GIVEN two players in a co-op session
+- WHEN they move apart
+- THEN each client's camera follows its own player, rendered at 640×360 with integer scaling and nearest filtering

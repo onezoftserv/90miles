@@ -8,7 +8,7 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 
 ## Workflow
 
-- Every feature starts as an OpenSpec change: `/openspec:proposal`, review, `/openspec:apply`, `/openspec:archive`. Do not write gameplay code without a change in `openspec/changes/`.
+- Every feature starts as an OpenSpec change: `/opsx:propose`, review, `/opsx:apply`, `/opsx:archive`. Do not write gameplay code without a change in `openspec/changes/`.
 - Use the Godot MCP to run the project and read errors after every change. A feature is not done until the project runs clean.
 - Keep `TASKS.md` current: tick tasks as they ship, add new ones below the current milestone.
 - Small PRs, one capability each. Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`).

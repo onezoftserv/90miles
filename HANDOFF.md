@@ -35,12 +35,12 @@ Run from the repo root. Do not skip ahead to code.
    - `git init && git add -A && git commit -m "chore: design docs and specs"`; create the GitHub repo; push.
    - `./tools/clone_references.sh` → `reference/` (git-ignored).
 2. **Assets** (TASKS §1): `python -I tools/fetch_assets.py`, then the manual downloads in `docs/ASSETS.md`. Write `game/assets/CREDITS.md`.
-3. **Skeleton** (TASKS §2): `/openspec:proposal project-skeleton`, review, `/openspec:apply`. Run the project through the Godot MCP; it must open and quit clean. `/openspec:archive`.
+3. **Skeleton** (TASKS §2): `/opsx:propose project-skeleton`, review, `/opsx:apply`. Run the project through the Godot MCP; it must open and quit clean. `/opsx:archive`.
 4. **Milestone A** (TASKS §3): one spec at a time, in the listed order, each as its own OpenSpec change. Stop at the playtest and report drain numbers.
 
 ## 4. How to work
 
-- **One capability per change.** `/openspec:proposal <spec-name>` → edit the proposal so its tasks match the spec's requirements → `/openspec:apply` → run via Godot MCP → tests → `/openspec:archive` → commit.
+- **One capability per change.** `/opsx:propose <spec-name>` → edit the proposal so its tasks match the spec's requirements → `/opsx:apply` → run via Godot MCP → tests → `/opsx:archive` → commit.
 - **Specs are the contract.** If a requirement is wrong, change the spec in the proposal first, then the code. Never silently diverge.
 - **Run after every change.** Use the Godot MCP to launch and read the debug output. GUT tests for anything pure (generation, meters, recipes).
 - **Data, not code.** New creatures, items, NPCs, recipes and chains are `.tres` resources. If adding one needs a script edit, the design is wrong.

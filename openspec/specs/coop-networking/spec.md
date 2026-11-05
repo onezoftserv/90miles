@@ -24,11 +24,31 @@ All world state (meters, inventory, creature positions, weather, patrol state) S
 ### Requirement: Spawning
 Players, creatures, items and NPCs SHALL be spawned through `MultiplayerSpawner` so late joiners receive them.
 
+#### Scenario: Late joiner sees existing entities
+- GIVEN players, creatures, items and NPCs already spawned on the island
+- WHEN a client joins
+- THEN the client receives all of them through `MultiplayerSpawner`
+
 ### Requirement: Disconnect handling
 If a client disconnects, its player SHALL stay in the world as downed for 90 s, then be removed with its inventory dropped. If the host disconnects, the session ends and clients see a "host lost" screen; migration is out of scope for v1.
+
+#### Scenario: Client drops
+- GIVEN a client's player on the island
+- WHEN that client disconnects
+- THEN the player stays in the world downed for 90 s, then is removed and its inventory is dropped
 
 ### Requirement: Difficulty scaling
 Resource spawn rates SHALL multiply by 0.8 per player beyond the first; patrol count adds 1 per 2 players.
 
+#### Scenario: Three players
+- GIVEN a session with 3 players
+- WHEN an island is set up
+- THEN resource spawn rates are ×0.64 (0.8 × 0.8) and patrol count is +1
+
 ### Requirement: Quick chat
 Players SHALL have a radial quick-chat with 8 phrases (¡Dale!, ¡Agua!, ¡Pa'llá no!, ¡Tiburón!, ¡Patrulla!, ¡Ayuda!, ¡Comida aquí!, ¡Vámonos!) shown as speech bubbles and heard as a short voice clip.
+
+#### Scenario: Shark warning
+- GIVEN a player with the radial quick-chat open
+- WHEN they pick ¡Tiburón!
+- THEN a ¡Tiburón! speech bubble is shown and its short voice clip is heard

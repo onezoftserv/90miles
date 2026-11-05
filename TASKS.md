@@ -1,6 +1,6 @@
 # 90 Millas — Tasks
 
-Ordered. Tick as you go; Claude Code keeps this file current. Each coding task maps to an OpenSpec change (`/openspec:proposal <name>`).
+Ordered. Tick as you go; Claude Code keeps this file current. Each coding task maps to an OpenSpec change (`/opsx:propose <name>`).
 
 ## 0. Tooling (one-time, ~1 hour)
 

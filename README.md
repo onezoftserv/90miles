@@ -68,14 +68,14 @@ npm install -g @fission-ai/openspec
 openspec init
 ```
 
-Pick **Claude Code** when prompted. This writes the `/openspec:proposal`, `/openspec:apply` and `/openspec:archive` commands into `.claude/`. The `openspec/` folder in this repo already holds the project context and the first capability specs.
+Pick **Claude Code** when prompted. This writes the `/opsx:propose`, `/opsx:apply` and `/opsx:archive` commands into `.claude/`. The `openspec/` folder in this repo already holds the project context and the first capability specs.
 
 Workflow for every feature:
 
-1. `/openspec:proposal <feature>` creates a change with proposal, spec delta, design and tasks.
+1. `/opsx:propose <feature>` creates a change with proposal, spec delta, design and tasks.
 2. Review and edit the proposal.
-3. `/openspec:apply` implements the tasks.
-4. `/openspec:archive` folds the change into the permanent specs.
+3. `/opsx:apply` implements the tasks.
+4. `/opsx:archive` folds the change into the permanent specs.
 
 ### 4. Install the Godot MCP server
 

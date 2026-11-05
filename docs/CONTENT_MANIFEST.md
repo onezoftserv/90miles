@@ -1,6 +1,6 @@
 # 90 Millas — Content Manifest
 
-Every data resource to create, by folder. Each line is one `.tres` file. The resource scripts (`CreatureData`, `ItemData`, `NpcData`, `RecipeData`, `ChainData`, `SetPieceData`, `RouteData`, `TextData`, `KeepsakeData`, `BackgroundData`) are defined in the `project-skeleton` change. Creating content is data entry against the docs, so it can be done in batches by Claude Code with `/openspec:apply content-batch-<n>`.
+Every data resource to create, by folder. Each line is one `.tres` file. The resource scripts (`CreatureData`, `ItemData`, `NpcData`, `RecipeData`, `ChainData`, `SetPieceData`, `RouteData`, `TextData`, `KeepsakeData`, `BackgroundData`) are defined in the `project-skeleton` change. Creating content is data entry against the docs, so it can be done in batches by Claude Code with `/opsx:apply content-batch-<n>`.
 
 Tick when the file exists and loads in Godot.
 
