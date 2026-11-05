@@ -17,8 +17,8 @@ Each group is written test-first: its tests are committed failing (RED), then th
 
 ## 3. Shell flow
 
-- [ ] 3.1 Add `GameShell` as the main scene with the title, settings, join and summary screens and the dev island run, and verify GUT tests for "solo from the title" (offline, no lobby, a player on the beach), the settings round trip, join-address validation, "end of a solo run" and Esc going back
-- [ ] 3.2 Verify the import, smoke run, GUT and a 300-frame run pass with zero error lines
+- [x] 3.1 Add `GameShell` as the main scene with the title, settings, join and summary screens and the dev island run, and verify GUT tests for "solo from the title" (offline, no lobby, a player on the beach), the settings round trip, join-address validation, "end of a solo run" and Esc going back
+- [x] 3.2 Verify the import, smoke run, GUT and a 300-frame run pass with zero error lines
 
 ## 4. Lobby
 

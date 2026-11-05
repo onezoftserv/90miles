@@ -54,6 +54,8 @@ var terrain: TerrainQuery = TerrainQuery.new()
 var climate: ClimateState = ClimateState.new()
 ## Host: what each joiner receives (island seed, weather, time of day). Client: what arrived.
 var world_state: Dictionary = {}
+## Player names by peer id (ui-shell). The host sets its own; the lobby fills in the others.
+var roster: Dictionary[int, String] = {}
 ## Host time in seconds for the rate limits. Tests replace it.
 var clock: Callable
 ## The quick-chat phrases (the quick-chat content file unless a level or test sets others).
@@ -158,6 +160,11 @@ func set_paused(value: bool) -> bool:
 func body(peer_id: int) -> PlayerBody:
 	var found: Variant = _bodies.get(peer_id)
 	return found as PlayerBody if is_instance_valid(found) else null
+
+
+## The name `peer_id` plays under ("Balsero" until one is known).
+func player_name(peer_id: int) -> String:
+	return roster.get(peer_id, GameSettings.DEFAULT_NAME)
 
 
 ## Peer ids with a player in this session, sorted.

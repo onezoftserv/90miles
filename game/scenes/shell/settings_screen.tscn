@@ -1,0 +1,63 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/shell/settings_screen.gd" id="1_settings"]
+
+[node name="SettingsScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 176.0
+offset_top = 84.0
+offset_right = 464.0
+offset_bottom = 276.0
+
+[node name="Rows" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_colors/font_color = Color(0.23, 0.16, 0.09, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+text = "Ajustes"
+horizontal_alignment = 1
+
+[node name="NameLabel" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+text = "Nombre"
+
+[node name="Name" type="LineEdit" parent="Panel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Balsero"
+
+[node name="Fullscreen" type="CheckBox" parent="Panel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.23, 0.16, 0.09, 1)
+theme_override_colors/font_hover_color = Color(0.23, 0.16, 0.09, 1)
+theme_override_colors/font_pressed_color = Color(0.23, 0.16, 0.09, 1)
+text = "Pantalla completa (F11)"
+
+[node name="ScaleLabel" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+text = "Escala"
+
+[node name="Scale" type="OptionButton" parent="Panel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Back" type="Button" parent="Panel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Volver"

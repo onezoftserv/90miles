@@ -1,0 +1,35 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/shell/game_shell.gd" id="1_shell"]
+[ext_resource type="Shader" path="res://scenes/shell/sea.gdshader" id="2_sea"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_backdrop"]
+shader = ExtResource("2_sea")
+
+[node name="GameShell" type="Node"]
+script = ExtResource("1_shell")
+
+[node name="World" type="Node2D" parent="."]
+
+[node name="Screens" type="CanvasLayer" parent="."]
+layer = 5
+
+[node name="Root" type="Control" parent="Screens"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Backdrop" type="ColorRect" parent="Screens/Root"]
+visible = false
+material = SubResource("ShaderMaterial_backdrop")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
