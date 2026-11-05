@@ -56,6 +56,20 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if auto_advance:
 		advance(delta)
+	# Once per host frame, after this frame's movement: PlayerNet may have advanced the body once
+	# per queued intent, or not at all while a client's intents stall.
+	_tick_meters(delta)
+
+
+# Meters are host state: only the host ticks them, and clients show what it replicates. The
+# energy a client's movement spends in advance() is local prediction that PlayerNet reconciles.
+func _tick_meters(delta: float) -> void:
+	if not is_inside_tree() or not multiplayer.is_server():
+		return
+	# Solo: nobody else alive in the run (a one-player run or the last one alive), so health 0
+	# kills instead of waiting for a revive nobody can give.
+	meters.solo = not _has_living_teammate(INF)
+	meters.tick(delta, _meter_context())
 
 
 ## One simulation step from the current intent. Interactions run only where the world is
@@ -77,13 +91,6 @@ func advance(delta: float, with_interaction: bool = true) -> void:
 	stealth_state = result.stealth
 	velocity = result.velocity * TILE_SIZE
 	_move(velocity * delta)
-	# Meters are host state: only the host ticks them, and clients show what it replicates. The
-	# energy a client's movement spends above is local prediction for coop-networking to reconcile.
-	if is_inside_tree() and multiplayer.is_server():
-		# Solo: nobody else alive in the run (a one-player run or the last one alive), so health 0
-		# kills instead of waiting for a revive nobody can give.
-		meters.solo = not _has_living_teammate(INF)
-		meters.tick(delta, _meter_context())
 
 
 func set_downed(value: bool) -> void:

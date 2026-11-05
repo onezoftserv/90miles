@@ -50,6 +50,8 @@ const WORLD_STATE_TYPES: Dictionary[String, int] = {
 @export var spawn_points: Array[Vector2] = [Vector2.ZERO]
 ## Ground and current for every player body. Set by the level.
 var terrain: TerrainQuery = TerrainQuery.new()
+## Clock and weather every player's meters read. Set by the level (weather-daynight later).
+var climate: ClimateState = ClimateState.new()
 ## Host: what each joiner receives (island seed, weather, time of day). Client: what arrived.
 var world_state: Dictionary = {}
 ## Host time in seconds for the rate limits. Tests replace it.
@@ -131,11 +133,9 @@ func island_difficulty(alive: Callable = Callable()) -> DifficultyScaling:
 	return DifficultyScaling.for_players(living)
 
 
-## Whether a player is alive: true unless its meters report it dead (survival-meters adds
-## SurvivalMeters.dead; until then every player is alive).
+## Whether a player is alive: true unless its meters report it dead.
 static func is_alive(player: PlayerBody) -> bool:
-	var dead: Variant = player.meters.get(&"dead") if player.meters != null else null
-	return not (dead is bool and dead)
+	return player.meters == null or not player.meters.dead
 
 
 ## Whether this session may pause: only solo (the offline peer, one player). Co-op, and a host
@@ -343,6 +343,7 @@ func _spawn_player(data: Variant) -> Node:
 	new_body.name = str(peer_id)
 	new_body.position = spot
 	new_body.terrain = terrain
+	new_body.climate = climate
 	var role := PlayerNet.role_for(multiplayer.is_server(), multiplayer.get_unique_id(), peer_id)
 	(new_body.get_node(^"PlayerNet") as PlayerNet).attach(peer_id, role, send_intent)
 	_bodies[peer_id] = new_body

@@ -57,6 +57,7 @@ static func parse_args(args: PackedStringArray) -> Dictionary:
 func _ready() -> void:
 	super._ready()
 	session.terrain = terrain
+	session.climate = climate
 	session.spawn_points = SPAWN_POINTS.duplicate()
 	session.world_state = DEV_WORLD_STATE.duplicate()
 	session.player_spawned.connect(_on_player_spawned)
@@ -100,7 +101,9 @@ func _on_join_pressed() -> void:
 	start(parse_args(PackedStringArray(["--join=%s" % address_field.text.strip_edges()])))
 
 
-func _on_player_spawned(peer_id: int, _body: PlayerBody) -> void:
+func _on_player_spawned(peer_id: int, spawned: PlayerBody) -> void:
+	if peer_id == session.multiplayer.get_unique_id():
+		hud.bind(spawned.meters)
 	_log("player %d spawned; players %s" % [peer_id, session.peer_ids()])
 
 

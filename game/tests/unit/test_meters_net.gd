@@ -97,9 +97,12 @@ func test_client_shows_host_values() -> void:
 	var on_host := host.body(a_id).meters
 	on_host.thirst = 40.0
 	on_host.health = 20.0
-	on_host.sunstroke = true
+	# States are derived on the host's tick (hallucinating below 20 morale), then replicated.
+	on_host.morale = 10.0
 	var shown := func(session: CoopSession) -> bool:
 		var meters := session.body(a_id).meters
-		return absf(meters.thirst - on_host.thirst) < 0.5 and absf(meters.health - on_host.health) < 0.5 and meters.sunstroke
+		return absf(meters.thirst - on_host.thirst) < 0.5 and absf(meters.health - on_host.health) < 0.5 \
+			and meters.hallucinating
 	assert_true(await wait_until(func() -> bool: return shown.call(a) and shown.call(b), TIMEOUT_S), "A and B show the host's values for A")
+	assert_true(on_host.hallucinating, "derived on the host")
 	assert_lt(a.body(a_id).meters.thirst, 40.5)
