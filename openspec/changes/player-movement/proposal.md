@@ -21,6 +21,8 @@ Milestone A starts with a player who can walk, run, crouch, swim, dive and inter
 3. The co-op sync model stays open (review item 15). Intents make both options possible: host authority with client prediction, or client-owned movement with host checks. `coop-networking` decides.
 4. Characters use a 16×16 CC0 Kenney sprite as a placeholder, committed to the repo so CI has it (review items 21 and 22); the final character size is still open.
 5. Drift: the water current comes from the island's terrain source and defaults to 1 tile/s east (trade wind), matching the spec scenario's "1 tile/s in the current direction".
+6. Treading water (swim state, no direction) costs no energy and ignores the current; only moving drains 3/s.
+7. Dragging a downed teammate is instant on press and lasts while interact is held, not a 2 s hold. A dive needs more than 10 energy so it never ends the frame after it is paid for.
 
 ## Capabilities
 

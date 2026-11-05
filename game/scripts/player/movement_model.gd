@@ -18,6 +18,8 @@ const RUN_ENERGY_PER_S: float = 0.5
 const SWIM_ENERGY_PER_S: float = 3.0
 const DIVE_ENERGY_COST: float = 10.0
 const DIVE_MAX_S: float = 5.0
+## Energy at or below this counts as empty: repeated float subtraction leaves crumbs like 2e-15.
+const EXHAUSTED_EPSILON: float = 0.000001
 
 var _diving: bool = false
 var _dive_time_s: float = 0.0
@@ -33,7 +35,7 @@ func step(terrain: DataEnums.Terrain, current: Vector2, energy: float, intent: M
 	var cost: float = 0.0
 
 	if TerrainQuery.is_water(terrain):
-		if energy <= 0.0:
+		if energy <= EXHAUSTED_EPSILON:
 			_end_dive(intent.crouch)
 			result.movement = MovementStep.Move.FLOAT
 			result.velocity = current
@@ -46,7 +48,7 @@ func step(terrain: DataEnums.Terrain, current: Vector2, energy: float, intent: M
 	else:
 		_end_dive(false)
 		_dive_locked = false
-		if energy <= 0.0:
+		if energy <= EXHAUSTED_EPSILON:
 			result.movement = MovementStep.Move.CRAWL
 			result.velocity = direction * CRAWL_SPEED
 		elif intent.crouch:
@@ -85,7 +87,8 @@ func _update_dive(result: MovementStep, energy: float, crouching: bool, delta: f
 		return 0.0
 	var cost: float = 0.0
 	if not _diving and not _dive_locked:
-		if energy >= DIVE_ENERGY_COST:
+		# A dive that leaves no energy would end on the next step, so it needs more than the cost.
+		if energy - DIVE_ENERGY_COST > EXHAUSTED_EPSILON:
 			_diving = true
 			_dive_time_s = 0.0
 			cost = DIVE_ENERGY_COST
@@ -99,6 +102,11 @@ func _update_dive(result: MovementStep, energy: float, crouching: bool, delta: f
 			result.movement = MovementStep.Move.DIVE
 			result.stealth = MovementStep.Stealth.SUBMERGED
 	return cost
+
+
+## Forgets the dive in progress (the player went down).
+func reset() -> void:
+	_end_dive(false)
 
 
 func _end_dive(lock: bool) -> void:

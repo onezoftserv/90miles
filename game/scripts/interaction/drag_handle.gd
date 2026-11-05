@@ -13,10 +13,11 @@ func _init() -> void:
 
 
 func use(by: Node) -> void:
-	if enabled:
+	if enabled and (dragger == null or not is_instance_valid(dragger) or dragger == by):
 		dragger = by as Node2D
 		interacted.emit(by)
 
 
-func release(_by: Node) -> void:
-	dragger = null
+func release(by: Node) -> void:
+	if by == dragger:
+		dragger = null

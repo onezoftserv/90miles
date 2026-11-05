@@ -44,6 +44,14 @@ func _has_button(action: StringName) -> bool:
 	return false
 
 
+func _button_index(action: StringName) -> int:
+	for event: InputEvent in InputMap.action_get_events(action):
+		var button := event as InputEventJoypadButton
+		if button != null:
+			return button.button_index
+	return -1
+
+
 func _has_axis(action: StringName, axis: int, sign_value: float) -> bool:
 	for event: InputEvent in InputMap.action_get_events(action):
 		var motion := event as InputEventJoypadMotion
@@ -76,6 +84,25 @@ func test_gamepad_defaults() -> void:
 	assert_true(_has_button(&"run"), "run on a shoulder button")
 	assert_true(_has_button(&"crouch"), "crouch on a face button")
 	assert_true(_has_button(&"interact"), "interact on another face button")
+
+
+func test_gamepad_buttons_are_a_shoulder_and_two_different_face_buttons() -> void:
+	var faces: Array[int] = [JOY_BUTTON_A, JOY_BUTTON_B, JOY_BUTTON_X, JOY_BUTTON_Y]
+	assert_true(_button_index(&"run") in [JOY_BUTTON_LEFT_SHOULDER, JOY_BUTTON_RIGHT_SHOULDER])
+	assert_true(_button_index(&"crouch") in faces)
+	assert_true(_button_index(&"interact") in faces)
+	assert_ne(_button_index(&"crouch"), _button_index(&"interact"))
+
+
+func test_full_stick_walks_a_body_at_4_tiles_per_second() -> void:
+	_stick(0, 1.0)
+	var body := (preload("res://scenes/player/player.tscn") as PackedScene).instantiate() as PlayerBody
+	add_child_autofree(body)
+	for i: int in 60:
+		body.player_input._physics_process(1.0 / 60.0)
+		body._physics_process(1.0 / 60.0)
+	assert_almost_eq(body.position.x / 16.0, 4.0, 0.05)
+	assert_eq(body.movement_state, MovementStep.Move.WALK)
 
 
 func test_idle_gives_a_zero_intent() -> void:

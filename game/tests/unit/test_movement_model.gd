@@ -256,3 +256,26 @@ func test_dragged_body_stops_next_to_the_dragger_without_overshooting() -> void:
 	assert_almost_eq(step.velocity.x, 0.6 - MovementModel.DRAG_STOP_DISTANCE, 0.0001)
 	var close := model.drag_step(Vector2(0.2, 0.0), 1.0)
 	assert_eq(close.velocity, Vector2.ZERO)
+
+
+func test_energy_3_swimmer_floats_after_exactly_1_second() -> void:
+	var r := _run(T.DEEP, 3.0, MoveIntent.create(EAST), 1.0)
+	assert_almost_eq(r["energy"] as float, 0.0, 0.0000001)
+	var next := model.step(T.DEEP, CURRENT, r["energy"] as float, MoveIntent.create(EAST), MovementSim.DT)
+	assert_eq(next.movement, MovementStep.Move.FLOAT)
+	assert_eq(next.velocity, CURRENT)
+
+
+func test_cannot_dive_with_exactly_10_energy() -> void:
+	var r := _run(T.DEEP, 10.0, MoveIntent.create(Vector2.ZERO, false, true), 1.0)
+	assert_ne(_last(r).stealth, MovementStep.Stealth.SUBMERGED)
+	assert_almost_eq(r["energy"] as float, 10.0, 0.0001, "a refused dive costs nothing")
+
+
+func test_reset_ends_a_dive_in_progress() -> void:
+	var crouch := MoveIntent.create(Vector2.ZERO, false, true)
+	var r := _run(T.DEEP, 50.0, crouch, 1.0)
+	assert_eq(_last(r).stealth, MovementStep.Stealth.SUBMERGED)
+	model.reset()
+	var again := model.step(T.DEEP, CURRENT, 40.0, crouch, MovementSim.DT)
+	assert_almost_eq(again.energy_spent, MovementModel.DIVE_ENERGY_COST, 0.0001, "a fresh dive is paid for")

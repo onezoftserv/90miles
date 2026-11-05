@@ -72,8 +72,7 @@ func test_downed_player_follows_but_never_overshoots_the_dragger() -> void:
 	downed.set_downed(true)
 	helper.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
 	_step(_both(helper, downed), 2.0)
-	assert_lt(downed.position.distance_to(helper.position), 12.0)
-	assert_gt(downed.position.distance_to(helper.position), 0.0, "stops beside the dragger")
+	assert_almost_eq(downed.position.distance_to(helper.position), MovementModel.DRAG_STOP_DISTANCE * TILE, 0.5, "stops at the stop distance")
 	assert_lt(downed.position.x, helper.position.x)
 
 
@@ -138,3 +137,64 @@ func test_player_needs_a_2_second_hold_for_a_timed_interactable() -> void:
 	assert_signal_not_emitted(net, "interacted", "holding again starts from 0 s")
 	_step([player] as Array[PlayerBody], 0.6)
 	assert_signal_emit_count(net, "interacted", 1)
+
+
+func test_second_helper_cannot_take_over_a_drag() -> void:
+	var a := _spawn(Vector2(12.0, 0.0))
+	var b := _spawn(Vector2(0.0, 12.0))
+	var downed := _spawn(Vector2.ZERO)
+	downed.set_downed(true)
+	var all: Array[PlayerBody] = [a, b, downed]
+	a.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	_step(all, 0.2)
+	assert_eq(downed.drag_handle.dragger, a)
+	b.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	_step(all, 0.2)
+	assert_eq(downed.drag_handle.dragger, a, "B's press is refused while A drags")
+	b.intent = MoveIntent.create()
+	_step(all, 0.2)
+	assert_eq(downed.drag_handle.dragger, a, "B releasing does not stop A's drag")
+
+
+func test_drag_continues_for_the_second_helper_when_the_first_lets_go() -> void:
+	var a := _spawn(Vector2(12.0, 0.0))
+	var downed := _spawn(Vector2.ZERO)
+	downed.set_downed(true)
+	var all: Array[PlayerBody] = [a, downed]
+	a.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	_step(all, 0.2)
+	a.intent = MoveIntent.create()
+	_step(all, 0.2)
+	assert_null(downed.drag_handle.dragger)
+
+
+func test_holding_interact_while_walking_into_reach_does_not_start_an_interaction() -> void:
+	var player := _spawn(Vector2(-5.0 * TILE, 0.0))
+	var coconut := Interactable.new()
+	coconut.hold_time_s = 0.0
+	add_child_autofree(coconut)
+	watch_signals(coconut)
+	player.intent = MoveIntent.create(Vector2.RIGHT, false, false, true)
+	_step([player] as Array[PlayerBody], 2.0)
+	assert_signal_not_emitted(coconut, "interacted", "needs a fresh press")
+	player.intent = MoveIntent.create()
+	_step([player] as Array[PlayerBody], 0.1)
+	player.position = Vector2(4.0, 0.0)
+	player.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	_step([player] as Array[PlayerBody], 0.1)
+	assert_signal_emit_count(coconut, "interacted", 1)
+
+
+func test_timed_interaction_is_cancelled_when_the_player_leaves_reach() -> void:
+	var player := _spawn(Vector2.ZERO)
+	var net := Interactable.new()
+	net.position = Vector2(8.0, 0.0)
+	add_child_autofree(net)
+	watch_signals(net)
+	player.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	_step([player] as Array[PlayerBody], 1.0)
+	player.intent = MoveIntent.create(Vector2.LEFT, false, false, true)
+	_step([player] as Array[PlayerBody], 1.5)
+	assert_signal_not_emitted(net, "interacted")
+	assert_null(player.interaction_hold.target)
+

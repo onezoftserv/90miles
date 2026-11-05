@@ -5,6 +5,8 @@ extends CharacterBody2D
 ## coop-networking (remote) sets `intent`.
 
 const TILE_SIZE: float = 16.0
+## Leeway beyond the 1 tile reach before a timed press is dropped.
+const REACH_SLACK_PX: float = 2.0
 
 ## What this player wants to do now. Set by PlayerInput, tests or the network.
 var intent: MoveIntent = MoveIntent.new()
@@ -20,6 +22,7 @@ var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
 ## property until survival-meters owns it.
 var downed: bool = false
 var interaction_hold: InteractionHold = InteractionHold.new()
+var _interact_was_held: bool = false
 
 @onready var meters: SurvivalMeters = $SurvivalMeters
 @onready var camera: Camera2D = $Camera
@@ -37,6 +40,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	var result: MovementStep
 	if downed:
+		_interact_was_held = false
 		interaction_hold.update(false, delta, self, null)
 		result = _dragged_step(delta)
 	else:
@@ -52,6 +56,7 @@ func _physics_process(delta: float) -> void:
 
 func set_downed(value: bool) -> void:
 	downed = value
+	model.reset()
 	drag_handle.enabled = value
 	if not value:
 		drag_handle.dragger = null
@@ -71,7 +76,15 @@ func _dragged_step(delta: float) -> MovementStep:
 
 func _update_interaction(delta: float) -> void:
 	var candidate: Interactable = null
-	if intent.interact_held and interaction_hold.target == null:
+	var pressed: bool = intent.interact_held and not _interact_was_held
+	_interact_was_held = intent.interact_held
+	# A press still counting down is dropped when its target is out of reach; a completed one
+	# (a drag) stays, because the dragger walks faster than the body it drags.
+	var target: Interactable = interaction_hold.target
+	if is_instance_valid(target) and not interaction_hold.completed 			and global_position.distance_to(target.global_position) > InteractionPicker.REACH_PX + REACH_SLACK_PX:
+		interaction_hold.cancel(self)
+	# Only a fresh press picks a target; holding while walking into reach does nothing.
+	if pressed:
 		var nearby: Array[Interactable] = []
 		for node: Node in get_tree().get_nodes_in_group(Interactable.GROUP):
 			var interactable := node as Interactable

@@ -21,7 +21,7 @@ The player SHALL move on land with WASD/left stick at 4 tiles/s walking, 6 runni
 - **THEN** the player moved 4 tiles and energy is still 0
 
 ### Requirement: Interaction
-The player SHALL interact with the nearest interactable within 1 tile via a single button: pick up, talk, use, climb. Timed interactions (drag a downed player, pull a trap, cut a net) SHALL complete only while the button is held for that interactable's hold time, 2 s unless the interactable sets another.
+The player SHALL interact with the nearest interactable within 1 tile via a single button: pick up, talk, use, climb. Dragging a downed player starts on press and lasts while the button is held. Timed interactions (pull a trap, cut a net) SHALL complete only while the player stays within 1 tile and while the button is held for that interactable's hold time, 2 s unless the interactable sets another.
 
 #### Scenario: Drag a downed teammate
 - GIVEN a downed teammate adjacent to the player
