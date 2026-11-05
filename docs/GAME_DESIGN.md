@@ -45,22 +45,26 @@ A 1–4 player co-op survival roguelite. Real-time, 2D top-down pixel art, built
 
 Thirst is the main pressure; everything else makes it harder to manage.
 
+Rates are per real minute (one in-game hour is 30 real seconds, see §5). The numbers were retuned in the `survival-meters` change and are provisional until the Milestone A playtest; `game/resources/survival_tuning.tres` holds them, per real second.
+
 | Meter | Max | Drains from | Restored by | At zero |
 | --- | --- | --- | --- | --- |
-| Thirst | 100 | 1/min base, ×2 in sun, ×3 swimming | Coconut 15, rain cup 25, still 40 | Health drains 2/s |
-| Hunger | 100 | 0.5/min, ×2 while working | Crab 20, fish 30, eggs 10, sea grapes 5 | Energy cap halves |
-| Heat | 0 (cool) → 100 (rises; decided 2026-11-05) | Rises in midday sun with no shade (rate retuned in `survival-meters`) | Shade, night, water lower it | At 100, sunstroke: blurred screen, speed −40% |
-| Energy | 100 | Swimming 3/s, building 1/s, running 0.5/s | Sleep (+50 per night), food | Collapse: can only crawl |
-| Morale | 100 | Loss of ally −30, storm −10, alone at night −5/min | Teammate nearby +2/min, fire +5, keepsake, music | Hallucinations: fake islands, fake voices |
-| Health | 100 | Attacks, thirst, heat | Aloe, rest, noni | Downed |
+| Thirst | 100 | 6/min at rest; ×2 in direct sun (day phase, on land, no shade), ×3 swimming instead of the sun, ×0.5 at night | Coconut 15, rain cup 25, still 40, well 30 | Health drains 2/s |
+| Hunger | 100 | 3/min, ×2 while crafting or swimming | Crab 20, fish 30, eggs 10, sea grapes 5 | Energy capped at 50 |
+| Heat | 0 (cool) → 100 (rises; decided 2026-11-05) | Rises 45/min in direct sun between 10:00 and 16:00, ×2 in scorching calm | Falls 45/min in shade, in water or outside 10:00–16:00; 0 at night | At 100, sunstroke until heat drops below 60: blurred screen, speed −40% |
+| Energy | 100 | Swimming 3/s, building 1/s, running 0.5/s | Sleep (+50 per night in shelter), meals (+10); nothing else | Collapse: can only crawl |
+| Morale | 100 | Loss of ally −30, squall −10 (both hit every player), alone at night −5/min | Teammate within 5 tiles +2/min, fire +5, song +15, found text +10, keepsake | Below 20: hallucinations: fake islands, fake voices |
+| Health | 100 | Attacks, thirst, poison (−20 over 30 s) | Aloe, rest, noni | Downed |
 
-**Downed, not dead.** A player at 0 health is downed for 90 s. Teammates can drag them to shade and give water to revive. Solo players, or an unrevived player, die: permadeath for the run.
+What that means for one player starting full at dawn: thirst lasts 1.15 days (≈ 14 min) working in the sun all day, 1.4 days half in the shade, 1.75 days resting in the shade. Hunger lasts 2–2.8 days. Standing in the midday sun brings sunstroke after 133 s (67 s in scorching calm); half sun, half shade never does on a normal day. Heat never costs health (provisional).
+
+**Downed, not dead.** A player at 0 health is downed for 90 s, still losing thirst and hunger. Teammates can drag them to shade and give water to revive them at 30 health. Solo players, or an unrevived player, die: permadeath for the run.
 
 **Drinking seawater** restores 10 thirst, then drains 30 over the next two minutes. Desperate players will do it anyway. That is the point.
 
 ## 5. Weather and time
 
-A day is 12 real minutes: dawn (1), day (5), dusk (1), night (5).
+A day is 12 real minutes: dawn (1), day (5), dusk (1), night (5). One in-game hour is 30 real seconds and the clock reads 06:00 when dawn starts, so the day phase runs 08:00–18:00, dusk 18:00–20:00 and night 20:00–06:00 (provisional, `survival-meters`). Midday, 10:00–16:00, is the middle 3 real minutes of the day phase.
 
 | Weather | Effect | Tell |
 | --- | --- | --- |

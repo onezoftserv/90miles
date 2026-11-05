@@ -36,7 +36,7 @@ Thirst is meant to be the main pressure of a 60–90 minute run, but the §4 num
 
 **Provisional decisions to confirm** (each is one value or one rule):
 1. Every number in the table above, and the dawn-at-06:00 anchor.
-2. Factors do not stack: swimming ×3 replaces sun ×2, and night ×0.5 applies alone (there is no sun at night).
+2. Swimming ×3 replaces sun ×2 instead of stacking with it (no ×6); night ×0.5 multiplies whichever applies, so swimming at night is ×1.5 (there is no sun at night).
 3. Outside 10:00–16:00 heat falls everywhere, not only in shade or water.
 4. Morale is one meter per player; "morale is shared" (§10) is read as party-wide events: an ally's death or a squall hits every player.
 5. A meal (+10 energy) is anything that restores hunger, so a coconut counts (data-model question 32).
