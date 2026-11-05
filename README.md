@@ -104,7 +104,7 @@ claude mcp add aws-mcp -- uvx mcp-proxy-for-aws@latest https://aws-mcp.us-east-1
 claude mcp add --transport http github https://api.githubcopilot.com/mcp/
 ```
 
-The older `@modelcontextprotocol/server-github` package is archived and `awslabs.aws-api-mcp-server` is superseded. Give the agent least privilege: an AWS profile limited to this project's resources, and a fine-grained GitHub token scoped to this repo if you use one instead of OAuth. The `gh` CLI covers issues and PRs without an MCP server.
+The older `@modelcontextprotocol/server-github` package is archived and `awslabs.aws-api-mcp-server` is superseded. Give the agent least privilege: an AWS profile limited to this project's resources, and a fine-grained GitHub token scoped to this repo with a short expiry (Claude Code stores the header in its config in plain text). If the AWS server fails to connect, the profile in its `AWS_MCP_PROXY_PROFILES` setting probably needs `aws login --profile <name>`. The `gh` CLI covers issues and PRs without an MCP server.
 
 Set `AWS_PROFILE` for the project profile before starting Claude Code. Keep tokens out of shell profiles and dotfiles.
 
