@@ -6,6 +6,8 @@ const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://test_shell_sky_settings.cfg"
 ## A run's first morning: the clock reads 06:00, dawn (docs/GAME_DESIGN.md §5).
 const FIRST_MORNING_S: float = 0.0
+## A time of day the host's resync could have sent: well after dawn.
+const HOST_TIME_S: float = 300.0
 
 
 func before_each() -> void:
@@ -76,8 +78,23 @@ func test_a_client_run_follows_the_host_and_never_rolls() -> void:
 	shell._join("127.0.0.1", 1)
 	assert_eq(shell.session.sky, WeatherManager.sky)
 	assert_false(WeatherManager.sky.weather.rolls_enabled, "the client never rolls weather")
+	WeatherManager.sky.start_at(HOST_TIME_S)
 	shell._enter_run()
-	assert_false(WeatherManager.running, "the client's clock follows receive_sky")
+	assert_true(WeatherManager.running, "the client's clock runs between resyncs")
+	assert_false(WeatherManager.sky.weather.rolls_enabled, "and it still never rolls")
+	assert_almost_eq(WeatherManager.time_of_day_s(), HOST_TIME_S, 1.0, "entering the run keeps the host's state")
+	await wait_seconds(0.3)
+	assert_gt(WeatherManager.time_of_day_s(), HOST_TIME_S, "the clock advances without a resync")
+
+
+func test_a_client_joining_mid_run_keeps_the_hosts_time() -> void:
+	var shell := _shell()
+	shell._join("127.0.0.1", 1)
+	WeatherManager.sky.start_at(HOST_TIME_S)
+	shell.session.lobby_received.emit(true)
+	assert_eq(shell.flow, GameShell.Flow.RUN)
+	assert_true(WeatherManager.running)
+	assert_almost_eq(WeatherManager.time_of_day_s(), HOST_TIME_S, 1.0, "not back at dawn")
 
 
 func test_leaving_the_run_stops_the_clock() -> void:

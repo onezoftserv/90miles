@@ -35,6 +35,13 @@ func start(at_s: float = 0.0) -> void:
 	running = true
 
 
+## A client's clock: runs between the host's resyncs, keeps the state the host sent and never
+## rolls weather.
+func follow() -> void:
+	sky.weather.rolls_enabled = false
+	running = true
+
+
 func stop() -> void:
 	running = false
 

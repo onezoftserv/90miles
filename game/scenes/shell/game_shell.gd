@@ -239,9 +239,12 @@ func _enter_run() -> void:
 	_close_screen()
 	flow = Flow.RUN
 	_run_started_s = clock.call()
-	# The host owns the clock; a client follows it through receive_sky and never starts it.
+	# The host owns the clock; a client runs its own between the host's resyncs (receive_sky)
+	# without restarting the day or rolling weather.
 	if session.multiplayer.is_server():
 		WeatherManager.start(RUN_START_TIME_S)
+	else:
+		WeatherManager.follow()
 	tint = TINT_SCENE.instantiate() as DayNightTint
 	_world.add_child(tint)
 	hud = HUD_SCENE.instantiate() as RunHud
