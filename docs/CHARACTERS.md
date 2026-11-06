@@ -23,7 +23,7 @@ Voice notes are for the Chatterbox clones and for the Haiku prompt. Satire targe
 
 **Changes the ending.** If you bring him the photo, he comes with you on the final crossing and appears in *Todos*. If you took his boat without him, *Los que llegamos* mentions him.
 
-**Voice.** Slow, dry, swears softly and often. Says *mijo* and *compadre*. Every story starts "En el noventa y cuatro…". Hates the word *bloqueo* and will argue it with anyone. Haiku profile: `backend/prompts/npcs/ramon.md`.
+**Voice.** Slow, dry, swears softly and often. Says *mijo* and *compadre*. Every story starts "En el noventa y cuatro…". Hates the word *bloqueo* and will argue it with anyone. At *El pilote* (final sandbar) without Tomás: "Antes, con un pie aquí arriba ya eras americano." — "¿Y ahora?" — "Ahora eres un tipo parado en un pilote." Haiku profile: `backend/prompts/npcs/ramon.md`.
 
 ---
 
@@ -101,7 +101,7 @@ Rescued balseros join the party as AI companions. Each one has a need, a skill, 
 
 #### Marisol — AI
 
-**Age:** 24. Seven months pregnant, from Cienfuegos; her husband was on the raft and did not surface. Found on a sandbar under a palm, rationing one coconut a day. **Skill:** none while pregnant, but every NPC in the game softens toward a party with her (Rodríguez releases a party with Marisol on the first capture, once). **Need:** thirst ×1.5, cannot swim at all, cannot climb; must ride a raft or boat. Morale −15 to everyone if she is left behind. **Ending:** in *Todos* the credits say the baby's name. **Voice:** quiet, very funny when she decides to be, calls the baby *el polizón* (the stowaway).
+**Age:** 24. Seven months pregnant, from Cienfuegos; her husband was on the raft and did not surface. Found on a sandbar under a palm, rationing one coconut a day. **Skill:** none while pregnant, but every NPC in the game softens toward a party with her (Rodríguez releases a party with Marisol on the first capture, once). **Need:** thirst ×1.5, cannot swim at all, cannot climb; must ride a raft, boat or almendrón (never the board, which dumps its rider). Morale −15 to everyone if she is left behind. **Ending:** in *Todos* the credits say the baby's name. **Voice:** quiet, very funny when she decides to be, calls the baby *el polizón* (the stowaway).
 
 #### Doctor Alfredo — AI
 
@@ -117,7 +117,7 @@ Rescued balseros join the party as AI companions. Each one has a need, a skill, 
 
 #### El Viejo Tomás — AI
 
-**Age:** 80. Was on a raft in 1994 and was returned; tried again in 2005 and was returned; this is the third time. Found on the shipwreck reef, sitting in the hull camp like it is his living room. **Skill:** knows every chain: reveals all routes on arrival at any island he has been to (all of them). **Need:** walks at half speed; thirst ×1.3; refuses rafts (he has seen three break) and will only cross by boat, turtle, or dolphins. **Ending:** he does not want to reach land: on the final approach he asks to stay on the sandbar. The party can insist (morale −20, he comes) or let him (he waves from the sandbar in every ending). **Voice:** the slowest speaker; every story starts with a year; swears like a sailor and apologizes to Marisol's belly.
+**Age:** 80. Was on a raft in 1994 and was returned; tried again in 2005 and was returned; this is the third time. Found on the shipwreck reef, sitting in the hull camp like it is his living room. **Skill:** knows every chain: reveals all routes on arrival at any island he has been to (all of them). **Need:** walks at half speed; thirst ×1.3; refuses rafts and boards (he has seen three break: "Ni muerto.") and will only cross by boat, almendrón, turtle, or dolphins. The car is different: "¿En almendrón? Eso es otra cosa: los carros americanos no se hunden, los hunden." **Ending:** he does not want to reach land: on the final approach he asks to stay on the sandbar. The party can insist (morale −20, he comes) or let him (he waves from the sandbar in every ending). **Voice:** the slowest speaker; every story starts with a year; swears like a sailor and apologizes to Marisol's belly. **The piling.** If the party reaches *El pilote* on the final sandbar, he remembers the old rule and has plans for it: "Antes era tocar tierra y ya. Pies secos." A younger party member: "Abuelo, eso se acabó en el 2017." He: "¿Y entonces pa' qué me apuran? Yo me quedo en mi pilote." It fits his wish to stay on the sandbar.
 
 
 ---
@@ -158,5 +158,9 @@ Six spotted dolphins. Appear at dawn in clear weather, more often if a *Músico*
 | *Las cartas de la Yuma* | A sister in Hialeah writing to her brother, who never arrived | Shipwreck reef, El ahogado | AI: the letter you find references your route |
 | *La lista* | Names scratched on the lighthouse wall by everyone who passed | Lighthouse | AI: adds a line about the previous run's dead |
 | Bottle notes | Random: jokes, prayers, shopping lists, curses at the sea | Any beach | AI |
-| Wall slogans | Repurposed revolutionary slogans painted on wrecks and bunkers | Everywhere | HW |
-| Radio fragments | Half-heard broadcasts from Radio Martí, Radio Reloj and a Miami salsa station | El loco de la radio | HW |
+| Wall slogans | Repurposed revolutionary slogans painted on wrecks, bunkers and village houses; invented, never real ones. Each has a reply scrawled underneath in pencil or charcoal ("AQUÍ SE QUEDA TODO EL MUNDO" / "Menos el que pueda.") | Everywhere | HW |
+| Radio fragments | Half-heard broadcasts from Radio Martí, Radio Reloj and a Miami salsa station. The *onda corta* entries added by the lore research use generic stations only: "la emisora oficial", an unattributed 1994 rumor, "una emisora de Miami" (the existing real names are an open item, `docs/reviews/2026-11-05-repo-review.md`) | El loco de la radio | HW |
+| *Se vende* note | A builder who changed his mind, selling a half-built raft ("No le digas nada a mi mujer") | The raft-for-sale POI | HW |
+| *El sobre de tres generaciones* | A fictional family's papers across sixty years (a letter from 1965, 1980 and the base in 1994, a note from 2017, an unsent visa-lottery form); first names only | Keeper's house, camp ruin | HW |
+| *El fallo del pilote* | A mock official ruling on whether a piling is land, signed by nobody | The piling off the final sandbar | HW |
+| Bottle notes and the Special Period diary | Four new handwritten bottle notes (overshot to Carolina, a raft packing list, "ninety miles", a curse at the current) and four diary pages (apagón, milordo, grapefruit steak, the Chinese bicycle) serve as offline fallbacks for the AI versions | Any beach, camp ruin | HW fallback |

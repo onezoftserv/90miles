@@ -24,6 +24,10 @@ Every asset source is free for commercial use. Keep each pack's license file nex
 | Palms, mangroves, dunes, wrecks, boats | OpenGameArt (search "tropical tileset", "beach tiles", "boat sprite") | CC0 / CC-BY | Prefer CC0; attribute CC-BY in `CREDITS.md` |
 | Lighthouse, hut, bunker, wreck interiors | Kenney "Roguelike Modern City" (for concrete), hand-pixel the rest | CC0 | The lighthouse will likely need custom art |
 | Patrol boat, cutter, dinghy, skiff, raft | itch.io "Top-down Boats" (free tier) / hand-pixel | varies | Raft is simple enough to draw |
+| Almendrón: a 1950s American car seen from above, no make, badge or logo, with four drums lashed under it and a welded propeller; it is a vessel (`Vessel.CAR`), drawn as a car at sea | Hand-pixel (no free pack has it); boat sprites as a base | — | Rare vessel (about 1 run in 4 sees the route); the sprite is the joke. Never copy a real model's grille or badge |
+| Surfboard with a sail, with a rider; a board is a vessel (`Vessel.BOARD`), one per rider | Hand-pixel | — | No maker's logo on the board |
+| Laughing gull perched on a player's head (4–8 frames: circle, land, turn with the player, lift off, hop down, walk), plus the songbird, booby and frigatebird for the ambient birds | OpenGameArt bird packs (CC0 only) as a base, then hand-pixel the perch frames | CC0 | Head perch needs a 16×16 head anchor on every character frame; settle it in the character-height decision (`TASKS.md` §11) |
+| Piling with an official board, the raft-for-sale sign, marked and unmarked washed-up rafts, the raft that fills a living room | Hand-pixel | — | The painted mark is a plain stripe, not a real agency's marking or logo |
 | Weather: rain, fog, lightning sprites/particles | Godot particles; Kenney "Particle Pack" for textures | CC0 | |
 | Cuban son / salsa loops for the Músico and endings | freemusicarchive.org (CC-BY) or commission | CC-BY | Do not use any real recorded song |
 | Portraits for NPCs (dialogue) | Hand-pixel from Kenney bases, or commission | — | 8 important NPCs + 8 minor |
