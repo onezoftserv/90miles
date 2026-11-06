@@ -57,6 +57,14 @@ func add_client(setup: Callable = Callable()) -> CoopSession:
 	return session
 
 
+## Adds a client branch that connects but never starts its session, so it sends no join
+## request (coop-reconnect "Join request").
+func add_silent_client() -> CoopSession:
+	var session := _add_branch("Client%d" % branches.size(), Callable())
+	apis[apis.size() - 1].multiplayer_peer = NetPeers.create_client("127.0.0.1", port)
+	return session
+
+
 ## Adds a client and waits until it is connected and its own player has spawned on it and
 ## on the host. Returns null on timeout.
 func join(setup: Callable = Callable()) -> CoopSession:
