@@ -1,6 +1,6 @@
 class_name EffectApplier
 extends RefCounted
-## Applies an EffectData to players. Interpreted: METER_ADD, REVIVE, GIVE_ITEM, TAKE_ITEM; any
+## Applies an EffectData to players. Interpreted: METER_ADD, REVIVE, GIVE_ITEM, TAKE_ITEM, START_ROUTE; any
 ## other kind is skipped with one warning. Anything that restores hunger is a meal (survival-meters).
 
 static var _warned: Dictionary[int, bool] = {}
@@ -18,10 +18,19 @@ static func apply(effect: EffectData, actor: PlayerBody, target: PlayerBody) -> 
 			subject.inventory.add(effect.ref_id, effect.count)
 		EffectData.Kind.TAKE_ITEM:
 			subject.inventory.remove_id(effect.ref_id, effect.count)
+		EffectData.Kind.START_ROUTE:
+			_start_route(effect, actor)
 		_:
 			if not _warned.has(effect.kind):
 				_warned[effect.kind] = true
 				push_warning("EffectApplier: kind %s is not built yet, skipped" % EffectData.Kind.keys()[effect.kind])
+
+
+# Asks the island's routes to start `effect.ref_id` for the actor; they may refuse.
+static func _start_route(effect: EffectData, actor: PlayerBody) -> void:
+	var routes := actor.get_tree().get_first_node_in_group(IslandRoutes.GROUP) as IslandRoutes
+	if routes != null:
+		routes.start_for(int(String(actor.name)), effect.ref_id)
 
 
 static func _add_meter(effect: EffectData, subject: PlayerBody) -> void:

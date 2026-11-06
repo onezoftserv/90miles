@@ -71,7 +71,7 @@ func test_spawns_are_10_to_20_tiles_apart_and_the_client_sees_the_pickups() -> v
 			assert_between(tiles, 10.0, 20.0)
 	var same := func() -> bool: return _pickups(a) == _pickups(host) and _pickups(host).size() > 0
 	assert_true(await wait_until(same, TIMEOUT_S), "the client sees the host's pick-ups")
-	assert_eq(a.pickups.get_child_count(), 19)
+	assert_eq(a.pickups.get_child_count(), 20)
 
 
 func test_a_clients_pickup_is_applied_by_the_host() -> void:

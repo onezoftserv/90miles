@@ -22,7 +22,8 @@ func _ready() -> void:
 	home_button.grab_focus()
 
 
-## `entries` holds one {name: String, dead: bool} per player.
+## `entries` holds one {name: String, dead: bool} per player, plus route (its Spanish name)
+## for a player who left the island by a route.
 func show_summary(entries: Array[Dictionary], length_s: float) -> void:
 	run_length.text = format_length(length_s)
 	for child: Node in _rows.get_children():
@@ -31,6 +32,8 @@ func show_summary(entries: Array[Dictionary], length_s: float) -> void:
 		var row := Label.new()
 		row.theme_type_variation = &"PanelLabel"
 		row.text = "%s: %s" % [entry.get("name", GameSettings.DEFAULT_NAME), "Murió" if entry.get("dead", false) else "Sobrevivió"]
+		if entry.has("route"):
+			row.text += " (se fue en: %s)" % entry["route"]
 		_rows.add_child(row)
 
 

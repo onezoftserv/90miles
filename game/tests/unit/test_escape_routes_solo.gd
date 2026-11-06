@@ -32,6 +32,7 @@ func _run() -> PlayerBody:
 	add_child_autofree(island)
 	session = SESSION_SCENE.instantiate() as CoopSession
 	session.terrain = island.terrain
+	session.climate = island.climate
 	session.spawn_points = island.spawn_points(true)
 	add_child_autofree(session)
 	island.furnish(session)

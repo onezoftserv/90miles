@@ -135,6 +135,10 @@ var dead: bool = false:
 		if dead:
 			died.emit()
 
+## Statuses on this player by DataEnums.Status. Host-only; nothing causes or clears one yet
+## (urchins, creatures and bandages come later), so routes and tests set them directly.
+var statuses: Dictionary[int, bool] = {}
+
 ## Changes spread over time (seawater, poison), advanced by tick.
 var _timed: Array[MeterOverTime] = []
 
@@ -214,6 +218,17 @@ func speed_factor() -> float:
 ## Highest energy right now: lower while hunger is empty.
 func energy_cap() -> float:
 	return tuning.starving_energy_cap if hunger <= 0.0 else MAX_ENERGY
+
+
+func has_status(status: DataEnums.Status) -> bool:
+	return statuses.get(status, false)
+
+
+func set_status(status: DataEnums.Status, active: bool) -> void:
+	if active:
+		statuses[status] = true
+	else:
+		statuses.erase(status)
 
 
 ## The value of `meter`, 0 for NONE.

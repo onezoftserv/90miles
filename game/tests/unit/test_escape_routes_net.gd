@@ -29,6 +29,7 @@ func _setup(session: CoopSession) -> void:
 	add_child(island)
 	islands.append(island)
 	session.terrain = island.terrain
+	session.climate = island.climate
 	session.spawn_points = island.spawn_points(false)
 	island.furnish(session)
 
@@ -110,6 +111,7 @@ func test_players_who_stay_keep_the_island_and_its_routes() -> void:
 	_gather(host)
 	host.body(client_id).inventory.add(&"binoculars", 1)
 	host.body(client_id).meters.energy = 100.0
+	host.body(1).meters.energy = 99.0
 	assert_true(host.start_route_for(client_id, &"binoculars_swim"))
 	var routes := host.get_node("Routes") as IslandRoutes
 	assert_eq(routes.offered.size(), 2)
