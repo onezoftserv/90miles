@@ -21,6 +21,7 @@ A 1–4 player co-op survival roguelite. Real-time, 2D top-down pixel art, built
 | Language | Spanish original; English keeps key slang |
 | Rating | Mature: swearing, political satire, danger |
 | Tone | Dark comedy with real stakes; Cubans laughing at the worst day of their lives |
+| Era | The present day. 1994 and the earlier waves (1965, 1980) live in found texts, wrecks and older characters' stories, never in the run's date; see `docs/LORE.md` |
 | Backend | AWS Bedrock (Claude Haiku 4.5) for key dialogue; Lambda + API Gateway |
 
 ## 3. Core loop
@@ -120,12 +121,16 @@ Each island rolls two or three. Routes are the "stairs".
 | Follow the dolphins | Find the pod at dawn, swim with them | Low; timing only | Everyone, swimming |
 | Signal a fishing boat | Fire or mirror at the right hour | Boat may not stop; patrol may see fire | Everyone |
 | Ride the Gulf Stream | Compass + charts + navigator skill | Fast; easy to overshoot | Raft-sized |
+| The floating almendrón | A rusted 1950s car with its drive shaft: 4 drums, 4 rope, 6 nails, 4 driftwood, a propeller, and a fuel jug per crossing | Fastest and loudest: starting it is heard 25 tiles away (50% chance to alert the patrol); a squall swamps it (×1.5 damage); the fuel jug is contested | Everyone |
+| The board | A rental surfboard rigged with a sail (board, tarp, hardwood, 2 rope), trade wind, no bleeding; one board per rider | Fastest and loneliest: sharks ×1.3, drift ×1.5; a squall or shark dumps the rider; the board is lost on arrival | One rider per board |
 
 The turtle's two-seat limit and the swimmer's energy cost are intentional: a 4-player party often has to split routes and meet on the next island.
 
+The almendrón and the board are rolled extras on a few chains (`ISLANDS.md`), never an island's guaranteed route: the raft stays guaranteed wherever they appear. One player can finish either one alone: the car's pliers, propeller, nails, drums and fuel are all on its island, and the board's shack always holds a board plus the tarp, hardwood and rope for one sail. Tomás refuses the board as he refuses rafts; Marisol and Alfredo cannot swim, so only the car takes them.
+
 ## 8. The crossing
 
-A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cuba and weather: reef sharks follow blood; a squall line forces you to tie down; searchlights sweep from a cutter on the early chains; the Gulf Stream pushes east: anyone aboard slows the drift to 0.25 tile/s, and a *Maestro*, Navigation 2 or a compass with charts cancels it. Drift pushes you sideways (up to 40 tiles, then you overshoot to a harder chain) but never makes the crossing longer. Falling in the water costs energy and attracts sharks; a swimmer climbs back aboard alone by holding interact for 3 s at the edge, or a teammate pulls them in 2 s. The raft takes damage; at 0 it breaks and everyone swims the rest or drowns.
+A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cuba and weather: reef sharks follow blood; a squall line forces you to tie down; searchlights sweep from a cutter on the early chains; the Gulf Stream pushes east: anyone aboard slows the drift to 0.25 tile/s, and a *Maestro*, Navigation 2 or a compass with charts cancels it. Drift pushes you sideways (up to 40 tiles, then you overshoot to a harder chain) but never makes the crossing longer. A car rides high and is hard to fall off (sharks ×0.6) but is loud under a searchlight (threats ×1.2). A board is its own small vessel: each rider has one (integrity 60), a squall or a shark attack dumps the rider, who climbs back as below, and at 0 the board breaks and the rider swims the rest. Board riders land 10–20 tiles apart instead of within 5, so a party finds each other on the next beach; a solo rider has nobody to look for. Falling in the water costs energy and attracts sharks; a swimmer climbs back aboard alone by holding interact for 3 s at the edge, or a teammate pulls them in 2 s. The raft takes damage; at 0 it breaks and everyone swims the rest or drowns.
 
 ## 9. Threats
 
@@ -138,7 +143,7 @@ Full lore and behavior specs in `BESTIARY.md`. Summary:
 | Barracuda school | Swarm shiny objects | Brogue jackal pack |
 | Portuguese man o' war | Passive drifting trap; paralysis sting | SPD / Brogue traps |
 | Land crabs | Night thieves; steal from stashes | SPD sewer crab |
-| Seagulls | Steal food and flee | Brogue monkey |
+| Seagulls | Steal food and flee; the same species rides the final crossing as the *galleguito* | Brogue monkey |
 | Mosquito cloud | Energy drain at dusk | Brogue / DCSS gas |
 | American crocodile | Drags you under in still water | Brogue bog monster |
 | Guardacostas | Patrol routes, searchlights, shore squads, capture | Brogue stealth/noise |
@@ -200,6 +205,12 @@ Decided: multiple endings, based on who you saved and how.
 
 Survivors are the players and companions who reach land. The first match wins, in this order: *Devuelto*, *El Niño*, *Solo*, *Todos*, *Los que llegamos*. A solo player who met nobody gets *Solo*; one who brings a companion to land can get *Todos*.
 
+**Epilogue lines.** Each ending card can carry flag-gated one-liners (data, not new endings; the selection order above is unchanged):
+
+- *El galleguito* (flag `galleguito_a_bordo`, set when the gull perched on someone during the final crossing; all five endings): the gull gets off first and walks up the beach, or in *Devuelto* is never sent back. It rides every final crossing out, solo included.
+- *El pilote* (every landing ending, no condition): "Pisamos arena. Ahora empieza la otra cola: la de los papeles." The era makes it true: landing is the win, not a legal guarantee.
+- *El almendrón* (flag `almendron_a_bordo`, the car was used this run): the key and the gas smell are all that is left. In *Devuelto*, if the car was sunk at sea (`almendron_hundido`), the car stays on the bottom.
+
 ## 14. Roguelite progression
 
 Permadeath per run. Between runs you unlock **memories**: keepsakes you can start with.
@@ -212,6 +223,8 @@ Permadeath per run. Between runs you unlock **memories**: keepsakes you can star
 | Nudo del pescador | Rafts 25% stronger | Cross 3 times by raft |
 | Pedazo de mapa | Reveals one route on island 1 | Reach the storm key |
 | Cassette de Los Van Van | Music works without a Músico | Finish with a Músico |
+| Llave del almendrón | Building ×1.2 for the holder | Cross once by the almendrón |
+| Pluma de galleguito | Gulls never steal from the holder (island gulls and the final galleguito) | Be returned (*Devuelto*) once |
 
 ### Difficulty and carry-over ("Experiencia")
 
@@ -236,7 +249,7 @@ Rules:
 - **The world eases a little per death, capped.** Each death adds one "Experiencia level" (max 8). Per level: thirst and hunger drain −3%, patrol period +10 s, one extra driftwood and one extra coconut per island, downed timer +5 s. At the cap that is drains −24%, patrols at 4:20 instead of 3:00, and 8 extra materials per island: enough to feel the game meet you halfway, not enough to remove the pressure.
 - **Downed-timer rewards in solo.** For a player with no other living player (solo, or the last one alive), the downed timer is a last-stand window with a 0 s base, so a first solo run stays brutal. The +5 s per Experiencia level and the +10 s boost lengthen that window (for example 30 s at level 4 with the boost); `survival-meters` defines what the player can do in it, and the Medalla revive, which fires at 0 health before the window starts, so it saves a solo player even on run 1.
 - Winning a run removes 2 Experiencia levels (the game gets harder again for a champion) and unlocks a keepsake.
-- *Devuelto* is a loss: it counts as a death (one Experiencia level added, the death carry-over above) and removes no levels. It unlocks a keepsake whose name and effect are still open.
+- *Devuelto* is a loss: it counts as a death (one Experiencia level added, the death carry-over above) and removes no levels. It unlocks the *Pluma de galleguito*, a small consolation and a joke, not a power spike.
 - Seeded and daily runs earn Experiencia but do not spend it.
 
 Challenges (optional hard modes): no fire, permanent storm season, sinking raft from the start, patrols on every island.

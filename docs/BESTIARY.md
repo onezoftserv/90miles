@@ -106,9 +106,21 @@ Difficulty scales by **distance** (islands 1–2: coast, 3–5: mid, 6–8: far)
 
 **Behavior.** Circle rocky keys and any beach where food lies uncovered. Swoop: steal one food item from the ground or from a player's hands (not inventory) and fly off. They defend egg nests: 3 damage per peck, swarm of 4.
 
-**Counters.** Cover food. Chase them with a stick (they flee 30 s). Egg raids are worth it: 10 eggs per nest.
+**Counters.** Cover food. Chase them with a stick (they flee 30 s). Egg raids are worth it: 10 eggs per nest. Carrying the *Pluma de galleguito* keepsake makes every gull ignore you.
+
+**Codex line.** "El mismo que te robó el cangrejo en el primer cayo. Ahora quiere que lo lleves." / "The same one that stole your crab on the first cay. Now it wants a ride."
 
 **Reference.** Brogue monkeys (steal and flee).
+
+#### The final passenger (*el galleguito*)
+
+The same species, the laughing gull Cubans call *galleguito*, and the same attitude: on the islands it steals your lunch, and at the end it steals a ride. It is a separate creature (`galleguito`) so the island gull's spawn rules stay untouched. Its story is invention, inspired by one unverified anecdote and the gull's real habits (`docs/LORE.md` §8).
+
+- **Spawn.** A crossing rule on the final chain family at chance 1.0, once per run: it appears on the crossing out of the final island, every run. It is a creature, not a set piece.
+- **Behavior.** `perch_ride`. As the party pushes off, it circles twice and lands on one player's head and stays for the whole crossing, turning when the player turns. Shooed (interact), it hops to another head, or in solo circles and lands again. If its player falls in, it lifts off and waits overhead. It ignores sharks, searchlights and squalls. At the beach it hops off first and walks up the sand ahead of everyone.
+- **Small effect, never a survival lever.** Each player who sees it land gets +10 morale, once per run; solo and co-op get the same per-player bonus (shore birds mean shore). Once every 60 s it has a 50% chance to take one *held* food item from the player it rides (never from inventory), and it does not fly away after; on a 60–120 s crossing that is at most two snacks. It never changes speed, drift, threats or the outcome.
+- **The pick.** In co-op the host picks the player holding the most food items, ties broken by the run seed, and rolls the theft; clients only send the shoo. In solo it picks the solo player. A *Pluma de galleguito* holder is never robbed.
+- **Lines.** "No lo espantes. Si un pájaro de costa se monta aquí, es que la costa está cerca." · "Se me sentó en la cabeza como si tuviera visa." · the theft: "¡Oye, esa galleta era mía! ...Bueno. Peaje es peaje." · "¡Me cagó el galleguito! ...Bueno, dicen que es buena suerte." (soft: "¡Me ensució el galleguito!..."). The endings carry its line (`GAME_DESIGN.md` §13).
 
 ---
 
@@ -230,6 +242,19 @@ Added to reach reference-game density (~35 creature types). Each follows the sam
 | 34 | **Jet-ski patrol** (*la moto*) | Coast, day | Fast (speed 8), loud (heard 20 tiles), short loop (90 s), no searchlight; spots swimmers in open water by day | Stay out of open water at midday; the noise is the warning | Two kids with sunglasses and a radio. They are bored. That makes them look harder. |
 | 35 | **Smugglers** (*los lancheros*) | Far chains, night, rare | A go-fast boat; will carry you for everything you own, or rob you; 50/50 | Negotiate with a Músico or El Chino present; or hide | Nine thousand dollars a head in Havana. Here the price is whatever you are holding. |
 
+## Birds (added)
+
+Four birds, one for each place a Cuban sees them from a boat. The first three are ambient: they follow the vessel for a morale bump and never threaten anyone. Nobody jokes about them at the expense of a person.
+
+| # | Creature | Chain | Behavior | Numbers | Counter | Lore line |
+| --- | --- | --- | --- | --- | --- | --- |
+| 36 | **Galleguito** (*galleguito*, laughing gull) | The final crossing, every run | `perch_ride`, see "The final passenger" | No health; +10 morale once per player; steals one held food item, 50% per 60 s | Shoo it (hops away); the *Pluma de galleguito* | He sat on my head like he had a visa. |
+| 37 | **Pajarito** (*pajarito*, small songbird) | Mid and far crossings, dawn, 10% | `ambient`, follows the vessel; flies off at any noise | +5 morale to each player who sees it, once a day | Keep quiet | A little yellow bird fell asleep on the oar. Nobody talked for an hour so as not to wake him. |
+| 38 | **Pájaro bobo** (*pájaro bobo*, booby) | Crossings, 15% | `ambient`, follows the vessel; flees once the weather is a squall | +5 morale to each player who sees it, once a day | None needed; it leaves on its own with the dark-line tell | A pájaro bobo climbed aboard. Doesn't pay, doesn't row, but at least he doesn't complain. |
+| 39 | **Rabihorcado** (*rabihorcado*, frigatebird) | Reef and rock cays, 40% | `swoop_steal` from the fishing catch, airborne only, never catchable; replaces the pelican where it spawns, so two catch thieves never stack | Steals the catch 20%, then flees | Reel fast | Doesn't swim, doesn't fish. Lives off taking from whoever works. That bird's a dirigente. |
+
+The `ambient` machine is shared with the sperm whale and the pelican. A forecast condition for the booby's early squall tell would need new code and is not proposed.
+
 ## Weather and environment (added)
 
 | Event | Where | Effect | Counter |
@@ -243,4 +268,4 @@ Added to reach reference-game density (~35 creature types). Each follows the sam
 
 ## Density check
 
-With these additions: 35 creature types, 5 bosses, 11 weather events. Per island the generator picks 3–5 creature types from the chain's list, so a 7-island run shows ~20 and two runs rarely repeat the same mix.
+With these additions: 39 creature types, 5 bosses, 11 weather events. Per island the generator picks 3–5 creature types from the chain's list, so a 7-island run shows ~20 and two runs rarely repeat the same mix.
