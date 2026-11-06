@@ -327,3 +327,30 @@ func test_a_late_joiner_learns_who_was_removed() -> void:
 		return
 	var told := func() -> bool: return late.removed_names() == (["Papo"] as Array[String])
 	assert_true(await wait_until(told, TIMEOUT_S))
+
+
+func test_a_reclaimed_client_gets_the_clock_and_weather() -> void:
+	# Review M2: the reclaim sends the same world state as a join, sky included.
+	var host_sky := WorldSky.from_catalog(GameState.content)
+	host_sky.start_at(450.0)
+	host_sky.weather.start_weather(&"squall")
+	var island_with_sky := func(session: CoopSession) -> void:
+		_island(session)
+		session.sky = host_sky
+	var host := net.add_host(island_with_sky)
+	var papo_body := await _papo_drops(host)
+	if papo_body == null:
+		return
+	var client_sky := WorldSky.from_catalog(GameState.content)
+	client_sky.weather.rolls_enabled = false
+	var papo_with_sky := func(session: CoopSession) -> void:
+		_as(papo).call(session)
+		session.sky = client_sky
+	var back := await net.join(papo_with_sky)
+	assert_not_null(back)
+	if back == null:
+		return
+	assert_same(host.body(net.peer_id(back)), papo_body)
+	var told := func() -> bool: return client_sky.weather.current.id == &"squall"
+	assert_true(await wait_until(told, TIMEOUT_S), "the rejoined client has the host's weather at once")
+	assert_eq(client_sky.clock.phase(), DataEnums.DayPhase.NIGHT)
