@@ -20,16 +20,28 @@ func _init(test: GutTest) -> void:
 	_test = test
 
 
-## Adds the host branch and (unless `started` is false) starts its session. `setup` gets the
-## session before start().
-func add_host(setup: Callable = Callable(), started: bool = true) -> CoopSession:
+## Adds the host branch and (unless `started` is false) starts its session, in the lobby phase
+## when `lobby` is true. `setup` gets the session before start().
+func add_host(setup: Callable = Callable(), started: bool = true, lobby: bool = false) -> CoopSession:
 	var session := _add_branch("Host", setup)
 	var peer := NetPeers.create_server(0)
 	port = NetPeers.bound_port(peer)
 	apis[0].multiplayer_peer = peer
 	if started:
-		session.start()
+		session.start(lobby)
 	return session
+
+
+## Adds a client named `player_name` and waits until the host has it in its roster (in the
+## lobby nothing spawns, so there is no body to wait for). Returns null on timeout.
+func join_lobby(player_name: String) -> CoopSession:
+	var named := func(session: CoopSession) -> void: session.local_name = player_name
+	var session := add_client(named)
+	var host: CoopSession = sessions[0]
+	var listed := func() -> bool:
+		return _connected(session) and host.roster.has(session.multiplayer.get_unique_id())
+	var ok: bool = await _test.wait_until(listed, TIMEOUT_S)
+	return session if ok else null
 
 
 ## Waits until `session`'s peer is connected.

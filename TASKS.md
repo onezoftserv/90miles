@@ -34,6 +34,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] `player-movement`: walk, run, crouch, swim, dive, interact
 - [x] `coop-networking`: host/join, spawner, synchronizer, quick chat
 - [x] `survival-meters`: all six meters with the §4 numbers, HUD bars
+- [x] `ui-shell`: title, host/join lobby, HUD layout, game theme, display scaling, pixel filter
 - [ ] Handmade sandbar scene: hut, 6 palms, flotsam line, tide pools
 - [x] `crafting-inventory`: inventory, pick-up, coconut, rain cup, workbench, fire
 - [ ] `weather-daynight`: 12-minute day, CanvasModulate, calm/squall only
@@ -95,7 +96,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 
 ## 10. Content batches (data entry, parallel to milestones C–E)
 
-Source: `docs/CONTENT_MANIFEST.md` (~280 `.tres` files). Each batch is one OpenSpec change, max 30 files, must load in Godot.
+Source: `docs/CONTENT_MANIFEST.md` (~315 `.tres` files). Each batch is one OpenSpec change, max 30 files, must load in Godot.
 
 - [ ] content-batch-1: creatures 1–20
 - [ ] content-batch-2: creatures 21–40
@@ -107,12 +108,14 @@ Source: `docs/CONTENT_MANIFEST.md` (~280 `.tres` files). Each batch is one OpenS
 - [ ] content-batch-8: POIs (~45)
 - [ ] content-batch-9: set pieces (15), routes (8), backgrounds (6)
 - [ ] content-batch-10: handwritten dialogue (minor NPCs, beats, endings, quick-chat, death lines)
+- [ ] content-batch-11 (balsero gear, 19 files): routes `almendron` and `tabla`, recipes 4, items 11, keepsakes `llave_almendron` and `pluma_galleguito`. Routes and the key need `Vessel.CAR` and `Vessel.BOARD` (`balsero-lore` task group 6)
+- [ ] content-batch-12 (balsero world, 16 files plus entry edits): creatures `galleguito`, `pajarito`, `pajaro_bobo`, `rabihorcado`, POIs 5, set pieces `balsa_en_la_sala` and `el_pilote`, texts 3, dialogue `beat_galleguito` and `beat_pies_secos`. The gull needs `Behavior.PERCH_RIDE`, the two ambient birds `ambient.gd`
 
 ## 11. Lore, stories and asset review (start alongside the content batches; finish before Milestone G)
 
 Each review is its own OpenSpec change; findings go back into the docs and the affected `.tres` files.
 
-- [ ] History and lore review: every historical claim in the lore, found texts, item descriptions and loading tips is checked against its sources; nothing names real people or puts invented words in real politicians' mouths; deaths are treated with respect while the satire stays aimed at the system
+- [ ] History and lore review: every historical claim in `docs/LORE.md` and the balsero found texts (entry 2 of *El sobre de tres generaciones* gets the final say), plus the lore, found texts, item descriptions and loading tips is checked against its sources; nothing names real people or puts invented words in real politicians' mouths; deaths are treated with respect while the satire stays aimed at the system
 - [ ] Background stories review: every NPC backstory in `docs/CHARACTERS.md`, the six backgrounds and the companions are checked for consistency with the history, the timeline (the canonical present year) and each other, and for the Cuban voice
 - [ ] Asset audit, one row per content entry (creatures, items, NPCs, companions, POIs, vessels such as the car-boat and surfboard, set pieces, UI, ambient birds like the head-sitting seagull): the asset found or missing, its source, license, resolution (16×16 tiles and characters) and fit; packs with the wrong size or style are flagged
 - [ ] Decide character height: 16×16 (today's Kenney bases) or 16×24 (same 16×16 tiles, taller characters with room for faces and expressions). Compare side-by-side mockups at 1920×1080 (3×) and 1366×768 (2×), as in the 2026-11-05 fullscreen previews, then update `CLAUDE.md`, `docs/ASSETS.md` and the placeholder sprite to the choice
@@ -128,3 +131,4 @@ Each review is its own OpenSpec change; findings go back into the docs and the a
 - 2026-11-05: ECC common rules copied to `~/.claude/rules/ecc/`; Godot MCP built and registered (user scope, Godot 4.7.2 console binary); AWS MCP connected after `aws login --profile control-plane-test` (that profile is a full-access role). GitHub MCP still open: it needs the user's fine-grained token (README §5).
 - 2026-11-05: `survival-meters` change implemented test-first (GUT 302/302, smoke and a 300-frame run clean): six meters in `SurvivalMeters` with the numbers in `game/resources/survival_tuning.tres`, meters-owned downed state (90 s plus downed-timer bonuses, revive at 30), sunstroke slowing movement, HUD bars with the sunstroke blur in the movement playground, and the clock (30 s per in-game hour, dawn 06:00). Solo play (user-approved): a player with no other living player gets a last stand of 0 s plus their downed-timer bonuses instead of being downed (death at once on run 1), the Medalla's free revive stands its holder at 30 once per run, a lit fire keeps a lone player company at night, and one player gets through 3 sandbar days on 9 coconuts. Provisional until the playtest and the user's confirmation: thirst 6/min (×2 sun, ×3 swim, ×0.5 night), hunger 3/min, heat ±45/min with sunstroke 100→60, and the ten rules in the change's proposal.md. Not archived yet. The 3-day sandbar check assumes crafting-inventory rescales the still to 1 cup per 6 real minutes.
 - 2026-11-05: `coop-networking` change implemented test-first (GUT 478/478 after merging survival-meters, import, smoke and a 300-frame run clean; a host and a client run as two local processes): ENet behind `NetPeers`, `NetManager` host/join/solo, `CoopSession` (spawners, world state on join, 4-player cap, intent RPC rules, per-client rate limits, 90 s downed on disconnect, host-lost screen), host authority with client prediction, reconciliation and interpolation, quick chat as content, co-op dev playground. Solo is offline and first-class; approved: difficulty counts living, connected players (one player gets the base numbers) and solo pause freezes the simulation (co-op has no pause). Not archived: proposal.md lists the remaining provisional decisions and questions (split parties, reconnect identity, platforms, opening a solo run to joiners, quick chat in solo).
+- 2026-11-05: `ui-shell` change implemented test-first (GUT 553/553, import, smoke and a 300-frame run clean; a host and a client went title → lobby → run through the shell as two processes): whole-number window fit and F11/Alt+Enter fullscreen, crisp Pixelify Sans 16/32 and Press Start 2P 8, one project theme with tracked CC0 Kenney 9-slices, a title over a sunset sea, settings, join, lobby (names once per peer, players spawn when the host starts), run HUD (labels inside the meter bars with a critical pulse, day phase, teammates and name tags in co-op only, no quick chat in solo), a run summary and a "Filtro de píxeles" setting (Nítido, pixel-identical to before; Suave, a Scale2x shader on the world only, written from the published rules; captures in `docs/ui-shell/`). Ideas from Shattered Pixel Dungeon, Brogue CE and DCSS (no code). Not archived: proposal.md lists provisional decisions (fullscreen by default?, fonts, palette, default name, spectating when dead).

@@ -811,3 +811,14 @@ These claims did not survive verification (the refuters could not confirm them f
 - [project-skeleton-code-tests-ci] ContentCatalog.get_entry accepts path-like ids and returns content of the wrong type
 - [content-data-schema] The skeleton shipped without its data classes and the content validator checks nothing, yet ~280 content files are queued against it
 - [creature-behavior-coverage] Crossing-only creatures have no support in the crossing spec: the event list is closed, there is no water grid, and the scene is shorter than their timers
+
+## Lore research notes, 2026-11-05
+
+The balsero lore research (`docs/LORE.md`, change `balsero-lore`) found four existing problems. On 2026-11-05 the user chose to leave each one unchanged for now. They stay open here for the History and lore review (`TASKS.md` §11).
+
+- **Medalla de la Caridad.** A religious medal gives a free revive (`GAME_DESIGN.md` §14, `ITEMS.md`, survival-meters "Free revive"), which conflicts with the rule that religious objects carry no mechanics (the faith mechanic was cut, `GAME_DESIGN.md` §18). The new lore keeps every religious object (the estampita, the saints on the shelf) flavor only. Open: decide whether the Medalla keeps its mechanic or becomes a different kind of keepsake.
+- **Real names in the docs.** *Radio Martí* and *Radio Reloj* (`CHARACTERS.md` found texts), the *Cassette de Los Van Van* keepsake, the *Cohibas* joke (`ITEMS.md`) and *Messi* (Yunior). The new found texts use generic stations ("la emisora oficial", "una emisora de Miami") and add no other real names. Open: rename the existing ones. This is also review item 56.
+- **The freighter's slogan.** The painted *¡Patria y Vida!* (`ISLANDS.md` chain 8) is closely tied to a real song. Open: replace it with an invented slogan.
+- **No canonical present year.** The run is the present day (decided), but no document fixes the year, so ages and "since 2017" lines cannot be checked. Open: the background stories review picks the year.
+
+Open citations in `docs/LORE.md`: the September 1994 Virginian-Pilot link returns 410 Gone and needs an archived copy; the figure of 862 athletes who left a delegation comes from a translation site, so a direct *Trabajadores* or *Granma* link is still wanted (it is cited in the change's `design.md`, not used as a number in game text).

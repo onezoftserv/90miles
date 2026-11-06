@@ -68,6 +68,10 @@ jobs:
       - name: Import project
         run: |
           set -o pipefail
+          # On a fresh checkout the editor loads the project theme (gui/theme/custom) before
+          # its fonts and textures are imported, so the first import prints load errors once.
+          # Warm the import cache, then check a second import: broken resources still fail it.
+          timeout 300 "$GODOT" --headless --path game --import > import-warmup.log 2>&1 || true
           timeout 300 "$GODOT" --headless --path game --import 2>&1 | tee import.log
           if sed 's/\x1b\[[0-9;]*m//g' import.log | grep -E '^(ERROR|SCRIPT ERROR):'; then
             echo "::error::errors during import"; exit 1
