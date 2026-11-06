@@ -20,7 +20,7 @@ const SETTINGS_SCENE: PackedScene = preload("res://scenes/shell/settings_screen.
 const JOIN_SCENE: PackedScene = preload("res://scenes/shell/join_screen.tscn")
 const SUMMARY_SCENE: PackedScene = preload("res://scenes/shell/summary_screen.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
-const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/dev_island.tscn")
+const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const LOBBY_SCENE: PackedScene = preload("res://scenes/shell/lobby_screen.tscn")
 const HOST_LOST_SCENE: PackedScene = preload("res://scenes/ui/host_lost_screen.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
@@ -43,7 +43,7 @@ var flow: Flow = Flow.TITLE
 var screen: Control
 ## The run's session and island, or null outside a run.
 var session: CoopSession
-var island: DevIsland
+var island: SandbarIsland
 ## Tints the world view while a run is on, or null.
 var tint: DayNightTint
 ## Seconds, for the run's length. Tests replace it.
@@ -160,7 +160,7 @@ func show_lobby(is_host: bool) -> void:
 # The session exists before the connection completes, so the host's spawns and messages
 # always find it.
 func _join(address: String, join_port: int) -> void:
-	_build_run()
+	_build_run(true)
 	session.local_name = settings.player_name
 	if NetManager.join(address, join_port) != OK:
 		_on_join_failed()
@@ -221,20 +221,26 @@ func back_to_title() -> void:
 	show_title()
 
 
-func _build_run() -> void:
+# A client's session exists before its connection completes, so only the caller knows it will not
+# be the host: the host (or solo) places the island's pick-ups, a client receives them.
+func _build_run(as_client: bool = false) -> void:
 	_end_run()
-	island = ISLAND_SCENE.instantiate() as DevIsland
+	var solo: bool = not as_client and multiplayer.multiplayer_peer is OfflineMultiplayerPeer
+	island = ISLAND_SCENE.instantiate() as SandbarIsland
 	_world.add_child(island)
 	session = SESSION_SCENE.instantiate() as CoopSession
 	session.terrain = island.terrain
 	session.climate = island.climate
 	session.sky = WeatherManager.sky
-	session.spawn_points = DevIsland.SPAWN_POINTS.duplicate()
+	session.spawn_points = island.spawn_points(solo)
 	session.player_spawned.connect(_on_player_spawned)
 	session.local_identity = settings.identity
 	session.removal_recorded.connect(_on_removal_recorded)
 	session.host_lost.connect(_on_host_lost)
 	_world.add_child(session)
+	island.furnish(session)
+	if not as_client:
+		island.place_pickups(session)
 
 
 func _enter_run() -> void:
@@ -281,10 +287,10 @@ func _on_removal_recorded(_peer_id: int, _player_name: String) -> void:
 func _on_player_spawned(_peer_id: int, body: PlayerBody) -> void:
 	body.meters.died.connect(_check_run_over)
 	# The camera stays over the island, never past its edge.
-	body.camera.limit_left = DevIsland.BOUNDS.position.x
-	body.camera.limit_top = DevIsland.BOUNDS.position.y
-	body.camera.limit_right = DevIsland.BOUNDS.end.x
-	body.camera.limit_bottom = DevIsland.BOUNDS.end.y
+	body.camera.limit_left = island.bounds.position.x
+	body.camera.limit_top = island.bounds.position.y
+	body.camera.limit_right = island.bounds.end.x
+	body.camera.limit_bottom = island.bounds.end.y
 
 
 # The run ends when every player in it is dead. A dropped player keeps it open until they are

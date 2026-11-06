@@ -45,6 +45,7 @@ enum Phase {
 
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const SPEECH_BUBBLE_SCENE: PackedScene = preload("res://scenes/ui/speech_bubble.tscn")
+const WORLD_ITEM_SCENE: PackedScene = preload("res://scenes/items/world_item.tscn")
 const BUBBLE_NAME: StringName = &"SpeechBubble"
 const HOST_ID: int = 1
 ## Connected players at most (dropped players waiting to be removed do not count).
@@ -111,6 +112,8 @@ var _spawn_peer: Dictionary[int, int] = {}
 ## Names of the players removed after their 90 s, in removal order (on every peer).
 var _removed: Array[String] = []
 var _joined: int = 0
+## Host: numbers the pick-ups it spawns, so every peer gives a node the same name.
+var _pickup_serial: int = 0
 ## Host: seconds until the next periodic clock message.
 var _resync_left_s: float = 0.0
 var _started: bool = false
@@ -119,6 +122,8 @@ var _started: bool = false
 @onready var player_spawner: MultiplayerSpawner = $PlayerSpawner
 @onready var entities: Node2D = $Entities
 @onready var entity_spawner: MultiplayerSpawner = $EntitySpawner
+@onready var pickups: Node2D = $Pickups
+@onready var pickup_spawner: MultiplayerSpawner = $PickupSpawner
 
 
 func _init() -> void:
@@ -127,6 +132,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	player_spawner.spawn_function = _spawn_player
+	pickup_spawner.spawn_function = _spawn_pickup
 	if phrases == null:
 		phrases = QuickChatPhrases.from_catalog(GameState.content)
 
@@ -598,6 +604,15 @@ func _acting_body(peer: int, allow_last_stand: bool = false) -> PlayerBody:
 	return player
 
 
+## Host: lays `count` of `item_id` on the ground at `at` (session coordinates). The spawner shows
+## it to every client and removes it there when it is taken. Returns null on a client.
+func spawn_pickup(item_id: StringName, count: int, at: Vector2) -> WorldItem:
+	if not multiplayer.is_server():
+		return null
+	_pickup_serial += 1
+	return pickup_spawner.spawn({"name": "Pickup%d" % _pickup_serial, "item_id": item_id, "count": count, "position": at}) as WorldItem
+
+
 ## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.
 func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> SpeechBubble:
 	var old := speaker.get_node_or_null(NodePath(BUBBLE_NAME))
@@ -732,6 +747,8 @@ func _on_server_disconnected() -> void:
 		child.queue_free()
 	for child: Node in entities.get_children():
 		child.queue_free()
+	for child: Node in pickups.get_children():
+		child.queue_free()
 	host_lost.emit()
 
 
@@ -770,6 +787,23 @@ func _spawn_player(data: Variant) -> Node:
 	new_body.tree_exiting.connect(_on_body_exiting.bind(new_body))
 	new_body.ready.connect(_on_body_ready.bind(peer_id, new_body), CONNECT_ONE_SHOT)
 	return new_body
+
+
+# Runs on every peer, like _spawn_player; the payload is checked because a client receives it.
+func _spawn_pickup(data: Variant) -> Node:
+	var info: Dictionary = data if data is Dictionary else {}
+	var item_id: Variant = info.get("item_id")
+	var count: Variant = info.get("count")
+	var spot: Variant = info.get("position")
+	var item_name: Variant = info.get("name")
+	if not item_id is StringName or not count is int or count < 1 or not spot is Vector2 or not spot.is_finite() or not item_name is String:
+		return null
+	var item := WORLD_ITEM_SCENE.instantiate() as WorldItem
+	item.name = item_name
+	item.item_id = item_id
+	item.count = count
+	item.position = spot
+	return item
 
 
 func _on_body_ready(peer_id: int, spawned: PlayerBody) -> void:
