@@ -1,0 +1,108 @@
+extends GutTest
+## island-generation over ENet on localhost (NetHarness): a hosted run on the sandbar, a client's
+## pick-up and the refresh as the client sees them.
+
+const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
+const TIMEOUT_S: float = 5.0
+
+var net: NetHarness
+var islands: Array[SandbarIsland] = []
+
+
+func before_each() -> void:
+	net = NetHarness.new(self)
+	WeatherManager.stop()
+	WeatherManager.sky.start_at(0.0)
+
+
+func after_each() -> void:
+	net.teardown()
+	for island: SandbarIsland in islands:
+		island.free()
+	islands.clear()
+
+
+# The shell's order: the island, the session's terrain and spawn points, furnish, start, and on
+# the host the pick-ups. The harness calls this before start().
+func _setup(session: CoopSession) -> void:
+	var island := ISLAND_SCENE.instantiate() as SandbarIsland
+	add_child(island)
+	islands.append(island)
+	session.terrain = island.terrain
+	session.spawn_points = island.spawn_points(false)
+	session.ready.connect(func() -> void:
+		island.furnish(session)
+		if session.multiplayer.is_server():
+			island.place_pickups(session))
+
+
+func _pickups(session: CoopSession) -> Dictionary:
+	var counts: Dictionary = {}
+	for node: Node in session.pickups.get_children():
+		var item := node as WorldItem
+		if not item.is_queued_for_deletion():
+			counts[item.item_id] = counts.get(item.item_id, 0) + item.count
+	return counts
+
+
+func _find(session: CoopSession, item_id: StringName) -> WorldItem:
+	for node: Node in session.pickups.get_children():
+		if (node as WorldItem).item_id == item_id and not node.is_queued_for_deletion():
+			return node as WorldItem
+	return null
+
+
+func test_spawns_are_10_to_20_tiles_apart_and_the_client_sees_the_pickups() -> void:
+	var host := net.add_host(_setup)
+	var a := await net.join(_setup)
+	var b := await net.join(_setup)
+	assert_not_null(a)
+	assert_not_null(b)
+	if a == null or b == null:
+		return
+	assert_true(await net.settle())
+	var ids: Array[int] = host.peer_ids()
+	for i: int in ids.size():
+		for j: int in range(i + 1, ids.size()):
+			var tiles: float = host.body(ids[i]).position.distance_to(host.body(ids[j]).position) / 16.0
+			assert_between(tiles, 10.0, 20.0)
+	var same := func() -> bool: return _pickups(a) == _pickups(host) and _pickups(host).size() > 0
+	assert_true(await wait_until(same, TIMEOUT_S), "the client sees the host's pick-ups")
+	assert_eq(a.pickups.get_child_count(), 19)
+
+
+func test_a_clients_pickup_is_applied_by_the_host() -> void:
+	var host := net.add_host(_setup)
+	var a := await net.join(_setup)
+	assert_not_null(a)
+	if a == null:
+		return
+	assert_true(await net.settle())
+	var a_id: int = net.peer_id(a)
+	var tube := _find(host, &"inner_tube")
+	host.body(a_id).global_position = tube.global_position
+	tube.interactable.interacted.emit(host.body(a_id))
+	var taken := func() -> bool:
+		return host.body(a_id).inventory.count_id(&"inner_tube") == 1 and _pickups(a).get(&"inner_tube", 0) == 1
+	assert_true(await wait_until(taken, TIMEOUT_S), "the host gave it and the tube vanished on the client")
+	var synced := func() -> bool: return net.own_body(a).inventory.count_id(&"inner_tube") == 1
+	assert_true(await wait_until(synced, TIMEOUT_S), "the client's inventory shows it")
+
+
+func test_the_client_sees_the_refresh_and_never_places_one() -> void:
+	var host := net.add_host(_setup)
+	var a := await net.join(_setup)
+	assert_not_null(a)
+	if a == null:
+		return
+	assert_true(await net.settle())
+	var jug := _find(host, &"plastic_jug")
+	jug.interactable.interacted.emit(host.body(1))
+	var gone := func() -> bool: return _pickups(a).get(&"plastic_jug", 0) == 2
+	assert_true(await wait_until(gone, TIMEOUT_S))
+	WeatherManager.sky.weather.start_weather(&"squall")
+	WeatherManager.sky.weather.start_weather(&"calm")
+	var back := func() -> bool: return _pickups(a).get(&"plastic_jug", 0) == 3
+	assert_true(await wait_until(back, TIMEOUT_S), "the client sees the jug again")
+	await wait_seconds(0.3)
+	assert_eq(_pickups(a), _pickups(host), "no extras from the client's own weather signal")
