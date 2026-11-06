@@ -64,6 +64,9 @@ func _init() -> void:
 
 func _ready() -> void:
 	settings = GameSettings.load_from(settings_path)
+	# The player id is kept from the first launch on (coop-reconnect).
+	if not settings.identity_stored:
+		settings.save()
 	NetManager.join_failed.connect(_on_join_failed)
 	apply_display()
 	apply_pixel_filter()

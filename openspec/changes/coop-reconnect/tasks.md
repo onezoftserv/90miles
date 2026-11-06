@@ -1,8 +1,8 @@
 ## 1. Identity
 
-- [ ] 1.1 Add `PlayerIdentity` (make, check form, hash) and `[player] id` / `secret` in `GameSettings`, saved by the shell when new, and verify GUT tests for "the id is kept", "a malformed id is replaced" and "load_from writes nothing"
-- [ ] 1.2 Add `IdentityRegistry` (new, reclaim, id in use, wrong secret, anonymous) and verify its offline GUT tests
-- [ ] 1.3 Verify the import, smoke run and GUT pass
+- [x] 1.1 Add `PlayerIdentity` (make, check form, hash) and `[player] id` / `secret` in `GameSettings`, saved by the shell when new, and verify GUT tests for "the id is kept", "a malformed id is replaced" and "load_from writes nothing"
+- [x] 1.2 Add `IdentityRegistry` (new, reclaim, id in use, wrong secret, anonymous) and verify its offline GUT tests
+- [x] 1.3 Verify the import, smoke run and GUT pass
 
 ## 2. Join request and rejoin
 

@@ -25,6 +25,10 @@ var ui_scale: int = 0:
 	set(value):
 		ui_scale = clampi(value, 0, MAX_SCALE)
 var pixel_filter: PixelFilter.Mode = PixelFilter.Mode.SHARP
+## This install's player id and secret (coop-reconnect). Made fresh until the file has one.
+var identity: PlayerIdentity = PlayerIdentity.create()
+## Whether `identity` came from the file or has been saved (false: made now, not kept yet).
+var identity_stored: bool = false
 
 
 func _init(file_path: String = DEFAULT_PATH) -> void:
@@ -39,6 +43,13 @@ static func load_from(file_path: String = DEFAULT_PATH) -> GameSettings:
 	var name_value: Variant = config.get_value("player", "name", DEFAULT_NAME)
 	if name_value is String:
 		settings.player_name = name_value
+	var id_value: Variant = config.get_value("player", "id", "")
+	var secret_value: Variant = config.get_value("player", "secret", "")
+	if id_value is String and secret_value is String:
+		var stored := PlayerIdentity.from(id_value, secret_value)
+		if stored.is_valid():
+			settings.identity = stored
+			settings.identity_stored = true
 	var fullscreen_value: Variant = config.get_value("display", "fullscreen", false)
 	if fullscreen_value is bool:
 		settings.fullscreen = fullscreen_value
@@ -54,10 +65,15 @@ static func load_from(file_path: String = DEFAULT_PATH) -> GameSettings:
 func save() -> Error:
 	var config := ConfigFile.new()
 	config.set_value("player", "name", player_name)
+	config.set_value("player", "id", identity.id)
+	config.set_value("player", "secret", identity.secret)
 	config.set_value("display", "fullscreen", fullscreen)
 	config.set_value("display", "ui_scale", ui_scale)
 	config.set_value("display", "pixel_filter", pixel_filter)
-	return config.save(path)
+	var saved := config.save(path)
+	if saved == OK:
+		identity_stored = true
+	return saved
 
 
 ## A name with control, text-direction and invisible characters removed, trimmed and cut to
