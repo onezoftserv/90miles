@@ -32,6 +32,8 @@ signal roster_updated
 signal lobby_received(in_run: bool)
 ## The host started the run (on every peer).
 signal run_started
+## A rejoined player took back its body: it now belongs to `new_peer` (on every peer).
+signal player_rebound(old_peer: int, new_peer: int, body: PlayerBody)
 
 ## LOBBY gathers names and spawns nobody; RUN spawns every player (and every joiner at once).
 enum Phase {
@@ -47,6 +49,8 @@ const HOST_ID: int = 1
 const MAX_PLAYERS: int = NetPeers.MAX_PLAYERS
 ## A dropped client's player stays downed this long before it is removed.
 const DISCONNECT_DOWNED_S: float = 90.0
+## A connected peer that sends no join request within this time is disconnected.
+const JOIN_TIMEOUT_S: float = 10.0
 ## An intent may claim at most this much time (one slow frame).
 const MAX_INTENT_DELTA_S: float = 0.1
 ## Squared length an intent's direction may reach (1 plus float slack).
@@ -80,6 +84,9 @@ var roster: Dictionary[int, String] = {}
 ## The name this peer plays under (the host's goes into the roster at start(); a client sends
 ## it in its join request). Set by the shell from the settings.
 var local_name: String = GameSettings.DEFAULT_NAME
+## This install's player id and secret, sent with the join request (coop-reconnect); null joins
+## without one, as a new player every time. Set by the shell from the settings.
+var local_identity: PlayerIdentity
 var phase: Phase = Phase.RUN
 ## Host time in seconds for the rate limits. Tests replace it.
 var clock: Callable
@@ -93,6 +100,12 @@ var _bodies: Dictionary[int, PlayerBody] = {}
 var _limits: Dictionary[int, PeerLimits] = {}
 ## Host: seconds left before each dropped client's player is removed.
 var _dropped: Dictionary[int, float] = {}
+## Host: seconds left for each connected peer to send its join request.
+var _awaiting: Dictionary[int, float] = {}
+## Host: which player id belongs to which peer this run.
+var _identities: IdentityRegistry = IdentityRegistry.new()
+## The peer each body first spawned under, by its current peer (they differ after a rebind).
+var _spawn_peer: Dictionary[int, int] = {}
 var _joined: int = 0
 ## Host: seconds until the next periodic clock message.
 var _resync_left_s: float = 0.0
@@ -123,6 +136,8 @@ func start(lobby: bool = false) -> void:
 	if multiplayer.is_server():
 		phase = Phase.LOBBY if lobby else Phase.RUN
 		roster[multiplayer.get_unique_id()] = GameSettings.clean_name(local_name)
+		if local_identity != null:
+			_identities.claim(local_identity.id, local_identity.secret, multiplayer.get_unique_id(), _is_dropped_peer)
 		multiplayer.peer_connected.connect(_on_peer_connected)
 		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 		if phase == Phase.RUN:
@@ -148,44 +163,110 @@ func begin_run() -> bool:
 		return false
 	phase = Phase.RUN
 	_add_player(multiplayer.get_unique_id())
-	var waiting: Array[int] = []
+	# Identified peers spawn in roster order; one still unidentified spawns when it asks.
 	for peer_id: int in roster:
 		if multiplayer.get_peers().has(peer_id):
-			waiting.append(peer_id)
-	for peer_id: int in multiplayer.get_peers():
-		if not waiting.has(peer_id):
-			waiting.append(peer_id)
-	for peer_id: int in waiting:
-		_on_peer_connected(peer_id)
+			_admit(peer_id)
 	run_begun.rpc()
 	run_started.emit()
 	return true
 
 
-## Client: sends this peer's name to the host (once; the host ignores repeats).
+## Client: sends this peer's name and identity to the host (once; the host ignores repeats).
 func _request_join() -> void:
-	request_join.rpc_id(HOST_ID, local_name)
+	var player_id: String = local_identity.id if local_identity != null else ""
+	var player_secret: String = local_identity.secret if local_identity != null else ""
+	request_join.rpc_id(HOST_ID, local_name, player_id, player_secret)
 
 
+# Host: a joiner's name and identity, once per peer. In the run it spawns the joiner, or hands it
+# back its dropped body (coop-reconnect); in the lobby it only joins the roster.
 @rpc("any_peer", "call_remote", "reliable")
-func request_join(player_name: String) -> void:
+func request_join(player_name: String, player_id: String, player_secret: String) -> void:
 	if not multiplayer.is_server():
 		return
 	var sender := multiplayer.get_remote_sender_id()
 	if sender == HOST_ID or roster.has(sender) or not multiplayer.get_peers().has(sender):
 		return
-	roster[sender] = GameSettings.clean_name(player_name, default_name(roster))
-	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN)
+	_awaiting.erase(sender)
+	var outcome := _identities.claim(player_id, player_secret, sender, _is_dropped_peer)
+	var reclaimed := outcome.kind == IdentityRegistry.Claim.RECLAIM and _started and phase == Phase.RUN \
+		and _reclaim(outcome.old_peer, sender)
+	if not reclaimed:
+		roster[sender] = GameSettings.clean_name(player_name, default_name(roster))
+		if _started and phase == Phase.RUN:
+			_admit(sender)
+	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN, owner_map())
 	_share_roster(sender)
 
 
 @rpc("authority", "call_remote", "reliable")
-func receive_lobby(roster_data: Dictionary, in_run: bool) -> void:
+func receive_lobby(roster_data: Dictionary, in_run: bool, owners: Dictionary) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID:
 		return
+	# Bodies re-bound before this peer joined still carry their first peer in the spawn data.
+	for spawned_as: Variant in owners:
+		var current: Variant = owners[spawned_as]
+		if spawned_as is int and current is int:
+			_rebind_body(spawned_as, current)
 	roster = clean_roster(roster_data)
 	phase = Phase.RUN if in_run else Phase.LOBBY
 	lobby_received.emit(in_run)
+
+
+@rpc("authority", "call_remote", "reliable")
+func rebind_player(old_peer: int, new_peer: int) -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID:
+		return
+	_rebind_body(old_peer, new_peer)
+
+
+## Host: spawn peer → current peer for every body that changed hands, for a joiner.
+func owner_map() -> Dictionary:
+	var owners: Dictionary = {}
+	for peer_id: int in _spawn_peer:
+		if _spawn_peer[peer_id] != peer_id:
+			owners[_spawn_peer[peer_id]] = peer_id
+	return owners
+
+
+# Host: hands `old_peer`'s dropped body to `new_peer` everywhere. False if it is gone.
+func _reclaim(old_peer: int, new_peer: int) -> bool:
+	var reclaimed := body(old_peer)
+	if reclaimed == null or not _dropped.has(old_peer):
+		return false
+	_dropped.erase(old_peer)
+	_limits.erase(old_peer)
+	_limits[new_peer] = PeerLimits.new()
+	_rebind_body(old_peer, new_peer)
+	# Down only because the client dropped: it stands again. Meters that downed it keep it down.
+	var meters := reclaimed.meters
+	if not (meters.downed or meters.last_stand or meters.dead):
+		reclaimed.set_downed(false)
+	rebind_player.rpc(old_peer, new_peer)
+	receive_world_state.rpc_id(new_peer, world_state)
+	return true
+
+
+# Every peer: the body of `old_peer` now belongs to `new_peer` (the name goes with it).
+func _rebind_body(old_peer: int, new_peer: int) -> void:
+	var moved := body(old_peer)
+	if moved == null or old_peer == new_peer:
+		return
+	_bodies.erase(old_peer)
+	_bodies[new_peer] = moved
+	_spawn_peer[new_peer] = _spawn_peer.get(old_peer, old_peer)
+	_spawn_peer.erase(old_peer)
+	if roster.has(old_peer):
+		roster[new_peer] = roster[old_peer]
+		roster.erase(old_peer)
+	var role := PlayerNet.role_for(multiplayer.is_server(), multiplayer.get_unique_id(), new_peer)
+	moved.rebind(new_peer, role, send_intent)
+	player_rebound.emit(old_peer, new_peer, moved)
+
+
+func _is_dropped_peer(peer_id: int) -> bool:
+	return _dropped.has(peer_id)
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -232,9 +313,18 @@ func _share_roster(except: int = 0) -> void:
 	roster_updated.emit()
 
 
-# Host: counts down the dropped players and removes each one when its time is up.
+# Host: counts down the dropped players and removes each one when its time is up, and
+# disconnects peers that never sent their join request.
 func _physics_process(delta: float) -> void:
 	_resync_sky(delta)
+	for peer_id: int in _awaiting.keys():
+		var waiting: float = _awaiting[peer_id] - delta
+		if waiting > 0.0:
+			_awaiting[peer_id] = waiting
+		else:
+			_awaiting.erase(peer_id)
+			if multiplayer.get_peers().has(peer_id):
+				multiplayer.multiplayer_peer.disconnect_peer(peer_id)
 	for peer_id: int in _dropped.keys():
 		var left: float = _dropped[peer_id] - delta
 		if left > 0.0:
@@ -529,10 +619,17 @@ static func checked_world_state(state: Dictionary) -> Dictionary:
 	return clean
 
 
+# The join request brings the name and identity; a peer that asked before start() is admitted
+# now (in the run), any other one has JOIN_TIMEOUT_S to ask.
 func _on_peer_connected(peer_id: int) -> void:
-	# In the lobby the join request brings the name; begin_run() spawns.
-	if phase == Phase.LOBBY:
-		return
+	if not roster.has(peer_id):
+		_awaiting[peer_id] = JOIN_TIMEOUT_S
+	elif phase == Phase.RUN:
+		_admit(peer_id)
+
+
+# Host, run: spawns a joiner's player and sends it the world state.
+func _admit(peer_id: int) -> void:
 	_add_player(peer_id)
 	if body(peer_id) != null:
 		var state: Dictionary = world_state.duplicate()
@@ -541,12 +638,14 @@ func _on_peer_connected(peer_id: int) -> void:
 		receive_world_state.rpc_id(peer_id, state)
 
 
-# The player stays in the world, downed (draggable), until the countdown removes it. A client
-# that reconnects gets a new peer id and so a new player.
+# The player stays in the world, downed (draggable), until the countdown removes it. The same
+# player joining again within the countdown takes it back (coop-reconnect).
 func _on_peer_disconnected(peer_id: int) -> void:
+	_awaiting.erase(peer_id)
 	if phase == Phase.LOBBY:
 		# Nobody is in the world yet: the name just leaves the roster.
 		_limits.erase(peer_id)
+		_identities.release_peer(peer_id)
 		if roster.erase(peer_id):
 			_share_roster()
 		return
@@ -565,6 +664,8 @@ func _remove_player(peer_id: int) -> void:
 		return
 	var last_position: Vector2 = leaving.position
 	_bodies.erase(peer_id)
+	_spawn_peer.erase(peer_id)
+	_identities.release_peer(peer_id)
 	player_removed.emit(peer_id, last_position)
 	# Freed on the host; the spawner removes it on every client.
 	leaving.queue_free()
@@ -573,6 +674,7 @@ func _remove_player(peer_id: int) -> void:
 # Client: the session is over. Players and entities go; the level shows the host-lost screen.
 func _on_server_disconnected() -> void:
 	_bodies.clear()
+	_spawn_peer.clear()
 	for child: Node in players.get_children():
 		child.queue_free()
 	for child: Node in entities.get_children():
@@ -611,7 +713,8 @@ func _spawn_player(data: Variant) -> Node:
 	var role := PlayerNet.role_for(multiplayer.is_server(), multiplayer.get_unique_id(), peer_id)
 	(new_body.get_node(^"PlayerNet") as PlayerNet).attach(peer_id, role, send_intent)
 	_bodies[peer_id] = new_body
-	new_body.tree_exiting.connect(_on_body_exiting.bind(peer_id, new_body))
+	_spawn_peer[peer_id] = peer_id
+	new_body.tree_exiting.connect(_on_body_exiting.bind(new_body))
 	new_body.ready.connect(_on_body_ready.bind(peer_id, new_body), CONNECT_ONE_SHOT)
 	return new_body
 
@@ -620,9 +723,12 @@ func _on_body_ready(peer_id: int, spawned: PlayerBody) -> void:
 	player_spawned.emit(peer_id, spawned)
 
 
-func _on_body_exiting(peer_id: int, leaving: PlayerBody) -> void:
-	if _bodies.get(peer_id) == leaving:
-		_bodies.erase(peer_id)
+# By the body, not its peer: a re-bound body is no longer under the peer it spawned for.
+func _on_body_exiting(leaving: PlayerBody) -> void:
+	for peer_id: int in _bodies.keys():
+		if _bodies[peer_id] == leaving:
+			_bodies.erase(peer_id)
+			_spawn_peer.erase(peer_id)
 
 
 # Host: the periodic clock message between changes.

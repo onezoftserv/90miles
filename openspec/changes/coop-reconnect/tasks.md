@@ -6,9 +6,9 @@
 
 ## 2. Join request and rejoin
 
-- [ ] 2.1 Carry the identity in `request_join`, spawn on the request in the run phase, keep a request that arrives before `start()`, add the 10 s join timeout, and verify GUT tests for "a peer that never asks to join" and "solo spawns at once" (1 player, offline)
-- [ ] 2.2 Add `PlayerNet.rebind()`, `PlayerBody.rebind()` / `refresh_local()`, the `rebind_player` RPC, the owner map in `receive_lobby` and `player_rebound`, and verify GUT tests for "rejoin within 90 s", "someone else's id", "an id already in use" and "a late joiner sees the reclaimed body"
-- [ ] 2.3 Verify the existing co-op suites (net, disconnect, lobby, meters, quick chat, rate limits, player net) still pass, and that the import, smoke run and GUT pass
+- [x] 2.1 Carry the identity in `request_join`, spawn on the request in the run phase, keep a request that arrives before `start()`, add the 10 s join timeout, and verify GUT tests for "a peer that never asks to join" and "solo spawns at once" (1 player, offline)
+- [x] 2.2 Add `PlayerNet.rebind()`, `PlayerBody.rebind()` / `refresh_local()`, the `rebind_player` RPC, the owner map in `receive_lobby` and `player_rebound`, and verify GUT tests for "rejoin within 90 s", "someone else's id", "an id already in use" and "a late joiner sees the reclaimed body"
+- [x] 2.3 Verify the existing co-op suites (net, disconnect, lobby, meters, quick chat, rate limits, player net) still pass, and that the import, smoke run and GUT pass
 
 ## 3. Removed players and the shell
 

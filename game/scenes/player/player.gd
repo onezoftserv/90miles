@@ -46,9 +46,7 @@ var _interact_was_held: bool = false
 
 func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
-	var is_local: bool = local_player and is_multiplayer_authority()
-	camera.enabled = is_local
-	player_input.enabled = is_local
+	refresh_local()
 	add_to_group(GROUP)
 	meters.downed_changed.connect(set_downed)
 	meters.last_stand_changed.connect(_on_last_stand_changed)
@@ -94,6 +92,19 @@ func advance(delta: float, with_interaction: bool = true) -> void:
 	stealth_state = result.stealth
 	velocity = result.velocity * TILE_SIZE
 	_move(velocity * delta)
+
+
+## The camera and keyboard follow this body only on its own player's peer.
+func refresh_local() -> void:
+	var is_local: bool = local_player and is_multiplayer_authority()
+	camera.enabled = is_local
+	player_input.enabled = is_local
+
+
+## coop-reconnect: this body now belongs to `peer_id`, a rejoined player's new peer.
+func rebind(peer_id: int, net_role: PlayerNet.Role, send: Callable) -> void:
+	net.rebind(peer_id, net_role, send)
+	refresh_local()
 
 
 func set_downed(value: bool) -> void:
