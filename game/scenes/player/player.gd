@@ -8,7 +8,7 @@ extends CharacterBody2D
 ## Every player body, for teammate checks.
 const GROUP: StringName = &"players"
 ## Lit fires (Node2D) join this group; one within the company radius keeps a player company at
-## night. crafting-inventory's fire joins it while lit.
+## night. crafting-inventory's Fire joins it while lit.
 const FIRE_GROUP: StringName = &"lit_fires"
 const TILE_SIZE: float = 16.0
 ## Leeway beyond the 1 tile reach before a timed press is dropped.
@@ -40,6 +40,8 @@ var _interact_was_held: bool = false
 @onready var player_input: PlayerInput = $PlayerInput
 @onready var drag_handle: DragHandle = $DragHandle
 @onready var net: PlayerNet = $PlayerNet
+@onready var inventory: Inventory = $Inventory
+@onready var crafter: Crafter = $Crafter
 
 
 func _ready() -> void:
@@ -69,6 +71,7 @@ func _tick_meters(delta: float) -> void:
 	# Solo: nobody else alive in the run (a one-player run or the last one alive), so health 0
 	# kills instead of waiting for a revive nobody can give.
 	meters.solo = not _has_living_teammate(INF)
+	crafter.advance(delta)
 	meters.tick(delta, _meter_context())
 
 
@@ -119,6 +122,7 @@ func _meter_context() -> MeterContext:
 	var radius_px: float = meters.tuning.company_radius_tiles * TILE_SIZE
 	context.teammate_nearby = _has_living_teammate(radius_px)
 	context.near_fire = _near_lit_fire(radius_px)
+	context.crafting = crafter.is_crafting()
 	return context
 
 

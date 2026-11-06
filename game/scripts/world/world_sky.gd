@@ -116,6 +116,7 @@ func _write_climate() -> void:
 	climate.phase = clock.phase()
 	climate.midday = clock.is_midday()
 	climate.heat_factor = weather.current.heat_gain_mult
+	climate.weather_id = weather.current.id
 
 
 func _on_phase_changed(phase: DataEnums.DayPhase) -> void:

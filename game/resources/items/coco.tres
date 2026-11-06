@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_vul6m"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_h7xs2"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_0vw7p"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="4_3jiyr"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="5_e0jqk"]
+[ext_resource type="Script" path="res://scripts/data/data_part.gd" id="6_f78aa"]
+
+[sub_resource type="Resource" id="Resource_joplc"]
+script = ExtResource("5_e0jqk")
+kind = 4
+scope = 0
+capability = 1
+consume = true
+
+[sub_resource type="Resource" id="Resource_ouipv"]
+script = ExtResource("1_vul6m")
+meter = 1
+amount = 15.0
+
+[sub_resource type="Resource" id="Resource_ebt2p"]
+script = ExtResource("1_vul6m")
+meter = 2
+amount = 5.0
+
+[sub_resource type="Resource" id="Resource_keklc"]
+script = ExtResource("4_3jiyr")
+action = 1
+time_s = 2.0
+conditions = Array[ExtResource("5_e0jqk")]([SubResource("Resource_joplc")])
+effects = Array[ExtResource("1_vul6m")]([SubResource("Resource_ouipv"), SubResource("Resource_ebt2p")])
+
+[sub_resource type="Resource" id="Resource_4qcne"]
+script = ExtResource("5_e0jqk")
+kind = 4
+scope = 0
+capability = 1
+consume = true
+
+[sub_resource type="Resource" id="Resource_mes4i"]
+script = ExtResource("1_vul6m")
+kind = 7
+target = 1
+
+[sub_resource type="Resource" id="Resource_sux34"]
+script = ExtResource("1_vul6m")
+target = 1
+meter = 1
+amount = 15.0
+
+[sub_resource type="Resource" id="Resource_t65xv"]
+script = ExtResource("1_vul6m")
+target = 1
+meter = 2
+amount = 5.0
+
+[sub_resource type="Resource" id="Resource_mrp28"]
+script = ExtResource("4_3jiyr")
+action = 1
+time_s = 2.0
+can_target_others = true
+conditions = Array[ExtResource("5_e0jqk")]([SubResource("Resource_4qcne")])
+effects = Array[ExtResource("1_vul6m")]([SubResource("Resource_mes4i"), SubResource("Resource_sux34"), SubResource("Resource_t65xv")])
+
+[resource]
+script = ExtResource("3_0vw7p")
+description_es = "Hay que abrirlo con un cuchillo. Agua y un poco de comida."
+description_en = "Needs a blade to open. Water and a little food."
+category = 0
+tags = Array[int]([1, 0])
+stack_size = 5
+weight = 0.5
+durability = 1
+uses = Array[ExtResource("4_3jiyr")]([SubResource("Resource_keklc"), SubResource("Resource_mrp28")])
+id = &"coco"
+name_es = "Coco"
+name_en = "Coconut"

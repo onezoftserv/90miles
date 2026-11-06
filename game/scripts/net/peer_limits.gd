@@ -16,6 +16,10 @@ const MIN_INTENT_COST_S: float = 1.0 / 60.0
 const QUICK_CHAT_BURST: float = 3.0
 const QUICK_CHAT_PER_S: float = 0.5
 
+## Item uses, crafts and deposits (CraftingTuning, crafting-inventory).
+var actions: RateLimiter = RateLimiter.new(
+	preload("res://resources/crafting_tuning.tres").action_burst,
+	preload("res://resources/crafting_tuning.tres").actions_per_s)
 var intents: RateLimiter = RateLimiter.new(INTENT_BURST, INTENTS_PER_S)
 var sim_time: RateLimiter = RateLimiter.new(SIM_TIME_SLACK_S, SIM_TIME_PER_S)
 var quick_chat: RateLimiter = RateLimiter.new(QUICK_CHAT_BURST, QUICK_CHAT_PER_S)
@@ -28,3 +32,7 @@ func allow_intent(delta: float, now_s: float) -> bool:
 
 func allow_quick_chat(now_s: float) -> bool:
 	return quick_chat.try_take(1.0, now_s)
+
+
+func allow_action(now_s: float) -> bool:
+	return actions.try_take(1.0, now_s)

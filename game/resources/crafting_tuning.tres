@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CraftingTuning" format=3]
+
+[ext_resource type="Script" path="res://scripts/components/crafting_tuning.gd" id="1_tuning"]
+
+[resource]
+script = ExtResource("1_tuning")
+weight_limit = 30.0
+slot_count = 12
+fire_burn_s = 360.0
+fire_put_out_hold_s = 2.0
+rain_fill_s = 30.0
+still_cup_every_game_hours = 12.0
+action_burst = 10.0
+actions_per_s = 10.0

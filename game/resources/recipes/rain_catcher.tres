@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1_8cbrf"]
+
+[resource]
+script = ExtResource("1_8cbrf")
+description_es = "Una lona y cuatro palos para cazar el aguacero."
+description_en = "A tarp and four sticks to catch the squall."
+inputs = Dictionary[StringName, int]({
+&"driftwood": 4,
+&"tarp": 1
+})
+station = 0
+build_site = true
+time_s = 20.0
+skill = 2
+output_kind = 1
+produces_item_id = &"rain_cup"
+produce_count = 1
+produce_on_weather_id = &"squall"
+id = &"rain_catcher"
+name_es = "Recogedor de lluvia"
+name_en = "Rain catcher"
