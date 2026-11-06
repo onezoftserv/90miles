@@ -1,5 +1,5 @@
 extends GutTest
-## content-data: the data model's 34 classes in game/scripts/data. The 11 folders are
+## content-data: the data model's 36 classes in game/scripts/data. The 12 folders are
 ## registered, every class builds on the right base, every reference field is a stored id
 ## field pointing at a registered folder (for every kind), every typed container survives a
 ## .tres round trip, and ContentValidator checks real content down to ids inside parts.
@@ -20,6 +20,7 @@ const FOLDER_CLASSES: Dictionary[StringName, StringName] = {
 	&"routes": &"RouteData",
 	&"backgrounds": &"BackgroundData",
 	&"weather": &"WeatherData",
+	&"islands": &"IslandLayoutData",
 }
 ## Content classes whose files live in items/ as ItemData subclasses.
 const ITEM_SUBCLASSES: Array[StringName] = [&"KeepsakeData", &"TextData"]
@@ -27,7 +28,7 @@ const ITEM_SUBCLASSES: Array[StringName] = [&"KeepsakeData", &"TextData"]
 const PART_CLASSES: Array[StringName] = [
 	&"ChainRouteEntryData", &"ChoiceData", &"CompanionData", &"CompanionStatusData",
 	&"ConditionData", &"CreatureCounterData", &"CreatureSpawnRuleData", &"DialogueLineData",
-	&"DialogueStateData", &"EffectData", &"EndingRoleData", &"GrabData", &"ItemUseData",
+	&"DialogueStateData", &"EffectData", &"EndingRoleData", &"GrabData", &"IslandGlyphData", &"ItemUseData",
 	&"ModifierData", &"NpcHookData", &"NpcSpawnRuleData", &"PatrolData", &"QuestData",
 	&"QuestStepData", &"SpawnEntryData", &"TextEntryData",
 ]
@@ -71,12 +72,12 @@ func after_all() -> void:
 # --- registration and class shape -------------------------------------------------------
 
 
-func test_default_types_register_exactly_the_eleven_folders() -> void:
+func test_default_types_register_exactly_the_twelve_folders() -> void:
 	var expected: Array[StringName] = []
 	expected.assign(FOLDER_CLASSES.keys())
 	expected.sort_custom(_by_text)
 	assert_eq(ContentCatalog.new(ROOT).types(), expected)
-	assert_eq(ContentCatalog.DEFAULT_TYPES.size(), 11)
+	assert_eq(ContentCatalog.DEFAULT_TYPES.size(), 12)
 	for folder: StringName in FOLDER_CLASSES:
 		var script: Script = ContentCatalog.DEFAULT_TYPES.get(folder)
 		var found: StringName = script.get_global_name() if script != null else &""
@@ -84,7 +85,7 @@ func test_default_types_register_exactly_the_eleven_folders() -> void:
 
 
 func test_data_folder_declares_exactly_the_model_classes() -> void:
-	assert_eq(_model_classes().size(), 34, "the data model has 34 classes")
+	assert_eq(_model_classes().size(), 36, "the data model has 36 classes")
 	var expected: Array[StringName] = _model_classes()
 	expected.append_array(SUPPORT_CLASSES)
 	expected.sort_custom(_by_text)
@@ -314,7 +315,7 @@ func test_keepsake_unlock_ids_are_checked_against_their_folder() -> void:
 # --- helpers ------------------------------------------------------------------------------
 
 
-## The 34 data model classes, sorted.
+## The 36 data model classes, sorted.
 func _model_classes() -> Array[StringName]:
 	var names: Array[StringName] = []
 	names.assign(FOLDER_CLASSES.values())
@@ -481,6 +482,8 @@ func _fill(obj: Resource, depth: int, problems: PackedStringArray, label: String
 				obj.set(field, Vector2i(3, 9) if current != Vector2i(3, 9) else Vector2i(4, 11))
 			TYPE_COLOR:
 				obj.set(field, Color(0.25, 0.5, 0.75) if current != Color(0.25, 0.5, 0.75) else Color(0.5, 0.25, 1.0))
+			TYPE_PACKED_STRING_ARRAY:
+				obj.set(field, PackedStringArray(["~-.", "río"]))
 			_:
 				problems.append("%s: no sample value for %s" % [where, type_string(prop_type)])
 	return filled

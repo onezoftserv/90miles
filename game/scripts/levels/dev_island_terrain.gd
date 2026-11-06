@@ -7,6 +7,7 @@ extends RefCounted
 const TILE: int = 16
 const COLORS: Dictionary[DataEnums.Terrain, Color] = {
 	DataEnums.Terrain.BEACH: Color("e8d9a0"),
+	DataEnums.Terrain.DUNE: Color("cdbf7e"),
 	DataEnums.Terrain.SCRUB: Color("6fa046"),
 	DataEnums.Terrain.MANGROVE: Color("2f6b3a"),
 	DataEnums.Terrain.SHALLOWS: Color("6ec6d9"),

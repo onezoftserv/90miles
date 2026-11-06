@@ -63,7 +63,7 @@ func test_new_content_validates() -> void:
 	assert_eq(layout.climb_effects[0].meter, DataEnums.Meter.ENERGY)
 	assert_eq(layout.climb_effects[0].amount, -5.0)
 	assert_eq(layout.climb_hold_s, 2.0)
-	assert_eq(ContentValidator.new(catalog).validate().size(), 0)
+	assert_eq(ContentValidator.validate(catalog).size(), 0)
 
 
 func test_new_items_names_and_tags() -> void:

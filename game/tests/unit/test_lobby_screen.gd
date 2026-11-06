@@ -72,7 +72,7 @@ func test_host_and_start() -> void:
 	assert_eq(shell.session.peer_ids().size(), 0, "nobody spawned yet")
 	lobby.start_button.pressed.emit()
 	assert_eq(shell.flow, GameShell.Flow.RUN)
-	assert_eq(shell.session.body(1).position, DevIsland.SPAWN_POINTS[0])
+	assert_eq(shell.session.body(1).position, shell.island.spawn_points(false)[0])
 	shell.back_to_title()
 	assert_eq(shell.flow, GameShell.Flow.TITLE)
 	assert_false(NetManager.is_online())

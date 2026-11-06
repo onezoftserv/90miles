@@ -121,7 +121,8 @@ func test_flotsam_refreshes_after_a_squall_ends() -> void:
 	await _take(body, &"inner_tube")
 	await _take(body, &"plastic_jug")
 	await _take(body, &"knife")
-	await _take(body, &"driftwood")
+	for i: int in 3:
+		await _take(body, &"driftwood")
 	WeatherManager.sky.weather.start_weather(&"squall")
 	assert_eq(_counts().get(&"inner_tube", 0), 0, "not back while the squall falls")
 	WeatherManager.sky.weather.start_weather(&"calm")
@@ -130,7 +131,7 @@ func test_flotsam_refreshes_after_a_squall_ends() -> void:
 	assert_eq(counts.get(&"plastic_jug", 0), 3, "untaken jugs are not doubled")
 	assert_eq(counts.get(&"rope", 0), 1)
 	assert_eq(counts.get(&"knife", 0), 0, "hut loot never comes back")
-	assert_eq(counts.get(&"driftwood", 0), 8, "the beach driftwood is back; the hut's piece is not")
+	assert_eq(counts.get(&"driftwood", 0), 6, "the beach driftwood is back; the hut's 2 pieces are not")
 
 
 func test_calm_to_calm_restores_nothing() -> void:

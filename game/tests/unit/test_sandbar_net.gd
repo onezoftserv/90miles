@@ -22,18 +22,21 @@ func after_each() -> void:
 	islands.clear()
 
 
-# The shell's order: the island, the session's terrain and spawn points, furnish, start, and on
-# the host the pick-ups. The harness calls this before start().
+# The shell's order: the island, the session's terrain and spawn points, furnish. The harness
+# calls this before start(); the host's pick-ups go down once its peer is open (host()).
 func _setup(session: CoopSession) -> void:
 	var island := ISLAND_SCENE.instantiate() as SandbarIsland
 	add_child(island)
 	islands.append(island)
 	session.terrain = island.terrain
 	session.spawn_points = island.spawn_points(false)
-	session.ready.connect(func() -> void:
-		island.furnish(session)
-		if session.multiplayer.is_server():
-			island.place_pickups(session))
+	island.furnish(session)
+
+
+func _host() -> CoopSession:
+	var host := net.add_host(_setup)
+	islands[0].place_pickups(host)
+	return host
 
 
 func _pickups(session: CoopSession) -> Dictionary:
@@ -53,7 +56,7 @@ func _find(session: CoopSession, item_id: StringName) -> WorldItem:
 
 
 func test_spawns_are_10_to_20_tiles_apart_and_the_client_sees_the_pickups() -> void:
-	var host := net.add_host(_setup)
+	var host := _host()
 	var a := await net.join(_setup)
 	var b := await net.join(_setup)
 	assert_not_null(a)
@@ -72,7 +75,7 @@ func test_spawns_are_10_to_20_tiles_apart_and_the_client_sees_the_pickups() -> v
 
 
 func test_a_clients_pickup_is_applied_by_the_host() -> void:
-	var host := net.add_host(_setup)
+	var host := _host()
 	var a := await net.join(_setup)
 	assert_not_null(a)
 	if a == null:
@@ -90,7 +93,7 @@ func test_a_clients_pickup_is_applied_by_the_host() -> void:
 
 
 func test_the_client_sees_the_refresh_and_never_places_one() -> void:
-	var host := net.add_host(_setup)
+	var host := _host()
 	var a := await net.join(_setup)
 	assert_not_null(a)
 	if a == null:
