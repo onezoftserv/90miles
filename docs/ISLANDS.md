@@ -28,9 +28,9 @@ Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile gr
 **POIs.**
 | POI | Resources | Notes |
 | --- | --- | --- |
-| Ruined hut | Tarp, 2 driftwood planks, a rusted knife, the first bottle note | Only shade; a workbench |
+| Ruined hut | Tarp, 2 driftwood planks, a rusted knife, 2 rope, the first bottle note | Only shade; a workbench. The 2 rope are never refreshed |
 | Palm grove (6 palms) | Coconuts, 8–12; climbing costs energy, throwing costs a coconut | Gulls nest in two of them |
-| Flotsam line | Inner tubes ×2, plastic jugs ×3, rope ×1, random shiny item | Refreshes after a squall |
+| Flotsam line | Inner tubes ×2, plastic jugs ×3, rope ×1, random shiny item | Refreshes after a squall. With the hut the island holds 3 rope, the raft's 3 |
 | Tide pools | Crabs at night, one man o' war, sea urchins (bleeding if stepped on) | Low tide only |
 | La señora's camp | The woman who never left; water for stories | 50% chance |
 | Raft for sale (*se vende balsa*) | A half-finished inner-tube raft with a hand-painted SE VENDE sign: 2 inner tubes, 3 driftwood, rope (50%), a note | 20% on either variant; the builder changed his mind. Salvage that speeds up the raft without replacing it |

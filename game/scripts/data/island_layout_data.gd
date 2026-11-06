@@ -30,6 +30,12 @@ extends ContentData
 ## One glyph per co-op spawn point, in join order (the host first).
 @export var coop_spawn_glyphs: String = ""
 @export var tide_pool_glyph: String = ""
+## The beach cell where the raft is built.
+@export var raft_site_glyph: String = ""
+
+@export_group("Routes")
+## The routes the island offers (RouteData ids in game/resources/routes/).
+@export var route_ids: Array[StringName] = []
 
 @export_group("Pick-ups")
 @export var pickups: Array[IslandGlyphData] = []

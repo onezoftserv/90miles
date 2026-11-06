@@ -43,6 +43,8 @@ enum DumpTrigger {
 @export var capacity_mode: CapacityMode = CapacityMode.ALL
 ## Seats when capacity_mode is FIXED.
 @export var capacity: int = 0
+## Riders must stand within this many tiles of the starter (provisional).
+@export var board_radius_tiles: int = 5
 
 @export_group("Starter")
 ## What starts it: BUILD_SITE (recipe), POI, NPC or ITEM_USE (item).
@@ -51,6 +53,8 @@ enum DumpTrigger {
 @export var starter_id: StringName = &""
 ## Known without discovery (raft).
 @export var starts_discovered: bool = false
+## The route becomes known the first time all of these hold for a player on the island.
+@export var discover_conditions: Array[ConditionData] = []
 ## Seen within this distance of the starter, in tiles (TBD).
 @export var reveal_radius_tiles: int = 8
 ## Effects applied when the route starts.

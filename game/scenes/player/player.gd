@@ -10,6 +10,8 @@ const GROUP: StringName = &"players"
 ## Lit fires (Node2D) join this group; one within the company radius keeps a player company at
 ## night. crafting-inventory's Fire joins it while lit.
 const FIRE_GROUP: StringName = &"lit_fires"
+## Finished structures that routes and conditions look up by their `recipe_id` meta.
+const STRUCTURE_GROUP: StringName = &"built_structures"
 const TILE_SIZE: float = 16.0
 ## Leeway beyond the 1 tile reach before a timed press is dropped.
 const REACH_SLACK_PX: float = 2.0
@@ -29,6 +31,8 @@ var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
 ## Downed players cannot act; a teammate can drag them (DragHandle). Follows the meters'
 ## downed state; a dead player stays down and cannot be dragged.
 var downed: bool = false
+## The player left the island by a route (escape-routes): hidden, not simulated, not ticked.
+var left_island: bool = false
 var interaction_hold: InteractionHold = InteractionHold.new()
 ## False once coop-networking drives the body: PlayerNet then steps it per intent (host),
 ## predicts it (owning client) or draws it from host states (other clients).
@@ -66,7 +70,7 @@ func _physics_process(delta: float) -> void:
 # Meters are host state: only the host ticks them, and clients show what it replicates. The
 # energy a client's movement spends in advance() is local prediction that PlayerNet reconciles.
 func _tick_meters(delta: float) -> void:
-	if not is_inside_tree() or not multiplayer.is_server():
+	if left_island or not is_inside_tree() or not multiplayer.is_server():
 		return
 	# Solo: nobody else alive in the run (a one-player run or the last one alive), so health 0
 	# kills instead of waiting for a revive nobody can give.
@@ -78,6 +82,8 @@ func _tick_meters(delta: float) -> void:
 ## One simulation step from the current intent. Interactions run only where the world is
 ## authoritative (the host, or offline); a client predicting its own player passes false.
 func advance(delta: float, with_interaction: bool = true) -> void:
+	if left_island:
+		return
 	var result: MovementStep
 	if downed:
 		if with_interaction:

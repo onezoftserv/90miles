@@ -42,11 +42,32 @@ static func _evaluate(condition: ConditionData, actor: PlayerBody) -> bool:
 			return _fire_within(actor, condition.radius_tiles * PlayerBody.TILE_SIZE)
 		K.WEATHER_IS:
 			return actor.climate.weather_id == condition.ref_id
+		K.METER_AT_LEAST:
+			return actor.meters.value(condition.meter) >= condition.amount
+		K.STATUS_ACTIVE:
+			return actor.meters.has_status(condition.status)
+		K.WEATHER_IS_CLEAR:
+			return _weather_is_clear(actor.climate.weather_id)
+		K.STRUCTURE_BUILT:
+			return _structure_built(actor, condition.ref_id)
 		K.PLAYERS_AT_LEAST:
 			return actor.get_tree().get_nodes_in_group(PlayerBody.GROUP).size() >= roundi(condition.amount)
 	if not _warned.has(condition.kind):
 		_warned[condition.kind] = true
 		push_warning("ConditionCheck: kind %s is not built yet, treated as false" % ConditionData.Kind.keys()[condition.kind])
+	return false
+
+
+static func _weather_is_clear(weather_id: StringName) -> bool:
+	var weather := GameState.content.get_entry(&"weather", weather_id) as WeatherData
+	return weather != null and weather.is_clear
+
+
+# A finished structure of recipe `recipe_id` stands on the island (it joined STRUCTURE_GROUP).
+static func _structure_built(actor: PlayerBody, recipe_id: StringName) -> bool:
+	for node: Node in actor.get_tree().get_nodes_in_group(PlayerBody.STRUCTURE_GROUP):
+		if node.get_meta(&"recipe_id", &"") == recipe_id:
+			return true
 	return false
 
 
