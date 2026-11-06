@@ -277,7 +277,7 @@ func _reclaim(old_peer: int, new_peer: int) -> bool:
 	if not (meters.downed or meters.last_stand or meters.dead):
 		reclaimed.set_downed(false)
 	rebind_player.rpc(old_peer, new_peer)
-	receive_world_state.rpc_id(new_peer, world_state)
+	receive_world_state.rpc_id(new_peer, join_state())
 	return true
 
 
@@ -676,10 +676,16 @@ func _on_peer_connected(peer_id: int) -> void:
 func _admit(peer_id: int) -> void:
 	_add_player(peer_id)
 	if body(peer_id) != null:
-		var state: Dictionary = world_state.duplicate()
-		if sky != null:
-			state.merge(sky.to_state(), true)
-		receive_world_state.rpc_id(peer_id, state)
+		receive_world_state.rpc_id(peer_id, join_state())
+
+
+## Host: what a joiner (or a rejoined player) receives: the world state with the clock and
+## weather merged in.
+func join_state() -> Dictionary:
+	var state: Dictionary = world_state.duplicate()
+	if sky != null:
+		state.merge(sky.to_state(), true)
+	return state
 
 
 # The player stays in the world, downed (draggable), until the countdown removes it. The same
