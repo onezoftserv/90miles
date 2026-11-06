@@ -19,7 +19,7 @@ Tick when the file exists and loads in Godot.
 - [ ] food (16): crab_raw · crab_cooked · fish_raw · fish_cooked · lobster · oysters · conch · bird_eggs · sea_grapes · coco_plum · mango · hutia_cooked · iguana_cooked · canned_food · toronja · bistec_toronja
 - [ ] plants (10): manzanillo · guao · jaguey · uva_caleta_unripe · hicaco · guanabana · noni · sabila · hongo_playa · tabaco_silvestre
 - [ ] tools (18): knife · machete · broken_bottle · spear · fishing_line · lure · net · snare · pliers · binoculars · compass · charts · mirror · lighter · flint_steel · shovel_oar · tabla_surf · tabla_vela
-- [ ] materials (17): driftwood · hardwood · inner_tube · plastic_jug · rope · line_spool · tarp · nails · resin · dry_grass · cloth · tire · tanque_55 · propela · bidon_combustible · azucar · camara_bici
+- [ ] materials (17; `inner_tube`, `plastic_jug`, `rope` exist): driftwood · hardwood · inner_tube · plastic_jug · rope · line_spool · tarp · nails · resin · dry_grass · cloth · tire · tanque_55 · propela · bidon_combustible · azucar · camara_bici
 - [ ] wearables (8): straw_hat · life_vest · wetsuit_top · fins · sandals · gloves · sunglasses · military_belt
 - [ ] oddities (13): flare · radio · car_battery · solar_charger · vhf · gps · expired_medicine · cigars · fire_pages · baseball · dominoes · bilge_pump · botija
 - [ ] keepsakes (9): foto_familia · cuchillo_abuelo · medalla_caridad · nudo_pescador · pedazo_mapa · cassette_van_van · pelota_firmada · llave_almendron · pluma_galleguito
@@ -68,6 +68,10 @@ The grapefruit steak is `toronja.cooks_into`, not a recipe.
 ## game/resources/weather/ (11)
 
 - [ ] calm · trade_wind · squall · fog · hurricane · waterspout · red_tide · king_tide · heat_dome · sargassum · lightning
+
+## game/resources/islands/ (1)
+
+- [x] sandbar (handmade first island, change `sandbar-island`; `IslandLayoutData`: text rows plus glyph legend)
 
 ## Balsero lore batches (change `balsero-lore`)
 
