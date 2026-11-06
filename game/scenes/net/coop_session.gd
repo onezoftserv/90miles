@@ -26,6 +26,18 @@ signal host_lost
 signal quick_chat_shown(peer_id: int, slot: int)
 ## The solo pause started or ended.
 signal paused_changed(paused: bool)
+## The roster changed (a name arrived or a lobby player left).
+signal roster_updated
+## Client: the host answered the join request; `in_run` says whether its run has started.
+signal lobby_received(in_run: bool)
+## The host started the run (on every peer).
+signal run_started
+
+## LOBBY gathers names and spawns nobody; RUN spawns every player (and every joiner at once).
+enum Phase {
+	LOBBY,
+	RUN,
+}
 
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const SPEECH_BUBBLE_SCENE: PackedScene = preload("res://scenes/ui/speech_bubble.tscn")
@@ -63,6 +75,12 @@ var climate: ClimateState = ClimateState.new()
 var sky: WorldSky = null
 ## Host: what each joiner receives (island seed, weather, time of day). Client: what arrived.
 var world_state: Dictionary = {}
+## Player names by peer id (ui-shell). The host sets its own; the lobby fills in the others.
+var roster: Dictionary[int, String] = {}
+## The name this peer plays under (the host's goes into the roster at start(); a client sends
+## it in its join request). Set by the shell from the settings.
+var local_name: String = GameSettings.DEFAULT_NAME
+var phase: Phase = Phase.RUN
 ## Host time in seconds for the rate limits. Tests replace it.
 var clock: Callable
 ## The quick-chat phrases (the quick-chat content file unless a level or test sets others).
@@ -98,15 +116,18 @@ func _ready() -> void:
 
 ## Starts the session on the branch's current peer. The host (or solo) spawns its own player
 ## and then one per joining peer; a client receives everything from the host.
-func start() -> void:
+func start(lobby: bool = false) -> void:
 	if _started:
 		return
 	_started = true
 	if multiplayer.is_server():
+		phase = Phase.LOBBY if lobby else Phase.RUN
+		roster[multiplayer.get_unique_id()] = GameSettings.clean_name(local_name)
 		multiplayer.peer_connected.connect(_on_peer_connected)
 		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
-		_add_player(multiplayer.get_unique_id())
-		# Peers that connected before start() get their player now.
+		if phase == Phase.RUN:
+			_add_player(multiplayer.get_unique_id())
+		# Peers that connected before start() are handled now.
 		for peer_id: int in multiplayer.get_peers():
 			_on_peer_connected(peer_id)
 		if sky != null:
@@ -115,6 +136,100 @@ func start() -> void:
 		multiplayer.server_disconnected.connect(_on_server_disconnected)
 		if sky != null:
 			sky.weather.rolls_enabled = false
+		multiplayer.connected_to_server.connect(_request_join)
+		if multiplayer.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
+			_request_join()
+
+
+## Host: ends the lobby and spawns every player, the host first, then in join order. Returns
+## false on a client or outside the lobby.
+func begin_run() -> bool:
+	if not multiplayer.is_server() or phase != Phase.LOBBY:
+		return false
+	phase = Phase.RUN
+	_add_player(multiplayer.get_unique_id())
+	var waiting: Array[int] = []
+	for peer_id: int in roster:
+		if multiplayer.get_peers().has(peer_id):
+			waiting.append(peer_id)
+	for peer_id: int in multiplayer.get_peers():
+		if not waiting.has(peer_id):
+			waiting.append(peer_id)
+	for peer_id: int in waiting:
+		_on_peer_connected(peer_id)
+	run_begun.rpc()
+	run_started.emit()
+	return true
+
+
+## Client: sends this peer's name to the host (once; the host ignores repeats).
+func _request_join() -> void:
+	request_join.rpc_id(HOST_ID, local_name)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_join(player_name: String) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender := multiplayer.get_remote_sender_id()
+	if sender == HOST_ID or roster.has(sender) or not multiplayer.get_peers().has(sender):
+		return
+	roster[sender] = GameSettings.clean_name(player_name, default_name(roster))
+	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN)
+	_share_roster(sender)
+
+
+@rpc("authority", "call_remote", "reliable")
+func receive_lobby(roster_data: Dictionary, in_run: bool) -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID:
+		return
+	roster = clean_roster(roster_data)
+	phase = Phase.RUN if in_run else Phase.LOBBY
+	lobby_received.emit(in_run)
+
+
+@rpc("authority", "call_remote", "reliable")
+func update_roster(roster_data: Dictionary) -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID:
+		return
+	roster = clean_roster(roster_data)
+	roster_updated.emit()
+
+
+@rpc("authority", "call_remote", "reliable")
+func run_begun() -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID:
+		return
+	phase = Phase.RUN
+	run_started.emit()
+
+
+## The name for a player who gave none: "Balsero N" with the first N from the lobby's size up
+## that nobody in the lobby already has.
+static func default_name(current: Dictionary[int, String]) -> String:
+	var number := current.size() + 1
+	while current.values().has("%s %d" % [GameSettings.DEFAULT_NAME, number]):
+		number += 1
+	return "%s %d" % [GameSettings.DEFAULT_NAME, number]
+
+
+## The int → cleaned-name pairs of a roster that arrived over the network; anything else is
+## dropped.
+static func clean_roster(data: Dictionary) -> Dictionary[int, String]:
+	var cleaned: Dictionary[int, String] = {}
+	for key: Variant in data:
+		var value: Variant = data[key]
+		if key is int and value is String:
+			cleaned[key] = GameSettings.clean_name(value)
+	return cleaned
+
+
+# Host: sends the roster to every client but `except` (which already has it) and tells itself.
+func _share_roster(except: int = 0) -> void:
+	for peer_id: int in multiplayer.get_peers():
+		if peer_id != except:
+			update_roster.rpc_id(peer_id, roster)
+	roster_updated.emit()
 
 
 # Host: counts down the dropped players and removes each one when its time is up.
@@ -127,6 +242,11 @@ func _physics_process(delta: float) -> void:
 		else:
 			_dropped.erase(peer_id)
 			_remove_player(peer_id)
+
+
+## Host: whether `peer_id` dropped and its player is waiting out the countdown.
+func is_dropped(peer_id: int) -> bool:
+	return _dropped.has(peer_id)
 
 
 ## Host: seconds before a dropped client's player is removed (0 if it is not dropped).
@@ -174,6 +294,11 @@ func set_paused(value: bool) -> bool:
 func body(peer_id: int) -> PlayerBody:
 	var found: Variant = _bodies.get(peer_id)
 	return found as PlayerBody if is_instance_valid(found) else null
+
+
+## The name `peer_id` plays under ("Balsero" until one is known).
+func player_name(peer_id: int) -> String:
+	return roster.get(peer_id, GameSettings.DEFAULT_NAME)
 
 
 ## Peer ids with a player in this session, sorted.
@@ -311,6 +436,9 @@ static func checked_world_state(state: Dictionary) -> Dictionary:
 
 
 func _on_peer_connected(peer_id: int) -> void:
+	# In the lobby the join request brings the name; begin_run() spawns.
+	if phase == Phase.LOBBY:
+		return
 	_add_player(peer_id)
 	if body(peer_id) != null:
 		var state: Dictionary = world_state.duplicate()
@@ -322,6 +450,12 @@ func _on_peer_connected(peer_id: int) -> void:
 # The player stays in the world, downed (draggable), until the countdown removes it. A client
 # that reconnects gets a new peer id and so a new player.
 func _on_peer_disconnected(peer_id: int) -> void:
+	if phase == Phase.LOBBY:
+		# Nobody is in the world yet: the name just leaves the roster.
+		_limits.erase(peer_id)
+		if roster.erase(peer_id):
+			_share_roster()
+		return
 	var dropped := body(peer_id)
 	if dropped == null or _dropped.has(peer_id):
 		return
