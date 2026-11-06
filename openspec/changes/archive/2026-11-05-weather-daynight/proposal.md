@@ -20,7 +20,7 @@ Everything runs on the offline peer with no second peer. The clock and weather r
 
 ## Provisional numbers
 
-All until the Milestone A playtest. Fixed by `GAME_DESIGN` §5 and so not provisional: phase lengths, the 30 s hour, 60 s warning, 120 s squall, calm heat ×2.
+Confirmed by the owner on 2026-11-06 as they stand, for tuning at the Milestone A playtest. Fixed by `GAME_DESIGN` §5 and so not provisional: phase lengths, the 30 s hour, 60 s warning, 120 s squall, calm heat ×2.
 
 | Number | Value | Where |
 | --- | --- | --- |
