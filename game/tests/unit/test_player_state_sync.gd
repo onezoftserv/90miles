@@ -7,6 +7,7 @@ const SHADOW_FIELDS: Array[String] = [
 	"PlayerNet:net_ack_seq",
 	"PlayerNet:net_downed",
 	"PlayerNet:net_energy",
+	"PlayerNet:net_inventory",
 	"PlayerNet:net_model_state",
 	"PlayerNet:net_movement",
 	"PlayerNet:net_position",

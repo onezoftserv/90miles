@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1_x12ua"]
+
+[resource]
+script = ExtResource("1_x12ua")
+description_es = "Tres maderas y yesca. Compañía de noche."
+description_en = "Three driftwood and tinder. Company at night."
+inputs = Dictionary[StringName, int]({
+&"driftwood": 3
+})
+input_tags = Dictionary[int, int]({
+13: 1
+})
+fast_tool = 19
+station = 0
+build_site = true
+time_s = 30.0
+output_kind = 1
+id = &"fire"
+name_es = "Fogata"
+name_en = "Fire"

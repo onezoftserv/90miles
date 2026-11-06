@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_x2ccf"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_mnl5a"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_nj3ul"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="4_eohqa"]
+
+[resource]
+script = ExtResource("3_nj3ul")
+tags = Array[int]([4, 10])
+stack_size = 10
+weight = 2.0
+id = &"driftwood"
+name_es = "Madera de la costa"
+name_en = "Driftwood"

@@ -5,9 +5,13 @@ const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const STEP: float = 0.25
 
+var arena: Node2D
+
 
 func before_each() -> void:
 	NetManager.start_solo()
+	arena = Node2D.new()
+	add_child_autofree(arena)
 
 
 func _body() -> PlayerBody:
@@ -47,7 +51,7 @@ func test_a_solo_player_completes_every_recipe_alone() -> void:
 		_give_everything(body, recipe)
 		var done: bool = false
 		if recipe.build_site:
-			var site := body.crafter.place_site(recipe, Vector2(8, 8), self)
+			var site := body.crafter.place_site(recipe, Vector2(8, 8), arena)
 			site.deposit(body)
 			done = body.crafter.start_work(site)
 		elif recipe.station == RecipeData.Station.WORKBENCH:
@@ -64,10 +68,11 @@ func test_solo_night_by_own_fire() -> void:
 	body.inventory.add(&"driftwood", 3)
 	body.inventory.add(&"dry_grass", 1)
 	var recipe := GameState.content.get_entry(&"recipes", &"fire") as RecipeData
-	var site := body.crafter.place_site(recipe, Vector2(48, 0), self)
+	var site := body.crafter.place_site(recipe, Vector2(8, 0), arena)
 	site.deposit(body)
 	body.crafter.start_work(site)
 	body.crafter.advance(30.0)
+	body.position = Vector2(-40, 0)
 	body.meters.morale = 50.0
 	for i: int in roundi(180.0 / STEP):
 		body._physics_process(STEP)

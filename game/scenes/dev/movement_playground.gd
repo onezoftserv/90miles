@@ -2,7 +2,8 @@ class_name MovementPlayground
 extends Node2D
 ## Manual-test island for player-movement and survival-meters: land, brush, shallow, deep and
 ## brackish water, a shaded hut, one interactable, two players under a fixed midday sun, and the
-## local player's meters HUD. Everything is drawn with colored rectangles, no textures.
+## local player's meters HUD, and the crafting-inventory supplies (a workbench, a coconut, a knife,
+## driftwood, dry grass and a tarp to pick up). Everything is drawn with colored rectangles, no textures.
 
 const TILE: int = 16
 const COLORS: Dictionary[DataEnums.Terrain, Color] = {
@@ -17,6 +18,12 @@ const COLORS: Dictionary[DataEnums.Terrain, Color] = {
 const SHADE_COLOR: Color = Color(0.24, 0.16, 0.08, 0.45)
 ## The hut, in cells: on the beach, north of the start.
 const HUT: Rect2i = Rect2i(0, 8, 4, 3)
+## Items lying on the beach for the crafting-inventory manual check: id, count, cell.
+const SUPPLIES: Array = [
+	[&"coco", 1, Vector2i(2, 2)], [&"knife", 1, Vector2i(3, 2)], [&"driftwood", 3, Vector2i(4, 2)],
+	[&"dry_grass", 2, Vector2i(5, 2)], [&"tarp", 1, Vector2i(6, 2)],
+]
+const WORKBENCH_CELL: Vector2i = Vector2i(8, 2)
 
 var terrain: GridTerrain = GridTerrain.new()
 ## Midday in the day phase, so heat rises outside the hut and sunstroke can be tried by hand.
@@ -27,6 +34,7 @@ var climate: ClimateState = ClimateState.new()
 
 func _ready() -> void:
 	_build_terrain()
+	_place_supplies()
 	climate.phase = DataEnums.DayPhase.DAY
 	climate.midday = true
 	var hud_bound: bool = false
@@ -40,6 +48,23 @@ func _ready() -> void:
 			hud.bind(body.meters)
 			hud_bound = true
 	queue_redraw()
+
+
+func _place_supplies() -> void:
+	var item_scene: PackedScene = preload("res://scenes/items/world_item.tscn")
+	for supply: Array in SUPPLIES:
+		var item := item_scene.instantiate() as WorldItem
+		item.item_id = supply[0]
+		item.count = supply[1]
+		item.position = _cell_center(supply[2])
+		add_child(item)
+	var bench := Workbench.new()
+	bench.position = _cell_center(WORKBENCH_CELL)
+	add_child(bench)
+
+
+func _cell_center(cell: Vector2i) -> Vector2:
+	return (Vector2(cell) + Vector2(0.5, 0.5)) * TILE
 
 
 func _build_terrain() -> void:

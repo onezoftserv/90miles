@@ -229,6 +229,94 @@ func show_quick_chat(peer_id: int, slot: int) -> void:
 	quick_chat_shown.emit(peer_id, slot)
 
 
+## This peer's player crafts `recipe_id` at the workbench at `station_path` (relative to this
+## session). The host checks and runs it; nothing changes here until the host's inventory syncs.
+func craft(recipe_id: StringName, station_path: NodePath) -> void:
+	request_craft.rpc_id(HOST_ID, recipe_id, station_path)
+
+
+## This peer's player uses the item in `slot` (use number `use_index`), on `target_peer`'s player
+## or, with 0, on themself.
+func use_item(slot: int, use_index: int, target_peer: int = 0) -> void:
+	request_use.rpc_id(HOST_ID, slot, use_index, target_peer)
+
+
+## This peer's player deposits what they carry into the build site at `site_path` and works it.
+func deposit(site_path: NodePath) -> void:
+	request_deposit.rpc_id(HOST_ID, site_path)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func request_craft(recipe_id: StringName, station_path: NodePath) -> void:
+	if multiplayer.is_server():
+		craft_for(_sender(), recipe_id, station_path)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func request_use(slot: int, use_index: int, target_peer: int) -> void:
+	if multiplayer.is_server():
+		use_for(_sender(), slot, use_index, target_peer)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func request_deposit(site_path: NodePath) -> void:
+	if multiplayer.is_server():
+		deposit_for(_sender(), site_path)
+
+
+## Host: starts `peer`'s craft. Only that peer's own inventory, reach and recipe count; the
+## request names no one else. Returns whether it started.
+func craft_for(peer: int, recipe_id: StringName, station_path: NodePath) -> bool:
+	var player := _acting_body(peer)
+	if player == null:
+		return false
+	return player.crafter.start(player.crafter.recipe_for(recipe_id), get_node_or_null(station_path) as Node2D)
+
+
+## Host: `peer` uses an item from their own slot on `target_peer`'s player (0: themself), who
+## must be within reach.
+func use_for(peer: int, slot: int, use_index: int, target_peer: int) -> bool:
+	var player := _acting_body(peer)
+	if player == null:
+		return false
+	var target: PlayerBody = null
+	if target_peer != 0 and target_peer != peer:
+		target = body(target_peer)
+		if target == null or player.global_position.distance_to(target.global_position) > InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX:
+			return false
+	return ItemUser.use(player, slot, use_index, target)
+
+
+## Host: `peer` feeds the build site at `site_path` from their own inventory and works it.
+func deposit_for(peer: int, site_path: NodePath) -> bool:
+	var player := _acting_body(peer)
+	var site := get_node_or_null(site_path) as BuildSite
+	if player == null or site == null or site.built:
+		return false
+	if player.global_position.distance_to(site.global_position) > InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX:
+		return false
+	site.deposit(player)
+	return player.crafter.start_work(site)
+
+
+# The sender of the RPC being handled; a call to ourselves (solo, or the host) has none.
+func _sender() -> int:
+	var sender: int = multiplayer.get_remote_sender_id()
+	return HOST_ID if sender == 0 else sender
+
+
+# `peer`'s living body if it may act now: the host is trusted, a client is rate limited.
+func _acting_body(peer: int) -> PlayerBody:
+	var player := body(peer)
+	if player == null or player.meters.dead:
+		return null
+	if peer != HOST_ID:
+		var limits: PeerLimits = _limits.get(peer)
+		if limits == null or not limits.allow_action(clock.call()):
+			return null
+	return player
+
+
 ## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.
 func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> SpeechBubble:
 	var old := speaker.get_node_or_null(NodePath(BUBBLE_NAME))

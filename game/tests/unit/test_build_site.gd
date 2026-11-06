@@ -5,10 +5,14 @@ extends GutTest
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 
 var recipe: RecipeData
+# Sites and the fires they become go here, so each test starts without leftovers.
+var arena: Node2D
 
 
 func before_each() -> void:
 	recipe = GameState.content.get_entry(&"recipes", &"fire") as RecipeData
+	arena = Node2D.new()
+	add_child_autofree(arena)
 
 
 func _body() -> PlayerBody:
@@ -25,7 +29,7 @@ func test_crafting_fire_consumes_3_driftwood_and_dry_grass() -> void:
 	var body := _body()
 	body.inventory.add(&"driftwood", 4)
 	body.inventory.add(&"dry_grass", 2)
-	var site := body.crafter.place_site(recipe, Vector2(8, 0), self)
+	var site := body.crafter.place_site(recipe, Vector2(8, 0), arena)
 	assert_not_null(site)
 	assert_eq(site.deposit(body), 4, "3 driftwood and 1 dry grass")
 	assert_true(site.inputs_complete())
@@ -45,7 +49,7 @@ func test_two_players_deposit_to_one_site() -> void:
 	a.inventory.add(&"driftwood", 2)
 	b.inventory.add(&"driftwood", 1)
 	b.inventory.add(&"dry_grass", 1)
-	var site := a.crafter.place_site(recipe, Vector2(8, 0), self)
+	var site := a.crafter.place_site(recipe, Vector2(8, 0), arena)
 	site.deposit(a)
 	assert_false(site.inputs_complete())
 	site.deposit(b)
@@ -57,7 +61,7 @@ func test_two_players_deposit_to_one_site() -> void:
 func test_work_does_not_advance_while_inputs_incomplete() -> void:
 	var body := _body()
 	body.inventory.add(&"driftwood", 1)
-	var site := body.crafter.place_site(recipe, Vector2(8, 0), self)
+	var site := body.crafter.place_site(recipe, Vector2(8, 0), arena)
 	site.deposit(body)
 	assert_false(site.work(0.5))
 	assert_eq(site.progress(), 0.0)
@@ -74,7 +78,7 @@ func test_lighter_capability_is_the_fast_tool() -> void:
 	body.inventory.add(&"lighter_fixture", 1)
 	body.inventory.add(&"driftwood", 3)
 	body.inventory.add(&"dry_grass", 1)
-	var site := body.crafter.place_site(recipe, Vector2(8, 0), self)
+	var site := body.crafter.place_site(recipe, Vector2(8, 0), arena)
 	site.deposit(body)
 	body.crafter.start_work(site)
 	body.crafter.advance(0.1)

@@ -38,6 +38,8 @@ var net_model_state: PackedFloat64Array = PackedFloat64Array([0.0, 0.0, 0.0])
 var net_movement: int = MovementStep.Move.WALK
 var net_stealth: int = MovementStep.Stealth.VISIBLE
 var net_downed: bool = false
+## The player's inventory as Inventory.to_net() writes it: the host's, shown on every peer.
+var net_inventory: Array = []
 
 ## The client's unacknowledged intents (PREDICTED).
 var buffer: PredictionBuffer = PredictionBuffer.new()
@@ -105,6 +107,7 @@ func enqueue(seq: int, intent: MoveIntent, delta: float) -> bool:
 func apply_host_state() -> void:
 	if not net_position.is_finite() or not is_finite(net_energy):
 		return
+	_body().inventory.from_net(net_inventory)
 	match role:
 		Role.PREDICTED:
 			if net_downed:
@@ -170,6 +173,9 @@ func _write_shadow() -> void:
 	net_movement = body.movement_state
 	net_stealth = body.stealth_state
 	net_downed = body.downed
+	var inventory_state: Array = body.inventory.to_net()
+	if inventory_state != net_inventory:
+		net_inventory = inventory_state
 
 
 func _predict(delta: float) -> void:
