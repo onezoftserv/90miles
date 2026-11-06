@@ -27,6 +27,8 @@ Rules for using it:
 - **Actos de repudio.** During Mariel, crowds organized through the neighborhood committees gathered outside the homes of people who had asked to leave, shouting and throwing eggs. Some turned violent. https://havanatimes.org/?p=26118 · https://text-message.blogs.archives.gov/2021/08/03/the-causes-and-effects-of-the-mariel-boatlift
 - **Gusano, mariposa, escoria.** *Gusano* (worm) was the official insult for those who left. After the 1978 dialogue, exiles began visiting family in 1979, arriving with gifts and money, and Cubans joked that the gusanos had become *mariposas* (butterflies). After Mariel the usual insult became *escoria* (scum). https://en.wikipedia.org/wiki/Gusano · https://oncubanews.com/cuba/nacion-y-emigracion/enfrentar-el-retorno-las-visitas-de-la-comunidad-de-1979
 
+- **Leaving a delegation.** Official usage calls an athlete who stays abroad an *abandono* (abandonment) of the delegation; one translation site reports the official weekly *Trabajadores* counting 862 such athletes in a decade. A direct *Trabajadores* or *Granma* link is still wanted. https://translatingcuba.com/1053-athletes-have-fled-cuba-in-a-decade-82-of-them-so-far-this-year
+
 ## 3. The Special Period
 
 - After the Soviet Union fell, Cuba's oil imports dropped from about 13 million tonnes in 1989 to about 5 million in 1993. The economy shrank by about a third, and blackouts (*apagones*) could last 16 hours. Estimated daily calories fell from about 3,050 to about 2,100. https://www.ipsnews.net/?p=73911 · https://new.scielo.br/j/ea/a/ZDsfdYJymh7TwVGB7P6wwDH/?lang=en · https://en.wikipedia.org/wiki/Special_Period
