@@ -7,6 +7,8 @@ extends Node2D
 
 const COCONUT_ID: StringName = &"coco"
 
+## Host only: every climb is applied on the host, so a client's copy is not synced (it keeps
+## the layout's count). Syncing it is a follow-up for when palms get an empty visual.
 @export var coconuts: int = 0
 @export var climb_effects: Array[EffectData] = []
 ## Seconds the interact button is held.

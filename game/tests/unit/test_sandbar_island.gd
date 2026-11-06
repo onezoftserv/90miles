@@ -115,6 +115,29 @@ func test_a_solo_player_takes_every_coconut_alone() -> void:
 	assert_almost_eq(body.meters.energy, 50.0, 0.01)
 
 
+func test_an_entry_with_a_count_is_one_pickup_carrying_it() -> void:
+	island = ISLAND_SCENE.instantiate() as SandbarIsland
+	add_child_autofree(island)
+	session = SESSION_SCENE.instantiate() as CoopSession
+	session.terrain = island.terrain
+	session.spawn_points = island.spawn_points(true)
+	add_child_autofree(session)
+	island.furnish(session)
+	session.start()
+	island.built.pickups = [{"cell": island.built.solo_spawn, "item_id": &"driftwood", "count": 3, "respawn": DataEnums.RespawnTrigger.SQUALL, "group": &"beach"}] as Array[Dictionary]
+	island.place_pickups(session)
+	assert_eq(session.pickups.get_child_count(), 1, "one node, not three on one cell")
+	assert_eq(_counts(), {&"driftwood": 3})
+	var body := session.body(1)
+	body.player_input.enabled = false
+	await _take(body, &"driftwood")
+	assert_eq(body.inventory.count_id(&"driftwood"), 3)
+	assert_eq(_counts(), {})
+	WeatherManager.sky.weather.start_weather(&"squall")
+	WeatherManager.sky.weather.start_weather(&"calm")
+	assert_eq(_counts(), {&"driftwood": 3}, "the refresh puts the whole entry back once")
+
+
 func test_flotsam_refreshes_after_a_squall_ends() -> void:
 	var body := _run()
 	await _take(body, &"inner_tube")

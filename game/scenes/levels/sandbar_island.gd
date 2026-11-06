@@ -67,11 +67,10 @@ func furnish(session: CoopSession) -> void:
 	WeatherManager.weather_changed.connect(_on_weather_changed)
 
 
-## Host: lays down every pick-up, one unit at a time.
+## Host: lays down every pick-up, one per placed entry, carrying the entry's count.
 func place_pickups(session: CoopSession) -> void:
 	for spec: Dictionary in built.pickups:
-		for unit: int in spec["count"]:
-			_placed.append({"spec": spec, "node": null})
+		_placed.append({"spec": spec, "node": null})
 	_refill(session, true)
 
 
@@ -83,7 +82,7 @@ func _refill(session: CoopSession, everything: bool) -> void:
 		var lying: bool = is_instance_valid(node) and not (node as Node).is_queued_for_deletion()
 		if lying or not everything and spec["respawn"] != DataEnums.RespawnTrigger.SQUALL:
 			continue
-		entry["node"] = session.spawn_pickup(spec["item_id"], 1, IslandLayout.cell_center(spec["cell"]))
+		entry["node"] = session.spawn_pickup(spec["item_id"], spec["count"], IslandLayout.cell_center(spec["cell"]))
 
 
 func _on_weather_changed(weather_id: StringName) -> void:

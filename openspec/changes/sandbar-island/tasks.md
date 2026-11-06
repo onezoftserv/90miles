@@ -29,3 +29,7 @@
 ## 6. Docs
 
 - [x] 6.1 `TASKS.md`: tick the sandbar item, log the provisional numbers; `CONTENT_MANIFEST.md`
+
+## Follow-ups
+
+- [ ] Sync palm coconut counts when palms get an empty visual (today only the host's copy changes; every climb is applied on the host)
