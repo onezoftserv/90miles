@@ -36,7 +36,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] `survival-meters`: all six meters with the §4 numbers, HUD bars
 - [x] `ui-shell`: title, host/join lobby, HUD layout, game theme, display scaling, pixel filter
 - [x] `coop-reconnect`: stable player id, rejoin within 90 s reclaims the body, removed players count as dead
-- [x] Handmade sandbar scene: hut, 6 palms, flotsam line, tide pools (`sandbar-island` change, not archived yet)
+- [x] Handmade sandbar scene: hut, 6 palms, flotsam line, tide pools (`sandbar-island` change, archived 2026-11-06)
 - [x] `crafting-inventory`: inventory, pick-up, coconut, rain cup, workbench, fire
 - [x] `weather-daynight`: 12-minute day, CanvasModulate, calm/squall only
 - [ ] Playtest: can 2 players survive 3 days? Tune drains.
