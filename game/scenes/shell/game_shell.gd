@@ -231,7 +231,8 @@ func _build_run() -> void:
 	session.sky = WeatherManager.sky
 	session.spawn_points = DevIsland.SPAWN_POINTS.duplicate()
 	session.player_spawned.connect(_on_player_spawned)
-	session.player_removed.connect(_on_player_removed)
+	session.local_identity = settings.identity
+	session.removal_recorded.connect(_on_removal_recorded)
 	session.host_lost.connect(_on_host_lost)
 	_world.add_child(session)
 
@@ -273,7 +274,7 @@ func _end_run() -> void:
 		island = null
 
 
-func _on_player_removed(_peer_id: int, _last_position: Vector2) -> void:
+func _on_removal_recorded(_peer_id: int, _player_name: String) -> void:
 	_check_run_over()
 
 
@@ -297,6 +298,9 @@ func _check_run_over() -> void:
 		if not dead:
 			return
 		entries.append({"name": session.player_name(peer_id), "dead": dead})
+	# Removed after a disconnect: dead for the run (coop-reconnect).
+	for removed_name: String in session.removed_names():
+		entries.append({"name": removed_name, "dead": true})
 	WeatherManager.stop()
 	var summary := _show(SUMMARY_SCENE, Flow.SUMMARY) as SummaryScreen
 	summary.show_summary(entries, clock.call() - _run_started_s)

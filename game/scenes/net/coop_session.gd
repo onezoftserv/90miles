@@ -33,6 +33,8 @@ signal lobby_received(in_run: bool)
 ## The host started the run (on every peer).
 signal run_started
 ## A rejoined player took back its body: it now belongs to `new_peer` (on every peer).
+## A dropped player was removed and now counts as dead for the run (on every peer).
+signal removal_recorded(peer_id: int, player_name: String)
 signal player_rebound(old_peer: int, new_peer: int, body: PlayerBody)
 
 ## LOBBY gathers names and spawns nobody; RUN spawns every player (and every joiner at once).
@@ -106,6 +108,8 @@ var _awaiting: Dictionary[int, float] = {}
 var _identities: IdentityRegistry = IdentityRegistry.new()
 ## The peer each body first spawned under, by its current peer (they differ after a rebind).
 var _spawn_peer: Dictionary[int, int] = {}
+## Names of the players removed after their 90 s, in removal order (on every peer).
+var _removed: Array[String] = []
 var _joined: int = 0
 ## Host: seconds until the next periodic clock message.
 var _resync_left_s: float = 0.0
@@ -196,14 +200,18 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 		roster[sender] = GameSettings.clean_name(player_name, default_name(roster))
 		if _started and phase == Phase.RUN:
 			_admit(sender)
-	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN, owner_map())
+	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN, owner_map(), _removed)
 	_share_roster(sender)
 
 
 @rpc("authority", "call_remote", "reliable")
-func receive_lobby(roster_data: Dictionary, in_run: bool, owners: Dictionary) -> void:
+func receive_lobby(roster_data: Dictionary, in_run: bool, owners: Dictionary, removed: Array) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID:
 		return
+	_removed.clear()
+	for removed_name: Variant in removed:
+		if removed_name is String:
+			_removed.append(GameSettings.clean_name(removed_name))
 	# Bodies re-bound before this peer joined still carry their first peer in the spawn data.
 	for spawned_as: Variant in owners:
 		var current: Variant = owners[spawned_as]
@@ -212,6 +220,27 @@ func receive_lobby(roster_data: Dictionary, in_run: bool, owners: Dictionary) ->
 	roster = clean_roster(roster_data)
 	phase = Phase.RUN if in_run else Phase.LOBBY
 	lobby_received.emit(in_run)
+
+
+@rpc("authority", "call_remote", "reliable")
+func record_removed(peer_id: int, removed_name: String) -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID:
+		return
+	# The host's despawn follows; the player is already gone from this session's players.
+	_bodies.erase(peer_id)
+	_spawn_peer.erase(peer_id)
+	_record_removal(peer_id, GameSettings.clean_name(removed_name))
+
+
+## The players removed after their 90 s, in removal order. They count as dead for the rest of
+## the run: the run summary lists them, and they are not survivors for the ending or Experiencia.
+func removed_names() -> Array[String]:
+	return _removed.duplicate()
+
+
+func _record_removal(peer_id: int, removed_name: String) -> void:
+	_removed.append(removed_name)
+	removal_recorded.emit(peer_id, removed_name)
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -663,10 +692,13 @@ func _remove_player(peer_id: int) -> void:
 	if leaving == null:
 		return
 	var last_position: Vector2 = leaving.position
+	var removed_name := player_name(peer_id)
 	_bodies.erase(peer_id)
 	_spawn_peer.erase(peer_id)
 	_identities.release_peer(peer_id)
 	player_removed.emit(peer_id, last_position)
+	record_removed.rpc(peer_id, removed_name)
+	_record_removal(peer_id, removed_name)
 	# Freed on the host; the spawner removes it on every client.
 	leaving.queue_free()
 

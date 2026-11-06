@@ -14,6 +14,11 @@ var _meters: SurvivalMeters = null
 
 ## Shows `meters` from now on and stops following the node bound before. With null the bars keep
 ## their last values and the blur is hidden.
+## The meters this panel shows, or null.
+func shown() -> SurvivalMeters:
+	return _meters
+
+
 func bind(meters: SurvivalMeters) -> void:
 	_unbind()
 	_meters = meters

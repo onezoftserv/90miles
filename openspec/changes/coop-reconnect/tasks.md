@@ -12,8 +12,8 @@
 
 ## 3. Removed players and the shell
 
-- [ ] 3.1 Keep removed players in `CoopSession`, list them as "Murió" in the run summary, and verify GUT tests for "rejoin after removal" and "removed player in the summary"
-- [ ] 3.2 Pass the settings identity to the session in `GameShell`, follow `player_rebound` in `RunHud`, and verify a shell GUT test with 1 player offline
+- [x] 3.1 Keep removed players in `CoopSession`, list them as "Murió" in the run summary, and verify GUT tests for "rejoin after removal" and "removed player in the summary"
+- [x] 3.2 Pass the settings identity to the session in `GameShell`, follow `player_rebound` in `RunHud`, and verify a shell GUT test with 1 player offline
 - [ ] 3.3 Verify the import, smoke run, GUT and a two-process host and client rejoin through the shell pass with zero error lines
 
 ## Workflow follow-up
