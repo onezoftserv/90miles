@@ -2,7 +2,7 @@ class_name RainCatcher
 extends Node2D
 ## A rain catcher (crafting-inventory "Water structures"): after tuning.rain_fill_s of
 ## continuous rain it holds the recipe's yield (1 rain cup), once per squall, until a player
-## takes it. Rain is the weather the level or weather-daynight puts in the ClimateState.
+## takes it. Rain is the recipe's produce_on_weather_id, read from the ClimateState the sky writes.
 
 var tuning: CraftingTuning = preload("res://resources/crafting_tuning.tres")
 var climate: ClimateState = null
@@ -28,7 +28,7 @@ func on_built(built_recipe: RecipeData) -> void:
 
 
 func advance(delta: float) -> void:
-	var raining: bool = climate != null and climate.weather_id == tuning.rain_weather_id
+	var raining: bool = climate != null and climate.weather_id == recipe.produce_on_weather_id
 	if not raining:
 		_rain_s = 0.0
 		_filled = false

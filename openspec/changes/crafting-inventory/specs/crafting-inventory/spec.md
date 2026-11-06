@@ -114,7 +114,7 @@ A fire SHALL be a structure built from its recipe (3 driftwood + 1 tinder; 30 s 
 - THEN it is out and no longer counts as company
 
 ### Requirement: Water structures
-A rain catcher SHALL yield rain cups while it rains (squall): 1 rain cup into the catcher after 30 s of continuous rain, at most once per squall, held there until a player takes it. A solar still SHALL yield 1 still cup per 12 in-game hours (360 s), which changes `docs/ITEMS.md` ("1 per 2 in-game hours"); the still itself is built by a later change. Until weather-daynight drives the weather, rain is read from the weather id the level sets on the climate.
+A rain catcher SHALL yield rain cups while it rains (squall): 1 rain cup into the catcher after 30 s of continuous rain, at most once per squall, held there until a player takes it. A solar still SHALL yield 1 still cup per 12 in-game hours (360 s), which changes `docs/ITEMS.md` ("1 per 2 in-game hours"); the still itself is built by a later change. Rain is the weather named by the recipe's `produce_on_weather_id` (`squall`), read from the climate the sky writes.
 
 #### Scenario: A rain cup fills during a squall
 - GIVEN a built rain catcher and a solo player

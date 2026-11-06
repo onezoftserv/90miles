@@ -12,7 +12,7 @@ Milestone A needs players to carry, use and craft the sandbar's survival basics:
 - `Workbench` (station placed by the level), `Crafter` (runs `RecipeData`: inputs, tags, tools, fast tool, wear), `BuildSite` (shared deposits and progress), `Fire` (lights, joins `lit_fires`, burns 360 s, put out with a 2 s hold), `RainCatcher` (30 s of rain, once per squall).
 - Host requests `craft`, `use_item` and `deposit` on `CoopSession`, rate limited per peer; the host's own player (solo included) is never limited.
 - Content: items `coco`, `rain_cup`, `driftwood`, `dry_grass`, `knife`, `tarp`; recipes `fire`, `rain_catcher`; `crafting_tuning.tres`.
-- `ClimateState.weather_id` (a level or test sets it until weather-daynight drives it).
+- `ClimateState.weather_id` (`WorldSky` writes it from the sky; tests may set it by hand).
 - The solar still yields 1 cup per 12 in-game hours: `docs/ITEMS.md` changes from "1 per 2 in-game hours".
 
 Out of scope: rafts and other recipes, identification, stashes and theft, swimming overload, cooking, the inventory and craft UI (ui-shell), squalls putting fires out (weather-daynight), replicating placed structures to clients (see design.md, Risks), the solar still itself.
@@ -28,7 +28,7 @@ Taken from the build plan's recommended options; each waits for the owner's conf
 1. **Coconut opening** needs a blade capability (knife, later machete), spending 1 knife use per coconut. The "or a rock" alternative is not built (no `rock` item in the manifest). A solo level must place a knife (the hut).
 2. **Coconut servings:** 1 per coconut, not the 2 `docs/ITEMS.md` mentions.
 3. **Rain catcher inputs:** 1 tarp + 4 driftwood (the design says "tarp + 4 sticks"; driftwood stands for sticks). This adds `items/tarp.tres`, one file beyond the brief's list.
-4. **Rain source:** `produce_on_weather_id` is left empty on the recipe because `weather/squall.tres` is not on main; `CraftingTuning.rain_weather_id = squall` is read against `ClimateState.weather_id` until weather-daynight lands, then it moves to the recipe.
+4. **Rain source:** Resolved: weather-daynight is on main, so the rain catcher recipe carries `produce_on_weather_id = squall` and `RainCatcher` reads it against `ClimateState.weather_id`, which `WorldSky` writes. `CraftingTuning.rain_weather_id` is removed.
 5. **Stations:** the workbench is a placed scene; fire and rain catcher are `station = NONE` build sites. The workbench is proven with a fixture recipe because no shipped recipe needs it yet.
 6. **Fire:** 30 s by friction; a carried `LIGHT_FIRE` item replaces that with its own tool time. Fire needs `input_tags {TINDER: 1}`, and dry grass carries TINDER.
 7. **Revive:** per-item REVIVE use on a `can_target_others` use; coconut and rain cup now, still and well cup later. Reviving needs a downed or last-stand target.

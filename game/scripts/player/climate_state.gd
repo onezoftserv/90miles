@@ -9,6 +9,6 @@ var phase: DataEnums.DayPhase = DataEnums.DayPhase.DAY
 var midday: bool = false
 ## 2 in scorching calm.
 var heat_factor: float = 1.0
-## WeatherData id now falling (squall = rain). weather-daynight drives it; a level or test sets
-## it until then. crafting-inventory's rain catcher reads it.
+## WeatherData id now falling (squall = rain). WorldSky writes it with the rest; tests may set
+## it by hand. crafting-inventory's rain catcher and condition checks read it.
 var weather_id: StringName = &""

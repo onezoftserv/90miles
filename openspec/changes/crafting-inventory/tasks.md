@@ -32,3 +32,9 @@
 - [x] 5.3 Movement playground: a workbench, a coconut, a knife, driftwood, dry grass, a tarp
 - [x] 5.4 Import, smoke, GUT and a 300-frame run pass
 - [x] 5.5 Tick `TASKS.md`; `docs/ITEMS.md` still rate
+
+## 6. Sky integration (weather-daynight on main)
+
+- [x] 6.1 RED: `test_crafting_sky.gd` (recipe names squall, catcher fills from the sky's weather cycle, fire is company at night by the sky clock, 1 player)
+- [x] 6.2 `produce_on_weather_id = squall` on the rain catcher recipe; `CraftingTuning.rain_weather_id` removed; `WorldSky` writes `ClimateState.weather_id`
+- [x] 6.3 Movement playground keeps the sky clock; doc comment fixed

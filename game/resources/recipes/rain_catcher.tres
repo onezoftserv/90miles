@@ -17,6 +17,7 @@ skill = 2
 output_kind = 1
 produces_item_id = &"rain_cup"
 produce_count = 1
+produce_on_weather_id = &"squall"
 id = &"rain_catcher"
 name_es = "Recogedor de lluvia"
 name_en = "Rain catcher"

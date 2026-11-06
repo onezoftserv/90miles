@@ -13,9 +13,6 @@ extends Resource
 @export var fire_put_out_hold_s: float = 2.0
 ## Seconds of continuous rain before a rain catcher holds a cup.
 @export var rain_fill_s: float = 30.0
-## WeatherData id that counts as rain until weather-daynight drives ClimateState; the rain
-## catcher recipe's produce_on_weather_id replaces it once weather/squall.tres exists.
-@export var rain_weather_id: StringName = &"squall"
 ## Solar still: in-game hours per still cup (the still itself is a later change).
 @export var still_cup_every_game_hours: float = 12.0
 ## Host requests (use, craft, deposit) a peer may send: a burst, then per second.

@@ -68,4 +68,3 @@ func test_crafting_tuning() -> void:
 	assert_eq(tuning.weight_limit, 30.0)
 	assert_eq(tuning.fire_burn_s, 360.0)
 	assert_eq(tuning.rain_fill_s, 30.0)
-	assert_eq(tuning.rain_weather_id, &"squall")

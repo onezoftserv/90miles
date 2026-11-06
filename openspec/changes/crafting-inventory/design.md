@@ -26,7 +26,7 @@
 `PlayerNet.net_inventory` (`[id, count, uses]` per slot) is written by the host each physics frame and replicated by `StateSync` like the other shadow fields; clients call `Inventory.from_net` on every state.
 
 ### Rain
-`ClimateState.weather_id` is new. `RainCatcher` compares it with `CraftingTuning.rain_weather_id` until the recipe's `produce_on_weather_id` can point at a `weather/` file.
+`ClimateState.weather_id` is new. `WorldSky` writes it with the rest of the climate, and `RainCatcher` compares it with its recipe's `produce_on_weather_id` (`squall`, a `weather/` file).
 
 ## Risks
 

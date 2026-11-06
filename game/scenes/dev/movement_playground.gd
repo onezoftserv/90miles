@@ -1,9 +1,9 @@
 class_name MovementPlayground
 extends Node2D
 ## Manual-test island for player-movement and survival-meters: land, brush, shallow, deep and
-## brackish water, a shaded hut, one interactable, two players under a fixed midday sun, and the
-## local player's meters HUD, and the crafting-inventory supplies (a workbench, a coconut, a knife,
-## driftwood, dry grass and a tarp to pick up). Everything is drawn with colored rectangles, no textures.
+## brackish water, a shaded hut, one interactable, two players under the sky clock (WeatherManager,
+## starting at 10:00), the local player's meters HUD, and the crafting-inventory supplies (a
+## workbench, a coconut, a knife, driftwood, dry grass and a tarp to pick up). Everything is drawn with colored rectangles, no textures.
 
 const TILE: int = DevIslandTerrain.TILE
 const HUT: Rect2i = DevIslandTerrain.HUT
