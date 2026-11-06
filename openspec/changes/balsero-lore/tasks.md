@@ -54,6 +54,7 @@ Groups 1–5 are docs and specs, done in this change (no file under `game/` chan
 - [ ] 9.2 Create `galleguito` and `beat_galleguito` once 7.2 lands, and `pajarito` and `pajaro_bobo` once 7.1 lands
 - [ ] 9.3 Edit existing entries: `bottle_note`, `wall_slogan`, `radio_fragment`, `diario_periodo_especial`, `seagull`, `la_captura`, the five ending dialogues, the chain route rows and `poi_chances`, and the loot of the fishermen's houses, the village dock, the resort generator and the galley, each with the lines in `docs/ITEMS.md`, `docs/BESTIARY.md` and `docs/GAME_DESIGN.md` §13 (Spanish first, English beside it, soft profanity variants where the line swears)
 - [ ] 9.4 Verify the content catalog loads, the import, smoke run and GUT pass
+- [ ] 9.5 When `backend/prompts/` is written, add the rule that the AI prompt bans the 1994 tugboat sinking (`docs/LORE.md`)
 
 ## 10. Review
 

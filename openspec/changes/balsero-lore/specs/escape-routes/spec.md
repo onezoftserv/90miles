@@ -29,7 +29,7 @@ Tarp-sail SHALL require trade wind; binoculars-swim SHALL require clear weather 
 The almendrón SHALL be a build-site route (capacity all) on a car wreck: recipe `almendron_flotante` (4 drums, 4 rope, 6 nails, 4 driftwood, 1 propeller; pliers; 90 s base, 1 energy/s per worker). Each crossing SHALL spend one fuel jug. Starting it makes noise in 25 tiles with a 50% patrol alert, sets `almendron_a_bordo` and gives the starter a botija; the car stays beached with its integrity.
 
 #### Scenario: Solo builds and starts it
-- GIVEN a 1-player run, a non-Mecánico at energy 100 on `coast_village` with the almendrón rolled, who takes the pliers, propeller, 6 nails, 2 rope and 2 drums at the car, 2 drums at the fishermen's houses and 1 fuel jug at the dock
+- GIVEN a 1-player run, a non-Mecánico at energy 100 on `coast_village` with the almendrón rolled, who takes the pliers, propeller, 6 nails, 2 rope and 2 drums at the car, 2 more rope and 4 driftwood found in flotsam and along the beach, 2 drums at the fishermen's houses and 1 fuel jug at the dock
 - WHEN the player works the build site alone, with the pliers' ×1.5, and then starts it
 - THEN it completes in 60 s using 60 energy, the jug is spent, a 25-tile noise is made, the flag `almendron_a_bordo` is set, and the player holds a botija
 

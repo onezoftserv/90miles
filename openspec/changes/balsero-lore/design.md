@@ -98,7 +98,7 @@ The claims and their URLs live in `docs/LORE.md`; this table points to the secti
 | Botija | The earthenware jar of early son groups | LORE §8 |
 | Songbird, booby, frigatebird | Songbirds landing on boats, boobies on buoys, frigatebird piracy | LORE §8 |
 
-Entry 2 of the envelope is the most sensitive line: the joke belongs to the victim and aims at the scarcity behind the system that organized the act. The user decided to keep it, and the History and lore review (`TASKS.md` §11) has the final say. Death and the missing are never a joke: the empty rafts are plain, the board-rider line appears only if a rider died on that crossing, and the AI prompt bans the 1994 tugboat.
+Entry 2 of the envelope is the most sensitive line: the joke belongs to the victim and aims at the scarcity behind the system that organized the act. The user decided to keep it, and the History and lore review (`TASKS.md` §11) has the final say. Death and the missing are never a joke: the empty rafts are plain, the board-rider line appears only if a rider died on that crossing, and the AI prompt must ban the 1994 tugboat (a rule for when `backend/prompts/` is written).
 
 ## Risks
 
