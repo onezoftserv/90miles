@@ -78,7 +78,7 @@ The host sends the time of day, day, weather, the squall warning and the time le
 ## ADDED Requirements
 
 ### Requirement: Calm and squall data
-Calm and squall SHALL be `WeatherData` files in `game/resources/weather/` that pass the content validator, and every number of the clock's presentation and roll (phase tints, blend time, roll weights, warning lead, squall length) SHALL be read from data, so retuning never needs a script edit. Calm is scorching (heat ×2 in direct sun, clear sky, white-sky tell); squall is a storm with the horizon-line tell, a 60 s warning, a 120 s length and calm after it. (Numbers from `docs/GAME_DESIGN.md` §5; roll weights and tint colours are provisional until the Milestone A playtest.) The same data applies with exactly 1 player.
+Calm and squall SHALL be `WeatherData` files in `game/resources/weather/` that pass the content validator. Every number of the clock's presentation and roll SHALL be read from data, so retuning never needs a script edit. Calm is scorching (heat ×2, clear sky); squall is a storm warned 60 s early by the horizon line, lasting 120 s, followed by calm. Roll weights and tint colours are provisional until the Milestone A playtest (`docs/GAME_DESIGN.md` §5). The same data applies with exactly 1 player.
 
 #### Scenario: Weather files validate
 - **GIVEN** the content catalog
