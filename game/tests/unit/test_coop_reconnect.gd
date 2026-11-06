@@ -207,3 +207,43 @@ func test_a_late_joiner_sees_the_reclaimed_body_under_its_new_owner() -> void:
 		assert_eq(reclaimed.net.owner_peer, papo_id)
 	assert_eq(late.player_name(papo_id), "Papo")
 	assert_eq(late.peer_ids(), host.peer_ids(), "the same players everywhere")
+
+
+# --- removed players -------------------------------------------------------------------------
+
+func test_a_rejoin_after_removal_is_a_new_player() -> void:
+	var host := net.add_host(_island)
+	var dayana := await net.join(_as(PlayerIdentity.create(), "Dayana"))
+	assert_not_null(dayana)
+	if dayana == null:
+		return
+	var papo_body := await _papo_drops(host)
+	if papo_body == null:
+		return
+	host._physics_process(CoopSession.DISCONNECT_DOWNED_S + 1.0)
+	assert_eq(host.removed_names(), ["Papo"] as Array[String], "the host keeps who was removed")
+	var told := func() -> bool: return dayana.removed_names() == (["Papo"] as Array[String])
+	assert_true(await wait_until(told, TIMEOUT_S), "and so does every client")
+	var back := await net.join(_as(papo))
+	assert_not_null(back, "Papo joins again")
+	if back == null:
+		return
+	var fresh := host.body(net.peer_id(back))
+	assert_not_null(fresh)
+	assert_false(is_instance_valid(papo_body) and fresh == papo_body, "a new player, not the removed body")
+	assert_true(SPAWNS.has(fresh.position), "at a spawn point")
+	assert_eq(host.removed_names(), ["Papo"] as Array[String], "the removed player still counts as dead")
+
+
+func test_a_late_joiner_learns_who_was_removed() -> void:
+	var host := net.add_host(_island)
+	var papo_body := await _papo_drops(host)
+	if papo_body == null:
+		return
+	host._physics_process(CoopSession.DISCONNECT_DOWNED_S + 1.0)
+	var late := await net.join(_as(PlayerIdentity.create(), "Yuni"))
+	assert_not_null(late)
+	if late == null:
+		return
+	var told := func() -> bool: return late.removed_names() == (["Papo"] as Array[String])
+	assert_true(await wait_until(told, TIMEOUT_S))
