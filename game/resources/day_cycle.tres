@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DayCycleTuning" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/day_cycle_tuning.gd" id="1_tuning"]
+
+[resource]
+script = ExtResource("1_tuning")
+phase_tints = Dictionary[int, Color]({
+0: Color(0.95, 0.8, 0.75, 1),
+1: Color(1, 1, 1, 1),
+2: Color(0.9, 0.7, 0.6, 1),
+3: Color(0.35, 0.4, 0.65, 1)
+})
+blend_s = 20.0
+resync_s = 10.0

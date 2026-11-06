@@ -6,18 +6,20 @@ extends Node2D
 
 const TILE: int = DevIslandTerrain.TILE
 const HUT: Rect2i = DevIslandTerrain.HUT
+## 10:00, seconds since dawn.
+const START_TIME_S: float = 120.0
 
 var terrain: GridTerrain = GridTerrain.new()
-## Midday in the day phase, so heat rises outside the hut and sunstroke can be tried by hand.
-var climate: ClimateState = ClimateState.new()
+## Starts at 10:00 on the one clock (WeatherManager), so heat rises outside the hut in the
+## midday sun and sunstroke can be tried by hand.
+var climate: ClimateState = WeatherManager.sky.climate
 
 @onready var hud: MetersHud = $Hud/MetersHud
 
 
 func _ready() -> void:
 	_build_terrain()
-	climate.phase = DataEnums.DayPhase.DAY
-	climate.midday = true
+	WeatherManager.start(START_TIME_S)
 	var hud_bound: bool = false
 	for child: Node in get_children():
 		var body := child as PlayerBody
@@ -29,6 +31,10 @@ func _ready() -> void:
 			hud.bind(body.meters)
 			hud_bound = true
 	queue_redraw()
+
+
+func _exit_tree() -> void:
+	WeatherManager.stop()
 
 
 func _build_terrain() -> void:

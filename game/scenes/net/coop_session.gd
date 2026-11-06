@@ -51,19 +51,28 @@ const DISCONNECT_DOWNED_S: float = 90.0
 const MAX_INTENT_DELTA_S: float = 0.1
 ## Squared length an intent's direction may reach (1 plus float slack).
 const MAX_DIRECTION_LENGTH_SQUARED: float = 1.001
-## World-state keys a joiner accepts, with their types; anything else is dropped.
+## World-state keys a joiner accepts, with their types; anything else is dropped. The sky keys
+## are WorldSky.to_state().
 const WORLD_STATE_TYPES: Dictionary[String, int] = {
 	"island_seed": TYPE_INT,
 	"weather": TYPE_STRING_NAME,
 	"time_of_day_s": TYPE_FLOAT,
+	"day": TYPE_INT,
+	"weather_left_s": TYPE_FLOAT,
+	"pending": TYPE_STRING_NAME,
+	"pending_in_s": TYPE_FLOAT,
 }
 
 ## Where players appear, in join order (the host first). Set by the level.
 @export var spawn_points: Array[Vector2] = [Vector2.ZERO]
 ## Ground and current for every player body. Set by the level.
 var terrain: TerrainQuery = TerrainQuery.new()
-## Clock and weather every player's meters read. Set by the level (weather-daynight later).
+## Clock and weather every player's meters read. Set by the level (the sky's climate).
 var climate: ClimateState = ClimateState.new()
+## The clock and weather (weather-daynight). The host owns it and sends it to clients; a client
+## follows it and never rolls. Set by the level (WeatherManager.sky in the game); without one the
+## session sends no clock.
+var sky: WorldSky = null
 ## Host: what each joiner receives (island seed, weather, time of day). Client: what arrived.
 var world_state: Dictionary = {}
 ## Player names by peer id (ui-shell). The host sets its own; the lobby fills in the others.
@@ -85,6 +94,8 @@ var _limits: Dictionary[int, PeerLimits] = {}
 ## Host: seconds left before each dropped client's player is removed.
 var _dropped: Dictionary[int, float] = {}
 var _joined: int = 0
+## Host: seconds until the next periodic clock message.
+var _resync_left_s: float = 0.0
 var _started: bool = false
 
 @onready var players: Node2D = $Players
@@ -119,8 +130,12 @@ func start(lobby: bool = false) -> void:
 		# Peers that connected before start() are handled now.
 		for peer_id: int in multiplayer.get_peers():
 			_on_peer_connected(peer_id)
+		if sky != null:
+			sky.changed.connect(send_sky)
 	else:
 		multiplayer.server_disconnected.connect(_on_server_disconnected)
+		if sky != null:
+			sky.weather.rolls_enabled = false
 		multiplayer.connected_to_server.connect(_request_join)
 		if multiplayer.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
 			_request_join()
@@ -219,6 +234,7 @@ func _share_roster(except: int = 0) -> void:
 
 # Host: counts down the dropped players and removes each one when its time is up.
 func _physics_process(delta: float) -> void:
+	_resync_sky(delta)
 	for peer_id: int in _dropped.keys():
 		var left: float = _dropped[peer_id] - delta
 		if left > 0.0:
@@ -373,7 +389,24 @@ func receive_world_state(state: Dictionary) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID:
 		return
 	world_state = checked_world_state(state)
+	if sky != null:
+		sky.apply_state(world_state)
 	world_state_received.emit(world_state)
+
+
+## Host: sends the clock and weather to every client. Solo has no client, so nothing is sent.
+func send_sky() -> void:
+	if sky == null or not multiplayer.is_server() or multiplayer.get_peers().is_empty():
+		return
+	_resync_left_s = sky.tuning.resync_s
+	receive_sky.rpc(sky.to_state())
+
+
+@rpc("authority", "call_remote", "reliable")
+func receive_sky(state: Dictionary) -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID or sky == null:
+		return
+	sky.apply_state(checked_world_state(state))
 
 
 ## Whether an intent's payload is in range (finite, direction length ≤ 1, a sane time step).
@@ -408,7 +441,10 @@ func _on_peer_connected(peer_id: int) -> void:
 		return
 	_add_player(peer_id)
 	if body(peer_id) != null:
-		receive_world_state.rpc_id(peer_id, world_state)
+		var state: Dictionary = world_state.duplicate()
+		if sky != null:
+			state.merge(sky.to_state(), true)
+		receive_world_state.rpc_id(peer_id, state)
 
 
 # The player stays in the world, downed (draggable), until the countdown removes it. A client
@@ -493,6 +529,16 @@ func _on_body_ready(peer_id: int, spawned: PlayerBody) -> void:
 func _on_body_exiting(peer_id: int, leaving: PlayerBody) -> void:
 	if _bodies.get(peer_id) == leaving:
 		_bodies.erase(peer_id)
+
+
+# Host: the periodic clock message between changes.
+func _resync_sky(delta: float) -> void:
+	if sky == null or not multiplayer.is_server():
+		return
+	_resync_left_s -= delta
+	if _resync_left_s <= 0.0:
+		send_sky()
+		_resync_left_s = sky.tuning.resync_s
 
 
 func _ticks_s() -> float:

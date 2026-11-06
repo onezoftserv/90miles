@@ -11,8 +11,8 @@ extends MovementPlayground
 const SPAWN_POINTS: Array[Vector2] = [
 	Vector2(40.0, 200.0), Vector2(72.0, 200.0), Vector2(40.0, 232.0), Vector2(72.0, 232.0),
 ]
-## Fixed until island-generation and weather-daynight own these values.
-const DEV_WORLD_STATE: Dictionary = {"island_seed": 0, "weather": &"dev", "time_of_day_s": 0.0}
+## Fixed until island-generation owns the seed; the sky (WeatherManager) supplies weather and time.
+const DEV_WORLD_STATE: Dictionary = {"island_seed": 0}
 const HOST_LOST_SCENE: PackedScene = preload("res://scenes/ui/host_lost_screen.tscn")
 const LOG_PREFIX: String = "coop:"
 
@@ -58,6 +58,7 @@ func _ready() -> void:
 	super._ready()
 	session.terrain = terrain
 	session.climate = climate
+	session.sky = WeatherManager.sky
 	session.spawn_points = SPAWN_POINTS.duplicate()
 	session.world_state = DEV_WORLD_STATE.duplicate()
 	session.player_spawned.connect(_on_player_spawned)

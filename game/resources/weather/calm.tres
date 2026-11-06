@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WeatherData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weather_data.gd" id="1_weather"]
+
+[resource]
+script = ExtResource("1_weather")
+id = &"calm"
+name_es = "Calma chicha"
+name_en = "Scorching calm"
+description_es = "Ni una nube, ni un soplo de aire. El sol de 10 a 4 cae a plomo y el calor sube el doble."
+description_en = "Not a cloud, not a breath of wind. The sun from 10 to 4 beats straight down and heat rises twice as fast."
+hint_es = "Busca sombra de 10 a 4."
+hint_en = "Find shade from 10 to 4."
+kind = 0
+context = 2
+is_clear = true
+trigger = 0
+roll_weight = 3.0
+tell = 1
+canvas_tint = Color(1, 1, 1, 1)
+heat_gain_mult = 2.0
+direct_sun = true
+sails_work = false
+binoculars = 0
