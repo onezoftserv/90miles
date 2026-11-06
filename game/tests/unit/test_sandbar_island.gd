@@ -74,8 +74,8 @@ func test_the_island_builds_6_palms_and_one_workbench() -> void:
 
 func test_the_host_places_every_pickup_once() -> void:
 	_run()
-	assert_eq(_counts(), {&"tarp": 1, &"driftwood": 8, &"knife": 1, &"inner_tube": 2, &"plastic_jug": 3, &"rope": 1, &"dry_grass": 3})
-	assert_eq(session.pickups.get_child_count(), 19)
+	assert_eq(_counts(), {&"tarp": 1, &"driftwood": 8, &"knife": 1, &"inner_tube": 2, &"plastic_jug": 3, &"rope": 3, &"dry_grass": 3})
+	assert_eq(session.pickups.get_child_count(), 20)
 
 
 func test_a_solo_player_climbs_and_opens_the_coconut_with_the_hut_knife() -> void:
@@ -152,14 +152,15 @@ func test_flotsam_refreshes_after_a_squall_ends() -> void:
 	var counts := _counts()
 	assert_eq(counts.get(&"inner_tube", 0), 2)
 	assert_eq(counts.get(&"plastic_jug", 0), 3, "untaken jugs are not doubled")
-	assert_eq(counts.get(&"rope", 0), 1)
+	assert_eq(counts.get(&"rope", 0), 3, "the flotsam rope plus the two in the hut, which never come back")
 	assert_eq(counts.get(&"knife", 0), 0, "hut loot never comes back")
 	assert_eq(counts.get(&"driftwood", 0), 6, "the beach driftwood is back; the hut's 2 pieces are not")
 
 
 func test_calm_to_calm_restores_nothing() -> void:
 	var body := _run()
-	await _take(body, &"rope")
+	for i: int in 3:
+		await _take(body, &"rope")
 	WeatherManager.sky.weather.apply(&"calm", 10.0, &"", -1.0)
 	assert_eq(_counts().get(&"rope", 0), 0)
 
@@ -179,7 +180,7 @@ func test_a_solo_run_starts_on_the_sandbar() -> void:
 	assert_true(shell.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "no network port")
 	var body := shell.session.body(1)
 	assert_eq(body.position, shell.island.spawn_points(true)[0])
-	assert_eq(shell.session.pickups.get_child_count(), 19)
+	assert_eq(shell.session.pickups.get_child_count(), 20)
 	assert_eq(shell.island.get_node("Palms").get_child_count(), 6)
 	assert_eq(body.camera.limit_right, 64 * 16)
 	assert_eq(body.camera.limit_bottom, 40 * 16)
