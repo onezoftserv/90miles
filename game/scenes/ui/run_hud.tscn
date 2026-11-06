@@ -2,10 +2,13 @@
 
 [ext_resource type="Script" path="res://scenes/ui/run_hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/meters_hud.tscn" id="2_meters"]
+[ext_resource type="PackedScene" path="res://scenes/ui/horizon_line.tscn" id="3_line"]
 
 [node name="RunHud" type="CanvasLayer"]
 layer = 3
 script = ExtResource("1_hud")
+
+[node name="HorizonLine" parent="." instance=ExtResource("3_line")]
 
 [node name="Meters" parent="." instance=ExtResource("2_meters")]
 unique_name_in_owner = true

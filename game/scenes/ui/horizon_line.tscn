@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/horizon_line.gd" id="1_line"]
+
+[node name="HorizonLine" type="ColorRect"]
+offset_right = 640.0
+offset_bottom = 6.0
+mouse_filter = 2
+script = ExtResource("1_line")

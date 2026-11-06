@@ -95,3 +95,14 @@ func test_players_share_a_midday_climate() -> void:
 func test_scene_draws_without_textures() -> void:
 	for dependency: String in ResourceLoader.get_dependencies(PLAYGROUND_PATH):
 		assert_false(dependency.get_extension() in ["png", "jpg", "webp", "svg"], dependency)
+
+
+func test_the_playground_has_a_day_night_tint() -> void:
+	var found: Array[Node] = playground.find_children("*", "DayNightTint", false, false)
+	assert_eq(found.size(), 1)
+	assert_true(found[0] is CanvasModulate)
+
+
+func test_the_playground_starts_at_1000_on_the_one_clock() -> void:
+	assert_eq(WeatherManager.hour(), 10)
+	assert_true(playground.climate == WeatherManager.sky.climate)
