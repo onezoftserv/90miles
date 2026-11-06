@@ -11,6 +11,8 @@ rules:
   tasks:
     - End every task group with the import, smoke run and GUT commands passing.
     - Every change that touches player-facing behaviour includes at least one test with exactly 1 player, offline.
+  design:
+    - Study how the three reference games in reference/ (Shattered Pixel Dungeon, Brogue CE, DCSS) handle the mechanic and say which ideas are borrowed or rejected and why, with file and function names. Ideas only, never code.
   specs:
     - When a requirement changes a number from docs/GAME_DESIGN.md or another design doc, name the doc section it changes.
     - Every requirement that involves players states what happens with exactly 1 player (solo, offline); a rule that needs a teammate gives the solo alternative.

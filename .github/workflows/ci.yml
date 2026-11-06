@@ -86,6 +86,10 @@ jobs:
         run: |
           set -o pipefail
           timeout 120 "$GODOT" --headless --path game --quit-after 300 2>&1 | tee run.log
+          # The playgrounds launched directly, as a developer does (solo and as host).
+          timeout 120 "$GODOT" --headless --path game --quit-after 300 res://scenes/dev/movement_playground.tscn 2>&1 | tee -a run.log
+          timeout 120 "$GODOT" --headless --path game --quit-after 300 res://scenes/dev/coop_playground.tscn -- --solo 2>&1 | tee -a run.log
+          timeout 120 "$GODOT" --headless --path game --quit-after 300 res://scenes/dev/coop_playground.tscn -- --host=0 2>&1 | tee -a run.log
           if sed 's/\x1b\[[0-9;]*m//g' run.log | grep -E '^(ERROR|SCRIPT ERROR):'; then
             echo "::error::errors while running the game"; exit 1
           fi

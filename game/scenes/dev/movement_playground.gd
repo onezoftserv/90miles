@@ -18,8 +18,9 @@ const START_TIME_S: float = 120.0
 
 var terrain: GridTerrain = GridTerrain.new()
 ## Starts at 10:00 on the one clock (WeatherManager), so heat rises outside the hut in the
-## midday sun and sunstroke can be tried by hand.
-var climate: ClimateState = WeatherManager.sky.climate
+## midday sun and sunstroke can be tried by hand. Read once the scene is ready: when the
+## playground is launched as the main scene it is built before WeatherManager has made its sky.
+@onready var climate: ClimateState = WeatherManager.sky.climate
 
 @onready var hud: MetersHud = $Hud/MetersHud
 

@@ -13,6 +13,7 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 - Keep `TASKS.md` current: tick tasks as they ship, add new ones below the current milestone.
 - Small PRs, one capability each. Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`).
 - Solo is a first-class mode: every feature must work, be winnable and be tested with exactly 1 player, offline (no hosting, no port, no second peer). A rule that needs a teammate (revive, drag, pooled materials, shared seats) must state its solo alternative in the spec, and each change adds at least one 1-player test.
+- Reference games first: before designing any mechanic (for example how fast time passes, hunger and thirst rates, stealth, level generation, AI, items), check how Shattered Pixel Dungeon, Brogue CE and DCSS handle it in `reference/`, and record in the change's `design.md` which ideas are borrowed or rejected and why (file and function names). Ideas and structure only; never copy code, data tables or text.
 
 ## Godot conventions
 
