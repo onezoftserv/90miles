@@ -22,7 +22,7 @@ Every rule here works offline with exactly 1 player: the solo spawn point is nex
 
 ## Provisional decisions
 
-Taken from the build plan's recommended options; each waits for the owner's confirmation.
+Taken from the build plan's recommended options; the owner confirmed all ten as they stand on 2026-11-06 (8 driftwood: one squall refresh covers the third solo night's fire).
 
 1. **Driftwood: 8 on the sandbar** (2 in the hut, 6 on the beach, refreshed after a squall), the `docs/ISLANDS.md` "Resource rules" base. Contradiction for the owner: survival-meters' "Three solo days" has the player at a fire each night, and 3 fires need 9 driftwood (and 3 tinder), so a solo player needs one squall refresh or the sandbar needs 9. Not silently changed. The "+4 after a squall, ×0.8 per extra player" rule is simplified to "put back what was taken", with no party scaling.
 2. **Dry grass: 3** on the dune, never refreshed (tinder for the fire recipe; not in `docs/ISLANDS.md` §1).
