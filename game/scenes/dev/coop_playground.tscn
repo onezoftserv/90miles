@@ -3,13 +3,8 @@
 [ext_resource type="Script" path="res://scenes/dev/coop_playground.gd" id="1_playground"]
 [ext_resource type="PackedScene" path="res://scenes/net/coop_session.tscn" id="2_session"]
 [ext_resource type="PackedScene" path="res://scenes/ui/quick_chat_wheel.tscn" id="3_wheel"]
-[ext_resource type="FontFile" path="res://assets/fonts/PixelifySans[wght].ttf" id="4_font"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="5_pause"]
 [ext_resource type="PackedScene" path="res://scenes/ui/meters_hud.tscn" id="6_hud"]
-
-[sub_resource type="Theme" id="Theme_panel"]
-default_font = ExtResource("4_font")
-default_font_size = 8
 
 [node name="CoopPlayground" type="Node2D"]
 script = ExtResource("1_playground")
@@ -28,7 +23,6 @@ offset_left = 8.0
 offset_top = 8.0
 offset_right = 248.0
 offset_bottom = 104.0
-theme = SubResource("Theme_panel")
 
 [node name="Rows" type="VBoxContainer" parent="UI/Panel"]
 layout_mode = 2
