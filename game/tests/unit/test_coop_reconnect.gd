@@ -168,21 +168,98 @@ func test_someone_elses_id_cannot_take_the_body() -> void:
 	assert_true(is_instance_valid(papo_body) and host.peer_ids().size() == 3, "and waits for Papo")
 
 
-func test_an_id_in_use_joins_as_a_new_player() -> void:
+func test_back_before_the_host_noticed_takes_over() -> void:
+	# Papo's client crashed; the host still holds the dead connection when he joins again.
 	var host := net.add_host(_island)
-	var first := await net.join(_as(papo))
-	assert_not_null(first)
-	if first == null:
+	var stale := await net.join(_as(papo))
+	assert_not_null(stale)
+	if stale == null:
 		return
-	var papo_id: int = net.peer_id(first)
-	var papo_body := host.body(papo_id)
-	var twin := await net.join(_as(papo))
-	assert_not_null(twin, "the same install joins twice")
-	if twin == null:
+	var stale_id: int = net.peer_id(stale)
+	var papo_body := host.body(stale_id)
+	var back := await net.join(_as(papo))
+	assert_not_null(back, "Papo joins again while his old connection is open")
+	if back == null:
 		return
-	assert_not_same(host.body(net.peer_id(twin)), papo_body, "as a new player")
-	assert_same(host.body(papo_id), papo_body, "and Papo keeps his")
-	assert_false(host.is_dropped(papo_id))
+	assert_same(host.body(net.peer_id(back)), papo_body, "he takes back the same body")
+	assert_null(host.body(stale_id))
+	assert_false(papo_body.downed)
+	var closed := func() -> bool: return not host.multiplayer.get_peers().has(stale_id)
+	assert_true(await wait_until(closed, TIMEOUT_S), "the host closed the old connection")
+	assert_eq(host.peer_ids().size(), 2, "still two players: the host and Papo")
+
+
+func test_a_client_with_the_hosts_id_joins_as_a_new_player() -> void:
+	# A host and a client started from one install share the id.
+	var same_install := func(session: CoopSession) -> void:
+		_island(session)
+		session.local_identity = papo
+	var host := net.add_host(same_install)
+	var host_body := host.body(CoopSession.HOST_ID)
+	var client := await net.join(_as(papo, "Yuni"))
+	assert_not_null(client)
+	if client == null:
+		return
+	assert_not_same(host.body(net.peer_id(client)), host_body, "a new player")
+	assert_same(host.body(CoopSession.HOST_ID), host_body, "the host keeps its own")
+	assert_eq(host.peer_ids().size(), 2)
+
+
+func test_a_body_reclaimed_twice_keeps_its_owner_for_late_joiners() -> void:
+	var host := net.add_host(_island)
+	var papo_body := await _papo_drops(host)
+	if papo_body == null:
+		return
+	var second := await net.join(_as(papo))
+	assert_not_null(second)
+	if second == null:
+		return
+	var second_id: int = net.peer_id(second)
+	net.drop(second)
+	assert_true(await wait_until(func() -> bool: return host.is_dropped(second_id), TIMEOUT_S))
+	var third := await net.join(_as(papo))
+	assert_not_null(third)
+	if third == null:
+		return
+	var third_id: int = net.peer_id(third)
+	assert_same(host.body(third_id), papo_body, "the same body after two drops")
+	var late := await net.join(_as(PlayerIdentity.create(), "Yuni"))
+	assert_not_null(late)
+	if late == null:
+		return
+	assert_true(await net.settle())
+	assert_not_null(late.body(third_id), "the late joiner maps it to its current owner")
+	net.drop(third)
+	assert_true(await wait_until(func() -> bool: return host.is_dropped(third_id), TIMEOUT_S))
+	host._physics_process(CoopSession.DISCONNECT_DOWNED_S + 1.0)
+	var removed := func() -> bool: return late.body(third_id) == null and late.removed_names() == (["Papo"] as Array[String])
+	assert_true(await wait_until(removed, TIMEOUT_S), "and removing it reaches the late joiner")
+
+
+func test_a_body_downed_by_its_meters_stays_down() -> void:
+	var host := net.add_host(_island)
+	var client := await net.join(_as(papo))
+	assert_not_null(client)
+	if client == null:
+		return
+	var papo_body := host.body(net.peer_id(client))
+	papo_body.meters.downed = true
+	net.drop(client)
+	var dropped := func() -> bool: return host.is_dropped(_peer_of(host, papo_body))
+	assert_true(await wait_until(dropped, TIMEOUT_S))
+	var back := await net.join(_as(papo))
+	assert_not_null(back)
+	if back == null:
+		return
+	assert_same(host.body(net.peer_id(back)), papo_body)
+	assert_true(papo_body.downed, "it was down before the drop: it stays down")
+
+
+func _peer_of(session: CoopSession, player: PlayerBody) -> int:
+	for peer_id: int in session.peer_ids():
+		if session.body(peer_id) == player:
+			return peer_id
+	return 0
 
 
 func test_a_late_joiner_sees_the_reclaimed_body_under_its_new_owner() -> void:
