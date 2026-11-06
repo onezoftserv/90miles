@@ -142,3 +142,16 @@ func test_a_late_name_reaches_the_tag() -> void:
 	session.roster[7] = "Papo"
 	session.roster_updated.emit()
 	assert_eq(tag.label.text, "Papo")
+
+
+func test_a_reclaimed_body_becomes_the_local_player() -> void:
+	# This peer (9) rejoined: the body it spawned with as peer 7 is handed to it.
+	var session := _session([7] as Array[int])
+	var hud := HUD_SCENE.instantiate() as RunHud
+	add_child_autofree(hud)
+	hud.bind(session, 9, false)
+	var reclaimed := session.body(7)
+	assert_not_null(reclaimed.get_node_or_null(^"NameTag"), "tagged while it was someone else's")
+	session._rebind_body(7, 9)
+	assert_null(reclaimed.get_node_or_null(^"NameTag"), "no tag over your own player")
+	assert_eq(hud.meters.shown(), reclaimed.meters, "its meters fill the meters panel")

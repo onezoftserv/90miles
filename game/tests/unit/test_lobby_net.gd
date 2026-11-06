@@ -89,7 +89,7 @@ func test_client_renames_itself_over_and_over() -> void:
 	assert_true(await wait_until(func() -> bool: return dayana.roster.size() == 3, TIMEOUT_S))
 	watch_signals(dayana)
 	for i: int in 50:
-		papo.request_join.rpc_id(1, "Otro %d" % i)
+		papo.request_join.rpc_id(1, "Otro %d" % i, "", "")
 	await wait_seconds(0.3)
 	assert_eq(host.player_name(net.peer_id(papo)), "Papo")
 	assert_signal_not_emitted(dayana, "roster_updated", "no roster update for ignored requests")

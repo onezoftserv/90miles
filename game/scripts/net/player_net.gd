@@ -91,6 +91,18 @@ func attach(peer_id: int, net_role: Role, send: Callable) -> void:
 		sync.set_multiplayer_authority(1, false)
 
 
+## coop-reconnect: hands the body to a rejoined player's new peer and starts its intent stream
+## afresh, since the new client numbers its intents from 1.
+func rebind(peer_id: int, net_role: Role, send: Callable) -> void:
+	attach(peer_id, net_role, send)
+	_queue.clear()
+	_last_queued_seq = 0
+	_sent_seq = 0
+	net_ack_seq = 0
+	buffer.clear()
+	interpolator.clear()
+
+
 ## Host: queues an intent from this body's peer. Refuses one that is not newer than the last.
 func enqueue(seq: int, intent: MoveIntent, delta: float) -> bool:
 	if role != Role.HOST or seq <= _last_queued_seq:
