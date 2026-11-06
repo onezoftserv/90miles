@@ -10,6 +10,11 @@ script = ExtResource("1_session")
 [node name="EntitySpawner" type="MultiplayerSpawner" parent="."]
 spawn_path = NodePath("../Entities")
 
+[node name="Pickups" type="Node2D" parent="."]
+
+[node name="PickupSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Pickups")
+
 [node name="Players" type="Node2D" parent="."]
 
 [node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]

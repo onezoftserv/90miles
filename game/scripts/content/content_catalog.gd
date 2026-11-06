@@ -20,6 +20,7 @@ const DEFAULT_TYPES: Dictionary[StringName, Script] = {
 	&"routes": preload("res://scripts/data/route_data.gd"),
 	&"backgrounds": preload("res://scripts/data/background_data.gd"),
 	&"weather": preload("res://scripts/data/weather_data.gd"),
+	&"islands": preload("res://scripts/data/island_layout_data.gd"),
 }
 const EXTENSIONS: Array[String] = ["tres", "res"]
 

@@ -51,7 +51,7 @@ func test_solo_from_the_title() -> void:
 	assert_true(shell.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "no network port")
 	assert_not_null(shell.session)
 	assert_eq(shell.session.peer_ids(), [1] as Array[int])
-	assert_eq(shell.session.body(1).position, DevIsland.SPAWN_POINTS[0], "on the beach")
+	assert_eq(shell.session.body(1).position, shell.island.spawn_points(true)[0], "on the beach")
 	assert_null(shell.screen, "no lobby or menu over the run")
 	assert_not_null(shell.hud, "the run HUD")
 	assert_true(shell.hud.solo)
