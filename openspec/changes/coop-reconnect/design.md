@@ -34,11 +34,15 @@
 
 - `PlayerIdentity` (`scripts/net/player_identity.gd`) holds `id` (32 hex characters) and `secret` (64 hex characters). It makes them from `Crypto.generate_random_bytes`, checks their form, and hashes the secret with SHA-256.
 - `GameSettings` keeps them under `[player] id` and `secret`. A missing or malformed pair is replaced by a new one, and the shell saves it at once so the id is stable from the first launch. `load_from` never writes files.
-- `IdentityRegistry` (`scripts/net/identity_registry.gd`) is the host's map for a run: id → (current peer, secret hash). `claim(id, secret, peer)` returns RECLAIM with the old peer, NEW, or ANONYMOUS. The session asks it whether the old peer is dropped.
-  - An unknown id is registered to the new peer.
-  - A known id whose player dropped, with the matching secret, is RECLAIM.
-  - Anything else is NEW, without registering: an id held by a connected player, a wrong secret, or a malformed or empty id.
-  - The host registers its own identity at start.
+- `IdentityRegistry` (`scripts/net/identity_registry.gd`) is the host's map for a run: id → (current peer, secret hash). `claim(id, secret, peer, is_dropped)` returns NEW, RECLAIM or TAKEOVER (both with the old peer), or GUEST.
+  - An unknown id is NEW, registered to the new peer.
+  - A known id with the matching secret is RECLAIM when its player dropped, and TAKEOVER when its old connection is still open.
+  - GUEST is not registered: a wrong secret, a malformed or empty id, or the host's own id.
+  - The host `reserve()`s its own identity at start, even if a client got there first.
+- **TAKEOVER** covers a client that crashed and joins again before the host's ENet times out the dead connection (several seconds).
+  - The host closes the old connection with `SceneMultiplayer.disconnect_peer()`. That forgets the peer at once, so nothing more is sent to a closing connection; it emits no signal.
+  - The host then handles it as a drop, and reclaims.
+  - Two clients from one install would take each other over, so give them separate settings files.
 - **Why a new player instead of a refusal:** a host and a client launched from one install share `user://settings.cfg` and so the id. Refusing would break the two-process checks this repo relies on, and "cannot take their body" is met either way.
 - **Ids never leave the host.** The roster stays peer → name. The secret is only compared as a hash, and it travels in plain text over ENet like the rest of the session (accepted for v1).
 

@@ -177,6 +177,9 @@ func test_back_before_the_host_noticed_takes_over() -> void:
 		return
 	var stale_id: int = net.peer_id(stale)
 	var papo_body := host.body(stale_id)
+	net.freeze(stale)
+	await wait_process_frames(5)
+	assert_true(host.multiplayer.get_peers().has(stale_id), "the host still holds the dead connection")
 	var back := await net.join(_as(papo))
 	assert_not_null(back, "Papo joins again while his old connection is open")
 	if back == null:

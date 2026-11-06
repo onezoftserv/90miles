@@ -51,17 +51,22 @@ Each install SHALL keep a random player id and a separate secret, made on first 
 - **THEN** it presents the same player id both times
 
 ### Requirement: Reclaiming a player
-A join request SHALL reclaim a player only when its id belongs to a player who dropped and is still in the world, and its secret matches. Otherwise the client joins as a new player: no id, an id already held by a connected player, or a wrong secret. That includes a host and a client started from the same install. Solo has nobody to reclaim.
+A join request SHALL reclaim a player only when its id and secret match a player who is still in the world: one who dropped, or one whose old connection the host still holds (a client that crashed and came back before the host noticed; the host closes the old connection first). The host's own player is never reclaimed. Otherwise the client joins as a new player: no id, a wrong secret, or the host's id (a host and a client started from the same install). Solo has nobody to reclaim.
 
 #### Scenario: Someone else's id
 - **GIVEN** Papo's client dropped and his player lies downed
 - **WHEN** another client joins presenting Papo's id with a different secret
 - **THEN** it joins as a new player and Papo's body stays downed, waiting for Papo
 
-#### Scenario: An id already in use
-- **GIVEN** Papo is connected and playing
-- **WHEN** a second client joins presenting Papo's id and secret
-- **THEN** it joins as a new player and Papo keeps his player
+#### Scenario: Back before the host noticed
+- **GIVEN** Papo's client crashed and the host still holds his old connection
+- **WHEN** Papo's client joins again from the same install
+- **THEN** the host closes the old connection and Papo takes back the same body
+
+#### Scenario: The host's id
+- **GIVEN** a host and a client started from the same install
+- **WHEN** the client joins presenting the host's id and secret
+- **THEN** it joins as a new player and the host keeps its own player
 
 ### Requirement: Join request
 A joining client's player SHALL spawn when the host receives its join request, not when it connects, so that the host can match the player id first. A peer that connects but sends no join request within 10 s is disconnected, and its slot is free again. The host's start of the run spawns only players whose join request has arrived. Solo has no joiners: its one player spawns at once.

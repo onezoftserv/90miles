@@ -32,9 +32,9 @@ signal roster_updated
 signal lobby_received(in_run: bool)
 ## The host started the run (on every peer).
 signal run_started
-## A rejoined player took back its body: it now belongs to `new_peer` (on every peer).
 ## A dropped player was removed and now counts as dead for the run (on every peer).
 signal removal_recorded(peer_id: int, player_name: String)
+## A rejoined player took back its body: it now belongs to `new_peer` (on every peer).
 signal player_rebound(old_peer: int, new_peer: int, body: PlayerBody)
 
 ## LOBBY gathers names and spawns nobody; RUN spawns every player (and every joiner at once).
@@ -141,7 +141,7 @@ func start(lobby: bool = false) -> void:
 		phase = Phase.LOBBY if lobby else Phase.RUN
 		roster[multiplayer.get_unique_id()] = GameSettings.clean_name(local_name)
 		if local_identity != null:
-			_identities.claim(local_identity.id, local_identity.secret, multiplayer.get_unique_id(), _is_dropped_peer)
+			_identities.reserve(local_identity.id, local_identity.secret, multiplayer.get_unique_id())
 		multiplayer.peer_connected.connect(_on_peer_connected)
 		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 		if phase == Phase.RUN:
@@ -194,8 +194,12 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 		return
 	_awaiting.erase(sender)
 	var outcome := _identities.claim(player_id, player_secret, sender, _is_dropped_peer)
-	var reclaimed := outcome.kind == IdentityRegistry.Claim.RECLAIM and _started and phase == Phase.RUN \
-		and _reclaim(outcome.old_peer, sender)
+	if outcome.kind == IdentityRegistry.Claim.TAKEOVER:
+		# The old connection is dead but not timed out yet: close it and treat it as a drop.
+		_close_peer(outcome.old_peer)
+		_on_peer_disconnected(outcome.old_peer)
+	var takes_back := outcome.kind == IdentityRegistry.Claim.RECLAIM or outcome.kind == IdentityRegistry.Claim.TAKEOVER
+	var reclaimed := takes_back and _started and phase == Phase.RUN and _reclaim(outcome.old_peer, sender)
 	if not reclaimed:
 		roster[sender] = GameSettings.clean_name(player_name, default_name(roster))
 		if _started and phase == Phase.RUN:
@@ -298,6 +302,18 @@ func _is_dropped_peer(peer_id: int) -> bool:
 	return _dropped.has(peer_id)
 
 
+# Host: closes `peer_id`'s connection and forgets the peer at once, so nothing more is sent to
+# a connection that is closing. SceneMultiplayer emits no peer_disconnected for it.
+func _close_peer(peer_id: int) -> void:
+	if not multiplayer.get_peers().has(peer_id):
+		return
+	var scene_api := multiplayer as SceneMultiplayer
+	if scene_api != null:
+		scene_api.disconnect_peer(peer_id)
+	else:
+		multiplayer.multiplayer_peer.disconnect_peer(peer_id)
+
+
 @rpc("authority", "call_remote", "reliable")
 func update_roster(roster_data: Dictionary) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID:
@@ -352,8 +368,7 @@ func _physics_process(delta: float) -> void:
 			_awaiting[peer_id] = waiting
 		else:
 			_awaiting.erase(peer_id)
-			if multiplayer.get_peers().has(peer_id):
-				multiplayer.multiplayer_peer.disconnect_peer(peer_id)
+			_close_peer(peer_id)
 	for peer_id: int in _dropped.keys():
 		var left: float = _dropped[peer_id] - delta
 		if left > 0.0:

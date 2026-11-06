@@ -111,6 +111,13 @@ func own_body(session: CoopSession) -> PlayerBody:
 	return session.body(peer_id(session))
 
 
+## Frees a session but leaves its connection open: a client that crashed, whose connection the
+## host has not timed out yet (coop-reconnect takeover). It sends nothing more.
+func freeze(session: CoopSession) -> void:
+	if sessions.has(session):
+		session.free()
+
+
 ## Frees a session, then closes its peer: what a peer quitting looks like to the others.
 func drop(session: CoopSession) -> void:
 	var index: int = sessions.find(session)

@@ -13,9 +13,10 @@ The user asked for this change to follow `ui-shell` (2026-11-05). It builds on t
 - **A rejoin within the 90 s reclaims the player.** A client that drops and joins again with the same id and secret before its 90 s are up takes back the same body: the node itself, with its position, meters and everything it carries.
   - The body stands up again unless its meters had it downed.
   - Everyone else sees the same body come back under its new peer id.
+- **Back before the host noticed:** a client that crashed and joins again while the host still holds its dead connection takes over. The host closes the old connection and the player takes back its body.
 - **Taking someone else's player is impossible.**
-  - An id held by a connected player, a wrong secret, or no id at all never reclaims anything: that client joins as a new player.
-  - Joining as a new player, not refusing, keeps a host and a client from the same install working (they share a settings file, so they share an id).
+  - A wrong secret, no id at all, or the host's own id never reclaims anything: that client joins as a new player.
+  - The host's id joins as a new player, not refused, so a host and a client from the same install keep working (they share a settings file, so they share an id).
 - **Joiners spawn when their join request arrives**, not on connect, so the host can match the id first.
   - A peer that connects but sends no join request within 10 s is disconnected and frees its slot.
   - The host's "Empezar viaje" spawns only identified peers.
@@ -25,7 +26,7 @@ The user asked for this change to follow `ui-shell` (2026-11-05). It builds on t
 - **Solo is unchanged.** It opens no port, so a solo run stays closed to joiners, and nothing here applies with one player. A test keeps that.
 
 **Decisions (made here, to confirm):**
-1. **A failed claim joins as a new player rather than being refused.** This covers an id in use, a wrong secret, and no id at all. Refusing would break running a host and a client from one install, which every two-process check in this repo does.
+1. **A failed claim joins as a new player rather than being refused.** This covers a wrong secret, no id at all, and the host's own id. Refusing would break running a host and a client from one install, which every two-process check in this repo does. Two clients from one install would take each other over; give them separate settings files.
 2. **The secret travels in plain text over ENet**, like everything else in the session. Someone on the same network could read it. Encrypting the transport (DTLS) is out of scope.
 3. **The reclaimed body keeps its node name** (the peer id it first spawned under). Nothing reads a peer id from a node name; the session maps peers to bodies.
 4. **Join timeout of 10 s** for a connected peer to identify.
@@ -43,7 +44,7 @@ None.
 - `coop-networking`:
   - "Disconnect handling" changes: a rejoin within 90 s reclaims the player, and a removed player counts as dead.
   - ADDED "Player identity": a stable id and secret per install, kept by the host and never shared.
-  - ADDED "Reclaiming a player": a dropped player's id and secret reclaim its body; anything else joins as a new player.
+  - ADDED "Reclaiming a player": a player's id and secret reclaim its body (dropped, or a connection the host has not noticed is dead); anything else joins as a new player.
   - ADDED "Join request": players spawn on the join request, and a silent peer times out.
 
 ## Impact
