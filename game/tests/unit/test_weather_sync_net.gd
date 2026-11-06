@@ -93,6 +93,7 @@ func test_a_forged_clock_message_is_ignored() -> void:
 	await wait_frames(30)
 	assert_eq(second.sky.weather.current.id, &"calm")
 	assert_gt(second.sky.clock.time_of_day_s, 299.0)
+	assert_engine_error("not allowed", "the host's engine refuses a non-authority call")
 
 
 func test_a_client_never_rolls() -> void:

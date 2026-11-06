@@ -9,6 +9,8 @@ var sky: WorldSky
 
 func before_each() -> void:
 	sky = WorldSky.from_catalog(GameState.content)
+	# Squalls come only from the tests, never from a random roll.
+	sky.weather.rolls_enabled = false
 
 
 func _tint_of(phase: DataEnums.DayPhase) -> Color:

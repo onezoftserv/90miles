@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="WeatherData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weather_data.gd" id="1_weather"]
+
+[resource]
+script = ExtResource("1_weather")
+id = &"squall"
+name_es = "Turbonada"
+name_en = "Squall"
+description_es = "Una raya oscura en el horizonte y un minuto después el cielo se viene abajo: lluvia, viento y fuegos apagados. Dura dos minutos."
+description_en = "A dark line on the horizon and a minute later the sky comes down: rain, wind and fires put out. It lasts two minutes."
+hint_es = "Amarra la balsa y busca refugio."
+hint_en = "Tie down the raft and find shelter."
+kind = 0
+context = 2
+is_storm = true
+trigger = 0
+roll_weight = 1.0
+duration_s = 120.0
+followed_by_weather_id = &"calm"
+tell = 3
+warning_lead_s = 60.0
+canvas_tint = Color(0.7, 0.72, 0.8, 1)
+heat_gain_mult = 1.0
+direct_sun = false
+morale_on_start = -10.0
+fire_extinguish_s = 5.0
+patrols_in_port = true
+rain = true
+respawn_trigger = 1
