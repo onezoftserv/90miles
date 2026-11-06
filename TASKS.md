@@ -35,7 +35,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] `coop-networking`: host/join, spawner, synchronizer, quick chat
 - [x] `survival-meters`: all six meters with the §4 numbers, HUD bars
 - [ ] Handmade sandbar scene: hut, 6 palms, flotsam line, tide pools
-- [ ] `crafting-inventory`: inventory, pick-up, coconut, rain cup, workbench, fire
+- [x] `crafting-inventory`: inventory, pick-up, coconut, rain cup, workbench, fire
 - [ ] `weather-daynight`: 12-minute day, CanvasModulate, calm/squall only
 - [ ] Playtest: can 2 players survive 3 days? Tune drains.
 

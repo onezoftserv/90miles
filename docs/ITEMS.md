@@ -10,7 +10,7 @@ Tags: `food`, `water`, `tool`, `weapon`, `material`, `wearable`, `shiny` (attrac
 | --- | --- | --- | --- |
 | Coco (green coconut) | +15, hunger +5 | Palms | Needs a knife or a rock; 2 uses |
 | Rain cup | +25 | Rain catcher | 1 use; jug stores 4 |
-| Still cup | +40 | Solar still, 1 per 2 in-game hours | |
+| Still cup | +40 | Solar still, 1 per 12 in-game hours | |
 | Well cup | +30 | Lighthouse well only | |
 | Seawater cup | +10, then −30 over 120 s | Anywhere | The desperate option |
 | Rum (bottle) | +5, morale +15, energy −10, thirst −10 after | Tourist wreck, Papo | 3 uses; Papo's need |
