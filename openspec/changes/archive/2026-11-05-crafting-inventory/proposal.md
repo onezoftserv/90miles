@@ -23,7 +23,7 @@ Every recipe here has no player-count condition. A build site accepts all deposi
 
 ## Provisional decisions
 
-Taken from the build plan's recommended options; each waits for the owner's confirmation.
+Taken from the build plan's recommended options; the owner confirmed all twelve as they stand on 2026-11-06.
 
 1. **Coconut opening** needs a blade capability (knife, later machete), spending 1 knife use per coconut. The "or a rock" alternative is not built (no `rock` item in the manifest). A solo level must place a knife (the hut).
 2. **Coconut servings:** 1 per coconut, not the 2 `docs/ITEMS.md` mentions.
