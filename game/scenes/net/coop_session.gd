@@ -276,8 +276,11 @@ func craft_for(peer: int, recipe_id: StringName, station_path: NodePath) -> bool
 ## Host: `peer` uses an item from their own slot on `target_peer`'s player (0: themself), who
 ## must be within reach.
 func use_for(peer: int, slot: int, use_index: int, target_peer: int) -> bool:
-	var player := _acting_body(peer)
+	var player := _acting_body(peer, true)
 	if player == null:
+		return false
+	# Downed means immobile; only a solo last stand may act, and only to stand themself up.
+	if player.meters.last_stand and not (target_peer in [0, peer] and ItemUser.revives(player, slot, use_index)):
 		return false
 	var target: PlayerBody = null
 	if target_peer != 0 and target_peer != peer:
@@ -305,10 +308,13 @@ func _sender() -> int:
 	return HOST_ID if sender == 0 else sender
 
 
-# `peer`'s living body if it may act now: the host is trusted, a client is rate limited.
-func _acting_body(peer: int) -> PlayerBody:
+# `peer`'s body if it may act now: alive and on their feet (a downed player or one in a last
+# stand lies still, unless `allow_last_stand`); the host is trusted, a client is rate limited.
+func _acting_body(peer: int, allow_last_stand: bool = false) -> PlayerBody:
 	var player := body(peer)
-	if player == null or player.meters.dead:
+	if player == null or player.meters.dead or player.meters.downed:
+		return null
+	if player.meters.last_stand and not allow_last_stand:
 		return null
 	if peer != HOST_ID:
 		var limits: PeerLimits = _limits.get(peer)

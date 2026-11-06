@@ -133,3 +133,9 @@ Pick-ups, item uses, deposits, crafts and putting out fires SHALL be requests a 
 - GIVEN a client that asks to craft without the inputs, or to use a slot it has nothing in, on another player
 - WHEN the host receives it
 - THEN nothing changes
+
+#### Scenario: A downed player cannot craft, deposit or use items
+- GIVEN a downed co-op player holding a recipe's inputs and a rain cup, next to a workbench and a build site
+- WHEN the host receives their request to craft, deposit or use an item
+- THEN the host refuses it and nothing is consumed, while a teammate within reach can still revive them with a rain cup or a coconut and a knife
+- AND a solo player in a last stand, who has no teammate, may drink a reviving cup they carry to stand up, but cannot craft, deposit or use any other item

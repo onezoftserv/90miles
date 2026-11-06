@@ -35,6 +35,17 @@ static func use(actor: PlayerBody, slot_index: int, use_index: int, target: Play
 	return true
 
 
+## Whether the use at `slot_index`/`use_index` of `actor`'s inventory stands someone up.
+static func revives(actor: PlayerBody, slot_index: int, use_index: int) -> bool:
+	if slot_index < 0 or slot_index >= actor.inventory.slots.size():
+		return false
+	var slot := actor.inventory.slots[slot_index]
+	var item := actor.inventory.item_for(slot.item_id) if not slot.is_empty() else null
+	if item == null or use_index < 0 or use_index >= item.uses.size():
+		return false
+	return _revives(item.uses[use_index])
+
+
 static func _revives(action: ItemUseData) -> bool:
 	for effect: EffectData in action.effects:
 		if effect.kind == EffectData.Kind.REVIVE:
