@@ -99,7 +99,7 @@ func test_losing_the_host_stops_the_clock() -> void:
 	var shell := _shell()
 	_solo(shell)
 	shell.session.host_lost.emit()
-	await wait_frames(2)
+	await wait_process_frames(2)
 	assert_false(WeatherManager.running)
 
 

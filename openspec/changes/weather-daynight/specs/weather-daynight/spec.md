@@ -84,3 +84,16 @@ Calm and squall SHALL be `WeatherData` files in `game/resources/weather/` that p
 - **GIVEN** the content catalog
 - **WHEN** the content validator runs
 - **THEN** calm and squall load as `WeatherData` with no errors, squall lasting 120 s with a 60 s horizon-line warning followed by calm, and calm with a heat factor of 2
+
+### Requirement: The shell's run uses the sky
+A run started from the game shell (solo, host or joined client) SHALL run on the game's one sky: the same clock, climate, tint and horizon line as the playgrounds. Solo and the host start the clock at 06:00 (dawn, `docs/GAME_DESIGN.md` §5) when the run begins and stop it when the run ends or is left; a joined client follows the host and never starts it. The tint SHALL cover the world view only, and the horizon line SHALL sit in the run HUD. With exactly 1 player, offline, all of this holds.
+
+#### Scenario: Solo run from the title
+- **GIVEN** the title screen and no teammate
+- **WHEN** the one player starts a solo run
+- **THEN** the clock starts at 06:00 and advances, the player's body reads the sky's climate, the tint covers the world view and the horizon line is in the HUD, and returning to the title stops the clock
+
+#### Scenario: Hosted and joined runs
+- **GIVEN** a host in the lobby and a client that joined
+- **WHEN** the host begins the run
+- **THEN** the host's clock starts, and the client's session holds the same sky with weather rolls off and follows the host's clock

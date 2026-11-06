@@ -21,6 +21,10 @@
 
 - [x] 5.1 `CoopSession.sky`, the sky keys in the world state, `send_sky` and `receive_sky`, the periodic resync, clients never roll
 
+## 5b. Shell run
+
+- [x] 5b.1 `GameShell` runs on `WeatherManager.sky` (solo and host start it at dawn, a client follows the host, `_end_run` and the summary stop it), with `DayNightTint` in the world view and `HorizonLine` in the run HUD; `test_shell_sky.gd`
+
 ## 6. Checks
 
 - [x] 6.1 Import, smoke run, GUT and the 300-frame run are clean (GREEN); `openspec validate --all` and `validate weather-daynight --type change --strict` pass

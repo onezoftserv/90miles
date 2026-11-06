@@ -24,6 +24,9 @@ const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/dev_island.tscn")
 const LOBBY_SCENE: PackedScene = preload("res://scenes/shell/lobby_screen.tscn")
 const HOST_LOST_SCENE: PackedScene = preload("res://scenes/ui/host_lost_screen.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
+const TINT_SCENE: PackedScene = preload("res://scenes/world/day_night_tint.tscn")
+## A run's first morning: the clock reads 06:00, the start of dawn (docs/GAME_DESIGN.md §5).
+const RUN_START_TIME_S: float = 0.0
 
 ## Where the settings live; tests point it elsewhere.
 @export var settings_path: String = GameSettings.DEFAULT_PATH
@@ -41,6 +44,8 @@ var screen: Control
 ## The run's session and island, or null outside a run.
 var session: CoopSession
 var island: DevIsland
+## Tints the world view while a run is on, or null.
+var tint: DayNightTint
 ## Seconds, for the run's length. Tests replace it.
 var clock: Callable
 var _run_started_s: float = 0.0
@@ -220,6 +225,7 @@ func _build_run() -> void:
 	session = SESSION_SCENE.instantiate() as CoopSession
 	session.terrain = island.terrain
 	session.climate = island.climate
+	session.sky = WeatherManager.sky
 	session.spawn_points = DevIsland.SPAWN_POINTS.duplicate()
 	session.player_spawned.connect(_on_player_spawned)
 	session.player_removed.connect(_on_player_removed)
@@ -233,6 +239,11 @@ func _enter_run() -> void:
 	_close_screen()
 	flow = Flow.RUN
 	_run_started_s = clock.call()
+	# The host owns the clock; a client follows it through receive_sky and never starts it.
+	if session.multiplayer.is_server():
+		WeatherManager.start(RUN_START_TIME_S)
+	tint = TINT_SCENE.instantiate() as DayNightTint
+	_world.add_child(tint)
 	hud = HUD_SCENE.instantiate() as RunHud
 	add_child(hud)
 	hud.bind(session, session.multiplayer.get_unique_id(), session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer)
@@ -241,6 +252,10 @@ func _enter_run() -> void:
 # Freed at once, before the peer is closed: closing a peer under live synchronizers logs
 # engine errors.
 func _end_run() -> void:
+	WeatherManager.stop()
+	if tint != null:
+		tint.free()
+		tint = null
 	if hud != null:
 		hud.free()
 		hud = null
@@ -276,6 +291,7 @@ func _check_run_over() -> void:
 		if not dead:
 			return
 		entries.append({"name": session.player_name(peer_id), "dead": dead})
+	WeatherManager.stop()
 	var summary := _show(SUMMARY_SCENE, Flow.SUMMARY) as SummaryScreen
 	summary.show_summary(entries, clock.call() - _run_started_s)
 	summary.home_requested.connect(back_to_title)
