@@ -109,3 +109,89 @@ func test_the_client_sees_the_refresh_and_never_places_one() -> void:
 	assert_true(await wait_until(back, TIMEOUT_S), "the client sees the jug again")
 	await wait_seconds(0.3)
 	assert_eq(_pickups(a), _pickups(host), "no extras from the client's own weather signal")
+
+
+# A client's own intents cross the network the way a real client's do (PlayerNet sends the
+# body's intent every frame); the host's body runs the interaction.
+func _hold_interact(a: CoopSession, seconds: float) -> void:
+	net.own_body(a).intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	await wait_seconds(seconds)
+	net.own_body(a).intent = MoveIntent.new()
+	await wait_seconds(0.2)
+
+
+func test_a_client_holding_interact_next_to_a_pickup_takes_it() -> void:
+	var host := _host()
+	var a := await net.join(_setup)
+	assert_not_null(a)
+	if a == null:
+		return
+	assert_true(await net.settle())
+	var a_id: int = net.peer_id(a)
+	var tube := _find(host, &"inner_tube")
+	host.body(a_id).global_position = tube.global_position
+	await wait_physics_frames(3)
+	await _hold_interact(a, 0.5)
+	assert_eq(host.body(a_id).inventory.count_id(&"inner_tube"), 1, "in that client's inventory on the host")
+	assert_eq(host.body(1).inventory.count_id(&"inner_tube"), 0, "not the host's")
+	var gone := func() -> bool:
+		return _pickups(a).get(&"inner_tube", 0) == 1 and _pickups(host).get(&"inner_tube", 0) == 1
+	assert_true(await wait_until(gone, TIMEOUT_S), "one tube left on both peers")
+
+
+func test_a_client_out_of_reach_takes_nothing() -> void:
+	var host := _host()
+	var a := await net.join(_setup)
+	assert_not_null(a)
+	if a == null:
+		return
+	assert_true(await net.settle())
+	var a_id: int = net.peer_id(a)
+	var tube := _find(host, &"inner_tube")
+	host.body(a_id).global_position = tube.global_position + Vector2(64.0, 0.0)
+	await wait_physics_frames(3)
+	await _hold_interact(a, 0.5)
+	assert_eq(host.body(a_id).inventory.count_id(&"inner_tube"), 0)
+	assert_eq(_pickups(host).get(&"inner_tube", 0), 2, "the tube is still there")
+
+
+func test_a_client_climbs_a_palm_and_pays_the_energy() -> void:
+	var host := _host()
+	var a := await net.join(_setup)
+	assert_not_null(a)
+	if a == null:
+		return
+	assert_true(await net.settle())
+	var a_id: int = net.peer_id(a)
+	var palm := islands[0].get_node("Palms").get_child(0) as Palm
+	var body := host.body(a_id)
+	body.meters.energy = 80.0
+	body.global_position = palm.global_position
+	await wait_physics_frames(3)
+	var before: int = palm.coconuts
+	await _hold_interact(a, islands[0].layout.climb_hold_s + 0.5)
+	assert_eq(palm.coconuts, before - 1)
+	assert_eq(body.inventory.count_id(&"coco"), 1)
+	assert_almost_eq(body.meters.energy, 75.0, 0.5)
+	var synced := func() -> bool: return net.own_body(a).inventory.count_id(&"coco") == 1
+	assert_true(await wait_until(synced, TIMEOUT_S), "the client's inventory shows the coconut")
+
+
+func test_a_client_out_of_reach_cannot_climb_a_palm() -> void:
+	var host := _host()
+	var a := await net.join(_setup)
+	assert_not_null(a)
+	if a == null:
+		return
+	assert_true(await net.settle())
+	var a_id: int = net.peer_id(a)
+	var palm := islands[0].get_node("Palms").get_child(0) as Palm
+	var body := host.body(a_id)
+	body.meters.energy = 80.0
+	body.global_position = palm.global_position + Vector2(64.0, 0.0)
+	await wait_physics_frames(3)
+	var before: int = palm.coconuts
+	await _hold_interact(a, islands[0].layout.climb_hold_s + 0.5)
+	assert_eq(palm.coconuts, before)
+	assert_eq(body.inventory.count_id(&"coco"), 0)
+	assert_almost_eq(body.meters.energy, 80.0, 0.5)
