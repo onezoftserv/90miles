@@ -42,7 +42,8 @@ None.
 
 - `coop-networking`:
   - "Disconnect handling" changes: a rejoin within 90 s reclaims the player, and a removed player counts as dead.
-  - ADDED "Player identity": a stable id and secret per install, and claims that fail join as a new player.
+  - ADDED "Player identity": a stable id and secret per install, kept by the host and never shared.
+  - ADDED "Reclaiming a player": a dropped player's id and secret reclaim its body; anything else joins as a new player.
   - ADDED "Join request": players spawn on the join request, and a silent peer times out.
 
 ## Impact
