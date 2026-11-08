@@ -28,7 +28,7 @@ const ITEM_SUBCLASSES: Array[StringName] = [&"KeepsakeData", &"TextData"]
 const PART_CLASSES: Array[StringName] = [
 	&"ChainRouteEntryData", &"ChoiceData", &"CompanionData", &"CompanionStatusData",
 	&"ConditionData", &"CreatureCounterData", &"CreatureSpawnRuleData", &"DialogueLineData",
-	&"DialogueStateData", &"EffectData", &"EndingRoleData", &"GrabData", &"IslandGlyphData", &"ItemUseData",
+	&"DialogueStateData", &"EffectData", &"EndingRoleData", &"GrabData", &"IslandGlyphData", &"IslandSignData", &"ItemUseData",
 	&"ModifierData", &"NpcHookData", &"NpcSpawnRuleData", &"PatrolData", &"QuestData",
 	&"QuestStepData", &"SpawnEntryData", &"TextEntryData",
 ]

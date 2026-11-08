@@ -36,6 +36,9 @@ signal run_started
 signal removal_recorded(peer_id: int, player_name: String)
 ## A rejoined player took back its body: it now belongs to `new_peer` (on every peer).
 signal player_rebound(old_peer: int, new_peer: int, body: PlayerBody)
+## Every peer: the host loads island `layout_id` with these arrivals (peer id -> {health, energy})
+## and a beached raft of `raft_integrity` (0: none). IslandTravel does it.
+signal island_travel_requested(layout_id: StringName, arrivals: Dictionary, raft_integrity: float)
 
 ## LOBBY gathers names and spawns nobody; RUN spawns every player (and every joiner at once).
 enum Phase {
@@ -70,7 +73,14 @@ const WORLD_STATE_TYPES: Dictionary[String, int] = {
 	"weather_left_s": TYPE_FLOAT,
 	"pending": TYPE_STRING_NAME,
 	"pending_in_s": TYPE_FLOAT,
+	# The island the host is on (an id in game/resources/islands/) and the peers waiting out of
+	# play on it, for a joiner or a rejoined player.
+	"island": TYPE_STRING_NAME,
+	"waiting": TYPE_ARRAY,
+	"raft": TYPE_FLOAT,
 }
+## The most players in a `waiting` list or an arrivals message.
+const MAX_ARRIVALS: int = MAX_PLAYERS
 
 ## Where players appear, in join order (the host first). Set by the level.
 @export var spawn_points: Array[Vector2] = [Vector2.ZERO]
@@ -84,6 +94,9 @@ var climate: ClimateState = ClimateState.new()
 var sky: WorldSky = null
 ## Host: what each joiner receives (island seed, weather, time of day). Client: what arrived.
 var world_state: Dictionary = {}
+## Host: more world state computed when a joiner is told it (the island, who waits, the raft);
+## returns a Dictionary. IslandTravel sets it.
+var join_extras: Callable
 ## Player names by peer id (ui-shell). The host sets its own; the lobby fills in the others.
 var roster: Dictionary[int, String] = {}
 ## The name this peer plays under (the host's goes into the roster at start(); a client sends
@@ -698,6 +711,57 @@ func _is_unsafe_node_name(node_name: String) -> bool:
 	return false
 
 
+## Every peer: the host loads the island `layout_id` for everyone, with `arrivals` (peer id ->
+## {health, energy}) landing on its landing cells in peer order and `raft_integrity` for the raft
+## beached at its build site (0: none). Anything not from the host, or not shaped like this, is
+## ignored: a client never loads an island on its own.
+@rpc("authority", "call_local", "reliable")
+func travel_to(layout_id: String, arrivals: Dictionary, raft_integrity: float) -> void:
+	if not _is_from_host():
+		return
+	var id := StringName(layout_id)
+	var clean: Variant = checked_arrivals(arrivals)
+	if clean == null or not is_finite(raft_integrity) or not GameState.content.has_entry(&"islands", id):
+		return
+	island_travel_requested.emit(id, clean, maxf(raft_integrity, 0.0))
+
+
+## Every peer: the host tells the sign named `sign_name` (a plain child name) to show its line.
+@rpc("authority", "call_local", "reliable")
+func show_sign(sign_name: String) -> void:
+	if not _is_from_host() or _is_unsafe_node_name(sign_name):
+		return
+	var marker := get_node_or_null(NodePath(sign_name)) as IslandSign
+	if marker != null:
+		show_bubble(marker, marker.line(locale))
+
+
+# The RPC being handled came from the host, or is the host calling itself (a local call has no sender).
+func _is_from_host() -> bool:
+	var sender: int = multiplayer.get_remote_sender_id()
+	return sender == HOST_ID or (sender == 0 and multiplayer.is_server())
+
+
+## The arrivals of a message with every key a peer id and every value {health, energy} finite
+## numbers, or null when anything is not (or there are too many).
+static func checked_arrivals(arrivals: Dictionary) -> Variant:
+	if arrivals.size() > MAX_ARRIVALS:
+		return null
+	var clean: Dictionary = {}
+	for peer: Variant in arrivals:
+		var entry: Variant = arrivals[peer]
+		if not peer is int or not entry is Dictionary:
+			return null
+		var health: Variant = (entry as Dictionary).get("health")
+		var energy: Variant = (entry as Dictionary).get("energy")
+		if not (health is float or health is int) or not (energy is float or energy is int):
+			return null
+		if not is_finite(float(health)) or not is_finite(float(energy)):
+			return null
+		clean[peer] = {"health": float(health), "energy": float(energy)}
+	return clean
+
+
 ## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.
 func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> SpeechBubble:
 	var old := speaker.get_node_or_null(NodePath(BUBBLE_NAME))
@@ -760,6 +824,13 @@ static func checked_world_state(state: Dictionary) -> Dictionary:
 			TYPE_STRING_NAME:
 				if value is StringName or value is String:
 					clean[key] = StringName(value)
+			TYPE_ARRAY:
+				if value is Array and (value as Array).size() <= MAX_ARRIVALS:
+					var peers: Array[int] = []
+					for entry: Variant in value:
+						if entry is int:
+							peers.append(entry)
+					clean[key] = peers
 	return clean
 
 
@@ -785,6 +856,8 @@ func join_state() -> Dictionary:
 	var state: Dictionary = world_state.duplicate()
 	if sky != null:
 		state.merge(sky.to_state(), true)
+	if join_extras.is_valid():
+		state.merge(join_extras.call(), true)
 	return state
 
 

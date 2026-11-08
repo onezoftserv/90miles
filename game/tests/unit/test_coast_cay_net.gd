@@ -151,7 +151,7 @@ func test_a_rider_still_crossing_holds_the_load() -> void:
 	var pair := await _pair()
 	var host := pair[0]
 	var client_id: int = net.peer_id(pair[1])
-	_end_crossing(host, 1, 90.0, 40.0, 70.0)
+	_end_crossing(host, 1, 90.0, 40.0, 0.0)
 	assert_eq(_travel(host).check(), IslandTravel.Outcome.PLAYING, "the other player is not done")
 	await wait_frames(5)
 	assert_eq(_island_id(host), SANDBAR)

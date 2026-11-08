@@ -13,6 +13,7 @@ const COLORS: Dictionary[DataEnums.Terrain, Color] = {
 	DataEnums.Terrain.SHALLOWS: Color("6ec6d9"),
 	DataEnums.Terrain.DEEP: Color("1e4f8a"),
 	DataEnums.Terrain.BRACKISH: Color("5a9a8a"),
+	DataEnums.Terrain.ROCK: Color("8d8678"),
 }
 ## Drawn over shaded cells.
 const SHADE_COLOR: Color = Color(0.24, 0.16, 0.08, 0.45)
