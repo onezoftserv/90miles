@@ -167,6 +167,11 @@ func share_with(peer: int) -> void:
 		_recipients.append(peer)
 
 
+## The session this crossing runs in (its threats spawn through it), or null once it is gone.
+func session() -> CoopSession:
+	return _session if is_instance_valid(_session) else null
+
+
 func body_of(peer: int) -> PlayerBody:
 	return _session.body(peer) if is_instance_valid(_session) else null
 
