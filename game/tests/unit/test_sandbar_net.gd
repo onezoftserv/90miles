@@ -55,7 +55,7 @@ func _find(session: CoopSession, item_id: StringName) -> WorldItem:
 	return null
 
 
-func test_spawns_are_10_to_20_tiles_apart_and_the_client_sees_the_pickups() -> void:
+func test_spawns_are_20_to_30_tiles_from_the_next_and_the_client_sees_the_pickups() -> void:
 	var host := _host()
 	var a := await net.join(_setup)
 	var b := await net.join(_setup)
@@ -64,11 +64,12 @@ func test_spawns_are_10_to_20_tiles_apart_and_the_client_sees_the_pickups() -> v
 	if a == null or b == null:
 		return
 	assert_true(await net.settle())
-	var ids: Array[int] = host.peer_ids()
-	for i: int in ids.size():
-		for j: int in range(i + 1, ids.size()):
-			var tiles: float = host.body(ids[i]).position.distance_to(host.body(ids[j]).position) / 16.0
-			assert_between(tiles, 10.0, 20.0)
+	# Join order, not peer_ids(): that sorts by the random peer id, so it is not the order the
+	# spawns were handed out in.
+	var ids: Array[int] = [net.peer_id(host), net.peer_id(a), net.peer_id(b)]
+	for i: int in range(1, ids.size()):
+		var tiles: float = host.body(ids[i - 1]).position.distance_to(host.body(ids[i]).position) / 16.0
+		assert_between(tiles, 20.0, 30.0, "join order %d and %d" % [i, i + 1])
 	var same := func() -> bool: return _pickups(a) == _pickups(host) and _pickups(host).size() > 0
 	assert_true(await wait_until(same, TIMEOUT_S), "the client sees the host's pick-ups")
 	assert_eq(a.pickups.get_child_count(), 20)
