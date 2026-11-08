@@ -22,6 +22,7 @@ func before_each() -> void:
 	session.climate = island.climate
 	session.spawn_points = island.spawn_points(true)
 	add_child_autofree(session)
+	island.with_creatures = false
 	island.furnish(session)
 	session.start()
 	site = session.get_node("RaftSite") as BuildSite
