@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="RouteData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/route_data.gd" id="1_route"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="2_condition"]
+
+[sub_resource type="Resource" id="Resource_discover"]
+script = ExtResource("2_condition")
+kind = 24
+
+[sub_resource type="Resource" id="Resource_clear"]
+script = ExtResource("2_condition")
+kind = 24
+
+[sub_resource type="Resource" id="Resource_glasses"]
+script = ExtResource("2_condition")
+kind = 2
+ref_id = &"binoculars"
+scope = 0
+
+[sub_resource type="Resource" id="Resource_energy"]
+script = ExtResource("2_condition")
+kind = 18
+scope = 4
+meter = 4
+amount = 100.0
+
+[sub_resource type="Resource" id="Resource_bleeding"]
+script = ExtResource("2_condition")
+kind = 19
+scope = 4
+negate = true
+status = 1
+
+[resource]
+script = ExtResource("1_route")
+description_es = "Solo con el día claro, y solo nada quien llega con la energía al tope y sin sangrar. Los prismáticos no se gastan."
+description_en = "Only on a clear day, and only those at full energy and not bleeding swim. The binoculars are not used up."
+requirements = Array[ExtResource("2_condition")]([SubResource("Resource_clear"), SubResource("Resource_glasses")])
+rider_requirements = Array[ExtResource("2_condition")]([SubResource("Resource_energy"), SubResource("Resource_bleeding")])
+capacity_mode = 2
+starter_kind = 3
+starter_id = &"binoculars"
+discover_conditions = Array[ExtResource("2_condition")]([SubResource("Resource_discover")])
+vessel = 3
+vessel_kept_on_arrival = false
+riders_swim = true
+id = &"binoculars_swim"
+name_es = "Prismáticos y a nadar"
+name_en = "Binoculars and swim"

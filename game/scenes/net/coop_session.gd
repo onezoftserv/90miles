@@ -437,6 +437,26 @@ func use_for(peer: int, slot: int, use_index: int, target_peer: int) -> bool:
 	return ItemUser.use(player, slot, use_index, target)
 
 
+## This peer's player asks to start the route `route_id`; the host decides and picks the riders.
+func start_route(route_id: StringName) -> void:
+	request_start_route.rpc_id(HOST_ID, route_id)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func request_start_route(route_id: StringName) -> void:
+	if multiplayer.is_server():
+		start_route_for(_sender(), route_id)
+
+
+## Host: starts `route_id` for `peer`'s player. The request names only the route; the player,
+## the riders and every check are the host's. Returns whether it started.
+func start_route_for(peer: int, route_id: StringName) -> bool:
+	var routes := get_node_or_null("Routes") as IslandRoutes
+	if routes == null or _acting_body(peer) == null:
+		return false
+	return routes.start_for(peer, route_id)
+
+
 ## Host: `peer` feeds the build site at `site_path` from their own inventory and works it.
 func deposit_for(peer: int, site_path: NodePath) -> bool:
 	var player := _acting_body(peer)
@@ -449,6 +469,12 @@ func deposit_for(peer: int, site_path: NodePath) -> bool:
 	return player.crafter.start_work(site)
 
 
+# Whether `peer`'s player left the island by a route (escape-routes).
+func _has_left(peer: int) -> bool:
+	var routes := get_node_or_null("Routes") as IslandRoutes
+	return routes != null and routes.has_left(peer)
+
+
 # The sender of the RPC being handled; a call to ourselves (solo, or the host) has none.
 func _sender() -> int:
 	var sender: int = multiplayer.get_remote_sender_id()
@@ -459,7 +485,7 @@ func _sender() -> int:
 # stand lies still, unless `allow_last_stand`); the host is trusted, a client is rate limited.
 func _acting_body(peer: int, allow_last_stand: bool = false) -> PlayerBody:
 	var player := body(peer)
-	if player == null or player.meters.dead or player.meters.downed:
+	if player == null or player.meters.dead or player.meters.downed or _has_left(peer):
 		return null
 	if player.meters.last_stand and not allow_last_stand:
 		return null

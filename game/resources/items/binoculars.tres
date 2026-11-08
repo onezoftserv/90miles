@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="2_use"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_item"]
+
+[sub_resource type="Resource" id="Resource_start"]
+script = ExtResource("1_effect")
+kind = 24
+ref_id = &"binoculars_swim"
+
+[sub_resource type="Resource" id="Resource_use"]
+script = ExtResource("2_use")
+action = 12
+spends_use = false
+effects = Array[ExtResource("1_effect")]([SubResource("Resource_start")])
+
+[resource]
+script = ExtResource("3_item")
+description_es = "Se ve la próxima cayería si el día está claro."
+description_en = "You can see the next cay if the day is clear."
+category = 3
+stack_size = 1
+weight = 1.0
+uses = Array[ExtResource("2_use")]([SubResource("Resource_use")])
+id = &"binoculars"
+name_es = "Prismáticos"
+name_en = "Binoculars"

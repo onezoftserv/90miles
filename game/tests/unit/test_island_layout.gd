@@ -112,7 +112,7 @@ func test_only_the_hut_is_shaded() -> void:
 
 
 func test_hut_loot_and_flotsam_line() -> void:
-	assert_eq(_by_group(&"hut"), {&"tarp": 1, &"driftwood": 2, &"knife": 1})
+	assert_eq(_by_group(&"hut"), {&"tarp": 1, &"driftwood": 2, &"knife": 1, &"rope": 2})
 	assert_eq(_by_group(&"flotsam"), {&"inner_tube": 2, &"plastic_jug": 3, &"rope": 1})
 	assert_eq(_by_group(&"beach"), {&"driftwood": 6})
 	assert_eq(_by_group(&"dune"), {&"dry_grass": 3})
