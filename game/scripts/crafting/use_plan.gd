@@ -45,15 +45,15 @@ static func choose(body: PlayerBody, slot: int, session: CoopSession = null) -> 
 ## downed, or in a last stand and not standing themself up with a reviving use; AT_SEA when
 ## `departed` on a route (design D11); OUT_OF_REACH for a target beyond reach and its slack.
 ## "Down" is the meters' state, never `body.downed`, which a solo last stand also sets.
-static func actor_reason(player: PlayerBody, departed: bool, slot: int, use_index: int, target: PlayerBody = null) -> ItemUser.Reason:
-	var on_self: bool = target == null or target == player
+static func actor_reason(player: PlayerBody, departed: bool, slot: int, use: int, on: PlayerBody = null) -> ItemUser.Reason:
+	var on_self: bool = on == null or on == player
 	if player.meters.dead or player.meters.downed:
 		return ItemUser.Reason.DOWN
-	if player.meters.last_stand and not (on_self and ItemUser.revives(player, slot, use_index)):
+	if player.meters.last_stand and not (on_self and ItemUser.revives(player, slot, use)):
 		return ItemUser.Reason.DOWN
 	if departed:
 		return ItemUser.Reason.AT_SEA
-	if not on_self and player.global_position.distance_to(target.global_position) > InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX:
+	if not on_self and player.global_position.distance_to(on.global_position) > InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX:
 		return ItemUser.Reason.OUT_OF_REACH
 	return ItemUser.Reason.OK
 

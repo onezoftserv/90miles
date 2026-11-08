@@ -104,11 +104,11 @@ static func head_parts(on: Interactable, by: Node, key: String, words: HudText, 
 	return PackedStringArray([lead, named])
 
 
-## Where a prompt of `size` goes for a target at `anchor` (HUD pixels): centred over it with its
+## Where a prompt of `box` size goes for a target at `anchor` (HUD pixels): centred over it with its
 ## bottom edge `rise` above, clamped into BOUNDS, then moved below (or, with no room below, above)
 ## each of `blockers` it would cover.
-static func place(anchor: Vector2, size: Vector2, rise: float, blockers: Array[Rect2]) -> Rect2:
-	var rect := _clamped(Rect2(Vector2(roundf(anchor.x - size.x / 2.0), roundf(anchor.y - rise - size.y)), size))
+static func place(anchor: Vector2, box: Vector2, rise: float, blockers: Array[Rect2]) -> Rect2:
+	var rect := _clamped(Rect2(Vector2(roundf(anchor.x - box.x / 2.0), roundf(anchor.y - rise - box.y)), box))
 	for i: int in blockers.size():
 		var hit: int = _first_overlap(rect, blockers)
 		if hit == NO_BLOCKER:
