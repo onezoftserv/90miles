@@ -82,6 +82,7 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 	var starting: float = 0.0 if route.riders_swim else (starting_integrity if starting_integrity > 0.0 else float(route.vessel_integrity))
 	integrity = VesselIntegrity.create(starting)
 	integrity.broke.connect(_on_broke)
+	session.player_rebound.connect(_on_player_rebound)
 	sea.default_terrain = DataEnums.Terrain.DEEP
 	sea.current = Vector2.ZERO
 	if integrity.intact():
@@ -97,6 +98,12 @@ func peers() -> Array[int]:
 
 func body_of(peer: int) -> PlayerBody:
 	return _session.body(peer) if is_instance_valid(_session) else null
+
+
+## The peer `player` plays under, or 0 (coop-reconnect: never the node name, which a reclaimed
+## body keeps from its first peer).
+func peer_of(player: PlayerBody) -> int:
+	return _session.peer_of(player) if is_instance_valid(_session) else 0
 
 
 func rider_state(peer: int) -> Rider:
@@ -353,7 +360,7 @@ func _make_point(kind: RescuePoint.Kind, swimmer: int, hold_s: float) -> RescueP
 func _on_point_used(by: Node, point: RescuePoint) -> void:
 	if not multiplayer.is_server() or not by is PlayerBody:
 		return
-	var user: int = int(String(by.name))
+	var user: int = peer_of(by as PlayerBody)
 	match point.kind:
 		RescuePoint.Kind.LASH:
 			if rider_state(user) == Rider.TIED:
@@ -384,6 +391,27 @@ func _refresh_points() -> void:
 		var edge: Vector2 = body.global_position.clamp(deck.position, deck.end)
 		climb.global_position = edge
 		climb.enabled = swimming and body.global_position.distance_to(edge) <= reach_px
+
+
+# coop-reconnect: a rider who rejoined plays under a new peer, and their slot (so their deck spot),
+# state and rescue points follow. Runs on every peer: the session re-binds on the host and, through
+# `rebind_player`, on each client.
+func _on_player_rebound(old_peer: int, new_peer: int, _body: PlayerBody) -> void:
+	var slot: int = _peers.find(old_peer)
+	if slot < 0:
+		return
+	_peers[slot] = new_peer
+	if _states.has(old_peer):
+		_states[new_peer] = _states[old_peer]
+		_states.erase(old_peer)
+	for offset: int in 2:
+		var point := _points.get(old_peer * 2 + offset) as RescuePoint
+		_points.erase(old_peer * 2 + offset)
+		if point != null:
+			point.swimmer = new_peer
+			_points[new_peer * 2 + offset] = point
+	_dirty = true
+	_apply_flags()
 
 
 func _set_state(peer: int, state: Rider) -> void:

@@ -149,3 +149,24 @@ func test_enter_while_connecting_does_not_join_twice() -> void:
 	screen.address_field.text_submitted.emit(screen.address_field.text)
 	screen.address_field.text_submitted.emit(screen.address_field.text)
 	assert_eq(asked, ["192.168.1.20"] as Array[String], "one attempt at a time")
+
+
+func test_a_removed_player_is_listed_as_dead_in_the_summary() -> void:
+	var shell := _shell()
+	(shell.screen as TitleScreen).solo_requested.emit()
+	shell.session._add_player(7)
+	shell.session.roster[7] = "Papo"
+	shell.session._remove_player(7)
+	shell.session.body(1).meters.dead = true
+	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
+	var summary := shell.screen as SummaryScreen
+	assert_eq(summary.rows().size(), 2, "the solo player and the removed one")
+	assert_string_contains(summary.rows()[1], "Papo")
+	assert_string_contains(summary.rows()[1], "Murió")
+
+
+func test_the_run_carries_this_installs_identity() -> void:
+	var shell := _shell()
+	(shell.screen as TitleScreen).solo_requested.emit()
+	assert_not_null(shell.session.local_identity)
+	assert_eq(shell.session.local_identity.id, shell.settings.identity.id)

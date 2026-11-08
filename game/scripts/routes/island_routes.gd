@@ -37,6 +37,7 @@ func setup(session: CoopSession, route_ids: Array[StringName]) -> void:
 			discovered[id] = route.starts_discovered
 	WeatherManager.weather_changed.connect(_on_weather_changed)
 	session.player_spawned.connect(_on_player_spawned)
+	session.player_rebound.connect(_on_player_rebound)
 
 
 func _exit_tree() -> void:
@@ -46,6 +47,12 @@ func _exit_tree() -> void:
 
 func is_discovered(route_id: StringName) -> bool:
 	return discovered.get(route_id, false)
+
+
+## The peer of `player` in this island's session, or 0 (coop-reconnect: never the node name,
+## which a reclaimed body keeps from its first peer).
+func peer_of(player: PlayerBody) -> int:
+	return _session.peer_of(player) if is_instance_valid(_session) else 0
 
 
 func has_left(peer_id: int) -> bool:
@@ -76,7 +83,7 @@ func start_for(peer: int, route_id: StringName) -> bool:
 		return false
 	var peers: Array[int] = []
 	for rider: PlayerBody in riders:
-		peers.append(int(String(rider.name)))
+		peers.append(peer_of(rider))
 	departure_integrity[route_id] = _structure_integrity(route)
 	# Clients hear first: their crossing must exist before the host's plan reaches it.
 	if not _session.multiplayer.get_peers().is_empty():
@@ -158,3 +165,10 @@ func _on_weather_changed(_weather_id: StringName) -> void:
 func _on_player_spawned(_peer_id: int, _body: PlayerBody) -> void:
 	if is_instance_valid(_session) and _session.multiplayer.is_server():
 		discover_check.call_deferred()
+
+
+# coop-reconnect: a player who left by a route and rejoined is still gone, under the new peer.
+func _on_player_rebound(old_peer: int, new_peer: int, _body: PlayerBody) -> void:
+	if departed.has(old_peer):
+		departed[new_peer] = departed[old_peer]
+		departed.erase(old_peer)

@@ -30,7 +30,7 @@ static func apply(effect: EffectData, actor: PlayerBody, target: PlayerBody) -> 
 static func _start_route(effect: EffectData, actor: PlayerBody) -> void:
 	var routes := actor.get_tree().get_first_node_in_group(IslandRoutes.GROUP) as IslandRoutes
 	if routes != null:
-		routes.start_for(int(String(actor.name)), effect.ref_id)
+		routes.start_for(routes.peer_of(actor), effect.ref_id)
 
 
 static func _add_meter(effect: EffectData, subject: PlayerBody) -> void:
