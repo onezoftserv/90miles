@@ -4,7 +4,8 @@ extends Panel
 ## around a 24×24 interior holding the item's 16×16 icon or, until it has one, the first three
 ## letters of its name; bottom-right the stack's count or a tool's uses left, outlined; top-left
 ## the slot's key while the keyboard is the last device. The selected slot wears the theme's
-## sun-yellow frame. It takes clicks, never focus.
+## sun-yellow frame, and a ring inside it fills while the use button is held on it. It takes
+## clicks, never focus.
 
 ## A left click landed on this slot.
 signal clicked
@@ -18,8 +19,17 @@ const ICON_RECT: Rect2 = Rect2(5.0, 5.0, 16.0, 16.0)
 const FRAME_STYLE: StringName = &"HudSlot"
 const SELECTED_STYLE: StringName = &"HudSlotSelected"
 const COUNT_STYLE: StringName = &"HudCount"
+## The use ring: centred in the interior, 2 px wide, in the selection's sun yellow, filling
+## clockwise from the top.
+const RING_CENTER: Vector2 = Vector2(13.0, 13.0)
+const RING_RADIUS: float = 10.0
+const RING_WIDTH: float = 2.0
+const RING_POINTS: int = 32
+const RING_COLOR: Color = Color(1.0, 0.8, 0.0)
 
 var selected: bool = false
+## How much of the use hold has passed, 0 (no ring) to 1.
+var ring: float = 0.0
 var key_label: Label = _label(KEY_RECT, HORIZONTAL_ALIGNMENT_LEFT)
 var name_label: Label = _label(NAME_RECT, HORIZONTAL_ALIGNMENT_CENTER)
 var count_label: Label = _label(COUNT_RECT, HORIZONTAL_ALIGNMENT_RIGHT)
@@ -70,6 +80,21 @@ func show_item(item: ItemData, held: InventorySlot, key: String, locale: String 
 func set_selected(value: bool) -> void:
 	selected = value
 	theme_type_variation = SELECTED_STYLE if value else FRAME_STYLE
+
+
+func set_ring(value: float) -> void:
+	var clamped: float = clampf(value, 0.0, 1.0)
+	if clamped == ring:
+		return
+	ring = clamped
+	queue_redraw()
+
+
+func _draw() -> void:
+	if ring <= 0.0:
+		return
+	var start: float = -PI / 2.0
+	draw_arc(RING_CENTER, RING_RADIUS, start, start + TAU * ring, RING_POINTS, RING_COLOR, RING_WIDTH)
 
 
 func _gui_input(event: InputEvent) -> void:

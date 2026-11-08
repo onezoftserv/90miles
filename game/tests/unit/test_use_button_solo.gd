@@ -307,6 +307,7 @@ func test_with_the_crafting_list_open_f_uses_nothing() -> void:
 	assert_eq(me.inventory.count_id(&"rain_cup"), 1, "the press made while the list was open stays spent")
 
 
+# Real frames here: the pause freezes the run, and what the strip sees then is the point.
 func test_paused_f_uses_nothing() -> void:
 	var session := _session()
 	var hud := _hud(session)
@@ -314,12 +315,13 @@ func test_paused_f_uses_nothing() -> void:
 	me.inventory.add(&"rain_cup", 1)
 	assert_true(hud.pause_menu.open())
 	_f(true)
-	_hold(hud, 1.5)
+	await wait_process_frames(5)
 	assert_eq(me.inventory.count_id(&"rain_cup"), 1)
 	assert_eq(_sent(hud), 0)
 	hud.pause_menu.resume()
-	_hold(hud, 1.5)
+	await wait_seconds(1.3)
 	assert_eq(me.inventory.count_id(&"rain_cup"), 1, "the press made while paused does not carry over")
+	assert_eq(_sent(hud), 0)
 
 
 func test_under_a_screen_f_uses_nothing() -> void:
@@ -332,4 +334,8 @@ func test_under_a_screen_f_uses_nothing() -> void:
 	hud.set_screen_shown(true)
 	_hold(hud, 1.5)
 	assert_eq(me.inventory.count_id(&"rain_cup"), 1)
+	assert_eq(_sent(hud), 0)
+	hud.set_screen_shown(false)
+	_hold(hud, 1.5)
+	assert_eq(me.inventory.count_id(&"rain_cup"), 1, "the press the screen took stays taken")
 	assert_eq(_sent(hud), 0)

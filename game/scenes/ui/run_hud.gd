@@ -32,6 +32,8 @@ var device: InputLabels.Device = InputLabels.Device.KEYBOARD
 var notice: HudNotice
 ## The run summary or the host-lost screen is over the run (GameShell sets it).
 var screen_shown: bool = false
+## The crafting list is open and holds the input: the use button does nothing meanwhile.
+var list_open: bool = false
 
 @onready var meters: MetersHud = %Meters
 @onready var strip: InventoryStrip = %Strip
@@ -83,6 +85,7 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 func _ready() -> void:
 	notice = strip.notice
 	strip.input_open = input_open
+	strip.list_open = func() -> bool: return list_open
 
 
 func _process(_delta: float) -> void:
