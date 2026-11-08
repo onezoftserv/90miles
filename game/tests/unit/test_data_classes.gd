@@ -1,5 +1,5 @@
 extends GutTest
-## content-data: the data model's 36 classes in game/scripts/data. The 12 folders are
+## content-data: the data model's 37 classes in game/scripts/data. The 12 folders are
 ## registered, every class builds on the right base, every reference field is a stored id
 ## field pointing at a registered folder (for every kind), every typed container survives a
 ## .tres round trip, and ContentValidator checks real content down to ids inside parts.
@@ -85,7 +85,7 @@ func test_default_types_register_exactly_the_twelve_folders() -> void:
 
 
 func test_data_folder_declares_exactly_the_model_classes() -> void:
-	assert_eq(_model_classes().size(), 36, "the data model has 36 classes")
+	assert_eq(_model_classes().size(), 37, "the data model has 37 classes")
 	var expected: Array[StringName] = _model_classes()
 	expected.append_array(SUPPORT_CLASSES)
 	expected.sort_custom(_by_text)
@@ -315,7 +315,7 @@ func test_keepsake_unlock_ids_are_checked_against_their_folder() -> void:
 # --- helpers ------------------------------------------------------------------------------
 
 
-## The 36 data model classes, sorted.
+## The 37 data model classes, sorted.
 func _model_classes() -> Array[StringName]:
 	var names: Array[StringName] = []
 	names.assign(FOLDER_CLASSES.values())

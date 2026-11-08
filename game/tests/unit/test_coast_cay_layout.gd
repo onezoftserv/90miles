@@ -4,6 +4,7 @@ extends GutTest
 
 const COAST_PATH: String = "res://resources/islands/coast_cay.tres"
 const SANDBAR_PATH: String = "res://resources/islands/sandbar.tres"
+const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const WALKABLE_LAND: Array[DataEnums.Terrain] = [
 	DataEnums.Terrain.BEACH, DataEnums.Terrain.DUNE, DataEnums.Terrain.SCRUB, DataEnums.Terrain.ROCK,
 ]
@@ -170,6 +171,21 @@ func test_a_lone_arrivals_walks() -> void:
 	_band(astar, _cells_of(&"aloe"), 7.0, 13.0, "the aloe")
 	_band(astar, _cells_of(&"rope") + _cells_of(&"lighter"), 9.0, 15.0, "the rope cache")
 	_band(astar, _cells_of(&"nails") + _cells_of(&"mirror"), 13.0, 19.0, "the observation post")
+
+
+func test_the_island_scene_builds_the_layout_it_is_given() -> void:
+	var island := ISLAND_SCENE.instantiate() as SandbarIsland
+	island.layout = layout
+	add_child_autofree(island)
+	assert_eq(island.built.size, built.size, "the coast cay's size, not the sandbar's")
+	assert_eq(island.bounds, Rect2i(Vector2i.ZERO, built.size * IslandLayout.TILE))
+	assert_eq(island.terrain.cells.size(), built.terrain.cells.size())
+	assert_eq(island.get_node("Palms").get_child_count(), 5, "the coast cay's palms")
+	var sandbar := ISLAND_SCENE.instantiate() as SandbarIsland
+	add_child_autofree(sandbar)
+	assert_eq(sandbar.layout.id, &"sandbar", "the default is still the sandbar")
+	assert_eq(sandbar.built.size, Vector2i(80, 72))
+	assert_eq(sandbar.get_node("Palms").get_child_count(), 6)
 
 
 func test_the_sandbar_names_the_coast_cay() -> void:

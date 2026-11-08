@@ -48,10 +48,12 @@ func _launch() -> Array:
 	return [shell, crossing]
 
 
-# A solo run standing on the coast cay, with no raft behind it.
+# A solo run standing on the coast cay, with no raft behind it. The old island is freed by the
+# time this returns.
 func _on_the_cay() -> GameShell:
 	var shell := _shell()
 	shell.travel.travel(COAST)
+	await wait_process_frames(2)
 	return shell
 
 
@@ -146,7 +148,7 @@ func test_a_solo_player_who_dies_in_the_crossing_does_not_arrive() -> void:
 
 
 func test_solo_drinks_the_lagoon() -> void:
-	var shell := _on_the_cay()
+	var shell := await _on_the_cay()
 	var body := shell.session.body(1)
 	var tuning := body.meters.tuning.duplicate() as SurvivalTuning
 	tuning.thirst_per_s = 0.0
@@ -173,7 +175,7 @@ func test_solo_drinks_the_lagoon() -> void:
 
 
 func test_the_lagoon_never_runs_dry() -> void:
-	var shell := _on_the_cay()
+	var shell := await _on_the_cay()
 	var body := shell.session.body(1)
 	body.meters.thirst = 10.0
 	var spot := shell.session.get_node("DrinkSpot0") as DrinkSpot
@@ -183,7 +185,7 @@ func test_the_lagoon_never_runs_dry() -> void:
 
 
 func test_solo_reads_the_wall() -> void:
-	var shell := _on_the_cay()
+	var shell := await _on_the_cay()
 	var body := shell.session.body(1)
 	var slogan: IslandSign = null
 	for node: Node in shell.session.get_children():
@@ -205,7 +207,7 @@ func test_solo_reads_the_wall() -> void:
 
 
 func test_solo_takes_the_post_nails_and_builds_a_raft() -> void:
-	var shell := _on_the_cay()
+	var shell := await _on_the_cay()
 	var body := shell.session.body(1)
 	assert_gt(_take(shell, body, &"nails"), 0)
 	_take(shell, body, &"mirror")
@@ -227,7 +229,7 @@ func test_solo_takes_the_post_nails_and_builds_a_raft() -> void:
 
 
 func test_coast_cay_creatures_for_a_solo_arrival() -> void:
-	var shell := _on_the_cay()
+	var shell := await _on_the_cay()
 	await wait_frames(3)
 	var spawner := shell.session.get_node("Creatures") as CreatureSpawner
 	var sharks: Array[Creature] = spawner.creatures(&"reef_shark")
@@ -243,6 +245,19 @@ func test_coast_cay_creatures_for_a_solo_arrival() -> void:
 	assert_gt(crabs.size(), 0, "crabs on its beaches at night")
 	for crab: Creature in crabs:
 		assert_eq(shell.island.terrain.terrain_at(CreatureNav.cell_of(crab.position)), DataEnums.Terrain.BEACH)
+
+
+# Two bodies in one offline session (no network): the rider is held, the other is on the island.
+func test_a_waiting_rider_is_no_teammate_for_the_last_player() -> void:
+	var session := CrossingRig.make_session(self, 2)
+	var rider := session.body(1)
+	var last := session.body(2)
+	assert_true(last._has_living_teammate(INF), "two players on the island: a teammate could revive")
+	IslandArrival.hold(rider)
+	assert_false(last._has_living_teammate(INF), "a rider waiting out of play is no teammate")
+	assert_false(last._has_living_teammate(80.0), "and no company either")
+	IslandArrival.land(rider, last.position, last.terrain)
+	assert_true(last._has_living_teammate(INF), "back in play, they are one again")
 
 
 func test_solo_uses_aloe_on_sunburn_and_bleeding() -> void:

@@ -147,7 +147,9 @@ func test_both_cross_and_land_together() -> void:
 	assert_eq(host.body(client_id).meters.energy, 55.0)
 
 
-func test_a_rider_still_crossing_holds_the_load() -> void:
+# A rider in a crossing is not held until it ends (the shell holds riders in Crossing.ended), so a
+# player who has not arrived keeps the sandbar open whether they stand on it or are still crossing.
+func test_a_player_who_has_not_arrived_holds_the_load() -> void:
 	var pair := await _pair()
 	var host := pair[0]
 	var client_id: int = net.peer_id(pair[1])
