@@ -25,6 +25,13 @@ func after_each() -> void:
 
 # The sandbar run with a second player who spawned as peer 7 and came back as peer 9.
 func _rejoined_player() -> PlayerBody:
+	_sandbar_with_second_player()
+	session._rebind_body(7, 9)
+	return session.body(9)
+
+
+# The sandbar run with the host and a second player, peer 7, both idle.
+func _sandbar_with_second_player() -> PlayerBody:
 	var island := ISLAND_SCENE.instantiate() as SandbarIsland
 	add_child_autofree(island)
 	session = SESSION_SCENE.instantiate() as CoopSession
@@ -37,10 +44,9 @@ func _rejoined_player() -> PlayerBody:
 	routes = session.get_node("Routes") as IslandRoutes
 	routes.route_started.connect(func(id: StringName, peers: Array[int]) -> void: started.append([id, peers]))
 	session._add_player(7)
-	session._rebind_body(7, 9)
 	for peer_id: int in session.peer_ids():
 		session.body(peer_id).player_input.enabled = false
-	return session.body(9)
+	return session.body(7)
 
 
 func test_the_session_names_a_bodys_current_peer() -> void:
@@ -77,3 +83,14 @@ func test_a_rejoined_player_starts_a_route_by_peer_lookup() -> void:
 	rejoined.meters.energy = 100.0
 	assert_true(routes.start_for(9, &"binoculars_swim"))
 	assert_eq(routes.route_left_by(9), &"binoculars_swim")
+
+
+func test_a_player_who_left_and_rejoins_is_still_gone() -> void:
+	var swimmer := _sandbar_with_second_player()
+	WeatherManager.sky.weather.apply(&"calm", 100.0, &"", -1.0)
+	swimmer.inventory.add(&"binoculars", 1)
+	swimmer.meters.energy = 100.0
+	assert_true(routes.start_for(7, &"binoculars_swim"))
+	session._rebind_body(7, 9)
+	assert_eq(routes.route_left_by(9), &"binoculars_swim", "the departure follows the body")
+	assert_false(routes.has_left(7), "nothing left under the old peer")
