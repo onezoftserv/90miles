@@ -81,7 +81,7 @@ func _pinch(creature: Creature, world: CreatureWorld, delta: float) -> bool:
 		_adjacent_s += delta
 		if _adjacent_s >= creature.data.attack_cooldown_s:
 			_adjacent_s -= creature.data.attack_cooldown_s
-			world.pinch(body, creature.data.damage)
+			world.pinch(body, creature.data)
 		return true
 	_adjacent_s = 0.0
 	return false
