@@ -121,8 +121,16 @@ func test_an_item_without_the_use_it_needs_has_no_use() -> void:
 	var wood := UsePlan.choose(me, 0, session)
 	assert_eq(wood.reason, R.NO_USE)
 	assert_eq(wood.use_index, -1)
+	var snack := ItemData.new()
+	snack.id = &"test_snack"
+	snack.name_es = "Galleta"
+	snack.uses.append(ItemUseData.new())
+	me.inventory.register(snack)
+	me.inventory.add(&"test_snack", 1)
+	assert_eq(UsePlan.choose(me, 2, session).use_index, 0, "eaten on your feet")
 	me.meters.last_stand = true
-	assert_eq(UsePlan.choose(me, 1, session).reason, R.NO_USE, "a coconut cannot stand you up")
+	assert_eq(UsePlan.choose(me, 2, session).reason, R.NO_USE, "a snack cannot stand you up")
+	assert_eq(UsePlan.choose(me, 1, session).use_index, 1, "a coconut can (its second use)")
 
 
 func test_an_empty_slot_is_empty() -> void:

@@ -5,6 +5,23 @@ extends RefCounted
 ## The use's time_s is for whoever drives the action (the UI holds the button); the effects
 ## here apply at once, on the host.
 
+## Why a use would be refused (inventory-hud design D5), shared by the host and the HUD. The
+## item's own reasons follow `use`'s checks in their order (EMPTY, NO_USE, NOT_TARGETABLE,
+## TARGET_DEAD, NOT_DOWNED_TARGET, CONDITION); the acting player's are DOWN, AT_SEA and
+## OUT_OF_REACH. OK: nothing stands in the way.
+enum Reason {
+	OK,
+	EMPTY,
+	NO_USE,
+	NOT_TARGETABLE,
+	TARGET_DEAD,
+	NOT_DOWNED_TARGET,
+	CONDITION,
+	DOWN,
+	AT_SEA,
+	OUT_OF_REACH,
+}
+
 
 ## Returns whether the use happened. `target` is a teammate for a can_target_others use; null
 ## means the user themself. A use that revives needs a target who is downed or in a last stand.
@@ -21,7 +38,7 @@ static func use(actor: PlayerBody, slot_index: int, use_index: int, target: Play
 		return false
 	if subject.meters.dead:
 		return false
-	if _revives(action) and not (subject.meters.downed or subject.meters.last_stand):
+	if action_revives(action) and not (subject.meters.downed or subject.meters.last_stand):
 		return false
 	if not ConditionCheck.all_hold(action.conditions, actor):
 		return false
@@ -43,10 +60,11 @@ static func revives(actor: PlayerBody, slot_index: int, use_index: int) -> bool:
 	var item := actor.inventory.item_for(slot.item_id) if not slot.is_empty() else null
 	if item == null or use_index < 0 or use_index >= item.uses.size():
 		return false
-	return _revives(item.uses[use_index])
+	return action_revives(item.uses[use_index])
 
 
-static func _revives(action: ItemUseData) -> bool:
+## Whether `action` stands someone up (it has a REVIVE effect).
+static func action_revives(action: ItemUseData) -> bool:
 	for effect: EffectData in action.effects:
 		if effect.kind == EffectData.Kind.REVIVE:
 			return true

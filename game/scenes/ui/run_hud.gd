@@ -3,8 +3,10 @@ extends CanvasLayer
 ## ui-shell "HUD layout": the run's HUD inside a 640×360 budget. Meters top-left (labels inside
 ## the bars, Brogue), the day phase top-centre, teammates top-right in co-op only (Brogue's
 ## sidebar, teammates first), a name tag over each teammate, the pause menu (solo only, it
-## refuses in co-op) and, in co-op only, the quick-chat wheel. The bottom band stays free for
-## the inventory.
+## refuses in co-op) and, in co-op only, the quick-chat wheel. The bottom band holds the local
+## player's inventory strip with its lines (inventory-hud), bound to the local body in one place,
+## `_bind_local`, so a rejoined client's reclaimed body gets it too. Key labels follow the last
+## device the player used (`device`).
 
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
@@ -23,8 +25,13 @@ var solo: bool = true
 ## The quick-chat wheel, or null in solo.
 var wheel: QuickChatWheel
 var pause_menu: PauseMenu
+## The last device the local player used; the HUD's key labels follow it.
+var device: InputLabels.Device = InputLabels.Device.KEYBOARD
+## The refusal line above the strip.
+var notice: HudNotice
 
 @onready var meters: MetersHud = %Meters
+@onready var strip: InventoryStrip = %Strip
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
 @onready var _teammates: VBoxContainer = %Teammates
@@ -70,9 +77,20 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	refresh()
 
 
+func _ready() -> void:
+	notice = strip.notice
+
+
 func _process(_delta: float) -> void:
 	if session != null:
 		refresh()
+
+
+func _input(event: InputEvent) -> void:
+	var next: InputLabels.Device = InputLabels.device_after(event, device)
+	if next != device:
+		device = next
+		strip.set_device(device)
 
 
 func refresh() -> void:
@@ -113,7 +131,13 @@ func _on_player_rebound(_old_peer: int, new_peer: int, player: PlayerBody) -> vo
 	if tag != null:
 		player.remove_child(tag)
 		tag.queue_free()
+	_bind_local(player)
+
+
+# Everything that shows or acts for the local player follows `player` from now on.
+func _bind_local(player: PlayerBody) -> void:
 	meters.bind(player.meters)
+	strip.bind(player, session)
 
 
 # A name can arrive after its player spawned (a join during the run): the tags follow the roster.
@@ -131,7 +155,7 @@ func _follow(peer_id: int) -> void:
 	if player == null:
 		return
 	if peer_id == local_peer:
-		meters.bind(player.meters)
+		_bind_local(player)
 		return
 	if player.has_node(NodePath(TAG_NAME)):
 		return
