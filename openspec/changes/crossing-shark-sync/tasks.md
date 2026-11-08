@@ -1,10 +1,10 @@
 ## 1. The shark on every peer
 
-- [ ] 1.1 Write the tests (RED) and verify they fail:
-  - `test_crossing_creature_shark.gd` (offline, 1 player): the shark is a passing reef shark under the session's `Entities`, freed after its circle; the island spawner's `creatures()` skips it and a phase change keeps it.
+- [x] 1.1 Write the tests (RED) and verify they fail:
+  - `test_crossing_creature_shark.gd` (offline, 1 player): the shark is a passing reef shark under the session's `Entities`, freed after its circle; the island spawner's `creatures()` skips it (it drives phase despawns and the fire halving).
   - `test_crossing_shark_net.gd` (ENet): a client and a client that joins during the circle see it; it's gone on both when the host's circle ends.
-- [ ] 1.2 Add `Crossing.session()`, `Creature.is_passing()`, the skip in `CreatureSpawner.creatures()`, and the spawn through `CoopSession.spawn_creature` in `CreatureThreats._show_shark`, and verify 1.1 passes and the creature and crossing suites stay green.
-- [ ] 1.3 Verify the import, the smoke run and GUT pass, and a 300-frame run is clean.
+- [x] 1.2 Add `Crossing.session()`, `Creature.is_passing()`, the skip in `CreatureSpawner.creatures()`, and the spawn through `CoopSession.spawn_creature` in `CreatureThreats._show_shark`, and verify 1.1 passes and the creature and crossing suites stay green.
+- [x] 1.3 Verify the import, the smoke run and GUT pass, and a 300-frame run is clean.
 
 ## Workflow follow-up
 
