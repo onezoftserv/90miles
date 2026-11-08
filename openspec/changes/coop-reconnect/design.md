@@ -59,7 +59,12 @@ On the host, `request_join` with RECLAIM:
 
 Further details:
 - **Later joiners:** the spawner replays the original spawn data `{peer: old}`, so a client that joins later first maps the body under its old peer. `receive_lobby` therefore also carries the owner map (spawn peer → current peer) for re-bound bodies, and the joiner re-binds them. Spawns are sent on connect, before any reply to the join request, on the same reliable path.
-- **Node name:** the body keeps its original name (the peer it first spawned under), so nothing may read a peer from a node name. Code that needs a body's peer asks `CoopSession.peer_of(body)`. `escape-routes` read it from the name in `IslandRoutes.start_for`, `Raft` and `EffectApplier`; since the merge they go through `IslandRoutes.peer_of`. `_on_body_exiting` forgets a body by value, not by the peer it was bound to.
+- **Node name:** the body keeps its original name (the peer it first spawned under), so nothing may read a peer from a node name. Code that needs a body's peer asks `CoopSession.peer_of(body)`. `escape-routes` read it from the name in `IslandRoutes.start_for`, `Raft` and `EffectApplier`; since the merge they go through `IslandRoutes.peer_of`. `crossing` read it in `Crossing._on_point_used` and `RescuePoint.usable_by`; they go through `Crossing.peer_of`. `_on_body_exiting` forgets a body by value, not by the peer it was bound to.
+- **Records keyed by peer follow the body.** Anything that keeps a player under their peer id listens to `player_rebound` and moves the entry to the new peer:
+  - `Crossing`: the rider's slot in `_peers` (in place, so the deck spot holds), their state, and their climb and pull points (keys and `swimmer`). Its result is then keyed by the current peer, which the shell uses to find the body.
+  - `IslandRoutes.departed`: a player who left by a route and rejoins is still gone, so the run can end.
+  - No new RPC: `player_rebound` fires on the host in `_reclaim` and on every client in `rebind_player`, so each peer's copy moves.
+- **Known gap: a client that rejoins mid-crossing sees no crossing.** Its world never ran `route_started`, so it has no `Crossing` node, and `join_state()` carries neither the crossing (plan, clock, rider states, integrity) nor the route departures. The host's crossing keeps the rider and is authoritative; the rejoiner's own screen is wrong until the crossing ends. Any late joiner has the same gap. Rebuilding a crossing from a snapshot for a joiner is its own change.
 - **HUD:** `CoopSession.player_rebound(old, new, body)` lets `RunHud` drop the name tag and bind the meters when the re-bound body becomes the local player. Other players' tags stay on the same node and are renamed through `roster_updated`.
 
 ### Spawning moves from connect to the join request (run phase)
@@ -87,6 +92,7 @@ Further details:
   - an id in use joins as a new player;
   - a silent peer is disconnected after 10 s (driven through `_physics_process` with a large step, like the drop countdown);
   - a late joiner sees the reclaimed body under its new owner.
+- **With escape-routes and crossing, offline** (`test_reconnect_routes.gd`, `test_reconnect_crossing.gd`): a rejoined player leaves by a route under their current peer and is still gone after rejoining; a rider who rejoined before or during a crossing ties down, climbs by their own point, is pulled in by a teammate and is named in the result by their current peer.
 - **Solo, offline:** the run spawns at once, opens no port and refuses nobody, because nobody can connect.
 - **Shell:** removed players appear as "Murió".
 - **Manual:** a two-process host and client through the shell, where the client quits and a second client process with the same settings file rejoins.

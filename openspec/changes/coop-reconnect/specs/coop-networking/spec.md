@@ -68,6 +68,16 @@ A join request SHALL reclaim a player only when its id and secret match a player
 - **WHEN** the client joins presenting the host's id and secret
 - **THEN** it joins as a new player and the host keeps its own player
 
+#### Scenario: Rejoin during a crossing
+- **GIVEN** Papo is a rider on a raft crossing when his client drops
+- **WHEN** he rejoins within 90 s
+- **THEN** the host keeps him as the same rider: his state on the raft, his own climb point, a teammate's pull handle on him, and his entry in the crossing's result
+
+#### Scenario: Rejoin after leaving by a route
+- **GIVEN** Papo left the island by a route and his client drops
+- **WHEN** he rejoins within 90 s
+- **THEN** he still counts as gone by that route, so the run can end without him
+
 ### Requirement: Join request
 A joining client's player SHALL spawn when the host receives its join request, not when it connects, so that the host can match the player id first. A peer that connects but sends no join request within 10 s is disconnected, and its slot is free again. The host's start of the run spawns only players whose join request has arrived. Solo has no joiners: its one player spawns at once.
 

@@ -16,6 +16,11 @@
 - [x] 3.2 Pass the settings identity to the session in `GameShell`, follow `player_rebound` in `RunHud`, and verify a shell GUT test with 1 player offline
 - [x] 3.3 Verify the import, smoke run, GUT and a two-process host and client rejoin through the shell pass with zero error lines
 
+## 4. With escape-routes and crossing (after merging main)
+
+- [x] 4.1 Take a body's peer from `CoopSession.peer_of` in `IslandRoutes`, `Raft`, `EffectApplier`, `Crossing` and `RescuePoint`, and verify GUT tests for "a rejoined player leaves by a route under their current peer"
+- [x] 4.2 Move route departures and crossing riders (slot, state, climb and pull points) to the new peer on `player_rebound`, and verify GUT tests for "Rejoin during a crossing" and "Rejoin after leaving by a route"
+
 ## Workflow follow-up
 
 - Review with the ECC reviewers and fix what survives verification.

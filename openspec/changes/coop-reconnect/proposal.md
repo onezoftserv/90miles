@@ -28,10 +28,10 @@ The user asked for this change to follow `ui-shell` (2026-11-05). It builds on t
 **Decisions (made here, to confirm):**
 1. **A failed claim joins as a new player rather than being refused.** This covers a wrong secret, no id at all, and the host's own id. Refusing would break running a host and a client from one install, which every two-process check in this repo does. Two clients from one install would take each other over; give them separate settings files.
 2. **The secret travels in plain text over ENet**, like everything else in the session. Someone on the same network could read it. Encrypting the transport (DTLS) is out of scope.
-3. **The reclaimed body keeps its node name** (the peer id it first spawned under). Code that needs a body's peer asks the session (`CoopSession.peer_of`), never the node name; the escape-route code does so since the merge.
+3. **The reclaimed body keeps its node name** (the peer id it first spawned under). Code that needs a body's peer asks the session (`CoopSession.peer_of`), never the node name; the escape-route and crossing code do so since the merges, and their records kept by peer (route departures, crossing riders) follow `player_rebound`.
 4. **Join timeout of 10 s** for a connected peer to identify.
 
-**Left out:** host migration, rejoining after the host restarts, encrypting the transport, and a "full" reason on refusal (ENet's three-client cap refuses a fourth client before the session sees it).
+**Left out:** host migration, rejoining after the host restarts, encrypting the transport, a "full" reason on refusal (ENet's three-client cap refuses a fourth client before the session sees it), and showing a crossing in progress to a client that joins or rejoins during it (the host keeps the rider; the joiner's screen has no crossing until it ends).
 
 ## Capabilities
 
