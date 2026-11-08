@@ -198,6 +198,9 @@ func _on_host_lost() -> void:
 	host_lost_screen = HOST_LOST_SCENE.instantiate() as HostLostScreen
 	add_child(host_lost_screen)
 	host_lost_screen.back_requested.connect(_leave_host_lost)
+	# The HUD reads bodies that are going: it takes no input until it is freed with the run.
+	if hud != null:
+		hud.set_screen_shown(true)
 	# The session is inside its own signal: free it after this frame.
 	_end_run.call_deferred()
 
@@ -373,6 +376,9 @@ func _check_run_over() -> void:
 	var summary := _show(SUMMARY_SCENE, Flow.SUMMARY) as SummaryScreen
 	summary.show_summary(entries, clock.call() - _run_started_s)
 	summary.home_requested.connect(back_to_title)
+	# The HUD stays up under the summary but takes no input (inventory-hud).
+	if hud != null:
+		hud.set_screen_shown(true)
 
 
 func _route_name(route_id: StringName) -> String:

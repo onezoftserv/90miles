@@ -6,7 +6,8 @@ extends CanvasLayer
 ## refuses in co-op) and, in co-op only, the quick-chat wheel. The bottom band holds the local
 ## player's inventory strip with its lines (inventory-hud), bound to the local body in one place,
 ## `_bind_local`, so a rejoined client's reclaimed body gets it too. Key labels follow the last
-## device the player used (`device`).
+## device the player used (`device`). While the pause menu, the run summary or the host-lost
+## screen is up, the HUD takes no input (`input_open`); the shell says when a screen shows.
 
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
@@ -29,6 +30,8 @@ var pause_menu: PauseMenu
 var device: InputLabels.Device = InputLabels.Device.KEYBOARD
 ## The refusal line above the strip.
 var notice: HudNotice
+## The run summary or the host-lost screen is over the run (GameShell sets it).
+var screen_shown: bool = false
 
 @onready var meters: MetersHud = %Meters
 @onready var strip: InventoryStrip = %Strip
@@ -79,6 +82,7 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 
 func _ready() -> void:
 	notice = strip.notice
+	strip.input_open = input_open
 
 
 func _process(_delta: float) -> void:
@@ -86,11 +90,31 @@ func _process(_delta: float) -> void:
 		refresh()
 
 
+# Before the GUI: the last device, and the wheel, which a slot under the pointer would swallow.
 func _input(event: InputEvent) -> void:
 	var next: InputLabels.Device = InputLabels.device_after(event, device)
 	if next != device:
 		device = next
 		strip.set_device(device)
+	if not event is InputEventMouseButton or not strip.accepts_input():
+		return
+	if event.is_action_pressed(InventoryStrip.NEXT_ACTION) or event.is_action_pressed(InventoryStrip.PREV_ACTION):
+		strip.step(1 if event.is_action_pressed(InventoryStrip.NEXT_ACTION) else -1)
+		get_viewport().set_input_as_handled()
+
+
+## Whether the HUD takes input now: no screen over the run and no pause.
+func input_open() -> bool:
+	if screen_shown or not is_inside_tree() or get_tree().paused:
+		return false
+	return pause_menu == null or not pause_menu.visible
+
+
+## The run summary or the host-lost screen shows (true) or went away: the HUD hides its strip and
+## takes no input meanwhile.
+func set_screen_shown(value: bool) -> void:
+	screen_shown = value
+	strip.set_screen_shown(value)
 
 
 func refresh() -> void:

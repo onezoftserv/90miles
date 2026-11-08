@@ -27,9 +27,9 @@ RED means the new tests are written first and seen failing; GREEN means the smal
 
 ## 3. Slot selection
 
-- [ ] 3.1 RED `test_slot_selection.gd` (solo): 1-9, 0, - and = select screen slots 1-12 even when empty; the wheel and D-pad right/left move to the next and previous non-empty slot, wrapping, and stay put when all slots are empty; the wheel with the pointer over the strip moves the selection the same way; a click selects; the selection stays on a slot that empties; selecting a knife does not change `Inventory.held_food()`; a focused `LineEdit` stops every slot key; with the pause menu, the run summary or the host-lost screen shown nothing changes; slots have `focus_mode = FOCUS_NONE`; no request reaches the session while selecting.
-- [ ] 3.2 GREEN selection in `InventoryStrip` (`_unhandled_input` for keys and the D-pad, the wheel routed from `RunHud._input`; the `LineEdit` guard from `QuickChatWheel`); `RunHud` learns from `GameShell` when the summary or host-lost screen shows; verify 3.1 passes.
-- [ ] 3.3 Verify import, smoke and GUT pass.
+- [x] 3.1 RED `test_slot_selection.gd` (solo): 1-9, 0, - and = select screen slots 1-12 even when empty; the wheel and D-pad right/left move to the next and previous non-empty slot, wrapping, and stay put when all slots are empty; the wheel with the pointer over the strip moves the selection the same way; a click selects; the selection stays on a slot that empties; selecting a knife does not change `Inventory.held_food()`; a focused `LineEdit` stops every slot key; with the pause menu, the run summary or the host-lost screen shown nothing changes; slots have `focus_mode = FOCUS_NONE`; no request reaches the session while selecting.
+- [x] 3.2 GREEN selection in `InventoryStrip` (`_unhandled_input` for keys and the D-pad, the wheel routed from `RunHud._input`; the `LineEdit` guard from `QuickChatWheel`); `RunHud` learns from `GameShell` when the summary or host-lost screen shows; verify 3.1 passes.
+- [x] 3.3 Verify import, smoke and GUT pass.
 
 ## 4. Using the selected item
 

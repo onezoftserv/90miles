@@ -6,7 +6,11 @@ extends Control
 ## inventory slot n − 1; above the slots the selected item's line and the refusal line, and the
 ## carried weight to their right, each on a HUD panel. It only reads the bound body's inventory,
 ## which the host owns (a client's copy arrives through Inventory.from_net), and redraws on the
-## frame that inventory changes. The selection is this peer's own and is never sent.
+## frame that inventory changes. The selection is this peer's own and is never sent: the number
+## row picks a screen slot by key position, D-pad right and left (here) and the wheel (routed from
+## RunHud._input, so a slot under the pointer never swallows it) cycle the slots that hold
+## something, and a click picks a slot. Nothing selects while a text field has focus or while
+## `input_open` says a screen or the pause menu has the input.
 
 ## The HUD's fixed budget (ui-shell "HUD layout").
 const VIEW_SIZE: Vector2 = Vector2(640.0, 360.0)
@@ -25,6 +29,8 @@ const SEPARATOR: String = " · "
 const ELLIPSIS: String = "…"
 const USE_ACTION: StringName = &"use_item"
 const SLOT_ACTION_FORMAT: String = "slot_%d"
+const NEXT_ACTION: StringName = &"slot_next"
+const PREV_ACTION: StringName = &"slot_prev"
 
 ## The player whose inventory this shows, or null.
 var body: PlayerBody = null
@@ -34,10 +40,16 @@ var text: HudText = HudText.load_default()
 var device: InputLabels.Device = InputLabels.Device.KEYBOARD
 ## The selected inventory slot: screen slot `selected + 1`.
 var selected: int = 0
+## Whether the HUD takes input now; RunHud answers (no pause menu, summary or host-lost screen).
+var input_open: Callable = func() -> bool: return true
+## Hidden, and deaf to input, while a screen is shown over the run.
+var screen_shown: bool = false
 # Typed with the base class: a typed array of one of our own classes can leak at exit.
 var _views: Array[Control] = []
 var _inventory: Inventory = null
 var _use_key: String = ""
+# The slot actions the input map defines, screen slot 1 first.
+var _slot_actions: Array[StringName] = []
 
 @onready var panel: PanelContainer = $Panel
 @onready var item_line_panel: PanelContainer = $ItemLinePanel
@@ -88,6 +100,56 @@ static func decimal(value: float) -> String:
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	while InputMap.has_action(StringName(SLOT_ACTION_FORMAT % (_slot_actions.size() + 1))):
+		_slot_actions.append(StringName(SLOT_ACTION_FORMAT % (_slot_actions.size() + 1)))
+	refresh()
+
+
+# Slot keys and the D-pad. The wheel arrives through RunHud._input instead (`step`), and a mouse
+# button here is never a slot input.
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton or not accepts_input():
+		return
+	for i: int in mini(_slot_actions.size(), _views.size()):
+		if event.is_action_pressed(_slot_actions[i]):
+			select(i)
+			get_viewport().set_input_as_handled()
+			return
+	if event.is_action_pressed(NEXT_ACTION) or event.is_action_pressed(PREV_ACTION):
+		step(1 if event.is_action_pressed(NEXT_ACTION) else -1)
+		get_viewport().set_input_as_handled()
+
+
+## Whether a slot input may change the selection now: a body to show, no screen, no pause, and
+## no text field being typed in.
+func accepts_input() -> bool:
+	if not _has_body() or not visible or screen_shown:
+		return false
+	if get_viewport() != null and get_viewport().gui_get_focus_owner() is LineEdit:
+		return false
+	return input_open.call()
+
+
+## Moves the selection to the next (1) or previous (-1) slot that holds an item.
+func step(direction: int) -> void:
+	select(next_filled(selected, direction))
+
+
+## The first slot after `from` in `direction` that holds an item, wrapping round; `from` when no
+## other slot does.
+func next_filled(from: int, direction: int) -> int:
+	if not _has_body():
+		return from
+	var count: int = body.inventory.slots.size()
+	for i: int in range(1, count + 1):
+		var index: int = posmod(from + direction * i, count)
+		if not body.inventory.slots[index].is_empty():
+			return index
+	return from
+
+
+func set_screen_shown(value: bool) -> void:
+	screen_shown = value
 	refresh()
 
 
@@ -142,7 +204,7 @@ func refresh() -> void:
 		return
 	if body.inventory.slots.size() != _views.size():
 		_rebuild(body.inventory.slots.size())
-	visible = not body.left_island
+	visible = not body.left_island and not screen_shown
 	_use_key = InputLabels.label_for(USE_ACTION, device, text, _locale())
 	_show_slots()
 	_show_selection()
@@ -151,7 +213,7 @@ func refresh() -> void:
 
 
 func _process(_delta: float) -> void:
-	if not _has_body() or body.left_island:
+	if not _has_body() or body.left_island or screen_shown:
 		visible = false
 		return
 	visible = true
@@ -185,11 +247,16 @@ func _rebuild(count: int) -> void:
 	for i: int in count:
 		var view := StripSlot.new()
 		view.name = "Slot%d" % (i + 1)
-		view.clicked.connect(select.bind(i))
+		view.clicked.connect(_on_slot_clicked.bind(i))
 		_slots.add_child(view)
 		_views.append(view)
 	selected = clampi(selected, 0, maxi(count - 1, 0))
 	_layout()
+
+
+func _on_slot_clicked(index: int) -> void:
+	if accepts_input():
+		select(index)
 
 
 func _layout() -> void:

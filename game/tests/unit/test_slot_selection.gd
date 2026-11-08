@@ -10,6 +10,10 @@ const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://test_slot_selection_settings.cfg"
 const NUMBER_ROW: Array[Key] = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_0, KEY_MINUS, KEY_EQUAL]
+## GUT's own panel, drawn over the bottom band in the test runner; hidden while a test clicks.
+const GUT_LAYER: NodePath = ^"/root/GutRunner/GutLayer"
+
+var _hid_gut_layer: bool = false
 
 
 func before_each() -> void:
@@ -18,6 +22,10 @@ func before_each() -> void:
 
 func after_each() -> void:
 	get_tree().paused = false
+	var gut_layer := get_node_or_null(GUT_LAYER) as CanvasLayer
+	if gut_layer != null and _hid_gut_layer:
+		gut_layer.visible = true
+	_hid_gut_layer = false
 	NetManager.leave()
 	if FileAccess.file_exists(SETTINGS_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
@@ -79,7 +87,12 @@ func _d_pad(button: JoyButton) -> void:
 		get_viewport().push_input(event)
 
 
+# A real click through the GUI at `at` (HUD coordinates), with the test runner's panel out of the way.
 func _click(at: Vector2) -> void:
+	var gut_layer := get_node_or_null(GUT_LAYER) as CanvasLayer
+	if gut_layer != null and gut_layer.visible:
+		gut_layer.visible = false
+		_hid_gut_layer = true
 	for pressed: bool in [true, false]:
 		var event := InputEventMouseButton.new()
 		event.button_index = MOUSE_BUTTON_LEFT
@@ -310,3 +323,4 @@ func test_the_host_lost_screen_takes_the_slot_keys() -> void:
 	assert_null(shell.hud, "the HUD went with the run")
 	_press_key(KEY_4)
 	assert_eq(shell.flow, GameShell.Flow.HOST_LOST)
+
