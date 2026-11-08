@@ -301,6 +301,25 @@ func test_a_solo_player_finishes_the_sandbar_from_inputs_alone() -> void:
 	_start()
 	# The creature spawner starts on the next frame, as in a real run.
 	await wait_physics_frames(2)
+	_check_the_run_setup()
+	_gather_at_the_hut()
+	if not _build_the_fire_from_the_bench() or not _climb_and_drink():
+		return
+	_gather_the_raft_inputs()
+	var crossing := _build_and_launch_the_raft()
+	if crossing == null:
+		return
+	assert_eq(crossing.rider_state(CoopSession.HOST_ID), Crossing.Rider.ABOARD, "the player is aboard")
+	assert_gt(min_thirst, 0.0, "thirst never reached 0")
+	assert_true(session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "still offline: no port opened")
+	assert_false(NetManager.is_online())
+	gut.p("solo sandbar run: %d frames, %.0f s, lowest thirst %.1f" % [frames, frames * DT, min_thirst])
+	# Real frames again, so the launched raft and the used-up site are freed before the shell is.
+	await wait_physics_frames(2)
+
+
+# Creatures on, as in a real run, every gull at a nest palm; the body reads the keyboard; no socket.
+func _check_the_run_setup() -> void:
 	spawner = session.get_node(^"Creatures") as CreatureSpawner
 	assert_true(island.with_creatures, "creatures on, as in a real run")
 	var nests := _nest_spots()
@@ -312,13 +331,18 @@ func test_a_solo_player_finishes_the_sandbar_from_inputs_alone() -> void:
 	assert_true(session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "offline: no socket, no port")
 	min_thirst = body.meters.thirst
 
-	# The hut: the knife, its two driftwood and two rope; dry grass and a beach driftwood nearby.
+
+# The hut: the knife, its two driftwood and two rope; dry grass and a beach driftwood nearby.
+func _gather_at_the_hut() -> void:
 	_pick_up(&"knife")
 	for item_id: StringName in [&"driftwood", &"driftwood", &"rope", &"driftwood", &"dry_grass"]:
 		_pick_up(item_id)
 	assert_eq(body.inventory.count_id(&"driftwood"), 3, "the fire's 3 driftwood")
 
-	# The bench: E opens the list, E chooses "Fogata" and the site appears at the player's feet.
+
+# The bench: E opens the list, E chooses "Fogata" and the site appears at the player's feet; E
+# deposits into it and the work builds the fire. False when no site appeared.
+func _build_the_fire_from_the_bench() -> bool:
 	var bench := session.get_node(^"HutWorkbench") as Workbench
 	assert_true(_walk_to(bench.global_position + Vector2(0.0, 10.0)), "walked to the bench")
 	_frame()
@@ -331,7 +355,7 @@ func test_a_solo_player_finishes_the_sandbar_from_inputs_alone() -> void:
 	var fire_site := _site_of(&"fire")
 	assert_not_null(fire_site, "a fire site at the player's feet")
 	if fire_site == null:
-		return
+		return false
 	assert_true(body.global_position.distance_to(fire_site.global_position) < TILE, "under the player")
 	assert_eq(fire_site.deposited.get(&"driftwood", 0), 0, "the choosing E deposited nothing")
 	_frame()
@@ -343,12 +367,16 @@ func test_a_solo_player_finishes_the_sandbar_from_inputs_alone() -> void:
 			break
 		_frame()
 	assert_eq(_fires().size(), 1, "the fire is built and lit")
+	return true
 
-	# The palm: a 2 s climb gives a coconut; it is drunk out of the gulls' sight with the knife.
+
+# The palm: a 2 s climb gives a coconut; it is drunk out of the gulls' sight with the knife. False
+# when no palm fits.
+func _climb_and_drink() -> bool:
 	var palm := _climbable_palm()
 	assert_not_null(palm, "a palm with coconuts that is not a nest")
 	if palm == null:
-		return
+		return false
 	assert_true(_walk_to(palm.global_position), "walked to the palm")
 	_frame()
 	assert_same(hud.prompt.target, palm.interactable, "the prompt is over the palm")
@@ -365,15 +393,18 @@ func test_a_solo_player_finishes_the_sandbar_from_inputs_alone() -> void:
 	assert_eq(body.inventory.count_id(&"coco"), 0, "F drank the coconut")
 	assert_gt(body.meters.thirst, thirst, "and it quenched thirst")
 	assert_eq(body.inventory.slots[_slot_of(&"knife")].uses_left, 39, "opened with the knife")
+	return true
 
-	# The raft's inputs: every beach driftwood, the flotsam tubes and rope.
+
+# The raft's inputs: every beach driftwood, the flotsam tubes and rope; one short, a squall passes
+# and its end puts the beach driftwood back.
+func _gather_the_raft_inputs() -> void:
 	for i: int in 2:
 		_pick_up(&"inner_tube")
 	_pick_up(&"rope")
 	while body.inventory.count_id(&"driftwood") < RAFT_INPUTS[&"driftwood"] and not _lying(&"driftwood").is_empty():
 		_pick_up(&"driftwood")
 	assert_eq(body.inventory.count_id(&"driftwood"), 5, "the island's other 5 driftwood")
-	# One short: a squall passes and its end puts the beach driftwood back.
 	WeatherManager.sky.weather.start_weather(&"squall")
 	_seconds(1.0)
 	WeatherManager.sky.weather.start_weather(&"calm")
@@ -382,7 +413,10 @@ func test_a_solo_player_finishes_the_sandbar_from_inputs_alone() -> void:
 	for item_id: StringName in RAFT_INPUTS:
 		assert_eq(body.inventory.count_id(item_id), RAFT_INPUTS[item_id], "carrying the raft's %s" % item_id)
 
-	# The raft site: E deposits everything and the player works it; then E held launches the raft.
+
+# The raft site: E deposits everything and the player works it; then E held launches the raft.
+# The crossing, or null when the raft was not built or did not launch.
+func _build_and_launch_the_raft() -> Crossing:
 	var raft_site := session.get_node(^"RaftSite") as BuildSite
 	assert_true(_walk_to(raft_site.global_position), "walked to the raft site")
 	_frame()
@@ -397,18 +431,9 @@ func test_a_solo_player_finishes_the_sandbar_from_inputs_alone() -> void:
 		_frame()
 	assert_not_null(raft, "the raft is built")
 	if raft == null:
-		return
+		return null
 	_frame()
 	assert_same(hud.prompt.target, raft.interactable, "the prompt is over the raft")
 	_hold(INTERACT, Raft.LAUNCH_HOLD_S + 0.2)
 	assert_eq(shell.crossings.size(), 1, "the raft launched")
-	if shell.crossings.is_empty():
-		return
-	var crossing := shell.crossings[0] as Crossing
-	assert_eq(crossing.rider_state(CoopSession.HOST_ID), Crossing.Rider.ABOARD, "the player is aboard")
-	assert_gt(min_thirst, 0.0, "thirst never reached 0")
-	assert_true(session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "still offline: no port opened")
-	assert_false(NetManager.is_online())
-	gut.p("solo sandbar run: %d frames, %.0f s, lowest thirst %.1f" % [frames, frames * DT, min_thirst])
-	# Real frames again, so the launched raft and the used-up site are freed before the shell is.
-	await wait_physics_frames(2)
+	return shell.crossings[0] as Crossing if not shell.crossings.is_empty() else null
