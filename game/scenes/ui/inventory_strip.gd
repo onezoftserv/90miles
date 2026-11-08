@@ -458,7 +458,8 @@ func _show_line() -> void:
 		var plan := UsePlan.choose(body, selected, session)
 		var verb: String = ""
 		var teammate: String = ""
-		if plan.use_index >= 0:
+		# At sea the use button is refused (design D11), so the line names no key and no verb.
+		if plan.use_index >= 0 and not at_sea():
 			verb = text.use_verb(item.uses[plan.use_index].action, locale)
 			if plan.target != null and session != null:
 				teammate = session.player_name(plan.target_peer)
