@@ -63,9 +63,10 @@ func to_dict() -> Dictionary:
 	}
 
 
-## Null for malformed data (a joiner never trusts what arrives): a missing key, a bad serial, a
-## route not in the catalog, riders that are not 1 to 4 distinct peer ids, a malformed plan, a
-## number that is not finite, a rider without a valid state, or a position that is not finite.
+## Null for malformed data (a joiner never trusts what arrives): a missing key, a serial outside
+## 0..Crossing.MAX_SERIAL, a route not in the catalog, riders that are not 1 to 4 distinct peer
+## ids, a malformed plan or one of no length, a number that is not finite, a rider without a valid
+## state, or a position that is not finite.
 ## In-range numbers are clamped; states and positions of non-riders are dropped.
 static func from_dict(data: Variant) -> CrossingSnapshot:
 	if not data is Dictionary:
@@ -85,14 +86,16 @@ static func from_dict(data: Variant) -> CrossingSnapshot:
 func _read_head(raw: Dictionary) -> bool:
 	var raw_serial: Variant = raw["serial"]
 	var raw_route: Variant = raw["route"]
-	if not raw_serial is int or raw_serial < 0 or not (raw_route is String or raw_route is StringName):
+	if not raw_serial is int or raw_serial < 0 or raw_serial > Crossing.MAX_SERIAL:
+		return false
+	if not (raw_route is String or raw_route is StringName):
 		return false
 	serial = raw_serial
 	route_id = StringName(raw_route)
 	if GameState.content.get_entry(&"routes", route_id) == null:
 		return false
 	plan = CrossingPlan.from_array(raw["plan"])
-	return plan != null and _read_riders(raw["riders"])
+	return plan != null and plan.length_s > 0.0 and _read_riders(raw["riders"])
 
 
 func _read_riders(raw_riders: Variant) -> bool:

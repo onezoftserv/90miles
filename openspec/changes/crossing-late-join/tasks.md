@@ -23,4 +23,3 @@
 - Add the `crossing-late-join` line to `TASKS.md` (Milestone B) and a Done entry.
 - Once onezoftserv/90miles#9 merges: move the branch onto `main` (merge if #9 was merged, rebase `--onto origin/main 75b4f7c` if squashed, before any push for review), open the PR against `main` and get CI green. The user's other session merges it.
 - Ask the owner to confirm the proposal's three decisions before archiving.
-- Follow-up change: on clients a broken vessel's deck cells stay sand (`receive_state` sets `broken` without changing the terrain).

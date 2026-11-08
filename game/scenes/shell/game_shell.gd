@@ -316,7 +316,6 @@ func _on_route_started(route_id: StringName, peer_ids: Array[int]) -> void:
 	_check_run_over()
 
 
-# The riders leave play until arrival on the next island exists.
 # A joiner (crossing-late-join): the crossings under way it restored are followed like launched
 # ones, and riders whose crossing ended before the join leave play here too.
 func _on_progress_received(restored: Array[Crossing]) -> void:
@@ -332,6 +331,7 @@ func _on_progress_received(restored: Array[Crossing]) -> void:
 	_check_run_over()
 
 
+# The riders leave play until arrival on the next island exists.
 func _on_crossing_ended(finished: CrossingResult, crossing: Crossing) -> void:
 	crossings.erase(crossing)
 	crossing_results.append(finished)

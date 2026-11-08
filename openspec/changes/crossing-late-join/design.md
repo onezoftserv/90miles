@@ -23,7 +23,6 @@ See proposal.md, "Why", for the gap. What the code does today, on `coop-reconnec
 **Non-Goals:**
 - Arrival on the next island. Riders still leave play through `ArrivalStub`.
 - Replicating crossings through a `MultiplayerSpawner`; see Decisions.
-- On a client, a broken vessel's deck cells stay walkable sand. `receive_state` sets `broken` without changing the sea's terrain, and the restore keeps that same behaviour; fixing it is a follow-up.
 - Bleeding status and the reef shark's state on clients.
 
 ## Decisions
@@ -56,10 +55,10 @@ It is authority-only and checks that the sender is `HOST_ID`. It carries:
 
 - A `RefCounted` like `CrossingResult`. `of(crossing)` builds one on the host. `to_dict()` writes it, and `from_dict(data)` returns null on any malformed field.
 - **Fields:**
-  - `serial`: int ≥ 0. The node name is built from it, never read from the network.
+  - `serial`: int from 0 to `Crossing.MAX_SERIAL` (1023, far more than a run holds; its sea stays where float positions are exact). The node name is built from it, never read from the network.
   - `route_id`: must be a route in the catalog.
   - `riders`: ints in slot order, 1 to `CoopSession.MAX_PLAYERS`, no repeats. The slot gives the deck spot.
-  - `plan`: `CrossingPlan.from_array`.
+  - `plan`: `CrossingPlan.from_array`, with a length above 0.
   - `elapsed_s`, `maximum` and `value`: finite. `value` is clamped to `[0, maximum]`.
   - `broken`: bool.
   - `states`: rider → int in `[0, Rider.size())`. Only listed riders are kept.
@@ -76,7 +75,8 @@ It is authority-only and checks that the sender is `HOST_ID`. It carries:
   4. Apply the snapshot.
 - **Applying a snapshot:**
   - It goes through the same body as `receive_state`, factored out as `_apply_state(states, value, time)` with the sender check left outside. A snapshot and a live resync therefore cannot diverge.
-  - `broken` is set as given.
+  - A break (`broken`, or a value of 0) sinks the deck: its cells become deep water, as `_on_broke` does on the host. A live resync now does the same, so a client that was there all along no longer keeps a sand deck after a break.
+  - Each rider's body is bound to the sea again (ground and camera limits, the half of `_enter_rider` split out as `_bind_body`). That covers a rider whose body was not under that peer yet when the crossing was built: a body re-bound before an early peer's join reply.
   - Each rider's body goes to its snapshot position, clamped into the sea, instead of the deck spot `_enter_rider` used.
   - `_apply_flags` then pins tied riders.
 - The restored crossing never advances: `advance` returns on a client. It shows, scrolls and waits for `receive_state` and `receive_result` as any client's does.
@@ -85,7 +85,7 @@ It is authority-only and checks that the sender is `HOST_ID`. It carries:
 ### The host sends crossing messages only to peers that have the crossing
 
 - **`Crossing._recipients`:**
-  - **At launch, on the host:** it is seeded with `session.multiplayer.get_peers()`. `start_for` sends `receive_departure` to exactly those peers just before, so each of them builds the crossing before the plan arrives.
+  - **At launch, on the host:** it is seeded with the connected peers that are in the run (`roster`). `start_for` sends `receive_departure` to every connected peer just before, so each of them builds the crossing before the plan arrives. A peer still joining builds it too but gets no crossing messages until its join is answered; the snapshot then brings it the plan and the rest.
   - **`send_progress`:** adds the joiner (`share_with(peer)`) when it snapshots a crossing for that peer.
 - `receive_plan`, `receive_state` and `receive_result` go out through `rpc_id`, to each recipient still in `get_peers()`.
 - A peer that connected but whose join is unanswered gets nothing. With the broadcast it got `receive_state` for a path it lacks and logged an engine error.
@@ -119,7 +119,8 @@ It is authority-only and checks that the sender is `HOST_ID`. It carries:
 - **[Elapsed skew]** The joiner's clock starts one latency behind the host's. → The 1 s resync corrects it, and the test allows 1 s.
 - **[Positions]** The joiner's own predicted body is placed at the snapshot position, and prediction then reconciles it to the host's state. → It is placed only once, and the host's position sync owns it after that.
 - **[A new joiner path through `IslandRoutes`]** `IslandRoutes` now depends on `Crossing`. → It already starts what becomes a crossing, and the shell stays the only place that launches one from a route start.
-- **[Recipients]** Seeding recipients with `get_peers()` at launch assumes every connected peer has `Routes`, so that it built the crossing. → Every session furnished by an island has it, and NetHarness tests furnish both sides.
+- **[Recipients]** Seeding recipients from the roster at launch assumes every peer in the run has `Routes`, so that it built the crossing. → Every session furnished by an island has it, and NetHarness tests furnish both sides.
+- **[A forged host]** The host is trusted by design: it can already spawn bodies and set any state. The joiner still refuses malformed snapshots and caps the serial and the number of snapshots, so a bad message cannot crash it or place a sea at a huge offset.
 
 ## Migration Plan
 

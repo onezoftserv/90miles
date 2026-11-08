@@ -95,7 +95,9 @@ func test_a_malformed_snapshot_is_refused() -> void:
 	assert_not_null(CrossingSnapshot.from_dict(good), "the unchanged dictionary is accepted")
 	var cases: Dictionary = {
 		"negative serial": ["serial", -1],
+		"serial past the cap": ["serial", Crossing.MAX_SERIAL + 1],
 		"serial as text": ["serial", "3"],
+		"a plan of no length": ["plan", [0.0, []]],
 		"unknown route": ["route", "no_such_route"],
 		"route not text": ["route", 7],
 		"no riders": ["riders", []],
@@ -196,6 +198,39 @@ func test_restoring_twice_keeps_one_crossing() -> void:
 	assert_eq(count, 1)
 	assert_eq(first.rider_state(2), Crossing.Rider.ABOARD)
 	assert_eq(first.integrity.value, 50.0)
+
+
+func test_a_raft_that_broke_has_no_deck_on_the_joiner() -> void:
+	var host_crossing := _under_way()
+	host_crossing.hit_vessel(100.0)
+	var restored := _restored_in_new_session(CrossingSnapshot.of(host_crossing))
+	assert_false(restored.integrity.intact())
+	var deck_cell := Vector2i((restored.deck_center() / Crossing.TILE_PX).floor())
+	assert_eq(restored.sea.terrain_at(deck_cell), DataEnums.Terrain.DEEP, "the deck went under")
+
+
+func test_a_break_in_a_resync_sinks_the_deck() -> void:
+	var restored := _restored_in_new_session(CrossingSnapshot.of(_under_way()))
+	var deck_cell := Vector2i((restored.deck_center() / Crossing.TILE_PX).floor())
+	assert_eq(restored.sea.terrain_at(deck_cell), DataEnums.Terrain.BEACH, "a deck while it holds")
+	restored._apply_state({}, 0.0, 25.0)
+	assert_true(restored.integrity.broken)
+	assert_eq(restored.sea.terrain_at(deck_cell), DataEnums.Terrain.DEEP)
+
+
+func test_a_refresh_binds_a_rider_whose_body_came_late() -> void:
+	var snapshot := CrossingSnapshot.of(_under_way())
+	var joiner := CrossingRig.make_session(self, 1)
+	var first := Crossing.restore(joiner, snapshot)
+	var late := CoopSession.PLAYER_SCENE.instantiate() as PlayerBody
+	late.name = "2"
+	joiner.players.add_child(late)
+	late.player_input.enabled = false
+	joiner._bodies[2] = late
+	Crossing.restore(joiner, snapshot)
+	assert_same(late.terrain, first.sea, "the second restore puts the late body in the sea")
+	assert_eq(late.camera.limit_top, int(first.sea_rect().position.y))
+	assert_eq(late.global_position, snapshot.positions[2])
 
 
 func test_a_restored_crossing_fires_nothing_that_already_happened() -> void:

@@ -141,7 +141,7 @@ func receive_progress(departures: Dictionary, host_next_serial: int, snapshots: 
 	if multiplayer.get_remote_sender_id() != HOST_ID or not is_instance_valid(_session):
 		return
 	_apply_departures(departures)
-	if host_next_serial >= 0:
+	if host_next_serial >= 0 and host_next_serial <= Crossing.MAX_SERIAL + 1:
 		Crossing.follow_serial(_session, host_next_serial)
 	var restored: Array[Crossing] = []
 	for raw: Variant in snapshots.slice(0, NetPeers.MAX_PLAYERS):

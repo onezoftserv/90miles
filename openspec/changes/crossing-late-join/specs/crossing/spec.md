@@ -26,7 +26,7 @@ A peer that joins the run, or rejoins and takes back its body, while a crossing 
 - **THEN** it plays and ends as before, and nothing is sent to anyone
 
 ### Requirement: Crossing messages reach only peers that have the crossing
-The host SHALL send a crossing's plan, rider states and result only to peers that have that crossing: those connected when it started, and each joiner once that joiner has been told of it. No peer receives a message for a crossing it does not have. With exactly 1 player, offline, there is no peer and nothing is sent.
+The host SHALL send a crossing's plan, rider states and result only to peers that have that crossing: those in the run when it started, and each joiner once that joiner has been told of it. No peer receives a message for a crossing it does not have. With exactly 1 player, offline, there is no peer and nothing is sent.
 
 #### Scenario: A peer still joining gets no crossing messages
 - **GIVEN** a crossing under way and a client that has connected but whose join request the host has not answered yet

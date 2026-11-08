@@ -279,10 +279,15 @@ func test_a_peer_that_saw_the_start_while_joining_keeps_one_crossing() -> void:
 	assert_true(await wait_until(func() -> bool: return host.multiplayer.get_peers().has(early_id), TIMEOUT_S))
 	var host_crossing := _raft_for_both(host)
 	assert_not_null(host_crossing)
-	var seen := await _crossing_on(early)
-	assert_not_null(seen, "the route start reached it before its join was answered")
+	var built := func() -> bool: return early.get_node_or_null("Crossing0") != null
+	assert_true(await wait_until(built, TIMEOUT_S), "the route start reached it before its join was answered")
+	var seen := early.get_node("Crossing0") as Crossing
+	await wait_physics_frames(10)
+	assert_null(seen.plan, "but no crossing messages until its join is answered")
+	assert_false(host_crossing.recipients().has(early_id))
 	early.start()
-	assert_true(await wait_until(func() -> bool: return host.body(early_id) != null and early.body(early_id) != null, TIMEOUT_S))
+	assert_true(await wait_until(func() -> bool: return seen.plan != null, TIMEOUT_S), "the snapshot brings the plan")
+	assert_true(host_crossing.recipients().has(early_id))
 	host_crossing.hit_vessel(25.0)
 	var refreshed := func() -> bool: return seen.integrity.value == host_crossing.integrity.value
 	assert_true(await wait_until(refreshed, TIMEOUT_S))

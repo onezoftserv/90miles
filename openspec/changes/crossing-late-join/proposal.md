@@ -10,7 +10,7 @@ A client that joins, or rejoins under a new peer (`coop-reconnect`), while a cro
   - a snapshot of each crossing under way: route, serial (so the node name), riders in slot order, plan, elapsed time, each rider's state and position, and the vessel's maximum, value and whether it broke.
 - **The joiner builds each crossing under way from its snapshot.** It does not roll or replay anything. Each rider body, the joiner's own included, goes into the sea at the host's position, with the sea as its ground and its camera limited to the sea, as entering a crossing does. Tied riders are pinned. From then on the host's normal messages keep it current, and the crossing ends on the joiner when it ends on the host.
 - **A crossing the joiner already has is refreshed, not duplicated.** This covers a peer that connected and saw the route start before its join request was answered.
-- **The host sends a crossing's messages only to peers that have that crossing:** the peers connected when it launched, plus each joiner it sent the snapshot to. A connected peer that has not been told yet gets nothing it cannot place, so no peer logs a missing-node error.
+- **The host sends a crossing's messages only to peers that have that crossing:** the peers in the run when it launched, plus each joiner it sent the snapshot to. A connected peer that has not been told yet gets nothing it cannot place, so no peer logs a missing-node error.
 - **The joiner's shell follows a restored crossing like one it launched.** The crossing keeps the run open while it runs. When it ends, its riders leave play (`ArrivalStub`) and the run-over check runs.
 - **Solo is unchanged.** One player offline has no joiner, sends nothing and builds its crossing as before. A 1-player test keeps that.
 

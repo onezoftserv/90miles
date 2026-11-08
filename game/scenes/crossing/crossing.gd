@@ -30,6 +30,9 @@ const EDGE_GAP_PX: float = 1.0
 const RESYNC_S: float = 1.0
 const EPSILON_S: float = 0.000001
 const SESSION_SERIAL_META: StringName = &"crossing_serial"
+## The highest crossing number a joiner accepts: far more than a run holds, and its sea stays where
+## float positions are exact to a fraction of a pixel.
+const MAX_SERIAL: int = 1023
 const SCENE: PackedScene = preload("res://scenes/crossing/crossing.tscn")
 
 var route: RouteData
@@ -73,9 +76,11 @@ static func launch(session: CoopSession, started: RouteData, peer_ids: Array[int
 		rolled = CrossingPlan.roll(started, band, WeatherManager.sky, rng, crossing.tuning)
 	crossing.setup(session, started, peer_ids, starting_integrity, rolled, number)
 	if rolled != null:
-		# Every peer connected now heard the route start just before, so it has this crossing.
+		# Every peer in the run heard the route start just before, so it has this crossing. A peer
+		# still joining gets the snapshot once its join is answered (IslandRoutes.send_progress).
 		for peer: int in session.multiplayer.get_peers():
-			crossing.share_with(peer)
+			if session.roster.has(peer):
+				crossing.share_with(peer)
 		for peer: int in crossing._connected_recipients():
 			crossing.receive_plan.rpc_id(peer, rolled.to_array(), crossing.integrity.value)
 	return crossing
@@ -284,12 +289,16 @@ func apply_snapshot(snapshot: CrossingSnapshot) -> void:
 	if plan == null:
 		plan = snapshot.plan
 	_apply_state(snapshot.states, snapshot.value, snapshot.elapsed_s)
-	if snapshot.broken and integrity.has_integrity():
-		integrity.broken = true
+	if snapshot.broken:
+		_show_broken()
 	var inside: Rect2 = sea_rect().grow(-EDGE_GAP_PX)
-	for peer: int in snapshot.positions:
+	for peer: int in _peers:
 		var body := body_of(peer)
-		if body != null and _peers.has(peer):
+		if body == null:
+			continue
+		# Again, for a rider whose body was not under this peer yet when the crossing was built.
+		_bind_body(body)
+		if snapshot.positions.has(peer):
 			body.global_position = snapshot.positions[peer].clamp(inside.position, inside.end)
 
 
@@ -353,10 +362,22 @@ func _squall() -> void:
 
 # A broken vessel throws everyone in, the tied included, and nobody can climb back.
 func _on_broke() -> void:
-	sea.fill_rect(_deck_cells(), DataEnums.Terrain.DEEP)
+	_sink_deck()
 	for peer: int in _peers:
 		throw_in(peer)
 	_dirty = true
+
+
+# Clients: the host says the vessel broke; the deck's cells are deep water here too.
+func _show_broken() -> void:
+	if integrity.broken or not integrity.has_integrity():
+		return
+	integrity.broken = true
+	_sink_deck()
+
+
+func _sink_deck() -> void:
+	sea.fill_rect(_deck_cells(), DataEnums.Terrain.DEEP)
 
 
 func _tick_rider(peer: int, delta: float) -> void:
@@ -408,15 +429,20 @@ func _enter_rider(peer: int, index: int) -> void:
 	var body := body_of(peer)
 	if body == null:
 		return
+	_bind_body(body)
+	body.global_position = _deck_spot(index) if integrity.has_integrity() else deck_center() + Vector2(0.0, (index - 1.5) * SPACING_PX)
+	_apply_flags()
+
+
+# A rider's body swims on this sea, with its camera kept to it.
+func _bind_body(body: PlayerBody) -> void:
 	body.terrain = sea
 	body.swim_energy_factor = 0.0
-	body.global_position = _deck_spot(index) if integrity.has_integrity() else deck_center() + Vector2(0.0, (index - 1.5) * SPACING_PX)
 	var rect := sea_rect()
 	body.camera.limit_left = int(rect.position.x)
 	body.camera.limit_top = int(rect.position.y)
 	body.camera.limit_right = int(rect.end.x)
 	body.camera.limit_bottom = int(rect.end.y)
-	_apply_flags()
 
 
 func _make_point(kind: RescuePoint.Kind, swimmer: int, hold_s: float) -> RescuePoint:
@@ -508,7 +534,7 @@ func _apply_state(states: Dictionary, vessel_value: float, time_s: float) -> voi
 	if integrity.has_integrity():
 		integrity.value = clampf(vessel_value, 0.0, integrity.maximum)
 		if integrity.value <= 0.0:
-			integrity.broken = true
+			_show_broken()
 	_apply_flags()
 
 
