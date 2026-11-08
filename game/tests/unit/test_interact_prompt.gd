@@ -289,3 +289,43 @@ func test_a_gamepad_button_turns_e_into_a() -> void:
 	get_viewport().push_input(key)
 	_tick()
 	assert_eq(_first_line(), "[E] Recoger Coco", "a key press switches back")
+
+
+# --- a build site's lines --------------------------------------------------------------------------
+
+func test_the_raft_site_lists_what_it_still_needs() -> void:
+	var body := _run()
+	var site := session.get_node("RaftSite") as BuildSite
+	body.inventory.add(&"driftwood", 2)
+	_stand(body, site.global_position)
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "Falta: Madera de la costa x6", "Cámara x2", "Soga x3"]), "nothing deposited yet")
+	_hold(body, STEP_S)
+	assert_eq(site.deposited.get(&"driftwood", 0), 2, "the press deposited the 2 driftwood")
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "Falta: Madera de la costa x4", "Cámara x2", "Soga x3"]))
+	assert_lt(hud.prompt.bar_progress(), 0.0, "no bar while inputs are missing")
+
+
+func test_a_fire_site_names_the_tag_it_needs() -> void:
+	var body := _run()
+	var site := body.crafter.place_site(GameState.content.get_entry(&"recipes", &"fire") as RecipeData, _open_sand(), session)
+	_stand(body, site.global_position)
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Fogata", "Falta: Madera de la costa x3", "Yesca x1"]))
+	body.inventory.add(&"driftwood", 3)
+	site.deposit(body)
+	_tick()
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Fogata", "Falta: Yesca x1"]))
+
+
+func test_with_every_input_in_the_site_shows_its_progress_as_a_bar() -> void:
+	var body := _run()
+	var site := session.get_node("RaftSite") as BuildSite
+	body.global_position = site.global_position
+	body.inventory.add(&"driftwood", 6)
+	body.inventory.add(&"inner_tube", 2)
+	body.inventory.add(&"rope", 3)
+	site.deposit(body)
+	site.work(0.5)
+	_stand(body, site.global_position)
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "50 %"]), "no Falta: line, the bar at 50 %")
+	assert_almost_eq(hud.prompt.bar_progress(), 0.5, 0.001)
+	assert_true(hud.prompt.bar.visible)
