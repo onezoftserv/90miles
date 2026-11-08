@@ -52,7 +52,7 @@ RED means the new tests are written first and seen failing; GREEN means the smal
 - [x] 5.5 GREEN `game/scripts/interaction/press_timer.gd` (`PressTimer`, locking its target like `InteractionHold`) and the ring in `InteractPrompt`; verify 5.4 passes.
 - [x] 5.6 RED then GREEN the build-site lines: after depositing 2 driftwood the raft site reads "Falta: Madera de la costa x4", "Cámara x2", "Soga x3" (solo); with every input in and half the work done, a client's prompt shows the bar at 50 % (`NetHarness`).
 - [x] 5.7 RED then GREEN `test_interact_prompt_net.gd` (`NetHarness`): a client within 1 tile of the raft site shows "[E] Construir Balsa" before any host message, and the host's prompt for its own player is unaffected. A client that drops and rejoins within 90 s with the same identity shows the prompt over what its reclaimed body can reach (moved here from 2.3).
-- [ ] 5.8 Verify import, smoke and GUT pass.
+- [x] 5.8 Verify import, smoke and GUT pass.
 
 ## 6. Workbench crafting list and build-site placement
 
