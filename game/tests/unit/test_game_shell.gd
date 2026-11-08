@@ -165,6 +165,76 @@ func test_a_removed_player_is_listed_as_dead_in_the_summary() -> void:
 	assert_string_contains(summary.rows()[1], "Murió")
 
 
+# --- crossing-late-join: what a joiner's shell does with the host's progress ------------------
+
+# A solo run with a teammate, peer 7, who left by raft; `crossing_s` > 0 puts their crossing under
+# way with that much left, 0 means it ended before the progress arrived.
+func _joined_after_7_left(crossing_s: float) -> Array:
+	var shell := _shell()
+	(shell.screen as TitleScreen).solo_requested.emit()
+	shell.session._add_player(7)
+	var routes := shell.session.get_node(^"Routes") as IslandRoutes
+	routes._apply_departures({7: "raft"})
+	var restored: Array[Crossing] = []
+	if crossing_s > 0.0:
+		var snapshot := CrossingSnapshot.new()
+		snapshot.route_id = &"raft"
+		snapshot.riders = [7] as Array[int]
+		snapshot.plan = CrossingPlan.create(crossing_s)
+		snapshot.maximum = 100.0
+		snapshot.value = 100.0
+		snapshot.states = {7: Crossing.Rider.ABOARD} as Dictionary[int, int]
+		restored.append(Crossing.restore(shell.session, snapshot))
+	routes.progress_received.emit(restored)
+	return [shell, restored]
+
+
+func test_a_restored_crossing_keeps_the_run_open_until_it_ends() -> void:
+	var made := _joined_after_7_left(30.0)
+	var shell := made[0] as GameShell
+	var crossing := (made[1] as Array[Crossing])[0]
+	assert_true(shell.crossings.has(crossing), "followed like a launched crossing")
+	assert_true(shell.session.body(7).visible, "the rider is in the crossing")
+	shell.session.body(1).meters.dead = true
+	assert_eq(shell.flow, GameShell.Flow.RUN, "the teammate's crossing keeps the run open")
+	crossing.advance(30.0)
+	assert_true(crossing.finished)
+	assert_false(shell.crossings.has(crossing))
+	assert_false(shell.session.body(7).visible, "the rider leaves play when it ends")
+	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
+	var rows: Array[String] = (shell.screen as SummaryScreen).rows()
+	assert_string_contains(rows[1], "Balsa")
+
+
+func test_a_rider_whose_crossing_ended_before_the_join_stays_out_of_play() -> void:
+	var made := _joined_after_7_left(0.0)
+	var shell := made[0] as GameShell
+	var rider := shell.session.body(7)
+	assert_false(rider.visible, "held like on the host")
+	assert_true(rider.left_island)
+	assert_eq(rider.collision_layer, 0)
+	assert_true(shell.session.body(1).visible, "the player who stayed is still on the island")
+	assert_eq(shell.flow, GameShell.Flow.RUN)
+
+
+func test_a_restored_crossing_already_followed_is_not_followed_twice() -> void:
+	var made := _joined_after_7_left(30.0)
+	var shell := made[0] as GameShell
+	var routes := shell.session.get_node(^"Routes") as IslandRoutes
+	routes.progress_received.emit(made[1] as Array[Crossing])
+	assert_eq(shell.crossings.size(), 1)
+
+
+func test_solo_progress_with_nothing_changes_nothing() -> void:
+	var shell := _shell()
+	(shell.screen as TitleScreen).solo_requested.emit()
+	var routes := shell.session.get_node(^"Routes") as IslandRoutes
+	routes.progress_received.emit([] as Array[Crossing])
+	assert_true(shell.session.body(1).visible)
+	assert_true(shell.crossings.is_empty())
+	assert_eq(shell.flow, GameShell.Flow.RUN)
+
+
 func test_the_run_carries_this_installs_identity() -> void:
 	var shell := _shell()
 	(shell.screen as TitleScreen).solo_requested.emit()
