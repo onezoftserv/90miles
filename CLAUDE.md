@@ -32,6 +32,7 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 
 - Spanish first. English is a translation that keeps key slang untranslated.
 - Cuban voice: slang, political satire and swearing are intended. Satire targets the system and daily life, never invented quotes from real politicians.
+- Cuban speech, not textbook Spanish (owner, 2026-11-08): in dialogue, narration, notes, signs, one-liners, hints and item descriptions use the spoken contractions: pa' (para), pa'l (para el), pa'llá, pa'cá, pa'lante, na' (nada), to' (todo or todos), 'tá and 'toy (está and estoy), and the like. Keep it readable: characters lean on it more than the narrator. Official notices, slogans and bureaucrats keep formal Spanish, because that is the joke. Menus, buttons and settings stay standard. Never contract a homograph: "nada" meaning swims and "para" meaning stops stay whole.
 - Handwritten: main story beats, boss scenes, endings, minor NPC lines (`game/resources/dialogue/*.tres`).
 - v1 is handwritten only: the important NPCs and the texts found every run included (owner decision, 2026-11-08). AI-generated lines are v2.
 - AI-generated, in v2 (Claude Haiku 4.5 on Bedrock, via `backend/`): important NPCs and texts found every run. The prompt and slang glossary live in `backend/prompts/`. Always ship handwritten fallback lines for offline play.

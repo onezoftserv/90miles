@@ -10,7 +10,7 @@ ref_id = &"raft"
 
 [resource]
 script = ExtResource("1_route")
-description_es = "Se arma en la playa entre todos. Cabe todo el que esté al lado; un chubasco en pleno mar tira a la gente al agua."
+description_es = "Se arma en la playa entre to'. Cabe to' el que esté al lado; un chubasco en pleno mar tira a la gente al agua."
 description_en = "Built on the beach by everyone. Takes whoever stands beside it; a squall at sea throws people into the water."
 requirements = Array[ExtResource("2_condition")]([SubResource("Resource_built")])
 capacity_mode = 0
