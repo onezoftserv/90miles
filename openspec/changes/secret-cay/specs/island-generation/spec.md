@@ -10,14 +10,6 @@ A handmade layout marked off-graph (the secret cay) SHALL never be generated, en
 - **WHEN** the layouts a run may use as numbered islands are listed for a 1-player run
 - **THEN** the sandbar is listed and the cay is not
 
-### Requirement: Any handmade layout builds the island
-The island scene SHALL build its terrain, shade, palms, spawn points, markers and pick-ups from whichever handmade layout it is given before it enters the tree, so another layout (a dev layout or the secret cay) reuses it with no script edit. A layout with no workbench gets none. One player gets the same island as a party.
-
-#### Scenario: The scene takes another layout
-- **GIVEN** the island scene handed the secret cay's layout instead of the sandbar's
-- **WHEN** it enters the tree in a solo offline game
-- **THEN** its size, palms, coconuts and spawn points are the cay's, and it has no workbench
-
 ## MODIFIED Requirements
 
 ### Requirement: Escape routes
