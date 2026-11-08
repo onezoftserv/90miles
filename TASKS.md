@@ -63,6 +63,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 ## 5. Milestone C — Procedural islands
 
 - [ ] `island-generation`: seeded landmass, bands, POI placement, validation
+  - Spec written 2026-11-08 (OpenSpec change `island-generator`: the seeded generator for one chain, the reef cay `reef_traps`, with nine owner decisions in its proposal); the build waits for the Milestone A/B playtest
 - [ ] Chain templates: sandbar, coast, mangrove, reef, rock (data in `.tres`)
 - [ ] Resource rules and respawn hooks (squall, night)
 - [ ] Run structure: 6–8 islands with branching (`endings-progression` part 1)

@@ -1,0 +1,84 @@
+# Tasks
+
+Not to be built before the Milestone A/B playtest. Every group is test-first: write the listed tests, watch them fail for the right reason, then build until they pass. Every group ends with these commands passing (run the import twice on a fresh checkout):
+
+- `godot --headless --path game --import`
+- `godot --headless --path game -s res://tests/smoke.gd`
+- `godot --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit`
+
+Tests that loop over 200 run seeds generate their islands once in `before_all` and share them. Run seeds are 1–200 and the island index is 3 unless a task says otherwise. Walk seconds use the `AStarGrid2D` helper of `test_coast_cay_layout.gd` (diagonals only where both orthogonal neighbours are walkable, Euclidean step lengths, divided by `MovementModel.WALK_SPEED`). Sort ids with a `String` comparator, never `Array[StringName].sort()`.
+
+## 0. Preconditions
+
+- [ ] 0.1 Confirm the owner's answers to the nine decisions in proposal.md; where an answer differs from the recommended option, update proposal.md, design.md and the spec delta first, and re-run `openspec validate island-generator --type change --strict`
+- [ ] 0.2 Confirm `run-end` (PR #31) is merged: `run_seed` is a `WORLD_STATE_TYPES` key, the host or solo rolls it in `GameShell._build_run`, joiners receive it. If it is not merged, add only that key the same way (with its joiner test) and say so in design.md "Changes from the build plan"
+- [ ] 0.3 Branch from the updated `main`; re-read `island_layout_data.gd`, `island_layout.gd`, `island_glyph_data.gd`, `sandbar_island.gd`, `island_travel.gd`, `island_arrival.gd`, `coop_session.gd`, `creature_spawner.gd`, `chain_data.gd`, `poi_data.gd`, `spawn_entry_data.gd`, `recipes/raft.tres`, `test_coast_cay_layout.gd` and `test_coast_cay_net.gd` as merged. If `secret-cay` or `art-pass` landed first, re-read what they changed in those files and rebase. Note any drift from design.md in a "Changes from the build plan" section; verify the three commands pass on the untouched branch
+
+## 1. Data fields, the template and the POIs
+
+- [ ] 1.1 Write `game/tests/unit/test_reef_traps_data.gd`: `chains/reef_traps.tres` loads as `ChainData` with every value in design.md §3 (grid (96, 64), margin 8, land cells (1000, 1300), land fraction (0.16, 0.22), landmass 1, inland 10, shallows (2, 2), shore band (2, 4), shore ROCK, lee BEACH facing (-1, 0), biome {SCRUB 0.7, ROCK 0.3}, shape (50, 66), (0, 60), (7, 11), landing 4 within 5, raft walk (0.5, 3), far end (9, 22), POI walk bands {`flotsam_line` (1, 7), `limestone_cave` (6, 18), `lobster_traps` (6, 22), `palm_grove` (3, 15)}, POIs (3, 6), signature `lobster_traps`, guaranteed [`limestone_cave`, `flotsam_line`], chances {`palm_grove` 0.5}, routes raft guaranteed and `binoculars_swim` weight 1, route count (2, 3), ambient driftwood count 8 per cell 1 on BEACH apart 3 SQUALL scaling 0.8 group `beach`, set pieces 0, bottle notes (0, 0), important texts 0, attempts 50, relaxed 5, fallback seed 9090, family REEF, band MID, rule REEF_RING); the four POI files load with the values in design.md §3; Spanish and English names on all five; the content check reports no errors and resolves the `poi_walk_s` keys as `pois` references; every file in `chains/` names a layout rule that has a painter in `IslandGenerator.PAINTERS`; `reef_shark.tres` has a rule for REEF with count (3, 3) on DEEP at least 2 tiles from shore and keeps its SANDBAR and COAST rule; `land_crab.tres`'s rule lists REEF; `seagull.tres`'s does not; `IslandGlyphData.party_scaling_per_extra_player` is 1.0 by default and on every glyph of `sandbar.tres` and `coast_cay.tres`. Verify it fails
+- [ ] 1.2 Append the new fields of design.md §3 to `ChainData`, `PoiData`, `SpawnEntryData` and `IslandGlyphData` (defaults keep today's behaviour); add `poi_walk_s` to `ChainData.get_reference_fields`; verify `test_data_classes.gd` still counts the same classes and folders (add only field samples if a new field type needs one)
+- [ ] 1.3 Add `game/resources/chains/reef_traps.tres` (*El cayo del arrecife* / *The reef cay*, lore in both languages from `docs/ISLANDS.md` §4 in our own words) and `game/resources/pois/lobster_traps.tres` (*Las nasas* / *Lobster traps*), `limestone_cave.tres` (*La cueva de caliza* / *Limestone cave*), `flotsam_line.tres` (*Lo que trajo el mar* / *Flotsam line*) and `palm_grove.tres` (*El palmar* / *Palm grove*), names draft for the owner's voice pass. Names stay standard Spanish; voiced text uses Cuban spoken contractions (pa', pa'l, pa'llá, pa'cá, pa'lante, na', to', 'tá, 'toy), characters often and the lore's narration sparingly, never on a homograph ("nada" for swims, "para" for stops), while official notices, slogans and bureaucrats keep formal Spanish and menus and buttons stay standard. Edit `reef_shark.tres` and `land_crab.tres`; verify `test_reef_traps_data.gd` passes
+- [ ] 1.4 Extend `test_island_layout.gd`: a small inline layout with no palm glyph and no palm reads with no problems; one that names a palm glyph and has no palm still reports "no palms". Change `IslandLayout._read` to match; verify the sandbar, coast cay and island layout tests pass
+- [ ] 1.5 Run the import, smoke run and GUT commands; verify all three pass
+
+## 2. Seeds and integer grids
+
+- [ ] 2.1 Write `game/tests/unit/test_island_seeds.gd`: `IslandSeeds.seed_for(run_seed, index, chain_id, attempt, stage)` is the integer of the first 15 hex digits of the SHA-256 of `"%d|%d|%s|%d|%s"`; it is the same on every call, at least 0 and below 2^60, and differs when any one input changes; the value for (1, 3, `reef_traps`, 0, `land`) equals a constant recorded in the test the first time it passes (a format guard); `rng_for` gives the same first 10 `randi_range(0, 9999)` draws twice. A source scan of `game/scripts/levels/generation/*.gd` finds no `hash(`, `randf`, `FastNoiseLite`, `sin(`, `cos(` or `atan`. Verify it fails
+- [ ] 2.2 Write `game/tests/unit/test_island_grid.gd` on small inline grids: Chebyshev distance to water by breadth-first search; squared Euclidean distance to the nearest water inside a window; 4-connected labelling with the largest body; the chamfer walk (an orthogonal step 2, a diagonal 3, in half-tiles; no diagonal past a blocked orthogonal neighbour; shallows walkable, deep never) matches hand counts. Verify it fails
+- [ ] 2.3 Implement `IslandSeeds` and `IslandGrid` in `game/scripts/levels/generation/` with `PackedInt32Array` grids; verify both tests pass
+- [ ] 2.4 Run the import, smoke run and GUT commands; verify all three pass
+
+## 3. The reef painter
+
+- [ ] 3.1 Write `game/tests/unit/test_island_landmass.gd` over 200 run seeds for "The reef cay's landmass": 96×64; 1,000–1,300 land cells, share 0.16–0.22; one 4-connected landmass; no land in the 8-cell margin; every land cell within 10 tiles of water (the window method of `test_coast_cay_layout.gd`); water within Chebyshev 2 of land is SHALLOWS and all other water DEEP; every shore cell (land within the island's shore width of water, 2–4) is BEACH or ROCK, every BEACH cell is within the shore width of a lee coast cell (a coast cell whose ray west, north-west or south-west reaches the edge over water only) and every ROCK shore cell is not; interior ROCK is 20–40% of the interior and the rest SCRUB; the terrain is identical when generated twice; a template copy with the palm grove at chance 1 gives the same terrain cell for cell on the first attempt ("A POI roll never moves the land"; the report keeps each attempt's terrain). Verify it fails
+- [ ] 3.2 Implement `ReefRingPainter` (design.md §4 steps 2–8) and the `IslandGenerator.PAINTERS` entry for `REEF_RING`; verify `test_island_landmass.gd` passes
+- [ ] 3.3 Run the import, smoke run and GUT commands; verify all three pass
+
+## 4. Landing, POIs, pick-ups, routes and the writer
+
+- [ ] 4.1 Write `game/tests/unit/test_island_pois.gd` over 200 run seeds for "The reef cay's POIs", "A solo reef's contents", "Where a solo reef's pieces lie", "The reef's landing", "A generated island builds like a handmade one" and "A reef with no grove is sound": the traps, cave and flotsam line on every island, a grove on 35–65% of them, kinds unique, anchors at least 12 tiles apart, no set piece; 6 trap rope, 2 inner tubes, 2–3 plastic jugs, 2 flotsam rope, 8 driftwood, one 2-cup `rain_cup` pick-up with respawn DAILY on the cave's anchor; every piece's cell, distance and respawn rule; the cave's 9 cells are land and the only shaded cells; 3 palms with 5 coconuts or none; the landing's 4 beach cells beside shallows within 5 tiles pairwise, the first the solo spawn; the raft site a beach cell off the landing; `route_ids` [`raft`, `binoculars_swim`]; id `reef_traps_3`, chain family REEF, no next island, no workbench, drink spot, sign or tide pool; `IslandLayout.build(layout).problems()` empty. Verify it fails
+- [ ] 4.2 Write `game/tests/unit/test_island_layout_writer.gd`: writing, parsing and writing again gives the same canonical text; `island_hash` is the SHA-256 of that text; island 3 of `reef_traps` for run seed 1 has the same text and hash when generated twice; its hash equals a constant recorded in the test the first time it passes on Windows (CI on Linux must then pass unchanged; re-record it only on purpose when the template or algorithm changes, and say so in the commit); `parse` refuses text over 128×128 cells, a glyph outside the writer's alphabet and a legend that reads with problems. Verify it fails
+- [ ] 4.3 Implement `PoiPlacer` (design.md §4 steps 9–14) and `IslandLayoutWriter` (§2); verify both tests pass
+- [ ] 4.4 Run the import, smoke run and GUT commands; verify all three pass
+
+## 5. Validation, attempts and the fallback
+
+- [ ] 5.1 Write `game/tests/unit/test_island_validation.gd`: `IslandValidator` rejects, each with a message naming the check, a built island with land outside its band, land in the margin, two landmasses, a land cell 11 tiles from water, a missing guaranteed POI, two anchors 11 tiles apart, a pick-up on an islet beyond deep water, a landing pair 6 tiles apart, a raft site 4 s away and a far end 23 s away (each made by editing a generated island's grid in the test); over 200 run seeds every island is accepted within 50 attempts and the mean is at most 2 (print the mean and the maximum); "The cap gives the fallback island" and "The last attempts drop rolled POIs" with the extra-check seam; the fallback island of `reef_traps` (run seed 9090, index 0) passes every check. Verify it fails
+- [ ] 5.2 Implement `IslandValidator`, `IslandGenerator.generate` with its attempt loop, relaxed attempts, fallback, extra-check seam and `GeneratedIsland` report (design.md §5); verify the test passes
+- [ ] 5.3 Run the import, smoke run and GUT commands; verify all three pass
+
+## 6. Solo on a generated reef
+
+- [ ] 6.1 Write `game/tests/unit/test_island_generator_solo.gd` with exactly 1 player, offline: the island scene given island 3 of `reef_traps` (run seed 1) before it enters the tree has its terrain, bounds 1,536×1,024 px and palms, and its creature spawner reads REEF; "A lone arrival's walks on the reef" over 50 run seeds with the bands of "Reef cay walks"; "A solo player builds a raft on the reef" (take 6 driftwood, both inner tubes and 3 rope, deposit, work the site 60 s, a raft at integrity 100); a player on the rock cell beside a trap takes its rope; "A solo reef's routes" (a Músico with no binoculars: the raft and binoculars-and-swim, the raft needing no skill or starting item, its site reachable); "A solo reef's creatures" (3 reef sharks in deep water at least 2 tiles from shore, 6 crabs on each beach of 8+ cells at night, no gulls); "A solo reef's grids" (rock and scrub cost 1, deep water solid, the water grid only water). Verify it fails
+- [ ] 6.2 Make it pass; expected: data only, since the island scene, the spawner and the navigation grids read layouts already. Record anything else in design.md "Changes from the build plan"
+- [ ] 6.3 Run the import, smoke run and GUT commands; verify all three pass
+
+## 7. Party scaling and the dawn refill
+
+- [ ] 7.1 Write `game/tests/unit/test_generated_pickups.gd`: "The reef's driftwood by party size" (8, 6, 6, 6 for 1–4 living, connected players, read the way the creature spawner reads them); "A solo reef keeps every driftwood"; "Four players never lose the raft" (6 driftwood, 2 inner tubes, 8 rope; the island hash equals the 1-player one); the coast cay still places its fixed counts for 4 players; "A solo player's seep fills again" (take both cups, a dawn begins, a 2-cup pick-up lies on the anchor again; a cup still lying is not doubled; the trap rope is not back). Add a host-plus-client case to the net test of task 8.2: the client sees the refilled cups and never places one. Verify it fails
+- [ ] 7.2 Implement the party scaling with the raft floor in `SandbarIsland.place_pickups` and the dawn refill of DAILY pick-ups (design.md §7); verify the test passes and the sandbar and coast cay tests still pass
+- [ ] 7.3 Run the import, smoke run and GUT commands; verify all three pass
+
+## 8. Travel and the network
+
+- [ ] 8.1 Write `game/tests/unit/test_island_generator_travel_solo.gd`: "A solo crossing lands on a generated reef" with a test copy of `coast_cay.tres` whose `next_island` is `reef_traps`, island index 2 and run seed 1 (the island is `reef_traps_3` with the hash of task 4.2, the player on its first landing cell, a raft at integrity 70 on its site, the run not over, no port opened); `IslandTravel.check()` still ends the run on the real coast cay. Verify it fails
+- [ ] 8.2 Write `game/tests/unit/test_island_generator_net.gd` (host and client): "Host and client land on the same reef"; "A bad travel message is ignored" (from the client, an unknown id, index 0 or 9, a hash that is not 64 lowercase hex characters, a chain with an empty hash); "A late joiner builds the same island" (the world state carries `island` = `reef_traps`, `island_index` = 3, `island_hash` and `run_seed`); "A mismatched client takes the host's island" (the client's `IslandSource` given a tampered template copy: one warning, one request, the host's text, the host's hash in the end; a second request on the same island is ignored); "A solo island is the same every time" for the host-with-client case. Verify it fails
+- [ ] 8.3 Implement `IslandSource`; `IslandTravel` (`island_index`, resolving a chain, the host generating before it sends, `follow` for a chain, `join_extras` with `island_index` and `island_hash`); `CoopSession.travel_to(island_id, island_index, island_hash, arrivals, raft_integrity)` with the checks of design.md §6, the `island_index` (TYPE_INT) and `island_hash` (TYPE_STRING_NAME) world-state keys, `request_island` and `receive_island`; update every existing `travel_to` caller and test (handmade layouts pass their index and an empty hash); verify the new tests and the coast cay, crossing and reconnect tests pass
+- [ ] 8.4 Run host and client locally (two instances, `CLAUDE.md` "Co-op") through the test layout's crossing to a generated reef; note the result in design.md
+- [ ] 8.5 Run the import, smoke run and GUT commands; verify all three pass
+
+## 9. Dev scene
+
+- [ ] 9.1 Write `game/tests/unit/test_island_generator_playground.gd` for "Walking generated reefs alone": the scene loads with `reef_traps`, run seed 1 and index 3, one offline player stands on the first landing cell, stepping to run seed 2 builds that island and moves the player to its first landing cell, the label shows land cells, attempts, fallback, the walks to the raft site and each POI and the generation time, and no error is logged. Verify it fails
+- [ ] 9.2 Add `game/scenes/dev/island_generator_playground.tscn` and `.gd` (keys: next seed, previous seed, regenerate; the chain, seed and index exported); verify the test passes and print the generation time per attempt for seeds 1–20 in the scene's output
+- [ ] 9.3 Run the import, smoke run and GUT commands; verify all three pass
+
+## 10. Docs
+
+- [ ] 10.1 After the owner confirms: `docs/ISLANDS.md` ("Generation" paragraph as the Landmass delta words it, a size line under §4 Reef cay like the coast cay's with the measured numbers, the reef's coconuts), `docs/GAME_DESIGN.md` §17 if decision 9a stands, `docs/CONTENT_MANIFEST.md` (`reef_traps` and the four POIs ticked), `HANDOFF.md` §5 (one decisions line), `TASKS.md` (tick the §5 item, a Done entry)
+- [ ] 10.2 design.md "Changes from the build plan": the measured mean and maximum attempts over 200 seeds, the time per attempt on the dev machine, the recorded seed and hash constants, and every departure from this plan
+
+## 11. Checks
+
+- [ ] 11.1 The import (twice), smoke run, GUT (twice), `godot --headless --path game --quit-after 300`, `openspec validate island-generator --type change --strict` and `openspec validate --all` pass with no `ERROR:` or `SCRIPT ERROR:` lines
