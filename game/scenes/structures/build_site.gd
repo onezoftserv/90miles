@@ -6,7 +6,8 @@ extends Node2D
 ## structure scene named by the recipe id (game/scenes/structures/<id>.tscn).
 ## A synced site (the level's raft site, or one placed at a bench) has the host push its item and
 ## tag deposits and its progress to every client, and a client asks for the live state when it is
-## ready (a joiner gets only the spawn payload otherwise). A site placed at a bench (`spawned`)
+## ready (a joiner gets only the spawn payload otherwise); a level site the host already built is
+## answered as built, so a joiner's copy becomes its structure too. A site placed at a bench (`spawned`)
 ## becomes its structure through the session: the host spawns the structure once, on every peer,
 ## runs its build effects alone and frees the site; no peer builds it locally.
 
@@ -140,28 +141,31 @@ func receive_state(deposits: Dictionary, tag_deposits: Dictionary, progress: flo
 
 
 ## Client: asks the host for this synced site's live state, once connected (the session asks again
-## when the host's world state arrives, which covers a site made before the connection).
+## when the host's world state arrives, which covers a site made before the connection). The ask
+## goes through the session, which is there on the host even when this site no longer is.
 func ask_for_state() -> void:
 	if synced and is_inside_tree() and not multiplayer.is_server() and _connected():
 		_send_state_request.call_deferred()
 
 
-## Host: a client asks for the live state; it gets it alone, within its action limit.
-@rpc("any_peer", "call_remote", "reliable")
-func request_state() -> void:
-	if not multiplayer.is_server() or not synced:
-		return
-	var sender: int = multiplayer.get_remote_sender_id()
-	var session := CoopSession.of(self)
-	if not multiplayer.get_peers().has(sender) or session == null or not session.allow_request(sender):
-		return
-	receive_state.rpc_id(sender, deposited, tags_deposited, _progress, built)
+## Host: sends this synced site's state to `peer` alone (the session checked the ask).
+func send_state_to(peer: int) -> void:
+	if synced and multiplayer.is_server():
+		receive_state.rpc_id(peer, deposited, tags_deposited, _progress, built)
+
+
+## Client: the host built this level site before this peer asked (`CoopSession.receive_site_built`),
+## so it becomes its structure here too. A site placed at a bench never does: the spawner brings it.
+func complete_from_host() -> void:
+	if synced and not spawned and not built and not multiplayer.is_server():
+		_complete()
 
 
 # Deferred, so a request made as the connection opens follows the session's join request.
 func _send_state_request() -> void:
-	if is_inside_tree() and not multiplayer.is_server() and _connected():
-		request_state.rpc_id(1)
+	var session := CoopSession.of(self)
+	if session != null and is_inside_tree() and not multiplayer.is_server() and _connected():
+		session.ask_site_state(self)
 
 
 func _connected() -> bool:
@@ -190,6 +194,9 @@ func _complete() -> void:
 		return
 	_mark_built()
 	_push_state()
+	var session := CoopSession.of(self)
+	if session != null and synced:
+		session.record_site_built(self)
 	var scene := load(STRUCTURE_PATH % recipe.id) as PackedScene
 	var structure: Node = scene.instantiate() if scene != null else null
 	if structure != null:

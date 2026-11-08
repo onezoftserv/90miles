@@ -10,11 +10,38 @@ const TILE: float = PlayerBody.TILE_SIZE
 const TAKEN_PX: float = TILE / 2.0
 const SITE_SCENE_PATH: String = "res://scenes/structures/build_site.tscn"
 const RECIPE_META: StringName = &"recipe_id"
+## The entity spawner's payload kinds built here.
+const KIND_SITE: String = "site"
+const KIND_STRUCTURE: String = "structure"
 
 
-## Whether the bench places `recipe`'s site: a build-site recipe whose output is a structure.
+## Whether the bench places `recipe`'s site: a known build-site recipe whose output is a structure
+## (one taught by an NPC, or one only an NPC makes, is not the player's to place).
 static func places(recipe: RecipeData) -> bool:
-	return recipe != null and recipe.build_site and recipe.output_kind == RecipeData.OutputKind.STRUCTURE
+	if recipe == null or recipe.availability != RecipeData.Availability.KNOWN:
+		return false
+	return recipe.build_site and recipe.output_kind == RecipeData.OutputKind.STRUCTURE
+
+
+## The site (KIND_SITE) or finished structure (KIND_STRUCTURE) a spawn payload asks for, named
+## `node_name` at `at`, both already checked by the session; null unless the payload's recipe is
+## one the bench places. A client's copy of a built structure shows itself lit when the payload
+## says so; the host lights its own through on_built.
+static func from_payload(kind: String, info: Dictionary, node_name: String, at: Vector2, climate: ClimateState, on_host: bool) -> Node2D:
+	var recipe := payload_recipe(info.get("recipe_id"))
+	if recipe == null:
+		return null
+	if kind == KIND_SITE:
+		return make_site(recipe, node_name, at, climate)
+	return make_structure(recipe, node_name, at, climate, info.get("lit") == true and not on_host)
+
+
+## The content's recipe named `id` when the bench places it, else null.
+static func payload_recipe(id: Variant) -> RecipeData:
+	if not id is StringName or not GameState.content.has_entry(&"recipes", id):
+		return null
+	var recipe := GameState.content.get_entry(&"recipes", id) as RecipeData
+	return recipe if places(recipe) else null
 
 
 ## The cell under `at`.

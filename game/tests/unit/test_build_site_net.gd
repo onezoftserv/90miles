@@ -4,13 +4,19 @@ extends GutTest
 ## joiner mid-build), over ENet on localhost (NetHarness): the host places a client's chosen site by
 ## that client's own player, at the same place on both peers; deposits of items and tags and the
 ## progress reach the client; a joiner gets the live state of a site and the fire built before it
-## came; and requests the host would refuse change nothing. Each peer has a bench at the same path
-## on a featureless beach. Only the client gets a HUD, and nothing presses a key.
+## came; a joiner after the level's raft site was built has the raft and no site, and the host logs
+## no error; and requests the host would refuse change nothing. Each peer has a bench at the same
+## path on a featureless beach. Only the client gets a HUD, and nothing presses a key.
 
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
+const SITE_SCENE: PackedScene = preload("res://scenes/structures/build_site.tscn")
 const SPAWNS: Array[Vector2] = [Vector2(32.0, 48.0), Vector2(48.0, 48.0), Vector2(64.0, 48.0), Vector2(80.0, 48.0)]
 const BENCH_NAME: StringName = &"HutWorkbench"
 const BENCH_CELL: Vector2i = Vector2i(6, 6)
+## The level's raft site and the raft it becomes, named as SandbarIsland names them.
+const RAFT_SITE_NAME: StringName = &"RaftSite"
+const RAFT_NAME: StringName = &"Raft"
+const RAFT_CELL: Vector2i = Vector2i(10, 6)
 ## Inside the cell south of the bench, within its reach.
 const AT_BENCH: Vector2 = Vector2(0.0, 10.0)
 const TIMEOUT_S: float = 5.0
@@ -230,6 +236,87 @@ func test_a_client_joining_after_a_fire_was_built_sees_one_lit_fire() -> void:
 	assert_true(_sites(client, &"fire").is_empty(), "and no site")
 
 
+# --- the level's raft site, built before a client joins ---------------------------------------------------
+
+# Every peer: the bench and the level's raft site at the same path, as SandbarIsland.furnish has them.
+func _setup_with_raft_site(session: CoopSession) -> void:
+	_setup(session)
+	session.add_child(_raft_site())
+
+
+func _raft_site() -> BuildSite:
+	var site := SITE_SCENE.instantiate() as BuildSite
+	site.name = RAFT_SITE_NAME
+	site.recipe = GameState.content.get_entry(&"recipes", &"raft") as RecipeData
+	site.synced = true
+	site.structure_name = RAFT_NAME
+	site.position = IslandLayout.cell_center(RAFT_CELL)
+	return site
+
+
+# Host: every input in and all the work done, so the site becomes the raft.
+func _build(site: BuildSite) -> void:
+	for id: StringName in site.recipe.inputs:
+		site.deposited[id] = site.recipe.inputs[id]
+	for tag: DataEnums.ItemTag in site.recipe.input_tags:
+		site.tags_deposited[tag] = site.recipe.input_tags[tag]
+	site.work(1.0)
+
+
+func _has_built_raft(session: CoopSession) -> bool:
+	var raft := session.get_node_or_null(NodePath(RAFT_NAME)) as Raft
+	return raft != null and raft.recipe_id == &"raft" and not session.has_node(NodePath(RAFT_SITE_NAME))
+
+
+func test_a_client_joining_after_the_raft_was_built_has_the_raft_and_no_site() -> void:
+	var host := net.add_host(_setup_with_raft_site)
+	_build(host.get_node(NodePath(RAFT_SITE_NAME)) as BuildSite)
+	assert_true(_has_built_raft(host), "the host built the raft")
+	var client := await net.join(_setup_with_raft_site)
+	assert_not_null(client)
+	if client == null:
+		return
+	assert_true(await wait_until(_has_built_raft.bind(client), TIMEOUT_S), "the joiner has the raft and no unbuilt site")
+	await wait_physics_frames(20)
+	assert_eq(get_errors().size(), 0, "the host logs no error for the joiner's site")
+
+
+func test_a_raft_site_made_after_the_connection_learns_it_was_built() -> void:
+	var host := net.add_host(_setup_with_raft_site)
+	_build(host.get_node(NodePath(RAFT_SITE_NAME)) as BuildSite)
+	var client := await net.join(_setup)
+	assert_not_null(client)
+	if client == null:
+		return
+	# The level furnished once connected: the site asks as it becomes ready.
+	client.add_child(_raft_site())
+	assert_true(await wait_until(_has_built_raft.bind(client), TIMEOUT_S), "the late site becomes the raft")
+	await wait_physics_frames(20)
+	assert_eq(get_errors().size(), 0, "the host logs no error for the late site")
+
+
+func test_after_the_launch_a_joiner_gets_the_fresh_site_and_no_raft() -> void:
+	var host := net.add_host(_setup_with_raft_site)
+	_build(host.get_node(NodePath(RAFT_SITE_NAME)) as BuildSite)
+	# The launch, as SandbarIsland._on_route_started has it: the raft goes, a fresh site takes its place.
+	var raft := host.get_node(NodePath(RAFT_NAME))
+	host.remove_child(raft)
+	raft.queue_free()
+	host.add_child(_raft_site())
+	var client := await net.join(_setup_with_raft_site)
+	assert_not_null(client)
+	if client == null:
+		return
+	await wait_physics_frames(30)
+	var site := client.get_node_or_null(NodePath(RAFT_SITE_NAME)) as BuildSite
+	assert_not_null(site, "the joiner keeps its site")
+	if site == null:
+		return
+	assert_false(site.built, "unbuilt, as the host's fresh one")
+	assert_false(client.has_node(NodePath(RAFT_NAME)), "and no raft")
+	assert_eq(get_errors().size(), 0)
+
+
 # --- refused requests ------------------------------------------------------------------------------------
 
 func test_requests_the_host_refuses_change_nothing() -> void:
@@ -257,5 +344,14 @@ func test_requests_the_host_refuses_change_nothing() -> void:
 	client.craft(&"fire", client.get_path_to(client.body(CoopSession.HOST_ID)))
 	await wait_physics_frames(20)
 	assert_eq(_sites(host, &"fire").size(), 0, "a station that is not a workbench")
+	# The host's own copy of the recipe for this player says an NPC teaches it.
+	var fire := GameState.content.get_entry(&"recipes", &"fire") as RecipeData
+	var taught := fire.duplicate() as RecipeData
+	taught.availability = RecipeData.Availability.TAUGHT_BY_NPC
+	theirs.crafter.register(taught)
+	client.craft(&"fire", _bench_path(client))
+	await wait_physics_frames(20)
+	assert_eq(_sites(host, &"fire").size(), 0, "a recipe the player does not know")
+	theirs.crafter.register(fire)
 	client.craft(&"fire", _bench_path(client))
 	assert_not_null(await _wait_for_site(host, &"fire"), "the same request at the bench is placed: the waits were long enough")

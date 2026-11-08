@@ -10,6 +10,10 @@ extends Node2D
 ## RPC rules (review item 17): clients send intents only to the host (rpc_id(1)); every intent
 ## handler returns unless it runs on the host; the acting player is the sender's own, never one
 ## named in the message; host-to-client calls are authority-only and also check the sender.
+##
+## Past the 800-line soft ceiling on purpose: it is the one RPC hub, so every intent and host
+## message, and its checks, sit together. Logic that needs no RPC lives elsewhere: placement and
+## the site and structure payloads in SitePlacer, use checks in UsePlan and ItemUser.
 
 ## A player body entered this session's tree (on every peer).
 signal player_spawned(peer_id: int, body: PlayerBody)
@@ -50,8 +54,8 @@ const BUBBLE_NAME: StringName = &"SpeechBubble"
 ## The entity spawner's payload kinds (creatures-ai's creatures, inventory-hud's sites and
 ## structures); a payload with no kind is a creature.
 const KIND_CREATURE: String = "creature"
-const KIND_SITE: String = "site"
-const KIND_STRUCTURE: String = "structure"
+const KIND_SITE: String = SitePlacer.KIND_SITE
+const KIND_STRUCTURE: String = SitePlacer.KIND_STRUCTURE
 const HOST_ID: int = 1
 ## Connected players at most (dropped players waiting to be removed do not count).
 const MAX_PLAYERS: int = NetPeers.MAX_PLAYERS
@@ -127,6 +131,9 @@ var _pickup_serial: int = 0
 var _creature_serial: int = 0
 var _site_serial: int = 0
 var _structure_serial: int = 0
+## Host: paths, in this session, of the level's synced sites built and gone. A joiner's own copy of
+## one stands unbuilt until it asks; a site placed again at that path answers for itself.
+var _built_sites: Dictionary[String, bool] = {}
 ## Host: when each peer last shooed a creature.
 var _shoo_at_s: Dictionary[int, float] = {}
 ## Host: seconds until the next periodic clock message.
@@ -635,9 +642,47 @@ func spawn_structure(recipe: RecipeData, at: Vector2) -> Node2D:
 	return made
 
 
-## Host: whether `peer` may ask for something now (a site's live state): the host always, a
-## client within its action limit.
-func allow_request(peer: int) -> bool:
+## Host: the level's synced `site` became its structure and leaves the tree; a joiner whose copy
+## asks later is told it was built (`request_site_state`).
+func record_site_built(site: BuildSite) -> void:
+	if multiplayer.is_server() and is_ancestor_of(site):
+		_built_sites[String(get_path_to(site))] = true
+
+
+## Client: asks the host for the live state of this peer's synced `site`.
+func ask_site_state(site: BuildSite) -> void:
+	request_site_state.rpc_id(HOST_ID, get_path_to(site))
+
+
+## Host: a client asks for the live state of the synced site at `site_path` (in this session); it
+## gets it alone, within its action limit. A level site built and gone is answered as built, and a
+## path the host has never had a site at is dropped.
+@rpc("any_peer", "call_remote", "reliable")
+func request_site_state(site_path: NodePath) -> void:
+	var sender: int = multiplayer.get_remote_sender_id()
+	if not multiplayer.is_server() or not multiplayer.get_peers().has(sender) or not _allow_request(sender):
+		return
+	var site := get_node_or_null(site_path) as BuildSite
+	if site != null and _is_own(site):
+		site.send_state_to(sender)
+	elif _built_sites.has(String(site_path)):
+		receive_site_built.rpc_id(sender, site_path)
+
+
+## Client: the host built the level site at `site_path` before this peer asked, so this peer's copy
+## becomes its structure too.
+@rpc("authority", "call_remote", "reliable")
+func receive_site_built(site_path: NodePath) -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID:
+		return
+	var site := get_node_or_null(site_path) as BuildSite
+	if site != null and _is_own(site):
+		site.complete_from_host()
+
+
+# Host: whether `peer` may ask for something now (a site's live state): the host always, a client
+# within its action limit.
+func _allow_request(peer: int) -> bool:
 	if peer == HOST_ID:
 		return true
 	var limits: PeerLimits = _limits.get(peer)
@@ -998,14 +1043,8 @@ func _spawn_entity(data: Variant) -> Node:
 	match kind:
 		KIND_CREATURE:
 			return _make_creature(info.get("id"), entity_name, spot)
-		KIND_SITE:
-			var recipe := _structure_recipe(info.get("recipe_id"))
-			return SitePlacer.make_site(recipe, entity_name, spot, climate) if recipe != null else null
-		KIND_STRUCTURE:
-			var built := _structure_recipe(info.get("recipe_id"))
-			# The host lights its own through on_built; a client's copy only shows itself lit.
-			var lit: bool = info.get("lit") == true and not multiplayer.is_server()
-			return SitePlacer.make_structure(built, entity_name, spot, climate, lit) if built != null else null
+		KIND_SITE, KIND_STRUCTURE:
+			return SitePlacer.from_payload(kind, info, entity_name, spot, climate, multiplayer.is_server())
 	return null
 
 
@@ -1018,14 +1057,6 @@ func _make_creature(id: Variant, entity_name: String, spot: Vector2) -> Creature
 	made.position = spot
 	made.attach_sync()
 	return made
-
-
-# The content's build-site structure recipe named `id`, or null.
-func _structure_recipe(id: Variant) -> RecipeData:
-	if not id is StringName or not GameState.content.has_entry(&"recipes", id):
-		return null
-	var recipe := GameState.content.get_entry(&"recipes", id) as RecipeData
-	return recipe if SitePlacer.places(recipe) else null
 
 
 func _on_body_ready(peer_id: int, spawned: PlayerBody) -> void:

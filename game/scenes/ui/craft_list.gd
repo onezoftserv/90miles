@@ -66,12 +66,13 @@ var _held_body: PlayerBody = null
 
 
 ## Whether the list offers `recipe`: a known workbench recipe that makes an item, or a known
-## build-site recipe whose output is a structure (vessels stay with their routes).
+## build-site recipe whose output is a structure (vessels stay with their routes); a site the
+## host places by the same rule (`SitePlacer.places`).
 static func offers(recipe: RecipeData) -> bool:
 	if recipe == null or recipe.availability != RecipeData.Availability.KNOWN:
 		return false
 	if recipe.build_site:
-		return recipe.output_kind == RecipeData.OutputKind.STRUCTURE
+		return SitePlacer.places(recipe)
 	return recipe.station == RecipeData.Station.WORKBENCH and recipe.output_kind == RecipeData.OutputKind.ITEM
 
 

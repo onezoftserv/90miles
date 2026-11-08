@@ -165,6 +165,20 @@ func test_not_a_workbench_or_out_of_reach_places_nothing() -> void:
 	assert_eq(_sites(&"fire").size(), 0)
 
 
+func test_a_recipe_the_player_does_not_know_places_nothing() -> void:
+	_run()
+	var taught := (GameState.content.get_entry(&"recipes", &"fire") as RecipeData).duplicate() as RecipeData
+	taught.availability = RecipeData.Availability.TAUGHT_BY_NPC
+	body.crafter.register(taught)
+	assert_false(session.craft_for(1, &"fire", _bench_path()), "a recipe an NPC teaches")
+	taught.availability = RecipeData.Availability.NPC_CRAFTS
+	assert_false(session.craft_for(1, &"fire", _bench_path()), "a recipe only an NPC makes")
+	assert_eq(_sites(&"fire").size(), 0)
+	assert_false(CraftList.offers(taught), "and the list offers neither")
+	taught.availability = RecipeData.Availability.KNOWN
+	assert_true(session.craft_for(1, &"fire", _bench_path()), "the same recipe, known, is placed")
+
+
 # --- built once ---------------------------------------------------------------------------------------
 
 func test_a_placed_fire_built_alone_stands_once_and_cheers_once() -> void:
