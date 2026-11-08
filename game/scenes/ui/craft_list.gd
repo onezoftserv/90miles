@@ -29,24 +29,22 @@ const RECT: Rect2 = Rect2(4.0, 162.0, 240.0, 140.0)
 ## Lines start inside the panel's edge.
 const PADDING: Vector2 = Vector2(4.0, 3.0)
 const LINE_HEIGHT: float = 10.0
-## Glyphs of the HUD's 8 px font that fit a line.
-const ROW_MAX_CHARS: int = 29
+## Glyphs of the HUD's font that fit a row inside the padding: 29.
+const ROW_MAX_CHARS: int = floori((RECT.size.x - 2.0 * PADDING.x) / HudStyle.GLYPH_PX)
 ## The highlighted recipe's lines start this far below the last row.
 const DETAIL_GAP: float = 4.0
 const DETAIL_INDENT: float = 8.0
 ## Lines the panel holds, rows and the highlighted recipe's lines together, inside its padding and
-## below the gap: (140 - 2 × 3 - 4) / 10.
-const PANEL_LINES: int = 13
+## below the gap: 13.
+const PANEL_LINES: int = floori((RECT.size.y - 2.0 * PADDING.y - DETAIL_GAP) / LINE_HEIGHT)
 const DIM: Color = Color(1.0, 1.0, 1.0, 0.4)
 const FULL: Color = Color(1.0, 1.0, 1.0, 1.0)
-## The highlighted row, in the selection's sun yellow.
-const HIGHLIGHT: Color = Color(1.0, 0.8, 0.0)
-const CARRIED_FORMAT: String = "%d/%d %s"
+## The highlighted row, in the selection's sun yellow; the others keep the theme's label colour.
+const HIGHLIGHT: Color = HudStyle.SUN
 const INTERACT_ACTION: StringName = &"interact"
 const PAUSE_ACTION: StringName = &"pause"
 const UP_ACTION: StringName = &"list_up"
 const DOWN_ACTION: StringName = &"list_down"
-const REACH_PX: float = InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX
 
 ## The local player, or null.
 var body: PlayerBody = null
@@ -257,7 +255,7 @@ func _may_stay_open() -> bool:
 		return false
 	if body.downed or body.left_island:
 		return false
-	return body.global_position.distance_to(bench.global_position) <= REACH_PX
+	return body.global_position.distance_to(bench.global_position) <= PlayerBody.HOLD_REACH_PX
 
 
 func _hold() -> void:
@@ -301,8 +299,10 @@ func _show() -> void:
 		row.text = InventoryStrip.cut(recipe.get_display_name(locale), ROW_MAX_CHARS)
 		row.position = RECT.position + PADDING + Vector2(0.0, slot * LINE_HEIGHT)
 		row.modulate = DIM if _is_dimmed(recipe) else FULL
-		var color: Color = HIGHLIGHT if index == highlighted else get_theme_color(&"font_color", &"Label")
-		row.add_theme_color_override(&"font_color", color)
+		if index == highlighted:
+			row.add_theme_color_override(&"font_color", HIGHLIGHT)
+		else:
+			row.remove_theme_color_override(&"font_color")
 	_details = _pool(_details, lines.size(), false)
 	var top: float = RECT.position.y + PADDING.y + shown * LINE_HEIGHT + DETAIL_GAP
 	for i: int in lines.size():
@@ -322,22 +322,18 @@ func _detail_lines(recipe: RecipeData) -> Array[Array]:
 	var locale := _locale()
 	var inventory := body.inventory
 	var lines: Array[Array] = []
+	var carried_format: String = text.line(&"carried", locale)
 	for id: StringName in recipe.inputs:
 		var have: int = inventory.count_id(id)
-		lines.append([CARRIED_FORMAT % [have, recipe.inputs[id], _item_name(id, locale)], have < recipe.inputs[id]])
+		lines.append([carried_format % [have, recipe.inputs[id], HudText.item_name(id, locale)], have < recipe.inputs[id]])
 	for tag: DataEnums.ItemTag in recipe.input_tags:
 		var carried: int = inventory.count_tag(tag)
-		lines.append([CARRIED_FORMAT % [carried, recipe.input_tags[tag], text.tag_name(tag, locale)], carried < recipe.input_tags[tag]])
+		lines.append([carried_format % [carried, recipe.input_tags[tag], text.tag_name(tag, locale)], carried < recipe.input_tags[tag]])
 	for capability: DataEnums.Capability in recipe.tools:
 		lines.append([text.line(&"needs_tool", locale) % text.tool_phrase(capability, locale), inventory.capability_slot(capability) < 0])
 	if recipe.fast_tool != DataEnums.Capability.NONE:
 		lines.append([text.line(&"faster", locale) % text.tool_phrase(recipe.fast_tool, locale), false])
 	return lines
-
-
-func _item_name(id: StringName, locale: String) -> String:
-	var item := GameState.content.get_entry(&"items", id) as ItemData
-	return item.get_display_name(locale) if item != null else String(id)
 
 
 # `labels` with exactly `count` shown, made as needed, each as wide as the panel leaves it (a
@@ -380,4 +376,4 @@ func _on_row_input(event: InputEvent, slot: int) -> void:
 
 
 func _locale() -> String:
-	return session.locale if is_instance_valid(session) else "es"
+	return CoopSession.locale_of(session)

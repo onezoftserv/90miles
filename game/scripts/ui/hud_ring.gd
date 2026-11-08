@@ -7,8 +7,8 @@ extends Control
 const SIZE: Vector2 = Vector2(10.0, 10.0)
 const WIDTH: float = 2.0
 const POINTS: int = 24
-const FILL_COLOR: Color = Color(1.0, 0.8, 0.0)
-const TRACK_COLOR: Color = Color(0.957, 0.937, 0.878, 0.35)
+const FILL_COLOR: Color = HudStyle.SUN
+const TRACK_COLOR: Color = HudStyle.TRACK
 
 ## How much of the hold has passed, 0 to 1.
 var value: float = 0.0

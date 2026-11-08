@@ -29,7 +29,7 @@ static func use(actor: PlayerBody, slot_index: int, use_index: int, target: Play
 	if check(actor, slot_index, use_index, target) != Reason.OK:
 		return false
 	var slot := actor.inventory.slots[slot_index]
-	var item := actor.inventory.item_for(slot.item_id)
+	var item := item_at(actor, slot_index)
 	var action: ItemUseData = item.uses[use_index]
 	var subject: PlayerBody = target if target != null else actor
 	_spend_consumed_tools(action, actor)

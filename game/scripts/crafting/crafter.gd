@@ -184,4 +184,4 @@ func _fast_item(recipe: RecipeData) -> ItemData:
 
 
 func _in_reach(node: Node2D) -> bool:
-	return body.global_position.distance_to(node.global_position) <= InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX
+	return body.global_position.distance_to(node.global_position) <= PlayerBody.HOLD_REACH_PX

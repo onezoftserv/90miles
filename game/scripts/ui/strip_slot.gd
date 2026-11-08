@@ -25,7 +25,7 @@ const RING_CENTER: Vector2 = Vector2(13.0, 13.0)
 const RING_RADIUS: float = 10.0
 const RING_WIDTH: float = 2.0
 const RING_POINTS: int = 32
-const RING_COLOR: Color = Color(1.0, 0.8, 0.0)
+const RING_COLOR: Color = HudStyle.SUN
 
 var selected: bool = false
 ## How much of the use hold has passed, 0 (no ring) to 1.

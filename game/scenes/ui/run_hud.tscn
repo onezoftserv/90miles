@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/inventory_strip.tscn" id="4_strip"]
 [ext_resource type="PackedScene" path="res://scenes/ui/interact_prompt.tscn" id="5_prompt"]
 [ext_resource type="PackedScene" path="res://scenes/ui/craft_list.tscn" id="6_list"]
-[ext_resource type="Script" path="res://scenes/ui/body_marks.gd" id="7_marks"]
+[ext_resource type="Script" path="res://scripts/ui/body_marks.gd" id="7_marks"]
 
 [node name="RunHud" type="CanvasLayer"]
 layer = 3

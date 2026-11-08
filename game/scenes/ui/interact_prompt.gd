@@ -29,8 +29,8 @@ signal bench_pressed(bench: Workbench)
 const INTERACT_ACTION: StringName = &"interact"
 const KEY_FORMAT: String = "[%s]"
 const LINE_HEIGHT: float = 10.0
-## Width of one glyph of the HUD's 8 px font.
-const GLYPH_PX: float = 8.0
+## Width of one glyph of the HUD's font.
+const GLYPH_PX: float = HudStyle.GLYPH_PX
 const MAX_WIDTH: float = 240.0
 const RISE_PX: float = 12.0
 ## Over a player the prompt clears the NameTag label, whose top is 31 px above the body.
@@ -43,7 +43,7 @@ const PANEL_GAP: float = 2.0
 ## The ring sits left of the first line with a 2 px gap.
 const RING_SPACE: float = HudRing.SIZE.x + 2.0
 ## How far a locked press may stray before it is dropped, as the host's hold.
-const LOCK_REACH_PX: float = InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX
+const LOCK_REACH_PX: float = PlayerBody.HOLD_REACH_PX
 ## The progress bar sits left of its percentage: 48 px, then a 4 px gap.
 const BAR_SPACE: float = 52.0
 const BAR_GAP: float = 4.0
@@ -124,8 +124,7 @@ static func site_lines(site: BuildSite, words: HudText, locale: String) -> Packe
 	var count_format: String = words.line(&"count", locale)
 	var items := site.missing_items()
 	for id: StringName in items:
-		var item := GameState.content.get_entry(&"items", id) as ItemData
-		shown.append(count_format % [item.get_display_name(locale) if item != null else String(id), items[id]])
+		shown.append(count_format % [HudText.item_name(id, locale), items[id]])
 	var tags := site.missing_tags()
 	for tag: int in tags:
 		shown.append(count_format % [words.tag_name(tag as DataEnums.ItemTag, locale), tags[tag]])
@@ -159,6 +158,8 @@ func _ready() -> void:
 	# Runs while the solo pause freezes the run, so the prompt hides under the pause menu.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
+	bar.color = HudStyle.TRACK
+	_bar_fill.color = HudStyle.SUN
 
 
 func _physics_process(delta: float) -> void:
@@ -355,4 +356,4 @@ func _hide() -> void:
 
 
 func _locale() -> String:
-	return session.locale if is_instance_valid(session) else "es"
+	return CoopSession.locale_of(session)

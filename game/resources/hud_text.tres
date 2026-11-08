@@ -100,12 +100,15 @@ refusals = Dictionary[StringName, PackedStringArray]({
 &"not_now": PackedStringArray("Ahora no se puede.", "Not now.")
 })
 lines = Dictionary[StringName, PackedStringArray]({
+&"carried": PackedStringArray("%d/%d %s", "%d/%d %s"),
 &"count": PackedStringArray("%s x%d", "%s x%d"),
+&"decimal_point": PackedStringArray(",", "."),
 &"faster": PackedStringArray("Más rápido: %s", "Faster: %s"),
 &"missing": PackedStringArray("Falta:", "Needs:"),
 &"needs_tool": PackedStringArray("Con qué %s", "Something to %s"),
 &"percent": PackedStringArray("%d %%", "%d%%"),
-&"weight": PackedStringArray("Peso", "Weight")
+&"weight": PackedStringArray("Peso", "Weight"),
+&"weight_readout": PackedStringArray("%s %s/%s", "%s %s/%s")
 })
 joy_buttons = Dictionary[int, PackedStringArray]({
 0: PackedStringArray("A", "A"),

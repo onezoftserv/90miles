@@ -12,9 +12,9 @@ const MARK_SIZE: Vector2 = Vector2(7.0, 5.0)
 ## Space between the mark's bottom edge and the head or the name tag.
 const HEAD_GAP_PX: float = 3.0
 ## The 1 px outline and the eye's ground: the HUD panels' dark blue.
-const OUTLINE_COLOR: Color = Color(0.04, 0.08, 0.13)
+const OUTLINE_COLOR: Color = HudStyle.OUTLINE
 ## The eye: the HUD's cream.
-const EYE_COLOR: Color = Color(0.957, 0.937, 0.878)
+const EYE_COLOR: Color = HudStyle.CREAM
 ## A closed eye in the 5×3 inside the outline: the lid's curve and two lashes, by pixel.
 const EYE_PIXELS: Array[Vector2i] = [
 	Vector2i(0, 0), Vector2i(4, 0),

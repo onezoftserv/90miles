@@ -31,8 +31,10 @@ const BOTTOM_MARGIN: float = 4.0
 const LINE_HEIGHT: float = 10.0
 ## The item line's top sits this far above the slots' top edge.
 const LINE_RISE: float = 12.0
-## Glyphs of the 8 px font that fit the item line's 334 px.
-const LINE_MAX_CHARS: int = 41
+## The item line's width over the 12 slots: 12 × 26 + 11 × 2 = 334 px.
+const LINE_WIDTH_PX: float = 12.0 * StripSlot.SIZE.x + 11.0 * SLOT_GAP
+## Glyphs of the HUD's font that fit the item line: 41.
+const LINE_MAX_CHARS: int = floori(LINE_WIDTH_PX / HudStyle.GLYPH_PX)
 const WEIGHT_GAP: float = 4.0
 const WEIGHT_WIDTH: float = 100.0
 ## The weight readout's top, below the slots' top edge.
@@ -117,17 +119,19 @@ static func cut(value: String, max_chars: int) -> String:
 	return value.left(max_chars - 1) + ELLIPSIS
 
 
-## "Peso 2,5/30": the label, the carried weight and the limit, with a decimal comma.
-static func weight_text(carried: float, limit: float, label: String) -> String:
-	return "%s %s/%s" % [label, decimal(carried), decimal(limit)]
+## "Peso 2,5/30" ("Weight 2.5/30" in English): the label, the carried weight and the limit, as
+## `words` writes them in `locale`.
+static func weight_text(carried: float, limit: float, words: HudText, locale: String) -> String:
+	var point: String = words.line(&"decimal_point", locale)
+	return words.line(&"weight_readout", locale) % [words.line(&"weight", locale), decimal(carried, point), decimal(limit, point)]
 
 
-## `value` with at most one decimal, written with a comma: "2,5", "30".
-static func decimal(value: float) -> String:
+## `value` with at most one decimal, written with `point`: "2,5", "30".
+static func decimal(value: float, point: String) -> String:
 	var tenths: float = snappedf(value, 0.1)
 	if is_equal_approx(tenths, roundf(tenths)):
 		return str(roundi(tenths))
-	return ("%.1f" % tenths).replace(".", ",")
+	return ("%.1f" % tenths).replace(".", point)
 
 
 func _ready() -> void:
@@ -338,7 +342,7 @@ func _begin_use() -> void:
 	_use_plan = plan
 	_use_slot = selected
 	_use_item_id = body.inventory.slots[selected].item_id
-	var item := UsePlan.item_in(body, selected)
+	var item := ItemUser.item_at(body, selected)
 	_use_timer.start(item.uses[plan.use_index].time_s)
 
 
@@ -373,7 +377,7 @@ func _cancel_use() -> void:
 
 
 func _locale() -> String:
-	return session.locale if session != null and is_instance_valid(session) else "es"
+	return CoopSession.locale_of(session)
 
 
 func _unbind() -> void:
@@ -445,14 +449,14 @@ func _show_selection() -> void:
 
 func _show_weight() -> void:
 	var inventory := body.inventory
-	weight_label.text = weight_text(inventory.weight(), inventory.tuning.weight_limit, text.line(&"weight", _locale()))
+	weight_label.text = weight_text(inventory.weight(), inventory.tuning.weight_limit, text, _locale())
 
 
 # The selected item's name and, when it has a use, the use key, its verb and the teammate it
 # goes to. Nothing for an empty slot.
 func _show_line() -> void:
 	var line: String = ""
-	var item: ItemData = UsePlan.item_in(body, selected) if _has_body() else null
+	var item: ItemData = ItemUser.item_at(body, selected) if _has_body() else null
 	if item != null:
 		var locale := _locale()
 		var plan := UsePlan.choose(body, selected, session)

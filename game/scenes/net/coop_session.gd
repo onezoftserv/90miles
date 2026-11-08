@@ -57,6 +57,8 @@ const KIND_CREATURE: String = "creature"
 const KIND_SITE: String = SitePlacer.KIND_SITE
 const KIND_STRUCTURE: String = SitePlacer.KIND_STRUCTURE
 const HOST_ID: int = 1
+## The language text shows in until a settings screen picks one: Spanish first.
+const DEFAULT_LOCALE: String = "es"
 ## Connected players at most (dropped players waiting to be removed do not count).
 const MAX_PLAYERS: int = NetPeers.MAX_PLAYERS
 ## A peer may shoo a creature at most this often.
@@ -108,8 +110,8 @@ var creature_catalog: ContentCatalog = null
 var clock: Callable
 ## The quick-chat phrases (the quick-chat content file unless a level or test sets others).
 var phrases: QuickChatPhrases
-## Language of bubble text; Spanish first until a settings screen exists.
-var locale: String = "es"
+## Language of bubble and HUD text; Spanish first until a settings screen exists.
+var locale: String = DEFAULT_LOCALE
 
 var _bodies: Dictionary[int, PlayerBody] = {}
 ## Host: each peer's rate limits.
@@ -464,6 +466,11 @@ static func of(node: Node) -> CoopSession:
 	return at as CoopSession
 
 
+## The language `session` shows its text in, or Spanish without a session (or a freed one).
+static func locale_of(session: CoopSession) -> String:
+	return session.locale if is_instance_valid(session) else DEFAULT_LOCALE
+
+
 ## The body of `peer_id`'s player in this session, or null.
 func body(peer_id: int) -> PlayerBody:
 	var found: Variant = _bodies.get(peer_id)
@@ -608,7 +615,7 @@ func craft_for(peer: int, recipe_id: StringName, station_path: NodePath) -> bool
 func _place_site(player: PlayerBody, recipe: RecipeData, station: Node2D) -> bool:
 	if not SitePlacer.places(recipe) or not station is Workbench or has_unfinished_site(recipe.id):
 		return false
-	if player.global_position.distance_to(station.global_position) > InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX:
+	if player.global_position.distance_to(station.global_position) > PlayerBody.HOLD_REACH_PX:
 		return false
 	var bench_cell := SitePlacer.cell_at(to_local(station.global_position))
 	var cells := SitePlacer.free_cell(to_local(player.global_position), bench_cell, recipe, terrain, _taken_spots())
@@ -747,7 +754,7 @@ func deposit_for(peer: int, site_path: NodePath) -> bool:
 	var site := get_node_or_null(site_path) as BuildSite
 	if player == null or site == null or site.built:
 		return false
-	if player.global_position.distance_to(site.global_position) > InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX:
+	if player.global_position.distance_to(site.global_position) > PlayerBody.HOLD_REACH_PX:
 		return false
 	site.deposit(player)
 	return player.crafter.start_work(site)

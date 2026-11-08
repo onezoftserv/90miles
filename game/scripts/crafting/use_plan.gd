@@ -20,7 +20,7 @@ var target_peer: int = 0
 ## no session there are none.
 static func choose(body: PlayerBody, slot: int, session: CoopSession = null) -> UsePlan:
 	var plan := UsePlan.new()
-	var item := item_in(body, slot)
+	var item := ItemUser.item_at(body, slot)
 	if item == null:
 		plan.reason = ItemUser.Reason.EMPTY
 		return plan
@@ -53,14 +53,9 @@ static func actor_reason(player: PlayerBody, departed: bool, slot: int, use: int
 		return ItemUser.Reason.DOWN
 	if departed:
 		return ItemUser.Reason.AT_SEA
-	if not on_self and player.global_position.distance_to(on.global_position) > InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX:
+	if not on_self and player.global_position.distance_to(on.global_position) > PlayerBody.HOLD_REACH_PX:
 		return ItemUser.Reason.OUT_OF_REACH
 	return ItemUser.Reason.OK
-
-
-## The item in `body`'s slot `slot`, or null for an empty or missing slot.
-static func item_in(body: PlayerBody, slot: int) -> ItemData:
-	return ItemUser.item_at(body, slot)
 
 
 ## The index of `item`'s first use that revives (and, with `others_only`, can target others),

@@ -8,8 +8,9 @@ extends RefCounted
 ## freed or disabled, or, before the hold is done, when the player is out of reach. It never uses
 ## anything: the HUD sends the request and the host decides.
 
-## A sum of frame deltas that falls this short of the duration still counts as reaching it.
-const TOLERANCE_S: float = 0.000001
+## A sum of frame deltas that falls this short of the duration still counts as reaching it: the
+## host's hold's own tolerance.
+const TOLERANCE_S: float = InteractionHold.TOLERANCE_S
 
 var duration_s: float = 0.0
 var elapsed_s: float = 0.0

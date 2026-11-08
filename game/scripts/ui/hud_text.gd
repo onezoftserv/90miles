@@ -14,8 +14,10 @@ const PATH: String = "res://resources/hud_text.tres"
 const REFUSALS: Array[StringName] = [&"empty", &"no_use", &"down", &"at_sea", &"condition", &"not_now", &"missing_materials", &"in_progress"]
 ## The fixed lines: a required tool ("%s" is its phrase), the speed-up tool (the same), the
 ## head of a build site's missing inputs, the weight readout's label, a missing input with its
-## count ("%s x%d") and a build's progress ("%d %%").
-const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent"]
+## count ("%s x%d"), a build's progress ("%d %%"), what the list says is carried of an input
+## ("%d/%d %s": carried, needed, name), the weight readout ("%s %s/%s": label, carried, limit)
+## and the decimal separator its numbers use.
+const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point"]
 
 ## Verb per ItemUseData.UseAction ("Beber").
 @export var use_verbs: Dictionary[ItemUseData.UseAction, PackedStringArray] = {}
@@ -50,6 +52,13 @@ static func pick(pair: PackedStringArray, locale: String) -> String:
 	if locale.begins_with("en") and pair.size() > 1 and not pair[1].is_empty():
 		return pair[1]
 	return pair[0] if pair.size() > 0 else ""
+
+
+## The content's name for item `id` in `locale`, which the HUD shows; "" for an id the content
+## does not have (the content validator keeps recipes from naming one), never the raw id.
+static func item_name(id: StringName, locale: String) -> String:
+	var item := GameState.content.get_entry(&"items", id) as ItemData
+	return item.get_display_name(locale) if item != null else ""
 
 
 func use_verb(action: ItemUseData.UseAction, locale: String = "es") -> String:

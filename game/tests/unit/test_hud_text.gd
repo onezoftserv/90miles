@@ -178,6 +178,14 @@ func test_english_sits_beside_it_and_falls_back_to_spanish() -> void:
 	assert_eq(half.refusal(&"missing_key", "en"), "", "an unknown key is empty")
 
 
+func test_the_weight_and_carried_lines_are_written_per_language() -> void:
+	var text := _text()
+	assert_eq(InventoryStrip.weight_text(2.5, 30.0, text, "es"), "Peso 2,5/30", "a decimal comma in Spanish")
+	assert_eq(InventoryStrip.weight_text(2.5, 30.0, text, "en"), "Weight 2.5/30", "a decimal point in English")
+	assert_eq(text.line(&"carried") % [3, 3, "Madera de la costa"], "3/3 Madera de la costa")
+	assert_eq(text.line(&"carried", "en") % [0, 1, "Tinder"], "0/1 Tinder")
+
+
 func test_every_scene_interactable_names_a_prompt() -> void:
 	var problems := PackedStringArray()
 	var scenes := _scenes_under(SCENES_ROOT)

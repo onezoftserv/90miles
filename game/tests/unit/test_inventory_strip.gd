@@ -241,10 +241,11 @@ func test_a_long_item_name_is_cut_after_the_teammate() -> void:
 
 
 func test_the_weight_uses_a_decimal_comma() -> void:
-	assert_eq(InventoryStrip.weight_text(2.5, 30.0, "Peso"), "Peso 2,5/30")
-	assert_eq(InventoryStrip.weight_text(4.5, 30.0, "Peso"), "Peso 4,5/30")
-	assert_eq(InventoryStrip.weight_text(0.0, 30.0, "Peso"), "Peso 0/30")
-	assert_eq(InventoryStrip.weight_text(12.0, 30.0, "Weight"), "Weight 12/30")
+	var text := HudText.load_default()
+	assert_eq(InventoryStrip.weight_text(2.5, 30.0, text, "es"), "Peso 2,5/30")
+	assert_eq(InventoryStrip.weight_text(4.5, 30.0, text, "es"), "Peso 4,5/30")
+	assert_eq(InventoryStrip.weight_text(0.0, 30.0, text, "es"), "Peso 0/30")
+	assert_eq(InventoryStrip.weight_text(12.0, 30.0, text, "en"), "Weight 12/30")
 
 
 # --- following the inventory ---------------------------------------------------------------
