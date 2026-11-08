@@ -34,7 +34,7 @@ Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile gr
 | Tide pools | Crabs at night, one man o' war, sea urchins (bleeding if stepped on) | Low tide only |
 | La señora's camp | The woman who never left; water for stories | 50% chance |
 | Raft for sale (*se vende balsa*) | A half-finished inner-tube raft with a hand-painted SE VENDE sign: 2 inner tubes, 3 driftwood, rope (50%), a note | 20% on either variant; the builder changed his mind. Salvage that speeds up the raft without replacing it |
-| Scattered landing | Players start 10–20 tiles apart | Co-op: find each other first |
+| Scattered landing | Each player starts 20–30 tiles from the next in join order, spread along the arc | Co-op: find each other first |
 
 **Escape routes.** Raft (always), binoculars-and-swim (the next island is visible on clear days), signal the fishing boat (Ramón, 30%).
 
