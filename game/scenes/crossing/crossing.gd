@@ -30,6 +30,9 @@ const EDGE_GAP_PX: float = 1.0
 const RESYNC_S: float = 1.0
 const EPSILON_S: float = 0.000001
 const SESSION_SERIAL_META: StringName = &"crossing_serial"
+## The highest crossing number a joiner accepts: far more than a run holds, and its sea stays where
+## float positions are exact to a fraction of a pixel.
+const MAX_SERIAL: int = 1023
 const SCENE: PackedScene = preload("res://scenes/crossing/crossing.tscn")
 
 var route: RouteData
@@ -43,8 +46,12 @@ var finished: bool = false
 var result: CrossingResult
 var sea: GridTerrain = GridTerrain.new()
 var origin: Vector2 = Vector2.ZERO
+## The crossing's number in its session: its node name and where its sea lies.
+var serial: int = 0
 
 var _session: CoopSession
+## Host: the peers that have this crossing, so the only ones sent its messages (crossing-late-join).
+var _recipients: Array[int] = []
 var _peers: Array[int] = []
 var _states: Dictionary[int, int] = {}
 var _points: Dictionary[int, Interactable] = {}
@@ -59,26 +66,78 @@ var _fired_to_s: float = -1.0
 ## Builds the crossing for `peer_ids` under `session`. The host rolls and sends the plan; a client
 ## waits for it. Called on every peer when `IslandRoutes.route_started` fires.
 static func launch(session: CoopSession, started: RouteData, peer_ids: Array[int], starting_integrity: float, band: DataEnums.DistanceBand, rng: RandomNumberGenerator) -> Crossing:
-	var serial: int = session.get_meta(SESSION_SERIAL_META, 0)
-	session.set_meta(SESSION_SERIAL_META, serial + 1)
+	var number: int = next_serial(session)
+	session.set_meta(SESSION_SERIAL_META, number + 1)
 	var crossing := SCENE.instantiate() as Crossing
-	crossing.name = "Crossing%d" % serial
+	crossing.name = node_name_for(number)
 	session.add_child(crossing)
 	var rolled: CrossingPlan = null
 	if session.multiplayer.is_server():
 		rolled = CrossingPlan.roll(started, band, WeatherManager.sky, rng, crossing.tuning)
-	crossing.setup(session, started, peer_ids, starting_integrity, rolled, serial)
-	if rolled != null and not session.multiplayer.get_peers().is_empty():
-		crossing.receive_plan.rpc(rolled.to_array(), crossing.integrity.value)
+	crossing.setup(session, started, peer_ids, starting_integrity, rolled, number)
+	if rolled != null:
+		# Every peer in the run heard the route start just before, so it has this crossing. A peer
+		# still joining gets the snapshot once its join is answered (IslandRoutes.send_progress).
+		for peer: int in session.multiplayer.get_peers():
+			if session.roster.has(peer):
+				crossing.share_with(peer)
+		for peer: int in crossing._connected_recipients():
+			crossing.receive_plan.rpc_id(peer, rolled.to_array(), crossing.integrity.value)
 	return crossing
 
 
-func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], starting_integrity: float, rolled: CrossingPlan, serial: int) -> void:
+## A joiner (crossing-late-join): builds the crossing under way that `snapshot` describes, or
+## refreshes it when this peer already has it. Rolls and replays nothing: the plan's beats up to
+## the snapshot's time count as fired. Null without a snapshot or its route.
+static func restore(session: CoopSession, snapshot: CrossingSnapshot) -> Crossing:
+	if snapshot == null:
+		return null
+	var crossing := session.get_node_or_null(NodePath(node_name_for(snapshot.serial))) as Crossing
+	if crossing == null:
+		var started := GameState.content.get_entry(&"routes", snapshot.route_id) as RouteData
+		if started == null:
+			return null
+		crossing = SCENE.instantiate() as Crossing
+		crossing.name = node_name_for(snapshot.serial)
+		session.add_child(crossing)
+		crossing.setup(session, started, snapshot.riders, snapshot.maximum, snapshot.plan, snapshot.serial)
+		crossing._fired_to_s = snapshot.elapsed_s + EPSILON_S
+	crossing.apply_snapshot(snapshot)
+	return crossing
+
+
+## Host: the crossings under way in `session` (not ended, with a plan), oldest first.
+static func under_way(session: CoopSession) -> Array[Crossing]:
+	var list: Array[Crossing] = []
+	for child: Node in session.get_children():
+		var crossing := child as Crossing
+		if crossing != null and not crossing.finished and crossing.plan != null and not crossing.is_queued_for_deletion():
+			list.append(crossing)
+	return list
+
+
+## The number the next crossing launched in `session` gets.
+static func next_serial(session: CoopSession) -> int:
+	return session.get_meta(SESSION_SERIAL_META, 0)
+
+
+## A joiner: takes the host's next crossing number, so a route started later gets the same node
+## name on every peer. The counter never moves down.
+static func follow_serial(session: CoopSession, host_next: int) -> void:
+	session.set_meta(SESSION_SERIAL_META, maxi(next_serial(session), host_next))
+
+
+static func node_name_for(number: int) -> String:
+	return "Crossing%d" % number
+
+
+func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], starting_integrity: float, rolled: CrossingPlan, number: int) -> void:
 	_session = session
 	route = started
 	plan = rolled
 	_peers = peer_ids.duplicate()
-	origin = Vector2(serial * ORIGIN_STEP_PX, ORIGIN_Y_PX)
+	serial = number
+	origin = Vector2(number * ORIGIN_STEP_PX, ORIGIN_Y_PX)
 	var starting: float = 0.0 if route.riders_swim else (starting_integrity if starting_integrity > 0.0 else float(route.vessel_integrity))
 	integrity = VesselIntegrity.create(starting)
 	integrity.broke.connect(_on_broke)
@@ -94,6 +153,18 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 
 func peers() -> Array[int]:
 	return _peers
+
+
+## Host: the peers that have this crossing and get its plan, states and result.
+func recipients() -> Array[int]:
+	return _recipients
+
+
+## Host: `peer` has this crossing (it heard the route start, or was sent the snapshot) and gets its
+## messages from now on.
+func share_with(peer: int) -> void:
+	if not _recipients.has(peer):
+		_recipients.append(peer)
 
 
 func body_of(peer: int) -> PlayerBody:
@@ -206,16 +277,29 @@ func receive_plan(plan_data: Array, vessel_value: float) -> void:
 func receive_state(states: Dictionary, vessel_value: float, time_s: float) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID or finished or not is_finite(vessel_value) or not is_finite(time_s):
 		return
-	for peer: Variant in states:
-		var state: Variant = states[peer]
-		if peer is int and state is int and _states.has(peer) and state >= 0 and state < Rider.size():
-			_states[peer] = state
-	elapsed_s = time_s
-	if integrity.has_integrity():
-		integrity.value = clampf(vessel_value, 0.0, integrity.maximum)
-		if integrity.value <= 0.0:
-			integrity.broken = true
-	_apply_flags()
+	_apply_state(states, vessel_value, time_s)
+
+
+## A joiner: the crossing as `snapshot` has it (a checked snapshot, so no sender check here). The
+## same state a resync brings, plus the plan if none came, the break, and every rider's body where
+## the host has it, kept inside the sea.
+func apply_snapshot(snapshot: CrossingSnapshot) -> void:
+	if finished:
+		return
+	if plan == null:
+		plan = snapshot.plan
+	_apply_state(snapshot.states, snapshot.value, snapshot.elapsed_s)
+	if snapshot.broken:
+		_show_broken()
+	var inside: Rect2 = sea_rect().grow(-EDGE_GAP_PX)
+	for peer: int in _peers:
+		var body := body_of(peer)
+		if body == null:
+			continue
+		# Again, for a rider whose body was not under this peer yet when the crossing was built.
+		_bind_body(body)
+		if snapshot.positions.has(peer):
+			body.global_position = snapshot.positions[peer].clamp(inside.position, inside.end)
 
 
 ## Clients: the crossing ended.
@@ -278,10 +362,22 @@ func _squall() -> void:
 
 # A broken vessel throws everyone in, the tied included, and nobody can climb back.
 func _on_broke() -> void:
-	sea.fill_rect(_deck_cells(), DataEnums.Terrain.DEEP)
+	_sink_deck()
 	for peer: int in _peers:
 		throw_in(peer)
 	_dirty = true
+
+
+# Clients: the host says the vessel broke; the deck's cells are deep water here too.
+func _show_broken() -> void:
+	if integrity.broken or not integrity.has_integrity():
+		return
+	integrity.broken = true
+	_sink_deck()
+
+
+func _sink_deck() -> void:
+	sea.fill_rect(_deck_cells(), DataEnums.Terrain.DEEP)
 
 
 func _tick_rider(peer: int, delta: float) -> void:
@@ -333,15 +429,20 @@ func _enter_rider(peer: int, index: int) -> void:
 	var body := body_of(peer)
 	if body == null:
 		return
+	_bind_body(body)
+	body.global_position = _deck_spot(index) if integrity.has_integrity() else deck_center() + Vector2(0.0, (index - 1.5) * SPACING_PX)
+	_apply_flags()
+
+
+# A rider's body swims on this sea, with its camera kept to it.
+func _bind_body(body: PlayerBody) -> void:
 	body.terrain = sea
 	body.swim_energy_factor = 0.0
-	body.global_position = _deck_spot(index) if integrity.has_integrity() else deck_center() + Vector2(0.0, (index - 1.5) * SPACING_PX)
 	var rect := sea_rect()
 	body.camera.limit_left = int(rect.position.x)
 	body.camera.limit_top = int(rect.position.y)
 	body.camera.limit_right = int(rect.end.x)
 	body.camera.limit_bottom = int(rect.end.y)
-	_apply_flags()
 
 
 func _make_point(kind: RescuePoint.Kind, swimmer: int, hold_s: float) -> RescuePoint:
@@ -422,6 +523,21 @@ func _set_state(peer: int, state: Rider) -> void:
 	_apply_flags()
 
 
+# Clients: the host's rider states (riders only, in range), clock and vessel, from a resync or a
+# snapshot.
+func _apply_state(states: Dictionary, vessel_value: float, time_s: float) -> void:
+	for peer: Variant in states:
+		var state: Variant = states[peer]
+		if peer is int and state is int and _states.has(peer) and state >= 0 and state < Rider.size():
+			_states[peer] = state
+	elapsed_s = time_s
+	if integrity.has_integrity():
+		integrity.value = clampf(vessel_value, 0.0, integrity.maximum)
+		if integrity.value <= 0.0:
+			_show_broken()
+	_apply_flags()
+
+
 # Tied riders cannot move; every rider's swim drain is the crossing's, on every peer.
 func _apply_flags() -> void:
 	for peer: int in _peers:
@@ -431,12 +547,22 @@ func _apply_flags() -> void:
 			body.swim_energy_factor = 0.0
 
 
+# Host: the recipients still connected (a dropped peer is skipped; if it rejoins it is a new peer
+# that gets the snapshot).
+func _connected_recipients() -> Array[int]:
+	var connected: PackedInt32Array = _session.multiplayer.get_peers() if is_instance_valid(_session) else PackedInt32Array()
+	var list: Array[int] = []
+	for peer: int in _recipients:
+		if connected.has(peer):
+			list.append(peer)
+	return list
+
+
 func _send_state() -> void:
 	_dirty = false
 	_resync_left_s = RESYNC_S
-	if _session.multiplayer.get_peers().is_empty():
-		return
-	receive_state.rpc(_states.duplicate(), integrity.value, elapsed_s)
+	for peer: int in _connected_recipients():
+		receive_state.rpc_id(peer, _states.duplicate(), integrity.value, elapsed_s)
 
 
 func _finish() -> void:
@@ -457,8 +583,8 @@ func _finish() -> void:
 			"dead": body.meters.dead,
 		}
 		body.pinned = false
-	if not _session.multiplayer.get_peers().is_empty():
-		receive_result.rpc(result.to_dict())
+	for peer: int in _connected_recipients():
+		receive_result.rpc_id(peer, result.to_dict())
 	ended.emit(result)
 
 

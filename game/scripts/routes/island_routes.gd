@@ -9,6 +9,9 @@ extends Node
 signal route_started(route_id: StringName, peer_ids: Array[int])
 ## Host: a route became known.
 signal route_discovered(route_id: StringName)
+## A joiner: the host's departures and crossings under way arrived (crossing-late-join);
+## `restored` are the crossings this peer built or refreshed from them.
+signal progress_received(restored: Array[Crossing])
 
 const GROUP: StringName = &"island_routes"
 const HOST_ID: int = 1
@@ -110,6 +113,52 @@ func receive_departure(route_id: StringName, peer_ids: Array[int]) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID or _route(route_id) == null:
 		return
 	_depart(route_id, peer_ids)
+
+
+## Host: tells `peer`, which just joined or took back its body, who left by which route, the next
+## crossing number and every crossing under way, and sends it those crossings' messages from then on
+## (crossing-late-join). CoopSession calls it after the join reply, so the joiner already holds
+## every body under its current peer.
+func send_progress(peer: int) -> void:
+	if not is_instance_valid(_session) or not _session.multiplayer.is_server() or not _session.multiplayer.get_peers().has(peer):
+		return
+	var crossings := Crossing.under_way(_session)
+	var snapshots: Array = []
+	for crossing: Crossing in crossings:
+		snapshots.append(CrossingSnapshot.of(crossing).to_dict())
+	var departures: Dictionary = {}
+	for rider: int in departed:
+		departures[rider] = String(departed[rider])
+	receive_progress.rpc_id(peer, departures, Crossing.next_serial(_session), snapshots)
+	for crossing: Crossing in crossings:
+		crossing.share_with(peer)
+
+
+## A joiner: the host's departures replace this peer's (nothing starts: those players already left),
+## the crossing counter follows the host's, and each crossing under way is built or refreshed.
+@rpc("authority", "call_remote", "reliable")
+func receive_progress(departures: Dictionary, host_next_serial: int, snapshots: Array) -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID or not is_instance_valid(_session):
+		return
+	_apply_departures(departures)
+	if host_next_serial >= 0 and host_next_serial <= Crossing.MAX_SERIAL + 1:
+		Crossing.follow_serial(_session, host_next_serial)
+	var restored: Array[Crossing] = []
+	for raw: Variant in snapshots.slice(0, NetPeers.MAX_PLAYERS):
+		var crossing := Crossing.restore(_session, CrossingSnapshot.from_dict(raw))
+		if crossing != null:
+			restored.append(crossing)
+	progress_received.emit(restored)
+
+
+# Only peer ids leaving by a route this island offers are kept.
+func _apply_departures(departures: Dictionary) -> void:
+	var kept: Dictionary[int, StringName] = {}
+	for rider: Variant in departures:
+		var route_id: Variant = departures[rider]
+		if rider is int and (route_id is String or route_id is StringName) and _route(StringName(route_id)) != null:
+			kept[rider] = StringName(route_id)
+	departed = kept
 
 
 func _depart(route_id: StringName, peer_ids: Array[int]) -> void:
