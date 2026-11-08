@@ -59,3 +59,10 @@ func prompt_target(by: Node, locale: String) -> String:
 	if owner_node != null and owner_node.has_method(&"prompt_target"):
 		return owner_node.call(&"prompt_target", by, locale)
 	return ""
+
+
+## The player this interactable stands for, whose name tag the prompt clears, or null: the owner
+## when it is a player (a downed player's drag handle). Kinds that sit on a player without being
+## their child override it (the crossing's pull handle on its swimmer).
+func prompt_player() -> PlayerBody:
+	return get_parent() as PlayerBody

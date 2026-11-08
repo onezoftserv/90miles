@@ -302,7 +302,7 @@ func _show(shown: PackedStringArray) -> void:
 		width = maxf(width, shown[i].length() * GLYPH_PX + indent)
 	var box := Vector2(width, shown.size() * LINE_HEIGHT)
 	var anchor: Vector2 = (to_hud.call(target.get_global_transform_with_canvas().origin) as Vector2).round()
-	var rise: float = PLAYER_RISE_PX if target.get_parent() is PlayerBody else RISE_PX
+	var rise: float = PLAYER_RISE_PX if target.prompt_player() != null else RISE_PX
 	var rect := place(anchor, box, rise, avoid.call())
 	position = rect.position
 	size = rect.size
