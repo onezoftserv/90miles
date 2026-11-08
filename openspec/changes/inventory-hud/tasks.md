@@ -77,8 +77,8 @@ RED means the new tests are written first and seen failing; GREEN means the smal
 - [x] 8.3 Run the game shell solo through the Godot MCP for 300 frames with the HUD up, and read its errors; verify the output is clean.
 - [ ] 8.4 Host and client by hand as two local processes: the client drinks a rain cup and places a rain catcher at the bench; the host applies both; the client's strip and both worlds update; the client presses Esc with the list open and nothing pauses; the client quits and rejoins and its strip comes back. Record the result in `TASKS.md`.
 - [x] 8.5 Capture the HUD at 640×360 (strip with a selection, a prompt with a half-full ring, the crafting list, a crouching hidden player by day and at Noche) into `docs/inventory-hud/` with a manual capture scene like `tests/manual/capture_pixel_filter.tscn`; verify the five images exist.
-- [ ] 8.6 `TASKS.md`: tick this change's line, add the log line under "Done" with the GUT count and the follow-ups (refusal reply from the host, palm, rain-catcher and fire state to clients, disabling a bare palm and an empty catcher, a placement mode, item icons, PlayStation glyphs, dive cue, held versus selected); `openspec validate inventory-hud --type change --strict` and `openspec validate --all` pass.
-- [ ] 8.7 Verify import, smoke and GUT pass.
+- [x] 8.6 `TASKS.md`: tick this change's line, add the log line under "Done" with the GUT count and the follow-ups (refusal reply from the host, palm, rain-catcher and fire state to clients, disabling a bare palm and an empty catcher, a placement mode, item icons, PlayStation glyphs, dive cue, held versus selected); `openspec validate inventory-hud --type change --strict` and `openspec validate --all` pass.
+- [x] 8.7 Verify import, smoke and GUT pass.
 
 ## Workflow
 
