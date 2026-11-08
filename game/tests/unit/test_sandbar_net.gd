@@ -30,6 +30,7 @@ func _setup(session: CoopSession) -> void:
 	islands.append(island)
 	session.terrain = island.terrain
 	session.spawn_points = island.spawn_points(false)
+	island.with_creatures = false
 	island.furnish(session)
 
 

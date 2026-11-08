@@ -50,6 +50,8 @@ const BUBBLE_NAME: StringName = &"SpeechBubble"
 const HOST_ID: int = 1
 ## Connected players at most (dropped players waiting to be removed do not count).
 const MAX_PLAYERS: int = NetPeers.MAX_PLAYERS
+## A peer may shoo a creature at most this often.
+const SHOO_INTERVAL_S: float = 0.25
 ## A dropped client's player stays downed this long before it is removed.
 const DISCONNECT_DOWNED_S: float = 90.0
 ## A connected peer that sends no join request within this time is disconnected.
@@ -91,6 +93,8 @@ var local_name: String = GameSettings.DEFAULT_NAME
 ## without one, as a new player every time. Set by the shell from the settings.
 var local_identity: PlayerIdentity
 var phase: Phase = Phase.RUN
+## Where creature ids are read from (the game's content unless a test sets another).
+var creature_catalog: ContentCatalog = null
 ## Host time in seconds for the rate limits. Tests replace it.
 var clock: Callable
 ## The quick-chat phrases (the quick-chat content file unless a level or test sets others).
@@ -114,6 +118,10 @@ var _removed: Array[String] = []
 var _joined: int = 0
 ## Host: numbers the pick-ups it spawns, so every peer gives a node the same name.
 var _pickup_serial: int = 0
+## Host: the same for creatures.
+var _creature_serial: int = 0
+## Host: when each peer last shooed a creature.
+var _shoo_at_s: Dictionary[int, float] = {}
 ## Host: seconds until the next periodic clock message.
 var _resync_left_s: float = 0.0
 var _started: bool = false
@@ -133,6 +141,7 @@ func _init() -> void:
 func _ready() -> void:
 	player_spawner.spawn_function = _spawn_player
 	pickup_spawner.spawn_function = _spawn_pickup
+	entity_spawner.spawn_function = _spawn_entity
 	if phrases == null:
 		phrases = QuickChatPhrases.from_catalog(GameState.content)
 
@@ -648,6 +657,47 @@ func spawn_pickup(item_id: StringName, count: int, at: Vector2) -> WorldItem:
 	return pickup_spawner.spawn({"name": "Pickup%d" % _pickup_serial, "item_id": item_id, "count": count, "position": at}) as WorldItem
 
 
+## Host: puts a creature of `data` at `at` (session coordinates). The spawner shows it to every
+## client, which draws it and never runs it. Returns null on a client.
+func spawn_creature(data: CreatureData, at: Vector2) -> Creature:
+	if not multiplayer.is_server():
+		return null
+	_creature_serial += 1
+	return entity_spawner.spawn({"name": "Creature%d" % _creature_serial, "id": data.id, "position": at}) as Creature
+
+
+## This peer's player shoos the creature named `creature_name`; the host checks the reach.
+func shoo(creature_name: String) -> void:
+	request_shoo.rpc_id(HOST_ID, creature_name)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func request_shoo(creature_name: String) -> void:
+	if not multiplayer.is_server():
+		return
+	if _is_unsafe_node_name(creature_name):
+		return
+	var sender := multiplayer.get_remote_sender_id()
+	var now: float = clock.call()
+	if now - _shoo_at_s.get(sender, -SHOO_INTERVAL_S) < SHOO_INTERVAL_S and sender != HOST_ID:
+		return
+	_shoo_at_s[sender] = now
+	var player := body(sender)
+	var creature := entities.get_node_or_null(NodePath(creature_name)) as Creature
+	if player != null and creature != null:
+		creature.shoo(player)
+
+
+# A client-sent name must be one plain child name, never a path to look up.
+func _is_unsafe_node_name(node_name: String) -> bool:
+	if node_name.is_empty():
+		return true
+	for bad: String in ["/", ":", ".", "@"]:
+		if node_name.contains(bad):
+			return true
+	return false
+
+
 ## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.
 func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> SpeechBubble:
 	var old := speaker.get_node_or_null(NodePath(BUBBLE_NAME))
@@ -839,6 +889,22 @@ func _spawn_pickup(data: Variant) -> Node:
 	item.count = count
 	item.position = spot
 	return item
+
+
+# Runs on every peer; the payload is checked because a client receives it.
+func _spawn_entity(data: Variant) -> Node:
+	var info: Dictionary = data if data is Dictionary else {}
+	var id: Variant = info.get("id")
+	var spot: Variant = info.get("position")
+	var entity_name: Variant = info.get("name")
+	var catalog: ContentCatalog = creature_catalog if creature_catalog != null else GameState.content
+	if not id is StringName or not spot is Vector2 or not spot.is_finite() or not entity_name is String or not catalog.has_entry(&"creatures", id):
+		return null
+	var made := Creature.make(catalog.get_entry(&"creatures", id) as CreatureData)
+	made.name = entity_name
+	made.position = spot
+	made.attach_sync()
+	return made
 
 
 func _on_body_ready(peer_id: int, spawned: PlayerBody) -> void:

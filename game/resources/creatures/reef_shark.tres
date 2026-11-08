@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="CreatureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="1_creature"]
+[ext_resource type="Script" path="res://scripts/data/creature_spawn_rule_data.gd" id="2_rule"]
+
+[sub_resource type="Resource" id="Resource_rule"]
+script = ExtResource("2_rule")
+context = 0
+chain_families = Array[int]([0])
+terrain = Array[int]([0])
+min_shore_distance_tiles = 2
+
+[resource]
+script = ExtResource("1_creature")
+id = &"reef_shark"
+name_es = "Tiburón de arrecife"
+name_en = "Reef shark"
+description_es = "Da vueltas despacio alrededor de quien nada y solo ataca al que sangra o ya no tiene fuerzas. Si llegas a la orilla, no te sigue."
+description_en = "It circles slowly around a swimmer and only strikes one who bleeds or has run out of strength. Reach the shallows and it will not follow."
+hint_es = "Sal del agua o quédate a un paso de la orilla; no nades herido ni agotado."
+hint_en = "Get out of the water or stay a step from shore; do not swim wounded or exhausted."
+category = 0
+creature_tags = Array[int]([0])
+health = 60
+speed_tiles_s = 2.0
+damage = 25.0
+attack_cooldown_s = 1.0
+vessel_damage = 20.0
+domains = Array[int]([2, 1])
+behavior = 1
+disposition = 0
+keep_off_shore_tiles = 2
+circle_time_s = Vector2(6, 10)
+retreat_time_s = 4.0
+strike_conditions = Array[int]([0, 1])
+low_energy_threshold = 20.0
+senses = Array[int]([0, 1])
+hearing_radius_tiles = 8.0
+spawn_rules = Array[ExtResource("2_rule")]([SubResource("Resource_rule")])

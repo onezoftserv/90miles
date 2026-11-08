@@ -84,6 +84,9 @@ func _read(layout: IslandLayoutData) -> void:
 		_problems.append("no solo spawn point")
 	if palms.is_empty():
 		_problems.append("no palms")
+	for index: int in layout.nest_palms:
+		if index < 0 or index >= palms.size():
+			_problems.append("nest palm %d is not a palm" % index)
 
 
 func _read_cell(cell: Vector2i, glyph: String, spawns: Dictionary[String, Vector2i]) -> void:

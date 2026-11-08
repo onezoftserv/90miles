@@ -136,6 +136,8 @@ enum BossKind {
 @export var behavior: Behavior = Behavior.NONE
 ## HOSTILE hunts, DEFENSIVE attacks only when provoked, PASSIVE never attacks, NEUTRAL is an encounter.
 @export var disposition: Disposition = Disposition.HOSTILE
+## Water cells closer than this many tiles to land are out of reach (the reef shark: 2).
+@export var keep_off_shore_tiles: int = 0
 ## What starts an attack or effect; more than one is allowed.
 @export var triggers: Array[AttackTrigger] = []
 ## HIDDEN until triggered or revealed; DISGUISED looks harmless until a REVEAL counter fires.

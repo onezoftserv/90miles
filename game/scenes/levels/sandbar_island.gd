@@ -8,6 +8,7 @@ extends Node2D
 const PALM_SCENE: PackedScene = preload("res://scenes/levels/palm.tscn")
 const BENCH_NAME: StringName = &"HutWorkbench"
 const ROUTES_NAME: StringName = &"Routes"
+const CREATURES_NAME: StringName = &"Creatures"
 const RAFT_SITE_NAME: StringName = &"RaftSite"
 const RAFT_NAME: StringName = &"Raft"
 const RAFT_RECIPE_ID: StringName = &"raft"
@@ -16,6 +17,8 @@ const POOL_COLOR: Color = Color(0.45, 0.8, 0.85, 0.6)
 
 @export var layout: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
 
+## Off only in tests that count pick-ups or inventories; the run keeps its crabs, gulls and shark.
+var with_creatures: bool = true
 var built: IslandLayout = IslandLayout.build(layout)
 var terrain: GridTerrain = built.terrain
 ## The game's one sky's climate (weather-daynight); the session and the bodies read it.
@@ -73,8 +76,20 @@ func furnish(session: CoopSession) -> void:
 	routes.setup(session, layout.route_ids)
 	routes.route_started.connect(_on_route_started)
 	_place_raft_site()
+	if with_creatures:
+		_place_creatures()
 	_weather_id = WeatherManager.weather_id()
 	WeatherManager.weather_changed.connect(_on_weather_changed)
+
+
+# Host: the creature spawner runs the island's crabs, gulls and shark. Clients only receive them.
+func _place_creatures() -> void:
+	var spawner := CreatureSpawner.new()
+	spawner.name = CREATURES_NAME
+	spawner.auto_party = true
+	_session.add_child(spawner)
+	spawner.setup(_session, layout)
+	spawner.start()
 
 
 # A fresh, empty site for the raft (named the same on every peer; the built raft takes the name Raft).
