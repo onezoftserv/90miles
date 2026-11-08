@@ -64,7 +64,9 @@ func test_spawns_are_20_to_30_tiles_from_the_next_and_the_client_sees_the_pickup
 	if a == null or b == null:
 		return
 	assert_true(await net.settle())
-	var ids: Array[int] = host.peer_ids()
+	# Join order, not peer_ids(): that sorts by the random peer id, so it is not the order the
+	# spawns were handed out in.
+	var ids: Array[int] = [net.peer_id(host), net.peer_id(a), net.peer_id(b)]
 	for i: int in range(1, ids.size()):
 		var tiles: float = host.body(ids[i - 1]).position.distance_to(host.body(ids[i]).position) / 16.0
 		assert_between(tiles, 20.0, 30.0, "join order %d and %d" % [i, i + 1])
