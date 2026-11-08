@@ -243,7 +243,9 @@ func _build_run(as_client: bool = false) -> void:
 	session.host_lost.connect(_on_host_lost)
 	_world.add_child(session)
 	island.furnish(session)
-	(session.get_node(^"Routes") as IslandRoutes).route_started.connect(_on_route_started)
+	var routes := session.get_node(^"Routes") as IslandRoutes
+	routes.route_started.connect(_on_route_started)
+	routes.progress_received.connect(_on_progress_received)
 	if not as_client:
 		island.place_pickups(session)
 
@@ -315,6 +317,21 @@ func _on_route_started(route_id: StringName, peer_ids: Array[int]) -> void:
 
 
 # The riders leave play until arrival on the next island exists.
+# A joiner (crossing-late-join): the crossings under way it restored are followed like launched
+# ones, and riders whose crossing ended before the join leave play here too.
+func _on_progress_received(restored: Array[Crossing]) -> void:
+	for crossing: Crossing in restored:
+		if not crossings.has(crossing):
+			crossing.ended.connect(_on_crossing_ended.bind(crossing))
+			crossings.append(crossing)
+	var routes := session.get_node(^"Routes") as IslandRoutes
+	for peer_id: int in routes.departed:
+		var rider := session.body(peer_id)
+		if rider != null and not _in_crossing(peer_id):
+			ArrivalStub.hold(rider)
+	_check_run_over()
+
+
 func _on_crossing_ended(finished: CrossingResult, crossing: Crossing) -> void:
 	crossings.erase(crossing)
 	crossing_results.append(finished)

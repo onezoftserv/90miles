@@ -13,9 +13,9 @@
 
 ## 3. Shell
 
-- [ ] 3.1 Write the shell tests (RED: a restored crossing is tracked, keeps the run open and holds its riders when it ends; a departed rider with no crossing under way is held, with 1 player offline) and verify they fail.
-- [ ] 3.2 Connect `progress_received` in `GameShell._build_run` (track, connect `ended`, hold departed riders outside a crossing, check run over) and verify 3.1 passes.
-- [ ] 3.3 Verify the import, the smoke run and GUT pass, and a 300-frame shell run is clean.
+- [x] 3.1 Write the shell tests (RED: a restored crossing is tracked, keeps the run open and holds its riders when it ends; a departed rider with no crossing under way is held, with 1 player offline) and verify they fail.
+- [x] 3.2 Connect `progress_received` in `GameShell._build_run` (track, connect `ended`, hold departed riders outside a crossing, check run over) and verify 3.1 passes.
+- [x] 3.3 Verify the import, the smoke run and GUT pass, and a 300-frame shell run is clean.
 
 ## Workflow follow-up
 
