@@ -211,6 +211,9 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 		if _started and phase == Phase.RUN:
 			_admit(sender)
 	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN, owner_map(), _removed)
+	# After the reply, whose owner map puts every body under its current peer (crossing-late-join).
+	if _started and phase == Phase.RUN and body(sender) != null and has_node(^"Routes"):
+		(get_node(^"Routes") as IslandRoutes).send_progress(sender)
 	_share_roster(sender)
 
 

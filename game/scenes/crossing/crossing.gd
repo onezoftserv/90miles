@@ -47,6 +47,8 @@ var origin: Vector2 = Vector2.ZERO
 var serial: int = 0
 
 var _session: CoopSession
+## Host: the peers that have this crossing, so the only ones sent its messages (crossing-late-join).
+var _recipients: Array[int] = []
 var _peers: Array[int] = []
 var _states: Dictionary[int, int] = {}
 var _points: Dictionary[int, Interactable] = {}
@@ -70,8 +72,12 @@ static func launch(session: CoopSession, started: RouteData, peer_ids: Array[int
 	if session.multiplayer.is_server():
 		rolled = CrossingPlan.roll(started, band, WeatherManager.sky, rng, crossing.tuning)
 	crossing.setup(session, started, peer_ids, starting_integrity, rolled, number)
-	if rolled != null and not session.multiplayer.get_peers().is_empty():
-		crossing.receive_plan.rpc(rolled.to_array(), crossing.integrity.value)
+	if rolled != null:
+		# Every peer connected now heard the route start just before, so it has this crossing.
+		for peer: int in session.multiplayer.get_peers():
+			crossing.share_with(peer)
+		for peer: int in crossing._connected_recipients():
+			crossing.receive_plan.rpc_id(peer, rolled.to_array(), crossing.integrity.value)
 	return crossing
 
 
@@ -93,6 +99,16 @@ static func restore(session: CoopSession, snapshot: CrossingSnapshot) -> Crossin
 		crossing._fired_to_s = snapshot.elapsed_s + EPSILON_S
 	crossing.apply_snapshot(snapshot)
 	return crossing
+
+
+## Host: the crossings under way in `session` (not ended, with a plan), oldest first.
+static func under_way(session: CoopSession) -> Array[Crossing]:
+	var list: Array[Crossing] = []
+	for child: Node in session.get_children():
+		var crossing := child as Crossing
+		if crossing != null and not crossing.finished and crossing.plan != null and not crossing.is_queued_for_deletion():
+			list.append(crossing)
+	return list
 
 
 ## The number the next crossing launched in `session` gets.
@@ -132,6 +148,18 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 
 func peers() -> Array[int]:
 	return _peers
+
+
+## Host: the peers that have this crossing and get its plan, states and result.
+func recipients() -> Array[int]:
+	return _recipients
+
+
+## Host: `peer` has this crossing (it heard the route start, or was sent the snapshot) and gets its
+## messages from now on.
+func share_with(peer: int) -> void:
+	if not _recipients.has(peer):
+		_recipients.append(peer)
 
 
 func body_of(peer: int) -> PlayerBody:
@@ -493,12 +521,22 @@ func _apply_flags() -> void:
 			body.swim_energy_factor = 0.0
 
 
+# Host: the recipients still connected (a dropped peer is skipped; if it rejoins it is a new peer
+# that gets the snapshot).
+func _connected_recipients() -> Array[int]:
+	var connected: PackedInt32Array = _session.multiplayer.get_peers() if is_instance_valid(_session) else PackedInt32Array()
+	var list: Array[int] = []
+	for peer: int in _recipients:
+		if connected.has(peer):
+			list.append(peer)
+	return list
+
+
 func _send_state() -> void:
 	_dirty = false
 	_resync_left_s = RESYNC_S
-	if _session.multiplayer.get_peers().is_empty():
-		return
-	receive_state.rpc(_states.duplicate(), integrity.value, elapsed_s)
+	for peer: int in _connected_recipients():
+		receive_state.rpc_id(peer, _states.duplicate(), integrity.value, elapsed_s)
 
 
 func _finish() -> void:
@@ -519,8 +557,8 @@ func _finish() -> void:
 			"dead": body.meters.dead,
 		}
 		body.pinned = false
-	if not _session.multiplayer.get_peers().is_empty():
-		receive_result.rpc(result.to_dict())
+	for peer: int in _connected_recipients():
+		receive_result.rpc_id(peer, result.to_dict())
 	ended.emit(result)
 
 
