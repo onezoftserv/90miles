@@ -576,19 +576,19 @@ func craft_for(peer: int, recipe_id: StringName, station_path: NodePath) -> bool
 
 
 ## Host: `peer` uses an item from their own slot on `target_peer`'s player (0: themself), who
-## must be within reach.
+## must be within reach. Downed means immobile: only a solo last stand may act, and only to
+## stand themself up (`UsePlan.actor_reason`, the check the HUD runs too).
 func use_for(peer: int, slot: int, use_index: int, target_peer: int) -> bool:
 	var player := _acting_body(peer, true)
 	if player == null:
 		return false
-	# Downed means immobile; only a solo last stand may act, and only to stand themself up.
-	if player.meters.last_stand and not (target_peer in [0, peer] and ItemUser.revives(player, slot, use_index)):
-		return false
 	var target: PlayerBody = null
 	if target_peer != 0 and target_peer != peer:
 		target = body(target_peer)
-		if target == null or player.global_position.distance_to(target.global_position) > InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX:
+		if target == null:
 			return false
+	if UsePlan.actor_reason(player, has_left(peer), slot, use_index, target) != ItemUser.Reason.OK:
+		return false
 	return ItemUser.use(player, slot, use_index, target)
 
 
@@ -624,8 +624,9 @@ func deposit_for(peer: int, site_path: NodePath) -> bool:
 	return player.crafter.start_work(site)
 
 
-# Whether `peer`'s player left the island by a route (escape-routes).
-func _has_left(peer: int) -> bool:
+## Whether `peer`'s player left the island by a route (escape-routes): from the moment the
+## route starts, so for the whole crossing too.
+func has_left(peer: int) -> bool:
 	var routes := get_node_or_null("Routes") as IslandRoutes
 	return routes != null and routes.has_left(peer)
 
@@ -640,7 +641,7 @@ func _sender() -> int:
 # stand lies still, unless `allow_last_stand`); the host is trusted, a client is rate limited.
 func _acting_body(peer: int, allow_last_stand: bool = false) -> PlayerBody:
 	var player := body(peer)
-	if player == null or player.meters.dead or player.meters.downed or _has_left(peer):
+	if player == null or player.meters.dead or player.meters.downed or has_left(peer):
 		return null
 	if player.meters.last_stand and not allow_last_stand:
 		return null

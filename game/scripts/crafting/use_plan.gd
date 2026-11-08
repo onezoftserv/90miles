@@ -40,12 +40,27 @@ static func choose(body: PlayerBody, slot: int, session: CoopSession = null) -> 
 	return plan
 
 
+## Why `player` may not use their slot `slot`'s use `use_index` on `target` (null: themself)
+## now, or OK (`CoopSession.use_for`'s checks of the acting player, design D5): DOWN when dead,
+## downed, or in a last stand and not standing themself up with a reviving use; AT_SEA when
+## `departed` on a route (design D11); OUT_OF_REACH for a target beyond reach and its slack.
+## "Down" is the meters' state, never `body.downed`, which a solo last stand also sets.
+static func actor_reason(player: PlayerBody, departed: bool, slot: int, use_index: int, target: PlayerBody = null) -> ItemUser.Reason:
+	var on_self: bool = target == null or target == player
+	if player.meters.dead or player.meters.downed:
+		return ItemUser.Reason.DOWN
+	if player.meters.last_stand and not (on_self and ItemUser.revives(player, slot, use_index)):
+		return ItemUser.Reason.DOWN
+	if departed:
+		return ItemUser.Reason.AT_SEA
+	if not on_self and player.global_position.distance_to(target.global_position) > InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX:
+		return ItemUser.Reason.OUT_OF_REACH
+	return ItemUser.Reason.OK
+
+
 ## The item in `body`'s slot `slot`, or null for an empty or missing slot.
 static func item_in(body: PlayerBody, slot: int) -> ItemData:
-	if body == null or slot < 0 or slot >= body.inventory.slots.size():
-		return null
-	var held := body.inventory.slots[slot]
-	return body.inventory.item_for(held.item_id) if not held.is_empty() else null
+	return ItemUser.item_at(body, slot)
 
 
 ## The index of `item`'s first use that revives (and, with `others_only`, can target others),
