@@ -38,7 +38,7 @@ Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile gr
 
 **Escape routes.** Raft (always), binoculars-and-swim (the next island is visible on clear days), signal the fishing boat (Ramón, 30%).
 
-**Threats.** Patrol every 3 minutes, gulls, crabs, the sun.
+**Threats.** Patrol every 3 minutes, gulls, crabs, the sun, and one reef shark offshore (deep and shallow water at least 2 tiles from shore; it circles swimmers and strikes only a bleeding swimmer or one below 20 energy; `creatures-ai`, owner-confirmed 2026-11-08; a spawn chance of 0 in `reef_shark.tres` turns it off).
 
 ---
 

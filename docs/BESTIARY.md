@@ -104,7 +104,7 @@ Difficulty scales by **distance** (islands 1–2: coast, 3–5: mid, 6–8: far)
 
 **Lore.** They were here first and they know it.
 
-**Behavior.** Circle rocky keys and any beach where food lies uncovered. Swoop: steal one food item from the ground or from a player's hands (not inventory) and fly off. They defend egg nests: 3 damage per peck, swarm of 4.
+**Behavior.** Circle rocky keys and any beach where food lies uncovered. Swoop: steal one food item from the ground or from a player's hands (not the rest of the inventory) and fly off for 30 s, then come back to the nest. "Hands" is the first food slot of the inventory while the player is on land, not swimming (`creatures-ai`, owner-confirmed 2026-11-08). They defend egg nests: 3 damage per peck, swarm of 4.
 
 **Counters.** Cover food. Chase them with a stick (they flee 30 s). Egg raids are worth it: 10 eggs per nest. Carrying the *Pluma de galleguito* keepsake makes every gull ignore you.
 
