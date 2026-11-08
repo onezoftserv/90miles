@@ -13,6 +13,12 @@ extends Control
 ## wide ends in "…". Drawn in the HUD layer, the night tint and the Suave filter leave it
 ## alone. It hides while the player is down or gone, the crafting list is open, the run is paused
 ## or a screen is shown.
+## A fresh interact press (the local body's intent, which is what the host's hold sees) locks the
+## target as InteractionHold does (`PressTimer`): until release the prompt stays on it even when
+## another comes nearer, and a 10 px ring left of the key fills over its hold time; the lock goes
+## when the target is freed or disabled or, before the hold is done, out of reach and the slack,
+## and nothing is shown again until release. Instant interactions show no ring. Ticked on physics
+## frames, so in solo and on the host it runs on the same frames as the host's hold.
 
 const INTERACT_ACTION: StringName = &"interact"
 const KEY_FORMAT: String = "[%s]"
@@ -28,6 +34,10 @@ const PLAYER_RISE_PX: float = 34.0
 const BOUNDS: Rect2 = Rect2(4.0, 22.0, 632.0, 280.0)
 ## Space left between the prompt and a HUD panel it is moved off.
 const PANEL_GAP: float = 2.0
+## The ring sits left of the first line with a 2 px gap.
+const RING_SPACE: float = HudRing.SIZE.x + 2.0
+## How far a locked press may stray before it is dropped, as the host's hold.
+const LOCK_REACH_PX: float = InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX
 const NO_BLOCKER: int = -1
 
 ## The local player, or null.
@@ -49,8 +59,11 @@ var avoid: Callable = func() -> Array[Rect2]: return []
 ## The interactable the prompt is over, or null.
 var target: Interactable = null
 var _labels: Array[Label] = []
+var _press: PressTimer = PressTimer.new()
+var _was_held: bool = false
 
 @onready var panel: PanelContainer = $Panel
+@onready var ring: HudRing = $Ring
 
 
 ## "[E] Recoger Coco": the key, then the verb and the target `by` sees for `on`'s prompt id (the
@@ -126,21 +139,34 @@ func bind(player: PlayerBody, run_session: CoopSession = null) -> void:
 	body = player
 	session = run_session
 	target = null
+	_press.reset()
 
 
 func set_device(value: InputLabels.Device) -> void:
 	device = value
 
 
-## One frame: picks the target and draws the prompt over it, or hides.
-func tick(_delta: float) -> void:
+## One frame: follows the interact press, picks or keeps the target and draws the prompt over
+## it, or hides.
+func tick(delta: float) -> void:
+	var held: bool = is_instance_valid(body) and body.intent.interact_held
+	var fresh: bool = held and not _was_held
+	_was_held = held
 	if not _can_show():
 		_hide()
 		return
-	target = _pick()
+	if not held:
+		_press.reset()
+		target = _pick()
+	elif fresh:
+		_lock_pressed()
+	elif not _press.keeps(body, LOCK_REACH_PX):
+		target = null
 	if target == null:
 		_hide()
 		return
+	if held:
+		_press.advance(delta)
 	_show(_lines_for(target))
 
 
@@ -166,6 +192,21 @@ func _can_show() -> bool:
 	return is_inside_tree() and input_open.call() and not list_open.call()
 
 
+# A fresh press goes to what the prompt showed: the body moves before the HUD in a frame, so that is
+# what the host's hold picked at the press. If the host already used it up (an instant pick-up),
+# nothing is locked until release; with nothing shown, the press goes to the picker's choice now.
+func _lock_pressed() -> void:
+	var pressed_on: Interactable = null
+	if is_instance_valid(target):
+		pressed_on = target
+	elif target == null:
+		pressed_on = _pick()
+	target = null
+	if pressed_on != null and pressed_on.enabled:
+		target = pressed_on
+		_press.lock(target)
+
+
 # What the host's press would reach now: the picker's choice among this peer's interactables.
 func _pick() -> Interactable:
 	var nearby: Array[Interactable] = []
@@ -184,17 +225,27 @@ func _lines_for(on: Interactable) -> PackedStringArray:
 	if parts[1].is_empty():
 		return PackedStringArray([parts[0]])
 	var whole: String = "%s %s" % [parts[0], parts[1]]
-	if whole.length() <= floori(MAX_WIDTH / GLYPH_PX):
+	if whole.length() <= _first_line_chars(on):
 		return PackedStringArray([whole])
 	return parts
 
 
+# Glyphs that fit the first line, beside the ring of a timed hold.
+func _first_line_chars(on: Interactable) -> int:
+	return floori((MAX_WIDTH - (RING_SPACE if _has_ring(on) else 0.0)) / GLYPH_PX)
+
+
+func _has_ring(on: Interactable) -> bool:
+	return on.hold_time_s > 0.0
+
+
 func _show(shown: PackedStringArray) -> void:
-	var max_chars: int = floori(MAX_WIDTH / GLYPH_PX)
+	var indent: float = RING_SPACE if _has_ring(target) else 0.0
 	var width: float = 0.0
 	for i: int in shown.size():
-		shown[i] = InventoryStrip.cut(shown[i], max_chars)
-		width = maxf(width, shown[i].length() * GLYPH_PX)
+		var room: float = MAX_WIDTH - (indent if i == 0 else 0.0)
+		shown[i] = InventoryStrip.cut(shown[i], floori(room / GLYPH_PX))
+		width = maxf(width, shown[i].length() * GLYPH_PX + (indent if i == 0 else 0.0))
 	var box := Vector2(width, shown.size() * LINE_HEIGHT)
 	var anchor: Vector2 = (to_hud.call(target.get_global_transform_with_canvas().origin) as Vector2).round()
 	var rise: float = PLAYER_RISE_PX if target.get_parent() is PlayerBody else RISE_PX
@@ -203,11 +254,14 @@ func _show(shown: PackedStringArray) -> void:
 	size = rect.size
 	panel.position = Vector2.ZERO
 	panel.size = rect.size
-	_set_lines(shown)
+	ring.visible = indent > 0.0
+	ring.position = Vector2.ZERO
+	ring.set_value(_press.progress() if _press.target == target else 0.0)
+	_set_lines(shown, indent)
 	visible = true
 
 
-func _set_lines(shown: PackedStringArray) -> void:
+func _set_lines(shown: PackedStringArray, indent: float) -> void:
 	while _labels.size() < shown.size():
 		var label := Label.new()
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -220,13 +274,16 @@ func _set_lines(shown: PackedStringArray) -> void:
 		label.visible = i < shown.size()
 		if not label.visible:
 			continue
+		var left: float = indent if i == 0 else 0.0
 		label.text = shown[i]
-		label.position = Vector2(0.0, i * LINE_HEIGHT)
-		label.size = Vector2(size.x, LINE_HEIGHT)
+		label.position = Vector2(left, i * LINE_HEIGHT)
+		label.size = Vector2(size.x - left, LINE_HEIGHT)
 
 
 func _hide() -> void:
+	_press.reset()
 	target = null
+	ring.set_value(0.0)
 	visible = false
 
 
