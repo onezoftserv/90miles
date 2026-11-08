@@ -67,6 +67,10 @@ const MAX_DIRECTION_LENGTH_SQUARED: float = 1.001
 ## are WorldSky.to_state().
 const WORLD_STATE_TYPES: Dictionary[String, int] = {
 	"island_seed": TYPE_INT,
+	# The run's seed (endings-progression "One-liner picked by the run seed") and how many
+	# islands the party has stood on (run summary totals).
+	"run_seed": TYPE_INT,
+	"islands": TYPE_INT,
 	"weather": TYPE_STRING_NAME,
 	"time_of_day_s": TYPE_FLOAT,
 	"day": TYPE_INT,
@@ -128,6 +132,8 @@ var _identities: IdentityRegistry = IdentityRegistry.new()
 var _spawn_peer: Dictionary[int, int] = {}
 ## Names of the players removed after their 90 s, in removal order (on every peer).
 var _removed: Array[String] = []
+## Why each of them is gone, parallel to `_removed` (a DeathCause id).
+var _removed_causes: Array[StringName] = []
 var _joined: int = 0
 ## Host: numbers the pick-ups it spawns, so every peer gives a node the same name.
 var _pickup_serial: int = 0
@@ -232,7 +238,7 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 		roster[sender] = GameSettings.clean_name(player_name, default_name(roster))
 		if _started and phase == Phase.RUN:
 			_admit(sender)
-	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN, owner_map(), _removed)
+	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN, owner_map(), _removed, _removed_causes)
 	# After the reply, whose owner map puts every body under its current peer (crossing-late-join).
 	if _started and phase == Phase.RUN and body(sender) != null and has_node(^"Routes"):
 		(get_node(^"Routes") as IslandRoutes).send_progress(sender)
@@ -240,13 +246,17 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 
 
 @rpc("authority", "call_remote", "reliable")
-func receive_lobby(roster_data: Dictionary, in_run: bool, owners: Dictionary, removed: Array) -> void:
+func receive_lobby(roster_data: Dictionary, in_run: bool, owners: Dictionary, removed: Array, removed_causes_data: Array) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID:
 		return
 	_removed.clear()
-	for removed_name: Variant in removed:
+	_removed_causes.clear()
+	for index: int in removed.size():
+		var removed_name: Variant = removed[index]
 		if removed_name is String:
 			_removed.append(GameSettings.clean_name(removed_name))
+			var sent: Variant = removed_causes_data[index] if index < removed_causes_data.size() else null
+			_removed_causes.append(DeathCause.checked(sent, _catalog(), DeathCause.REMOVED))
 	# Bodies re-bound before this peer joined still carry their first peer in the spawn data.
 	for spawned_as: Variant in owners:
 		var current: Variant = owners[spawned_as]
@@ -258,13 +268,13 @@ func receive_lobby(roster_data: Dictionary, in_run: bool, owners: Dictionary, re
 
 
 @rpc("authority", "call_remote", "reliable")
-func record_removed(peer_id: int, removed_name: String) -> void:
+func record_removed(peer_id: int, removed_name: String, cause: StringName) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID:
 		return
 	# The host's despawn follows; the player is already gone from this session's players.
 	_bodies.erase(peer_id)
 	_spawn_peer.erase(peer_id)
-	_record_removal(peer_id, GameSettings.clean_name(removed_name))
+	_record_removal(peer_id, GameSettings.clean_name(removed_name), DeathCause.checked(cause, _catalog(), DeathCause.REMOVED))
 
 
 ## The players removed after their 90 s, in removal order. They count as dead for the rest of
@@ -273,8 +283,15 @@ func removed_names() -> Array[String]:
 	return _removed.duplicate()
 
 
-func _record_removal(peer_id: int, removed_name: String) -> void:
+## Why each removed player is gone, in removal order: `removed`, or the cause their meters died
+## of while they were away.
+func removed_causes() -> Array[StringName]:
+	return _removed_causes.duplicate()
+
+
+func _record_removal(peer_id: int, removed_name: String, cause: StringName) -> void:
 	_removed.append(removed_name)
+	_removed_causes.append(cause)
 	removal_recorded.emit(peer_id, removed_name)
 
 
@@ -890,12 +907,16 @@ func _remove_player(peer_id: int) -> void:
 		return
 	var last_position: Vector2 = leaving.position
 	var removed_name := player_name(peer_id)
+	# A player whose meters died while they were away keeps that cause.
+	var cause: StringName = DeathCause.REMOVED
+	if leaving.meters.dead and not leaving.meters.death_cause.is_empty():
+		cause = leaving.meters.death_cause
 	_bodies.erase(peer_id)
 	_spawn_peer.erase(peer_id)
 	_identities.release_peer(peer_id)
 	player_removed.emit(peer_id, last_position)
-	record_removed.rpc(peer_id, removed_name)
-	_record_removal(peer_id, removed_name)
+	record_removed.rpc(peer_id, removed_name, cause)
+	_record_removal(peer_id, removed_name, cause)
 	# Freed on the host; the spawner removes it on every client.
 	leaving.queue_free()
 
@@ -973,7 +994,7 @@ func _spawn_entity(data: Variant) -> Node:
 	var id: Variant = info.get("id")
 	var spot: Variant = info.get("position")
 	var entity_name: Variant = info.get("name")
-	var catalog: ContentCatalog = creature_catalog if creature_catalog != null else GameState.content
+	var catalog: ContentCatalog = _catalog()
 	if not id is StringName or not spot is Vector2 or not spot.is_finite() or not entity_name is String or not catalog.has_entry(&"creatures", id):
 		return null
 	var made := Creature.make(catalog.get_entry(&"creatures", id) as CreatureData)
@@ -981,6 +1002,11 @@ func _spawn_entity(data: Variant) -> Node:
 	made.position = spot
 	made.attach_sync()
 	return made
+
+
+# Where creature ids are read from.
+func _catalog() -> ContentCatalog:
+	return creature_catalog if creature_catalog != null else GameState.content
 
 
 func _on_body_ready(peer_id: int, spawned: PlayerBody) -> void:

@@ -22,10 +22,10 @@ color = Color(0, 0, 0, 0.6)
 
 [node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 0
-offset_left = 192.0
-offset_top = 96.0
-offset_right = 448.0
-offset_bottom = 264.0
+offset_left = 32.0
+offset_top = 16.0
+offset_right = 608.0
+offset_bottom = 344.0
 
 [node name="Box" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
@@ -39,24 +39,75 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
 text = "Fin del viaje"
 horizontal_alignment = 1
 
-[node name="LengthRow" type="HBoxContainer" parent="Panel/Box"]
+[node name="TotalsRow" type="HBoxContainer" parent="Panel/Box"]
 layout_mode = 2
+theme_override_constants/separation = 16
 
-[node name="LengthLabel" type="Label" parent="Panel/Box/LengthRow"]
+[node name="Islands" type="Label" parent="Panel/Box/TotalsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+
+[node name="Days" type="Label" parent="Panel/Box/TotalsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+
+[node name="LengthLabel" type="Label" parent="Panel/Box/TotalsRow"]
 layout_mode = 2
 theme_type_variation = &"PanelLabel"
 text = "Duración:"
 
-[node name="Length" type="Label" parent="Panel/Box/LengthRow"]
+[node name="Length" type="Label" parent="Panel/Box/TotalsRow"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"PanelLabel"
 
-[node name="Rows" type="VBoxContainer" parent="Panel/Box"]
+[node name="ExtrasRow" type="HBoxContainer" parent="Panel/Box"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Companions" type="Label" parent="Panel/Box/ExtrasRow"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"PanelLabel"
 
-[node name="Home" type="Button" parent="Panel/Box"]
+[node name="Texts" type="Label" parent="Panel/Box/ExtrasRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+
+[node name="Note" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/Box"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Rows" type="VBoxContainer" parent="Panel/Box/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Buttons" type="HBoxContainer" parent="Panel/Box"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Restart" type="Button" parent="Panel/Box/Buttons"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Otra vez"
+
+[node name="Home" type="Button" parent="Panel/Box/Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Volver al inicio"
