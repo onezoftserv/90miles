@@ -32,6 +32,8 @@ Solo is first class. A solo player never waits: their crossing ending loads the 
 
 ## Provisional decisions
 
+The owner confirmed these as they stand on 2026-11-08, and kept the rule that a rider waiting on the next island is no living teammate (the last player on the sandbar gets the solo last stand). The sign lines stay draft Spanish for the owner's voice pass.
+
 Not yet confirmed by the owner. Each is data or a named constant.
 
 - **Q3 What a waiting rider sees.** A centred label "En la orilla. Esperando a: <names>" from the shell, over the sea their crossing left them in. No spectate camera yet (a follow-up).
