@@ -19,6 +19,7 @@ starter_id = &"raft"
 starts_discovered = true
 vessel = 0
 vessel_integrity = 100
+duration_s = Vector2(60, 90)
 dump_triggers = Array[int]([2])
 id = &"raft"
 name_es = "Balsa"

@@ -71,9 +71,10 @@ func test_a_clients_start_request_is_applied_by_the_host() -> void:
 	assert_true(await wait_until(func() -> bool: return started.size() == 1, TIMEOUT_S))
 	assert_eq(started[0][0], &"raft")
 	assert_eq(started[0][1].size(), 2)
-	var hidden := func() -> bool:
-		return not net.own_body(client).visible
-	assert_true(await wait_until(hidden, TIMEOUT_S), "the client hides its player too")
+	var client_routes := client.get_node("Routes") as IslandRoutes
+	var left := func() -> bool:
+		return client_routes.has_left(net.peer_id(client))
+	assert_true(await wait_until(left, TIMEOUT_S), "the client sees its player leave too")
 
 
 func test_the_host_picks_riders_from_the_sender() -> void:
@@ -88,7 +89,7 @@ func test_the_host_picks_riders_from_the_sender() -> void:
 	host.body(1).meters.energy = 99.0
 	assert_true(host.start_route_for(client_id, &"binoculars_swim"))
 	assert_eq(started[0][1], [client_id])
-	assert_true(host.body(1).visible, "the host stays on the island")
+	assert_false((host.get_node("Routes") as IslandRoutes).has_left(1), "the host stays on the island")
 
 
 func test_a_client_cannot_start_an_unoffered_or_undiscovered_route() -> void:
