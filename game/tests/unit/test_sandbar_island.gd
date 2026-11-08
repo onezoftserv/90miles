@@ -31,6 +31,7 @@ func _run() -> PlayerBody:
 	session.terrain = island.terrain
 	session.spawn_points = island.spawn_points(true)
 	add_child_autofree(session)
+	island.with_creatures = false
 	island.furnish(session)
 	session.start()
 	island.place_pickups(session)
@@ -122,6 +123,7 @@ func test_an_entry_with_a_count_is_one_pickup_carrying_it() -> void:
 	session.terrain = island.terrain
 	session.spawn_points = island.spawn_points(true)
 	add_child_autofree(session)
+	island.with_creatures = false
 	island.furnish(session)
 	session.start()
 	island.built.pickups = [{"cell": island.built.solo_spawn, "item_id": &"driftwood", "count": 3, "respawn": DataEnums.RespawnTrigger.SQUALL, "group": &"beach"}] as Array[Dictionary]

@@ -5,6 +5,12 @@ extends DataPart
 ## chain_ids are both empty, or the island's family or variant id is listed.
 ## Sources: creatures-ai spawn rules, BESTIARY "Chain" column, ISLANDS variants.
 
+## What the members are tied to. Enum values are saved as ints: append only.
+enum Anchor {
+	NONE,
+	NEST_PALM,
+}
+
 @export_group("Location")
 ## ISLAND for the island generator, CROSSING for the crossing threat roll.
 @export var context: DataEnums.SceneContext = DataEnums.SceneContext.ISLAND
@@ -32,6 +38,10 @@ extends DataPart
 @export var poi_ids: Array[StringName] = []
 ## Limits the creature to one island feature (mangrove patrols: SAND_SPIT).
 @export var zone_feature: DataEnums.TerrainFeature = DataEnums.TerrainFeature.NONE
+## true means `count` is per beach (a 4-connected group of at least 8 beach cells), not per island.
+@export var per_beach: bool = false
+## NEST_PALM puts `count` members at each of the island's nest palms (IslandLayoutData.nest_palms).
+@export var anchor: Anchor = Anchor.NONE
 
 @export_group("Roll")
 ## Min/max group size, or tiles for a hazard cluster.

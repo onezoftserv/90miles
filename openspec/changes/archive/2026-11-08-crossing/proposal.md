@@ -34,6 +34,8 @@ One offline player launches the raft, crosses alone, ties down, is thrown in, cl
 
 ## Provisional (the plan's other choices)
 
+The owner confirmed these too, as they stand, on 2026-11-08.
+
 - The squall's own roll on a crossing long enough for its warning (60 s plus a 10 s margin), and a running squall hitting 10 s into the crossing.
 - Events never fall in the first or last 10 s; at most one shark pass and one rock per coast crossing.
 - Hold times other than the rescue ones (tie-down 1 s is the owner's; pull 2 s and climb 3 s come from the spec); reach 1 tile.

@@ -39,8 +39,8 @@ var route: RouteData
 var plan: CrossingPlan
 var tuning: CrossingTuning = CrossingTuning.standard()
 var integrity: VesselIntegrity = VesselIntegrity.new()
-## Replaceable: creatures-ai puts the reef shark behind it.
-var threats: CrossingThreats = ScriptedThreats.new()
+## Replaceable: the reef shark (creatures-ai) resolves the shark pass; ScriptedThreats stays as the fallback.
+var threats: CrossingThreats = CreatureThreats.new()
 var elapsed_s: float = 0.0
 var finished: bool = false
 var result: CrossingResult

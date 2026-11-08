@@ -19,6 +19,8 @@ extends ContentData
 @export var palm_glyph: String = ""
 ## Coconuts on the island, shared over the palms in reading order (the first ones get more).
 @export var coconut_total: int = 0
+## Indices into the palms (reading order) where gulls nest (creatures-ai).
+@export var nest_palms: Array[int] = []
 ## Seconds the interact button is held to climb.
 @export var climb_hold_s: float = 2.0
 ## What one climb costs the climber (energy).

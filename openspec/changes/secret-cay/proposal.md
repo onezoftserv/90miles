@@ -14,7 +14,7 @@ The owner wants a rare, funny secret that rewards players who search off the bea
 - An empty chest built on every peer. The host opens it once, picks the note entry once and tells every peer, including players who join later. Until the reading panel exists, the note shows on a HUD label for 6 s + 50 ms per character.
 - The rule for hiding spots (a land cell, never shallows or deep water, between the 50th and 85th percentile of land walking distance from the layout's solo spawn, 4–10 tiles from the nearest palm, non-secret pick-up, tide pool, workbench or raft site, with a fixed fallback order so a crowded island still gets its piece) and the map's hint, which fills the map's text with the kind of spot where this run's compass hides.
 - A player who is removed from the run while holding secret items drops them where they were last seen, unless they had already left the island by a route.
-- Any handmade layout can now build the island scene, so the cay and a dev hunt layout reuse it.
+- The cay and a dev hunt layout reuse the island scene through coast-cay's "Any handmade layout builds the island" rule (the owner decided on 2026-11-08 that coast-cay owns it, since it builds the code first).
 - Two playable dev scenes, the hunt and the cay (solo offline and host plus client), with 1-player tests for each.
 - **Not in this change** (later, see design.md): placing the pieces in real runs, the crossing to the cay and back, the *Seguir la aguja* departure choice, wearing the hat, the cross-run cosmetic unlock, and reading panels.
 
@@ -25,7 +25,7 @@ The owner wants a rare, funny secret that rewards players who search off the bea
 
 ### Modified Capabilities
 - `endings-progression`: the cay does not count in Run structure, Experiencia levels (no per-island bonus), Experiencia points, Experiencia carry-over (no map knowledge or routes from secret things) or Run summary; the patrols-everywhere challenge places no patrols on it.
-- `island-generation`: off-graph handmade layouts are never generated, enumerated or counted, expose only the routes their layout lists (the cay: the raft) and place exactly their listed pick-ups, which never respawn; any handmade layout builds the island scene.
+- `island-generation`: off-graph handmade layouts are never generated, enumerated or counted, expose only the routes their layout lists (the cay: the raft) and place exactly their listed pick-ups, which never respawn. The rule that any handmade layout builds the island scene now comes from coast-cay.
 - `crafting-inventory`: the item resource gains the `secret` tag (spawn weight 0, never picked by item-tag spawns or found-text placement) and a concealment radius; picking up a concealed item takes the tuning's hold.
 - `crossing`: the broken compass and the map never count as the compass or the charts that cancel drift.
 - `npcs-dialogue`: AI context never carries secret items or the cay.
