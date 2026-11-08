@@ -130,6 +130,11 @@ var last_stand: bool = false:
 		last_stand = value
 		last_stand_changed.emit(last_stand)
 
+## Why the player died (survival-meters "Cause of death"): a DeathCause id, set by the host just
+## before `dead` and empty while alive. It replicates before `dead`, so a client's `died` already
+## sees it.
+var death_cause: StringName = &""
+
 ## Permadeath for the run. Set once; emits died.
 var dead: bool = false:
 	set(value):
@@ -149,6 +154,10 @@ var status_flags: int = 0:
 		status_flags = value
 		statuses_changed.emit(value)
 
+## The cause of the latest loss of health, and the cause that put a downed or last-stand player
+## down (what they die of if the time runs out).
+var _last_harm: StringName = &""
+var _down_cause: StringName = &""
 ## Changes spread over time (seawater, poison), advanced by tick.
 var _timed: Array[MeterOverTime] = []
 ## Effects waiting out their delay, and the seconds each has left (parallel arrays), advanced by tick.
@@ -163,7 +172,7 @@ func tick(delta: float, context: MeterContext) -> void:
 	if downed or last_stand:
 		downed_time_left_s = maxf(downed_time_left_s - delta, 0.0)
 		if downed_time_left_s <= EMPTY_EPSILON:
-			dead = true
+			_die(_down_cause)
 			return
 	_advance_timed(delta)
 	_advance_delayed(delta)
@@ -173,7 +182,18 @@ func tick(delta: float, context: MeterContext) -> void:
 	morale += SurvivalRules.morale_rate(context, tuning) * delta
 	_snap_empty()
 	if thirst <= 0.0:
+		_last_harm = DeathCause.THIRST
 		health -= tuning.dry_health_per_s * delta
+	_update_states()
+
+
+## Takes `amount` of health now and remembers `cause` (a DeathCause id) for the death it may lead
+## to. Nothing happens once dead.
+func harm(amount: float, cause: StringName) -> void:
+	if dead or amount <= 0.0:
+		return
+	_last_harm = cause
+	health -= amount
 	_update_states()
 
 
@@ -225,6 +245,8 @@ func revive() -> bool:
 		return false
 	health = tuning.revive_health
 	downed_time_left_s = 0.0
+	_last_harm = &""
+	_down_cause = &""
 	downed = false
 	last_stand = false
 	_update_states()
@@ -316,6 +338,8 @@ func _add_raw(meter: DataEnums.Meter, amount: float) -> void:
 		else:
 			spend_energy(-amount)
 		return
+	if meter == DataEnums.Meter.HEALTH and amount < 0.0:
+		_last_harm = DeathCause.OTHER
 	set_value(meter, value(meter) + amount)
 
 
@@ -370,16 +394,23 @@ func _on_health_empty() -> void:
 		health = tuning.revive_health
 		free_revive_used.emit()
 		return
+	_down_cause = _last_harm if not _last_harm.is_empty() else DeathCause.OTHER
 	if not solo:
 		downed_time_left_s = tuning.downed_s + downed_bonus_s
 		downed = true
 		return
 	var window_s: float = tuning.solo_last_stand_s + downed_bonus_s
 	if window_s <= EMPTY_EPSILON:
-		dead = true
+		_die(_down_cause)
 		return
 	downed_time_left_s = window_s
 	last_stand = true
+
+
+## The host's death: the cause first, so it replicates before `dead` (and `died` can read it).
+func _die(cause: StringName) -> void:
+	death_cause = cause if not cause.is_empty() else DeathCause.OTHER
+	dead = true
 
 
 func _morale_amount(event: MoraleEvent) -> float:

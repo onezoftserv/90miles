@@ -1,0 +1,212 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/dialogue_data.gd" id="1_dd"]
+[ext_resource type="Script" path="res://scripts/data/dialogue_state_data.gd" id="2_ds"]
+[ext_resource type="Script" path="res://scripts/data/dialogue_line_data.gd" id="3_dl"]
+
+[sub_resource type="Resource" id="Line_death_thirst_1"]
+script = ExtResource("3_dl")
+id = &"death_thirst_1"
+speaker_id = &"narrator"
+text_es = "Noventa millas de agua y ni una gota pa' tomar. Como la bodega: hay de to' menos lo que hace falta."
+text_en = "Ninety miles of water and not a drop to drink. Like the bodega: everything except what you need."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_death_thirst_2"]
+script = ExtResource("3_dl")
+id = &"death_thirst_2"
+speaker_id = &"narrator"
+text_es = "Se secó esperando la lluvia, como quien espera la guagua: sabía que venía, pero no a qué hora."
+text_en = "Dried up waiting for the rain, like waiting for the guagua: you know it's coming, just not when."
+emotion = 6
+
+[sub_resource type="Resource" id="Line_death_thirst_3"]
+script = ExtResource("3_dl")
+id = &"death_thirst_3"
+speaker_id = &"narrator"
+text_es = "La libreta nunca traía agua. El mar tampoco."
+text_en = "The libreta never came with water. Neither did the sea."
+emotion = 2
+
+[sub_resource type="Resource" id="Line_death_thirst_4"]
+script = ExtResource("3_dl")
+id = &"death_thirst_4"
+speaker_id = &"narrator"
+text_es = "Una sed más larga que el Período Especial, y eso es mucho decir."
+text_en = "A thirst longer than the Período Especial, and that's saying something."
+emotion = 5
+
+[sub_resource type="Resource" id="State_thirst"]
+script = ExtResource("2_ds")
+state = &"thirst"
+pick = 1
+lines = Array[ExtResource("3_dl")]([SubResource("Line_death_thirst_1"), SubResource("Line_death_thirst_2"), SubResource("Line_death_thirst_3"), SubResource("Line_death_thirst_4")])
+
+[sub_resource type="Resource" id="Line_death_drowning_1"]
+script = ExtResource("3_dl")
+id = &"death_drowning_1"
+speaker_id = &"narrator"
+text_es = "El mar no pide carné ni hace cola: se lleva a cualquiera."
+text_en = "The sea doesn't ask for your carné or make you stand in line: it takes anyone."
+emotion = 2
+
+[sub_resource type="Resource" id="Line_death_drowning_2"]
+script = ExtResource("3_dl")
+id = &"death_drowning_2"
+speaker_id = &"narrator"
+text_es = "En el noticiero dirán que el mar estaba en calma. El noticiero siempre dice que todo está en calma."
+text_en = "On the noticiero they'll say the sea was calm. The noticiero always says everything is calm."
+emotion = 2
+
+[sub_resource type="Resource" id="Line_death_drowning_3"]
+script = ExtResource("3_dl")
+id = &"death_drowning_3"
+speaker_id = &"narrator"
+text_es = "Noventa millas, y ni una lancha salió a buscar. Pa' eso nunca hubo combustible."
+text_en = "Ninety miles, and not one boat went out to look. For that there was never any fuel."
+emotion = 2
+
+[sub_resource type="Resource" id="Line_death_drowning_4"]
+script = ExtResource("3_dl")
+id = &"death_drowning_4"
+speaker_id = &"narrator"
+text_es = "Se fue al fondo con los sueños de toda la familia. Coño, qué peso."
+text_en = "Went down with the whole family's dreams. Coño, that's heavy."
+text_es_soft = "Se fue al fondo con los sueños de toda la familia. Ay, qué peso."
+text_en_soft = "Went down with the whole family's dreams. Ay, that's heavy."
+emotion = 2
+
+[sub_resource type="Resource" id="State_drowning"]
+script = ExtResource("2_ds")
+state = &"drowning"
+pick = 1
+lines = Array[ExtResource("3_dl")]([SubResource("Line_death_drowning_1"), SubResource("Line_death_drowning_2"), SubResource("Line_death_drowning_3"), SubResource("Line_death_drowning_4")])
+
+[sub_resource type="Resource" id="Line_death_reef_shark_1"]
+script = ExtResource("3_dl")
+id = &"death_reef_shark_1"
+speaker_id = &"narrator"
+text_es = "El tiburón tampoco tenía qué comer. En este mar nadie come completo."
+text_en = "The shark had nothing to eat either. Out here nobody gets a full meal."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_death_reef_shark_2"]
+script = ExtResource("3_dl")
+id = &"death_reef_shark_2"
+speaker_id = &"narrator"
+text_es = "¡Tiburón, cojones! Lo gritaron tarde, como to' lo importante."
+text_en = "Shark, cojones! Somebody yelled it too late, like everything that matters."
+text_es_soft = "¡Tiburón, caballero! Lo gritaron tarde, como to' lo importante."
+text_en_soft = "Shark, caballero! Somebody yelled it too late, like everything that matters."
+emotion = 4
+
+[sub_resource type="Resource" id="Line_death_reef_shark_3"]
+script = ExtResource("3_dl")
+id = &"death_reef_shark_3"
+speaker_id = &"narrator"
+text_es = "Hasta el tiburón cobró su parte. Aquí to' el mundo pide comisión."
+text_en = "Even the shark took its cut. Around here everybody wants a commission."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_death_reef_shark_4"]
+script = ExtResource("3_dl")
+id = &"death_reef_shark_4"
+speaker_id = &"narrator"
+text_es = "Le salió un tiburón como un inspector: no se va hasta que se lleva algo."
+text_en = "A shark showed up like an inspector: it won't leave until it takes something."
+emotion = 5
+
+[sub_resource type="Resource" id="State_reef_shark"]
+script = ExtResource("2_ds")
+state = &"reef_shark"
+pick = 1
+lines = Array[ExtResource("3_dl")]([SubResource("Line_death_reef_shark_1"), SubResource("Line_death_reef_shark_2"), SubResource("Line_death_reef_shark_3"), SubResource("Line_death_reef_shark_4")])
+
+[sub_resource type="Resource" id="Line_death_land_crab_1"]
+script = ExtResource("3_dl")
+id = &"death_land_crab_1"
+speaker_id = &"narrator"
+text_es = "Le ganó un cangrejo. Eso no sale en el noticiero: allí todas las cosechas son récord."
+text_en = "Beaten by a crab. That won't make the noticiero: on there every harvest is a record."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_death_land_crab_2"]
+script = ExtResource("3_dl")
+id = &"death_land_crab_2"
+speaker_id = &"narrator"
+text_es = "Hasta los cangrejos salen de noche a resolver. Esta vez la lucha la ganaron ellos."
+text_en = "Even the crabs go out at night to resolver. This time they won the lucha."
+emotion = 6
+
+[sub_resource type="Resource" id="State_land_crab"]
+script = ExtResource("2_ds")
+state = &"land_crab"
+pick = 1
+lines = Array[ExtResource("3_dl")]([SubResource("Line_death_land_crab_1"), SubResource("Line_death_land_crab_2")])
+
+[sub_resource type="Resource" id="Line_death_removed_1"]
+script = ExtResource("3_dl")
+id = &"death_removed_1"
+speaker_id = &"narrator"
+text_es = "Se le fue la conexión. Por lo menos esta vez no fue un apagón."
+text_en = "Lost the connection. At least this time it wasn't an apagón."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_death_removed_2"]
+script = ExtResource("3_dl")
+id = &"death_removed_2"
+speaker_id = &"narrator"
+text_es = "Desapareció sin despedirse, como el pollo de la libreta."
+text_en = "Vanished without a goodbye, like the chicken on the libreta."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_death_removed_3"]
+script = ExtResource("3_dl")
+id = &"death_removed_3"
+speaker_id = &"narrator"
+text_es = "Se cayó la señal. Cosas de ETECSA: pasa hasta en tierra firme."
+text_en = "The signal dropped. ETECSA stuff: it happens even on dry land."
+emotion = 0
+
+[sub_resource type="Resource" id="State_removed"]
+script = ExtResource("2_ds")
+state = &"removed"
+pick = 1
+lines = Array[ExtResource("3_dl")]([SubResource("Line_death_removed_1"), SubResource("Line_death_removed_2"), SubResource("Line_death_removed_3")])
+
+[sub_resource type="Resource" id="Line_death_other_1"]
+script = ExtResource("3_dl")
+id = &"death_other_1"
+speaker_id = &"narrator"
+text_es = "Nadie sabe bien de qué fue. Como los precios: suben y nadie explica."
+text_en = "Nobody quite knows what it was. Like prices: they go up and nobody explains."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_death_other_2"]
+script = ExtResource("3_dl")
+id = &"death_other_2"
+speaker_id = &"narrator"
+text_es = "Se fue sin papeles, sin visa y sin decir adiós."
+text_en = "Left without papers, without a visa and without saying goodbye."
+emotion = 2
+
+[sub_resource type="Resource" id="Line_death_other_3"]
+script = ExtResource("3_dl")
+id = &"death_other_3"
+speaker_id = &"narrator"
+text_es = "Se acabó la lucha. Descansa, asere: allá no hay colas."
+text_en = "The lucha is over. Rest easy, asere: there are no lines over there."
+emotion = 7
+
+[sub_resource type="Resource" id="State_other"]
+script = ExtResource("2_ds")
+state = &"other"
+pick = 1
+lines = Array[ExtResource("3_dl")]([SubResource("Line_death_other_1"), SubResource("Line_death_other_2"), SubResource("Line_death_other_3")])
+
+[resource]
+script = ExtResource("1_dd")
+name_es = "Frases de muerte (borrador)"
+kind = 4
+states = Array[ExtResource("2_ds")]([SubResource("State_thirst"), SubResource("State_drowning"), SubResource("State_reef_shark"), SubResource("State_land_crab"), SubResource("State_removed"), SubResource("State_other")])
+id = &"death_one_liners"
