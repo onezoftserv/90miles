@@ -8,7 +8,9 @@ extends Control
 ## crafter, so a new recipe file shows with no script change; the highlighted one lists each input
 ## and tag as carried/needed, each required tool as "Con qué <tool phrase>" and the speed-up tool as
 ## "Más rápido: <tool phrase>". What is carried short is dimmed, the speed-up tool never; a
-## workbench row missing anything is dimmed, a build-site row never. The arrows, D-pad up and
+## workbench row missing anything is dimmed, a build-site row never. Rows and the highlighted
+## recipe's lines stay inside the panel: a list too long for it scrolls, keeping the highlighted
+## row on show. The arrows, D-pad up and
 ## down, the wheel (routed from RunHud) and the pointer move the highlight; interact (E, A) or a
 ## click chooses. A choice this peer can see is refused (a dimmed row, or a site of that recipe
 ## still unfinished) shows its line and keeps the list open; otherwise the craft request goes to
@@ -32,6 +34,9 @@ const ROW_MAX_CHARS: int = 29
 ## The highlighted recipe's lines start this far below the last row.
 const DETAIL_GAP: float = 4.0
 const DETAIL_INDENT: float = 8.0
+## Lines the panel holds, rows and the highlighted recipe's lines together, inside its padding and
+## below the gap: (140 - 2 × 3 - 4) / 10.
+const PANEL_LINES: int = 13
 const DIM: Color = Color(1.0, 1.0, 1.0, 0.4)
 const FULL: Color = Color(1.0, 1.0, 1.0, 1.0)
 ## The highlighted row, in the selection's sun yellow.
@@ -57,7 +62,9 @@ var bench: Workbench = null
 var highlighted: int = 0
 var _open: bool = false
 var _recipes: Array[RecipeData] = []
+# One label per row on show: row label k shows recipe _first_row + k.
 var _rows: Array[Label] = []
+var _first_row: int = 0
 var _details: Array[Label] = []
 # The body whose interact press this list holds, until interact is let go.
 var _held_body: PlayerBody = null
@@ -110,6 +117,7 @@ func open(at: Workbench) -> void:
 	bench = at
 	_recipes = _offered()
 	highlighted = 0
+	_first_row = 0
 	_hold()
 	_open = true
 	visible = true
@@ -176,20 +184,29 @@ func has_unfinished_site(recipe_id: StringName) -> bool:
 	return is_instance_valid(session) and session.has_unfinished_site(recipe_id)
 
 
-## The rows' texts, top first.
+## How many recipes the list offers, on show or scrolled out of it.
+func recipe_count() -> int:
+	return _recipes.size()
+
+
+## The texts of the rows on show, top first.
 func row_texts() -> PackedStringArray:
 	var texts: PackedStringArray = []
-	for i: int in _recipes.size():
-		texts.append(_rows[i].text)
+	for label: Label in _rows:
+		if label.visible:
+			texts.append(label.text)
 	return texts
 
 
+## The label showing recipe `index`, or null while it is scrolled out of the panel.
 func row_label(index: int) -> Label:
-	return _rows[index] if index >= 0 and index < _recipes.size() else null
+	var at: int = index - _first_row
+	return _rows[at] if at >= 0 and at < _rows.size() and _rows[at].visible else null
 
 
+## Whether recipe `index`'s row is dimmed: a workbench recipe missing something.
 func row_dimmed(index: int) -> bool:
-	return _rows[index].modulate.a < 1.0
+	return index >= 0 and index < _recipes.size() and _is_dimmed(_recipes[index])
 
 
 ## The highlighted recipe's lines: its inputs, tags and tools.
@@ -266,27 +283,38 @@ func _offered() -> Array[RecipeData]:
 
 
 # Rows, then the highlighted recipe's lines, from the bound player's inventory as this peer has it.
+# The rows on show are the window of them that fits beside those lines and holds the highlight.
 func _show() -> void:
 	var locale := _locale()
-	_rows = _pool(_rows, _recipes.size(), true)
-	for i: int in _recipes.size():
-		var recipe := _recipes[i]
-		var row := _rows[i]
-		row.text = InventoryStrip.cut(recipe.get_display_name(locale), ROW_MAX_CHARS)
-		row.position = RECT.position + PADDING + Vector2(0.0, i * LINE_HEIGHT)
-		row.modulate = DIM if not recipe.build_site and not body.crafter.can_craft(recipe) else FULL
-		var color: Color = HIGHLIGHT if i == highlighted else get_theme_color(&"font_color", &"Label")
-		row.add_theme_color_override(&"font_color", color)
 	var lines: Array[Array] = []
 	if not _recipes.is_empty():
 		lines = _detail_lines(_recipes[highlighted])
+		lines.resize(mini(lines.size(), PANEL_LINES - 1))
+	var shown: int = mini(_recipes.size(), PANEL_LINES - lines.size())
+	_first_row = clampi(_first_row, highlighted - shown + 1, highlighted)
+	_first_row = clampi(_first_row, 0, _recipes.size() - shown)
+	_rows = _pool(_rows, shown, true)
+	for slot: int in shown:
+		var index: int = _first_row + slot
+		var recipe := _recipes[index]
+		var row := _rows[slot]
+		row.text = InventoryStrip.cut(recipe.get_display_name(locale), ROW_MAX_CHARS)
+		row.position = RECT.position + PADDING + Vector2(0.0, slot * LINE_HEIGHT)
+		row.modulate = DIM if _is_dimmed(recipe) else FULL
+		var color: Color = HIGHLIGHT if index == highlighted else get_theme_color(&"font_color", &"Label")
+		row.add_theme_color_override(&"font_color", color)
 	_details = _pool(_details, lines.size(), false)
-	var top: float = RECT.position.y + PADDING.y + _recipes.size() * LINE_HEIGHT + DETAIL_GAP
+	var top: float = RECT.position.y + PADDING.y + shown * LINE_HEIGHT + DETAIL_GAP
 	for i: int in lines.size():
 		var label := _details[i]
 		label.text = InventoryStrip.cut(lines[i][0], ROW_MAX_CHARS - 1)
 		label.position = Vector2(RECT.position.x + PADDING.x + DETAIL_INDENT, top + i * LINE_HEIGHT)
 		label.modulate = DIM if lines[i][1] else FULL
+
+
+# A workbench recipe missing an input or a tool; a build-site row never is.
+func _is_dimmed(recipe: RecipeData) -> bool:
+	return not recipe.build_site and not body.crafter.can_craft(recipe)
 
 
 # Each line of `recipe` as [text, dimmed]: inputs and tags as carried/needed, tools, the speed-up.
@@ -312,19 +340,21 @@ func _item_name(id: StringName, locale: String) -> String:
 	return item.get_display_name(locale) if item != null else String(id)
 
 
-# `labels` with exactly `count` shown, made as needed; rows take clicks and the pointer, never focus.
+# `labels` with exactly `count` shown, made as needed, each as wide as the panel leaves it (a
+# detail line is indented); rows take clicks and the pointer, never focus.
 func _pool(labels: Array[Label], count: int, as_rows: bool) -> Array[Label]:
 	while labels.size() < count:
 		var label := Label.new()
-		label.size = Vector2(RECT.size.x - 2.0 * PADDING.x, LINE_HEIGHT)
+		var width: float = RECT.size.x - 2.0 * PADDING.x - (0.0 if as_rows else DETAIL_INDENT)
+		label.size = Vector2(width, LINE_HEIGHT)
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.clip_text = true
 		label.focus_mode = Control.FOCUS_NONE
 		label.mouse_filter = Control.MOUSE_FILTER_STOP if as_rows else Control.MOUSE_FILTER_IGNORE
 		if as_rows:
-			var index: int = labels.size()
-			label.mouse_entered.connect(_on_row_pointed.bind(index))
-			label.gui_input.connect(_on_row_input.bind(index))
+			var slot: int = labels.size()
+			label.mouse_entered.connect(_on_row_pointed.bind(slot))
+			label.gui_input.connect(_on_row_input.bind(slot))
 		add_child(label)
 		labels.append(label)
 	for i: int in labels.size():
@@ -332,17 +362,19 @@ func _pool(labels: Array[Label], count: int, as_rows: bool) -> Array[Label]:
 	return labels
 
 
-func _on_row_pointed(index: int) -> void:
+# The pointer entered row label `slot`, which shows recipe _first_row + slot.
+func _on_row_pointed(slot: int) -> void:
 	if accepts_input():
-		highlight(index)
+		highlight(_first_row + slot)
 
 
-func _on_row_input(event: InputEvent, index: int) -> void:
+func _on_row_input(event: InputEvent, slot: int) -> void:
 	var click := event as InputEventMouseButton
 	if click == null or not click.pressed or click.button_index != MOUSE_BUTTON_LEFT:
 		return
 	accept_event()
 	if accepts_input():
+		var index: int = _first_row + slot
 		highlight(index)
 		choose(index)
 

@@ -158,6 +158,29 @@ func test_changing_the_selection_mid_hold_cancels() -> void:
 	assert_eq(me.inventory.count_id(&"coco"), 0, "a fresh press works")
 
 
+func test_the_slots_item_changing_mid_hold_cancels() -> void:
+	var session := _session()
+	var hud := _hud(session)
+	var me := session.body(1)
+	_thirsty(me)
+	me.inventory.add(&"knife", 1)
+	me.inventory.add(&"coco", 1)
+	hud.strip.select(1)
+	_f(true)
+	_hold(hud, 1.0)
+	# The host's inventory changes the slot mid-drink: the coconut goes, a rain cup takes its place,
+	# whose first use is a drink on self too.
+	assert_true(me.inventory.remove_id(&"coco", 1))
+	me.inventory.add(&"rain_cup", 1)
+	assert_eq(me.inventory.slots[1].item_id, &"rain_cup", "the same slot now holds a rain cup")
+	_hold(hud, 0.1)
+	assert_eq(hud.strip.slot_view(1).ring, 0.0, "the ring empties")
+	_hold(hud, 3.0)
+	assert_eq(_sent(hud), 0, "nothing is sent")
+	assert_eq(me.inventory.count_id(&"rain_cup"), 1, "the cup stays")
+	assert_eq(me.meters.thirst, 50.0)
+
+
 func test_x_on_a_gamepad_does_the_same_as_f() -> void:
 	var session := _session()
 	var hud := _hud(session)
@@ -288,8 +311,56 @@ func test_a_refusal_shows_once_per_press() -> void:
 	assert_eq(hud.notice.shown_text(), "No tienes nada ahí.", "a new press does")
 
 
+func test_a_downed_player_outside_a_last_stand_is_told_they_are_down() -> void:
+	var session := _session()
+	var hud := _hud(session)
+	var me := session.body(1)
+	me.inventory.add(&"rain_cup", 1)
+	me.meters.solo = false
+	me.meters.add(M.HEALTH, -me.meters.health)
+	assert_true(me.meters.downed and not me.meters.last_stand, "down, as in co-op")
+	_f(true)
+	_hold(hud, 1.0)
+	assert_eq(hud.notice.shown_text(), "Estás en el suelo.")
+	assert_eq(_sent(hud), 0)
+	assert_eq(me.inventory.count_id(&"rain_cup"), 1)
+
+
+func test_a_target_out_of_reach_or_unusable_reads_not_now() -> void:
+	var session := _session()
+	var hud := _hud(session)
+	session.body(1).inventory.add(&"rain_cup", 1)
+	for reason: ItemUser.Reason in [ItemUser.Reason.OUT_OF_REACH, ItemUser.Reason.TARGET_DEAD, ItemUser.Reason.NOT_TARGETABLE, ItemUser.Reason.NOT_DOWNED_TARGET]:
+		assert_eq(hud.strip.refusal_line(reason, 0, 1), "Ahora no se puede.", "reason %d" % reason)
+	assert_eq(hud.strip.refusal_line(ItemUser.Reason.DOWN, 0, 0), "Estás en el suelo.")
+	assert_eq(hud.strip.refusal_line(ItemUser.Reason.AT_SEA, 0, 0), "En plena travesía no se puede.")
+
+
+func test_a_failed_condition_that_is_no_tool_reads_not_now() -> void:
+	var session := _session()
+	var hud := _hud(session)
+	var me := session.body(1)
+	_thirsty(me)
+	# A cup whose drink needs a tarp carried: a condition, but no tool to name.
+	var odd := (GameState.content.get_entry(&"items", &"rain_cup") as ItemData).duplicate(true) as ItemData
+	odd.id = &"test_odd_cup"
+	var needs_tarp := ConditionData.new()
+	needs_tarp.kind = ConditionData.Kind.HAS_ITEM
+	needs_tarp.ref_id = &"tarp"
+	odd.uses[0].conditions = [needs_tarp]
+	me.inventory.register(odd)
+	me.inventory.add(&"test_odd_cup", 1)
+	_f(true)
+	_hold(hud, 1.0)
+	assert_eq(hud.notice.shown_text(), "Ahora no se puede.")
+	assert_eq(_sent(hud), 0)
+	assert_eq(me.inventory.count_id(&"test_odd_cup"), 1)
+
+
 # --- input the use button does not take ----------------------------------------------------------
 
+# The strip's own gate, with the list's flag set by hand; test_craft_list.gd holds F over the real
+# list and checks that it stays open.
 func test_with_the_crafting_list_open_f_uses_nothing() -> void:
 	var session := _session()
 	var hud := _hud(session)
@@ -301,7 +372,6 @@ func test_with_the_crafting_list_open_f_uses_nothing() -> void:
 	assert_eq(me.inventory.count_id(&"rain_cup"), 1, "nothing is used")
 	assert_eq(_sent(hud), 0)
 	assert_eq(hud.notice.shown_text(), "", "and nothing is refused either: F is not for the list")
-	assert_true(hud.list_open, "the list stays open")
 	hud.list_open = false
 	_hold(hud, 1.0)
 	assert_eq(me.inventory.count_id(&"rain_cup"), 1, "the press made while the list was open stays spent")

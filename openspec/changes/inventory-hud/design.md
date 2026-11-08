@@ -47,7 +47,7 @@ Layout at 640×360 (spec "Inventory strip", "Prompt placement"):
 | Selected item line, centred, on `HudPanel` | 153, 318, 334, 10; one line, at most 41 glyphs (spec "The selected item's line") |
 | Refusal line, centred, on `HudPanel` | 120, 306, 400, 10 |
 | Weight readout, on `HudPanel` | 491, 339, 100, 10 (13 slots: 505) |
-| Crafting list, on `HudPanel` | 4, 162, 240, 140 (bottom at y 302); rows of at most 29 glyphs, cut with "…" |
+| Crafting list, on `HudPanel` | 4, 162, 240, 140 (bottom at y 302); rows of at most 29 glyphs, cut with "…"; 13 lines of 10 px fit inside the 3 px padding and the 4 px gap, rows and the highlighted recipe's lines together, so a longer list shows the window of rows that holds the highlight and scrolls as it moves |
 | Interact prompt | centred on the target's x; bottom edge 12 px above the target's origin, or 34 px above a player target (over the NameTag label's top at −31), which is any interactable standing for a player (`Interactable.prompt_player`: a drag handle's owner, a pull handle's swimmer); 10 px lines, at most 240 px wide, each line cut with "…"; the ring 10×10 px left of the first line with a 2 px gap; clamped into x 4-636, y 22-302, then moved below (or near the bottom, above) any HUD panel it would cover: meters, phase, teammates, the secret-cay needle and note, the strip's lines; on `HudPanel` |
 | Hidden mark | 7×5 px (a 5×3 closed eye in cream inside a 1 px dark-blue outline), centred over the body, bottom edge 3 px above the head, or above the NameTag when it shows |
 | Meters (existing) | 4, 4, about 104, 78 |

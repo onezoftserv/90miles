@@ -34,11 +34,23 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	_esc(false)
+	get_tree().paused = false
 	for hud: Node in huds:
 		if is_instance_valid(hud):
 			hud.free()
 	huds.clear()
 	net.teardown()
+
+
+# Esc on the keyboard, pressed or let go, as the engine would read it.
+func _esc(pressed: bool) -> void:
+	var event := InputEventKey.new()
+	event.physical_keycode = KEY_ESCAPE
+	event.keycode = KEY_ESCAPE
+	event.pressed = pressed
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
 
 
 # Every peer: the spawn points and the bench at the same path.
@@ -315,6 +327,34 @@ func test_after_the_launch_a_joiner_gets_the_fresh_site_and_no_raft() -> void:
 	assert_false(site.built, "unbuilt, as the host's fresh one")
 	assert_false(client.has_node(NodePath(RAFT_NAME)), "and no raft")
 	assert_eq(get_errors().size(), 0)
+
+
+# --- Esc in co-op (coop-networking "Pause closes a panel in co-op") --------------------------------------
+
+func test_in_co_op_esc_closes_the_clients_list_and_pauses_nothing() -> void:
+	var host := net.add_host(_setup)
+	var client := await net.join(_setup)
+	assert_not_null(client)
+	if client == null:
+		return
+	_place(host, client, net.peer_id(client), _bench(client).global_position + AT_BENCH)
+	var hud := _hud(client)
+	hud.craft_list.open(_bench(client))
+	assert_true(hud.craft_list.is_open(), "the client's list is open at the shared bench")
+	_esc(true)
+	_esc(false)
+	assert_false(hud.craft_list.is_open(), "Esc closes the list")
+	# Host and client share this process's one tree, so this covers both peers.
+	assert_false(get_tree().paused, "nothing pauses")
+	assert_false(hud.pause_menu.visible, "no pause menu")
+	_esc(true)
+	_esc(false)
+	assert_false(get_tree().paused, "a second Esc pauses nothing either, in co-op")
+	assert_false(hud.pause_menu.visible)
+	var before: Vector2 = host.body(CoopSession.HOST_ID).global_position
+	host.body(CoopSession.HOST_ID).intent = MoveIntent.create(Vector2.RIGHT, false, false, false)
+	await wait_physics_frames(5)
+	assert_ne(host.body(CoopSession.HOST_ID).global_position, before, "the host's run goes on")
 
 
 # --- refused requests ------------------------------------------------------------------------------------

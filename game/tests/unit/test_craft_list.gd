@@ -35,7 +35,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-	for keycode: Key in [KEY_E, KEY_ESCAPE, KEY_UP, KEY_DOWN]:
+	for keycode: Key in [KEY_E, KEY_ESCAPE, KEY_UP, KEY_DOWN, KEY_F]:
 		_key(keycode, false)
 	for button: JoyButton in [JOY_BUTTON_A, JOY_BUTTON_DPAD_UP, JOY_BUTTON_DPAD_DOWN]:
 		_joy(button, false)
@@ -163,6 +163,31 @@ func _fire() -> RecipeData:
 	return GameState.content.get_entry(&"recipes", &"fire") as RecipeData
 
 
+# `count` workbench recipes known only to this player's crafter, "Prueba 00" first, each with three
+# inputs, a tool and a speed-up: five detail lines under the highlighted one.
+func _register_many(count: int) -> void:
+	for i: int in count:
+		var recipe := RecipeData.new()
+		recipe.id = StringName("test_many_%02d" % i)
+		recipe.name_es = "Prueba %02d" % i
+		recipe.station = RecipeData.Station.WORKBENCH
+		recipe.output_kind = RecipeData.OutputKind.ITEM
+		recipe.output_item_id = &"rope"
+		recipe.inputs = {&"driftwood": 1, &"tarp": 1, &"rope": 1}
+		recipe.tools = [DataEnums.Capability.OPEN_COCONUT]
+		recipe.fast_tool = DataEnums.Capability.PRY_NAILS
+		recipe.time_s = 5.0
+		body.crafter.register(recipe)
+
+
+# Every row and detail line on show lies inside the list's panel.
+func _assert_inside(where: String) -> void:
+	for child: Node in hud.craft_list.get_children():
+		var label := child as Label
+		if label != null and label.visible:
+			assert_true(LIST_RECT.encloses(label.get_global_rect()), "%s %s inside %s %s" % [label.text, label.get_global_rect(), LIST_RECT, where])
+
+
 # A workbench recipe known only to this player's crafter, with a name longer than a row.
 func _hook() -> RecipeData:
 	var recipe := RecipeData.new()
@@ -215,6 +240,67 @@ func test_the_sandbars_list_carrying_3_driftwood() -> void:
 	assert_false(list.detail_dimmed(2), "the speed-up tool is never dimmed")
 	assert_false(list.row_dimmed(0), "a build-site row is never dimmed")
 	assert_false(list.row_dimmed(1))
+	_assert_inside("for the sandbar")
+
+
+func test_a_long_list_scrolls_inside_its_panel_and_keeps_the_highlight_shown() -> void:
+	_run()
+	_register_many(10)
+	_open()
+	var list := hud.craft_list
+	var names: PackedStringArray = ["Fogata"]
+	for i: int in 10:
+		names.append("Prueba %02d" % i)
+	names.append("Recogedor de lluvia")
+	assert_eq(list.recipe_count(), 12, "all twelve are offered")
+	# Down through every row and round again to the first.
+	for at: int in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0]:
+		assert_eq(list.highlighted, at)
+		_assert_shown(at, names[at])
+		_assert_inside("with row %d highlighted" % at)
+		if at == 11:
+			assert_true(list.row_texts().size() < 12, "not every row fits beside five detail lines")
+			assert_eq(list.row_texts()[list.row_texts().size() - 1], "Recogedor de lluvia", "scrolled to the last")
+			_point(_row_center(10))
+			assert_eq(list.highlighted, 10, "the pointer picks the row under it in a scrolled list")
+			_click(_row_center(9))
+			assert_eq(list.highlighted, 9, "a click picks the row under it")
+			assert_eq(hud.notice.shown_text(), "Te faltan materiales.", "and chooses that recipe")
+			_tap(KEY_DOWN)
+			_tap(KEY_DOWN)
+		_tap(KEY_DOWN)
+	assert_eq(list.row_texts()[0], "Fogata", "back at the top")
+	assert_true(list.is_open())
+	assert_signal_emit_count(list, SENT, 0)
+	# The pointer leaves the rows before the HUD is freed.
+	_point(Vector2(600.0, 100.0))
+
+
+func _assert_shown(index: int, text: String) -> void:
+	var shown := hud.craft_list.row_label(index)
+	assert_not_null(shown, "row %d is on show while highlighted" % index)
+	if shown != null:
+		assert_true(shown.visible)
+		assert_eq(shown.text, text)
+
+
+func test_holding_f_with_the_list_open_uses_nothing_and_leaves_it_open() -> void:
+	_run()
+	body.meters.thirst = 50.0
+	body.inventory.add(&"rain_cup", 1)
+	hud.strip.select(0)
+	watch_signals(hud.strip)
+	_open()
+	_key(KEY_F, true)
+	for i: int in roundi(1.0 / STEP_S):
+		_frame()
+		hud.strip._process(STEP_S)
+	assert_true(hud.craft_list.is_open(), "the list stays open")
+	assert_eq(body.inventory.count_id(&"rain_cup"), 1, "nothing is used")
+	assert_true(body.meters.thirst <= 50.0, "no drink")
+	assert_signal_emit_count(hud.strip, "use_sent", 0, "nothing is sent")
+	_key(KEY_F, false)
+	_frame()
 
 
 func test_a_partly_carried_input_is_dimmed() -> void:
