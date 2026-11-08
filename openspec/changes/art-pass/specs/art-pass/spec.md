@@ -229,6 +229,14 @@ A swimming or floating player SHALL be drawn sunk so the water line lies on the 
 - **WHEN** they swim, then dive
 - **THEN** while swimming only their upper body is opaque, a ripple marks the line and no shadow is drawn; while diving only a ripple ring is drawn
 
+### Requirement: Layered player look
+The player SHALL be drawn from layers on one frame grid, back to front: body (its skin-tone row), outfit, hair and one signature item, all from a `PlayerLookData` resource of part ids, so a new hair, outfit or item is data and never a script edit. A part SHALL have a frame for every pose it shows in, or it is not offered. This pass ships one look; one player alone draws it the same way.
+
+#### Scenario: A look built from parts
+- **GIVEN** a solo offline game whose look is skin row 2, hair 0, the default outfit and no item
+- **WHEN** the player walks, crouches, swims and is downed
+- **THEN** every drawn frame stacks those layers with matching poses, and changing the look's hair id in data changes only the hair layer
+
 ### Requirement: Player look slots
 When a player body spawns, the host SHALL give it the lowest look slot (0–3) that no other body holds and send it with the spawn, so every peer and every late joiner draws the same slot; if all four are held (a dropped body still waiting out its 90 s), it takes the lowest slot a dropped body holds. A rejoiner who reclaims their body keeps its slot; a removed player's slot becomes free. A solo player is slot 0. The slot changes only drawing.
 

@@ -181,6 +181,8 @@ That is 33 unique frames (budget 48). Run reuses walk frames at a higher fps ins
 - `DevIslandTerrain` keeps `build` and `fill`; its `draw` and `COLORS` go once every caller uses the tile builder. `player_placeholder.png` goes when the player sheet lands.
 - Rollback is a revert: no save data, settings or network messages change, apart from the extra `look` key in the player spawn payload, which an older peer ignores.
 
+**D25. Layered look, ready for `player-looks` (owner decision, 2026-11-08).** The owner chose how a balsero gets their look: the background sets the outfit and one signature item drawn on the body (the fisherman's hat, the músico's guitar on the back), the player picks man or woman, skin tone, hair and clothing colour in the lobby (a title-screen screen in solo), and extra hairs, hats and outfits unlock when found in a run, remembered per install. This change does not build the picker or the unlocks; it draws the player from layers (body row, outfit, hair, item) on MetroCity's 32×32 grid through a `PlayerLookData` of part ids, so `player-looks` only adds choices. Cost: every hand-made pose (D3) is drawn once per layer part it can show with. This pass ships the body rows, one default outfit (a T-shirt and shorts) and the eight MetroCity hairs, so its pose frames cover those; parts added later must bring their own pose frames, and the frame-budget check counts each part. MetroCity has no beards, moustaches or hats other than the police cap: those are hand-made hair or item parts in `player-looks`.
+
 ## Open Questions
 
 - Which MetroCity skin row, hair and outfit the default balsero wears (data only; the build starts from the middle skin row, short hair and a T-shirt with shorts).

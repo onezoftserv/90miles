@@ -53,6 +53,7 @@ Run from the repo root. Do not skip ahead to code.
 
 - Engine Godot 4, GDScript, 2D top-down pixel art, 16×16 tiles, 640×360
 - Real-time (not turn-based), host-and-join co-op, 1–4 players
+- Player looks (2026-11-08): the background sets the outfit and one signature item drawn on the body; the player picks man or woman, skin, hair and clothing colour in the lobby; extra hairs, hats and outfits unlock when found in a run, remembered per install (`player-looks`, after `art-pass`).
 - Movement sync: host authority with client prediction and reconciliation, driven by `MoveIntent` (2026-11-05)
 - Heat rises 0 → 100 with sunstroke at 100; meter drains get retuned in `survival-meters` so thirst empties in about 1–1.5 in-game days (2026-11-05)
 - Art direction C, "GBA tropic" (2026-11-08; replaces "characters are 16×16 on Kenney CC0 bases" from 2026-11-05): a bright *A Link to the Past* / Pokémon look, 1 px dark outlines, 3/4 view, 16×16 tiles, players about 16×28 in 32×32 frames anchored bottom-centre on a one-tile footprint; MetroCity, Zelda-like (ArMM1998), Scallywag, Eldiran, DawnLike, Tiny, Tiny Heroes – Animals, Kyrise and Shikashi were downloaded with permission; missing pieces are kitbashed from them by hand to one master palette, rough first; only used files are copied into tracked folders with their `License.txt`; CC-BY credits in `game/assets/CREDITS.md` and an in-game credits screen; `tools/fetch_assets.py` learns every pack (OpenSpec change `art-pass`)
