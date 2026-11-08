@@ -13,6 +13,12 @@ const DEFAULT_HOLD_TIME_S: float = 2.0
 
 ## Seconds of holding needed; 0 means instant.
 @export var hold_time_s: float = DEFAULT_HOLD_TIME_S
+## The HUD prompt's verb and default label in game/resources/hud_text.tres (inventory-hud
+## "Prompt verbs and targets"). Set in the scene, or in code by kinds whose prompt follows their
+## state; empty shows the interact key alone.
+@export var prompt_id: StringName = &""
+## The prompt names only this interactable, never what it holds.
+@export var hides_contents: bool = false
 ## Disabled interactables are skipped by the picker and cannot be used.
 var enabled: bool = true
 

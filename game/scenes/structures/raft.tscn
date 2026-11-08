@@ -8,3 +8,4 @@ script = ExtResource("1_main")
 
 [node name="Interactable" type="Node2D" parent="."]
 script = ExtResource("2_interactable")
+prompt_id = &"launch"

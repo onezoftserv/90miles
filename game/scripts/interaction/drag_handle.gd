@@ -10,6 +10,7 @@ var dragger: Node2D = null
 func _init() -> void:
 	hold_time_s = 0.0
 	enabled = false
+	prompt_id = &"drag"
 
 
 func use(by: Node) -> void:
