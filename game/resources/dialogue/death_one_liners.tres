@@ -54,16 +54,16 @@ emotion = 2
 script = ExtResource("3_dl")
 id = &"death_drowning_2"
 speaker_id = &"narrator"
-text_es = "Nadó hasta que no le quedó ni un kilo. En la isla tampoco le quedaba ninguno."
-text_en = "Swam until there wasn't a kilo left. Back on the island there wasn't one either."
-emotion = 5
+text_es = "En el noticiero dirán que el mar estaba en calma. El noticiero siempre dice que todo está en calma."
+text_en = "On the noticiero they'll say the sea was calm. The noticiero always says everything is calm."
+emotion = 2
 
 [sub_resource type="Resource" id="Line_death_drowning_3"]
 script = ExtResource("3_dl")
 id = &"death_drowning_3"
 speaker_id = &"narrator"
-text_es = "Noventa millas. Le faltaron unas pocas, nada más."
-text_en = "Ninety miles. Just a few short, that's all."
+text_es = "Noventa millas, y ni una lancha salió a buscar. Para eso nunca hubo combustible."
+text_en = "Ninety miles, and not one boat went out to look. For that there was never any fuel."
 emotion = 2
 
 [sub_resource type="Resource" id="Line_death_drowning_4"]
@@ -164,8 +164,8 @@ emotion = 5
 script = ExtResource("3_dl")
 id = &"death_removed_3"
 speaker_id = &"narrator"
-text_es = "Se cayó la señal. Eso pasa hasta en tierra firme."
-text_en = "The signal dropped. That happens even on dry land."
+text_es = "Se cayó la señal. Cosas de ETECSA: pasa hasta en tierra firme."
+text_en = "The signal dropped. ETECSA stuff: it happens even on dry land."
 emotion = 0
 
 [sub_resource type="Resource" id="State_removed"]
