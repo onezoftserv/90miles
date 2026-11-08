@@ -12,9 +12,11 @@ signal clicked
 
 const SIZE: Vector2 = Vector2(26.0, 26.0)
 const LETTERS: int = 3
-const KEY_RECT: Rect2 = Rect2(2.0, 2.0, 8.0, 8.0)
+## Three 8 px rows (the font's full height) fill the 24 px interior from y 1, none over another:
+## the key, the letters, the count.
+const KEY_RECT: Rect2 = Rect2(2.0, 1.0, 8.0, 8.0)
 const NAME_RECT: Rect2 = Rect2(1.0, 9.0, 24.0, 8.0)
-const COUNT_RECT: Rect2 = Rect2(1.0, 16.0, 23.0, 8.0)
+const COUNT_RECT: Rect2 = Rect2(1.0, 17.0, 23.0, 8.0)
 const ICON_RECT: Rect2 = Rect2(5.0, 5.0, 16.0, 16.0)
 const FRAME_STYLE: StringName = &"HudSlot"
 const SELECTED_STYLE: StringName = &"HudSlotSelected"

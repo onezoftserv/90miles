@@ -43,7 +43,7 @@ Layout at 640×360 (spec "Inventory strip", "Prompt placement"):
 | Piece | Rect (x, y, w, h) and rules |
 | --- | --- |
 | Strip, 12 slots of 26×26, 2 px gaps, on `HudPanel` | 153, 330, 334, 26 (13 slots: 139, 330, 362, 26) |
-| Slot interior (24×24 inside a 1 px frame) | key top-left at 1,1 (8×8, keyboard only); the three letters centred on the middle row (y 8-16) or the 16×16 icon centred; count bottom-right ending at 23,23 in the new `HudCount` Label variation (outline_size 1, outline colour the panel's dark blue) |
+| Slot interior (24×24 inside a 1 px frame) | three 8 px rows, the font's full height, filling the interior with none over another: the key top-left in rows 0-8 at x 1 (8×8, keyboard only); the three letters centred in rows 8-16 or the 16×16 icon centred; the count bottom-right in rows 16-24 ending at x 23, in the new `HudCount` Label variation (outline_size 1, outline colour the panel's dark blue). (Rows 1-9 and 15-23 at first let the key and the count touch the letters; amended after review.) |
 | Selected item line, centred, on `HudPanel` | 153, 318, 334, 10; one line, at most 41 glyphs (spec "The selected item's line") |
 | Refusal line, centred, on `HudPanel` | 120, 306, 400, 10 |
 | Weight readout, on `HudPanel` | 491, 339, 100, 10 (13 slots: 505) |

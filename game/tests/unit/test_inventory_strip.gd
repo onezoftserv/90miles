@@ -130,7 +130,14 @@ func test_a_stack_a_tool_and_an_empty_slot() -> void:
 	assert_eq(coco.count_label.text, "3")
 	assert_eq(coco.count_label.theme_type_variation, &"HudCount")
 	assert_eq(coco.key_label.text, "1")
-	assert_eq(coco.key_label.position, Vector2(2.0, 2.0), "the key top-left")
+	assert_eq(coco.key_label.position, Vector2(2.0, 1.0), "the key top-left")
+	# Three 8 px rows in the 24 px interior: key, letters, count, none over another.
+	var interior := Rect2(Vector2.ONE, StripSlot.SIZE - 2.0 * Vector2.ONE)
+	var rows: Array[Rect2] = [coco.key_label.get_rect(), coco.name_label.get_rect(), coco.count_label.get_rect()]
+	for i: int in rows.size():
+		assert_true(interior.encloses(rows[i]), "row %d %s inside the interior %s" % [i, rows[i], interior])
+		for j: int in range(i + 1, rows.size()):
+			assert_false(rows[i].intersects(rows[j]), "row %d %s clear of row %d %s" % [i, rows[i], j, rows[j]])
 	var knife := strip.slot_view(1)
 	assert_eq(knife.name_label.text, "Cuc")
 	assert_eq(knife.count_label.text, "39", "uses left")
