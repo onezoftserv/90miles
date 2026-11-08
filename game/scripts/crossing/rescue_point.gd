@@ -20,7 +20,7 @@ var crossing: Crossing
 func usable_by(by: Node) -> bool:
 	if not is_instance_valid(crossing) or not by is PlayerBody:
 		return false
-	var user: int = int(String(by.name))
+	var user: int = crossing.peer_of(by as PlayerBody)
 	if kind == Kind.CLIMB:
 		return user == swimmer
 	var aboard: bool = crossing.rider_state(user) == Crossing.Rider.ABOARD or crossing.rider_state(user) == Crossing.Rider.TIED
