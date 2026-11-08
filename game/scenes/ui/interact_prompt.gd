@@ -19,6 +19,9 @@ extends Control
 ## when the target is freed or disabled or, before the hold is done, out of reach and the slack,
 ## and nothing is shown again until release. Instant interactions show no ring. Ticked on physics
 ## frames, so in solo and on the host it runs on the same frames as the host's hold.
+## A build site's prompt adds its state as this peer has it (inventory-hud "Build site prompt"):
+## a line per missing input or tag, "Falta: Madera de la costa x4" first, or, once every input is
+## in, the shared progress as a bar with its percentage.
 
 const INTERACT_ACTION: StringName = &"interact"
 const KEY_FORMAT: String = "[%s]"
@@ -38,6 +41,10 @@ const PANEL_GAP: float = 2.0
 const RING_SPACE: float = HudRing.SIZE.x + 2.0
 ## How far a locked press may stray before it is dropped, as the host's hold.
 const LOCK_REACH_PX: float = InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX
+## The progress bar sits left of its percentage: 48 px, then a 4 px gap.
+const BAR_SPACE: float = 52.0
+const BAR_GAP: float = 4.0
+const NO_BAR: float = -1.0
 const NO_BLOCKER: int = -1
 
 ## The local player, or null.
@@ -61,9 +68,13 @@ var target: Interactable = null
 var _labels: Array[Label] = []
 var _press: PressTimer = PressTimer.new()
 var _was_held: bool = false
+var _bar_value: float = NO_BAR
 
 @onready var panel: PanelContainer = $Panel
 @onready var ring: HudRing = $Ring
+## The build progress bar; its fill is a child sized to the progress.
+@onready var bar: ColorRect = $Bar
+@onready var _bar_fill: ColorRect = $Bar/Fill
 
 
 ## "[E] Recoger Coco": the key, then the verb and the target `by` sees for `on`'s prompt id (the
@@ -101,6 +112,23 @@ static func place(anchor: Vector2, size: Vector2, rise: float, blockers: Array[R
 			break
 		rect = _clamped(_off(rect, blockers[hit]))
 	return rect
+
+
+## What `site` still needs as this peer has it, one line per missing input or tag in the recipe's
+## order ("Madera de la costa x4", "Yesca x1"), the first headed "Falta:"; none once all is in.
+static func site_lines(site: BuildSite, words: HudText, locale: String) -> PackedStringArray:
+	var shown: PackedStringArray = []
+	var count_format: String = words.line(&"count", locale)
+	var items := site.missing_items()
+	for id: StringName in items:
+		var item := GameState.content.get_entry(&"items", id) as ItemData
+		shown.append(count_format % [item.get_display_name(locale) if item != null else String(id), items[id]])
+	var tags := site.missing_tags()
+	for tag: int in tags:
+		shown.append(count_format % [words.tag_name(tag as DataEnums.ItemTag, locale), tags[tag]])
+	if not shown.is_empty():
+		shown[0] = "%s %s" % [words.line(&"missing", locale), shown[0]]
+	return shown
 
 
 static func _clamped(rect: Rect2) -> Rect2:
@@ -167,7 +195,16 @@ func tick(delta: float) -> void:
 		return
 	if held:
 		_press.advance(delta)
-	_show(_lines_for(target))
+	var shown := _lines_for(target)
+	_bar_value = NO_BAR
+	var site := target.get_parent() as BuildSite
+	if site != null and site.recipe != null:
+		var needs := site_lines(site, text, _locale())
+		if needs.is_empty():
+			_bar_value = site.progress()
+			needs.append(text.line(&"percent", _locale()) % roundi(_bar_value * 100.0))
+		shown.append_array(needs)
+	_show(shown)
 
 
 ## The lines on show, top first; none while hidden.
@@ -184,6 +221,11 @@ func lines() -> PackedStringArray:
 ## The prompt's rect in HUD pixels.
 func prompt_rect() -> Rect2:
 	return get_global_rect()
+
+
+## The build progress the bar shows, 0 to 1, or below 0 with no bar on show.
+func bar_progress() -> float:
+	return _bar_value if visible and bar.visible else NO_BAR
 
 
 func _can_show() -> bool:
@@ -239,13 +281,19 @@ func _has_ring(on: Interactable) -> bool:
 	return on.hold_time_s > 0.0
 
 
+# Lays out `shown` over the target; with a bar, the last line is its percentage.
 func _show(shown: PackedStringArray) -> void:
-	var indent: float = RING_SPACE if _has_ring(target) else 0.0
+	var indents: Array[float] = []
 	var width: float = 0.0
 	for i: int in shown.size():
-		var room: float = MAX_WIDTH - (indent if i == 0 else 0.0)
-		shown[i] = InventoryStrip.cut(shown[i], floori(room / GLYPH_PX))
-		width = maxf(width, shown[i].length() * GLYPH_PX + (indent if i == 0 else 0.0))
+		var indent: float = 0.0
+		if i == 0 and _has_ring(target):
+			indent = RING_SPACE
+		elif i == shown.size() - 1 and _bar_value != NO_BAR:
+			indent = BAR_SPACE
+		indents.append(indent)
+		shown[i] = InventoryStrip.cut(shown[i], floori((MAX_WIDTH - indent) / GLYPH_PX))
+		width = maxf(width, shown[i].length() * GLYPH_PX + indent)
 	var box := Vector2(width, shown.size() * LINE_HEIGHT)
 	var anchor: Vector2 = (to_hud.call(target.get_global_transform_with_canvas().origin) as Vector2).round()
 	var rise: float = PLAYER_RISE_PX if target.get_parent() is PlayerBody else RISE_PX
@@ -254,14 +302,26 @@ func _show(shown: PackedStringArray) -> void:
 	size = rect.size
 	panel.position = Vector2.ZERO
 	panel.size = rect.size
-	ring.visible = indent > 0.0
+	ring.visible = _has_ring(target)
 	ring.position = Vector2.ZERO
 	ring.set_value(_press.progress() if _press.target == target else 0.0)
-	_set_lines(shown, indent)
+	_show_bar(shown.size() - 1)
+	_set_lines(shown, indents)
 	visible = true
 
 
-func _set_lines(shown: PackedStringArray, indent: float) -> void:
+# The bar on line `line`, filled to the progress, or hidden with no bar.
+func _show_bar(line: int) -> void:
+	bar.visible = _bar_value != NO_BAR
+	if not bar.visible:
+		return
+	var width: float = BAR_SPACE - BAR_GAP
+	bar.position = Vector2(0.0, line * LINE_HEIGHT + floorf((LINE_HEIGHT - bar.size.y) / 2.0))
+	bar.size = Vector2(width, bar.size.y)
+	_bar_fill.size = Vector2(roundf(width * clampf(_bar_value, 0.0, 1.0)), bar.size.y)
+
+
+func _set_lines(shown: PackedStringArray, indents: Array[float]) -> void:
 	while _labels.size() < shown.size():
 		var label := Label.new()
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -274,7 +334,7 @@ func _set_lines(shown: PackedStringArray, indent: float) -> void:
 		label.visible = i < shown.size()
 		if not label.visible:
 			continue
-		var left: float = indent if i == 0 else 0.0
+		var left: float = indents[i]
 		label.text = shown[i]
 		label.position = Vector2(left, i * LINE_HEIGHT)
 		label.size = Vector2(size.x - left, LINE_HEIGHT)
@@ -283,6 +343,7 @@ func _set_lines(shown: PackedStringArray, indent: float) -> void:
 func _hide() -> void:
 	_press.reset()
 	target = null
+	_bar_value = NO_BAR
 	ring.set_value(0.0)
 	visible = false
 

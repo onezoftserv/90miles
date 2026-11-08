@@ -18,3 +18,17 @@ theme_type_variation = &"HudPanel"
 layout_mode = 0
 mouse_filter = 2
 script = ExtResource("2_ring")
+
+[node name="Bar" type="ColorRect" parent="."]
+visible = false
+layout_mode = 0
+offset_right = 48.0
+offset_bottom = 4.0
+mouse_filter = 2
+color = Color(0.95686275, 0.9372549, 0.8784314, 0.35)
+
+[node name="Fill" type="ColorRect" parent="Bar"]
+layout_mode = 0
+offset_bottom = 4.0
+mouse_filter = 2
+color = Color(1, 0.8, 0, 1)

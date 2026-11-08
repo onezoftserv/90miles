@@ -13,8 +13,9 @@ const PATH: String = "res://resources/hud_text.tres"
 ## materials and a build site already under way.
 const REFUSALS: Array[StringName] = [&"empty", &"no_use", &"down", &"at_sea", &"condition", &"not_now", &"missing_materials", &"in_progress"]
 ## The fixed lines: a required tool ("%s" is its phrase), the speed-up tool (the same), the
-## head of a build site's missing inputs, and the weight readout's label.
-const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight"]
+## head of a build site's missing inputs, the weight readout's label, a missing input with its
+## count ("%s x%d") and a build's progress ("%d %%").
+const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent"]
 
 ## Verb per ItemUseData.UseAction ("Beber").
 @export var use_verbs: Dictionary[ItemUseData.UseAction, PackedStringArray] = {}

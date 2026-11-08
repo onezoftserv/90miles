@@ -57,6 +57,26 @@ func deposit(player: PlayerBody) -> int:
 	return moved
 
 
+## The inputs still to be deposited, by item id, in the recipe's order.
+func missing_items() -> Dictionary[StringName, int]:
+	var missing: Dictionary[StringName, int] = {}
+	for id: StringName in recipe.inputs:
+		var short: int = recipe.inputs[id] - deposited.get(id, 0)
+		if short > 0:
+			missing[id] = short
+	return missing
+
+
+## The tags still to be deposited, by ItemTag value, in the recipe's order.
+func missing_tags() -> Dictionary[int, int]:
+	var missing: Dictionary[int, int] = {}
+	for tag: DataEnums.ItemTag in recipe.input_tags:
+		var short: int = recipe.input_tags[tag] - tags_deposited.get(tag, 0)
+		if short > 0:
+			missing[tag] = short
+	return missing
+
+
 func inputs_complete() -> bool:
 	for id: StringName in recipe.inputs:
 		if deposited.get(id, 0) < recipe.inputs[id]:
