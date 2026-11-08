@@ -5,7 +5,8 @@ extends RefCounted
 
 const TILE: int = DevIslandTerrain.TILE
 const WALKABLE: Array[DataEnums.Terrain] = [
-	DataEnums.Terrain.BEACH, DataEnums.Terrain.DUNE, DataEnums.Terrain.SCRUB, DataEnums.Terrain.SHALLOWS,
+	DataEnums.Terrain.BEACH, DataEnums.Terrain.DUNE, DataEnums.Terrain.SCRUB, DataEnums.Terrain.ROCK,
+	DataEnums.Terrain.SHALLOWS,
 ]
 const STEPS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
 
@@ -21,8 +22,12 @@ var coop_spawns: Array[Vector2i] = []
 var tide_pools: Array[Vector2i] = []
 ## The beach cell of the raft's build site; (-1, -1) when the layout has none.
 var raft_site: Vector2i = Vector2i(-1, -1)
-## The cells shaded by the hut.
+## The cells shaded by the hut (the coast cay's observation post).
 var hut_cells: Array[Vector2i] = []
+## The shore cells of drinkable water.
+var drink_spots: Array[Vector2i] = []
+## Each sign: {cell: Vector2i, sign: IslandSignData}, in reading order.
+var signs: Array[Dictionary] = []
 ## Each pick-up: {cell: Vector2i, item_id: StringName, count: int, respawn: int, group: StringName}.
 var pickups: Array[Dictionary] = []
 
@@ -34,6 +39,12 @@ static func build(layout: IslandLayoutData) -> IslandLayout:
 	var built := IslandLayout.new()
 	built._read(layout)
 	return built
+
+
+## Where arriving players stand, in join order: the co-op spawn points. The first is also the
+## solo spawn, so a lone arrival always stands on the first landing cell.
+func landing_cells() -> Array[Vector2i]:
+	return coop_spawns
 
 
 ## The pixel position of the middle of `cell`.
@@ -105,8 +116,13 @@ func _read_cell(cell: Vector2i, glyph: String, spawns: Dictionary[String, Vector
 		tide_pools.append(cell)
 	elif not _layout.raft_site_glyph.is_empty() and glyph == _layout.raft_site_glyph:
 		raft_site = cell
+	elif not _layout.drink_glyph.is_empty() and glyph == _layout.drink_glyph:
+		drink_spots.append(cell)
 	elif glyph == _layout.solo_spawn_glyph or _layout.coop_spawn_glyphs.contains(glyph):
 		spawns[glyph] = cell
+	for sign_data: IslandSignData in _layout.signs:
+		if sign_data.glyph == glyph:
+			signs.append({"cell": cell, "sign": sign_data})
 	for entry: IslandGlyphData in _layout.pickups:
 		if entry.glyph == glyph:
 			pickups.append({"cell": cell, "item_id": entry.item_id, "count": entry.count, "respawn": entry.respawn, "group": entry.group})

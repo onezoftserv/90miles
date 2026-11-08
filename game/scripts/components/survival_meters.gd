@@ -15,6 +15,8 @@ signal last_stand_changed(active: bool)
 ## A free revive (the Medalla) stood the player up at 0 health.
 signal free_revive_used
 signal died
+## A delayed effect (EffectData.delay_s) is due: the body applies it to its player.
+signal effect_due(effect: EffectData)
 
 ## One-off morale changes other systems report; the amounts are in the tuning.
 enum MoraleEvent { ALLY_DIED, SQUALL, FIRE_LIT, SONG, TEXT_READ }
@@ -141,6 +143,9 @@ var statuses: Dictionary[int, bool] = {}
 
 ## Changes spread over time (seawater, poison), advanced by tick.
 var _timed: Array[MeterOverTime] = []
+## Effects waiting out their delay, and the seconds each has left (parallel arrays), advanced by tick.
+var _delayed_effects: Array[EffectData] = []
+var _delayed_left_s: Array[float] = []
 
 
 ## One host step: timed changes, then drains and restores from `context`, then the states.
@@ -153,6 +158,7 @@ func tick(delta: float, context: MeterContext) -> void:
 			dead = true
 			return
 	_advance_timed(delta)
+	_advance_delayed(delta)
 	thirst -= SurvivalRules.thirst_drain(context, tuning) * delta
 	hunger -= SurvivalRules.hunger_drain(context, tuning) * delta
 	heat = SurvivalRules.next_heat(heat, context, tuning, delta)
@@ -177,6 +183,13 @@ func add_over_time(meter: DataEnums.Meter, total: float, duration_s: float) -> v
 		add(meter, total)
 		return
 	_timed.append(MeterOverTime.new(meter, total, duration_s))
+
+
+## Holds `effect` for `delay_s` seconds of ticks, then emits `effect_due` once. Time does not run
+## while the meters do not tick (a rider waiting out of play).
+func delay_effect(effect: EffectData, delay_s: float) -> void:
+	_delayed_effects.append(effect)
+	_delayed_left_s.append(delay_s)
 
 
 ## Eats food worth `hunger_amount`. Anything that restores hunger is a meal and gives energy.
@@ -291,6 +304,21 @@ func _add_raw(meter: DataEnums.Meter, amount: float) -> void:
 			spend_energy(-amount)
 		return
 	set_value(meter, value(meter) + amount)
+
+
+func _advance_delayed(delta: float) -> void:
+	var due: Array[EffectData] = []
+	var index: int = 0
+	while index < _delayed_left_s.size():
+		_delayed_left_s[index] -= delta
+		if _delayed_left_s[index] <= EMPTY_EPSILON:
+			due.append(_delayed_effects[index])
+			_delayed_effects.remove_at(index)
+			_delayed_left_s.remove_at(index)
+		else:
+			index += 1
+	for effect: EffectData in due:
+		effect_due.emit(effect)
 
 
 func _advance_timed(delta: float) -> void:

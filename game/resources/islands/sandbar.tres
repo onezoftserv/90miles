@@ -86,6 +86,7 @@ coop_spawn_glyphs = "1234"
 tide_pool_glyph = "o"
 raft_site_glyph = "B"
 route_ids = Array[StringName]([&"raft", &"binoculars_swim"])
+next_island = &"coast_cay"
 pickups = Array[ExtResource("2_glyph")]([SubResource("Resource_t_hut"), SubResource("Resource_d_hut"), SubResource("Resource_k_hut"), SubResource("Resource_q_hut"), SubResource("Resource_u_flotsam"), SubResource("Resource_j_flotsam"), SubResource("Resource_r_flotsam"), SubResource("Resource_w_beach"), SubResource("Resource_y_dune")])
 id = &"sandbar"
 name_es = "El banco de arena"

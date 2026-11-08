@@ -1,9 +1,11 @@
 class_name SandbarIsland
 extends Node2D
-## The run's first island, el banco de arena (island-generation "Handmade sandbar"), built from
-## its layout data: terrain and shade, the palms, the hut's workbench and the pick-ups. Terrain,
-## palms and the workbench are built on every peer from the same data; the pick-ups are placed
-## and refreshed by the host alone, through the session's pick-up spawner.
+## A handmade island (island-generation "Handmade sandbar", "Handmade coast cay" and "Any handmade
+## layout builds the island"), built from the layout it is given: terrain and shade, the palms, the
+## workbench, the lagoon, the signs and the pick-ups. The layout is set before the island enters
+## the tree (the sandbar is the default). Terrain, palms, workbench, drinking spots and signs are
+## built on every peer from the same data; the pick-ups are placed and refreshed by the host alone,
+## through the session's pick-up spawner. The class keeps its name from the first island.
 
 const PALM_SCENE: PackedScene = preload("res://scenes/levels/palm.tscn")
 const BENCH_NAME: StringName = &"HutWorkbench"
@@ -13,9 +15,17 @@ const RAFT_SITE_NAME: StringName = &"RaftSite"
 const RAFT_NAME: StringName = &"Raft"
 const RAFT_RECIPE_ID: StringName = &"raft"
 const SQUALL_ID: StringName = &"squall"
+const DRINK_SPOT_NAME: String = "DrinkSpot%d"
+const SIGN_NAME: String = "Sign%d"
+const RAFT_SCENE: PackedScene = preload("res://scenes/structures/raft.tscn")
 const POOL_COLOR: Color = Color(0.45, 0.8, 0.85, 0.6)
 
-@export var layout: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
+## The island to build. Setting it rebuilds the terrain, bounds and lists below, so set it before
+## the island enters the tree.
+@export var layout: IslandLayoutData = preload("res://resources/islands/sandbar.tres"):
+	set(value):
+		layout = value
+		_rebuild()
 
 ## Off only in tests that count pick-ups or inventories; the run keeps its crabs, gulls and shark.
 var with_creatures: bool = true
@@ -30,6 +40,13 @@ var _session: CoopSession
 var _weather_id: StringName = &""
 ## Host: each placed pick-up's spec and its node (null, or freed, once taken).
 var _placed: Array[Dictionary] = []
+
+
+# The member initialisers above build the default layout; this is the same reading for another one.
+func _rebuild() -> void:
+	built = IslandLayout.build(layout)
+	terrain = built.terrain
+	bounds = Rect2i(Vector2i.ZERO, built.size * IslandLayout.TILE)
 
 
 func _ready() -> void:
@@ -62,14 +79,17 @@ func spawn_points(solo: bool) -> Array[Vector2]:
 	return points
 
 
-## Every peer: the hut's workbench, the routes and the raft's build site go in the session at the
-## same path on each, and the island starts listening for squalls to end.
+## Every peer: the workbench (when the layout has one), the routes, the raft's build site, the
+## drinking spots and the signs go in the session at the same path on each, and the island starts
+## listening for squalls to end.
 func furnish(session: CoopSession) -> void:
 	_session = session
-	var bench := Workbench.new()
-	bench.name = BENCH_NAME
-	bench.position = IslandLayout.cell_center(built.workbench)
-	session.add_child(bench)
+	if built.workbench.x >= 0:
+		var bench := Workbench.new()
+		bench.name = BENCH_NAME
+		bench.position = IslandLayout.cell_center(built.workbench)
+		session.add_child(bench)
+	_place_water_and_signs()
 	var routes := IslandRoutes.new()
 	routes.name = ROUTES_NAME
 	session.add_child(routes)
@@ -80,6 +100,45 @@ func furnish(session: CoopSession) -> void:
 		_place_creatures()
 	_weather_id = WeatherManager.weather_id()
 	WeatherManager.weather_changed.connect(_on_weather_changed)
+
+
+# The lagoon's shore and the flavour signs, named by their order in the layout.
+func _place_water_and_signs() -> void:
+	for index: int in built.drink_spots.size():
+		var spot := DrinkSpot.new()
+		spot.name = DRINK_SPOT_NAME % index
+		spot.position = IslandLayout.cell_center(built.drink_spots[index])
+		spot.hold_time_s = layout.drink_hold_s
+		spot.effects = layout.drink_effects
+		_session.add_child(spot)
+	for index: int in built.signs.size():
+		var data := built.signs[index]["sign"] as IslandSignData
+		var marker := IslandSign.new()
+		marker.name = SIGN_NAME % index
+		marker.position = IslandLayout.cell_center(built.signs[index]["cell"])
+		marker.line_es = data.text_es
+		marker.line_en = data.text_en
+		_session.add_child(marker)
+
+
+## Every peer: a raft that ended its crossing intact lies on the build site with the integrity it
+## has left, and can be launched again. The empty site it replaces goes. Nothing for a broken raft
+## or a layout with no site.
+func beach_raft(integrity: float) -> void:
+	if built.raft_site.x < 0 or integrity <= 0.0 or _session == null:
+		return
+	var site := _session.get_node_or_null(NodePath(RAFT_SITE_NAME))
+	if site != null:
+		_session.remove_child(site)
+		site.queue_free()
+	var raft := RAFT_SCENE.instantiate() as Raft
+	raft.name = RAFT_NAME
+	raft.climate = climate
+	raft.position = IslandLayout.cell_center(built.raft_site)
+	_session.add_child(raft)
+	raft.on_built(GameState.content.get_entry(&"recipes", RAFT_RECIPE_ID) as RecipeData)
+	# on_built gives the recipe's full integrity: the beached raft has what the crossing left.
+	raft.integrity = integrity
 
 
 # Host: the creature spawner runs the island's crabs, gulls and shark. Clients only receive them.

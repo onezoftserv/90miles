@@ -48,6 +48,8 @@ Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile gr
 
 **Biome.** Beach, dunes, a rocky point, a small lagoon.
 
+**Size.** Base variant, handmade (`coast_cay.tres`, owner-confirmed 2026-11-08): 88×64 cells, 1,021 land cells (18.1%) in a C of two 12-wide strips and a rocky spur round shallow flats, a long axis of 60 tiles (about 15 s) and a 42-cell brackish lagoon in the north-west corner. Four landing cells within 3 tiles of each other on the south-west beach. Walks from the first landing cell: raft site 3 s, flotsam 3–4 s, lagoon 7 s, aloe 8–9 s, rope cache 12 s, observation post 14 s. The lagoon never runs dry (thirst +10, then −5 after 30 s). Counts are fixed: nails ×4, mirror ×1, aloe ×4, rope ×4, lighter ×1, tubes ×2, jugs ×2, driftwood 8, 5 palms with 10 coconuts; no workbench, no noni yet.
+
 **POIs.**
 | POI | Resources | Notes |
 | --- | --- | --- |
