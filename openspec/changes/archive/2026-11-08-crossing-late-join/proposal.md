@@ -19,6 +19,12 @@ A client that joins, or rejoins under a new peer (`coop-reconnect`), while a cro
 2. **Riders appear where the host has them, not at their deck spot.** A swimmer three tiles off the raft is three tiles off it on the joiner's screen from the first frame. The host's position sync then takes over.
 3. **The joiner's crossing clock starts at the host's elapsed time.** The sea's scroll and the deck art pick up from there. Nothing that already happened (a squall warning, a hit) replays on the joiner; it sees the result in the integrity and rider states.
 
+## Confirmed by the owner (2026-11-08)
+
+- A joiner hides riders whose crossing already ended, as on the host (`ArrivalStub.hold`).
+- Riders appear where the host has them, not at their deck spot.
+- The joiner's crossing clock starts at the host's elapsed time; nothing that already happened replays.
+
 ## Capabilities
 
 ### New Capabilities
