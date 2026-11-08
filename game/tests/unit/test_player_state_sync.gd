@@ -23,6 +23,7 @@ const SHADOW_FIELDS: Array[String] = [
 	"SurvivalMeters:hunger",
 	"SurvivalMeters:last_stand",
 	"SurvivalMeters:morale",
+	"SurvivalMeters:status_flags",
 	"SurvivalMeters:sunstroke",
 	"SurvivalMeters:thirst",
 ]

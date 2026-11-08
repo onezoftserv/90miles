@@ -71,6 +71,9 @@ properties/17/replication_mode = 1
 properties/18/path = NodePath("PlayerNet:net_inventory")
 properties/18/spawn = true
 properties/18/replication_mode = 1
+properties/19/path = NodePath("SurvivalMeters:status_flags")
+properties/19/spawn = true
+properties/19/replication_mode = 1
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2

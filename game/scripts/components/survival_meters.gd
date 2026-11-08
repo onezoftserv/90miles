@@ -15,6 +15,8 @@ signal last_stand_changed(active: bool)
 ## A free revive (the Medalla) stood the player up at 0 health.
 signal free_revive_used
 signal died
+## Every peer: a status started or ended (status_flags changed, by set_status or the sync).
+signal statuses_changed(flags: int)
 
 ## One-off morale changes other systems report; the amounts are in the tuning.
 enum MoraleEvent { ALLY_DIED, SQUALL, FIRE_LIT, SONG, TEXT_READ }
@@ -135,9 +137,15 @@ var dead: bool = false:
 		if dead:
 			died.emit()
 
-## Statuses on this player by DataEnums.Status. Host-only; nothing causes or clears one yet
-## (urchins, creatures and bandages come later), so routes and tests set them directly.
-var statuses: Dictionary[int, bool] = {}
+## Statuses on this player, one bit (1 << status) per DataEnums.Status (status-sync). The host
+## sets them through set_status; the player's synchronizer sends the int to every peer like the
+## meters, so a client reads the host's and never sets one.
+var status_flags: int = 0:
+	set(value):
+		if status_flags == value:
+			return
+		status_flags = value
+		statuses_changed.emit(value)
 
 ## Changes spread over time (seawater, poison), advanced by tick.
 var _timed: Array[MeterOverTime] = []
@@ -221,14 +229,19 @@ func energy_cap() -> float:
 
 
 func has_status(status: DataEnums.Status) -> bool:
-	return statuses.get(status, false)
+	return _is_real_status(status) and (status_flags & (1 << status)) != 0
 
 
+## Host: starts or ends `status`. NONE and values outside DataEnums.Status change nothing.
 func set_status(status: DataEnums.Status, active: bool) -> void:
-	if active:
-		statuses[status] = true
-	else:
-		statuses.erase(status)
+	if not _is_real_status(status):
+		return
+	var bit: int = 1 << status
+	status_flags = (status_flags | bit) if active else (status_flags & ~bit)
+
+
+static func _is_real_status(status: int) -> bool:
+	return status > DataEnums.Status.NONE and status < DataEnums.Status.size()
 
 
 ## The value of `meter`, 0 for NONE.
