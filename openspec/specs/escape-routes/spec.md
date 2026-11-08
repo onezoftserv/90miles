@@ -99,12 +99,12 @@ The host SHALL pick riders among living, standing players on the island within t
 - THEN only the first leaves; the second stays on the island, can still build and launch the raft, and can swim once at energy 100
 
 ### Requirement: Leaving before the crossing exists
-Until the crossing change ships, riders of a started route SHALL leave the island (removed from play on every peer, meters stopped) and the run SHALL end with the summary once every player has left or died, at least one having left; each entry names the route its player left by. With exactly 1 player, launching any route ends the run.
+Riders of a started route SHALL leave the island into the crossing (the crossing capability). Until arrival on the next island exists, riders who finish the crossing leave play (removed from play on every peer, meters stopped), and the run SHALL end with the summary once every player has left or died, at least one having left; each entry names the route its player left by. With exactly 1 player, the run ends when that player's crossing ends or they die.
 
 #### Scenario: Solo ends the island by raft
 - GIVEN a 1-player run with a built raft
-- WHEN the player launches it
-- THEN the player leaves the island and the summary shows them as having left by "Balsa"
+- WHEN the player launches it and the crossing ends
+- THEN the player has left the island and the summary shows them as having left by "Balsa"
 
 ### Requirement: Sandbar route discovery
 The raft SHALL be known from the start. Binoculars-and-swim SHALL become discovered the first time the weather is clear while any player is on the island (the next island shows on the horizon) and stays discovered. Undiscovered routes cannot be started. With exactly 1 player that player's presence is enough.
