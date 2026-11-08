@@ -26,7 +26,7 @@ func _shark_pass(crossing: Crossing) -> void:
 			continue
 		var body := crossing.body_of(peer)
 		if PatrolCircleStrike.qualifies(body, data):
-			crossing.bite_swimmer(peer)
+			crossing.bite_swimmer(peer, data.id)
 			arrives_at = body.global_position
 			bitten = true
 			break
