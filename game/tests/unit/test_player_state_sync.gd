@@ -15,6 +15,7 @@ const SHADOW_FIELDS: Array[String] = [
 	# survival-meters values the client only shows (energy travels as net_energy, because the
 	# client's prediction spends it).
 	"SurvivalMeters:dead",
+	"SurvivalMeters:death_cause",
 	"SurvivalMeters:downed",
 	"SurvivalMeters:downed_time_left_s",
 	"SurvivalMeters:hallucinating",

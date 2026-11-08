@@ -203,6 +203,19 @@ func test_a_late_joiner_lands_on_the_coast_cay() -> void:
 	assert_true(IslandLayout.cell_center(_travel(host).island.built.landing_cells()[1]) == host.body(id).position, "at a landing cell")
 
 
+func test_a_joiner_on_the_coast_cay_counts_two_islands() -> void:
+	var host := net.add_host(_setup)
+	_travel(host).island.place_pickups(host)
+	_travel(host).travel(COAST)
+	assert_eq(_travel(host).islands_reached, 2, "the sandbar and the cay")
+	var joiner := await net.join(_setup)
+	assert_not_null(joiner)
+	if joiner == null:
+		return
+	assert_true(await wait_until(func() -> bool: return _island_id(joiner) == COAST, TIMEOUT_S))
+	assert_eq(_travel(joiner).islands_reached, 2, "the host's count, not 1")
+
+
 func test_a_waiting_rider_who_drops_and_rejoins_stays_a_waiting_rider() -> void:
 	var host := net.add_host(_setup)
 	var client := await net.join(_as(papo, "Papo"))

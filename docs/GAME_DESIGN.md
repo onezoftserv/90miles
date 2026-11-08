@@ -290,7 +290,7 @@ Claude Haiku 4.5 on Amazon Bedrock generates dialogue for **important NPCs and t
 
 | System | Godot approach | Reference |
 | --- | --- | --- |
-| Island generation | TileMapLayer, noise island shape, rule-placed POIs | SPD room builders |
+| Island generation | TileMapLayer, seeded integer island shape (no floating-point noise), rule-placed POIs | SPD room builders, Brogue blobs, DCSS Shoals |
 | Natural features | Mangroves, reefs, tide pools by placement rules | Brogue lakes and machines |
 | Pathfinding and AI | AStarGrid2D; state machines per creature | Brogue Dijkstra maps |
 | Data | Custom Resources (.tres) for items, creatures, NPCs, recipes | DCSS data files |
