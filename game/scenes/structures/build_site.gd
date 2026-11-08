@@ -4,6 +4,11 @@ extends Node2D
 ## from their own inventory, progress is shared, and work advances only once every input is in.
 ## One player can deposit everything and do all the work. When it completes it becomes the
 ## structure scene named by the recipe id (game/scenes/structures/<id>.tscn).
+## A synced site (the level's raft site, or one placed at a bench) has the host push its item and
+## tag deposits and its progress to every client, and a client asks for the live state when it is
+## ready (a joiner gets only the spawn payload otherwise). A site placed at a bench (`spawned`)
+## becomes its structure through the session: the host spawns the structure once, on every peer,
+## runs its build effects alone and frees the site; no peer builds it locally.
 
 signal completed(structure: Node)
 
@@ -23,6 +28,8 @@ var tags_deposited: Dictionary[int, int] = {}
 var built: bool = false
 ## Placed by a level on every peer at the same path: the host pushes its state to the clients.
 var synced: bool = false
+## Placed at a bench through the session's entity spawner: completion goes through the session.
+var spawned: bool = false
 ## Name the finished structure takes (empty keeps the scene's own), so its path matches on every peer.
 var structure_name: StringName = &""
 var _progress: float = 0.0
@@ -38,6 +45,7 @@ func _enter_tree() -> void:
 func _ready() -> void:
 	interactable.hold_time_s = 0.0
 	interactable.interacted.connect(_on_interacted)
+	ask_for_state()
 
 
 ## The interact prompt names what is being built: the recipe.
@@ -53,13 +61,13 @@ func deposit(player: PlayerBody) -> int:
 		if take > 0 and player.inventory.remove_id(id, take):
 			deposited[id] = deposited.get(id, 0) + take
 			moved += take
-	if moved > 0:
-		_push_state()
 	for tag: DataEnums.ItemTag in recipe.input_tags:
 		var need: int = recipe.input_tags[tag] - tags_deposited.get(tag, 0)
 		var taken: Array[StringName] = player.inventory.take_tag(tag, need)
 		tags_deposited[tag] = tags_deposited.get(tag, 0) + taken.size()
 		moved += taken.size()
+	if moved > 0:
+		_push_state()
 	return moved
 
 
@@ -110,25 +118,62 @@ func work(fraction: float) -> bool:
 	return true
 
 
-## Clients: the host's deposits, progress and whether it is built. Anything not from the host or
-## not shaped like a state is dropped.
+## Clients: the host's item and tag deposits, progress and whether it is built, each clamped to
+## the recipe. Anything not from the host or not shaped like a state is dropped. A spawned site
+## built on the host is only marked built here: the host's spawner brings the structure.
 @rpc("authority", "call_remote", "reliable")
-func receive_state(deposits: Dictionary, progress: float, is_built: bool) -> void:
+func receive_state(deposits: Dictionary, tag_deposits: Dictionary, progress: float, is_built: bool) -> void:
 	if multiplayer.get_remote_sender_id() != 1 or not synced or built or not is_finite(progress):
 		return
 	for id: StringName in recipe.inputs:
 		var amount: Variant = deposits.get(id, 0)
 		deposited[id] = clampi(amount if amount is int else 0, 0, recipe.inputs[id])
+	for tag: DataEnums.ItemTag in recipe.input_tags:
+		var tag_amount: Variant = tag_deposits.get(tag, 0)
+		tags_deposited[tag] = clampi(tag_amount if tag_amount is int else 0, 0, recipe.input_tags[tag])
 	_progress = clampf(progress, 0.0, 1.0)
 	if is_built:
-		_complete()
+		if spawned:
+			_mark_built()
+		else:
+			_complete()
 
 
-# Host: sends the current state to every client (a level-placed site only).
+## Client: asks the host for this synced site's live state, once connected (the session asks again
+## when the host's world state arrives, which covers a site made before the connection).
+func ask_for_state() -> void:
+	if synced and is_inside_tree() and not multiplayer.is_server() and _connected():
+		_send_state_request.call_deferred()
+
+
+## Host: a client asks for the live state; it gets it alone, within its action limit.
+@rpc("any_peer", "call_remote", "reliable")
+func request_state() -> void:
+	if not multiplayer.is_server() or not synced:
+		return
+	var sender: int = multiplayer.get_remote_sender_id()
+	var session := CoopSession.of(self)
+	if not multiplayer.get_peers().has(sender) or session == null or not session.allow_request(sender):
+		return
+	receive_state.rpc_id(sender, deposited, tags_deposited, _progress, built)
+
+
+# Deferred, so a request made as the connection opens follows the session's join request.
+func _send_state_request() -> void:
+	if is_inside_tree() and not multiplayer.is_server() and _connected():
+		request_state.rpc_id(1)
+
+
+func _connected() -> bool:
+	var peer := multiplayer.multiplayer_peer
+	return peer != null and peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+
+
+# Host: sends the current state to every client (a synced site only).
 func _push_state() -> void:
 	_pushed_progress = _progress
 	if synced and is_inside_tree() and multiplayer.is_server() and not multiplayer.get_peers().is_empty():
-		receive_state.rpc(deposited, _progress, built)
+		receive_state.rpc(deposited, tags_deposited, _progress, built)
 
 
 func _on_interacted(by: Node) -> void:
@@ -140,8 +185,10 @@ func _on_interacted(by: Node) -> void:
 
 
 func _complete() -> void:
-	built = true
-	interactable.enabled = false
+	if spawned:
+		_complete_spawned()
+		return
+	_mark_built()
 	_push_state()
 	var scene := load(STRUCTURE_PATH % recipe.id) as PackedScene
 	var structure: Node = scene.instantiate() if scene != null else null
@@ -158,6 +205,25 @@ func _complete() -> void:
 	# Out of the tree at once, so the structure and any later site can take this name.
 	get_parent().remove_child(self)
 	queue_free()
+
+
+# A site placed at a bench: marked built everywhere, and on the host the session spawns the
+# structure once, on every peer, with its build effects here alone; the site then goes, and the
+# spawner removes it on every client.
+func _complete_spawned() -> void:
+	_mark_built()
+	_push_state()
+	if not multiplayer.is_server():
+		return
+	var session := CoopSession.of(self)
+	var structure: Node2D = session.spawn_structure(recipe, session.to_local(global_position)) if session != null else null
+	completed.emit(structure)
+	queue_free()
+
+
+func _mark_built() -> void:
+	built = true
+	interactable.enabled = false
 
 
 func _draw() -> void:

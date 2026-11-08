@@ -16,6 +16,9 @@ func _ready() -> void:
 	interactable.hold_time_s = tuning.fire_put_out_hold_s
 	interactable.enabled = lit
 	interactable.interacted.connect(_on_interacted)
+	# A client's copy of a fire built on the host arrives lit, with no light() of its own.
+	if lit:
+		_burn()
 
 
 ## Called by a BuildSite when the build completes: a built fire is lit.
@@ -24,15 +27,20 @@ func on_built(_recipe: RecipeData) -> void:
 
 
 func light() -> void:
-	lit = true
-	burn_left_s = tuning.fire_burn_s
-	add_to_group(PlayerBody.FIRE_GROUP)
-	interactable.enabled = true
+	_burn()
 	for node: Node in get_tree().get_nodes_in_group(PlayerBody.GROUP):
 		var player := node as PlayerBody
 		var radius_px: float = player.meters.tuning.company_radius_tiles * PlayerBody.TILE_SIZE
 		if player.global_position.distance_to(global_position) <= radius_px:
 			player.meters.morale_event(SurvivalMeters.MoraleEvent.FIRE_LIT)
+
+
+# Burning from now on: in the lit fires, interactable, drawn lit.
+func _burn() -> void:
+	lit = true
+	burn_left_s = tuning.fire_burn_s
+	add_to_group(PlayerBody.FIRE_GROUP)
+	interactable.enabled = true
 	queue_redraw()
 
 

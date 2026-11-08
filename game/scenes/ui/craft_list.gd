@@ -170,15 +170,9 @@ func choose(index: int) -> bool:
 	return true
 
 
-## Whether a site of `recipe_id` stands unfinished in this session (as this peer sees it).
+## Whether a site of `recipe_id` stands unfinished in the session, as this peer has it.
 func has_unfinished_site(recipe_id: StringName) -> bool:
-	for node: Node in get_tree().get_nodes_in_group(BuildSite.GROUP):
-		var site := node as BuildSite
-		if site == null or site.built or site.is_queued_for_deletion() or site.recipe == null:
-			continue
-		if site.recipe.id == recipe_id and (not is_instance_valid(session) or session.is_ancestor_of(site)):
-			return true
-	return false
+	return is_instance_valid(session) and session.has_unfinished_site(recipe_id)
 
 
 ## The rows' texts, top first.

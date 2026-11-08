@@ -47,6 +47,11 @@ const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const SPEECH_BUBBLE_SCENE: PackedScene = preload("res://scenes/ui/speech_bubble.tscn")
 const WORLD_ITEM_SCENE: PackedScene = preload("res://scenes/items/world_item.tscn")
 const BUBBLE_NAME: StringName = &"SpeechBubble"
+## The entity spawner's payload kinds (creatures-ai's creatures, inventory-hud's sites and
+## structures); a payload with no kind is a creature.
+const KIND_CREATURE: String = "creature"
+const KIND_SITE: String = "site"
+const KIND_STRUCTURE: String = "structure"
 const HOST_ID: int = 1
 ## Connected players at most (dropped players waiting to be removed do not count).
 const MAX_PLAYERS: int = NetPeers.MAX_PLAYERS
@@ -118,8 +123,10 @@ var _removed: Array[String] = []
 var _joined: int = 0
 ## Host: numbers the pick-ups it spawns, so every peer gives a node the same name.
 var _pickup_serial: int = 0
-## Host: the same for creatures.
+## Host: the same for creatures, build sites and structures.
 var _creature_serial: int = 0
+var _site_serial: int = 0
+var _structure_serial: int = 0
 ## Host: when each peer last shooed a creature.
 var _shoo_at_s: Dictionary[int, float] = {}
 ## Host: seconds until the next periodic clock message.
@@ -574,13 +581,82 @@ func request_deposit(site_path: NodePath) -> void:
 		deposit_for(_sender(), site_path)
 
 
-## Host: starts `peer`'s craft. Only that peer's own inventory, reach and recipe count; the
-## request names no one else. Returns whether it started.
+## Host: starts `peer`'s craft, or places the site of a build-site structure by that peer's own
+## player at the bench (`_place_site`). Only that peer's own inventory, reach and recipe count; the
+## request names no one else and no position. Returns whether it started.
 func craft_for(peer: int, recipe_id: StringName, station_path: NodePath) -> bool:
 	var player := _acting_body(peer)
 	if player == null:
 		return false
-	return player.crafter.start(player.crafter.recipe_for(recipe_id), get_node_or_null(station_path) as Node2D)
+	var recipe := player.crafter.recipe_for(recipe_id)
+	var station := get_node_or_null(station_path) as Node2D
+	if recipe != null and recipe.build_site:
+		return _place_site(player, recipe, station)
+	return player.crafter.start(recipe, station)
+
+
+# Host (crafting-inventory "Placing a build site"): an empty site of `recipe` on the free cell
+# nearest `player` within 1 tile, chosen at the workbench `station` in reach; at most one
+# unfinished site per recipe. The spawner puts it on every peer, joiners included.
+func _place_site(player: PlayerBody, recipe: RecipeData, station: Node2D) -> bool:
+	if not SitePlacer.places(recipe) or not station is Workbench or has_unfinished_site(recipe.id):
+		return false
+	if player.global_position.distance_to(station.global_position) > InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX:
+		return false
+	var bench_cell := SitePlacer.cell_at(to_local(station.global_position))
+	var cells := SitePlacer.free_cell(to_local(player.global_position), bench_cell, recipe, terrain, _taken_spots())
+	if cells.is_empty():
+		return false
+	_site_serial += 1
+	var payload: Dictionary = {"kind": KIND_SITE, "name": "Site%d" % _site_serial, "recipe_id": recipe.id, "position": IslandLayout.cell_center(cells[0])}
+	return entity_spawner.spawn(payload) != null
+
+
+## Whether a site of `recipe_id` stands unfinished in this session (as this peer has it).
+func has_unfinished_site(recipe_id: StringName) -> bool:
+	for node: Node in get_tree().get_nodes_in_group(BuildSite.GROUP):
+		var site := node as BuildSite
+		if site != null and _is_own(site) and not site.built and site.recipe != null and site.recipe.id == recipe_id:
+			return true
+	return false
+
+
+## Host: the finished structure of `recipe` at `at` (session coordinates), spawned once on every
+## peer; its build effects (`on_built`: a fire lights and cheers whoever is near) run here alone.
+## Null on a client.
+func spawn_structure(recipe: RecipeData, at: Vector2) -> Node2D:
+	if not multiplayer.is_server():
+		return null
+	_structure_serial += 1
+	var payload: Dictionary = {"kind": KIND_STRUCTURE, "name": "Structure%d" % _structure_serial, "recipe_id": recipe.id, "position": at, "lit": true}
+	var made := entity_spawner.spawn(payload) as Node2D
+	if made != null and made.has_method(&"on_built"):
+		made.call(&"on_built", recipe)
+	return made
+
+
+## Host: whether `peer` may ask for something now (a site's live state): the host always, a
+## client within its action limit.
+func allow_request(peer: int) -> bool:
+	if peer == HOST_ID:
+		return true
+	var limits: PeerLimits = _limits.get(peer)
+	return limits != null and limits.allow_action(clock.call())
+
+
+# Where the sites and finished structures of this session stand, in its coordinates.
+func _taken_spots() -> Array[Vector2]:
+	var spots: Array[Vector2] = []
+	for group: StringName in [BuildSite.GROUP, PlayerBody.STRUCTURE_GROUP]:
+		for node: Node in get_tree().get_nodes_in_group(group):
+			if node is Node2D and _is_own(node):
+				spots.append(to_local((node as Node2D).global_position))
+	return spots
+
+
+# Under this session and staying: tests run a host and clients in one tree.
+func _is_own(node: Node) -> bool:
+	return is_ancestor_of(node) and not node.is_queued_for_deletion()
 
 
 ## Host: `peer` uses an item from their own slot on `target_peer`'s player (0: themself), who
@@ -732,6 +808,11 @@ func receive_world_state(state: Dictionary) -> void:
 	if sky != null:
 		sky.apply_state(world_state)
 	world_state_received.emit(world_state)
+	# Joined (or back): every synced site asks for its live state, the level's made before the
+	# connection included.
+	for node: Node in get_tree().get_nodes_in_group(BuildSite.GROUP):
+		if node is BuildSite and _is_own(node):
+			(node as BuildSite).ask_for_state()
 
 
 ## Host: sends the clock and weather to every client. Solo has no client, so nothing is sent.
@@ -903,20 +984,48 @@ func _spawn_pickup(data: Variant) -> Node:
 	return item
 
 
-# Runs on every peer; the payload is checked because a client receives it.
+# Runs on every peer; the payload is checked because a client receives it: a kind of the fixed
+# set, a finite position and one plain name, then what that kind needs.
 func _spawn_entity(data: Variant) -> Node:
 	var info: Dictionary = data if data is Dictionary else {}
-	var id: Variant = info.get("id")
+	var kind: Variant = info.get("kind", KIND_CREATURE)
 	var spot: Variant = info.get("position")
 	var entity_name: Variant = info.get("name")
+	if not kind is String or not spot is Vector2 or not spot.is_finite():
+		return null
+	if not entity_name is String or _is_unsafe_node_name(entity_name):
+		return null
+	match kind:
+		KIND_CREATURE:
+			return _make_creature(info.get("id"), entity_name, spot)
+		KIND_SITE:
+			var recipe := _structure_recipe(info.get("recipe_id"))
+			return SitePlacer.make_site(recipe, entity_name, spot, climate) if recipe != null else null
+		KIND_STRUCTURE:
+			var built := _structure_recipe(info.get("recipe_id"))
+			# The host lights its own through on_built; a client's copy only shows itself lit.
+			var lit: bool = info.get("lit") == true and not multiplayer.is_server()
+			return SitePlacer.make_structure(built, entity_name, spot, climate, lit) if built != null else null
+	return null
+
+
+func _make_creature(id: Variant, entity_name: String, spot: Vector2) -> Creature:
 	var catalog: ContentCatalog = creature_catalog if creature_catalog != null else GameState.content
-	if not id is StringName or not spot is Vector2 or not spot.is_finite() or not entity_name is String or not catalog.has_entry(&"creatures", id):
+	if not id is StringName or not catalog.has_entry(&"creatures", id):
 		return null
 	var made := Creature.make(catalog.get_entry(&"creatures", id) as CreatureData)
 	made.name = entity_name
 	made.position = spot
 	made.attach_sync()
 	return made
+
+
+# The content's build-site structure recipe named `id`, or null.
+func _structure_recipe(id: Variant) -> RecipeData:
+	if not id is StringName or not GameState.content.has_entry(&"recipes", id):
+		return null
+	var recipe := GameState.content.get_entry(&"recipes", id) as RecipeData
+	return recipe if SitePlacer.places(recipe) else null
 
 
 func _on_body_ready(peer_id: int, spawned: PlayerBody) -> void:
