@@ -61,8 +61,9 @@ func prompt_target(by: Node, locale: String) -> String:
 	return ""
 
 
-## The player this interactable stands for, whose name tag the prompt clears, or null: the owner
-## when it is a player (a downed player's drag handle). Kinds that sit on a player without being
-## their child override it (the crossing's pull handle on its swimmer).
-func prompt_player() -> PlayerBody:
-	return get_parent() as PlayerBody
+## The player this interactable stands for, whose name tag the prompt clears, or null. Kinds that
+## stand for a player override it: a downed player's drag handle, the crossing's pull handle on its
+## swimmer. (Typed as Node2D and never naming PlayerBody here: the player's scene holds a kind of
+## Interactable, and scenes that load this script load early.)
+func prompt_player() -> Node2D:
+	return null

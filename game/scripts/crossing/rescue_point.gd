@@ -49,7 +49,7 @@ func prompt_target(_by: Node, _locale: String) -> String:
 
 
 ## A pull handle sits on its swimmer, so the prompt clears their name tag as over any player.
-func prompt_player() -> PlayerBody:
+func prompt_player() -> Node2D:
 	if kind != Kind.PULL or not is_instance_valid(crossing):
 		return null
 	return crossing.body_of(swimmer)

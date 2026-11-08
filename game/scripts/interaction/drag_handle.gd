@@ -32,3 +32,8 @@ func prompt_target(_by: Node, _locale: String) -> String:
 	if session == null or player == null:
 		return ""
 	return session.player_name(session.peer_of(player))
+
+
+## The downed player this handle drags: the prompt clears their name tag.
+func prompt_player() -> Node2D:
+	return get_parent() as PlayerBody
