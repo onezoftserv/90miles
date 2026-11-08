@@ -141,3 +141,24 @@ func test_a_rejoined_client_shows_the_prompt_over_what_its_reclaimed_body_reache
 	assert_true(await wait_until(reclaimed, TIMEOUT_S), "the prompt follows the reclaimed body to the raft site")
 	assert_same(host.body(net.peer_id(back)), papo_body, "the same body on the host")
 	assert_same(hud.prompt.target, (back.get_node("RaftSite") as BuildSite).interactable)
+
+
+func test_a_client_joining_after_deposits_reads_the_raft_sites_live_state() -> void:
+	var host := net.add_host(_setup)
+	var host_site := host.get_node("RaftSite") as BuildSite
+	var builder := host.body(CoopSession.HOST_ID)
+	builder.global_position = host_site.global_position
+	builder.inventory.add(&"driftwood", 2)
+	host_site.deposit(builder)
+	var client := await net.join(_setup)
+	assert_not_null(client)
+	if client == null:
+		return
+	var hud := _hud(client)
+	var site := client.get_node("RaftSite") as BuildSite
+	_place(host, client, net.peer_id(client), site.global_position + Vector2(4.0, 0.0))
+	var live := func() -> bool:
+		hud.prompt.tick(STEP_S)
+		return hud.prompt.lines().size() > 1 and hud.prompt.lines()[1] == "Falta: Madera de la costa x4"
+	assert_true(await wait_until(live, TIMEOUT_S), "the level's site, made before the join, asks for its state")
+	assert_eq(site.deposited.get(&"driftwood", 0), 2)
