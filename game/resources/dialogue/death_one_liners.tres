@@ -8,7 +8,7 @@
 script = ExtResource("3_dl")
 id = &"death_thirst_1"
 speaker_id = &"narrator"
-text_es = "Noventa millas de agua y ni una gota pa' tomar. Como la bodega: hay de todo menos lo que hace falta."
+text_es = "Noventa millas de agua y ni una gota pa' tomar. Como la bodega: hay de to' menos lo que hace falta."
 text_en = "Ninety miles of water and not a drop to drink. Like the bodega: everything except what you need."
 emotion = 5
 
@@ -62,7 +62,7 @@ emotion = 2
 script = ExtResource("3_dl")
 id = &"death_drowning_3"
 speaker_id = &"narrator"
-text_es = "Noventa millas, y ni una lancha salió a buscar. Para eso nunca hubo combustible."
+text_es = "Noventa millas, y ni una lancha salió a buscar. Pa' eso nunca hubo combustible."
 text_en = "Ninety miles, and not one boat went out to look. For that there was never any fuel."
 emotion = 2
 
@@ -94,9 +94,9 @@ emotion = 5
 script = ExtResource("3_dl")
 id = &"death_reef_shark_2"
 speaker_id = &"narrator"
-text_es = "¡Tiburón, cojones! Lo gritaron tarde, como todo lo importante."
+text_es = "¡Tiburón, cojones! Lo gritaron tarde, como to' lo importante."
 text_en = "Shark, cojones! Somebody yelled it too late, like everything that matters."
-text_es_soft = "¡Tiburón, caballero! Lo gritaron tarde, como todo lo importante."
+text_es_soft = "¡Tiburón, caballero! Lo gritaron tarde, como to' lo importante."
 text_en_soft = "Shark, caballero! Somebody yelled it too late, like everything that matters."
 emotion = 4
 
@@ -104,7 +104,7 @@ emotion = 4
 script = ExtResource("3_dl")
 id = &"death_reef_shark_3"
 speaker_id = &"narrator"
-text_es = "Hasta el tiburón cobró su parte. Aquí todo el mundo pide comisión."
+text_es = "Hasta el tiburón cobró su parte. Aquí to' el mundo pide comisión."
 text_en = "Even the shark took its cut. Around here everybody wants a commission."
 emotion = 5
 
