@@ -6,6 +6,7 @@ extends GutTest
 const SPAWNS: Array[Vector2] = [Vector2(32.0, 48.0), Vector2(48.0, 48.0), Vector2(64.0, 48.0), Vector2(80.0, 48.0)]
 const BLEEDING := DataEnums.Status.BLEEDING
 const TIMEOUT_S: float = 5.0
+const HUD_SCENE: PackedScene = preload("res://scenes/ui/meters_hud.tscn")
 
 var net: NetHarness
 var rng := RandomNumberGenerator.new()
@@ -41,13 +42,19 @@ func test_a_client_bitten_in_a_crossing_knows_it_bleeds() -> void:
 	crossing.throw_in(client_id)
 	var own := net.own_body(client)
 	watch_signals(own.meters)
+	var hud := HUD_SCENE.instantiate() as MetersHud
+	add_child_autofree(hud)
+	hud.bind(own.meters)
+	assert_false(hud.bleeding_tag().visible)
 	crossing.bite_swimmer(client_id)
 	var bleeds := func() -> bool: return own.meters.has_status(BLEEDING)
 	assert_true(await wait_until(bleeds, TIMEOUT_S), "the client's own player bleeds there too")
 	assert_signal_emitted(own.meters, "statuses_changed", "and the client hears of it")
+	assert_true(hud.bleeding_tag().visible, "the client's screen shows Sangrando")
 	host.body(client_id).meters.set_status(BLEEDING, false)
 	var stopped := func() -> bool: return not own.meters.has_status(BLEEDING)
 	assert_true(await wait_until(stopped, TIMEOUT_S), "the host ends it and so does the client")
+	assert_false(hud.bleeding_tag().visible, "and the tag goes away")
 
 
 func test_a_client_cannot_start_a_status() -> void:

@@ -119,5 +119,65 @@ func test_panel_fits_in_the_top_left_corner_of_640x360() -> void:
 	assert_lte(rect.end.y, 90.0, "at most a quarter of the height")
 
 
+# --- status-sync: the bleeding tag --------------------------------------------------------------
+
+func test_the_bleeding_tag_shows_only_while_the_player_bleeds() -> void:
+	var meters := _meters()
+	hud.bind(meters)
+	var tag := hud.bleeding_tag()
+	assert_not_null(tag)
+	if tag == null:
+		return
+	assert_false(tag.visible, "no tag while not bleeding")
+	meters.set_status(DataEnums.Status.BLEEDING, true)
+	assert_true(tag.visible)
+	assert_eq(tag.text, "Sangrando")
+	meters.set_status(DataEnums.Status.POISON, true)
+	meters.set_status(DataEnums.Status.BLEEDING, false)
+	assert_false(tag.visible, "another status shows no bleeding tag")
+
+
+func test_binding_a_bleeding_player_shows_the_tag_at_once() -> void:
+	var meters := _meters()
+	meters.set_status(DataEnums.Status.BLEEDING, true)
+	hud.bind(meters)
+	assert_true(hud.bleeding_tag().visible)
+
+
+func test_the_bleeding_tag_is_red_under_the_bars_in_the_pixel_font() -> void:
+	var tag := hud.bleeding_tag()
+	var health := hud.bar_for(M.HEALTH)
+	assert_same(tag.get_parent(), health.get_parent(), "in the bars panel")
+	assert_gt(tag.get_index(), health.get_index(), "under the last bar")
+	var color := tag.get_theme_color(&"font_color")
+	assert_gt(color.r, 0.7, "red")
+	assert_lt(color.g, 0.4)
+	assert_lt(color.b, 0.4)
+	var font := tag.get_theme_font(&"font")
+	assert_not_null(font)
+	if font != null:
+		assert_eq(font.resource_path, FONT_PATH)
+	assert_eq(tag.get_theme_font_size(&"font_size"), 8)
+
+
+func test_the_panel_still_fits_the_corner_while_bleeding() -> void:
+	var meters := _meters()
+	meters.set_status(DataEnums.Status.BLEEDING, true)
+	hud.bind(meters)
+	await wait_process_frames(2)
+	var rect := hud.panel_rect()
+	assert_lte(rect.end.x, 160.0, "at most a quarter of the width")
+	assert_lte(rect.end.y, 90.0, "at most a quarter of the height")
+
+
+func test_rebinding_stops_following_the_old_nodes_statuses() -> void:
+	var old := _meters()
+	var current := _meters()
+	hud.bind(old)
+	hud.bind(current)
+	old.set_status(DataEnums.Status.BLEEDING, true)
+	assert_false(hud.bleeding_tag().visible)
+
+
 func test_hud_ignores_the_mouse() -> void:
 	assert_eq(hud.mouse_filter, Control.MOUSE_FILTER_IGNORE)
