@@ -34,4 +34,8 @@ Every cause is reachable alone. The summary has one row. "Otra vez" exists only 
 
 ## Departures from the build plan
 
-Filled in when the change is built (see the end of this file).
+- **Replication indices.** `status-sync` (PR #26) added `status_flags` to the player's synchronizer, so `death_cause` is property 17, `dead` 18, `net_inventory` 19 and `status_flags` 20 (the plan said 17 to 19). The order test compares positions, not numbers.
+- **A survivor's `route` key** is added only when the player left by a route (the old summary always wrote it, so a survivor with no route read "(se fue en: )").
+- **`SummaryScreen.rows()`** reads the fate label of each `SummaryRow` and keeps its old contract.
+- **No status cause.** After `status-sync`, bleeding is a flag that nothing turns into damage, so there is no `bleeding` cause (proposal "Status causes").
+- **Extra tests** beyond the plan's list: `DeathCause.of`, and "a new run never starts paused".
