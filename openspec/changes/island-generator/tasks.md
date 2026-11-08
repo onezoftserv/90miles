@@ -76,7 +76,7 @@ Tests that loop over 200 run seeds generate their islands once in `before_all` a
 
 ## 10. Docs
 
-- [ ] 10.1 After the owner confirms: `docs/ISLANDS.md` ("Generation" paragraph as the Landmass delta words it, a size line under §4 Reef cay like the coast cay's with the measured numbers, the reef's coconuts), `docs/GAME_DESIGN.md` §17 if decision 9a stands, `docs/CONTENT_MANIFEST.md` (`reef_traps` and the four POIs ticked), `HANDOFF.md` §5 (one decisions line), `TASKS.md` (tick the §5 item, a Done entry)
+- [ ] 10.1 Already done with the spec (owner confirmed 2026-11-08): the `docs/ISLANDS.md` "Generation" paragraph, the reef cay's seep and palm-grove rows and `docs/GAME_DESIGN.md` §17. Left for the build: a size line under `docs/ISLANDS.md` §4 Reef cay like the coast cay's with the measured numbers, `docs/CONTENT_MANIFEST.md` (`reef_traps` and the four POIs ticked), `HANDOFF.md` §5 (one decisions line), `TASKS.md` (tick the §5 item, a Done entry)
 - [ ] 10.2 design.md "Changes from the build plan": the measured mean and maximum attempts over 200 seeds, the time per attempt on the dev machine, the recorded seed and hash constants, and every departure from this plan
 
 ## 11. Checks

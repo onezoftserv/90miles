@@ -26,6 +26,8 @@ Solo is first class and nothing in the generator knows the party size. A 1-playe
 
 ## Owner decisions (recommended option first)
 
+The owner chose the recommended option (a) on all nine on 2026-11-08; the options stay listed for the record.
+
 1. **The chain.**
    a. *Recommended:* the reef cay, traps variant (`reef_traps`). Both of its non-quest routes exist today (raft, binoculars-and-swim), so it meets "2–3 routes" with no new route; its reef sharks exist (a data edit); its terrain (rock, beach, scrub, shallows, deep) is already walkable, drawn and costed; its shape is the plain blob-plus-bands pipeline every later chain needs.
    b. The mangrove cay, maze variant (`mangrove_maze`). Its own routes (repair the boat with the old crocodile's nest as boss, follow the dolphins) and threats (crocodiles, mosquitoes) are not built, so it would offer only the raft; it needs a channel and maze painter, the "mangrove touches only shallow or brackish water" rule and slow movement in mangrove (today mangrove only hides a crouching player).

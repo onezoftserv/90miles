@@ -2,7 +2,7 @@
 
 Islands are generated from **chain templates**. A run is 6–8 islands: island 1 is always the sandbar; island 2 is always a coast-chain island; from island 3 the route branches between chains; the last island is always the final approach. Each island rolls 2–3 escape routes and 3–6 points of interest (POIs) from its chain's table. The one exception is the secret cay, an off-graph detour that never counts as one of the 6–8 islands and has only the routes its layout lists (see "Secret: El cayo sin norte").
 
-Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile grid, places biome bands (deep water → shallows → beach → dunes/mangrove/rock → interior), then places POIs with a rule set (min distance, shoreline access, no two of the same kind). Escape routes are POIs with a flag. See `openspec/specs/island-generation/spec.md`.
+Generation: `IslandGenerator` builds a landmass from seeded integer steps (height bumps along a spine, integer smoothing, a sea level picked by rank; no floating-point noise, so every peer builds the same island from the run seed) on a 96×64 tile grid, places biome bands (deep water → shallows → beach → dunes/mangrove/rock → interior), then places POIs with a rule set (min distance, shoreline access, no two of the same kind). Escape routes are POIs with a flag. See `openspec/specs/island-generation/spec.md`.
 
 ---
 
@@ -106,7 +106,8 @@ Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile gr
 | Lobster traps (6) | Lobster (food 35), rope ×1 each, a moray in two of them | Ramón's quest |
 | Reef flats | Fish (spear), sea urchins, man o' war, conch (food + shell horn) | Low tide only; rip current on the north side |
 | The ghost net | Vieja the turtle, tangled | 70% |
-| Limestone cave | Shade, fresh water seep (2 cups/day), bats | Only shade; echoes carry (noise ×2) |
+| Limestone cave | Shade, fresh water seep (2 rain cups, refilled each dawn), bats | Only shade; echoes carry (noise ×2) |
+| Palm grove (about half the reefs) | 3 palms, 5 coconuts | The reef's only coconuts; the other reefs have none |
 | Blue hole | Deep, cold, a sunk outboard motor at the bottom | Diving quest: 3 dives, sharks |
 | Dayana's camp | Dayana with the broken ankle | 60% |
 | Empty raft (*balsa vacía*, *balsa marcada*) | One washed-up raft: a tube (70%), rope, a plastic jug (50%). Marked: a spray-painted tube, no morale change. Unmarked: morale −5 to players nearby, once per run | 20% each on every reef, rock, lighthouse, storm and yacht variant; never on the freighter (its raft is Ramón's son's). No jokes |
