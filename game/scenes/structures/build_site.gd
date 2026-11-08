@@ -34,6 +34,11 @@ func _ready() -> void:
 	interactable.interacted.connect(_on_interacted)
 
 
+## The interact prompt names what is being built: the recipe.
+func prompt_target(_by: Node, locale: String) -> String:
+	return recipe.get_display_name(locale) if recipe != null else ""
+
+
 ## Moves matching inputs from the player's inventory into the site; returns the units moved.
 func deposit(player: PlayerBody) -> int:
 	var moved: int = 0

@@ -442,6 +442,14 @@ func set_paused(value: bool) -> bool:
 	return true
 
 
+## The session `node` belongs to (itself or its nearest CoopSession ancestor), or null.
+static func of(node: Node) -> CoopSession:
+	var at: Node = node
+	while at != null and not at is CoopSession:
+		at = at.get_parent()
+	return at as CoopSession
+
+
 ## The body of `peer_id`'s player in this session, or null.
 func body(peer_id: int) -> PlayerBody:
 	var found: Variant = _bodies.get(peer_id)

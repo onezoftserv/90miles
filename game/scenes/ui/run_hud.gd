@@ -5,9 +5,11 @@ extends CanvasLayer
 ## sidebar, teammates first), a name tag over each teammate, the pause menu (solo only, it
 ## refuses in co-op) and, in co-op only, the quick-chat wheel. The bottom band holds the local
 ## player's inventory strip with its lines (inventory-hud), bound to the local body in one place,
-## `_bind_local`, so a rejoined client's reclaimed body gets it too. Key labels follow the last
-## device the player used (`device`). While the pause menu, the run summary or the host-lost
-## screen is up, the HUD takes no input (`input_open`); the shell says when a screen shows.
+## `_bind_local`, so a rejoined client's reclaimed body gets it too, as does the interact prompt
+## over what the local player can reach, mapped from the world view into the HUD (`world_to_hud`)
+## and kept off every HUD panel (`panel_rects`). Key labels follow the last device the player used
+## (`device`). While the pause menu, the run summary or the host-lost screen is up, the HUD takes
+## no input (`input_open`); the shell says when a screen shows.
 
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
@@ -19,6 +21,10 @@ const PHASE_NAMES: Dictionary[DataEnums.DayPhase, String] = {
 	DataEnums.DayPhase.NIGHT: "Noche",
 }
 const TAG_NAME: StringName = &"NameTag"
+const HUD_PANEL: StringName = &"HudPanel"
+## HUD pieces that are not HUD panels but that the interact prompt keeps clear of too (secret-cay's
+## needle and note join it).
+const AVOID_GROUP: StringName = &"hud_avoid"
 
 var session: CoopSession
 var local_peer: int = CoopSession.HOST_ID
@@ -34,9 +40,13 @@ var notice: HudNotice
 var screen_shown: bool = false
 ## The crafting list is open and holds the input: the use button does nothing meanwhile.
 var list_open: bool = false
+## The world's view (GameShell's WorldView), which world-anchored marks are mapped through; null
+## draws them at the world canvas's own pixels.
+var world_view: Control = null
 
 @onready var meters: MetersHud = %Meters
 @onready var strip: InventoryStrip = %Strip
+@onready var prompt: InteractPrompt = %Prompt
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
 @onready var _teammates: VBoxContainer = %Teammates
@@ -86,6 +96,10 @@ func _ready() -> void:
 	notice = strip.notice
 	strip.input_open = input_open
 	strip.list_open = func() -> bool: return list_open
+	prompt.input_open = input_open
+	prompt.list_open = func() -> bool: return list_open
+	prompt.to_hud = world_to_hud
+	prompt.avoid = panel_rects
 
 
 func _process(_delta: float) -> void:
@@ -99,6 +113,7 @@ func _input(event: InputEvent) -> void:
 	if next != device:
 		device = next
 		strip.set_device(device)
+		prompt.set_device(device)
 	if not event is InputEventMouseButton or not strip.accepts_input():
 		return
 	if event.is_action_pressed(InventoryStrip.NEXT_ACTION) or event.is_action_pressed(InventoryStrip.PREV_ACTION):
@@ -118,6 +133,36 @@ func input_open() -> bool:
 func set_screen_shown(value: bool) -> void:
 	screen_shown = value
 	strip.set_screen_shown(value)
+	prompt.screen_shown = value
+
+
+## A point of the world's canvas (the world view's pixels, camera applied) in HUD pixels.
+func world_to_hud(point: Vector2) -> Vector2:
+	if is_instance_valid(world_view):
+		return world_view.get_global_transform() * point
+	return point
+
+
+## The rects of every HUD panel on show and every piece of AVOID_GROUP, which world-anchored
+## marks keep clear of; the prompt's own panel is not one.
+func panel_rects() -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	_collect_panels(self, rects)
+	for node: Node in get_tree().get_nodes_in_group(AVOID_GROUP):
+		var piece := node as Control
+		if piece != null and is_ancestor_of(piece) and piece.is_visible_in_tree():
+			rects.append(piece.get_global_rect())
+	return rects
+
+
+func _collect_panels(node: Node, into: Array[Rect2]) -> void:
+	for child: Node in node.get_children():
+		if child == prompt:
+			continue
+		var box := child as PanelContainer
+		if box != null and box.theme_type_variation == HUD_PANEL and box.is_visible_in_tree():
+			into.append(box.get_global_rect())
+		_collect_panels(child, into)
 
 
 func refresh() -> void:
@@ -165,6 +210,7 @@ func _on_player_rebound(_old_peer: int, new_peer: int, player: PlayerBody) -> vo
 func _bind_local(player: PlayerBody) -> void:
 	meters.bind(player.meters)
 	strip.bind(player, session)
+	prompt.bind(player, session)
 
 
 # A name can arrive after its player spawned (a join during the run): the tags follow the roster.

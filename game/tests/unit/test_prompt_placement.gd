@@ -147,11 +147,13 @@ func test_at_most_240_px_wide_and_cut_with_an_ellipsis() -> void:
 	papo.global_position = spot + Vector2(4.0, 0.0)
 	_stand(body, spot)
 	var prompt := shell.hud.prompt
-	var line: String = prompt.lines()[0]
-	assert_true(line.begins_with("[E] Arrastrar a Papo"), line)
-	assert_true(line.ends_with("…"), "cut with an ellipsis: %s" % line)
-	assert_eq(line.length(), 30, "30 glyphs of 8 px")
-	assert_true(prompt.prompt_rect().size.x <= 240.0, "at most 240 px wide")
+	var lines := prompt.lines()
+	assert_eq(lines.size(), 2, "too wide for one line: the name goes on the next")
+	assert_eq(lines[0], "[E] Arrastrar a")
+	assert_true(lines[1].begins_with("Papo de los Palotes"), lines[1])
+	assert_true(lines[1].ends_with("…"), "still too wide: cut with an ellipsis: %s" % lines[1])
+	assert_eq(lines[1].length(), 30, "30 glyphs of 8 px")
+	assert_eq(prompt.prompt_rect().size, Vector2(240.0, 20.0), "at most 240 px wide, two 10 px lines")
 
 
 func test_near_each_view_edge_it_stays_inside_and_off_every_panel() -> void:

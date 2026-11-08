@@ -268,6 +268,7 @@ func _enter_run() -> void:
 	tint = TINT_SCENE.instantiate() as DayNightTint
 	_world.add_child(tint)
 	hud = HUD_SCENE.instantiate() as RunHud
+	hud.world_view = world_view
 	add_child(hud)
 	hud.bind(session, session.multiplayer.get_unique_id(), session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer)
 

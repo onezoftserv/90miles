@@ -43,3 +43,19 @@ func use(by: Node) -> void:
 ## button is held (dragging) override this.
 func release(_by: Node) -> void:
 	pass
+
+
+## The prompt id the HUD shows `by` (inventory-hud "Prompt verbs and targets"): `prompt_id`,
+## unless a kind's verb follows its state for that player (the crossing's lashing: tie or untie).
+func prompt_id_for(_by: Node) -> StringName:
+	return prompt_id
+
+
+## The content name the prompt names for `by` in `locale` (the item lying there, the site's
+## recipe, the creature), or "" for none. Asked of the owner, this node's parent, which names its
+## own content once per kind; kinds that are Interactables themselves override it.
+func prompt_target(by: Node, locale: String) -> String:
+	var owner_node := get_parent()
+	if owner_node != null and owner_node.has_method(&"prompt_target"):
+		return owner_node.call(&"prompt_target", by, locale)
+	return ""

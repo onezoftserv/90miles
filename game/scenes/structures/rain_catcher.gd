@@ -23,6 +23,14 @@ func _ready() -> void:
 	interactable.interacted.connect(_on_interacted)
 
 
+## The interact prompt names the item it yields.
+func prompt_target(_by: Node, locale: String) -> String:
+	var item: ItemData = null
+	if recipe != null:
+		item = GameState.content.get_entry(&"items", recipe.produces_item_id) as ItemData
+	return item.get_display_name(locale) if item != null else ""
+
+
 func on_built(built_recipe: RecipeData) -> void:
 	recipe = built_recipe
 

@@ -78,9 +78,14 @@ func _all() -> Array[Interactable]:
 	return found
 
 
+# The head of the prompt as one string: its key, verb and target, over two lines when too wide.
 func _first_line() -> String:
 	var lines := hud.prompt.lines()
-	return lines[0] if not lines.is_empty() else ""
+	if lines.is_empty():
+		return ""
+	if lines.size() > 1 and not lines[1].begins_with(HudText.load_default().line(&"missing")):
+		return "%s %s" % [lines[0], lines[1]]
+	return lines[0]
 
 
 func _palm(index: int) -> Palm:
@@ -187,6 +192,8 @@ func test_hidden_while_down_with_the_list_paused_under_a_screen_or_gone() -> voi
 
 func test_the_sandbars_prompts() -> void:
 	var body := _run(true)
+	# The creature spawner starts on the next frame.
+	await wait_process_frames(2)
 	var sand := _open_sand()
 	_stand(body, _pickup(&"knife").global_position)
 	assert_eq(_first_line(), "[E] Recoger Cuchillo")
@@ -203,6 +210,7 @@ func test_the_sandbars_prompts() -> void:
 	var catcher := _place(RAIN_CATCHER_SCENE, sand + Vector2(3.0 * TILE, 0.0))
 	_stand(body, catcher.global_position)
 	assert_eq(_first_line(), "[E] Tomar Vaso de agua de lluvia")
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Tomar", "Vaso de agua de lluvia"]), "32 glyphs: two lines, nothing cut")
 	var raft := _place(RAFT_SCENE, sand + Vector2(-3.0 * TILE, 0.0))
 	_stand(body, raft.global_position)
 	assert_eq(_first_line(), "[E] Zarpar en la balsa")
