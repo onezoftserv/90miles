@@ -29,6 +29,8 @@ Every behavior is tested with exactly 1 player, offline: a lone swimmer is circl
 
 ## Provisional decisions
 
+The owner confirmed these too, as they stand, on 2026-11-08; they stay tunable data in the creature `.tres` files.
+
 Not yet confirmed by the owner. Each is data or a named constant.
 
 - **D1** The crossing shark keeps the crossing's instant pass (strike or ram at the beat), then circles visually for its circle time.
