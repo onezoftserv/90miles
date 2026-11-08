@@ -352,6 +352,14 @@ func _on_crossing_ended(finished: CrossingResult, crossing: Crossing) -> void:
 	_check_run_over()
 
 
+# Whether `peer_id` rides a crossing this shell follows (crossing-late-join).
+func _in_crossing(peer_id: int) -> bool:
+	for node: Node in crossings:
+		if is_instance_valid(node) and (node as Crossing).peers().has(peer_id):
+			return true
+	return false
+
+
 # The next island is live: this is its node and its routes now.
 func _on_island_loaded(loaded: SandbarIsland) -> void:
 	island = loaded
