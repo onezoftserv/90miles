@@ -1,8 +1,8 @@
 ## 1. Snapshot and restore (offline)
 
-- [ ] 1.1 Write `test_crossing_snapshot.gd` (RED) and verify it fails. It covers: the round trip keeps every field, keeps maximum and value apart and keeps slot order; `from_dict` refuses each malformed field; a restore into a second session builds `Crossing<serial>` with the riders on sea ground, the camera kept to the sea, tied riders pinned and the host's positions; restoring twice keeps one node; a 1-player offline session restores at its elapsed time.
-- [ ] 1.2 Add `CrossingSnapshot` (`scripts/crossing/crossing_snapshot.gd`: `of`, `to_dict`, `from_dict`) and `Crossing.restore` / `apply_snapshot`, factor `receive_state`'s body into `_apply_state`, and verify 1.1 passes and `test_crossing.gd`, `test_crossing_net.gd` and `test_reconnect_crossing.gd` stay green.
-- [ ] 1.3 Verify the import, the smoke run and GUT pass.
+- [x] 1.1 Write `test_crossing_snapshot.gd` (RED) and verify it fails. It covers: the round trip keeps every field, keeps maximum and value apart and keeps slot order; `from_dict` refuses each malformed field; a restore into a second session builds `Crossing<serial>` with the riders on sea ground, the camera kept to the sea, tied riders pinned and the host's positions; restoring twice keeps one node; a 1-player offline session restores at its elapsed time.
+- [x] 1.2 Add `CrossingSnapshot` (`scripts/crossing/crossing_snapshot.gd`: `of`, `to_dict`, `from_dict`) and `Crossing.restore` / `apply_snapshot`, factor `receive_state`'s body into `_apply_state`, and verify 1.1 passes and the crossing suites (`test_crossing_*.gd`) and `test_reconnect_crossing.gd` stay green.
+- [x] 1.3 Verify the import, the smoke run and GUT pass.
 
 ## 2. Recipients and the progress message
 
