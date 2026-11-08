@@ -53,7 +53,7 @@ No status takes health today. Bleeding (the only status the game sets) is a flag
 
 ## Provisional decisions
 
-Not yet confirmed by the owner. Each is data or a named constant.
+Confirmed by the owner as they stand on 2026-11-08, at the archive. Each is data or a named constant. The 20 lines carry the owner's review of 2026-11-08 (two drowning lines rewritten, ETECSA named in a lost-signal line, the Cuban contractions) and stay drafts for the voice pass.
 
 - The 20 line texts (split thirst 4, drowning 4, reef_shark 4, land_crab 2, removed 3, other 3), at most 120 characters per language.
 - Panel 576x328 at (32, 16), scroll area at least 200 px, row separation 6, wrap at about 68 glyphs.
