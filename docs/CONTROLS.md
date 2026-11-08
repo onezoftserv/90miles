@@ -18,8 +18,8 @@ No key, mouse button or gamepad button is bound to two of these actions (`test_i
 | `slot_10` | Select screen slot 10 | 0 | none |
 | `slot_11` | Select screen slot 11 | - (minus) | none |
 | `slot_12` | Select screen slot 12 | = (equal) | none |
-| `slot_next` | Next slot that holds something (crafting list: next row) | Mouse wheel down | D-pad right (button 14) |
-| `slot_prev` | Previous slot that holds something (crafting list: previous row) | Mouse wheel up | D-pad left (button 13) |
+| `slot_next` | Next slot that holds something (while the crafting list is open the mouse wheel moves its row down instead; D-pad right still moves the slot) | Mouse wheel down | D-pad right (button 14) |
+| `slot_prev` | Previous slot that holds something (while the crafting list is open the mouse wheel moves its row up instead; D-pad left still moves the slot) | Mouse wheel up | D-pad left (button 13) |
 | `list_up` | Crafting list: row up | Arrow up | D-pad up (button 11) |
 | `list_down` | Crafting list: row down | Arrow down | D-pad down (button 12) |
 | `quick_chat` | Quick-chat wheel while held (co-op only) | Q | RB (button 10) |
