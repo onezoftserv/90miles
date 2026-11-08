@@ -8,6 +8,10 @@ During a crossing, only the host sees the reef shark. `CreatureThreats._show_sha
 - **The crossing's shark is a passing creature, not one of the island's.** A creature with a lifetime (`Creature.is_passing()`) is skipped by the island's creature spawner. So no phase change despawns it early, a fire never counts it as fire-shy, and it never stands in for an island shark.
 - **Unchanged:** the shark pass's choice and numbers (`bite_swimmer`, `hit_vessel`), its circle time (6 s, the low end of `reef_shark.tres`'s range, as today), and solo play. One player offline spawns and frees the same shark on the offline peer.
 
+## Confirmed by the owner (2026-11-08)
+
+- Build it ("Yes, queue both (Recommended)"): every peer, and a late joiner, sees the crossing's reef shark, which passes through the session's entity spawner and is not one of the island's creatures. No numbers changed, so nothing else was asked.
+
 ## Capabilities
 
 ### New Capabilities
