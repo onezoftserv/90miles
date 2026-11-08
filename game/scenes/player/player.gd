@@ -35,6 +35,9 @@ var downed: bool = false
 var left_island: bool = false
 ## A tied-down rider (crossing) cannot move but still interacts.
 var pinned: bool = false
+## A HUD panel holds the interact button (inventory-hud's crafting list, until interact is let go
+## after it closes): the local intent carries no interact press meanwhile.
+var hud_holds_interact: bool = false
 ## Scales the energy swimming spends: 0 where the crossing pays its own pace drain instead.
 var swim_energy_factor: float = 1.0
 var interaction_hold: InteractionHold = InteractionHold.new()

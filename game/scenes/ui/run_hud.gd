@@ -9,7 +9,8 @@ extends CanvasLayer
 ## over what the local player can reach, mapped from the world view into the HUD (`world_to_hud`)
 ## and kept off every HUD panel (`panel_rects`). Key labels follow the last device the player used
 ## (`device`). While the pause menu, the run summary or the host-lost screen is up, the HUD takes
-## no input (`input_open`); the shell says when a screen shows.
+## no input (`input_open`); the shell says when a screen shows. The local player's press on a
+## workbench opens the crafting list (`craft_list`), which holds the input while open.
 
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
@@ -47,6 +48,7 @@ var world_view: Control = null
 @onready var meters: MetersHud = %Meters
 @onready var strip: InventoryStrip = %Strip
 @onready var prompt: InteractPrompt = %Prompt
+@onready var craft_list: CraftList = %CraftList
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
 @onready var _teammates: VBoxContainer = %Teammates
@@ -100,6 +102,11 @@ func _ready() -> void:
 	prompt.list_open = func() -> bool: return list_open
 	prompt.to_hud = world_to_hud
 	prompt.avoid = panel_rects
+	craft_list.notice = notice
+	craft_list.input_open = input_open
+	craft_list.opened.connect(func() -> void: list_open = true)
+	craft_list.closed.connect(func() -> void: list_open = false)
+	prompt.bench_pressed.connect(craft_list.open)
 
 
 func _process(_delta: float) -> void:
@@ -114,10 +121,22 @@ func _input(event: InputEvent) -> void:
 		device = next
 		strip.set_device(device)
 		prompt.set_device(device)
-	if not event is InputEventMouseButton or not strip.accepts_input():
+	if not event is InputEventMouseButton:
 		return
-	if event.is_action_pressed(InventoryStrip.NEXT_ACTION) or event.is_action_pressed(InventoryStrip.PREV_ACTION):
-		strip.step(1 if event.is_action_pressed(InventoryStrip.NEXT_ACTION) else -1)
+	var direction: int = 0
+	if event.is_action_pressed(InventoryStrip.NEXT_ACTION):
+		direction = 1
+	elif event.is_action_pressed(InventoryStrip.PREV_ACTION):
+		direction = -1
+	if direction == 0:
+		return
+	# The wheel moves the crafting list while it is open, the strip's selection otherwise.
+	if craft_list.is_open():
+		if craft_list.accepts_input():
+			craft_list.step(direction)
+			get_viewport().set_input_as_handled()
+	elif strip.accepts_input():
+		strip.step(direction)
 		get_viewport().set_input_as_handled()
 
 
@@ -134,6 +153,7 @@ func set_screen_shown(value: bool) -> void:
 	screen_shown = value
 	strip.set_screen_shown(value)
 	prompt.screen_shown = value
+	craft_list.set_screen_shown(value)
 
 
 ## A point of the world's canvas (the world view's pixels, camera applied) in HUD pixels.
@@ -157,7 +177,7 @@ func panel_rects() -> Array[Rect2]:
 
 func _collect_panels(node: Node, into: Array[Rect2]) -> void:
 	for child: Node in node.get_children():
-		if child == prompt:
+		if child == prompt or child == craft_list:
 			continue
 		var box := child as PanelContainer
 		if box != null and box.theme_type_variation == HUD_PANEL and box.is_visible_in_tree():
@@ -211,6 +231,7 @@ func _bind_local(player: PlayerBody) -> void:
 	meters.bind(player.meters)
 	strip.bind(player, session)
 	prompt.bind(player, session)
+	craft_list.bind(player, session)
 
 
 # A name can arrive after its player spawned (a join during the run): the tags follow the roster.

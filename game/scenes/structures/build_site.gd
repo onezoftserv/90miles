@@ -7,6 +7,8 @@ extends Node2D
 
 signal completed(structure: Node)
 
+## Every build site joins it, so the HUD and the host can find the unfinished ones.
+const GROUP: StringName = &"build_sites"
 const STRUCTURE_PATH: String = "res://scenes/structures/%s.tscn"
 ## A synced site pushes its state to the clients each time progress moved this much (1/120 of
 ## the build; provisional).
@@ -27,6 +29,10 @@ var _progress: float = 0.0
 var _pushed_progress: float = 0.0
 
 @onready var interactable: Interactable = $Interactable
+
+
+func _enter_tree() -> void:
+	add_to_group(GROUP)
 
 
 func _ready() -> void:

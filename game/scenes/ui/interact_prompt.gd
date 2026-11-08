@@ -23,6 +23,9 @@ extends Control
 ## a line per missing input or tag, "Falta: Madera de la costa x4" first, or, once every input is
 ## in, the shared progress as a bar with its percentage.
 
+## The local player's press landed on a workbench: the HUD opens the crafting list there.
+signal bench_pressed(bench: Workbench)
+
 const INTERACT_ACTION: StringName = &"interact"
 const KEY_FORMAT: String = "[%s]"
 const LINE_HEIGHT: float = 10.0
@@ -247,6 +250,9 @@ func _lock_pressed() -> void:
 	if pressed_on != null and pressed_on.enabled:
 		target = pressed_on
 		_press.lock(target)
+		var bench := target.get_parent() as Workbench
+		if bench != null:
+			bench_pressed.emit(bench)
 
 
 # What the host's press would reach now: the picker's choice among this peer's interactables.
