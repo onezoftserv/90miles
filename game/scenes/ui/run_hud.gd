@@ -10,7 +10,8 @@ extends CanvasLayer
 ## and kept off every HUD panel (`panel_rects`). Key labels follow the last device the player used
 ## (`device`). While the pause menu, the run summary or the host-lost screen is up, the HUD takes
 ## no input (`input_open`); the shell says when a screen shows. The local player's press on a
-## workbench opens the crafting list (`craft_list`), which holds the input while open.
+## workbench opens the crafting list (`craft_list`), which holds the input while open. A closed-eye
+## mark shows over every hidden player (`marks`), placed like the prompt.
 
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
@@ -49,6 +50,7 @@ var world_view: Control = null
 @onready var strip: InventoryStrip = %Strip
 @onready var prompt: InteractPrompt = %Prompt
 @onready var craft_list: CraftList = %CraftList
+@onready var marks: BodyMarks = %Marks
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
 @onready var _teammates: VBoxContainer = %Teammates
@@ -89,6 +91,7 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	session.player_spawned.connect(func(peer_id: int, _body: PlayerBody) -> void: _follow(peer_id))
 	session.roster_updated.connect(_rename_tags)
 	session.player_rebound.connect(_on_player_rebound)
+	marks.bind(session)
 	for peer_id: int in session.peer_ids():
 		_follow(peer_id)
 	refresh()
@@ -107,6 +110,7 @@ func _ready() -> void:
 	craft_list.opened.connect(func() -> void: list_open = true)
 	craft_list.closed.connect(func() -> void: list_open = false)
 	prompt.bench_pressed.connect(craft_list.open)
+	marks.to_hud = world_to_hud
 
 
 func _process(_delta: float) -> void:
@@ -154,6 +158,7 @@ func set_screen_shown(value: bool) -> void:
 	strip.set_screen_shown(value)
 	prompt.screen_shown = value
 	craft_list.set_screen_shown(value)
+	marks.screen_shown = value
 
 
 ## A point of the world's canvas (the world view's pixels, camera applied) in HUD pixels.

@@ -65,8 +65,8 @@ RED means the new tests are written first and seen failing; GREEN means the smal
 
 ## 7. Crouch cue and hidden mark
 
-- [ ] 7.1 RED `test_body_look.gd` (solo): holding crouch draws the body 10 px tall with its bottom edge unchanged and 16 px again on release; crouching on brush shows the mark in the HUD layer at its D1 place and stepping onto sand hides it; the mark's colours are the same at Noche with Suave on; a submerged player has no mark.
-- [ ] 7.2 GREEN `game/scripts/player/body_look.gd` (`BodyLook`) in `player.tscn` and `game/scenes/ui/body_marks.gd` (`BodyMarks`) in `RunHud`; verify 7.1 and `test_player_scene.gd` pass.
+- [x] 7.1 RED `test_body_look.gd` (solo): holding crouch draws the body 10 px tall with its bottom edge unchanged and 16 px again on release; crouching on brush shows the mark in the HUD layer at its D1 place and stepping onto sand hides it; the mark's colours are the same at Noche with Suave on; a submerged player has no mark.
+- [x] 7.2 GREEN `game/scripts/player/body_look.gd` (`BodyLook`) in `player.tscn` and `game/scenes/ui/body_marks.gd` (`BodyMarks`) in `RunHud`; verify 7.1 and `test_player_scene.gd` pass.
 - [ ] 7.3 RED then GREEN `test_body_look_net.gd` (`NetHarness`): the host draws a crouching client's player 10 px tall; the client shows the mark over the host's player hidden in brush.
 - [ ] 7.4 Verify import, smoke and GUT pass.
 

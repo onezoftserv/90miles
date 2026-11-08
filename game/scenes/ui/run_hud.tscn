@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/inventory_strip.tscn" id="4_strip"]
 [ext_resource type="PackedScene" path="res://scenes/ui/interact_prompt.tscn" id="5_prompt"]
 [ext_resource type="PackedScene" path="res://scenes/ui/craft_list.tscn" id="6_list"]
+[ext_resource type="Script" path="res://scenes/ui/body_marks.gd" id="7_marks"]
 
 [node name="RunHud" type="CanvasLayer"]
 layer = 3
@@ -42,6 +43,17 @@ theme_type_variation = &"HudPanel"
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 2
+
+[node name="Marks" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("7_marks")
 
 [node name="Strip" parent="." instance=ExtResource("4_strip")]
 unique_name_in_owner = true
