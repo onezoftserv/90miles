@@ -25,6 +25,8 @@ One offline player spawns 2 tiles from the hut and walks to everything: every pa
 
 ## Provisional decisions
 
+The owner confirmed these as they stand on 2026-11-08, with the open crescent and the chained spawn rule (each spawn 20–30 tiles from the next in join order).
+
 - 80×72 grid, mid radius 20.6, band about 10, 250° of arc (55° mouth each side of east), 991 land tiles, all cell positions.
 - Walk bands in the 1-player test (palms 6–11 s, raft site 4.5–8 s, pools 13–17.5 s, far horn 15 s or more) and the 940–1,100 land band.
 - The camera is unchanged (it clamps to the grid): the crescent spans about 41×51 tiles, so there are about 20 tiles of open sea on each side.
