@@ -88,30 +88,24 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 
 - [ ] `npcs-dialogue`: NPC resource, dialogue UI, quests, companions, found texts
 - [ ] Handwritten lines for all minor NPCs, story beats, endings (Spanish, then English)
+- [ ] Handwritten lines for the important NPCs and the texts found every run (v1 has no AI dialogue; Spanish, then English)
 - [ ] Companions: Dayana, Papo, El Chino with needs and skills; Yunior
 - [ ] Ramón, Caridad, Rodríguez quests and ending flags
 - [ ] Endings: five scenes with slots; `endings-progression` part 2
 - [ ] Keepsakes, Experiencia carry-over and levels, Experiencia point shop
 - [ ] Backgrounds: six, with starting items and skill growth
 
-## 8. Milestone F — AI dialogue
+## 8. Milestone F — AI dialogue: moved to v2
 
-- [ ] `backend/`: SAM template, Lambda, Bedrock Haiku 4.5 call with JSON schema, DynamoDB cache, API key issuance, rate limits
-- [ ] `backend/prompts/style.md` and `slang.md`; NPC profiles for the 7 important NPCs; text profiles for the 4 important texts
-- [ ] `backend/mock_server.py` for offline dev
-- [ ] `DialogueService` client with 3 s timeout and fallback
-- [ ] Test Haiku's Cuban Spanish on 50 sample contexts; iterate the style guide
-- [ ] Cost check: ≤ $0.05 per run
+Decided by the owner on 2026-11-08: the AI dialogue backend is not part of v1. Its tasks are in "v2" at the end of this file. v1 ships handwritten lines only (Milestone E).
 
-## 9. Milestone G — Voice and polish
+## 9. Milestone G — Polish (v1)
 
-- [ ] Record 6–8 Cuban voices (written permission); clone with Chatterbox; generate all handwritten lines (`tools/gen_voice.py`)
-- [ ] Emotion grunt clips for AI lines; Kokoro runtime TTS behind a flag
+Voice acting, cloned voices, runtime TTS, challenges, seeded and daily runs, and Steam joining moved to v2 (owner, 2026-11-08). These stay in v1:
+
 - [ ] Music: Músico songs, ending themes (CC-BY or commissioned)
 - [ ] Profanity toggle, English localization pass
 - [ ] Set pieces (Brogue machines): six from `docs/ISLANDS.md`
-- [ ] Challenges, seeds, daily run
-- [ ] Steam/relay joining (post-v1)
 
 ## 10. Content batches (data entry, parallel to milestones C–E)
 
@@ -140,6 +134,24 @@ Each review is its own OpenSpec change; findings go back into the docs and the a
 - [ ] Decide character height: 16×16 (today's Kenney bases) or 16×24 (same 16×16 tiles, taller characters with room for faces and expressions). Compare side-by-side mockups at 1920×1080 (3×) and 1366×768 (2×), as in the 2026-11-05 fullscreen previews, then update `CLAUDE.md`, `docs/ASSETS.md` and the placeholder sprite to the choice
 - [ ] Decide per missing or poor-fit asset: a better free asset (CC0 preferred, CC-BY credited) or our own pixel art, with a shared palette and an animation list (walk cycles at the chosen character height)
 - [ ] Create or commission the "make it ourselves" art, commit it to tracked folders with its license, and update `game/assets/CREDITS.md` and `docs/ASSETS.md`
+
+## v2 (after the first release; decided by the owner on 2026-11-08)
+
+AI dialogue (was Milestone F):
+- [ ] `backend/`: SAM template, Lambda, Bedrock Haiku 4.5 call with JSON schema, DynamoDB cache, API key issuance, rate limits
+- [ ] `backend/prompts/style.md` and `slang.md`; NPC profiles for the 7 important NPCs; text profiles for the 4 important texts
+- [ ] `backend/mock_server.py` for offline dev
+- [ ] `DialogueService` client with 3 s timeout and fallback
+- [ ] Test Haiku's Cuban Spanish on 50 sample contexts; iterate the style guide
+- [ ] Cost check: ≤ $0.05 per run
+
+Voice (was in Milestone G):
+- [ ] Record 6–8 Cuban voices (written permission); clone with Chatterbox; generate all handwritten lines (`tools/gen_voice.py`)
+- [ ] Emotion grunt clips for AI lines; Kokoro runtime TTS behind a flag
+
+Other (was in Milestone G):
+- [ ] Challenges, seeds, daily run
+- [ ] Steam/relay joining
 
 ## Done
 

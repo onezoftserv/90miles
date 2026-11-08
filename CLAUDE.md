@@ -33,11 +33,13 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 - Spanish first. English is a translation that keeps key slang untranslated.
 - Cuban voice: slang, political satire and swearing are intended. Satire targets the system and daily life, never invented quotes from real politicians.
 - Handwritten: main story beats, boss scenes, endings, minor NPC lines (`game/resources/dialogue/*.tres`).
-- AI-generated (Claude Haiku 4.5 on Bedrock, via `backend/`): important NPCs and texts found every run. The prompt and slang glossary live in `backend/prompts/`. Always ship handwritten fallback lines for offline play.
+- v1 is handwritten only: the important NPCs and the texts found every run included (owner decision, 2026-11-08). AI-generated lines are v2.
+- AI-generated, in v2 (Claude Haiku 4.5 on Bedrock, via `backend/`): important NPCs and texts found every run. The prompt and slang glossary live in `backend/prompts/`. Always ship handwritten fallback lines for offline play.
 - Every generated line returns JSON `{speaker, text, emotion}`; the game never renders raw model output.
 
-## Backend
+## Backend (v2)
 
+- Not part of v1 (owner decision, 2026-11-08); nothing in `game/` may depend on it in v1.
 - `backend/` is an AWS SAM app: API Gateway → Lambda (Python 3.12) → Bedrock `anthropic.claude-haiku-4-5`.
 - AWS credentials never enter `game/`. Per-player rate limiting and response caching (keyed by game-state hash) are mandatory.
 
