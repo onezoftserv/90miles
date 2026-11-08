@@ -98,7 +98,7 @@ func test_sandbar_has_6_palms_and_10_coconuts() -> void:
 	assert_eq(built.palms.size(), 6)
 	assert_eq(built.palm_coconuts, [2, 2, 2, 2, 1, 1] as Array[int])
 	assert_eq(built.problems().size(), 0)
-	assert_eq(built.size, Vector2i(64, 40))
+	assert_eq(built.size, Vector2i(80, 72))
 
 
 func test_only_the_hut_is_shaded() -> void:
@@ -161,13 +161,22 @@ func test_land_share_and_inland_distance() -> void:
 		assert_lte(nearest, 6.0, "%s is within 6 tiles of water" % cell)
 
 
-func test_coop_spawns_are_10_to_20_tiles_apart() -> void:
+func test_a_thousand_land_cells() -> void:
+	var land: int = 0
+	for cell: Vector2i in built.terrain.cells:
+		if _land(cell):
+			land += 1
+	assert_between(land, 940, 1100)
+
+
+## Each spawn is 20-30 tiles from the next in join order; the first and the last may be far apart.
+func test_coop_spawns_are_20_to_30_tiles_from_the_next() -> void:
 	assert_eq(built.coop_spawns.size(), 4)
 	for cell: Vector2i in built.coop_spawns:
 		assert_true(_land(cell))
-	for a: int in 4:
-		for b: int in range(a + 1, 4):
-			assert_between(_tiles(built.coop_spawns[a], built.coop_spawns[b]), 10.0, 20.0, "spawns %d and %d" % [a + 1, b + 1])
+	for a: int in 3:
+		assert_between(_tiles(built.coop_spawns[a], built.coop_spawns[a + 1]), 20.0, 30.0, "spawns %d and %d" % [a + 1, a + 2])
+	assert_gt(_tiles(built.coop_spawns[0], built.coop_spawns[3]), 30.0, "spawns 1 and 4 are spread along the arc")
 
 
 func test_a_solo_spawn_near_the_hut() -> void:
@@ -182,7 +191,8 @@ func test_a_solo_spawn_near_the_hut() -> void:
 func test_everything_is_in_reach_of_every_spawn() -> void:
 	var starts: Array[Vector2i] = [built.solo_spawn]
 	starts.append_array(built.coop_spawns)
-	var goals: Array[Vector2i] = [built.workbench]
+	assert_ne(built.raft_site, Vector2i(-1, -1))
+	var goals: Array[Vector2i] = [built.workbench, built.raft_site]
 	goals.append_array(built.palms)
 	goals.append_array(built.tide_pools)
 	for pickup: Dictionary in built.pickups:
@@ -191,3 +201,56 @@ func test_everything_is_in_reach_of_every_spawn() -> void:
 		var reach: Dictionary[Vector2i, bool] = built.reachable_from(start)
 		for goal: Vector2i in goals:
 			assert_true(reach.has(goal), "%s reaches %s" % [start, goal])
+
+
+func test_the_pois_are_spread_along_the_crescent() -> void:
+	var apart: float = 99.0
+	for palm: Vector2i in built.palms:
+		for cell: Vector2i in built.hut_cells:
+			apart = minf(apart, _tiles(palm, cell))
+	assert_gte(apart, 20.0, "the nearest palm is 20 tiles or more from the hut")
+	var nearest: float = 99.0
+	for pickup: Dictionary in built.pickups:
+		if pickup["group"] == &"flotsam":
+			nearest = minf(nearest, _tiles(pickup["cell"], built.raft_site))
+	assert_lte(nearest, 6.0, "the raft site is on the beach where the flotsam lands")
+
+
+## Shortest walk over land and shallows, in tiles (the A* path, 8 ways, no corner cutting).
+func _walk_tiles(astar: AStarGrid2D, from: Vector2i, to: Vector2i) -> float:
+	var path: PackedVector2Array = astar.get_point_path(from, to)
+	var total: float = 0.0
+	for i: int in range(1, path.size()):
+		total += path[i - 1].distance_to(path[i])
+	return total
+
+
+func _walk_grid() -> AStarGrid2D:
+	var astar := AStarGrid2D.new()
+	astar.region = Rect2i(Vector2i.ZERO, built.size)
+	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	astar.default_compute_heuristic = AStarGrid2D.HEURISTIC_EUCLIDEAN
+	astar.default_estimate_heuristic = AStarGrid2D.HEURISTIC_EUCLIDEAN
+	astar.update()
+	for y: int in built.size.y:
+		for x: int in built.size.x:
+			var cell := Vector2i(x, y)
+			astar.set_point_solid(cell, not IslandLayout.WALKABLE.has(built.terrain.terrain_at(cell)))
+	return astar
+
+
+## 1 player, offline: from the solo spawn the whole island is a walk of seconds at WALK_SPEED.
+func test_a_solo_player_walks_the_crescent() -> void:
+	var astar := _walk_grid()
+	var solo: Vector2i = built.solo_spawn
+	var speed: float = MovementModel.WALK_SPEED
+	for palm: Vector2i in built.palms:
+		assert_between(_walk_tiles(astar, solo, palm) / speed, 6.0, 11.0, "palm %s in seconds" % palm)
+	assert_between(_walk_tiles(astar, solo, built.raft_site) / speed, 4.5, 8.0, "the raft site in seconds")
+	for pool: Vector2i in built.tide_pools:
+		assert_between(_walk_tiles(astar, solo, pool) / speed, 13.0, 17.5, "tide pool %s in seconds" % pool)
+	var farthest: float = 0.0
+	for cell: Vector2i in built.reachable_from(solo):
+		if _land(cell) and _tiles(cell, solo) >= 30.0:
+			farthest = maxf(farthest, _walk_tiles(astar, solo, cell))
+	assert_gte(farthest / speed, 15.0, "the far horn is a 15 s walk or more")

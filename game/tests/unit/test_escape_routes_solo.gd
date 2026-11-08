@@ -1,6 +1,6 @@
 extends GutTest
 ## escape-routes with exactly 1 player, offline: build and launch the raft, swim alone, the
-## discovery of the swim, and the run ending when the only player leaves.
+## discovery of the swim, and the run ending when the only player's crossing ends.
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
@@ -106,8 +106,7 @@ func test_solo_swim_starts_in_calm_at_energy_100_and_keeps_the_binoculars() -> v
 	assert_eq(started[0][0], &"binoculars_swim")
 	assert_eq(started[0][1], [1])
 	assert_eq(body.inventory.count_id(&"binoculars"), 1)
-	assert_true(routes.has_left(1))
-	assert_false(body.visible, "gone from the island")
+	assert_true(routes.has_left(1), "gone from the island")
 
 
 func test_the_swim_is_discovered_when_a_squall_start_ends() -> void:
@@ -131,6 +130,10 @@ func test_solo_leaving_by_raft_ends_the_run_with_the_summary() -> void:
 	site.deposit(body)
 	site.work(1.0)
 	(shell.session.get_node("Raft") as Raft).interactable.interacted.emit(body)
+	assert_eq(shell.flow, GameShell.Flow.RUN, "the crossing keeps the run open")
+	var crossing := shell.crossings[0] as Crossing
+	crossing.plan = CrossingPlan.create(60.0)
+	CrossingRig.run(crossing, 60.0)
 	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
 	var rows: Array[String] = (shell.screen as SummaryScreen).rows()
 	assert_eq(rows.size(), 1)

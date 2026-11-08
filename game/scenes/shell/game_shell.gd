@@ -46,9 +46,13 @@ var session: CoopSession
 var island: SandbarIsland
 ## Tints the world view while a run is on, or null.
 var tint: DayNightTint
+## Crossings still running, and the results of those that ended (kept until arrival exists).
+var crossings: Array[Node] = []
+var crossing_results: Array[RefCounted] = []
 ## Seconds, for the run's length. Tests replace it.
 var clock: Callable
 var _run_started_s: float = 0.0
+var _crossing_rng := RandomNumberGenerator.new()
 
 ## The world's own 640×360 view (ui-shell "Pixel filter"); the HUD and screens are outside it.
 @onready var world_view: SubViewportContainer = $WorldView
@@ -273,6 +277,8 @@ func _end_run() -> void:
 	if hud != null:
 		hud.free()
 		hud = null
+	crossings.clear()
+	crossing_results.clear()
 	if session != null:
 		session.free()
 		session = null
@@ -294,9 +300,37 @@ func _on_player_spawned(_peer_id: int, body: PlayerBody) -> void:
 	body.camera.limit_bottom = island.bounds.end.y
 
 
-# Until the crossing exists the riders have already left (CrossingStub); the run may be over.
-func _on_route_started(_route_id: StringName, _peer_ids: Array[int]) -> void:
+# The riders of a started route enter the crossing on every peer; it keeps the run open until it
+# ends.
+func _on_route_started(route_id: StringName, peer_ids: Array[int]) -> void:
+	var routes := session.get_node(^"Routes") as IslandRoutes
+	var route := GameState.content.get_entry(&"routes", route_id) as RouteData
+	if route == null:
+		return
+	var integrity: float = routes.departure_integrity.get(route_id, float(route.vessel_integrity))
+	var crossing := Crossing.launch(session, route, peer_ids, integrity, DataEnums.DistanceBand.COAST, _crossing_rng)
+	crossing.ended.connect(_on_crossing_ended.bind(crossing))
+	crossings.append(crossing)
 	_check_run_over()
+
+
+# The riders leave play until arrival on the next island exists.
+func _on_crossing_ended(finished: CrossingResult, crossing: Crossing) -> void:
+	crossings.erase(crossing)
+	crossing_results.append(finished)
+	for peer_id: int in finished.riders:
+		var rider := session.body(peer_id) if session != null else null
+		if rider != null:
+			ArrivalStub.hold(rider)
+	crossing.queue_free()
+	_check_run_over()
+
+
+func _in_crossing(peer_id: int) -> bool:
+	for node: Node in crossings:
+		if is_instance_valid(node) and (node as Crossing).peers().has(peer_id):
+			return true
+	return false
 
 
 # The run ends when every player in it is dead or has left by a route. A dropped player keeps it
@@ -309,7 +343,7 @@ func _check_run_over() -> void:
 	for peer_id: int in session.peer_ids():
 		var dead: bool = session.body(peer_id).meters.dead
 		var left_by: StringName = routes.route_left_by(peer_id)
-		if not dead and left_by.is_empty():
+		if not dead and (left_by.is_empty() or _in_crossing(peer_id)):
 			return
 		var entry: Dictionary = {"name": session.player_name(peer_id), "dead": dead}
 		if not dead:

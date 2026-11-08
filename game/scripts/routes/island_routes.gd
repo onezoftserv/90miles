@@ -2,7 +2,7 @@ class_name IslandRoutes
 extends Node
 ## The routes an island offers (escape-routes). The level adds one at the path `Routes` of the
 ## session on every peer. The host starts a route for a sender, picks the riders and tells the
-## clients; the riders leave the island (CrossingStub) and everyone else stays, with every route
+## clients; the riders leave the island into the crossing and everyone else stays, with every route
 ## still on offer. Discovery is host-only state; no map UI reads it yet.
 
 ## Every peer: `route_id` started with these riders.
@@ -17,6 +17,8 @@ var offered: Array[RouteData] = []
 var discovered: Dictionary[StringName, bool] = {}
 ## Peer id -> the route that player left by.
 var departed: Dictionary[int, StringName] = {}
+## Host: route id -> integrity of the vessel that left (the sandbar frees the raft as the route starts).
+var departure_integrity: Dictionary[StringName, float] = {}
 
 var _session: CoopSession
 
@@ -81,9 +83,11 @@ func start_for(peer: int, route_id: StringName) -> bool:
 	var peers: Array[int] = []
 	for rider: PlayerBody in riders:
 		peers.append(peer_of(rider))
-	_depart(route_id, peers)
+	departure_integrity[route_id] = _structure_integrity(route)
+	# Clients hear first: their crossing must exist before the host's plan reaches it.
 	if not _session.multiplayer.get_peers().is_empty():
 		receive_departure.rpc(route_id, peers)
+	_depart(route_id, peers)
 	return true
 
 
@@ -110,9 +114,6 @@ func receive_departure(route_id: StringName, peer_ids: Array[int]) -> void:
 func _depart(route_id: StringName, peer_ids: Array[int]) -> void:
 	for peer: int in peer_ids:
 		departed[peer] = route_id
-		var rider := _session.body(peer)
-		if rider != null:
-			CrossingStub.depart(rider)
 	route_started.emit(route_id, peer_ids)
 
 
@@ -134,6 +135,15 @@ func _anchor(route: RouteData, sender: PlayerBody) -> Variant:
 			var reach_px: float = InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX
 			return structure.global_position if sender.global_position.distance_to(structure.global_position) <= reach_px else null
 	return null
+
+
+# The integrity of the built structure a BUILD_SITE route starts from; the route's own otherwise.
+func _structure_integrity(route: RouteData) -> float:
+	if route.starter_kind == RouteData.StarterKind.BUILD_SITE:
+		for node: Node in get_tree().get_nodes_in_group(PlayerBody.STRUCTURE_GROUP):
+			if node.get_meta(&"recipe_id", &"") == route.starter_id and node.get(&"integrity") is float:
+				return node.get(&"integrity")
+	return float(route.vessel_integrity)
 
 
 func _on_island() -> Array[PlayerBody]:

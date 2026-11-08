@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CrossingTuning" format=3]
+
+[ext_resource type="Script" path="res://scripts/crossing/crossing_tuning.gd" id="1_tuning"]
+
+[resource]
+script = ExtResource("1_tuning")
+squall_hit = 30.0
+shark_hit = 20.0
+rock_hit = 40.0
+fall_in_energy = 10.0
+pace_drain_per_s = 3.0
+drown_health_per_s = 10.0
+tie_hold_s = 1.0
+pull_hold_s = 2.0
+climb_hold_s = 3.0
+reach_tiles = 1.0
+running_squall_grace_s = 10.0
+shark_swimmer_damage = 25.0
+shark_energy_threshold = 20.0
+scroll_tiles_per_s = 2.0
+shark_chance = Dictionary[int, float]({
+0: 0.5
+})
+rock_chance = Dictionary[int, float]({
+0: 0.25
+})
+event_margin_s = 10.0

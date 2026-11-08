@@ -33,6 +33,10 @@ var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
 var downed: bool = false
 ## The player left the island by a route (escape-routes): hidden, not simulated, not ticked.
 var left_island: bool = false
+## A tied-down rider (crossing) cannot move but still interacts.
+var pinned: bool = false
+## Scales the energy swimming spends: 0 where the crossing pays its own pace drain instead.
+var swim_energy_factor: float = 1.0
 var interaction_hold: InteractionHold = InteractionHold.new()
 ## False once coop-networking drives the body: PlayerNet then steps it per intent (host),
 ## predicts it (owning client) or draws it from host states (other clients).
@@ -92,8 +96,10 @@ func advance(delta: float, with_interaction: bool = true) -> void:
 		if with_interaction:
 			_update_interaction(delta)
 		var cell := cell()
-		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, intent, delta, meters.speed_factor())
-		meters.spend_energy(result.energy_spent)
+		var step_intent: MoveIntent = MoveIntent.create(Vector2.ZERO, false, false, intent.interact_held) if pinned else intent
+		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, step_intent, delta, meters.speed_factor())
+		var swimming: bool = result.movement == MovementStep.Move.SWIM or result.movement == MovementStep.Move.DIVE
+		meters.spend_energy(result.energy_spent * (swim_energy_factor if swimming else 1.0))
 	movement_state = result.movement
 	stealth_state = result.stealth
 	velocity = result.velocity * TILE_SIZE

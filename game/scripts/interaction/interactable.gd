@@ -21,6 +21,12 @@ func _enter_tree() -> void:
 	add_to_group(GROUP)
 
 
+## Whether `by` may be offered this interactable (the picker asks). Some belong to one player or
+## to everyone else (a swimmer's climb point, a rescue handle).
+func usable_by(_by: Node) -> bool:
+	return true
+
+
 ## Called when a player completes the interaction.
 func use(by: Node) -> void:
 	if enabled:

@@ -13,17 +13,17 @@ Tick when the file exists and loads in Godot.
 - [ ] birds (4, content-batch-12): galleguito · pajarito · pajaro_bobo · rabihorcado
 - [ ] boss_cutter · boss_old_crocodile · boss_tiger_shark · boss_hurricane (weather) · boss_straits (crossing script)
 
-## game/resources/items/ (113) — `docs/ITEMS.md`
+## game/resources/items/ (117) — `docs/ITEMS.md`
 
 - [ ] water (7): coco · rain_cup · still_cup · well_cup · seawater_cup · rum · milordo
 - [ ] food (16): crab_raw · crab_cooked · fish_raw · fish_cooked · lobster · oysters · conch · bird_eggs · sea_grapes · coco_plum · mango · hutia_cooked · iguana_cooked · canned_food · toronja · bistec_toronja
 - [ ] plants (10): manzanillo · guao · jaguey · uva_caleta_unripe · hicaco · guanabana · noni · sabila · hongo_playa · tabaco_silvestre
 - [ ] tools (18): knife · machete · broken_bottle · spear · fishing_line · lure · net · snare · pliers · binoculars · compass · charts · mirror · lighter · flint_steel · shovel_oar · tabla_surf · tabla_vela
 - [ ] materials (17; `inner_tube`, `plastic_jug`, `rope` exist): driftwood · hardwood · inner_tube · plastic_jug · rope · line_spool · tarp · nails · resin · dry_grass · cloth · tire · tanque_55 · propela · bidon_combustible · azucar · camara_bici
-- [ ] wearables (8): straw_hat · life_vest · wetsuit_top · fins · sandals · gloves · sunglasses · military_belt
-- [ ] oddities (13): flare · radio · car_battery · solar_charger · vhf · gps · expired_medicine · cigars · fire_pages · baseball · dominoes · bilge_pump · botija
+- [ ] wearables (9): straw_hat · life_vest · wetsuit_top · fins · sandals · gloves · sunglasses · military_belt · sombrero_cinta_roja (secret)
+- [ ] oddities (15): flare · radio · car_battery · solar_charger · vhf · gps · expired_medicine · cigars · fire_pages · baseball · dominoes · bilge_pump · botija · brujula_rota (secret) · mapa_sin_norte (secret)
 - [ ] keepsakes (9): foto_familia · cuchillo_abuelo · medalla_caridad · nudo_pescador · pedazo_mapa · cassette_van_van · pelota_firmada · llave_almendron · pluma_galleguito
-- [ ] texts (15): libreta_ramon · diario_periodo_especial · cartas_yuma · la_lista · bottle_note · reply_bottle · wall_slogan · radio_fragment · menu_board · patrol_logbook · yunior_notebook · captain_log · nota_se_vende · fallo_del_pilote · sobre_tres_generaciones
+- [ ] texts (16): libreta_ramon · diario_periodo_especial · cartas_yuma · la_lista · bottle_note · reply_bottle · wall_slogan · radio_fragment · menu_board · patrol_logbook · yunior_notebook · captain_log · nota_se_vende · fallo_del_pilote · sobre_tres_generaciones · nota_llegaste_tarde (secret)
 
 ## game/resources/recipes/ (22)
 
@@ -69,9 +69,14 @@ The grapefruit steak is `toronja.cooks_into`, not a recipe.
 
 - [ ] calm · trade_wind · squall · fog · hurricane · waterspout · red_tide · king_tide · heat_dome · sargassum · lightning
 
-## game/resources/islands/ (1)
+## game/resources/islands/ (2)
 
 - [x] sandbar (handmade first island, change `sandbar-island`; `IslandLayoutData`: text rows plus glyph legend)
+- [ ] cayo_sin_norte (handmade secret cay, change `secret-cay`; marked `secret` and `off_graph`, so island generation never lists or numbers it; `docs/ISLANDS.md` "El cayo sin norte")
+
+## Secret cay (change `secret-cay`)
+
+5 new content files, built by the change itself rather than a content batch, because they need its new fields and enum values: items `brujula_rota`, `mapa_sin_norte`, `sombrero_cinta_roja`, `nota_llegaste_tarde` and island `cayo_sin_norte`. Its tuning file `game/resources/secret_tuning.tres` sits beside the other tuning files and is not content. Its dev hunt layout lives in `game/scenes/dev/`, outside the content folders, so no run or catalog offers it.
 
 ## Balsero lore batches (change `balsero-lore`)
 
@@ -95,4 +100,4 @@ Ids are proposals. POI ids such as `fishermen_houses`, `village_dock`, `resort_g
 
 ## Totals
 
-44 creatures, 113 items, 22 recipes, 24 NPCs, 18 chains, ~50 POIs, 17 set pieces, 10 routes, 6 backgrounds, 11 weather = **~315 resource files** (the handwritten dialogue files are listed separately). At the reference games' scale for a 7-island run. The creature and NPC counts still carry the mismatches in review item 47.
+44 creatures, 117 items, 22 recipes, 24 NPCs, 18 chains, ~50 POIs, 17 set pieces, 10 routes, 6 backgrounds, 11 weather, 2 handmade islands = **~321 resource files** (the handwritten dialogue files are listed separately). At the reference games' scale for a 7-island run. The creature and NPC counts still carry the mismatches in review item 47.

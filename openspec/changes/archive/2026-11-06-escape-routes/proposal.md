@@ -28,7 +28,7 @@ One offline player builds the raft alone (they deposit everything, work it 60 s 
 
 ## Provisional decisions
 
-Taken from the plan's recommended options; the owner has not confirmed them.
+Taken from the plan's recommended options; the owner confirmed them on 2026-11-06: 60 s of raft work for any party size, everyone qualifying within 5 tiles boards automatically, one pair of binoculars (the starter's) lets the group swim, a launched raft leaves a fresh empty site, and the rest as listed.
 
 1. **Raft work 60 s** (no doc gives one; at 1 energy/s a solo builder ends at 40).
 2. **Boarding radius 5 tiles** (`RouteData.board_radius_tiles`), matching the crossing's 5-tile arrival scatter.
