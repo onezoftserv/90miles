@@ -13,7 +13,8 @@ A player's statuses (bleeding today; burning, poison and the rest later) live on
 
 ## Confirmed by the owner (2026-11-08)
 
-- Sync the status to every peer and show the tag ("Sync and show a tag"), with the host-plus-client test checking it on the client.
+- Build it ("Yes, queue both (Recommended)").
+- Sync the status to every peer and show the tag ("Sync and show a tag (Recommended)"), with the host-plus-client test checking it on the client.
 
 ## Capabilities
 
