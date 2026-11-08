@@ -46,6 +46,12 @@ func is_discovered(route_id: StringName) -> bool:
 	return discovered.get(route_id, false)
 
 
+## The peer of `player` in this island's session, or 0 (coop-reconnect: never the node name,
+## which a reclaimed body keeps from its first peer).
+func peer_of(player: PlayerBody) -> int:
+	return _session.peer_of(player) if is_instance_valid(_session) else 0
+
+
 func has_left(peer_id: int) -> bool:
 	return departed.has(peer_id)
 
@@ -74,7 +80,7 @@ func start_for(peer: int, route_id: StringName) -> bool:
 		return false
 	var peers: Array[int] = []
 	for rider: PlayerBody in riders:
-		peers.append(int(String(rider.name)))
+		peers.append(peer_of(rider))
 	_depart(route_id, peers)
 	if not _session.multiplayer.get_peers().is_empty():
 		receive_departure.rpc(route_id, peers)

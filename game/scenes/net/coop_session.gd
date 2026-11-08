@@ -436,6 +436,15 @@ func body(peer_id: int) -> PlayerBody:
 	return found as PlayerBody if is_instance_valid(found) else null
 
 
+## The peer whose player `player` is now, or 0 if it is not in this session. Ask this, not the
+## node name: a reclaimed body keeps the name of the peer it first spawned under.
+func peer_of(player: PlayerBody) -> int:
+	for peer_id: int in _bodies:
+		if _bodies[peer_id] == player:
+			return peer_id
+	return 0
+
+
 ## The name `peer_id` plays under ("Balsero" until one is known).
 func player_name(peer_id: int) -> String:
 	return roster.get(peer_id, GameSettings.DEFAULT_NAME)
