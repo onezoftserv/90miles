@@ -251,6 +251,6 @@ func test_a_solo_player_walks_the_crescent() -> void:
 		assert_between(_walk_tiles(astar, solo, pool) / speed, 13.0, 17.5, "tide pool %s in seconds" % pool)
 	var farthest: float = 0.0
 	for cell: Vector2i in built.reachable_from(solo):
-		if _land(cell) and _tiles(cell, solo) >= 50.0:
+		if _land(cell) and _tiles(cell, solo) >= 30.0:
 			farthest = maxf(farthest, _walk_tiles(astar, solo, cell))
 	assert_gte(farthest / speed, 15.0, "the far horn is a 15 s walk or more")

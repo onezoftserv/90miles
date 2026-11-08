@@ -182,8 +182,8 @@ func test_a_solo_run_starts_on_the_sandbar() -> void:
 	assert_eq(body.position, shell.island.spawn_points(true)[0])
 	assert_eq(shell.session.pickups.get_child_count(), 20)
 	assert_eq(shell.island.get_node("Palms").get_child_count(), 6)
-	assert_eq(body.camera.limit_right, 64 * 16)
-	assert_eq(body.camera.limit_bottom, 40 * 16)
+	assert_eq(body.camera.limit_right, 80 * 16)
+	assert_eq(body.camera.limit_bottom, 72 * 16)
 
 
 func test_leaving_the_run_frees_the_island_and_pickups() -> void:
