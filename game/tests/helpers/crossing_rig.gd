@@ -9,18 +9,30 @@ const STEP_S: float = 0.1
 
 ## The crossing, with `players` riders (peer ids 1, 2, ...) and a plan of `length_s` and `beats`.
 static func make(test: GutTest, route_id: StringName, players: int, integrity: float, length_s: float, beats: Array[RefCounted] = []) -> Crossing:
+	var session := make_session(test, players)
+	var ids: Array[int] = []
+	for id: int in range(1, players + 1):
+		ids.append(id)
+	return launch_on(session, route_id, ids, integrity, length_s, beats)
+
+
+## A started session with `players` idle bodies (peer ids 1, 2, ...) and no crossing yet.
+static func make_session(test: GutTest, players: int) -> CoopSession:
 	var session := SESSION_SCENE.instantiate() as CoopSession
 	test.add_child_autofree(session)
 	session.start()
-	var ids: Array[int] = [1]
 	for id: int in range(2, players + 1):
 		var body := CoopSession.PLAYER_SCENE.instantiate() as PlayerBody
 		body.name = str(id)
 		session.players.add_child(body)
 		body.player_input.enabled = false
 		session._bodies[id] = body
-		ids.append(id)
 	session.body(1).player_input.enabled = false
+	return session
+
+
+## A crossing on `route_id` in `session` for the riders `ids`, in that order.
+static func launch_on(session: CoopSession, route_id: StringName, ids: Array[int], integrity: float, length_s: float, beats: Array[RefCounted] = []) -> Crossing:
 	var route := (GameState.content.get_entry(&"routes", route_id) as RouteData).duplicate() as RouteData
 	var crossing := Crossing.SCENE.instantiate() as Crossing
 	session.add_child(crossing)
@@ -38,7 +50,9 @@ static func run(crossing: Crossing, seconds: float) -> void:
 	for i: int in roundi(seconds / STEP_S):
 		crossing.advance(STEP_S)
 		for peer: int in crossing.peers():
-			crossing.body_of(peer).advance(STEP_S)
+			var body := crossing.body_of(peer)
+			if body != null:
+				body.advance(STEP_S)
 
 
 ## `body` holds interact for `seconds` while the crossing runs.

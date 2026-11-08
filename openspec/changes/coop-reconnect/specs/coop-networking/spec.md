@@ -1,0 +1,92 @@
+# Spec Delta
+
+## MODIFIED Requirements
+
+### Requirement: Disconnect handling
+If a client disconnects, its player SHALL stay in the world as downed for 90 s, then be removed from every peer; the host announces the removal with the player's last position so its inventory can be dropped there. If the same player joins again before its 90 s are up (see "Player identity"), it takes back that same body, standing again unless its meters had it downed. A removed player counts as dead for the rest of the run: the run summary lists them as dead, they are not a survivor for the ending, and they earn no further Experiencia. A dropped player does not hold a place in the player cap. If the host disconnects, the session ends and clients see a "host lost" screen; migration is out of scope for v1. Solo has no client to drop and no host to lose, so none of this applies with one player.
+
+#### Scenario: Client drops
+- **GIVEN** a client's player on the island
+- **WHEN** that client disconnects
+- **THEN** the player stays in the world downed for 90 s, then is removed from every peer, and the removal is announced with the player's last position so its inventory can be dropped there
+
+#### Scenario: Rejoin within 90 s
+- **GIVEN** Papo's player at health 60 and thirst 40, standing on the beach, and Papo's client drops
+- **WHEN** Papo's client joins again 20 s later from the same install
+- **THEN** Papo controls the same body again, standing where it lay, with health 60 and thirst 40, and every other player sees that body come back as Papo's
+
+#### Scenario: Reconnect into a full session
+- **GIVEN** a session with four players
+- **WHEN** one client drops and a client from another install connects before the 90 s are up
+- **THEN** it joins as a new player while the dropped player is still downed in the world
+
+#### Scenario: Rejoin after removal
+- **GIVEN** Papo's client dropped and his player was removed after 90 s
+- **WHEN** Papo's client joins again
+- **THEN** Papo joins as a new player at a spawn point, and the run summary still lists the removed player as dead
+
+#### Scenario: Removed player in the summary
+- **GIVEN** a co-op run in which Papo was removed after a disconnect
+- **WHEN** every remaining player dies
+- **THEN** the run summary lists Papo as dead along with the others
+
+#### Scenario: Host drops
+- **GIVEN** a session with a host and a client
+- **WHEN** the host disconnects
+- **THEN** the client's session ends and it shows the "host lost" screen
+
+#### Scenario: Solo run stays closed
+- **GIVEN** a solo run, offline
+- **WHEN** another game tries to join it mid-run
+- **THEN** there is no port to reach, and the solo player keeps playing alone
+
+## ADDED Requirements
+
+### Requirement: Player identity
+Each install SHALL keep a random player id and a separate secret, made on first launch and kept across launches. A client's join request carries both. For the run, the host remembers which player each id belongs to and a hash of its secret, and never sends ids or secrets to other clients. Solo sends no join request; its one player is always the host's own.
+
+#### Scenario: The id is kept
+- **GIVEN** a fresh install that is launched, closed and launched again
+- **WHEN** it joins a session
+- **THEN** it presents the same player id both times
+
+### Requirement: Reclaiming a player
+A join request SHALL reclaim a player only when its id and secret match a player who is still in the world: one who dropped, or one whose old connection the host still holds (a client that crashed and came back before the host noticed; the host closes the old connection first). The host's own player is never reclaimed. Otherwise the client joins as a new player: no id, a wrong secret, or the host's id (a host and a client started from the same install). Solo has nobody to reclaim.
+
+#### Scenario: Someone else's id
+- **GIVEN** Papo's client dropped and his player lies downed
+- **WHEN** another client joins presenting Papo's id with a different secret
+- **THEN** it joins as a new player and Papo's body stays downed, waiting for Papo
+
+#### Scenario: Back before the host noticed
+- **GIVEN** Papo's client crashed and the host still holds his old connection
+- **WHEN** Papo's client joins again from the same install
+- **THEN** the host closes the old connection and Papo takes back the same body
+
+#### Scenario: The host's id
+- **GIVEN** a host and a client started from the same install
+- **WHEN** the client joins presenting the host's id and secret
+- **THEN** it joins as a new player and the host keeps its own player
+
+#### Scenario: Rejoin during a crossing
+- **GIVEN** Papo is a rider on a raft crossing when his client drops
+- **WHEN** he rejoins within 90 s
+- **THEN** the host keeps him as the same rider: his state on the raft, his own climb point, a teammate's pull handle on him, and his entry in the crossing's result
+
+#### Scenario: Rejoin after leaving by a route
+- **GIVEN** Papo left the island by a route and his client drops
+- **WHEN** he rejoins within 90 s
+- **THEN** he still counts as gone by that route, so the run can end without him
+
+### Requirement: Join request
+A joining client's player SHALL spawn when the host receives its join request, not when it connects, so that the host can match the player id first. A peer that connects but sends no join request within 10 s is disconnected, and its slot is free again. The host's start of the run spawns only players whose join request has arrived. Solo has no joiners: its one player spawns at once.
+
+#### Scenario: A peer that never asks to join
+- **GIVEN** a host in a run
+- **WHEN** a peer connects and sends no join request for 10 s
+- **THEN** the host disconnects it, no player spawned for it, and another client can take the slot
+
+#### Scenario: Solo spawns at once
+- **GIVEN** a player who starts a solo run, offline
+- **WHEN** the session starts
+- **THEN** their player spawns at once, with no join request and no wait
