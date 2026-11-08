@@ -59,7 +59,7 @@ On the host, `request_join` with RECLAIM:
 
 Further details:
 - **Later joiners:** the spawner replays the original spawn data `{peer: old}`, so a client that joins later first maps the body under its old peer. `receive_lobby` therefore also carries the owner map (spawn peer → current peer) for re-bound bodies, and the joiner re-binds them. Spawns are sent on connect, before any reply to the join request, on the same reliable path.
-- **Node name:** the body keeps its original name (the peer it first spawned under). Nothing reads a peer from a node name. `_on_body_exiting` now forgets a body by value, not by the peer it was bound to.
+- **Node name:** the body keeps its original name (the peer it first spawned under), so nothing may read a peer from a node name. Code that needs a body's peer asks `CoopSession.peer_of(body)`. `escape-routes` read it from the name in `IslandRoutes.start_for`, `Raft` and `EffectApplier`; since the merge they go through `IslandRoutes.peer_of`. `_on_body_exiting` forgets a body by value, not by the peer it was bound to.
 - **HUD:** `CoopSession.player_rebound(old, new, body)` lets `RunHud` drop the name tag and bind the meters when the re-bound body becomes the local player. Other players' tags stay on the same node and are renamed through `roster_updated`.
 
 ### Spawning moves from connect to the join request (run phase)
