@@ -167,3 +167,7 @@ None of these changes what this change builds; each must be answered before the 
 - **One handwritten hint bottle note per run** (max 1, from island 2): found-text placement on generated islands.
 - **Art**: the shimmer, the needle, the chest, the hat, the scenery (textures replace the decor colours); then the optional compass state names as data.
 - **A one-line brag** in the run summary or credits: endings-progression run summary.
+
+## Platino on the chest's ledge (owner decision, 2026-11-08)
+
+DawnLike's author asks, as a courtesy and not a licence term, that his character Platino appear in games using the pack. The owner chose to hide it on the secret cay: a tiny figurine on the chest's ledge, pure decor with no interaction or collision, an extra wink for whoever finds the cay. The art-pass change tracks the sprite with DawnLike's credit; this change places it (task 6.3b).

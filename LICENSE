@@ -1,0 +1,12 @@
+Copyright (c) 2026 onezoftserv. All rights reserved.
+
+90 Millas: the source code, the game's own art, text, dialogue and design documents in
+this repository are not licensed for reuse. The repository is public so the work can be
+read and reviewed; no permission to copy, modify, distribute or sell any part of it is
+granted.
+
+Third-party material keeps its own licence and is not covered by this notice:
+- art and sound packs under game/assets/ (each with its License.txt; credits in
+  game/assets/CREDITS.md), CC0 or CC BY as stated there;
+- fonts under game/assets/fonts/ (SIL Open Font License 1.1, files beside them);
+- the GUT test framework in game/addons/gut/ (see game/addons/gut/LICENSE.md).
