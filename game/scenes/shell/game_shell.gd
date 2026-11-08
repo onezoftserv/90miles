@@ -239,6 +239,7 @@ func _build_run(as_client: bool = false) -> void:
 	session.host_lost.connect(_on_host_lost)
 	_world.add_child(session)
 	island.furnish(session)
+	(session.get_node(^"Routes") as IslandRoutes).route_started.connect(_on_route_started)
 	if not as_client:
 		island.place_pickups(session)
 
@@ -293,17 +294,27 @@ func _on_player_spawned(_peer_id: int, body: PlayerBody) -> void:
 	body.camera.limit_bottom = island.bounds.end.y
 
 
-# The run ends when every player in it is dead. A dropped player keeps it open until they are
-# removed (they may come back); the removal checks again.
+# Until the crossing exists the riders have already left (CrossingStub); the run may be over.
+func _on_route_started(_route_id: StringName, _peer_ids: Array[int]) -> void:
+	_check_run_over()
+
+
+# The run ends when every player in it is dead or has left by a route. A dropped player keeps it
+# open until they are removed (they may come back); the removal checks again.
 func _check_run_over() -> void:
 	if flow != Flow.RUN or session == null:
 		return
+	var routes := session.get_node(^"Routes") as IslandRoutes
 	var entries: Array[Dictionary] = []
 	for peer_id: int in session.peer_ids():
 		var dead: bool = session.body(peer_id).meters.dead
-		if not dead:
+		var left_by: StringName = routes.route_left_by(peer_id)
+		if not dead and left_by.is_empty():
 			return
-		entries.append({"name": session.player_name(peer_id), "dead": dead})
+		var entry: Dictionary = {"name": session.player_name(peer_id), "dead": dead}
+		if not dead:
+			entry["route"] = _route_name(left_by)
+		entries.append(entry)
 	# Removed after a disconnect: dead for the run (coop-reconnect).
 	for removed_name: String in session.removed_names():
 		entries.append({"name": removed_name, "dead": true})
@@ -311,6 +322,11 @@ func _check_run_over() -> void:
 	var summary := _show(SUMMARY_SCENE, Flow.SUMMARY) as SummaryScreen
 	summary.show_summary(entries, clock.call() - _run_started_s)
 	summary.home_requested.connect(back_to_title)
+
+
+func _route_name(route_id: StringName) -> String:
+	var route := GameState.content.get_entry(&"routes", route_id) as RouteData
+	return route.name_es if route != null else String(route_id)
 
 
 func _show(scene: PackedScene, next: Flow) -> Control:

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+description_es = "Seis palos, dos cámaras y tres sogas: la balsa de todos."
+description_en = "Six pieces of driftwood, two inner tubes and three ropes: everyone's raft."
+inputs = Dictionary[StringName, int]({
+&"driftwood": 6,
+&"inner_tube": 2,
+&"rope": 3
+})
+station = 0
+build_site = true
+time_s = 60.0
+skill = 2
+skill_speed_multiplier = 2.0
+output_kind = 2
+vessel_integrity = 100.0
+id = &"raft"
+name_es = "Balsa"
+name_en = "Raft"

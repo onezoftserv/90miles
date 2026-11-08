@@ -19,6 +19,8 @@ var workbench: Vector2i = Vector2i(-1, -1)
 var solo_spawn: Vector2i = Vector2i(-1, -1)
 var coop_spawns: Array[Vector2i] = []
 var tide_pools: Array[Vector2i] = []
+## The beach cell of the raft's build site; (-1, -1) when the layout has none.
+var raft_site: Vector2i = Vector2i(-1, -1)
 ## The cells shaded by the hut.
 var hut_cells: Array[Vector2i] = []
 ## Each pick-up: {cell: Vector2i, item_id: StringName, count: int, respawn: int, group: StringName}.
@@ -98,6 +100,8 @@ func _read_cell(cell: Vector2i, glyph: String, spawns: Dictionary[String, Vector
 		workbench = cell
 	elif glyph == _layout.tide_pool_glyph:
 		tide_pools.append(cell)
+	elif not _layout.raft_site_glyph.is_empty() and glyph == _layout.raft_site_glyph:
+		raft_site = cell
 	elif glyph == _layout.solo_spawn_glyph or _layout.coop_spawn_glyphs.contains(glyph):
 		spawns[glyph] = cell
 	for entry: IslandGlyphData in _layout.pickups:
