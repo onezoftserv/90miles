@@ -10,6 +10,7 @@ var _meters: SurvivalMeters = null
 @onready var _panel: PanelContainer = $Panel
 @onready var _bars_box: VBoxContainer = $Panel/Bars
 @onready var _blur: ColorRect = $Blur
+@onready var _bleeding: Label = $Panel/Bars/Bleeding
 
 
 ## The meters this panel shows, or null.
@@ -24,12 +25,15 @@ func bind(meters: SurvivalMeters) -> void:
 	_meters = meters
 	if meters == null:
 		_blur.visible = false
+		_bleeding.visible = false
 		return
 	meters.meter_changed.connect(_on_meter_changed)
 	meters.sunstroke_changed.connect(_on_sunstroke_changed)
+	meters.statuses_changed.connect(_on_statuses_changed)
 	for bar: MeterBar in bars():
 		bar.show_value(meters.value(bar.meter))
 	_blur.visible = meters.sunstroke
+	_bleeding.visible = meters.has_status(DataEnums.Status.BLEEDING)
 
 
 ## The rows, top to bottom.
@@ -54,6 +58,11 @@ func blurred() -> bool:
 	return _blur.visible
 
 
+## The red "Sangrando" tag under the bars, shown while the player bleeds (status-sync).
+func bleeding_tag() -> Label:
+	return _bleeding
+
+
 ## Where the bars panel sits on screen, in HUD coordinates.
 func panel_rect() -> Rect2:
 	return _panel.get_rect()
@@ -65,6 +74,8 @@ func _unbind() -> void:
 			_meters.meter_changed.disconnect(_on_meter_changed)
 		if _meters.sunstroke_changed.is_connected(_on_sunstroke_changed):
 			_meters.sunstroke_changed.disconnect(_on_sunstroke_changed)
+		if _meters.statuses_changed.is_connected(_on_statuses_changed):
+			_meters.statuses_changed.disconnect(_on_statuses_changed)
 	_meters = null
 
 
@@ -76,3 +87,7 @@ func _on_meter_changed(meter: DataEnums.Meter, new_value: float) -> void:
 
 func _on_sunstroke_changed(active: bool) -> void:
 	_blur.visible = active
+
+
+func _on_statuses_changed(_flags: int) -> void:
+	_bleeding.visible = _meters != null and _meters.has_status(DataEnums.Status.BLEEDING)

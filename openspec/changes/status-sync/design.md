@@ -15,7 +15,7 @@
 
 **Non-Goals:**
 - How a status starts, lasts or ends. Bleeding still has no cure or timer; that comes with bandages.
-- A HUD tag. It is asked as a decision in proposal.md and added in this change only if the owner says yes.
+- Icons or tags for the other statuses: each comes with the change that makes it reachable.
 
 ## Decisions
 
@@ -28,7 +28,7 @@
 - **Borrowed from Brogue CE, `src/brogue/Rogue.h` (`status[NUMBER_OF_STATUS_EFFECTS]`) and `src/brogue/IO.c`, `printMonsterInfo()`.**
   - A creature's statuses are a fixed array indexed by the status enum, and the sidebar walks it.
   - Here, a fixed set indexed by `DataEnums.Status`, so one bit per status in one int.
-- **Borrowed for the HUD, if the owner says yes:** Shattered Pixel Dungeon, `actors/buffs/Bleeding.java` (`icon()`) and `ui/BuffIndicator.java`. A buff only names its icon, and the indicator draws what the hero has. Here, a HUD tag would only read the synced status.
+- **Borrowed for the HUD:** Shattered Pixel Dungeon, `actors/buffs/Bleeding.java` (`icon()`) and `ui/BuffIndicator.java`. A buff only names its icon, and the indicator draws what the hero has. Here, the HUD tag only reads the synced status.
 - **Rejected:** SPD's `Buff` as an actor with its own `act()` on every peer. Statuses here are host state, and a client must never run their effects.
 
 ### One int of bit flags
@@ -47,14 +47,20 @@
 - `player.tscn` gains `SurvivalMeters:status_flags` in `SceneReplicationConfig_state`, sent on spawn and replicated like the other meter properties.
 - The host is the synchronizer's authority, as for the meters, so a client's own change would never be sent, and the host's value overwrites it.
 
+### The HUD tag
+
+- `meters_hud.tscn` gains a hidden `Label` "Sangrando" (red, the theme's pixel font at 8 px) as the last row of the bars panel, so it sits under Salud at the top-left. `MetersHud.bars()` still lists only `MeterBar` rows.
+- `MetersHud.bind` sets it from `has_status(BLEEDING)`, and `statuses_changed` updates it; unbinding disconnects. `RunHud` already rebinds the meters HUD to the local player (also after a rejoin), so the tag needs nothing there. The inventory-hud change works in `run_hud.gd` and the HUD's bottom band, not here.
+
 ### Tests
 
 - **Offline, 1 player (`test_status_flags.gd`):**
   - `set_status` sets and clears its bit and emits `statuses_changed` once per change, with nothing for a repeat.
   - `NONE` and out-of-range values change nothing.
   - A solo crossing shark bite still sets bleeding.
+- **Offline, 1 player (`test_meters_hud.gd`):** the tag shows only while bleeding (not for another status), shows at once when binding a bleeding player, is red, under the bars and in the pixel font, keeps the panel in the corner, and stops following an unbound node.
 - **ENet (`test_status_net.gd`, `NetHarness`):**
-  - The host bites a client's swimming player in a crossing. The client's own body has `BLEEDING` and emitted `statuses_changed`. Clearing it on the host clears it on the client.
+  - The host bites a client's swimming player in a crossing. The client's own body has `BLEEDING`, emitted `statuses_changed`, and a `MetersHud` bound to it shows the tag. Clearing it on the host clears both on the client.
   - A late joiner sees the host's bleeding.
 
 ## Risks / Trade-offs
