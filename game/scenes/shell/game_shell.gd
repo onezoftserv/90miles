@@ -46,12 +46,20 @@ var session: CoopSession
 var island: SandbarIsland
 ## Tints the world view while a run is on, or null.
 var tint: DayNightTint
-## Crossings still running, and the results of those that ended (kept until arrival exists).
+## The island keeper: waits for the party and loads the next island (null outside a run).
+var travel: IslandTravel
+## Crossings still running, and the results of those that ended.
 var crossings: Array[Node] = []
 var crossing_results: Array[RefCounted] = []
 ## Seconds, for the run's length. Tests replace it.
 var clock: Callable
+## Rolls the run seed the host (or solo) starts every run with. Tests replace it.
+var seed_source: Callable
+## The death one-liners the summary picks from (the content's unless a test sets others).
+var death_lines: DeathLines
 var _run_started_s: float = 0.0
+## While the local rider waits on the shore: who is still playing (null outside a run).
+var _wait_label: Label
 var _crossing_rng := RandomNumberGenerator.new()
 
 ## The world's own 640×360 view (ui-shell "Pixel filter"); the HUD and screens are outside it.
@@ -64,6 +72,7 @@ var _crossing_rng := RandomNumberGenerator.new()
 
 func _init() -> void:
 	clock = _ticks_s
+	seed_source = _roll_seed
 
 
 func _ready() -> void:
@@ -72,6 +81,7 @@ func _ready() -> void:
 	if not settings.identity_stored:
 		settings.save()
 	NetManager.join_failed.connect(_on_join_failed)
+	death_lines = DeathLines.from_catalog(GameState.content)
 	apply_display()
 	apply_pixel_filter()
 	show_title()
@@ -193,6 +203,12 @@ func _refresh_lobby() -> void:
 
 
 func _on_host_lost() -> void:
+	if flow == Flow.SUMMARY:
+		# A client that finished its run keeps the summary; the run behind it goes.
+		(screen as SummaryScreen).show_host_left()
+		_backdrop.visible = true
+		_end_run.call_deferred()
+		return
 	_close_screen()
 	flow = Flow.HOST_LOST
 	host_lost_screen = HOST_LOST_SCENE.instantiate() as HostLostScreen
@@ -221,6 +237,12 @@ func start_solo() -> void:
 	_enter_run()
 
 
+## "Otra vez": a clean solo run from the summary. The old run ends before the peer is swapped.
+func _restart_solo() -> void:
+	_end_run()
+	start_solo()
+
+
 ## Ends the run (if any), goes offline and shows the title.
 func back_to_title() -> void:
 	_end_run()
@@ -239,6 +261,11 @@ func _build_run(as_client: bool = false) -> void:
 	session.terrain = island.terrain
 	session.climate = island.climate
 	session.sky = WeatherManager.sky
+	if not as_client:
+		# A run starts on day 1 at dawn, calm, before the island's creatures read the hour, and
+		# with a seed of its own (endings-progression "A fresh run starts clean").
+		WeatherManager.sky.start_at(RUN_START_TIME_S)
+		session.world_state = {"run_seed": seed_source.call()}
 	session.spawn_points = island.spawn_points(solo)
 	session.player_spawned.connect(_on_player_spawned)
 	session.local_identity = settings.identity
@@ -246,6 +273,11 @@ func _build_run(as_client: bool = false) -> void:
 	session.host_lost.connect(_on_host_lost)
 	_world.add_child(session)
 	island.furnish(session)
+	travel = IslandTravel.new()
+	travel.name = "Travel"
+	session.add_child(travel)
+	travel.setup(session, island)
+	travel.island_loaded.connect(_on_island_loaded)
 	var routes := session.get_node(^"Routes") as IslandRoutes
 	routes.route_started.connect(_on_route_started)
 	routes.progress_received.connect(_on_progress_received)
@@ -271,18 +303,24 @@ func _enter_run() -> void:
 	hud.world_view = world_view
 	add_child(hud)
 	hud.bind(session, session.multiplayer.get_unique_id(), session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer)
+	_wait_label = _make_wait_label()
+	hud.add_child(_wait_label)
 
 
 # Freed at once, before the peer is closed: closing a peer under live synchronizers logs
 # engine errors.
 func _end_run() -> void:
 	WeatherManager.stop()
+	# The pause menu may have paused the tree under the summary.
+	get_tree().paused = false
 	if tint != null:
 		tint.free()
 		tint = null
 	if hud != null:
 		hud.free()
 		hud = null
+	_wait_label = null
+	travel = null
 	crossings.clear()
 	crossing_results.clear()
 	if session != null:
@@ -300,10 +338,7 @@ func _on_removal_recorded(_peer_id: int, _player_name: String) -> void:
 func _on_player_spawned(_peer_id: int, body: PlayerBody) -> void:
 	body.meters.died.connect(_check_run_over)
 	# The camera stays over the island, never past its edge.
-	body.camera.limit_left = island.bounds.position.x
-	body.camera.limit_top = island.bounds.position.y
-	body.camera.limit_right = island.bounds.end.x
-	body.camera.limit_bottom = island.bounds.end.y
+	IslandArrival.fit_camera(body, island.bounds)
 
 
 # The riders of a started route enter the crossing on every peer; it keeps the run open until it
@@ -331,22 +366,22 @@ func _on_progress_received(restored: Array[Crossing]) -> void:
 	for peer_id: int in routes.departed:
 		var rider := session.body(peer_id)
 		if rider != null and not _in_crossing(peer_id):
-			ArrivalStub.hold(rider)
+			IslandArrival.hold(rider)
 	_check_run_over()
 
 
-# The riders leave play until arrival on the next island exists.
+# The riders wait out of play on the shore; the island keeper loads the next island once nobody
+# else is playing (or the run ends if there is none).
 func _on_crossing_ended(finished: CrossingResult, crossing: Crossing) -> void:
 	crossings.erase(crossing)
 	crossing_results.append(finished)
-	for peer_id: int in finished.riders:
-		var rider := session.body(peer_id) if session != null else null
-		if rider != null:
-			ArrivalStub.hold(rider)
+	if session != null:
+		travel.crossing_ended(finished)
 	crossing.queue_free()
 	_check_run_over()
 
 
+# Whether `peer_id` rides a crossing this shell follows (crossing-late-join).
 func _in_crossing(peer_id: int) -> bool:
 	for node: Node in crossings:
 		if is_instance_valid(node) and (node as Crossing).peers().has(peer_id):
@@ -354,37 +389,69 @@ func _in_crossing(peer_id: int) -> bool:
 	return false
 
 
-# The run ends when every player in it is dead or has left by a route. A dropped player keeps it
-# open until they are removed (they may come back); the removal checks again.
+# The next island is live: this is its node and its routes now.
+func _on_island_loaded(loaded: SandbarIsland) -> void:
+	island = loaded
+	var routes := session.get_node(^"Routes") as IslandRoutes
+	routes.route_started.connect(_on_route_started)
+	routes.progress_received.connect(_on_progress_received)
+
+
+# The run ends when nobody is left playing and no island is next: every player is dead, or has
+# left by a route on an island that names no next one. A dropped player keeps it open until they
+# are removed (they may come back); the removal checks again.
 func _check_run_over() -> void:
 	if flow != Flow.RUN or session == null:
 		return
-	var routes := session.get_node(^"Routes") as IslandRoutes
-	var entries: Array[Dictionary] = []
-	for peer_id: int in session.peer_ids():
-		var dead: bool = session.body(peer_id).meters.dead
-		var left_by: StringName = routes.route_left_by(peer_id)
-		if not dead and (left_by.is_empty() or _in_crossing(peer_id)):
-			return
-		var entry: Dictionary = {"name": session.player_name(peer_id), "dead": dead}
-		if not dead:
-			entry["route"] = _route_name(left_by)
-		entries.append(entry)
-	# Removed after a disconnect: dead for the run (coop-reconnect).
-	for removed_name: String in session.removed_names():
-		entries.append({"name": removed_name, "dead": true})
+	if travel.check() != IslandTravel.Outcome.OVER:
+		return
+	var solo: bool = session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer
+	var made := RunSummary.collect(session, travel.islands_reached, WeatherManager.sky.clock.day,
+			clock.call() - _run_started_s, death_lines, GameState.content)
 	WeatherManager.stop()
-	var summary := _show(SUMMARY_SCENE, Flow.SUMMARY) as SummaryScreen
-	summary.show_summary(entries, clock.call() - _run_started_s)
-	summary.home_requested.connect(back_to_title)
-	# The HUD stays up under the summary but takes no input (inventory-hud).
+	# The HUD (and its pause menu) goes with the run: nothing under the summary can pause it. It
+	# stops taking input first, so no key reaches it in the frame before it is freed (inventory-hud).
 	if hud != null:
 		hud.set_screen_shown(true)
+		hud.queue_free()
+		hud = null
+	_wait_label = null
+	var summary := _show(SUMMARY_SCENE, Flow.SUMMARY) as SummaryScreen
+	summary.show_summary(made, "Otra vez" if solo else "")
+	summary.home_requested.connect(back_to_title)
+	summary.restart_requested.connect(_restart_solo)
 
 
-func _route_name(route_id: StringName) -> String:
-	var route := GameState.content.get_entry(&"routes", route_id) as RouteData
-	return route.name_es if route != null else String(route_id)
+func _process(_delta: float) -> void:
+	if _wait_label != null and session != null:
+		var text: String = _waiting_text()
+		_wait_label.text = text
+		_wait_label.visible = not text.is_empty()
+
+
+# A rider whose crossing ended sees who is still playing while they wait on the shore.
+func _waiting_text() -> String:
+	var own := session.body(session.multiplayer.get_unique_id())
+	if own == null or not own.left_island or own.meters.dead:
+		return ""
+	var names: Array[String] = []
+	for peer_id: int in session.peer_ids():
+		var other := session.body(peer_id)
+		if not other.left_island and not other.meters.dead:
+			names.append(session.player_name(peer_id))
+	if names.is_empty():
+		return ""
+	return "En la orilla. Esperando a: %s" % ", ".join(names)
+
+
+func _make_wait_label() -> Label:
+	var label := Label.new()
+	label.name = "WaitLabel"
+	label.visible = false
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.anchor_right = 1.0
+	label.offset_top = 48.0
+	return label
 
 
 func _show(scene: PackedScene, next: Flow) -> Control:
@@ -405,3 +472,7 @@ func _close_screen() -> void:
 
 func _ticks_s() -> float:
 	return Time.get_ticks_usec() / 1000000.0
+
+
+func _roll_seed() -> int:
+	return randi()

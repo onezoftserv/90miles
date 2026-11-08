@@ -65,6 +65,7 @@ func _ready() -> void:
 	meters.downed_changed.connect(set_downed)
 	meters.last_stand_changed.connect(_on_last_stand_changed)
 	meters.died.connect(_on_died)
+	meters.effect_due.connect(_on_effect_due)
 
 
 func _physics_process(delta: float) -> void:
@@ -155,11 +156,12 @@ func _meter_context() -> MeterContext:
 	return context
 
 
-## Another player who is not dead (downed counts) within `within_px`.
+## Another player who is not dead (downed counts) and not waiting out of play, within `within_px`.
 func _has_living_teammate(within_px: float) -> bool:
 	for node: Node in get_tree().get_nodes_in_group(GROUP):
 		var other := node as PlayerBody
-		if other == null or other == self or other.meters.dead:
+		# A rider waiting out of play on the next island is no company and no one to revive you.
+		if other == null or other == self or other.meters.dead or other.left_island:
 			continue
 		if global_position.distance_to(other.global_position) <= within_px:
 			return true
@@ -180,6 +182,11 @@ func _on_last_stand_changed(active: bool) -> void:
 	set_downed(active)
 	if active:
 		drag_handle.enabled = false
+
+
+# A delayed effect of this player's is due (EffectApplier.apply held it in the meters).
+func _on_effect_due(effect: EffectData) -> void:
+	EffectApplier.apply_now(effect, self, self)
 
 
 func _on_died() -> void:

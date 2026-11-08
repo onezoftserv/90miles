@@ -2,7 +2,7 @@
 
 Islands are generated from **chain templates**. A run is 6–8 islands: island 1 is always the sandbar; island 2 is always a coast-chain island; from island 3 the route branches between chains; the last island is always the final approach. Each island rolls 2–3 escape routes and 3–6 points of interest (POIs) from its chain's table. The one exception is the secret cay, an off-graph detour that never counts as one of the 6–8 islands and has only the routes its layout lists (see "Secret: El cayo sin norte").
 
-Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile grid, places biome bands (deep water → shallows → beach → dunes/mangrove/rock → interior), then places POIs with a rule set (min distance, shoreline access, no two of the same kind). Escape routes are POIs with a flag. See `openspec/specs/island-generation/spec.md`.
+Generation: `IslandGenerator` builds a landmass from seeded integer steps (height bumps along a spine, integer smoothing, a sea level picked by rank; no floating-point noise, so every peer builds the same island from the run seed) on a 96×64 tile grid, places biome bands (deep water → shallows → beach → dunes/mangrove/rock → interior), then places POIs with a rule set (min distance, shoreline access, no two of the same kind). Escape routes are POIs with a flag. See `openspec/specs/island-generation/spec.md`.
 
 ---
 
@@ -47,6 +47,8 @@ Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile gr
 **Lore.** Close enough to Cuba that on clear nights you see the glow of Havana. Close enough that the patrol passes twice an hour. A concrete observation post from the 1980s rots on the point, slogans still painted on it.
 
 **Biome.** Beach, dunes, a rocky point, a small lagoon.
+
+**Size.** Base variant, handmade (`coast_cay.tres`, owner-confirmed 2026-11-08): 88×64 cells, 1,021 land cells (18.1%) in a C of two 12-wide strips and a rocky spur round shallow flats, a long axis of 60 tiles (about 15 s) and a 42-cell brackish lagoon in the north-west corner. Four landing cells within 3 tiles of each other on the south-west beach. Walks from the first landing cell: raft site 3 s, flotsam 3–4 s, lagoon 7 s, aloe 8–9 s, rope cache 12 s, observation post 14 s. The lagoon never runs dry (thirst +10, then −5 after 30 s). Counts are fixed: nails ×4, mirror ×1, aloe ×4, rope ×4, lighter ×1, tubes ×2, jugs ×2, driftwood 8, 5 palms with 10 coconuts; no workbench, no noni yet.
 
 **POIs.**
 | POI | Resources | Notes |
@@ -104,7 +106,8 @@ Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile gr
 | Lobster traps (6) | Lobster (food 35), rope ×1 each, a moray in two of them | Ramón's quest |
 | Reef flats | Fish (spear), sea urchins, man o' war, conch (food + shell horn) | Low tide only; rip current on the north side |
 | The ghost net | Vieja the turtle, tangled | 70% |
-| Limestone cave | Shade, fresh water seep (2 cups/day), bats | Only shade; echoes carry (noise ×2) |
+| Limestone cave | Shade, fresh water seep (2 rain cups, refilled each dawn), bats | Only shade; echoes carry (noise ×2) |
+| Palm grove (about half the reefs) | 3 palms, 5 coconuts | The reef's only coconuts; the other reefs have none |
 | Blue hole | Deep, cold, a sunk outboard motor at the bottom | Diving quest: 3 dives, sharks |
 | Dayana's camp | Dayana with the broken ankle | 60% |
 | Empty raft (*balsa vacía*, *balsa marcada*) | One washed-up raft: a tube (70%), rope, a plastic jug (50%). Marked: a spray-painted tube, no morale change. Unmarked: morale −5 to players nearby, once per run | 20% each on every reef, rock, lighthouse, storm and yacht variant; never on the freighter (its raft is Ramón's son's). No jokes |

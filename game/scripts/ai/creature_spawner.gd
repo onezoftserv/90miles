@@ -69,12 +69,15 @@ func _physics_process(_delta: float) -> void:
 		check_fires()
 
 
-## The living creatures of `id` (all of them when empty).
+## The island's living creatures of `id` (all of them when empty). A passing creature (the
+## crossing's shark) is not the island's, so phases, fires and counts never touch it.
 func creatures(id: StringName = &"") -> Array[Creature]:
 	var found: Array[Creature] = []
 	for node: Node in session.entities.get_children():
 		var creature := node as Creature
-		if creature != null and not creature.is_queued_for_deletion() and (id.is_empty() or creature.data.id == id):
+		if creature == null or creature.is_queued_for_deletion() or creature.is_passing():
+			continue
+		if id.is_empty() or creature.data.id == id:
 			found.append(creature)
 	return found
 
@@ -177,11 +180,11 @@ func _offshore_spots(data: CreatureData, rule: CreatureSpawnRuleData, count: int
 	return picked
 
 
-# The rule fits this island (the sandbar's chain family) and, for a phased rule, the phase.
+# The rule fits this island (its layout's chain family) and, for a phased rule, the phase.
 func _matches(rule: CreatureSpawnRuleData, phase: Variant) -> bool:
 	if rule.context == DataEnums.SceneContext.CROSSING or rule.tide != DataEnums.Tide.ANY:
 		return false
-	if not rule.chain_families.is_empty() and not rule.chain_families.has(DataEnums.ChainFamily.SANDBAR):
+	if not rule.chain_families.is_empty() and not rule.chain_families.has(layout.chain_family):
 		return false
 	if rule.phases.is_empty():
 		return phase == null

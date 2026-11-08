@@ -281,7 +281,7 @@ func test_an_empty_slot_says_so() -> void:
 	hud.strip.select(3)
 	_f(true)
 	_hold(hud, 1.0)
-	assert_eq(hud.notice.shown_text(), "No tienes nada ahí.")
+	assert_eq(hud.notice.shown_text(), "No tienes na' ahí.")
 	assert_eq(_sent(hud), 0)
 	assert_eq(session.body(1).inventory.count_id(&"rain_cup"), 1)
 
@@ -308,7 +308,7 @@ func test_a_refusal_shows_once_per_press() -> void:
 	_hold(hud, 0.1)
 	_f(true)
 	_hold(hud, 0.1)
-	assert_eq(hud.notice.shown_text(), "No tienes nada ahí.", "a new press does")
+	assert_eq(hud.notice.shown_text(), "No tienes na' ahí.", "a new press does")
 
 
 func test_a_downed_player_outside_a_last_stand_is_told_they_are_down() -> void:
@@ -321,7 +321,7 @@ func test_a_downed_player_outside_a_last_stand_is_told_they_are_down() -> void:
 	assert_true(me.meters.downed and not me.meters.last_stand, "down, as in co-op")
 	_f(true)
 	_hold(hud, 1.0)
-	assert_eq(hud.notice.shown_text(), "Estás en el suelo.")
+	assert_eq(hud.notice.shown_text(), "'Tás en el suelo.")
 	assert_eq(_sent(hud), 0)
 	assert_eq(me.inventory.count_id(&"rain_cup"), 1)
 
@@ -332,7 +332,7 @@ func test_a_target_out_of_reach_or_unusable_reads_not_now() -> void:
 	session.body(1).inventory.add(&"rain_cup", 1)
 	for reason: ItemUser.Reason in [ItemUser.Reason.OUT_OF_REACH, ItemUser.Reason.TARGET_DEAD, ItemUser.Reason.NOT_TARGETABLE, ItemUser.Reason.NOT_DOWNED_TARGET]:
 		assert_eq(hud.strip.refusal_line(reason, 0, 1), "Ahora no se puede.", "reason %d" % reason)
-	assert_eq(hud.strip.refusal_line(ItemUser.Reason.DOWN, 0, 0), "Estás en el suelo.")
+	assert_eq(hud.strip.refusal_line(ItemUser.Reason.DOWN, 0, 0), "'Tás en el suelo.")
 	assert_eq(hud.strip.refusal_line(ItemUser.Reason.AT_SEA, 0, 0), "En plena travesía no se puede.")
 
 

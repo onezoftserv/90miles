@@ -167,6 +167,11 @@ func share_with(peer: int) -> void:
 		_recipients.append(peer)
 
 
+## The session this crossing runs in (its threats spawn through it), or null once it is gone.
+func session() -> CoopSession:
+	return _session if is_instance_valid(_session) else null
+
+
 func body_of(peer: int) -> PlayerBody:
 	return _session.body(peer) if is_instance_valid(_session) else null
 
@@ -221,12 +226,13 @@ func hit_vessel(amount: float) -> void:
 	_dirty = true
 
 
-## A shark's bite on a swimmer: health and bleeding.
-func bite_swimmer(peer: int) -> void:
+## A shark's bite on a swimmer: health and bleeding. `by` is the biting creature's id, the cause
+## of death if it kills.
+func bite_swimmer(peer: int, by: StringName = CreatureThreats.SHARK_ID) -> void:
 	var body := body_of(peer)
 	if body == null:
 		return
-	body.meters.add(DataEnums.Meter.HEALTH, -tuning.shark_swimmer_damage)
+	body.meters.harm(tuning.shark_swimmer_damage, by)
 	body.meters.set_status(DataEnums.Status.BLEEDING, true)
 
 
@@ -402,7 +408,7 @@ func _tick_rider(peer: int, delta: float) -> void:
 func _swim(body: PlayerBody, delta: float) -> void:
 	body.meters.spend_energy(tuning.pace_drain_per_s * route.swim_drain_multiplier * delta)
 	if body.meters.energy <= EPSILON_S:
-		body.meters.add(DataEnums.Meter.HEALTH, -tuning.drown_health_per_s * delta)
+		body.meters.harm(tuning.drown_health_per_s * delta, DeathCause.DROWNING)
 	if integrity.intact() and deck_rect().has_point(body.global_position):
 		body.global_position = _edge_outside(body.global_position)
 

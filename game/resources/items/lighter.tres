@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+description_es = "Una fosforera de gas que todavía prende. Fuego en un segundo; veinte llamas y se acabó."
+description_en = "A gas lighter that still sparks. Fire in a second; twenty flames and it is done."
+category = 3
+tags = Array[int]([2])
+weight = 0.1
+durability = 20
+capabilities = Array[int]([19])
+tool_action_time_s = 1.0
+id = &"lighter"
+name_es = "Fosforera"
+name_en = "Lighter"

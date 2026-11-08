@@ -40,6 +40,9 @@ signal run_started
 signal removal_recorded(peer_id: int, player_name: String)
 ## A rejoined player took back its body: it now belongs to `new_peer` (on every peer).
 signal player_rebound(old_peer: int, new_peer: int, body: PlayerBody)
+## Every peer: the host loads island `layout_id` with these arrivals (peer id -> {health, energy})
+## and a beached raft of `raft_integrity` (0: none). IslandTravel does it.
+signal island_travel_requested(layout_id: StringName, arrivals: Dictionary, raft_integrity: float)
 
 ## LOBBY gathers names and spawns nobody; RUN spawns every player (and every joiner at once).
 enum Phase {
@@ -75,13 +78,24 @@ const MAX_DIRECTION_LENGTH_SQUARED: float = 1.001
 ## are WorldSky.to_state().
 const WORLD_STATE_TYPES: Dictionary[String, int] = {
 	"island_seed": TYPE_INT,
+	# The run's seed (endings-progression "One-liner picked by the run seed") and how many
+	# islands the party has stood on (run summary totals).
+	"run_seed": TYPE_INT,
+	"islands": TYPE_INT,
 	"weather": TYPE_STRING_NAME,
 	"time_of_day_s": TYPE_FLOAT,
 	"day": TYPE_INT,
 	"weather_left_s": TYPE_FLOAT,
 	"pending": TYPE_STRING_NAME,
 	"pending_in_s": TYPE_FLOAT,
+	# The island the host is on (an id in game/resources/islands/) and the peers waiting out of
+	# play on it, for a joiner or a rejoined player.
+	"island": TYPE_STRING_NAME,
+	"waiting": TYPE_ARRAY,
+	"raft": TYPE_FLOAT,
 }
+## The most players in a `waiting` list or an arrivals message.
+const MAX_ARRIVALS: int = MAX_PLAYERS
 
 ## Where players appear, in join order (the host first). Set by the level.
 @export var spawn_points: Array[Vector2] = [Vector2.ZERO]
@@ -95,6 +109,9 @@ var climate: ClimateState = ClimateState.new()
 var sky: WorldSky = null
 ## Host: what each joiner receives (island seed, weather, time of day). Client: what arrived.
 var world_state: Dictionary = {}
+## Host: more world state computed when a joiner is told it (the island, who waits, the raft);
+## returns a Dictionary. IslandTravel sets it.
+var join_extras: Callable
 ## Player names by peer id (ui-shell). The host sets its own; the lobby fills in the others.
 var roster: Dictionary[int, String] = {}
 ## The name this peer plays under (the host's goes into the roster at start(); a client sends
@@ -126,6 +143,8 @@ var _identities: IdentityRegistry = IdentityRegistry.new()
 var _spawn_peer: Dictionary[int, int] = {}
 ## Names of the players removed after their 90 s, in removal order (on every peer).
 var _removed: Array[String] = []
+## Why each of them is gone, parallel to `_removed` (a DeathCause id).
+var _removed_causes: Array[StringName] = []
 var _joined: int = 0
 ## Host: numbers the pick-ups it spawns, so every peer gives a node the same name.
 var _pickup_serial: int = 0
@@ -235,7 +254,7 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 		roster[sender] = GameSettings.clean_name(player_name, default_name(roster))
 		if _started and phase == Phase.RUN:
 			_admit(sender)
-	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN, owner_map(), _removed)
+	receive_lobby.rpc_id(sender, roster, phase == Phase.RUN, owner_map(), _removed, _removed_causes)
 	# After the reply, whose owner map puts every body under its current peer (crossing-late-join).
 	if _started and phase == Phase.RUN and body(sender) != null and has_node(^"Routes"):
 		(get_node(^"Routes") as IslandRoutes).send_progress(sender)
@@ -243,13 +262,17 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 
 
 @rpc("authority", "call_remote", "reliable")
-func receive_lobby(roster_data: Dictionary, in_run: bool, owners: Dictionary, removed: Array) -> void:
+func receive_lobby(roster_data: Dictionary, in_run: bool, owners: Dictionary, removed: Array, removed_causes_data: Array) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID:
 		return
 	_removed.clear()
-	for removed_name: Variant in removed:
+	_removed_causes.clear()
+	for index: int in removed.size():
+		var removed_name: Variant = removed[index]
 		if removed_name is String:
 			_removed.append(GameSettings.clean_name(removed_name))
+			var sent: Variant = removed_causes_data[index] if index < removed_causes_data.size() else null
+			_removed_causes.append(DeathCause.checked(sent, _catalog(), DeathCause.REMOVED))
 	# Bodies re-bound before this peer joined still carry their first peer in the spawn data.
 	for spawned_as: Variant in owners:
 		var current: Variant = owners[spawned_as]
@@ -261,13 +284,13 @@ func receive_lobby(roster_data: Dictionary, in_run: bool, owners: Dictionary, re
 
 
 @rpc("authority", "call_remote", "reliable")
-func record_removed(peer_id: int, removed_name: String) -> void:
+func record_removed(peer_id: int, removed_name: String, cause: StringName) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID:
 		return
 	# The host's despawn follows; the player is already gone from this session's players.
 	_bodies.erase(peer_id)
 	_spawn_peer.erase(peer_id)
-	_record_removal(peer_id, GameSettings.clean_name(removed_name))
+	_record_removal(peer_id, GameSettings.clean_name(removed_name), DeathCause.checked(cause, _catalog(), DeathCause.REMOVED))
 
 
 ## The players removed after their 90 s, in removal order. They count as dead for the rest of
@@ -276,8 +299,15 @@ func removed_names() -> Array[String]:
 	return _removed.duplicate()
 
 
-func _record_removal(peer_id: int, removed_name: String) -> void:
+## Why each removed player is gone, in removal order: `removed`, or the cause their meters died
+## of while they were away.
+func removed_causes() -> Array[StringName]:
+	return _removed_causes.duplicate()
+
+
+func _record_removal(peer_id: int, removed_name: String, cause: StringName) -> void:
 	_removed.append(removed_name)
+	_removed_causes.append(cause)
 	removal_recorded.emit(peer_id, removed_name)
 
 
@@ -838,6 +868,57 @@ func _is_unsafe_node_name(node_name: String) -> bool:
 	return false
 
 
+## Every peer: the host loads the island `layout_id` for everyone, with `arrivals` (peer id ->
+## {health, energy}) landing on its landing cells in peer order and `raft_integrity` for the raft
+## beached at its build site (0: none). Anything not from the host, or not shaped like this, is
+## ignored: a client never loads an island on its own.
+@rpc("authority", "call_local", "reliable")
+func travel_to(layout_id: String, arrivals: Dictionary, raft_integrity: float) -> void:
+	if not _is_from_host():
+		return
+	var id := StringName(layout_id)
+	var clean: Variant = checked_arrivals(arrivals)
+	if clean == null or not is_finite(raft_integrity) or not GameState.content.has_entry(&"islands", id):
+		return
+	island_travel_requested.emit(id, clean, maxf(raft_integrity, 0.0))
+
+
+## Every peer: the host tells the sign named `sign_name` (a plain child name) to show its line.
+@rpc("authority", "call_local", "reliable")
+func show_sign(sign_name: String) -> void:
+	if not _is_from_host() or _is_unsafe_node_name(sign_name):
+		return
+	var marker := get_node_or_null(NodePath(sign_name)) as IslandSign
+	if marker != null:
+		show_bubble(marker, marker.line(locale))
+
+
+# The RPC being handled came from the host, or is the host calling itself (a local call has no sender).
+func _is_from_host() -> bool:
+	var sender: int = multiplayer.get_remote_sender_id()
+	return sender == HOST_ID or (sender == 0 and multiplayer.is_server())
+
+
+## The arrivals of a message with every key a peer id and every value {health, energy} finite
+## numbers, or null when anything is not (or there are too many).
+static func checked_arrivals(arrivals: Dictionary) -> Variant:
+	if arrivals.size() > MAX_ARRIVALS:
+		return null
+	var clean: Dictionary = {}
+	for peer: Variant in arrivals:
+		var entry: Variant = arrivals[peer]
+		if not peer is int or not entry is Dictionary:
+			return null
+		var health: Variant = (entry as Dictionary).get("health")
+		var energy: Variant = (entry as Dictionary).get("energy")
+		if not (health is float or health is int) or not (energy is float or energy is int):
+			return null
+		if not is_finite(float(health)) or not is_finite(float(energy)):
+			return null
+		clean[peer] = {"health": float(health), "energy": float(energy)}
+	return clean
+
+
 ## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.
 func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> SpeechBubble:
 	var old := speaker.get_node_or_null(NodePath(BUBBLE_NAME))
@@ -905,6 +986,13 @@ static func checked_world_state(state: Dictionary) -> Dictionary:
 			TYPE_STRING_NAME:
 				if value is StringName or value is String:
 					clean[key] = StringName(value)
+			TYPE_ARRAY:
+				if value is Array and (value as Array).size() <= MAX_ARRIVALS:
+					var peers: Array[int] = []
+					for entry: Variant in value:
+						if entry is int:
+							peers.append(entry)
+					clean[key] = peers
 	return clean
 
 
@@ -930,6 +1018,8 @@ func join_state() -> Dictionary:
 	var state: Dictionary = world_state.duplicate()
 	if sky != null:
 		state.merge(sky.to_state(), true)
+	if join_extras.is_valid():
+		state.merge(join_extras.call(), true)
 	return state
 
 
@@ -959,12 +1049,16 @@ func _remove_player(peer_id: int) -> void:
 		return
 	var last_position: Vector2 = leaving.position
 	var removed_name := player_name(peer_id)
+	# A player whose meters died while they were away keeps that cause.
+	var cause: StringName = DeathCause.REMOVED
+	if leaving.meters.dead and not leaving.meters.death_cause.is_empty():
+		cause = leaving.meters.death_cause
 	_bodies.erase(peer_id)
 	_spawn_peer.erase(peer_id)
 	_identities.release_peer(peer_id)
 	player_removed.emit(peer_id, last_position)
-	record_removed.rpc(peer_id, removed_name)
-	_record_removal(peer_id, removed_name)
+	record_removed.rpc(peer_id, removed_name, cause)
+	_record_removal(peer_id, removed_name, cause)
 	# Freed on the host; the spawner removes it on every client.
 	leaving.queue_free()
 
@@ -1056,7 +1150,7 @@ func _spawn_entity(data: Variant) -> Node:
 
 
 func _make_creature(id: Variant, entity_name: String, spot: Vector2) -> Creature:
-	var catalog: ContentCatalog = creature_catalog if creature_catalog != null else GameState.content
+	var catalog: ContentCatalog = _catalog()
 	if not id is StringName or not catalog.has_entry(&"creatures", id):
 		return null
 	var made := Creature.make(catalog.get_entry(&"creatures", id) as CreatureData)
@@ -1064,6 +1158,11 @@ func _make_creature(id: Variant, entity_name: String, spot: Vector2) -> Creature
 	made.position = spot
 	made.attach_sync()
 	return made
+
+
+# Where creature ids are read from.
+func _catalog() -> ContentCatalog:
+	return creature_catalog if creature_catalog != null else GameState.content
 
 
 func _on_body_ready(peer_id: int, spawned: PlayerBody) -> void:

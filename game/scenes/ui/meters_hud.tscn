@@ -77,3 +77,10 @@ layout_mode = 2
 meter = 6
 label_text = "Salud"
 fill_color = Color(0.36, 0.75, 0.36, 1)
+
+[node name="Bleeding" type="Label" parent="Panel/Bars"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.9, 0.2, 0.2, 1)
+text = "Sangrando"

@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_8cbrf")
-description_es = "Una lona y cuatro palos para cazar el aguacero."
+description_es = "Una lona y cuatro palos pa' cazar el aguacero."
 description_en = "A tarp and four sticks to catch the squall."
 inputs = Dictionary[StringName, int]({
 &"driftwood": 4,

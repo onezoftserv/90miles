@@ -64,6 +64,12 @@ func cell() -> Vector2i:
 	return CreatureNav.cell_of(position)
 
 
+## True for a creature that leaves by itself after its lifetime (the crossing's shark): it passes
+## through and is not one of the island's creatures. Host only: a client's copy has no lifetime.
+func is_passing() -> bool:
+	return lifetime_s >= 0.0
+
+
 func state_name() -> StringName:
 	return brain.state_name() if brain != null else &"NONE"
 

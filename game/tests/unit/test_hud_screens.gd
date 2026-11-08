@@ -11,7 +11,6 @@ const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const SETTINGS_PATH: String = "user://test_hud_screens_settings.cfg"
 const STEP_S: float = 0.1
 const TIMEOUT_S: float = 5.0
-const CROSSING_S: float = 60.0
 const HOLD_S: float = 2.5
 
 var net: NetHarness
@@ -103,21 +102,12 @@ func test_under_the_run_summary_the_hud_takes_no_input() -> void:
 	(shell.screen as TitleScreen).solo_requested.emit()
 	var session := shell.session
 	var body := session.body(CoopSession.HOST_ID)
-	var site := session.get_node(^"RaftSite") as BuildSite
-	body.global_position = site.global_position
-	body.inventory.add(&"driftwood", 6)
-	body.inventory.add(&"inner_tube", 2)
-	body.inventory.add(&"rope", 3)
-	site.deposit(body)
-	site.work(1.0)
-	(session.get_node(^"Raft") as Raft).interactable.interacted.emit(body)
-	assert_eq(shell.crossings.size(), 1, "the raft left")
-	var crossing := shell.crossings[0] as Crossing
-	crossing.plan = CrossingPlan.create(CROSSING_S)
-	CrossingRig.run(crossing, CROSSING_S + 1.0)
-	assert_eq(shell.flow, GameShell.Flow.SUMMARY, "the crossing ended and the summary shows")
+	# A solo raft crossing now lands on the coast cay (coast-cay), so the run ends by death here.
 	var hud := shell.hud
-	assert_not_null(hud, "the HUD stays up under the summary")
+	body.meters.dead = true
+	assert_eq(shell.flow, GameShell.Flow.SUMMARY, "the death ended the run and the summary shows")
+	assert_null(shell.hud, "the HUD goes with the run (run-end)")
+	assert_true(hud.is_queued_for_deletion(), "and is freed at the end of the frame")
 	body.meters.thirst = 50.0
 	body.inventory.add(&"rain_cup", 1)
 	body.inventory.add(&"coco", 1)

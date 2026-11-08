@@ -162,7 +162,7 @@ func test_spanish_comes_first() -> void:
 	assert_eq(text.tool_phrase(DataEnums.Capability.LIGHT_FIRE), "prender candela")
 	assert_eq(text.line(&"faster") % text.tool_phrase(DataEnums.Capability.LIGHT_FIRE), "Más rápido: prender candela")
 	assert_eq(text.refusal(&"condition") % text.tool_phrase(DataEnums.Capability.OPEN_COCONUT), "Te falta con qué abrir el coco.")
-	assert_eq(text.refusal(&"empty"), "No tienes nada ahí.")
+	assert_eq(text.refusal(&"empty"), "No tienes na' ahí.")
 	assert_eq(text.refusal(&"at_sea"), "En plena travesía no se puede.")
 	assert_eq(text.line(&"weight"), "Peso")
 	assert_eq(text.line(&"missing"), "Falta:")

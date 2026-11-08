@@ -92,8 +92,8 @@ tool_phrases = Dictionary[int, PackedStringArray]({
 refusals = Dictionary[StringName, PackedStringArray]({
 &"at_sea": PackedStringArray("En plena travesía no se puede.", "Not in the middle of the crossing."),
 &"condition": PackedStringArray("Te falta con qué %s.", "You need something to %s."),
-&"down": PackedStringArray("Estás en el suelo.", "You're down."),
-&"empty": PackedStringArray("No tienes nada ahí.", "There's nothing there."),
+&"down": PackedStringArray("'Tás en el suelo.", "You're down."),
+&"empty": PackedStringArray("No tienes na' ahí.", "There's nothing there."),
 &"in_progress": PackedStringArray("Eso ya está en obra.", "That's already being built."),
 &"missing_materials": PackedStringArray("Te faltan materiales.", "You're missing materials."),
 &"no_use": PackedStringArray("Eso no se usa así.", "That's not how it's used."),

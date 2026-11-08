@@ -67,15 +67,15 @@ static func is_swimming(body: PlayerBody) -> bool:
 	return body.movement_state == MovementStep.Move.SWIM or body.movement_state == MovementStep.Move.DIVE
 
 
-## A shark's strike: health and bleeding.
+## A shark's strike: health and bleeding. The creature's id is the cause of death if it kills.
 func strike(body: PlayerBody, data: CreatureData) -> void:
-	body.meters.add(DataEnums.Meter.HEALTH, -data.damage)
+	body.meters.harm(data.damage, data.id)
 	body.meters.set_status(DataEnums.Status.BLEEDING, true)
 
 
 ## A crab's pinch: health only.
-func pinch(body: PlayerBody, damage: float) -> void:
-	body.meters.add(DataEnums.Meter.HEALTH, -damage)
+func pinch(body: PlayerBody, data: CreatureData) -> void:
+	body.meters.harm(data.damage, data.id)
 
 
 ## Takes `count` (at most what lies there) from a ground item; returns how many.

@@ -22,7 +22,7 @@ A 1–4 player co-op survival roguelite. Real-time, 2D top-down pixel art, built
 | Rating | Mature: swearing, political satire, danger |
 | Tone | Dark comedy with real stakes; Cubans laughing at the worst day of their lives |
 | Era | The present day. 1994 and the earlier waves (1965, 1980) live in found texts, wrecks and older characters' stories, never in the run's date; see `docs/LORE.md` |
-| Backend | AWS Bedrock (Claude Haiku 4.5) for key dialogue; Lambda + API Gateway |
+| Backend | v2: AWS Bedrock (Claude Haiku 4.5) for key dialogue; Lambda + API Gateway |
 
 ## 3. Core loop
 
@@ -39,8 +39,8 @@ A 1–4 player co-op survival roguelite. Real-time, 2D top-down pixel art, built
 
 - Islands are generated fresh each run from chain templates (see `ISLANDS.md`).
 - After island 1 the route branches (mangroves, reefs, storm keys). You cannot see every chain in one run.
-- The order of NPCs, found texts and events is shuffled. Important NPCs can appear on any island and their AI-generated lines react to what has happened so far.
-- Seeded runs let friends share a seed. Daily runs use the date.
+- The order of NPCs, found texts and events is shuffled. Important NPCs can appear on any island; their lines react to what has happened so far (handwritten in v1; AI-generated in v2, §16).
+- Seeded runs let friends share a seed. Daily runs use the date. (v2: seeds, dailies and challenges are not in v1.)
 
 ## 4. Survival meters
 
@@ -185,7 +185,7 @@ Any player can do anything; backgrounds do it better. Solo uses the same base nu
 
 ## 11. NPCs
 
-Full backstories in `CHARACTERS.md`. Important NPCs (AI dialogue) are **Ramón** the fisherman, **La Vieja Caridad** the lighthouse hermit, **Yunior** the kid, **El Capitán Rodríguez** (guardacostas), and the rescued balseros **Dayana**, **Papo** and **El Chino**. Minor NPCs use handwritten lines.
+Full backstories in `CHARACTERS.md`. Important NPCs (handwritten in v1, AI dialogue in v2) are **Ramón** the fisherman, **La Vieja Caridad** the lighthouse hermit, **Yunior** the kid, **El Capitán Rodríguez** (guardacostas), and the rescued balseros **Dayana**, **Papo** and **El Chino**. Minor NPCs use handwritten lines.
 
 Rescued balseros join your party as AI companions (like Brogue's freed captives). Each needs something to survive the trip and each changes the ending.
 
@@ -269,7 +269,9 @@ The game speaks like Cubans talk.
 
 Rules: satire targets the system, slogans and daily life, not invented quotes from real politicians. A settings toggle softens profanity. Haiku receives a style guide and slang glossary. Spanish first.
 
-## 16. AI dialogue and voice
+## 16. AI dialogue and voice (v2)
+
+This whole section is v2 (owner decision, 2026-11-08). In v1 every line is handwritten, the important NPCs and the texts found every run included, and there is no voice acting; music stays in v1.
 
 Claude Haiku 4.5 on Amazon Bedrock generates dialogue for **important NPCs and the texts found every run**, so the content players see most stays fresh. Minor NPCs, story beats, bosses and endings are handwritten.
 
@@ -288,7 +290,7 @@ Claude Haiku 4.5 on Amazon Bedrock generates dialogue for **important NPCs and t
 
 | System | Godot approach | Reference |
 | --- | --- | --- |
-| Island generation | TileMapLayer, noise island shape, rule-placed POIs | SPD room builders |
+| Island generation | TileMapLayer, seeded integer island shape (no floating-point noise), rule-placed POIs | SPD room builders, Brogue blobs, DCSS Shoals |
 | Natural features | Mangroves, reefs, tide pools by placement rules | Brogue lakes and machines |
 | Pathfinding and AI | AStarGrid2D; state machines per creature | Brogue Dijkstra maps |
 | Data | Custom Resources (.tres) for items, creatures, NPCs, recipes | DCSS data files |

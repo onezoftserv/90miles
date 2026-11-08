@@ -38,12 +38,37 @@ Tarp-sail SHALL require trade wind; binoculars-swim SHALL require clear weather 
 - THEN the route cannot start
 
 ### Requirement: Split parties
-When a route takes a subset of the party, the island SHALL remain active for the others; the next island waits until all living players arrive or die. Arrived players spawn on the next island's beach and can survive there meanwhile.
+When a route takes a subset of the party, the island SHALL remain active for the others; the next island waits until all living players arrive or die. Because a session runs one live level (coop-networking, decided 2026-11-05), riders whose crossing has ended wait on the next island's shore instead of playing it: they are out of play (hidden, not hurt by anything, their meters frozen), they do not count as company or as a teammate who could revive someone, and they see who is still playing. When no living player is left on the island (each has died, been removed or left by a route) and no crossing is still running, the host SHALL load the next island for every peer: the waiting and arriving players land on its landing cells, within 5 tiles of each other, with the health and energy they had, and can survive there. A dropped player who is still on the island keeps it open until removed; a removed player counts as dead; a waiting rider who drops and rejoins stays a waiting rider. A client never loads an island on its own. With exactly 1 player there is no wait: the next island loads as soon as the player's crossing ends, and if they die in the crossing the run ends as a death.
 
 #### Scenario: Half the party leaves
 - GIVEN two of four players leave by a route
 - WHEN those two arrive on the next island
-- THEN they spawn on its beach and can survive there, the previous island stays active for the other two, and the next island waits until those two arrive or die
+- THEN they wait on its shore out of play, the previous island stays active for the other two, and the next island loads for everyone when those two arrive or die, with the waiting two on its beach
+
+#### Scenario: The one who stayed dies
+- GIVEN a 2-player run where the first player's crossing has ended and the second is still on the sandbar
+- WHEN the second player dies
+- THEN the coast cay loads on both peers and the first player stands on its first landing cell with the health and energy their crossing left them
+
+#### Scenario: A crossing still running holds the load
+- GIVEN a 2-player run where the first player's crossing has ended and the second is still on the sandbar or in a crossing
+- WHEN the host checks the party
+- THEN the sandbar stays the live island on both peers, and the coast cay loads when the second player's crossing ends, or they die or are removed
+
+#### Scenario: A waiting rider drops and rejoins
+- GIVEN a 2-player run where the second player's crossing has ended and they drop
+- WHEN they rejoin with the same identity before the first player leaves or dies
+- THEN they are still a waiting rider under their new peer, on the host and on their own screen, and they land with the rest when the coast cay loads
+
+#### Scenario: A removed player counts as dead
+- GIVEN a 2-player run where the first player's crossing has ended and the second drops on the sandbar
+- WHEN the second player's 90 s run out and they are removed
+- THEN the coast cay loads for the first player alone, and the removed player is listed as dead
+
+#### Scenario: A solo player never waits
+- GIVEN a 1-player run, offline, whose crossing ends
+- WHEN the crossing ends
+- THEN the coast cay loads at once for the one player, with no wait and no other player needed
 
 ### Requirement: Route discovery
 Routes SHALL be hidden until discovered (seen, told by an NPC, or revealed by charts/keepsake). Discovered routes show on the island map with their requirements.
@@ -113,3 +138,26 @@ The raft SHALL be known from the start. Binoculars-and-swim SHALL become discove
 - GIVEN a 1-player run that starts in a squall
 - WHEN the squall ends and the weather turns calm
 - THEN binoculars-and-swim becomes discovered; before that a start request for it is refused
+
+### Requirement: Departures reach joiners
+A peer that joins the run, or rejoins and takes back its body, SHALL learn from the host which players already left by a route and by which one, under each player's current peer. Learning it starts nothing. Riders whose crossing already ended stay out of play on the joiner's screen, as on the host's. With exactly 1 player, offline, nobody can join, and leaving by a route works as before.
+
+#### Scenario: A late joiner learns who left
+- **GIVEN** a 2-player run in which the client left by "Prismáticos y a nadar" and the host stayed on the island
+- **WHEN** a third player joins
+- **THEN** the third player's game has the client as having left by that route and the host as still on the island, and no crossing starts because of it
+
+#### Scenario: Riders of an ended crossing stay out of play
+- **GIVEN** a 2-player run whose client crossed by raft and whose crossing has ended, while the host stays on the island
+- **WHEN** a third player joins
+- **THEN** the third player does not see the client's body on the island
+
+#### Scenario: A rejoined rider is still gone
+- **GIVEN** a 2-player run whose client left by raft, and the client's crossing still under way
+- **WHEN** the client drops and joins again from the same install
+- **THEN** the client's game has them as having left by "Balsa" under their new peer, and the run does not end while their crossing runs
+
+#### Scenario: Solo departure unchanged
+- **GIVEN** a 1-player run, offline, with a built raft
+- **WHEN** the player launches it
+- **THEN** the player leaves the island by "Balsa" as before, and nothing is sent to anyone

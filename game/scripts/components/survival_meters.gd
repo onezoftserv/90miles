@@ -15,6 +15,10 @@ signal last_stand_changed(active: bool)
 ## A free revive (the Medalla) stood the player up at 0 health.
 signal free_revive_used
 signal died
+## A delayed effect (EffectData.delay_s) is due: the body applies it to its player.
+signal effect_due(effect: EffectData)
+## Every peer: a status started or ended (status_flags changed, by set_status or the sync).
+signal statuses_changed(flags: int)
 
 ## One-off morale changes other systems report; the amounts are in the tuning.
 enum MoraleEvent { ALLY_DIED, SQUALL, FIRE_LIT, SONG, TEXT_READ }
@@ -126,6 +130,11 @@ var last_stand: bool = false:
 		last_stand = value
 		last_stand_changed.emit(last_stand)
 
+## Why the player died (survival-meters "Cause of death"): a DeathCause id, set by the host just
+## before `dead` and empty while alive. It replicates before `dead`, so a client's `died` already
+## sees it.
+var death_cause: StringName = &""
+
 ## Permadeath for the run. Set once; emits died.
 var dead: bool = false:
 	set(value):
@@ -135,12 +144,25 @@ var dead: bool = false:
 		if dead:
 			died.emit()
 
-## Statuses on this player by DataEnums.Status. Host-only; nothing causes or clears one yet
-## (urchins, creatures and bandages come later), so routes and tests set them directly.
-var statuses: Dictionary[int, bool] = {}
+## Statuses on this player, one bit (1 << status) per DataEnums.Status (status-sync). The host
+## sets them through set_status; the player's synchronizer sends the int to every peer like the
+## meters, so a client reads the host's and never sets one.
+var status_flags: int = 0:
+	set(value):
+		if status_flags == value:
+			return
+		status_flags = value
+		statuses_changed.emit(value)
 
+## The cause of the latest loss of health, and the cause that put a downed or last-stand player
+## down (what they die of if the time runs out).
+var _last_harm: StringName = &""
+var _down_cause: StringName = &""
 ## Changes spread over time (seawater, poison), advanced by tick.
 var _timed: Array[MeterOverTime] = []
+## Effects waiting out their delay, and the seconds each has left (parallel arrays), advanced by tick.
+var _delayed_effects: Array[EffectData] = []
+var _delayed_left_s: Array[float] = []
 
 
 ## One host step: timed changes, then drains and restores from `context`, then the states.
@@ -150,16 +172,28 @@ func tick(delta: float, context: MeterContext) -> void:
 	if downed or last_stand:
 		downed_time_left_s = maxf(downed_time_left_s - delta, 0.0)
 		if downed_time_left_s <= EMPTY_EPSILON:
-			dead = true
+			_die(_down_cause)
 			return
 	_advance_timed(delta)
+	_advance_delayed(delta)
 	thirst -= SurvivalRules.thirst_drain(context, tuning) * delta
 	hunger -= SurvivalRules.hunger_drain(context, tuning) * delta
 	heat = SurvivalRules.next_heat(heat, context, tuning, delta)
 	morale += SurvivalRules.morale_rate(context, tuning) * delta
 	_snap_empty()
 	if thirst <= 0.0:
+		_last_harm = DeathCause.THIRST
 		health -= tuning.dry_health_per_s * delta
+	_update_states()
+
+
+## Takes `amount` of health now and remembers `cause` (a DeathCause id) for the death it may lead
+## to. Nothing happens once dead.
+func harm(amount: float, cause: StringName) -> void:
+	if dead or amount <= 0.0:
+		return
+	_last_harm = cause
+	health -= amount
 	_update_states()
 
 
@@ -177,6 +211,13 @@ func add_over_time(meter: DataEnums.Meter, total: float, duration_s: float) -> v
 		add(meter, total)
 		return
 	_timed.append(MeterOverTime.new(meter, total, duration_s))
+
+
+## Holds `effect` for `delay_s` seconds of ticks, then emits `effect_due` once. Time does not run
+## while the meters do not tick (a rider waiting out of play).
+func delay_effect(effect: EffectData, delay_s: float) -> void:
+	_delayed_effects.append(effect)
+	_delayed_left_s.append(delay_s)
 
 
 ## Eats food worth `hunger_amount`. Anything that restores hunger is a meal and gives energy.
@@ -204,6 +245,8 @@ func revive() -> bool:
 		return false
 	health = tuning.revive_health
 	downed_time_left_s = 0.0
+	_last_harm = &""
+	_down_cause = &""
 	downed = false
 	last_stand = false
 	_update_states()
@@ -221,14 +264,19 @@ func energy_cap() -> float:
 
 
 func has_status(status: DataEnums.Status) -> bool:
-	return statuses.get(status, false)
+	return _is_real_status(status) and (status_flags & (1 << status)) != 0
 
 
+## Host: starts or ends `status`. NONE and values outside DataEnums.Status change nothing.
 func set_status(status: DataEnums.Status, active: bool) -> void:
-	if active:
-		statuses[status] = true
-	else:
-		statuses.erase(status)
+	if not _is_real_status(status):
+		return
+	var bit: int = 1 << status
+	status_flags = (status_flags | bit) if active else (status_flags & ~bit)
+
+
+static func _is_real_status(status: int) -> bool:
+	return status > DataEnums.Status.NONE and status < DataEnums.Status.size()
 
 
 ## The value of `meter`, 0 for NONE.
@@ -290,7 +338,24 @@ func _add_raw(meter: DataEnums.Meter, amount: float) -> void:
 		else:
 			spend_energy(-amount)
 		return
+	if meter == DataEnums.Meter.HEALTH and amount < 0.0:
+		_last_harm = DeathCause.OTHER
 	set_value(meter, value(meter) + amount)
+
+
+func _advance_delayed(delta: float) -> void:
+	var due: Array[EffectData] = []
+	var index: int = 0
+	while index < _delayed_left_s.size():
+		_delayed_left_s[index] -= delta
+		if _delayed_left_s[index] <= EMPTY_EPSILON:
+			due.append(_delayed_effects[index])
+			_delayed_effects.remove_at(index)
+			_delayed_left_s.remove_at(index)
+		else:
+			index += 1
+	for effect: EffectData in due:
+		effect_due.emit(effect)
 
 
 func _advance_timed(delta: float) -> void:
@@ -329,16 +394,23 @@ func _on_health_empty() -> void:
 		health = tuning.revive_health
 		free_revive_used.emit()
 		return
+	_down_cause = _last_harm if not _last_harm.is_empty() else DeathCause.OTHER
 	if not solo:
 		downed_time_left_s = tuning.downed_s + downed_bonus_s
 		downed = true
 		return
 	var window_s: float = tuning.solo_last_stand_s + downed_bonus_s
 	if window_s <= EMPTY_EPSILON:
-		dead = true
+		_die(_down_cause)
 		return
 	downed_time_left_s = window_s
 	last_stand = true
+
+
+## The host's death: the cause first, so it replicates before `dead` (and `died` can read it).
+func _die(cause: StringName) -> void:
+	death_cause = cause if not cause.is_empty() else DeathCause.OTHER
+	dead = true
 
 
 func _morale_amount(event: MoraleEvent) -> float:
