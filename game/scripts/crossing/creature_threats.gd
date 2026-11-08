@@ -36,8 +36,12 @@ func _shark_pass(crossing: Crossing) -> void:
 
 
 # The visual shark: it appears beside the victim, circles for its circle time and frees itself.
+# It comes through the session's entity spawner like the island's creatures, so every peer sees it
+# (and a peer that joins during the circle); only the host times it (crossing-shark-sync).
 func _show_shark(crossing: Crossing, data: CreatureData, at: Vector2) -> void:
-	var shark := Creature.make(data)
-	shark.position = at
-	shark.lifetime_s = data.circle_time_s.x
-	crossing.add_child(shark)
+	var session := crossing.session()
+	if session == null:
+		return
+	var shark := session.spawn_creature(data, at)
+	if shark != null:
+		shark.lifetime_s = data.circle_time_s.x

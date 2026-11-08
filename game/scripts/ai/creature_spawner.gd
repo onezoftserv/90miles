@@ -69,12 +69,15 @@ func _physics_process(_delta: float) -> void:
 		check_fires()
 
 
-## The living creatures of `id` (all of them when empty).
+## The island's living creatures of `id` (all of them when empty). A passing creature (the
+## crossing's shark) is not the island's, so phases, fires and counts never touch it.
 func creatures(id: StringName = &"") -> Array[Creature]:
 	var found: Array[Creature] = []
 	for node: Node in session.entities.get_children():
 		var creature := node as Creature
-		if creature != null and not creature.is_queued_for_deletion() and (id.is_empty() or creature.data.id == id):
+		if creature == null or creature.is_queued_for_deletion() or creature.is_passing():
+			continue
+		if id.is_empty() or creature.data.id == id:
 			found.append(creature)
 	return found
 
