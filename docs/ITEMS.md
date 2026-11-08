@@ -2,7 +2,7 @@
 
 Every item, with tags, effect and where it comes from. Items are `.tres` resources (`game/resources/items/<id>.tres`). Numbers are first-pass; tune in playtests. Study: Shattered Pixel Dungeon `items/` for the identify/upgrade pattern, DCSS item data for data-driven definitions.
 
-Tags: `food`, `water`, `tool`, `weapon`, `material`, `wearable`, `shiny` (attracts barracuda), `keepsake`, `text`, `container`, `fuel`, `medicine`, `unknown` (needs identification).
+Tags: `food`, `water`, `tool`, `weapon`, `material`, `wearable`, `shiny` (attracts barracuda), `keepsake`, `text`, `container`, `fuel`, `medicine`, `unknown` (needs identification), `secret` (never shown by charts, binoculars, map knowledge, route discovery, HUD markers or AI context, and never picked by item-tag spawns or found-text placement, so its spawn weight is 0; see "Secret items" below).
 
 ## Water (7)
 
@@ -99,7 +99,7 @@ Each run assigns a random look ("fruta roja", "fruta verde", "baya morada", "hon
 | Azúcar (sugar) | Milordo; ingredient only, no use, stacks to 5 | Freighter galley (1–2), balseros' camps (trade) |
 | Cámara de bicicleta (Chinese-bicycle tube) | 2 + 1 resin → 1 inner tube at a workbench, 30 s; weight 1, stacks to 4 | Flotsam line (30%, 1–2, respawns after a squall), fishermen's houses (1–2). "Esta cámara cruzó La Habana mil veces. Ahora le toca cruzar el mar." |
 
-## Wearables (8)
+## Wearables (9)
 
 | Item | Effect | Trade-off |
 | --- | --- | --- |
@@ -111,8 +111,9 @@ Each run assigns a random look ("fruta roja", "fruta verde", "baya morada", "hon
 | Gloves (cloth) | Oysters and traps without bleeding | — |
 | Sunglasses (shiny) | Binoculars work in scorching calm glare | Barracuda |
 | Military belt | +2 inventory slots | Ex-militar start |
+| Sombrero de yarey con cinta roja (`sombrero_cinta_roja`, secret) | Heat −30%, like the yarey hat | Never blows off (it has a chin cord). Only one, hanging on the lean-to of the secret cay. Wearing it waits for the equipment change |
 
-## Wreck loot and oddities (13)
+## Wreck loot and oddities (15)
 
 | Item | Effect | Lore |
 | --- | --- | --- |
@@ -129,6 +130,8 @@ Each run assigns a random look ("fruta roja", "fruta verde", "baya morada", "hon
 | Dominoes (set) | At a fire with 2+ players: morale +20 for all, costs 1 night phase | Nobody leaves mid-game |
 | Hand pump + bilge bucket | Repaired boat sinks 50% slower; raft sheds squall water | |
 | Botija | Blow into the emptied fuel jug at a lit fire (20 s): a bass note, morale +5 to players within 5 tiles once a day, +5 more with a Músico or the cassette present; plays no real song | Given to whoever starts the almendrón; also loot in the fishermen's houses (30%) and resort generator (50%). "En Cuba nada se bota: se reasigna." |
+| Brújula rota (`brujula_rota`, secret) | Points to secrets: a HUD needle, shown only to its carrier, aims at the nearest concealed item on the island or at the secret cay's unopened chest and steadies as you close in. Never steers and never cancels drift | Concealed (reveal radius 3 tiles, 1.5 s hold to dig it out) on a mid-run island in 1 run in 3. "La única brújula que nunca te manda pa'l Norte." |
+| Mapa sin norte (`mapa_sin_norte`, secret) | Does nothing alone; its text names the kind of spot where this run's compass hides. Never counts as charts | Concealed like the compass, on a different mid-run island. "Una X, {pista} y una rosa de los vientos torcida. Se nota que lo dibujaron con una brújula que no sirve." (`{pista}` is the hint phrase, see "Secret items") |
 
 ## Keepsakes (9)
 
@@ -146,7 +149,7 @@ See `GAME_DESIGN.md` §14 for unlocks. Each is one inventory slot and cannot be 
 | Llave del almendrón | Building ×1.2 for the holder; unlocks by crossing once by the almendrón. "La llave de un carro que está en el fondo del mar. O en Hialeah. Depende de cómo te fue." |
 | Pluma de galleguito | Island gulls and the final galleguito never steal from the holder; unlocks on *Devuelto*. "Una pluma gris. Él llegó; tú no. Por lo menos los galleguitos ya te conocen." |
 
-## Found texts (15 types)
+## Found texts (16 types)
 
 Readable items. Important ones (marked AI) are generated per run.
 
@@ -167,9 +170,40 @@ Readable items. Important ones (marked AI) are generated per run.
 | Se vende (note) | The raft-for-sale POI on sandbar and coast cays | HW |
 | El fallo del pilote (the board) | The piling off the final sandbar | HW |
 | El sobre de tres generaciones | Keeper's house, camp ruin (40% each) | HW |
+| Llegaste tarde (`nota_llegaste_tarde`, secret) | The chest on the secret cay | HW |
 
 The lore additions also give four existing texts new handwritten entries, no new files: bottle note (four entries that become its offline fallbacks), wall slogan (four slogans, each with a reply written under it), radio fragment (three broadcasts from generic stations) and the Special Period diary (four fallback pages). Every text is original, uses real places and years but only invented people with first names, and keeps its sources in `docs/LORE.md`. Each gives +10 morale on first read, as every found text does.
 
+## Secret items (change `secret-cay`)
+
+Four items tagged `secret`, for the hidden cay (`ISLANDS.md`, "El cayo sin norte"). In 1 run in 3 the compass and the map hide on two different islands from 2 to 5; with both, the party can detour to the cay. Every number lives in `game/resources/secret_tuning.tres`; the reveal radius is the items' own `conceal_radius_tiles`, and the tuning names which two items are the pieces (`map_item_id`, `compass_item_id`). Nothing secret is ever shown by charts, binoculars, the lighthouse, keepsakes, NPC reveals, route discovery, carried map knowledge, HUD markers or the AI. All four have `spawn_weight` 0, so no item-tag spawn or found-text placement ever picks them; the content validator rejects a `secret` item with a spawn weight above 0.
+
+- **Brújula rota** / *Broken compass* (`brujula_rota`, oddity, weight 0.3, capability `POINT_TO_SECRET`, never `STEER` or `NAVIGATE_STREAM`). "La única brújula que nunca te manda pa'l Norte." / "The only compass that never sends you to el Norte."
+- **Mapa sin norte** / *Map without north* (`mapa_sin_norte`, oddity, weight 0.1, never `REVEAL_LAYOUT` or `REVEAL_ROUTES`). "Una X, {pista} y una rosa de los vientos torcida. Se nota que lo dibujaron con una brújula que no sirve." / "An X, {pista} and a crooked compass rose. You can tell it was drawn with a compass that doesn't work." Each peer fills the `{pista}` slot with the hint phrase for the kind of spot where this run's compass hides (the kind of the spot's nearest feature; table below), never the island or the cell.
+- **Sombrero de yarey con cinta roja** / *Yarey hat with a red band* (`sombrero_cinta_roja`, wearable, head, weight 0.3, heat gain ×0.7, no weather knocks it off). "Yarey de verdad, cinta roja sencilla y barbiquejo: a este no se lo lleva el viento." / "Real yarey, a plain red band and a chin cord: the wind won't take this one." One per cay, whoever takes it first. Later, everyone present unlocks it as a cosmetic for future runs (no stats from run start).
+- **Llegaste tarde** / *Too slow* (`nota_llegaste_tarde`, text, handwritten, one entry picked at random when the chest opens). Every entry is written by someone alive who left minutes ago and is coming back on Thursday; the hat's owner appears only in the last one. No entry has a swear, so the soft bodies stay empty (already clean). Each entry gives its heading, then its body:
+  1. `llegaste_tarde` (*Llegaste tarde* / *Too slow*): "Llegaste tarde, mi hermano. Aquí el que no madruga no coge ni la nota, y esta te la dejé por lástima. Vuelvo el jueves." / "Too slow, mi hermano. Around here, whoever doesn't get up early doesn't even get the note, and I left you this one out of pity. Back on Thursday."
+  2. `decomisado` (*Acta de decomiso* / *Seizure notice*): "Contenido: DECOMISADO. Motivo: tesoro sin factura. Para reclamar, traiga el carné, tres fotos y el tesoro. Oficina cerrada; vuelvo el jueves." / "Contents: DECOMISADO. Reason: treasure without a receipt. To file a claim, bring your carné, three photos and the treasure. Office closed; back on Thursday."
+  3. `la_cola` (*¿Quién es el último?* / *Who's last in the cola?*): "Para el tesoro hubo cola. Yo marqué, me fui a resolver una cosa y cuando volví ya no había ni cola. Ahora voy a marcar en otra. Vuelvo el jueves." / "There was a cola for the treasure. I marked my place, went off to resolver something, and when I got back there wasn't even a cola. Now I'm off to mark my place in another one. Back on Thursday."
+  4. `ni_el_norte` (*Sobre la brújula* / *About the compass*): "Si llegaste con esa brújula, felicidades: te perdiste igualito que yo. Con ella dibujé el mapa. Por eso aquí no hay nada. Ni el Norte. Vuelvo el jueves, si la brújula me deja." / "If you got here with that compass, congratulations: you got lost just like I did. I drew the map with it. That's why there's nothing here. Not even el Norte. Back on Thursday, if the compass lets me."
+  5. `el_sombrero` (*Sobre el sombrero* / *About the hat*): "Ese sombrero tiene dueño, y no eres tú. Dijo que volvía por él. Yo vuelvo el jueves, a ver quién llega primero. Mientras, póntelo, que este sol no perdona. Pero no le cojas cariño." / "That hat has an owner, and it isn't you. He said he's coming back for it. I'm back on Thursday; we'll see who gets here first. Meanwhile, put it on, this sun doesn't forgive. But don't get attached."
+
+The map's hint phrases (`spot_hints_es` / `spot_hints_en` in `secret_tuning.tres`), by spot kind. A pick-up's kind is its glyph's `group`; any kind not listed takes `default`:
+
+| Spot kind | `{pista}` (es) | `{pista}` (en) |
+| --- | --- | --- |
+| `palm` | una palma | a palm |
+| `flotsam` | un reguero de cosas que trajo el mar | a reguero of junk the sea brought in |
+| `hut` | un bohío sin techo | a bohío with no roof |
+| `beach` | un pedazo de playa | a stretch of beach |
+| `dune` | una loma de arena | a hill of sand |
+| `tide_pool` | un charco entre las piedras | a pool among the rocks |
+| `workbench` | un banco de trabajo | a workbench |
+| `raft_site` | un buen sitio pa' armar una balsa | a good spot to put a raft together |
+| `default` | algo que no se entiende | something nobody can make out |
+
+The hat is a plain Cuban yarey hat with a red band. No name, emblem or line from any franchise appears with it, in any file, text, art or prompt.
+
 ## Counts
 
-7 water, 16 food, 10 plants, 18 tools, 17 materials, 8 wearables, 13 oddities, 9 keepsakes, 15 texts = **113 item definitions** (the 16 added by `balsero-lore`: 11 items, 2 keepsakes, 3 texts).
+7 water, 16 food, 10 plants, 18 tools, 17 materials, 9 wearables, 15 oddities, 9 keepsakes, 16 texts = **117 item definitions** (the 16 added by `balsero-lore`: 11 items, 2 keepsakes, 3 texts; the 4 added by `secret-cay`: 1 wearable, 2 oddities, 1 text).
