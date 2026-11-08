@@ -532,6 +532,8 @@ func shoo(creature_name: String) -> void:
 func request_shoo(creature_name: String) -> void:
 	if not multiplayer.is_server():
 		return
+	if _is_unsafe_node_name(creature_name):
+		return
 	var sender := multiplayer.get_remote_sender_id()
 	var now: float = clock.call()
 	if now - _shoo_at_s.get(sender, -SHOO_INTERVAL_S) < SHOO_INTERVAL_S and sender != HOST_ID:
@@ -541,6 +543,16 @@ func request_shoo(creature_name: String) -> void:
 	var creature := entities.get_node_or_null(NodePath(creature_name)) as Creature
 	if player != null and creature != null:
 		creature.shoo(player)
+
+
+# A client-sent name must be one plain child name, never a path to look up.
+func _is_unsafe_node_name(node_name: String) -> bool:
+	if node_name.is_empty():
+		return true
+	for bad: String in ["/", ":", ".", "@"]:
+		if node_name.contains(bad):
+			return true
+	return false
 
 
 ## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.

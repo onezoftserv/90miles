@@ -50,6 +50,21 @@ func test_a_shoo_from_6_tiles_is_refused_and_from_1_tile_is_accepted() -> void:
 	assert_true(await wait_until(func() -> bool: return gull.state_name() == &"FLEE", TIMEOUT_S))
 
 
+func test_a_shoo_with_an_unsafe_creature_name_is_ignored() -> void:
+	var host := net.add_host()
+	var client := await net.join()
+	var gull := host.spawn_creature(_data(&"seagull"), Vector2(200.0, 200.0))
+	assert_true(await _client_has(client, 1))
+	host.body(net.peer_id(client)).global_position = gull.position + Vector2(16.0, 0.0)
+	var bad_names: Array[String] = ["", "../Players", "@a", ".", "./%s" % gull.name, "%s/." % gull.name, "%s:position" % gull.name]
+	for bad: String in bad_names:
+		client.shoo(bad)
+		await wait_seconds(0.3)
+	assert_eq(gull.state_name(), &"PERCH", "no unsafe name shooed it")
+	client.shoo(gull.name)
+	assert_true(await wait_until(func() -> bool: return gull.state_name() == &"FLEE", TIMEOUT_S), "and none used up the cooldown")
+
+
 func test_a_late_joiner_sees_the_six_crabs() -> void:
 	var host := net.add_host()
 	for i: int in 6:
