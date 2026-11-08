@@ -201,9 +201,13 @@ func test_a_restored_crossing_keeps_the_run_open_until_it_ends() -> void:
 	assert_true(crossing.finished)
 	assert_false(shell.crossings.has(crossing))
 	assert_false(shell.session.body(7).visible, "the rider leaves play when it ends")
-	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
-	var rows: Array[String] = (shell.screen as SummaryScreen).rows()
-	assert_string_contains(rows[1], "Balsa")
+	# coast-cay: with nobody living left on the sandbar, the rider goes on to the coast cay
+	# instead of ending the run.
+	assert_eq(shell.flow, GameShell.Flow.RUN, "the run goes on to the next island")
+	await wait_frames(2)
+	assert_eq(shell.island.layout.id, &"coast_cay", "the party travelled")
+	assert_true(shell.session.body(7).visible, "the rider landed on the coast cay")
+	assert_eq(shell.flow, GameShell.Flow.RUN)
 
 
 func test_a_rider_whose_crossing_ended_before_the_join_stays_out_of_play() -> void:

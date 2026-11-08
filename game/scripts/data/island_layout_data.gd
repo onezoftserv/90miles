@@ -38,6 +38,23 @@ extends ContentData
 @export_group("Routes")
 ## The routes the island offers (RouteData ids in game/resources/routes/).
 @export var route_ids: Array[StringName] = []
+## The island riders reach when a crossing from this one ends (an id in game/resources/islands/);
+## empty when none is built yet, and the run ends with the summary instead.
+@export var next_island: StringName = &""
+
+@export_group("Chain")
+## The family the island belongs to: the creature spawn rules read it.
+@export var chain_family: DataEnums.ChainFamily = DataEnums.ChainFamily.SANDBAR
+
+@export_group("Drinking and signs")
+## The shore cell of drinkable water (the coast cay's lagoon); empty when the island has none.
+@export var drink_glyph: String = ""
+## Seconds the interact button is held to drink.
+@export var drink_hold_s: float = 2.0
+## What one drink does to the drinker. An effect with delay_s applies that long after the drink.
+@export var drink_effects: Array[EffectData] = []
+## Signs: one glyph each, shown as speech bubbles.
+@export var signs: Array[IslandSignData] = []
 
 @export_group("Pick-ups")
 @export var pickups: Array[IslandGlyphData] = []

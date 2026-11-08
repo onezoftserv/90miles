@@ -180,11 +180,11 @@ func _offshore_spots(data: CreatureData, rule: CreatureSpawnRuleData, count: int
 	return picked
 
 
-# The rule fits this island (the sandbar's chain family) and, for a phased rule, the phase.
+# The rule fits this island (its layout's chain family) and, for a phased rule, the phase.
 func _matches(rule: CreatureSpawnRuleData, phase: Variant) -> bool:
 	if rule.context == DataEnums.SceneContext.CROSSING or rule.tide != DataEnums.Tide.ANY:
 		return false
-	if not rule.chain_families.is_empty() and not rule.chain_families.has(DataEnums.ChainFamily.SANDBAR):
+	if not rule.chain_families.is_empty() and not rule.chain_families.has(layout.chain_family):
 		return false
 	if rule.phases.is_empty():
 		return phase == null

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+description_es = "Para hacer señas a los barcos de día. Cuando haya barcos."
+description_en = "For signalling boats by day. Once there are boats."
+category = 3
+tags = Array[int]([2, 6])
+weight = 0.3
+id = &"mirror"
+name_es = "Espejo"
+name_en = "Mirror"

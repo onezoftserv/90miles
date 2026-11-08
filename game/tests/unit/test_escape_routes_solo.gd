@@ -120,7 +120,7 @@ func test_the_swim_is_discovered_when_a_squall_start_ends() -> void:
 	assert_eq(body.inventory.count_id(&"binoculars"), 1)
 
 
-func test_solo_leaving_by_raft_ends_the_run_with_the_summary() -> void:
+func test_solo_leaving_by_raft_lands_on_the_coast_cay() -> void:
 	var shell := SHELL_SCENE.instantiate() as GameShell
 	shell.settings_path = SETTINGS_PATH
 	add_child_autofree(shell)
@@ -135,8 +135,7 @@ func test_solo_leaving_by_raft_ends_the_run_with_the_summary() -> void:
 	var crossing := shell.crossings[0] as Crossing
 	crossing.plan = CrossingPlan.create(60.0)
 	CrossingRig.run(crossing, 60.0)
-	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
-	var rows: Array[String] = (shell.screen as SummaryScreen).rows()
-	assert_eq(rows.size(), 1)
-	assert_string_contains(rows[0], "Balsa")
-	assert_string_contains(rows[0], "Sobrevivió")
+	await wait_frames(2)
+	assert_eq(shell.flow, GameShell.Flow.RUN, "the solo player lands on the next island")
+	assert_eq(shell.island.layout.id, &"coast_cay")
+	assert_false(shell.session.body(1).left_island)

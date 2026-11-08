@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+description_es = "Clavos oxidados de la garita. Todavía agarran."
+description_en = "Rusty nails from the post. They still bite."
+category = 4
+tags = Array[int]([4])
+stack_size = 12
+weight = 0.1
+id = &"nails"
+name_es = "Clavos"
+name_en = "Nails"

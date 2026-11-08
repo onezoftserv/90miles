@@ -1,6 +1,6 @@
 extends GutTest
 ## crossing with exactly 1 player, offline: launch, cross alone, tie down, fall in, climb back,
-## swim the whole way, and the run ending when the crossing does.
+## swim the whole way, and the coast cay opening when the crossing ends (the run ends only in a death).
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://test_crossing_settings.cfg"
@@ -66,9 +66,9 @@ func test_solo_finishes_coast_crossing() -> void:
 	assert_eq(result.drift_offset_tiles, 0.0, "a coast crossing has no drift")
 	assert_true(result.riders[1]["aboard"])
 	assert_false(result.riders[1]["dead"])
-	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
-	var rows: Array[String] = (shell.screen as SummaryScreen).rows()
-	assert_string_contains(rows[0], "Balsa")
+	await wait_frames(2)
+	assert_eq(shell.flow, GameShell.Flow.RUN, "the crossing ends on the coast cay, not in the summary")
+	assert_eq(shell.island.layout.id, &"coast_cay")
 
 
 func test_solo_ties_down_through_squall() -> void:
@@ -104,7 +104,9 @@ func test_solo_falls_in_climbs_back_and_finishes() -> void:
 	var result := shell.crossing_results[0] as CrossingResult
 	assert_true(result.riders[1]["aboard"])
 	assert_eq(result.integrity, 70.0)
-	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
+	await wait_frames(2)
+	assert_eq(shell.flow, GameShell.Flow.RUN)
+	assert_eq(shell.island.layout.id, &"coast_cay")
 
 
 func test_solo_swimmer_finishes_swim_route() -> void:
@@ -128,4 +130,5 @@ func test_solo_dying_in_the_crossing_ends_the_run_as_a_death() -> void:
 	var crossing := launched[1] as Crossing
 	crossing.body_of(1).meters.dead = true
 	CrossingRig.run(crossing, 0.2)
+	await wait_frames(2)
 	assert_eq(shell.flow, GameShell.Flow.SUMMARY)

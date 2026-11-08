@@ -6,7 +6,7 @@
 [sub_resource type="Resource" id="Resource_rule"]
 script = ExtResource("2_rule")
 context = 0
-chain_families = Array[int]([0])
+chain_families = Array[int]([0, 1])
 terrain = Array[int]([0])
 min_shore_distance_tiles = 2
 
