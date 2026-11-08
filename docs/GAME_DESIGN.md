@@ -17,7 +17,7 @@ A 1–4 player co-op survival roguelite. Real-time, 2D top-down pixel art, built
 | Engine | Godot 4.7, GDScript |
 | View | 2D top-down pixel art, 16×16 tiles |
 | Time model | Real-time, Don't Starve Together pace; a full day is 12 real minutes |
-| Run length | 6–8 islands, 60–90 minutes |
+| Run length | 6–8 islands, 60–90 minutes. The secret cay is an optional detour that never counts as one of them (`ISLANDS.md` "Secret: El cayo sin norte") |
 | Language | Spanish original; English keeps key slang |
 | Rating | Mature: swearing, political satire, danger |
 | Tone | Dark comedy with real stakes; Cubans laughing at the worst day of their lives |
@@ -130,7 +130,7 @@ The almendrón and the board are rolled extras on a few chains (`ISLANDS.md`), n
 
 ## 8. The crossing
 
-A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cuba and weather: reef sharks follow blood; a squall line forces you to tie down; searchlights sweep from a cutter on the early chains; the Gulf Stream pushes east: anyone aboard slows the drift to 0.25 tile/s, and a *Maestro*, Navigation 2 or a compass with charts cancels it. Drift pushes you sideways (up to 40 tiles, then you overshoot to a harder chain) but never makes the crossing longer. A car rides high and is hard to fall off (sharks ×0.6) but is loud under a searchlight (threats ×1.2). A board is its own small vessel: each rider has one (integrity 60), a squall or a shark attack dumps the rider, who climbs back as below, and at 0 the board breaks and the rider swims the rest. Board riders land 10–20 tiles apart instead of within 5, so a party finds each other on the next beach; a solo rider has nobody to look for. Falling in the water costs energy and attracts sharks; a swimmer climbs back aboard alone by holding interact for 3 s at the edge, or a teammate pulls them in 2 s. The raft takes damage; at 0 it breaks and everyone swims the rest or drowns.
+A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cuba and weather: reef sharks follow blood; a squall line forces you to tie down; searchlights sweep from a cutter on the early chains; the Gulf Stream pushes east: anyone aboard slows the drift to 0.25 tile/s, and a *Maestro*, Navigation 2 or a compass with charts cancels it (the secret *Brújula rota* and *Mapa sin norte* never count as either, `ITEMS.md` "Secret items"). Drift pushes you sideways (up to 40 tiles, then you overshoot to a harder chain) but never makes the crossing longer. A car rides high and is hard to fall off (sharks ×0.6) but is loud under a searchlight (threats ×1.2). A board is its own small vessel: each rider has one (integrity 60), a squall or a shark attack dumps the rider, who climbs back as below, and at 0 the board breaks and the rider swims the rest. Board riders land 10–20 tiles apart instead of within 5, so a party finds each other on the next beach; a solo rider has nobody to look for. Falling in the water costs energy and attracts sharks; a swimmer climbs back aboard alone by holding interact for 3 s at the edge, or a teammate pulls them in 2 s. The raft takes damage; at 0 it breaks and everyone swims the rest or drowns.
 
 Swimmers in the water lose energy every second, moving or not (3 a second, times the route's drain factor: 0.4 for binoculars-and-swim, so a solo swimmer at 100 ends a 60 s crossing with 28); at 0 energy they drown at 10 health a second. Falling in costs 10 energy.
 
@@ -155,7 +155,7 @@ Full lore and behavior specs in `BESTIARY.md`. Summary:
 
 ### Guardacostas and stealth
 
-The human threat on the first two or three islands, fading as you head north. Patrol boats run fixed routes; at night a searchlight cone sweeps beach and water. Smoke or fire draws a shore squad that searches the island for three minutes. A caught player is taken aboard: teammates can free them by sneaking onto the boat at the dock. When the last free player is caught (a solo player always is), *La captura* plays with Rodríguez: a persuasive party is released at the next cay; otherwise it restarts the previous island, regenerated from the run seed, keeping its items except fire sources (keepsakes always stay). On island 1 the party restarts island 1 the same way. Caught on the final crossing, the run ends: *Devuelto*. Stealth is a skill: crouching in brush, diving, hiding in mangroves and putting out fires all count.
+The human threat on the first two or three islands, fading as you head north. Patrol boats run fixed routes; at night a searchlight cone sweeps beach and water. Smoke or fire draws a shore squad that searches the island for three minutes. A caught player is taken aboard: teammates can free them by sneaking onto the boat at the dock. When the last free player is caught (a solo player always is), *La captura* plays with Rodríguez: a persuasive party is released at the next cay; otherwise it restarts the previous island, regenerated from the run seed, keeping its items except fire sources (keepsakes always stay). On island 1 the party restarts island 1 the same way. The secret cay is never the previous island (a party caught after the detour restarts the island it left for the cay), and a regenerated island never places a secret piece the run has already spawned (`ISLANDS.md` "Secret: El cayo sin norte"). Caught on the final crossing, the run ends: *Devuelto*. Stealth is a skill: crouching in brush, diving, hiding in mangroves and putting out fires all count.
 
 ## 10. Characters and co-op
 
@@ -180,7 +180,7 @@ Any player can do anything; backgrounds do it better. Solo uses the same base nu
 - A raft needs everyone's materials; crafting a shared project pools inventories.
 - Downed players can be dragged, revived with water, and fed.
 - Morale is shared: losing a player hits everyone.
-- Difficulty scales: resources ×0.8 per extra player, patrols +1 per 2 players.
+- Difficulty scales: resources ×0.8 per extra player, patrols +1 per 2 players. The secret cay is never scaled: its handmade contents are the same for 1–4 players and it has no patrols (`ISLANDS.md` "Secret: El cayo sin norte").
 - Voice chat is not built in; players use their own. Quick-chat wheel with Cuban phrases (*¡Dale!*, *¡Agua!*, *¡Pa'llá no!*, *¡Tiburón!*).
 
 ## 11. NPCs
@@ -241,20 +241,20 @@ What makes the next run a bit easier is **Experiencia**: when you die, you keep 
 | Discovered escape routes | Routes you used stay discovered on their chain for next run | All |
 | NPC trust (Ramón, Caridad, Rodríguez) | 50% of trust earned; they remember you ("¿Tú otra vez?") | 100% |
 | Recipes learned from NPCs | All | All |
-| Map knowledge | Chain layouts you reached show POI icons on arrival next run | All |
+| Map knowledge | Chain layouts you reached show POI icons on arrival next run; nothing from the secret cay or its pieces (no map knowledge, route or hiding spot) is ever kept | All, with the same exception |
 | Keepsakes | Unlocked ones stay | Unlocked ones stay |
 | Items | None | None |
 
 Rules:
 - Skills cap at level 5 per background skill and level 3 for the others; carry-over never pushes a skill above level 3 without a run that earned it.
-- Each run also grants **1 Experiencia point** per island reached, spent at the start of the next run on small permanent boosts: +10 max thirst, +1 inventory slot, +10 s downed timer, start with a known plant, start with 1 rope. Max 12 points banked; spending is the only way to use them.
-- **The world eases a little per death, capped.** Each death adds one "Experiencia level" (max 8). Per level: thirst and hunger drain −3%, patrol period +10 s, one extra driftwood and one extra coconut per island, downed timer +5 s. At the cap that is drains −24%, patrols at 4:20 instead of 3:00, and 8 extra materials per island: enough to feel the game meet you halfway, not enough to remove the pressure.
+- Each run also grants **1 Experiencia point** per island reached, spent at the start of the next run on small permanent boosts: +10 max thirst, +1 inventory slot, +10 s downed timer, start with a known plant, start with 1 rope. Max 12 points banked; spending is the only way to use them. The secret cay is not an island reached and grants no point.
+- **The world eases a little per death, capped.** Each death adds one "Experiencia level" (max 8). Per level: thirst and hunger drain −3%, patrol period +10 s, one extra driftwood and one extra coconut per island (never on the secret cay, whose contents are fixed), downed timer +5 s. At the cap that is drains −24%, patrols at 4:20 instead of 3:00, and 8 extra materials per island: enough to feel the game meet you halfway, not enough to remove the pressure.
 - **Downed-timer rewards in solo.** For a player with no other living player (solo, or the last one alive), the downed timer is a last-stand window with a 0 s base, so a first solo run stays brutal. The +5 s per Experiencia level and the +10 s boost lengthen that window (for example 30 s at level 4 with the boost); `survival-meters` defines what the player can do in it, and the Medalla revive, which fires at 0 health before the window starts, so it saves a solo player even on run 1.
 - Winning a run removes 2 Experiencia levels (the game gets harder again for a champion) and unlocks a keepsake.
 - *Devuelto* is a loss: it counts as a death (one Experiencia level added, the death carry-over above) and removes no levels. It unlocks the *Pluma de galleguito*, a small consolation and a joke, not a power spike.
 - Seeded and daily runs earn Experiencia but do not spend it.
 
-Challenges (optional hard modes): no fire, permanent storm season, sinking raft from the start, patrols on every island.
+Challenges (optional hard modes): no fire, permanent storm season, sinking raft from the start, patrols on every island (except the secret cay, which never has patrols; the other challenges apply there as anywhere).
 
 ## 15. Cuban voice and humor
 
@@ -278,7 +278,7 @@ Claude Haiku 4.5 on Amazon Bedrock generates dialogue for **important NPCs and t
 | Model | Claude Haiku 4.5 on Bedrock (~$1 in / $5 out per 1M tokens) |
 | Cost | ~$0.0015 per line; a few cents per run |
 | Pipeline | Godot `HTTPRequest` → API Gateway → Lambda → Bedrock |
-| Input | Game-state JSON: island, weather, party, who was saved, items, NPC profile, run history |
+| Input | Game-state JSON: island, weather, party, who was saved, items, NPC profile, run history; never a secret item or the secret cay (`ITEMS.md` "Secret items") |
 | Output | `{speaker, text, emotion}` |
 | Voice | Pre-generated Chatterbox (cloned Cuban voices) for handwritten lines; Kokoro at runtime for generated ones |
 | Safeguards | Keys only in Lambda; per-player rate limits; cache by state hash; handwritten fallbacks offline |

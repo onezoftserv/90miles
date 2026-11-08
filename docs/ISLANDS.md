@@ -1,6 +1,6 @@
 # 90 Millas — Islands and Resource Places
 
-Islands are generated from **chain templates**. A run is 6–8 islands: island 1 is always the sandbar; island 2 is always a coast-chain island; from island 3 the route branches between chains; the last island is always the final approach. Each island rolls 2–3 escape routes and 3–6 points of interest (POIs) from its chain's table.
+Islands are generated from **chain templates**. A run is 6–8 islands: island 1 is always the sandbar; island 2 is always a coast-chain island; from island 3 the route branches between chains; the last island is always the final approach. Each island rolls 2–3 escape routes and 3–6 points of interest (POIs) from its chain's table. The one exception is the secret cay, an off-graph detour that never counts as one of the 6–8 islands and has only the routes its layout lists (see "Secret: El cayo sin norte").
 
 Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile grid, places biome bands (deep water → shallows → beach → dunes/mangrove/rock → interior), then places POIs with a rule set (min distance, shoreline access, no two of the same kind). Escape routes are POIs with a flag. See `openspec/specs/island-generation/spec.md`.
 
@@ -215,6 +215,32 @@ Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile gr
 
 ---
 
+## Secret: El cayo sin norte (off-graph)
+
+**Secret and off-graph** (change `secret-cay`). Not a chain and not one of the run's 6–8 islands. No chart, binoculars, lighthouse, keepsake, NPC, route discovery, carried map knowledge, HUD marker or AI ever shows or mentions it. The generator never builds, lists or numbers it. Layout: `game/resources/islands/cayo_sin_norte.tres` (`off_graph`, `secret`).
+
+**How you get there.** In 1 run in 3, a *Brújula rota* and a *Mapa sin norte* hide on two different islands from 2 to 5 (never the sandbar or the final approach), one per island, concealed until a player is within 3 tiles, with a short shimmer every 6 s. A piece hides on a land cell (beach, dune or scrub, never shallows), measured from the landing (the layout's solo spawn): between the 50th and 85th percentile of walking distance over the reachable land cells, and 4–10 tiles in a straight line from the nearest feature the tuning lists (a palm, a non-secret pick-up, a tide pool, the workbench or the raft site). On an island too crowded for that, the rule relaxes in a fixed order (a wider band, then no feature limit, then any reachable land cell off the features and spawns), so the piece is always placed. The map's text names the kind of spot where the compass hides. Holding both, the party can choose *Seguir la aguja* on leaving an island from index 3 on (later work: crossing, arrival and the departure choice). Everything in `ITEMS.md` "Secret items".
+
+**Lore.** A sand teardrop no fisherman talks about. Someone got here first and left minutes ago: the embers are still warm, a cigar stub is still smoking, a fresh raft-drag mark runs from the camp to the water, and a cut mooring line hangs from a post. He is coming back on Thursday. Nobody died here and nothing here is a memorial.
+
+**Layout.** 48×27 tiles: about 200 cells of sand and scrub, a ring of reef shallows, deep water around.
+
+| Place | What is there |
+| --- | --- |
+| South beach | The landing: everyone arrives within 5 tiles of each other |
+| Waist | A palm-frond lean-to (the only shade) with the *sombrero de yarey con cinta roja* hanging on it, the warm embers, the smoking cigar stub, a knife, 2 rain cups, 3 palms with 7 coconuts |
+| East cove | A raft build site with at least the raft recipe's inputs on the sand (today 6 driftwood, 2 inner tubes, 3 rope) |
+| Waterline | The drag mark and the post with the cut mooring line |
+| North tip | The chest, on the land (non-shallows) cell farthest by walking from the landing (any one of them on a tie): open it (hold 1 s) and it holds only the note *Llegaste tarde* |
+
+**Escape route.** Only the raft (the cay lists one route instead of rolling 2–3), which one player with an empty inventory can gather, build and launch alone. After the cay the party goes on to the island it was heading for.
+
+**Rules.** No Experiencia point, no Experiencia-level driftwood or coconut, no party-size scaling: the contents are the same for 1–4 players, and no pick-up respawns after a squall or a night. No creatures, patrols or set pieces, even with the patrols-everywhere challenge; the sun, thirst and hunger still work. A captured party never restarts here.
+
+**Threats.** The sun, thirst, and the extra crossing.
+
+---
+
 ## Resource rules (for the generator and balance)
 
 | Resource | Base per island | Scales with |
@@ -228,6 +254,8 @@ Generation: `IslandGenerator` builds a noise-shaped landmass on a 96×64 tile gr
 | Tubes/jugs | 2–3 on flotsam | Respawn after squall |
 | Unknown fruit | 3–5, one is manchineel on 50% of islands | |
 | Keepsake/text | 1 important text + 1–3 bottle notes | |
+
+Off-graph handmade layouts (today only the secret cay) skip this table: they place exactly the pick-ups their layout lists, never scaled by party size or Experiencia, and none respawns after a squall or a night.
 
 ## Set pieces (Brogue "machines")
 
