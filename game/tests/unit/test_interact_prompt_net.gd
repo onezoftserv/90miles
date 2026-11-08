@@ -84,3 +84,60 @@ func test_a_client_sees_the_shared_progress_at_50_percent() -> void:
 	assert_true(await wait_until(half, TIMEOUT_S), "the client's prompt shows the host's progress")
 	assert_same(hud.prompt.target, site.interactable, "over the client's own copy")
 	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "50 %"]))
+
+
+func _as(identity: PlayerIdentity, player_name: String = "Papo") -> Callable:
+	return func(session: CoopSession) -> void:
+		_setup(session)
+		session.local_identity = identity
+		session.local_name = player_name
+
+
+func test_a_clients_prompt_needs_no_host_message() -> void:
+	var host := net.add_host(_setup)
+	var client := await net.join(_setup)
+	assert_not_null(client)
+	if client == null:
+		return
+	var host_hud := _hud(host)
+	var hud := _hud(client)
+	var site := client.get_node("RaftSite") as BuildSite
+	var mine := net.own_body(client)
+	# Only this peer's copy moves: no host message can have told it about the site since.
+	mine.global_position = site.global_position + Vector2(-8.0, 0.0)
+	hud.prompt.tick(STEP_S)
+	assert_same(hud.prompt.target, site.interactable, "the client's own copy of the site")
+	assert_eq(hud.prompt.lines()[0], "[E] Construir Balsa")
+	var host_body := host.body(CoopSession.HOST_ID)
+	host_hud.prompt.tick(STEP_S)
+	var own: Array[Interactable] = []
+	for node: Node in get_tree().get_nodes_in_group(Interactable.GROUP):
+		if node is Interactable and host.is_ancestor_of(node):
+			own.append(node as Interactable)
+	assert_same(host_hud.prompt.target, InteractionPicker.pick(host_body.global_position, own, host_body), "the host's prompt reads the host's own player")
+	assert_ne(host_hud.prompt.target, site.interactable)
+	assert_ne(host_hud.prompt.target, (host.get_node("RaftSite") as BuildSite).interactable, "the host's player is nowhere near it")
+
+
+func test_a_rejoined_client_shows_the_prompt_over_what_its_reclaimed_body_reaches() -> void:
+	var papo := PlayerIdentity.create()
+	var host := net.add_host(_setup)
+	var client := await net.join(_as(papo))
+	assert_not_null(client)
+	if client == null:
+		return
+	var old_id: int = net.peer_id(client)
+	var papo_body := host.body(old_id)
+	papo_body.global_position = (host.get_node("RaftSite") as Node2D).global_position + Vector2(4.0, 0.0)
+	net.drop(client)
+	assert_true(await wait_until(func() -> bool: return host.is_dropped(old_id), TIMEOUT_S), "Papo's body waits")
+	var back := net.add_client(_as(papo))
+	var hud := _hud(back)
+	var reclaimed := func() -> bool:
+		var mine := net.own_body(back)
+		hud.prompt.tick(STEP_S)
+		return mine != null and hud.prompt.body == mine and hud.prompt.lines().size() > 0 \
+			and hud.prompt.lines()[0] == "[E] Construir Balsa"
+	assert_true(await wait_until(reclaimed, TIMEOUT_S), "the prompt follows the reclaimed body to the raft site")
+	assert_same(host.body(net.peer_id(back)), papo_body, "the same body on the host")
+	assert_same(hud.prompt.target, (back.get_node("RaftSite") as BuildSite).interactable)
