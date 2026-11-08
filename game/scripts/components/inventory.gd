@@ -183,6 +183,15 @@ func _slot_for(id: StringName, item: ItemData) -> InventorySlot:
 	return null
 
 
+## The item a player is holding out in the open for a gull: the first FOOD slot, or &"" when the
+## inventory has none. Packed items are never "held": callers also skip a swimmer.
+func held_food() -> StringName:
+	for slot: InventorySlot in slots:
+		if not slot.is_empty() and _has_tag(slot.item_id, DataEnums.ItemTag.FOOD):
+			return slot.item_id
+	return &""
+
+
 func _has_tag(id: StringName, tag: DataEnums.ItemTag) -> bool:
 	var item := item_for(id)
 	return item != null and item.tags.has(tag)

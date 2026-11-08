@@ -30,6 +30,7 @@ func _spawner(party: int = 1, catalog: ContentCatalog = null) -> CreatureSpawner
 	spawner.party_size = party
 	session.add_child(spawner)
 	spawner.setup(session, SANDBAR, catalog)
+	spawner.spawn_permanent()
 	return spawner
 
 

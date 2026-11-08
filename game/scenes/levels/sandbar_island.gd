@@ -8,6 +8,7 @@ extends Node2D
 const PALM_SCENE: PackedScene = preload("res://scenes/levels/palm.tscn")
 const BENCH_NAME: StringName = &"HutWorkbench"
 const ROUTES_NAME: StringName = &"Routes"
+const CREATURES_NAME: StringName = &"Creatures"
 const RAFT_SITE_NAME: StringName = &"RaftSite"
 const RAFT_NAME: StringName = &"Raft"
 const RAFT_RECIPE_ID: StringName = &"raft"
@@ -73,8 +74,19 @@ func furnish(session: CoopSession) -> void:
 	routes.setup(session, layout.route_ids)
 	routes.route_started.connect(_on_route_started)
 	_place_raft_site()
+	_place_creatures()
 	_weather_id = WeatherManager.weather_id()
 	WeatherManager.weather_changed.connect(_on_weather_changed)
+
+
+# Host: the creature spawner runs the island's crabs, gulls and shark. Clients only receive them.
+func _place_creatures() -> void:
+	var spawner := CreatureSpawner.new()
+	spawner.name = CREATURES_NAME
+	spawner.auto_party = true
+	_session.add_child(spawner)
+	spawner.setup(_session, layout)
+	spawner.start()
 
 
 # A fresh, empty site for the raft (named the same on every peer; the built raft takes the name Raft).

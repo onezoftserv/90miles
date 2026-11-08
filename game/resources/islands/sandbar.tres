@@ -76,6 +76,7 @@ rows = PackedStringArray("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 terrain_glyphs = Dictionary[String, int]({"~": 0, "-": 1, ".": 3, ":": 4, "g": 7, "H": 3, "W": 3, "P": 3, "t": 3, "d": 3, "k": 3, "u": 3, "j": 3, "r": 3, "w": 3, "y": 4, "S": 3, "1": 3, "2": 3, "3": 3, "4": 3, "o": 1, "B": 3, "q": 3})
 shade_glyphs = "HWtdkq"
 palm_glyph = "P"
+nest_palms = Array[int]([4, 5])
 coconut_total = 10
 climb_hold_s = 2.0
 climb_effects = Array[ExtResource("3_effect")]([SubResource("Resource_climb")])
