@@ -132,6 +132,8 @@ The almendrón and the board are rolled extras on a few chains (`ISLANDS.md`), n
 
 A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cuba and weather: reef sharks follow blood; a squall line forces you to tie down; searchlights sweep from a cutter on the early chains; the Gulf Stream pushes east: anyone aboard slows the drift to 0.25 tile/s, and a *Maestro*, Navigation 2 or a compass with charts cancels it (the secret *Brújula rota* and *Mapa sin norte* never count as either, `ITEMS.md` "Secret items"). Drift pushes you sideways (up to 40 tiles, then you overshoot to a harder chain) but never makes the crossing longer. A car rides high and is hard to fall off (sharks ×0.6) but is loud under a searchlight (threats ×1.2). A board is its own small vessel: each rider has one (integrity 60), a squall or a shark attack dumps the rider, who climbs back as below, and at 0 the board breaks and the rider swims the rest. Board riders land 10–20 tiles apart instead of within 5, so a party finds each other on the next beach; a solo rider has nobody to look for. Falling in the water costs energy and attracts sharks; a swimmer climbs back aboard alone by holding interact for 3 s at the edge, or a teammate pulls them in 2 s. The raft takes damage; at 0 it breaks and everyone swims the rest or drowns.
 
+Swimmers in the water lose energy every second, moving or not (3 a second, times the route's drain factor: 0.4 for binoculars-and-swim, so a solo swimmer at 100 ends a 60 s crossing with 28); at 0 energy they drown at 10 health a second. Falling in costs 10 energy.
+
 ## 9. Threats
 
 Full lore and behavior specs in `BESTIARY.md`. Summary:
