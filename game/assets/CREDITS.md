@@ -20,6 +20,22 @@ Kenney packs are fetched by `python -I tools/fetch_assets.py` and are git-ignore
 | UI 9-slices (Pixel UI Pack: `9-Slice/Ancient/tan`, `9-Slice/Colored/blue`, `blue_pressed`) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/pixel-ui-pack | `art/ui/panel_tan.png`, `button_blue.png`, `button_blue_pressed.png` (tracked copies; license: `art/ui/License.txt`) |
 | Player placeholder sprite (Tiny Dungeon, tile_0097, 16x16) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/tiny-dungeon | `art/characters/player_placeholder.png` (tracked copy; license: `art/characters/License.txt`) |
 
+## Art direction C packs (downloaded 2026-11-08)
+
+Downloaded by hand with the owner's permission into git-ignored folders (`game/assets/oga/`, `game/assets/itch/`); each pack folder keeps its archive, a `License.txt` with the source page, the licence and the date read, and an `extracted/` folder. No file from them is tracked yet: the `art-pass` change copies only the files it uses into `game/assets/art/<area>/` with their licence and adds a row here for each tracked copy, saying whether it was modified. The CC-BY packs must also be credited on the in-game credits screen.
+
+| Pack | Author | License | Source | Local folder |
+| --- | --- | --- | --- | --- |
+| MetroCity Free Top Down Character Pack (1.0 and 2.0) | JIK-A-4 | CC0 1.0 | https://jik-a-4.itch.io/metrocity-free-topdown-character-pack | `itch/metrocity/` |
+| Zelda-like tilesets and sprites | ArMM1998 | CC0 1.0 | https://opengameart.org/content/zelda-like-tilesets-and-sprites | `oga/zelda-like/` |
+| Scallywag - Water and Islands (1.0) | Foozle, commissioned from Pixel Carvel | CC0 1.0 | https://foozlecc.itch.io/scallywag-water-islands | `itch/scallywag-water-islands/` |
+| Scallywag - Ships (1.0) | Foozle, commissioned from Pixel Carvel | CC0 1.0 | https://foozlecc.itch.io/scallywag-ships | `itch/scallywag-ships/` |
+| 16x16 Shoreline Wave Animation Tiles | Eldiran | CC0 1.0 | https://opengameart.org/node/144858 | `oga/eldiran-shoreline/` |
+| DawnLike - 16x16 Universal Rogue-like tileset v1.81 | DragonDePlatino; palette by DawnBringer | CC BY 4.0 (the OpenGameArt licence field and the pack's own `README.txt`) | https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181 | `oga/dawnlike/` |
+| Tiny, Tiny Heroes - Animals | Kacper Woźniak (thkaspar) | CC BY 4.0 | https://thkaspar.itch.io/tth-animals | `itch/tth-animals/` |
+| Kyrise's Free 16x16 RPG Icon Pack (v1.3) | © 2018 Kyrise | CC BY 4.0 | https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack | `itch/kyrise-icons/` |
+| Shikashi's Fantasy Icons Pack v2 | Matt Firth (shikashipx); based on game-icons.net designs | CC BY 4.0 (game-icons.net: CC BY 3.0) | https://shikashipx.itch.io/shikashis-fantasy-icons-pack | `itch/shikashi-icons/` |
+
 ## Fonts
 
 | Font | Author | License | Source | Local file |
@@ -31,6 +47,5 @@ Kenney packs are fetched by `python -I tools/fetch_assets.py` and are git-ignore
 
 Listed in `docs/ASSETS.md` but still to source (manual download, license checked per pack):
 
-- Shark, crab, fish and bird sprites (OpenGameArt / itch.io): needed from Milestone B.
 - Sea ambience, waves, wind and rain (freesound.org, CC0 filter; needs a login).
 - Priority 2 content-pass art and music.
