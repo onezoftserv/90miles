@@ -5,8 +5,10 @@ extends GutTest
 ## that client's own player, at the same place on both peers; deposits of items and tags and the
 ## progress reach the client; a joiner gets the live state of a site and the fire built before it
 ## came; a joiner after the level's raft site was built has the raft and no site, and the host logs
-## no error; and requests the host would refuse change nothing. Each peer has a bench at the same
-## path on a featureless beach. Only the client gets a HUD, and nothing presses a key.
+## no error; in co-op Esc closes the client's list and pauses nothing (coop-networking "Pause closes
+## a panel in co-op"); and requests the host would refuse change nothing. Each peer has a bench at
+## the same path on a featureless beach. Only the client gets a HUD, and only the Esc case presses a
+## key.
 
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const SITE_SCENE: PackedScene = preload("res://scenes/structures/build_site.tscn")
