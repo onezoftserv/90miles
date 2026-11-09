@@ -2,7 +2,7 @@
 
 Every asset source is free for commercial use and for redistribution of the raw files in this public repository. Downloaded packs are git-ignored (`game/assets/kenney/`, `game/assets/oga/`, `game/assets/itch/`) and keep their own license file next to them. Only the files the game actually uses are copied into tracked folders under `game/assets/art/<area>/`, each with its `License.txt`, and no tracked scene, resource, GDScript or shader under `game/` may refer to a git-ignored folder (`CREDITS.md` and the pipeline tools in `tools/` name those folders on purpose).
 
-`tools/fetch_assets.py` downloads the packs marked **auto**; the rest need a manual download because the site requires a login or a click. The `art-pass` change teaches the script every pack below, printing the page and target folder for those it cannot fetch.
+`tools/fetch_assets.py` downloads the packs marked **auto** and the OpenGameArt art packs below; for the rest, whose site requires a login or a click, it prints the page and the target folder (see Pipeline).
 
 ## Art direction (decided 2026-11-08)
 
@@ -34,6 +34,59 @@ The installed Kenney packs (all CC0) may fill gaps, but their flat or outline-fr
 - **Creatures:** side-on frames mirrored by facing; animations named after the behaviour states (`circle`, `swoop`, `pinch`…), with `move` and `idle` as fallbacks.
 - **Items:** 16×16 icons with the item inside the 14×14 box one pixel in from the edge, one silhouette per item, raised 3 px on the ground (5 px for an item under 8 px tall) over a small shadow.
 - **Readability:** on land the dark outline carries the contrast (every outline colour reaches 3:1 against sand, dune and brush); on water, swimmers and the shark fin reach 3:1 against shallows and deep water with their outline ring or their mean colour. Every actor and item has a drop shadow except swimmers and the shark fin, which are cut at the water line.
+
+## Pipeline
+
+**Tracked folders.** The downloaded packs stay in their git-ignored folders (`game/assets/kenney/`, `oga/`, `itch/`, `audio/ambience/`), which no tracked scene, resource, GDScript or shader under `game/` may name. The game draws only tracked copies under `game/assets/art/<area>/` (`palette`, `terrain`, `decals`, `sea`, `characters`, `creatures`, `items`, `structures`, `shadows`, `fx`, `ui`):
+
+- every folder holding a PNG has a `License.txt` with one block per source, each starting with a `Pack:` or `Work:` line and holding `Author:`, `Licence:`, `Source:` and `Files:`; a pack's source is its page, never a licence deed, and own work reads `Source: 90 Millas (own work)` and `Licence: All rights reserved (see LICENSE)`; vendor text above the first block is kept as it came;
+- every PNG is named by a `.tscn` or `.tres` and imports lossless with no mipmaps;
+- every pack used has an entry in `game/assets/art/credits.tres` (what the in-game credits show) and a row in `game/assets/CREDITS.md`;
+- the tools write only into `game/assets/art/`; `tools/art/fixes/` (hand-fix overlays for the player parts) is pipeline source with its own `License.txt`, never drawn.
+
+**The packs root.** Every art tool takes `--packs <dir>` (default `game/assets`) and reads pack files relative to it. The packs exist only in the checkout that fetched them, so in a git worktree pass the main checkout's `game/assets`, for example `--packs C:/Users/<you>/src/90miles/game/assets`. Run every tool with `python -I` (standard library only; each tool puts its own folder on `sys.path`).
+
+**Fetch the packs.**
+
+```sh
+python -I tools/fetch_assets.py --list      # every pack with its folder and licence; downloads nothing
+python -I tools/fetch_assets.py --dry-run   # what a run would do; writes nothing
+python -I tools/fetch_assets.py             # fetch; prints the page and folder for each itch.io pack,
+                                            # exits non-zero until every pack is in place
+```
+
+Download each itch.io pack's archive into the folder it names, then run the script again: it unpacks it (a RAR with 7-Zip when `7z` is on `PATH`) and writes the pack's `License.txt` with the source and the date read.
+
+**Make art.**
+
+```sh
+python -I tools/art/remap.py <in.png> <out.png> [--map map.json] [--strict] --packs game/assets
+python -I tools/art/rim.py <in.png> <out.png> [--cell N] [--outline "#000000"] [--over body.png] [--grow] --packs game/assets
+python -I tools/art/compose.py [part ids] --packs game/assets
+python -I tools/art/check.py game/assets/art
+```
+
+- `remap.py` maps a piece to the master palette, or through a colour map (`--map`, the only way to write a clothing key colour; `--strict` fails on an unmapped colour), drops half-transparent pixels outside `shadows/` and `decals/`, and prints every change.
+- `rim.py` gives a piece its closed 1 px outline: it recolours the piece's own edge ring to the nearest outline colour (or the one `--outline` colour), so the piece keeps its size; `--grow` grows a ring round a piece with none, and `--over` rims an overlay against the body sheet it is drawn on. For example, MetroCity's walk sheet in 32 px cells, read through the packs root: `python -I tools/art/rim.py "itch/metrocity/extracted/MetroCity/MetroCity/CharacterModel/Character Model.png" <out.png> --cell 32 --outline "#000000" --packs game/assets`.
+- `compose.py` builds the player part sheets listed in `tools/art/look_parts.json` into `game/assets/art/characters/parts/`: cut the walk frames, apply the pose rules of `poses.py`, blend the part's hand fixes, remap, then rim. It fails naming the part and cell when a rule would lose a pixel.
+- `check.py` runs the licence, palette, alpha, outline and import rules over a folder and exits non-zero naming each failing file (`--licence-only` for a folder of pipeline source such as `tools/art/fixes/`).
+- `png.py`, `poses.py` and `palette.py` are the tools' shared modules.
+
+**Checks.** CI has no packs, so the GUT tests, which read only tracked files, are the gate; the Python tests cover the tools.
+
+```sh
+godot --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit
+python -I -m unittest discover -s tools/art -p 'test_*.py'
+python -I -m unittest discover -s tools -p 'test_fetch_assets.py'
+```
+
+| Check | What it holds |
+| --- | --- |
+| `test_downloaded_asset_refs.gd` | no tracked file under `game/` names `res://assets/kenney/`, `oga/`, `itch/` or `audio/ambience/` |
+| `test_art_tracked.gd` | every file under `res://assets/art/`: licence blocks with their own source, every PNG referred to, lossless import, palette and whole alpha (not `ui/`), outlines on creature, item and structure frames, frame budgets |
+| `test_art_palette.gd` | the master palette (at most 64 colours, all of DB32), the key, skin and slot ramps, the outline set at 3:1 on every land ground, the four slots telling apart |
+| `test_art_credits.gd` | `credits.tres`, `CREDITS.md` and every `License.txt` agree: each CC-BY pack credited with its author, "CC BY 4.0", the licence's address and its source page, and every tracked pack listed |
+| `test_art_checks.gd` | each rule above fails on its fixture in `game/tests/fixtures/art/` and names the file: a copy without its licence, a licence deed as source, an off-palette pixel, partial alpha outside shadows, an icon without its rim, a lossy import, an outline colour or fin that blends in, water in land tiles, too many frames, two items with one silhouette |
 
 ## Priority 1 — needed for the first playable
 
