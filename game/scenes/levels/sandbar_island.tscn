@@ -3,4 +3,5 @@
 [ext_resource type="Script" path="res://scenes/levels/sandbar_island.gd" id="1_island"]
 
 [node name="SandbarIsland" type="Node2D"]
+y_sort_enabled = true
 script = ExtResource("1_island")

@@ -50,8 +50,11 @@ func _rebuild() -> void:
 
 
 func _ready() -> void:
+	# Y-sorted like the island root and the World above it, so each palm sorts by its trunk base
+	# with the players, creatures and pick-ups (art-pass "Draw order by foot position").
 	var palms := Node2D.new()
 	palms.name = "Palms"
+	palms.y_sort_enabled = true
 	add_child(palms)
 	for i: int in built.palms.size():
 		var palm := PALM_SCENE.instantiate() as Palm
