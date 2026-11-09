@@ -52,6 +52,15 @@ The user asked to take the best-fitting ideas from the three reference games; de
 
 **Left out (later changes):** DCSS's flashing gain/loss bar segments, an event log, hover info panels, a minimap, and the background picker in the lobby (no background content exists yet). SPD's variable viewport is rejected: the view stays 640×360.
 
+## Confirmed by the owner (2026-11-08)
+
+At the archive, after `inventory-hud` merged:
+
+- **1–4 and 8 as written:** windowed at the largest whole-number scale (F11 or Alt+Enter for fullscreen), Pixelify Sans 16/32 and Press Start 2P 8, the Kenney palette, "Balsero" as the default name, and the title line. The art pass may restyle the fonts and palette in its own change.
+- **5 is superseded by `run-end`** (archived 2026-11-08): the summary's totals, cause and one-liner live in endings-progression, solo adds "Otra vez" beside "Volver al inicio", and "Screen flow" now ends "then the title or a new run".
+- **6 is superseded:** runs start on the handmade sandbar (`sandbar-island`).
+- **7:** a dead co-op player should spectate a living teammate, with a key that cycles between them. Until that Milestone G task ships, the camera stays on their own body, as built.
+
 ## Capabilities
 
 ### New Capabilities

@@ -50,12 +50,17 @@ The player SHALL interact with the nearest interactable within 1 tile via a sing
 - **THEN** the net is not cut and holding again starts from 0 s
 
 ### Requirement: Camera and viewport
-The game SHALL render at 640×360 with integer scaling and nearest filtering. In co-op each client follows its own player; the host sees the same.
+The game SHALL render the world at 640×360 with integer scaling. The enlarged picture uses nearest filtering by default; the optional pixel filter setting (ui-shell "Pixel filter") smooths it instead, keeping the 640×360 base and the integer scale. In co-op each client follows its own player; the host sees the same.
 
 #### Scenario: Two players apart
-- GIVEN two players in a co-op session
-- WHEN they move apart
-- THEN each client's camera follows its own player, rendered at 640×360 with integer scaling and nearest filtering
+- **GIVEN** two players in a co-op session
+- **WHEN** they move apart
+- **THEN** each client's camera follows its own player, rendered at 640×360 with integer scaling and nearest filtering by default
+
+#### Scenario: Smooth filter keeps the base
+- **GIVEN** a player whose pixel filter is Suave
+- **WHEN** their camera follows them at 2×
+- **THEN** the world is still rendered at 640×360 and enlarged by exactly 2, with the smoothing applied only to the enlarged picture
 
 ### Requirement: Movement follows intents
 The player's movement SHALL be driven by an intent (move direction, run, crouch, interact) produced by that player's input, so the same body behaves identically whether the intent comes from local input or from another peer.
@@ -66,8 +71,13 @@ The player's movement SHALL be driven by an intent (move direction, run, crouch,
 - **THEN** both moved 12 tiles east and spent 1 energy
 
 ### Requirement: Named input actions
-The game SHALL define named input actions for moving (up, down, left, right), run, crouch and interact, with keyboard defaults (WASD, Shift, Ctrl or C, E) and gamepad defaults (left stick, a shoulder button, a face button, another face button).
+The game SHALL define named input actions, each with a keyboard or mouse default and, where one exists, a gamepad default: moving up, down, left and right (WASD; left stick), run (Shift; a shoulder button), crouch (Ctrl or C; a face button), interact (E; another face button), use the selected item (F; a third face button, X), slots 1 to 12 (the number row 1-9, 0, - and =; none on a gamepad, where D-pad cycling reaches them), next and previous slot (mouse wheel down and up; D-pad right and left) and list up and down (arrow keys up and down; D-pad up and down).
 
 #### Scenario: Gamepad movement
 - **WHEN** a player pushes the left stick fully right
 - **THEN** the move intent points east with full strength and the player walks at 4 tiles/s
+
+#### Scenario: Use on a gamepad
+- **GIVEN** a solo player on a gamepad with a rain cup selected
+- **WHEN** they hold X for 1 s
+- **THEN** the cup is drunk, exactly as holding F would

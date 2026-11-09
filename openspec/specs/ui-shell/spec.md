@@ -1,10 +1,9 @@
-# Spec Delta
+# ui-shell Specification
 
 ## Purpose
-
 The player-facing shell of 90 Millas: how the game fills the screen, the shared look of every screen, the flow from the title through a run and back, the HUD layout at 640×360, and the settings each install keeps.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Display scaling
 The game SHALL draw its 640×360 view at the largest whole-number scale that fits the window, with black bars for the rest, and with nearest filtering unless the pixel filter is Suave. At launch the window opens at the largest multiple that fits the usable screen, or fullscreen if the player chose it, unless a fixed scale (1× to 4×) is set. F11 or Alt+Enter toggles fullscreen at any time. Solo and co-op behave the same.
@@ -53,7 +52,7 @@ Every screen SHALL use one theme: Pixelify Sans at 16 or 32 px for titles and bu
 - **THEN** its pixels are whole (no smoothing between font pixels)
 
 ### Requirement: Screen flow
-The game SHALL open on the title screen. Solo goes straight to a run, with no lobby and nothing waiting for another player. Hosting opens the lobby; joining opens the join screen, then the lobby, or the run if one is under way. When every player still in the run is dead the run summary shows, then the title; a disconnected player keeps the run open until they are removed. Losing the host shows the host-lost screen, then the title.
+The game SHALL open on the title screen. Solo goes straight to a run, with no lobby and nothing waiting for another player. Hosting opens the lobby; joining opens the join screen, then the lobby, or the run if one is under way. When every player still in the run is dead the run summary shows, then the title or a new run; a disconnected player keeps the run open until they are removed. Losing the host shows the host-lost screen, then the title.
 
 #### Scenario: Solo from the title
 - **GIVEN** the title screen
@@ -109,12 +108,12 @@ The lobby SHALL list up to four players by name, the host first and marked. Only
 - **THEN** both lobbies list Yuni (anfitrión) and Papo, and only Yuni's has "Empezar viaje"
 
 ### Requirement: HUD layout
-During a run the HUD SHALL keep to a 640×360 budget. The six meters sit top-left, each label inside its bar, a bar pulsing when critical (thirst, hunger, energy, morale or health at 25 or less, heat at 75 or more). The day phase sits top-centre. In co-op, teammates are listed top-right with name, health and a state word, and a teammate's name and health strip show over their head while health is not full. The bottom band and the centre stay clear.
+During a run the HUD SHALL keep to a 640×360 budget. The six meters sit top-left, each label inside its bar, a bar pulsing when critical (thirst, hunger, energy, morale or health at 25 or less, heat at 75 or more). The day phase sits top-centre. In co-op, teammates are listed top-right with name, health and a state word, and a teammate's name and health strip show over their head while health is not full. The bottom band is the inventory's and the centre holds no panel.
 
 #### Scenario: Solo HUD
 - **GIVEN** a solo run
 - **WHEN** the HUD is shown
-- **THEN** it shows the meters and the day phase, and no teammate list or quick-chat wheel
+- **THEN** it shows the meters, the day phase and the inventory strip, and no teammate list or quick-chat wheel
 
 #### Scenario: Critical thirst
 - **GIVEN** a player whose thirst is 20
@@ -158,3 +157,16 @@ The run summary SHALL list each player of the run with their name, whether they 
 - **GIVEN** a solo player who died after 3 minutes
 - **WHEN** the summary shows
 - **THEN** it lists their name as dead and a run length of 3:00
+
+### Requirement: Inventory band and world marks
+During a run the HUD's bottom band (y 306 to 360) SHALL hold the local player's inventory strip, its selected item's line and refusal line, and the crafting list opens above it at the left edge (4,162 to 244,302) while the player is at a workbench (inventory-hud). In the centre the HUD draws only marks anchored to something in the world: a teammate's name tag, the interact prompt and the hidden mark. Solo the same.
+
+#### Scenario: Marks in the centre
+- **GIVEN** a solo player standing within 1 tile of a coconut, crouched in brush
+- **WHEN** the HUD is drawn
+- **THEN** the interact prompt shows over the coconut and the hidden mark over the player, both anchored to their world positions, and no panel covers the centre
+
+#### Scenario: The band in co-op
+- **GIVEN** a host with one client
+- **WHEN** each peer draws its HUD
+- **THEN** the strip and its lines lie inside y 306 to 360 and overlap neither the meters, the day phase nor the teammate list
