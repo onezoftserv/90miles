@@ -1,16 +1,18 @@
 extends Node
 ## Manual capture for inventory-hud task 8.5, run windowed (it needs a real renderer, so never
 ## headless and never in CI). It starts a solo sandbar run at 1× (the window is the 640×360 base
-## picture), sets each scene up by placing the player and setting its intent, and saves what the
-## window shows:
-##   godot --path game res://tests/manual/capture_inventory_hud.tscn -- --out=<dir>
+## picture; --scale=2..4 for the art-pass captures, design.md K15), sets each scene up by placing
+## the player and setting its intent, and saves what the window shows:
+##   godot --path game res://tests/manual/capture_inventory_hud.tscn -- --out=<dir> [--scale=2]
 ## Writes <dir>/strip_selection.png (the strip with the coconut selected), prompt_ring.png (a palm
 ## climb halfway, its ring half full), craft_list.png (the bench's list), hidden_day.png and
 ## hidden_night.png (a player crouching in the brush with the hidden mark, by day and at Noche).
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://capture_inventory_hud.cfg"
-const SCALE: int = 1
+const DEFAULT_SCALE: int = 1
+## The largest fixed scale the settings offer (SettingsScreen.SCALE_LABELS).
+const MAX_SCALE: int = 4
 const SETTLE_FRAMES: int = 30
 ## Half the sandbar's 2 s palm climb, at 60 physics frames a second.
 const HALF_CLIMB_FRAMES: int = 60
@@ -20,6 +22,7 @@ const NIGHT_S: float = 440.1
 const AT_BENCH: Vector2 = Vector2(0.0, 10.0)
 
 var _out_dir: String = ""
+var _scale: int = DEFAULT_SCALE
 var _shell: GameShell
 var _body: PlayerBody
 
@@ -28,8 +31,10 @@ func _ready() -> void:
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--out="):
 			_out_dir = arg.trim_prefix("--out=")
-	if _out_dir.is_empty() or DisplayServer.get_name() == "headless":
-		push_error("capture_inventory_hud: run windowed and pass --out=<dir>")
+		elif arg.begins_with("--scale="):
+			_scale = arg.trim_prefix("--scale=").to_int()
+	if _out_dir.is_empty() or DisplayServer.get_name() == "headless" or _scale < 1 or _scale > MAX_SCALE:
+		push_error("capture_inventory_hud: run windowed and pass --out=<dir> and optionally --scale=1..%d" % MAX_SCALE)
 		get_tree().quit(1)
 		return
 	_write_settings()
@@ -54,7 +59,7 @@ func _write_settings() -> void:
 	var config := ConfigFile.new()
 	config.set_value("player", "name", "Yuni")
 	config.set_value("display", "fullscreen", false)
-	config.set_value("display", "ui_scale", SCALE)
+	config.set_value("display", "ui_scale", _scale)
 	config.set_value("display", "pixel_filter", 0)
 	config.save(SETTINGS_PATH)
 
@@ -77,7 +82,7 @@ func _place(at: Vector2) -> void:
 
 func _save(file_name: String) -> void:
 	await RenderingServer.frame_post_draw
-	var window_size := DisplayFit.window_size(SCALE)
+	var window_size := DisplayFit.window_size(_scale)
 	var image := get_viewport().get_texture().get_image()
 	if image.get_size() != window_size:
 		image.resize(window_size.x, window_size.y, Image.INTERPOLATE_NEAREST)
