@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ArtTuning" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/palette/master_palette.png" id="1_vjeit"]
+[ext_resource type="Texture2D" path="res://assets/art/palette/player_ramps.png" id="2_gbhx4"]
+[ext_resource type="Script" path="res://scripts/art/art_tuning.gd" id="3_siayd"]
+[ext_resource type="Texture2D" path="res://assets/art/palette/skin_ramps.png" id="4_rth0l"]
+
+[resource]
+script = ExtResource("3_siayd")
+contrast_min = 3.0
+slot_contrast_min = 1.3
+slot_hue_min_deg = 30.0
+max_unique_frames = 6
+max_creature_frames = 4
+max_character_frames = 48
+max_fps = 12.0
+outline_colors = PackedColorArray(0, 0, 0, 1, 0.13333334, 0.1254902, 0.20392157, 1, 0.27058825, 0.15686275, 0.23529412, 1, 0.19607843, 0.23529412, 0.22352941, 1)
+land_grounds = Dictionary[StringName, Color]({
+&"brush": Color(0.41568628, 0.74509805, 0.1882353, 1),
+&"dune": Color(0.93333334, 0.7647059, 0.6039216, 1),
+&"sand": Color(0.8509804, 0.627451, 0.4, 1)
+})
+water_grounds = Dictionary[StringName, Color]({
+&"brackish": Color(0.21568628, 0.5803922, 0.43137255, 1),
+&"deep": Color(0.1882353, 0.3764706, 0.50980395, 1),
+&"shallows": Color(0.37254903, 0.8039216, 0.89411765, 1)
+})
+master_palette = ExtResource("1_vjeit")
+player_ramps = ExtResource("2_gbhx4")
+skin_ramps = ExtResource("4_rth0l")

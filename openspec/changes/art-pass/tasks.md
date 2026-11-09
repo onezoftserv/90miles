@@ -28,7 +28,7 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - frame budgets on every actor and structure `SpriteFrames` under `res://assets/art/` and on every part sheet, counted as unique non-empty 32×32 cells.
 
   Put `art/characters/player_placeholder.png` on a temporary exemption list that task 5.7 empties. Verify it fails on today's `art/ui/License.txt` and `art/characters/License.txt` (vendor text only: no block with its own `Source:` line). Then append to each a block (design.md K11) with `Pack:`, `Author:`, `Licence: CC0 1.0`, `Source:` (the pack page: `https://kenney.nl/assets/pixel-ui-pack`, `https://kenney.nl/assets/tiny-dungeon`) and `Files:`, and verify it passes.
-- [ ] 1.4 Add `game/scripts/art/art_tuning.gd` (`ArtTuning`) and `game/resources/art_tuning.tres` with design.md D21's values, the outline set, the ground mean colours and references to the three palette textures below. Add, with a `License.txt` (DawnBringer's palette, credited; 90 Millas ramps, own work):
+- [x] 1.4 Add `game/scripts/art/art_tuning.gd` (`ArtTuning`) and `game/resources/art_tuning.tres` with design.md D21's values, the outline set, the ground mean colours and references to the three palette textures below. Add, with a `License.txt` (DawnBringer's palette, credited; 90 Millas ramps, own work):
   - `game/assets/art/palette/master_palette.png` (DawnBringer's 32 colours plus at most 32 added colours: players 7, the key ramp's 4 and 3 skin colours; terrain about 11; design.md C1 D7) and `master_palette.gpl`;
   - `player_ramps.png`: the 4-shade clothing key ramp in row 0, slots azul, rojo, amarillo and verde in rows 1–4;
   - `skin_ramps.png`: 4 shades each (highlight, base, shade, line); row 0 claro, the reference the body sheets are drawn in; row 1 trigueño; row 2 moreno; every entry as in design.md C1 D7's table.
@@ -41,6 +41,8 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - the slot mid tones pairwise of different hue with a contrast ratio of at least 1.3:1 (art-pass "Four slots read apart").
 
   Verify it fails before the files exist and passes after.
+
+  Done 2026-11-09 (before task 1.3, whose palette check needs these files): `test_art_palette.gd` failed on the missing `art_tuning.tres` and passes 10 of 10 with it; the palette is DB32 plus the 7 player colours (39), and the terrain colours wait for task 4.4 (design.md K16).
 - [ ] 1.5 Write `tools/art/test_poses.py` first (unittest, standard library, fixture frames):
   - each pose rule of design.md C1 applied per layer and then alpha-composited equals the rule applied to the composite;
   - crouch deletes exactly rows 21–23 and 27–29;
