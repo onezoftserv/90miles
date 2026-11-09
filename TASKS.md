@@ -34,8 +34,8 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] `player-movement`: walk, run, crouch, swim, dive, interact
 - [x] `coop-networking`: host/join, spawner, synchronizer, quick chat
 - [x] `survival-meters`: all six meters with the §4 numbers, HUD bars
-- [x] `ui-shell`: title, host/join lobby, HUD layout, game theme, display scaling, pixel filter
-- [x] `coop-reconnect`: stable player id, rejoin within 90 s reclaims the body, removed players count as dead
+- [x] `ui-shell`: title, host/join lobby, HUD layout, game theme, display scaling, pixel filter; archived 2026-11-08
+- [x] `coop-reconnect`: stable player id, rejoin within 90 s reclaims the body, removed players count as dead; archived 2026-11-08
 - [x] Handmade sandbar scene: hut, 6 palms, flotsam line, tide pools (`sandbar-island` change, archived 2026-11-06)
 - [x] `crafting-inventory`: inventory, pick-up, coconut, rain cup, workbench, fire
 - [x] `weather-daynight`: 12-minute day, CanvasModulate, calm/squall only
@@ -55,7 +55,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
   - [ ] A co-op rematch with the same peers (its own change: a host RPC, every client rebuilding its session)
   - [ ] Seed crossings and islands from `run_seed` (island-generation)
   - [ ] English summary strings (labels are Spanish only for now); the profanity toggle (Milestone G) switches the lines to their soft variants
-  - [ ] Reword ui-shell "Screen flow" ("then the title") when ui-shell is archived: "then the title or a new run"
+  - [x] Reword ui-shell "Screen flow" ("then the title") when ui-shell is archived: "then the title or a new run"
   - [ ] A `hunger` or `bleeding` cause only if starvation or bleeding ever takes health; a co-op summary hand test in the Milestone B playtest
 - [ ] `secret-cay` (OpenSpec change written 2026-11-06; `escape-routes` is merged and archived, so it is ready to build): the four secret items (`brujula_rota`, `mapa_sin_norte`, `sombrero_cinta_roja`, `nota_llegaste_tarde`), `secret_tuning.tres`, concealment with a shimmer and a dig hold, hiding spots, the broken-compass needle on the HUD, the hidden cay `cayo_sin_norte` (off-graph) with its empty chest, note and hat, the note on a HUD label, the hunt and cay dev scenes, 1-player and host-plus-client tests. Nothing reaches a real run yet. Later, each when its capability exists:
   - [ ] Place the pieces in real runs (1 run in 3, two islands from 2 to 5): island-generation, the run seed and run state
@@ -65,7 +65,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
   - [ ] The hat as a cross-run cosmetic for everyone present: keepsakes or a profile cosmetic shelf
   - [ ] Reading panels for the note and the map: npcs-dialogue found texts
   - [ ] Secrecy checks in charts, binoculars, the lighthouse, *Pedazo de mapa*, Tomás, Experiencia map knowledge, HUD markers and the AI prompts, as each is built
-- [x] `inventory-hud`: the inventory strip, F to use items, the workbench crafting list (with fire and rain-catcher sites), the [E] prompt with its hold ring, and the crouch and hidden cues; host-plus-client hand test (task 8.4) done 2026-11-08 with three processes; archive after merge `ui-shell` (OpenSpec change written 2026-11-08 on main 8d3c4ca; owner decision: one change that makes a full solo run playable): the inventory strip in the HUD's bottom band (12 slots of 26×26 px, Spanish names, counts or uses left, slot keys on the keyboard, the selected item's line, "Peso x/30"; it follows a rejoined player's body), slot selection (1-9, 0, -, =, the mouse wheel, D-pad left/right; never sent, and not what a gull counts as held), `use_item` on F / gamepad X (hold for the use's time; a solo last stand drinks a reviving cup; a downed teammate in reach gets revived; Spanish reasons when refused), the workbench crafting list (E at the bench; workbench recipes plus the fire and rain-catcher sites, placed at the player's feet through the session's entity spawner, with tag deposits synced and joiners given the live state), the "[E] verb target" prompt (gull included) with a hold ring locked to the pressed target, placed clear of every HUD panel, and a build site's missing inputs or progress, the crouch cue (body 10 of 16 px) and the hidden mark drawn by the HUD, all text in `game/resources/hud_text.tres`; a 1-player test that finishes the sandbar with its creatures from inputs alone, and host-plus-client tests. Quick chat stays off in solo (owner, 2026-11-08). Archive after `ui-shell` (its "HUD layout" is modified here). Owner confirmed 2026-11-08: F is refused at sea with "En plena travesía no se puede.", the fire and rain-catcher sites are placed from the bench, F revives a downed teammate in reach (a solo last stand revives yourself), and the key defaults in its proposal.md.
+- [x] `inventory-hud`: the inventory strip, F to use items, the workbench crafting list (with fire and rain-catcher sites), the [E] prompt with its hold ring, and the crouch and hidden cues; host-plus-client hand test (task 8.4) done 2026-11-08 with three processes; merged (#35) and archived 2026-11-08 (OpenSpec change written 2026-11-08 on main 8d3c4ca; owner decision: one change that makes a full solo run playable): the inventory strip in the HUD's bottom band (12 slots of 26×26 px, Spanish names, counts or uses left, slot keys on the keyboard, the selected item's line, "Peso x/30"; it follows a rejoined player's body), slot selection (1-9, 0, -, =, the mouse wheel, D-pad left/right; never sent, and not what a gull counts as held), `use_item` on F / gamepad X (hold for the use's time; a solo last stand drinks a reviving cup; a downed teammate in reach gets revived; Spanish reasons when refused), the workbench crafting list (E at the bench; workbench recipes plus the fire and rain-catcher sites, placed at the player's feet through the session's entity spawner, with tag deposits synced and joiners given the live state), the "[E] verb target" prompt (gull included) with a hold ring locked to the pressed target, placed clear of every HUD panel, and a build site's missing inputs or progress, the crouch cue (body 10 of 16 px) and the hidden mark drawn by the HUD, all text in `game/resources/hud_text.tres`; a 1-player test that finishes the sandbar with its creatures from inputs alone, and host-plus-client tests. Quick chat stays off in solo (owner, 2026-11-08). Archived after `ui-shell` (its "HUD layout" is modified here). Owner confirmed 2026-11-08: F is refused at sea with "En plena travesía no se puede.", the fire and rain-catcher sites are placed from the bench, F revives a downed teammate in reach (a solo last stand revives yourself), and the key defaults in its proposal.md.
 
 ## 5. Milestone C — Procedural islands
 
@@ -107,6 +107,7 @@ Voice acting, cloned voices, runtime TTS, challenges, seeded and daily runs, and
 - [ ] Music: Músico songs, ending themes (CC-BY or commissioned)
 - [ ] Profanity toggle, English localization pass
 - [ ] Set pieces (Brogue machines): six from `docs/ISLANDS.md`
+- [ ] A dead co-op player spectates a living teammate, a key cycling between them, instead of watching their own body (owner, 2026-11-08)
 
 ## 10. Content batches (data entry, parallel to milestones C–E)
 

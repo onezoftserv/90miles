@@ -83,5 +83,5 @@ RED means the new tests are written first and seen failing; GREEN means the smal
 ## Workflow
 
 - [x] W.1 Before apply, the owner confirms or changes the proposal's "Provisional" list, items on a crossing first (design D11); update the spec, design and task 4.8 to the choice.
-- [ ] W.2 Archive `ui-shell` before this change: `specs/ui-shell/spec.md` modifies ui-shell "HUD layout", and archive refuses a MODIFIED block until `openspec/specs/ui-shell/` exists. If ui-shell's own "HUD layout" text changes before it is archived, update this delta to the archived text first.
-- [ ] W.3 Archive this change once W.1 and W.2 are done and every task above is ticked.
+- [x] W.2 Archive `ui-shell` before this change: `specs/ui-shell/spec.md` modifies ui-shell "HUD layout", and archive refuses a MODIFIED block until `openspec/specs/ui-shell/` exists. If ui-shell's own "HUD layout" text changes before it is archived, update this delta to the archived text first.
+- [x] W.3 Archive this change once W.1 and W.2 are done and every task above is ticked.
