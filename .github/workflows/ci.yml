@@ -87,6 +87,14 @@ jobs:
             echo "::error::errors during the smoke run"; exit 1
           fi
 
+      # The art pipeline's tools (art-pass): offline, standard library only. check.py reads the
+      # tracked art and its .import files.
+      - name: Art tool tests (Python)
+        run: |
+          python3 --version
+          python3 -I -m unittest discover -s tools/art -p 'test_*.py'
+          python3 -I -m unittest discover -s tools -p 'test_fetch_assets.py'
+
       # Runs the real game loop (autoloads first, then the main scene) to catch runtime errors in
       # autoloads and scenes outside the smoke script, and resource leaks reported at exit.
       - name: Run the game headless
