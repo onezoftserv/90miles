@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_recipe")
-description_es = "Seis palos, dos cámaras y tres sogas: la balsa de todos."
+description_es = "Seis palos, dos cámaras y tres sogas: la balsa de to'."
 description_en = "Six pieces of driftwood, two inner tubes and three ropes: everyone's raft."
 inputs = Dictionary[StringName, int]({
 &"driftwood": 6,

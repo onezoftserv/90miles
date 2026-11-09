@@ -53,6 +53,10 @@ var crossings: Array[Node] = []
 var crossing_results: Array[RefCounted] = []
 ## Seconds, for the run's length. Tests replace it.
 var clock: Callable
+## Rolls the run seed the host (or solo) starts every run with. Tests replace it.
+var seed_source: Callable
+## The death one-liners the summary picks from (the content's unless a test sets others).
+var death_lines: DeathLines
 var _run_started_s: float = 0.0
 ## While the local rider waits on the shore: who is still playing (null outside a run).
 var _wait_label: Label
@@ -68,6 +72,7 @@ var _crossing_rng := RandomNumberGenerator.new()
 
 func _init() -> void:
 	clock = _ticks_s
+	seed_source = _roll_seed
 
 
 func _ready() -> void:
@@ -76,6 +81,7 @@ func _ready() -> void:
 	if not settings.identity_stored:
 		settings.save()
 	NetManager.join_failed.connect(_on_join_failed)
+	death_lines = DeathLines.from_catalog(GameState.content)
 	apply_display()
 	apply_pixel_filter()
 	show_title()
@@ -197,11 +203,20 @@ func _refresh_lobby() -> void:
 
 
 func _on_host_lost() -> void:
+	if flow == Flow.SUMMARY:
+		# A client that finished its run keeps the summary; the run behind it goes.
+		(screen as SummaryScreen).show_host_left()
+		_backdrop.visible = true
+		_end_run.call_deferred()
+		return
 	_close_screen()
 	flow = Flow.HOST_LOST
 	host_lost_screen = HOST_LOST_SCENE.instantiate() as HostLostScreen
 	add_child(host_lost_screen)
 	host_lost_screen.back_requested.connect(_leave_host_lost)
+	# The HUD reads bodies that are going: it takes no input until it is freed with the run.
+	if hud != null:
+		hud.set_screen_shown(true)
 	# The session is inside its own signal: free it after this frame.
 	_end_run.call_deferred()
 
@@ -222,6 +237,12 @@ func start_solo() -> void:
 	_enter_run()
 
 
+## "Otra vez": a clean solo run from the summary. The old run ends before the peer is swapped.
+func _restart_solo() -> void:
+	_end_run()
+	start_solo()
+
+
 ## Ends the run (if any), goes offline and shows the title.
 func back_to_title() -> void:
 	_end_run()
@@ -240,6 +261,11 @@ func _build_run(as_client: bool = false) -> void:
 	session.terrain = island.terrain
 	session.climate = island.climate
 	session.sky = WeatherManager.sky
+	if not as_client:
+		# A run starts on day 1 at dawn, calm, before the island's creatures read the hour, and
+		# with a seed of its own (endings-progression "A fresh run starts clean").
+		WeatherManager.sky.start_at(RUN_START_TIME_S)
+		session.world_state = {"run_seed": seed_source.call()}
 	session.spawn_points = island.spawn_points(solo)
 	session.player_spawned.connect(_on_player_spawned)
 	session.local_identity = settings.identity
@@ -274,6 +300,7 @@ func _enter_run() -> void:
 	tint = TINT_SCENE.instantiate() as DayNightTint
 	_world.add_child(tint)
 	hud = HUD_SCENE.instantiate() as RunHud
+	hud.world_view = world_view
 	add_child(hud)
 	hud.bind(session, session.multiplayer.get_unique_id(), session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer)
 	_wait_label = _make_wait_label()
@@ -284,6 +311,8 @@ func _enter_run() -> void:
 # engine errors.
 func _end_run() -> void:
 	WeatherManager.stop()
+	# The pause menu may have paused the tree under the summary.
+	get_tree().paused = false
 	if tint != null:
 		tint.free()
 		tint = null
@@ -376,22 +405,21 @@ func _check_run_over() -> void:
 		return
 	if travel.check() != IslandTravel.Outcome.OVER:
 		return
-	var routes := session.get_node(^"Routes") as IslandRoutes
-	var entries: Array[Dictionary] = []
-	for peer_id: int in session.peer_ids():
-		var dead: bool = session.body(peer_id).meters.dead
-		var left_by: StringName = routes.route_left_by(peer_id)
-		var entry: Dictionary = {"name": session.player_name(peer_id), "dead": dead}
-		if not dead:
-			entry["route"] = _route_name(left_by)
-		entries.append(entry)
-	# Removed after a disconnect: dead for the run (coop-reconnect).
-	for removed_name: String in session.removed_names():
-		entries.append({"name": removed_name, "dead": true})
+	var solo: bool = session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer
+	var made := RunSummary.collect(session, travel.islands_reached, WeatherManager.sky.clock.day,
+			clock.call() - _run_started_s, death_lines, GameState.content)
 	WeatherManager.stop()
+	# The HUD (and its pause menu) goes with the run: nothing under the summary can pause it. It
+	# stops taking input first, so no key reaches it in the frame before it is freed (inventory-hud).
+	if hud != null:
+		hud.set_screen_shown(true)
+		hud.queue_free()
+		hud = null
+	_wait_label = null
 	var summary := _show(SUMMARY_SCENE, Flow.SUMMARY) as SummaryScreen
-	summary.show_summary(entries, clock.call() - _run_started_s)
+	summary.show_summary(made, "Otra vez" if solo else "")
 	summary.home_requested.connect(back_to_title)
+	summary.restart_requested.connect(_restart_solo)
 
 
 func _process(_delta: float) -> void:
@@ -426,11 +454,6 @@ func _make_wait_label() -> Label:
 	return label
 
 
-func _route_name(route_id: StringName) -> String:
-	var route := GameState.content.get_entry(&"routes", route_id) as RouteData
-	return route.name_es if route != null else String(route_id)
-
-
 func _show(scene: PackedScene, next: Flow) -> Control:
 	_close_screen()
 	screen = scene.instantiate() as Control
@@ -449,3 +472,7 @@ func _close_screen() -> void:
 
 func _ticks_s() -> float:
 	return Time.get_ticks_usec() / 1000000.0
+
+
+func _roll_seed() -> int:
+	return randi()

@@ -34,8 +34,8 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] `player-movement`: walk, run, crouch, swim, dive, interact
 - [x] `coop-networking`: host/join, spawner, synchronizer, quick chat
 - [x] `survival-meters`: all six meters with the §4 numbers, HUD bars
-- [x] `ui-shell`: title, host/join lobby, HUD layout, game theme, display scaling, pixel filter
-- [x] `coop-reconnect`: stable player id, rejoin within 90 s reclaims the body, removed players count as dead
+- [x] `ui-shell`: title, host/join lobby, HUD layout, game theme, display scaling, pixel filter; archived 2026-11-08
+- [x] `coop-reconnect`: stable player id, rejoin within 90 s reclaims the body, removed players count as dead; archived 2026-11-08
 - [x] Handmade sandbar scene: hut, 6 palms, flotsam line, tide pools (`sandbar-island` change, archived 2026-11-06)
 - [x] `crafting-inventory`: inventory, pick-up, coconut, rain cup, workbench, fire
 - [x] `weather-daynight`: 12-minute day, CanvasModulate, calm/squall only
@@ -50,7 +50,14 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] `status-sync`: a player's statuses (bleeding) reach every peer, late joiners included, and a "Sangrando" tag shows on the HUD
 - [x] Arrival on a second handmade island (coast cay): `coast-cay` change, archived 2026-11-08
 - [x] `creatures-ai`: reef shark (patrol/circle/strike), crabs, gulls
-- [ ] Death, run summary with the Cuban one-liner, restart
+- [x] Death, run summary with the Cuban one-liner, restart: `run-end` change, archived 2026-11-08
+  - [ ] Owner's voice pass on the 20 draft death one-liners (`game/resources/dialogue/death_one_liners.tres`, respect and Cuban voice)
+  - [ ] A co-op rematch with the same peers (its own change: a host RPC, every client rebuilding its session)
+  - [ ] Seed crossings and islands from `run_seed` (island-generation)
+  - [ ] English summary strings (labels are Spanish only for now); the profanity toggle (Milestone G) switches the lines to their soft variants
+  - [x] Reword ui-shell "Screen flow" ("then the title") when ui-shell is archived: "then the title or a new run"
+  - [ ] When the summary next changes, MODIFY ui-shell "Run summary" (a per-player list and "Volver al inicio") to match endings-progression's totals, cause and "Otra vez", so one spec owns the summary
+  - [ ] A `hunger` or `bleeding` cause only if starvation or bleeding ever takes health; a co-op summary hand test in the Milestone B playtest
 - [ ] `secret-cay` (OpenSpec change written 2026-11-06; `escape-routes` is merged and archived, so it is ready to build): the four secret items (`brujula_rota`, `mapa_sin_norte`, `sombrero_cinta_roja`, `nota_llegaste_tarde`), `secret_tuning.tres`, concealment with a shimmer and a dig hold, hiding spots, the broken-compass needle on the HUD, the hidden cay `cayo_sin_norte` (off-graph) with its empty chest, note and hat, the note on a HUD label, the hunt and cay dev scenes, 1-player and host-plus-client tests. Nothing reaches a real run yet. Later, each when its capability exists:
   - [ ] Place the pieces in real runs (1 run in 3, two islands from 2 to 5): island-generation, the run seed and run state
   - [ ] The crossing to the cay and back, and the needle holding the cay's bearing: crossing and arrival
@@ -59,10 +66,12 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
   - [ ] The hat as a cross-run cosmetic for everyone present: keepsakes or a profile cosmetic shelf
   - [ ] Reading panels for the note and the map: npcs-dialogue found texts
   - [ ] Secrecy checks in charts, binoculars, the lighthouse, *Pedazo de mapa*, Tomás, Experiencia map knowledge, HUD markers and the AI prompts, as each is built
+- [x] `inventory-hud`: the inventory strip, F to use items, the workbench crafting list (with fire and rain-catcher sites), the [E] prompt with its hold ring, and the crouch and hidden cues; host-plus-client hand test (task 8.4) done 2026-11-08 with three processes; merged (#35) and archived 2026-11-08 (OpenSpec change written 2026-11-08 on main 8d3c4ca; owner decision: one change that makes a full solo run playable): the inventory strip in the HUD's bottom band (12 slots of 26×26 px, Spanish names, counts or uses left, slot keys on the keyboard, the selected item's line, "Peso x/30"; it follows a rejoined player's body), slot selection (1-9, 0, -, =, the mouse wheel, D-pad left/right; never sent, and not what a gull counts as held), `use_item` on F / gamepad X (hold for the use's time; a solo last stand drinks a reviving cup; a downed teammate in reach gets revived; Spanish reasons when refused), the workbench crafting list (E at the bench; workbench recipes plus the fire and rain-catcher sites, placed at the player's feet through the session's entity spawner, with tag deposits synced and joiners given the live state), the "[E] verb target" prompt (gull included) with a hold ring locked to the pressed target, placed clear of every HUD panel, and a build site's missing inputs or progress, the crouch cue (body 10 of 16 px) and the hidden mark drawn by the HUD, all text in `game/resources/hud_text.tres`; a 1-player test that finishes the sandbar with its creatures from inputs alone, and host-plus-client tests. Quick chat stays off in solo (owner, 2026-11-08). Archived after `ui-shell` (its "HUD layout" is modified here). Owner confirmed 2026-11-08: F is refused at sea with "En plena travesía no se puede.", the fire and rain-catcher sites are placed from the bench, F revives a downed teammate in reach (a solo last stand revives yourself), and the key defaults in its proposal.md.
 
 ## 5. Milestone C — Procedural islands
 
 - [ ] `island-generation`: seeded landmass, bands, POI placement, validation
+  - Spec written 2026-11-08 (OpenSpec change `island-generator`: the seeded generator for one chain, the reef cay `reef_traps`, with nine owner decisions in its proposal); the build waits for the Milestone A/B playtest
 - [ ] Chain templates: sandbar, coast, mangrove, reef, rock (data in `.tres`)
 - [ ] Resource rules and respawn hooks (squall, night)
 - [ ] Run structure: 6–8 islands with branching (`endings-progression` part 1)
@@ -81,30 +90,25 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 
 - [ ] `npcs-dialogue`: NPC resource, dialogue UI, quests, companions, found texts
 - [ ] Handwritten lines for all minor NPCs, story beats, endings (Spanish, then English)
+- [ ] Handwritten lines for the important NPCs and the texts found every run (v1 has no AI dialogue; Spanish, then English)
 - [ ] Companions: Dayana, Papo, El Chino with needs and skills; Yunior
 - [ ] Ramón, Caridad, Rodríguez quests and ending flags
 - [ ] Endings: five scenes with slots; `endings-progression` part 2
 - [ ] Keepsakes, Experiencia carry-over and levels, Experiencia point shop
 - [ ] Backgrounds: six, with starting items and skill growth
 
-## 8. Milestone F — AI dialogue
+## 8. Milestone F — AI dialogue: moved to v2
 
-- [ ] `backend/`: SAM template, Lambda, Bedrock Haiku 4.5 call with JSON schema, DynamoDB cache, API key issuance, rate limits
-- [ ] `backend/prompts/style.md` and `slang.md`; NPC profiles for the 7 important NPCs; text profiles for the 4 important texts
-- [ ] `backend/mock_server.py` for offline dev
-- [ ] `DialogueService` client with 3 s timeout and fallback
-- [ ] Test Haiku's Cuban Spanish on 50 sample contexts; iterate the style guide
-- [ ] Cost check: ≤ $0.05 per run
+Decided by the owner on 2026-11-08: the AI dialogue backend is not part of v1. Its tasks are in "v2" at the end of this file. v1 ships handwritten lines only (Milestone E).
 
-## 9. Milestone G — Voice and polish
+## 9. Milestone G — Polish (v1)
 
-- [ ] Record 6–8 Cuban voices (written permission); clone with Chatterbox; generate all handwritten lines (`tools/gen_voice.py`)
-- [ ] Emotion grunt clips for AI lines; Kokoro runtime TTS behind a flag
+Voice acting, cloned voices, runtime TTS, challenges, seeded and daily runs, and Steam joining moved to v2 (owner, 2026-11-08). These stay in v1:
+
 - [ ] Music: Músico songs, ending themes (CC-BY or commissioned)
 - [ ] Profanity toggle, English localization pass
 - [ ] Set pieces (Brogue machines): six from `docs/ISLANDS.md`
-- [ ] Challenges, seeds, daily run
-- [ ] Steam/relay joining (post-v1)
+- [ ] A dead co-op player spectates a living teammate, a key cycling between them, instead of watching their own body (owner, 2026-11-08)
 
 ## 10. Content batches (data entry, parallel to milestones C–E)
 
@@ -136,6 +140,24 @@ Each review is its own OpenSpec change; findings go back into the docs and the a
 - [ ] `player-looks` (after `art-pass`; owner decision 2026-11-08): each background sets the outfit and one signature item drawn on the body; the player picks man or woman, skin, hair and clothing colour in the lobby (a title-screen screen in solo); extra hairs, hats and outfits unlock when found in a run and are remembered per install (the secret cay's red-band hat among them); hand-made beards, moustaches and hats
 - [ ] `art-pass` (OpenSpec change written 2026-11-08; build after `inventory-hud` is merged): the first art pass in direction C end to end: tracked art folders with licences, the in-game credits screen, `tools/fetch_assets.py` for every pack, a master palette with rim and palette checks; terrain as tile layers with corner-matched edges, the Eldiran shoreline overlay and a scrolling sea; the player on the MetroCity base (walk, run, crouch, swim at the water line, dive, downed, dead) with four palette-swapped clothing colours by look slot and a head anchor; the shark fin, crab and gull; icons for all fourteen items (the sandbar's ten and the coast cay's four); palm, lean-to, workbench, fire, rain catcher, signs, raft site and raft with damage states; the crossing sea and deck; drop shadows and Y-sort; contrast, outline, icon-silhouette and frame-budget checks; and a test that drawing never changes the simulation. 1-player and host-plus-client checks in every group. The "Later" list (NPC cast, portraits, other vessels, set pieces, weather particles, the remaining poses, polish) is in its proposal.md
 
+## v2 (after the first release; decided by the owner on 2026-11-08)
+
+AI dialogue (was Milestone F):
+- [ ] `backend/`: SAM template, Lambda, Bedrock Haiku 4.5 call with JSON schema, DynamoDB cache, API key issuance, rate limits
+- [ ] `backend/prompts/style.md` and `slang.md`; NPC profiles for the 7 important NPCs; text profiles for the 4 important texts
+- [ ] `backend/mock_server.py` for offline dev
+- [ ] `DialogueService` client with 3 s timeout and fallback
+- [ ] Test Haiku's Cuban Spanish on 50 sample contexts; iterate the style guide
+- [ ] Cost check: ≤ $0.05 per run
+
+Voice (was in Milestone G):
+- [ ] Record 6–8 Cuban voices (written permission); clone with Chatterbox; generate all handwritten lines (`tools/gen_voice.py`)
+- [ ] Emotion grunt clips for AI lines; Kokoro runtime TTS behind a flag
+
+Other (was in Milestone G):
+- [ ] Challenges, seeds, daily run
+- [ ] Steam/relay joining
+
 ## Done
 
 - 2026-11-05: Tooling: Godot 4.7.2 (winget), ECC plugin, OpenSpec 1.16 (`openspec init`, Claude Code), reference games cloned. Still open: ECC rules copy, Godot MCP build and registration, AWS and GitHub MCPs (each needs the user).
@@ -154,6 +176,8 @@ Each review is its own OpenSpec change; findings go back into the docs and the a
 - 2026-11-08: `coop-reconnect` after merging `crossing` (GUT 816/816, import and smoke clean): the crossing takes a rider's peer from `CoopSession.peer_of` (lashing and rescue points), and the crossing's riders (slot, state, climb and pull points) and the route departures move to the new peer on `player_rebound`, on every peer; `test_reconnect_crossing.gd` and a route test. Known gap, left out: a client that joins or rejoins during a crossing has no crossing on its screen (the host keeps the rider).
 - 2026-11-08: `creatures-ai` change implemented test-first (GUT 812+ tests, import, smoke and a 300-frame run clean; not archived): reef shark, land crab and seagull are `.tres` files read by one generic host-run `Creature` with three state machines (`patrol_circle_strike`, `night_thief`, `swoop_steal`), land and water `AStarGrid2D`s with the shark's 2-tile shore margin, a `CreatureSpawner` on the sandbar (crabs at night with the fire halving and party scaling, gulls at two nest palms, one offshore shark) and `CreatureThreats` behind the crossing's shark pass. Owner-confirmed: held food is the first food slot on land (D3), one offshore sandbar shark (D6).
 - 2026-11-08: `crossing-late-join` change implemented test-first on top of `coop-reconnect` (GUT 887/887 after merging `main` with `creatures-ai`, import, smoke and a 300-frame run clean; a host and a client process through the shell, the client joining 5 s into the host's raft crossing, both with zero error lines): after the join reply the host sends `IslandRoutes.receive_progress` with the route departures (applied without starting anything), the crossing counter and a checked `CrossingSnapshot` of each crossing under way (serial, route, riders in slot order, plan, clock, states, positions, vessel maximum, value and break); the joiner builds or refreshes each with `Crossing.restore`, its riders on sea ground with the camera kept to the sea and nothing replayed; a crossing sends its plan, states and result only to peers that have it, so no peer gets a message for a node it lacks; the joiner's shell follows restored crossings and hides riders whose crossing already ended; a break now sinks the deck on clients too. Confirmed by the owner (2026-11-08): riders of an ended crossing are hidden on a joiner as on the host, riders appear where the host has them, and the joiner's clock starts at the host's time with nothing replayed. Archived 2026-11-08. Follow-ups queued: the reef shark seen by clients during a crossing, and bleeding status reaching clients.
-- 2026-11-08: `crossing-shark-sync` change implemented test-first (GUT 889/889, import, smoke and a 300-frame run clean): the crossing's reef shark is spawned through the session's entity spawner (`CoopSession.spawn_creature`) instead of under the host's `Crossing`, so a client in the crossing and a client that joins during the circle see it beside its victim, and the host freeing it after its circle removes it everywhere; `Creature.is_passing()` (a creature with a lifetime) keeps it out of the island spawner's `creatures()`, so phases, fires and counts ignore it. Solo unchanged.
+- 2026-11-08: `crossing-shark-sync` change implemented test-first (GUT 889/889, import, smoke and a 300-frame run clean): the crossing's reef shark is spawned through the session's entity spawner (`CoopSession.spawn_creature`) instead of under the host's `Crossing`, so a client in the crossing and a client that joins during the circle see it beside its victim, and the host freeing it after its circle removes it everywhere; `Creature.is_passing()` (a creature with a lifetime) keeps it out of the island spawner's `creatures()`, so phases, fires and counts ignore it. Solo unchanged. Archived 2026-11-08.
 - 2026-11-08: `coast-cay` change implemented test-first (archived 2026-11-08 with the owner's confirmations): the coast cay is data (`coast_cay.tres`, 88×64, 1,021 land cells, lagoon, observation post, rope cache, flotsam) with four new items (nails, mirror, aloe, lighter), `ArrivalStub` is replaced by `IslandArrival` and `IslandTravel` (riders wait out of play, the host loads the next island for everyone, the raft is beached at its integrity, joiners follow through the world state), the island scene builds any layout, the lagoon (`DrinkSpot`) and flavour signs (`IslandSign`) are layout data, delayed effects and `CURE_STATUS` work, and reef sharks and crabs also spawn on the coast chain. Confirmed by the owner (2026-11-08): the split-party wait, the requirement name `Any handmade layout builds the island`, an unlimited lagoon. Follow-ups: a spectate camera for waiting riders, the village variant, Ramón and the balseros' camp, patrols and the observation post's hiding spot, noni, the cache's Navigation gate, mirror signalling, nails on the raft, a salt status or a drink limit for the lagoon, a shell-level host-and-client hand test.
-- 2026-11-08: `status-sync` change implemented test-first (GUT 938/938 after merging `main` with `crossing-shark-sync` and `coast-cay`, import, smoke and a 300-frame run clean): a player's statuses are one replicated int of bit flags (`SurvivalMeters.status_flags`, one bit per `DataEnums.Status`) in the player's synchronizer, replacing the host-only dictionary, so a client bitten in a crossing knows it bleeds and when it stops, a late joiner sees who bleeds, and a client's own change is never taken; `statuses_changed` fires on every peer, and a red "Sangrando" tag under the local player's meter bars shows while they bleed (a client's follows the host). Confirmed by the owner (2026-11-08): sync and show the tag. Solo unchanged.
+- 2026-11-08: `status-sync` change implemented test-first (GUT 938/938 after merging `main` with `crossing-shark-sync` and `coast-cay`, import, smoke and a 300-frame run clean): a player's statuses are one replicated int of bit flags (`SurvivalMeters.status_flags`, one bit per `DataEnums.Status`) in the player's synchronizer, replacing the host-only dictionary, so a client bitten in a crossing knows it bleeds and when it stops, a late joiner sees who bleeds, and a client's own change is never taken; `statuses_changed` fires on every peer, and a red "Sangrando" tag under the local player's meter bars shows while they bleed (a client's follows the host). Confirmed by the owner (2026-11-08): sync and show the tag. Solo unchanged. Archived 2026-11-08.
+- 2026-11-08: `run-end` change implemented test-first on top of `status-sync` (GUT 987/987, twice; import twice, smoke and a 300-frame run clean; archived 2026-11-08): `SurvivalMeters.harm(amount, cause)` records why health fell and `death_cause` replicates just before `dead`, with the cause ids `thirst`, `drowning`, the creature's own id (`reef_shark`, `land_crab`), `removed` and `other` (`DeathCause`); a downed death or a solo last stand keeps the cause that downed the player, a revive or the Medalla records none, and a removed player keeps the cause they died of while away, else counts as `removed` (every peer and late joiner get the causes). 20 draft one-liners (`death_one_liners.tres`, for the owner's voice pass) are picked by `(run_seed + n) mod count` from a `run_seed` the host rolls per run and sends in the world state. The summary (`RunSummary`, `SummaryRow` with a hidden `Tip` slot, a 576×328 panel with a scrolling list) shows islands, days, length, companions and texts ("ninguno") and one row per player; solo gets "Otra vez" (a clean new run on the sandbar), co-op only "Volver al inicio", and a client keeps its summary when the host leaves. The HUD goes when the summary shows and a new run never starts paused. No status takes health today, so no status cause. The co-op summary is covered by host-plus-client sync tests but was not hand-played end to end (nothing kills quickly on purpose): the owner checks it in the Milestone B playtest. Provisional decisions are in the change's proposal.md.
+- 2026-11-08: `inventory-hud` change implemented test-first (GUT 1058/1058, import, smoke, a 300-frame run and a 300-frame solo run with the HUD up clean, the last also through the Godot MCP; not archived): the inventory strip in the HUD's bottom band (12 slots of 26×26 px, three-letter Spanish names until item icons exist, counts or uses left, slot keys while on the keyboard, the selected item's line "Coco · [F] Beber", "Peso x/30"; it follows a rejoined player's body), selection by 1-9, 0, -, =, the wheel, D-pad left/right and a click (this peer's own, never sent, not what a gull counts as held), F / gamepad X held for the selected item's use time (a solo last stand drinks a reviving cup, a downed teammate in reach is revived, Spanish refusals checked as the host checks, refused at sea as the owner chose; the host still decides), the bench's crafting list (the fire and rain-catcher sites placed at the player's feet through the session's entity spawner, tag deposits synced, joiners asking for the live state, one structure and one set of build effects), the "[E] verb target" prompt (gull included) with a hold ring locked to the pressed target, kept off every HUD panel, and a build site's missing inputs or progress, the crouch cue (the body drawn 10 of 16 px) and the closed-eye hidden mark drawn by the HUD on every peer, all player text in `game/resources/hud_text.tres`; `test_inventory_hud_solo_run.gd` finishes the sandbar with its creatures from the named input actions alone (the sandbar's 8 driftwood are one short of the fire and the raft, so the run sits out one squall for the ninth); captures in `docs/inventory-hud/`. After review (same day, GUT 1073/1073, import, smoke and a 300-frame run clean): a client joining after the level's raft site was built now gets the raft (the site-state ask goes through the session, which answers a built level site as built) with no host errors; only known recipes place sites; the crafting list scrolls inside its panel; a pull prompt clears the swimmer's name tag; the slot's key, letters and count no longer overlap; the weight and the list's carried counts are HUD text ("Weight 2.5/30" in English); one reach constant and one hold tolerance; new tests for co-op Esc, F over the open list, the slot's item changing mid-hold, "Estás en el suelo." and "Ahora no se puede.". Still open: the host-and-client hand test as two processes (task 8.4: a client drinks a rain cup and places a rain catcher at the bench, presses Esc with the list open, quits and rejoins), which needs a person at both windows, and archiving after `ui-shell` (tasks W.2, W.3). Follow-ups: a refusal reply from the host, palm, rain-catcher and fire state sent to clients, disabling a bare palm and an empty catcher, a placement mode for build sites, item icons, PlayStation glyphs, a dive cue with the swim art, held versus selected (sending the selection to the host).

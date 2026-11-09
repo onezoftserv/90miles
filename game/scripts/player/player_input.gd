@@ -17,7 +17,9 @@ func build_intent() -> MoveIntent:
 	intent.direction = Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
 	intent.run = Input.is_action_pressed(&"run")
 	intent.crouch = Input.is_action_pressed(&"crouch")
-	intent.interact_held = Input.is_action_pressed(&"interact")
+	var body := get_parent() as PlayerBody
+	var held_by_hud: bool = body != null and body.hud_holds_interact
+	intent.interact_held = Input.is_action_pressed(&"interact") and not held_by_hud
 	return intent
 
 

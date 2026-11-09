@@ -41,7 +41,7 @@ The grapefruit steak is `toronja.cooks_into`, not a recipe.
 
 ## game/resources/dialogue/ (handwritten, es + en)
 
-- [ ] minor NPC lines (8 files) · story beats (intro, la_captura, each boss) · endings (5) · quick-chat (8 phrases) · death one-liners (20)
+- [ ] minor NPC lines (8 files) · story beats (intro, la_captura, each boss) · endings (5) · quick-chat (8 phrases) · death one-liners (20; `death_one_liners.tres`, draft, `run-end`)
 - [ ] balsero lore beats (2, content-batch-12): beat_galleguito · beat_pies_secos
 
 ## game/resources/chains/ (9 chains × 2 variants = 18) — `docs/ISLANDS.md`

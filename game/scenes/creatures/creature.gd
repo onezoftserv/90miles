@@ -74,6 +74,11 @@ func state_name() -> StringName:
 	return brain.state_name() if brain != null else &"NONE"
 
 
+## The interact prompt names the creature.
+func prompt_target(_by: Node, locale: String) -> String:
+	return data.get_display_name(locale) if data != null else ""
+
+
 ## Host: runs the brain for `delta` seconds. A client creature, or one with no world, only waits.
 func advance(delta: float) -> void:
 	if is_inside_tree() and not multiplayer.is_server():

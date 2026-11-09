@@ -10,6 +10,7 @@ var dragger: Node2D = null
 func _init() -> void:
 	hold_time_s = 0.0
 	enabled = false
+	prompt_id = &"drag"
 
 
 func use(by: Node) -> void:
@@ -21,3 +22,18 @@ func use(by: Node) -> void:
 func release(by: Node) -> void:
 	if by == dragger:
 		dragger = null
+
+
+## The prompt names the downed player by the name their peer plays under, never the node name
+## (a reclaimed body keeps the name of the peer it first spawned under).
+func prompt_target(_by: Node, _locale: String) -> String:
+	var session := CoopSession.of(self)
+	var player := get_parent() as PlayerBody
+	if session == null or player == null:
+		return ""
+	return session.player_name(session.peer_of(player))
+
+
+## The downed player this handle drags: the prompt clears their name tag.
+func prompt_player() -> Node2D:
+	return get_parent() as PlayerBody

@@ -45,7 +45,7 @@ Every group is test-first: write the listed tests, watch them fail for the right
 ## 5. The needle on the carrier's HUD
 
 - [ ] 5.1 Write `game/tests/unit/test_compass_needle.gd` with 1 offline player: no needle without the compass; picking it up shows a 24×24 needle top-centre under the day phase, inside 640×360 and not overlapping the meters, the teammate list or the bottom band; it points due east and holds still at a concealed map 5 tiles due east, and spins at 0.5 turn/s once the map is carried; at straight-line distances of 44, 30, 15, 8 and 4 tiles it spins, wobbles within ±90°, ±45° and ±20° of the bearing, and holds still; one rattle on entering 40 tiles, a second only after leaving to 44 and returning to 38; with no concealed item and an unopened chest it points at the chest, and spins once the chest is open; it never targets an item someone carries; verify it fails
-- [ ] 5.2 Implement `CompassNeedle` (`game/scenes/ui/compass_needle.gd` + `.tscn`) and bind it in `run_hud.gd` for the local peer only (design.md decision 5); verify `test_compass_needle.gd` and the existing HUD tests pass
+- [ ] 5.2 Implement `CompassNeedle` (`game/scenes/ui/compass_needle.gd` + `.tscn`) and bind it in `run_hud.gd` for the local peer only (design.md decision 5); add the needle to `RunHud.AVOID_GROUP` (`hud_avoid`, from inventory-hud), unless it sits on a `HudPanel`, so the interact prompt keeps clear of it; verify `test_compass_needle.gd` and the existing HUD tests pass, `test_prompt_placement.gd` with the real needle in place of its stand-in
 - [ ] 5.3 Run the import, smoke run and GUT commands; verify all three pass
 
 ## 6. The cay layout, the chest and the note label
@@ -54,7 +54,7 @@ Every group is test-first: write the listed tests, watch them fail for the right
 - [ ] 6.2 Write `game/resources/islands/cayo_sin_norte.tres` (design.md decision 10) and draw its decor cells in their `decor_colors` in `SandbarIsland._draw`, with no per-id branch; verify the layout part of the tests passes and the content validator passes
 - [ ] 6.3 Implement `Chest` (`game/scenes/structures/chest.gd` + `.tscn`) built in `furnish()` under the name `Chest`, the host-only opening, the entry pick by weight, the note spawned through `spawn_pickup`, the authority `receive_state` RPC with the host-only sender check, and the late-joiner push on `player_spawned` (design.md decision 7); verify `test_chest.gd` passes
 - [ ] 6.3b Place DawnLike's Platino figurine (tracked by art-pass under `art/creatures/`, credited to DragonDePlatino) as a decor cell on the chest's ledge in `cayo_sin_norte.tres`; it is pure decor (no interaction, no collision), owner decision 2026-11-08; extend `test_island_layout.gd` to find it beside the chest
-- [ ] 6.4 Implement `NoteLabel` (`game/scenes/ui/note_label.gd`) in `run_hud.tscn` under the needle's place (design.md decision 8); verify the label part of `test_chest.gd` passes
+- [ ] 6.4 Implement `NoteLabel` (`game/scenes/ui/note_label.gd`) in `run_hud.tscn` under the needle's place (design.md decision 8), in `RunHud.AVOID_GROUP` (`hud_avoid`) like the needle unless it sits on a `HudPanel`, so the interact prompt keeps clear of it; verify the label part of `test_chest.gd` passes
 - [ ] 6.5 Run the import, smoke run and GUT commands; verify all three pass
 
 ## 7. The hunt: dev scene and 1-player test

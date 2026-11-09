@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/net/player_net.gd" id="6_net"]
 [ext_resource type="Script" path="res://scripts/components/inventory.gd" id="7_inventory"]
 [ext_resource type="Script" path="res://scripts/crafting/crafter.gd" id="8_crafter"]
+[ext_resource type="Script" path="res://scripts/player/body_look.gd" id="9_look"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 6.0
@@ -65,15 +66,18 @@ properties/15/replication_mode = 1
 properties/16/path = NodePath("SurvivalMeters:last_stand")
 properties/16/spawn = true
 properties/16/replication_mode = 1
-properties/17/path = NodePath("SurvivalMeters:dead")
+properties/17/path = NodePath("SurvivalMeters:death_cause")
 properties/17/spawn = true
 properties/17/replication_mode = 1
-properties/18/path = NodePath("PlayerNet:net_inventory")
+properties/18/path = NodePath("SurvivalMeters:dead")
 properties/18/spawn = true
 properties/18/replication_mode = 1
-properties/19/path = NodePath("SurvivalMeters:status_flags")
+properties/19/path = NodePath("PlayerNet:net_inventory")
 properties/19/spawn = true
 properties/19/replication_mode = 1
+properties/20/path = NodePath("SurvivalMeters:status_flags")
+properties/20/spawn = true
+properties/20/replication_mode = 1
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
@@ -83,6 +87,9 @@ script = ExtResource("1_body")
 [node name="Sprite" type="Sprite2D" parent="."]
 texture_filter = 1
 texture = ExtResource("4_sprite")
+
+[node name="BodyLook" type="Node" parent="."]
+script = ExtResource("9_look")
 
 [node name="CollisionShape" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_body")

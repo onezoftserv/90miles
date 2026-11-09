@@ -1,0 +1,144 @@
+[gd_resource type="Resource" script_class="HudText" format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/hud_text.gd" id="1_hud"]
+
+[resource]
+script = ExtResource("1_hud")
+use_verbs = Dictionary[int, PackedStringArray]({
+0: PackedStringArray("Comer", "Eat"),
+1: PackedStringArray("Beber", "Drink"),
+2: PackedStringArray("Untar", "Apply"),
+3: PackedStringArray("Fumar", "Smoke"),
+4: PackedStringArray("Leer", "Read"),
+5: PackedStringArray("Tocar", "Play"),
+6: PackedStringArray("Tirar", "Throw"),
+7: PackedStringArray("Poner", "Place"),
+8: PackedStringArray("Hacer señas", "Signal"),
+9: PackedStringArray("Oír", "Listen"),
+10: PackedStringArray("Llamar", "Call"),
+11: PackedStringArray("Cargar", "Charge"),
+12: PackedStringArray("Prender", "Switch on")
+})
+prompt_verbs = Dictionary[StringName, PackedStringArray]({
+&"build": PackedStringArray("Construir", "Build"),
+&"climb_aboard": PackedStringArray("Subir", "Climb"),
+&"climb_palm": PackedStringArray("Trepar", "Climb"),
+&"drag": PackedStringArray("Arrastrar a", "Drag"),
+&"launch": PackedStringArray("Zarpar", "Set off"),
+&"pick_up": PackedStringArray("Recoger", "Pick up"),
+&"pull": PackedStringArray("Jalar a", "Pull"),
+&"put_out": PackedStringArray("Apagar", "Put out"),
+&"shoo": PackedStringArray("Espantar", "Shoo"),
+&"take_water": PackedStringArray("Tomar", "Take"),
+&"tie_down": PackedStringArray("Amarrarse", "Tie down"),
+&"untie": PackedStringArray("Soltarse", "Untie"),
+&"workbench": PackedStringArray("Fabricar", "Craft")
+})
+prompt_labels = Dictionary[StringName, PackedStringArray]({
+&"climb_aboard": PackedStringArray("a la balsa", "aboard the raft"),
+&"climb_palm": PackedStringArray("Mata de coco", "Coconut palm"),
+&"launch": PackedStringArray("en la balsa", "on the raft"),
+&"put_out": PackedStringArray("Fogata", "Fire"),
+&"tie_down": PackedStringArray("a la balsa", "to the raft"),
+&"untie": PackedStringArray("de la balsa", "from the raft"),
+&"workbench": PackedStringArray("en el banco", "at the bench")
+})
+tag_names = Dictionary[int, PackedStringArray]({
+0: PackedStringArray("Comida", "Food"),
+1: PackedStringArray("Agua", "Water"),
+2: PackedStringArray("Herramienta", "Tool"),
+3: PackedStringArray("Arma", "Weapon"),
+4: PackedStringArray("Material", "Material"),
+5: PackedStringArray("Ropa", "Clothing"),
+6: PackedStringArray("Algo que brille", "Something shiny"),
+7: PackedStringArray("Recuerdo", "Keepsake"),
+8: PackedStringArray("Papel", "Paper"),
+9: PackedStringArray("Envase", "Container"),
+10: PackedStringArray("Leña", "Fuel"),
+11: PackedStringArray("Medicina", "Medicine"),
+12: PackedStringArray("Algo raro", "Something odd"),
+13: PackedStringArray("Yesca", "Tinder"),
+14: PackedStringArray("Carne", "Meat")
+})
+tool_phrases = Dictionary[int, PackedStringArray]({
+1: PackedStringArray("abrir el coco", "open the coconut"),
+2: PackedStringArray("abrir la lata", "open the can"),
+3: PackedStringArray("cortar la red", "cut the net"),
+4: PackedStringArray("abrir camino", "cut a path"),
+5: PackedStringArray("sacarle filo", "sharpen a blade"),
+6: PackedStringArray("pescar con arpón", "spear fish"),
+7: PackedStringArray("pescar con cordel", "fish with a line"),
+8: PackedStringArray("pescar con red", "fish with a net"),
+9: PackedStringArray("poner la trampa", "set a trap"),
+10: PackedStringArray("sacar clavos", "pull nails"),
+11: PackedStringArray("remendar", "patch it up"),
+12: PackedStringArray("ver tierra", "spot land"),
+13: PackedStringArray("ver la ruta", "see the route"),
+14: PackedStringArray("llevar el timón", "steer"),
+15: PackedStringArray("cruzar la corriente", "cross the current"),
+16: PackedStringArray("ver el cayo", "see the cay"),
+17: PackedStringArray("hacer señas de día", "signal by day"),
+18: PackedStringArray("hacer señas de noche", "signal by night"),
+19: PackedStringArray("prender candela", "light a fire"),
+20: PackedStringArray("cavar", "dig"),
+21: PackedStringArray("enterrar el bulto", "bury the stash"),
+22: PackedStringArray("remar", "row"),
+23: PackedStringArray("amarrar", "tie down"),
+24: PackedStringArray("cuidarte las manos", "protect your hands"),
+25: PackedStringArray("taparte del sol", "shade your eyes"),
+26: PackedStringArray("flotar", "stay afloat"),
+27: PackedStringArray("darle corriente", "power it")
+})
+refusals = Dictionary[StringName, PackedStringArray]({
+&"at_sea": PackedStringArray("En plena travesía no se puede.", "Not in the middle of the crossing."),
+&"condition": PackedStringArray("Te falta con qué %s.", "You need something to %s."),
+&"down": PackedStringArray("'Tás en el suelo.", "You're down."),
+&"empty": PackedStringArray("No tienes na' ahí.", "There's nothing there."),
+&"in_progress": PackedStringArray("Eso ya está en obra.", "That's already being built."),
+&"missing_materials": PackedStringArray("Te faltan materiales.", "You're missing materials."),
+&"no_use": PackedStringArray("Eso no se usa así.", "That's not how it's used."),
+&"not_now": PackedStringArray("Ahora no se puede.", "Not now.")
+})
+lines = Dictionary[StringName, PackedStringArray]({
+&"carried": PackedStringArray("%d/%d %s", "%d/%d %s"),
+&"count": PackedStringArray("%s x%d", "%s x%d"),
+&"decimal_point": PackedStringArray(",", "."),
+&"faster": PackedStringArray("Más rápido: %s", "Faster: %s"),
+&"missing": PackedStringArray("Falta:", "Needs:"),
+&"needs_tool": PackedStringArray("Con qué %s", "Something to %s"),
+&"percent": PackedStringArray("%d %%", "%d%%"),
+&"weight": PackedStringArray("Peso", "Weight"),
+&"weight_readout": PackedStringArray("%s %s/%s", "%s %s/%s")
+})
+joy_buttons = Dictionary[int, PackedStringArray]({
+0: PackedStringArray("A", "A"),
+1: PackedStringArray("B", "B"),
+2: PackedStringArray("X", "X"),
+3: PackedStringArray("Y", "Y"),
+4: PackedStringArray("Back", "Back"),
+5: PackedStringArray("Guía", "Guide"),
+6: PackedStringArray("Start", "Start"),
+7: PackedStringArray("LS", "LS"),
+8: PackedStringArray("RS", "RS"),
+9: PackedStringArray("LB", "LB"),
+10: PackedStringArray("RB", "RB"),
+11: PackedStringArray("Cruz ↑", "D-pad ↑"),
+12: PackedStringArray("Cruz ↓", "D-pad ↓"),
+13: PackedStringArray("Cruz ←", "D-pad ←"),
+14: PackedStringArray("Cruz →", "D-pad →")
+})
+joy_axes = Dictionary[int, PackedStringArray]({
+0: PackedStringArray("Palanca izq.", "Left stick"),
+1: PackedStringArray("Palanca izq.", "Left stick"),
+2: PackedStringArray("Palanca der.", "Right stick"),
+3: PackedStringArray("Palanca der.", "Right stick"),
+4: PackedStringArray("LT", "LT"),
+5: PackedStringArray("RT", "RT")
+})
+mouse_buttons = Dictionary[int, PackedStringArray]({
+1: PackedStringArray("Clic", "Click"),
+2: PackedStringArray("Clic der.", "Right click"),
+3: PackedStringArray("Clic rueda", "Wheel click"),
+4: PackedStringArray("Rueda ↑", "Wheel ↑"),
+5: PackedStringArray("Rueda ↓", "Wheel ↓")
+})

@@ -33,6 +33,8 @@ const RAFT_NAME: StringName = &"Raft"
 ## The island the session is on (it sits beside the session, in the same parent).
 var island: SandbarIsland
 var session: CoopSession
+## How many islands the party has stood on this run, the sandbar being 1 (run summary totals).
+var islands_reached: int = 1
 
 # The results of the crossings that ended since the island loaded.
 var _results: Array[CrossingResult] = []
@@ -105,6 +107,9 @@ func follow(state: Dictionary) -> void:
 	if id is StringName and not (id as StringName).is_empty() and id != island.layout.id:
 		var raft: Variant = state.get("raft")
 		_load(id, {}, raft if raft is float else 0.0)
+	var islands: Variant = state.get("islands")
+	if islands is int and islands >= 1:
+		islands_reached = islands
 	var waiting: Variant = state.get("waiting")
 	_waiting_peers.clear()
 	if waiting is Array:
@@ -125,7 +130,7 @@ func _join_extras() -> Dictionary:
 	var integrity: float = 0.0
 	if raft != null and raft.get(&"integrity") is float:
 		integrity = raft.get(&"integrity")
-	return {"island": island.layout.id, "waiting": waiting, "raft": integrity}
+	return {"island": island.layout.id, "waiting": waiting, "raft": integrity, "islands": islands_reached}
 
 
 # The sturdiest raft that ended a crossing intact lies on the next island's build site; any other
@@ -199,6 +204,7 @@ func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float) -
 	if session.multiplayer.is_server():
 		fresh.place_pickups(session)
 	_results.clear()
+	islands_reached += 1
 	island_loaded.emit(fresh)
 
 
