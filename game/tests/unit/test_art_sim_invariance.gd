@@ -51,8 +51,11 @@ var stripped: int = 0
 var disarmed: int = 0
 ## Art callbacks the runs called.
 var ticked: int = 0
-## Bad looks planted under the player in both runs, by where each writes (the guard's own tests).
+## Bad looks planted under the player in both runs, by where each writes (the guard's own tests):
+## inside a plain holder, so each enters the tree with its parent's subtree as scene-built art does,
+## or added to the player on its own.
 var planted: Array[StringName] = []
+var planted_alone: Array[StringName] = []
 # The built run's route: where to walk, then whether to press E there.
 var _route: Array[Vector2] = []
 var _leg: int = 0
@@ -63,6 +66,7 @@ func before_each() -> void:
 	dt = 1.0 / float(Engine.physics_ticks_per_second)
 	intents.clear()
 	planted.clear()
+	planted_alone.clear()
 	stripped = 0
 	disarmed = 0
 	ticked = 0
@@ -101,6 +105,10 @@ func _build() -> void:
 	body = session.body(CoopSession.HOST_ID)
 	body.player_input.enabled = false
 	for writes_in: StringName in planted:
+		var holder := Node2D.new()
+		holder.add_child(WRITING_LOOK.new(writes_in) as Node)
+		body.add_child(holder)
+	for writes_in: StringName in planted_alone:
 		body.add_child(WRITING_LOOK.new(writes_in) as Node)
 	spawner = session.get_node(NodePath(SandbarIsland.CREATURES_NAME)) as CreatureSpawner
 	# The spawner's start is deferred to the next frame, which never comes while the run lives: it
@@ -389,8 +397,11 @@ func test_a_solo_sandbar_runs_the_same_with_and_without_art() -> void:
 
 # The guard itself: a bad look planted under the player in both runs makes them differ on the first
 # frame, naming the player's thirst, and was disarmed in the stripped run.
-func _assert_caught(writes_in: StringName) -> void:
-	planted.append(writes_in)
+func _assert_caught(writes_in: StringName, alone: bool = false) -> void:
+	if alone:
+		planted_alone.append(writes_in)
+	else:
+		planted.append(writes_in)
 	var built: Dictionary = _built_run(SHORT_FRAMES)
 	var bare: Dictionary = _stripped_run(SHORT_FRAMES)
 	var built_frames: Array[Dictionary] = built["frames"]
@@ -412,6 +423,10 @@ func test_the_guard_catches_a_look_that_writes_each_physics_frame() -> void:
 
 func test_the_guard_catches_a_look_that_writes_each_process_frame() -> void:
 	_assert_caught(&"process")
+
+
+func test_the_guard_catches_a_look_added_to_the_player_on_its_own() -> void:
+	_assert_caught(&"ready", true)
 
 
 func test_the_guard_names_an_art_script_with_an_enter_tree() -> void:

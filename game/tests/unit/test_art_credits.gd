@@ -159,6 +159,9 @@ func test_every_entry_but_the_fonts_credits_a_pack_whose_files_are_tracked() -> 
 
 func test_each_pending_pack_is_credited_and_has_no_tracked_files_yet() -> void:
 	var credits: ArtCredits = _credits()
+	assert_not_null(credits)
+	if credits == null:
+		return
 	var licences: Dictionary[String, String] = CreditChecks.licence_texts_under(ART_ROOT)
 	for source: String in PENDING_SOURCES:
 		var entry: ArtCredit = _entry(credits, source)

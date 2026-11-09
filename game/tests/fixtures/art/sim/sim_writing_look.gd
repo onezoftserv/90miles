@@ -28,7 +28,13 @@ func _process(_delta: float) -> void:
 	_write_if(&"process")
 
 
+# Writes the thirst of the player this look sits under, at any depth.
 func _write_if(where: StringName) -> void:
-	var body := get_parent() as PlayerBody
-	if where == writes_in and body != null:
+	if where != writes_in:
+		return
+	var node: Node = get_parent()
+	while node != null and not node is PlayerBody:
+		node = node.get_parent()
+	var body := node as PlayerBody
+	if body != null:
 		body.meters.thirst -= SIP
