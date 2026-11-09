@@ -21,3 +21,9 @@
 
 
 ###############################################################################
+
+Pack: Pixel UI Pack
+Author: Kenney Vleugels for Kenney (kenney.nl), with help by Lynn Evers
+Licence: CC0 1.0
+Source: https://kenney.nl/assets/pixel-ui-pack
+Files: panel_tan.png (9-Slice/Ancient/tan), button_blue.png (9-Slice/Colored/blue), button_blue_pressed.png (9-Slice/Colored/blue_pressed)
