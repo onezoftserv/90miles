@@ -213,6 +213,7 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
     - `test_inventory_hud_solo_run.gd` keeps passing through the kept `BodyLook`;
     - `tests/manual/capture_inventory_hud.gd`'s `_capture_hidden` comment updated for the crouch pose (design.md K15).
   - Delete `art/characters/player_placeholder.png`, its import and `art/characters/License.txt`, drop its `CREDITS.md` row, and empty the exemption list of task 1.3.
+  - Tiny Dungeon then has no tracked `Pack:` block until task 6.3's `creatures/License.txt` names it as the crab's shape reference, so add its source to `test_art_credits.gd`'s `PENDING_SOURCES` until then (design.md K33).
 
   Verify 5.1–5.5, the rewritten tests, `test_inventory_hud_solo_run.gd`, `test_player_state_sync.gd` and `test_art_sim_invariance.gd` pass.
 - [ ] 5.8 Write `game/tests/manual/capture_looks.gd/.tscn`, which composes `PlayerLookData` variants (slots 0–3, skin rows 0–2, `hair_0` and `hair_3`) and saves `docs/art-pass/looks.png` (the four slots side by side, the three skin rows, `hair_0` against `hair_3` on the shipped body). Capture it and the crouch, swim, dive, downed and night looks. Run the import (twice), the smoke run and GUT.

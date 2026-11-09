@@ -59,6 +59,28 @@ static func check_packs_credited(licences: Dictionary[String, String], credits: 
 	return failures
 
 
+## The other direction (design.md K33): every entry but the fonts credits a pack the game ships,
+## that is one with a Pack: block by its source and author in some License.txt, unless its source
+## is in `pending` (credited ahead of its files).
+static func check_entries_tracked(licences: Dictionary[String, String], credits: ArtCredits, pending: PackedStringArray) -> PackedStringArray:
+	var failures: PackedStringArray = []
+	var blocks: Array[Dictionary] = _pack_blocks(licences)
+	for entry: ArtCredit in credits.entries:
+		if entry.group() == ArtCredit.Group.FONT or pending.has(entry.source):
+			continue
+		if not _has_block(blocks, entry):
+			failures.append("%s entry '%s' (%s, %s) matches no Pack: block in a tracked License.txt: the game ships no file of it" % [ArtCredits.STANDARD_PATH, entry.pack, entry.author, entry.source])
+	return failures
+
+
+static func _has_block(blocks: Array[Dictionary], entry: ArtCredit) -> bool:
+	var source: String = _url_key(entry.source)
+	for block: Dictionary in blocks:
+		if _url_key(block.get("Source", "")) == source and _names_match(entry.author, block.get("Author", "")):
+			return true
+	return false
+
+
 ## Every CC BY entry carries the licence's address, a source page that is not a licence deed, a
 ## line that shows that page, and its CREDITS.md row.
 static func check_cc_by_entries(credits: ArtCredits, credits_md: String) -> PackedStringArray:

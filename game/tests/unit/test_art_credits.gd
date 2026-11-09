@@ -27,6 +27,17 @@ const CC0_SOURCES: PackedStringArray = [
 	"https://kenney.nl/assets/pixel-ui-pack",
 	"https://kenney.nl/assets/tiny-dungeon",
 ]
+## Packs credited ahead of their files (design.md K20, K33): each leaves this list in the group that
+## tracks its files (Zelda-like, Scallywag and Eldiran in group 4, DawnLike and Tiny, Tiny Heroes -
+## Animals in group 6, Kyrise in group 7), and a test fails while it names a pack that has a block.
+const PENDING_SOURCES: PackedStringArray = [
+	"https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181",
+	"https://thkaspar.itch.io/tth-animals",
+	"https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack",
+	"https://opengameart.org/content/zelda-like-tilesets-and-sprites",
+	"https://foozlecc.itch.io/scallywag-water-islands",
+	"https://opengameart.org/node/144858",
+]
 const FONT_SOURCES: PackedStringArray = [
 	"https://github.com/google/fonts/tree/main/ofl/pressstart2p",
 	"https://github.com/google/fonts/tree/main/ofl/pixelifysans",
@@ -137,6 +148,40 @@ func test_every_tracked_pack_is_credited_in_the_data_and_credits_md() -> void:
 	assert_not_null(credits)
 	if credits != null:
 		assert_eq(CreditChecks.check_packs_credited(CreditChecks.licence_texts_under(ART_ROOT), credits, _credits_md()), PackedStringArray())
+
+
+func test_every_entry_but_the_fonts_credits_a_pack_whose_files_are_tracked() -> void:
+	var credits: ArtCredits = _credits()
+	assert_not_null(credits)
+	if credits != null:
+		assert_eq(CreditChecks.check_entries_tracked(CreditChecks.licence_texts_under(ART_ROOT), credits, PENDING_SOURCES), PackedStringArray())
+
+
+func test_each_pending_pack_is_credited_and_has_no_tracked_files_yet() -> void:
+	var credits: ArtCredits = _credits()
+	var licences: Dictionary[String, String] = CreditChecks.licence_texts_under(ART_ROOT)
+	for source: String in PENDING_SOURCES:
+		var entry: ArtCredit = _entry(credits, source)
+		assert_not_null(entry, "%s has an entry" % source)
+		if entry == null:
+			continue
+		var alone: ArtCredits = ArtCredits.new()
+		alone.entries.append(entry)
+		var failures: PackedStringArray = CreditChecks.check_entries_tracked(licences, alone, PackedStringArray())
+		assert_eq(failures.size(), 1, "%s still has no Pack: block under %s; once it has, drop it from PENDING_SOURCES" % [source, ART_ROOT])
+
+
+func test_an_entry_whose_pack_has_no_tracked_files_fails_naming_it() -> void:
+	var failures: PackedStringArray = CreditChecks.check_entries_tracked({}, _fixture_credits(), PackedStringArray())
+	assert_eq(failures.size(), 1, "%s" % [failures])
+	if failures.size() == 1:
+		assert_string_contains(failures[0], "Tiburones de prueba – otro nombre")
+		assert_string_contains(failures[0], "https://example.com/tiburones-de-prueba")
+	assert_eq(CreditChecks.check_entries_tracked(_fixture_licences(), _fixture_credits(), PackedStringArray()), PackedStringArray(), "matched by source and author, not by name")
+	var font: ArtCredits = _fixture_credits()
+	font.entries[0].licence = OFL
+	font.entries[0].attribution_required = false
+	assert_eq(CreditChecks.check_entries_tracked({}, font, PackedStringArray()), PackedStringArray(), "fonts are not art packs")
 
 
 func test_a_cc_by_licence_without_its_credit_fails_naming_the_pack() -> void:
