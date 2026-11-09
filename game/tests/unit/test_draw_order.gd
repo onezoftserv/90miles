@@ -105,6 +105,29 @@ func test_the_reading_sorts_by_y_through_nested_y_sort_and_keeps_subtrees_whole(
 	assert_eq(DrawOrder.absolute_z(_node_at(high, 0.0)), 1, "z is relative to the parent")
 
 
+# Godot sorts a y-sorted node's own drawing into its list at its own origin, first among equal y
+# (RendererCanvasCull::_cull_canvas_item: child_items[0] is the item, ysort_pos (0, 0), index 0).
+func test_a_y_sorted_parent_draws_itself_at_its_origin_among_its_children() -> void:
+	var root := Node2D.new()
+	root.y_sort_enabled = true
+	add_child_autofree(root)
+	var above := _node_at(root, -5.0)
+	var below := _node_at(root, 5.0)
+	var level := _node_at(root, 0.0)
+	assert_false(DrawOrder.drawn_after(above, root), "a child above the parent's origin is drawn before the parent")
+	assert_true(DrawOrder.drawn_after(root, above), "so the parent is drawn after it")
+	assert_true(DrawOrder.drawn_after(below, root), "a child below the origin, after the parent")
+	assert_true(DrawOrder.drawn_after(level, root), "on a tie the parent comes first")
+	var nested := _node_at(root, 20.0)
+	nested.y_sort_enabled = true
+	var inside := _node_at(nested, -30.0)
+	assert_false(DrawOrder.drawn_after(inside, nested), "a nested y-sorted parent sorts at its origin (20) in the outer list")
+	assert_true(DrawOrder.drawn_after(nested, inside), "and is drawn after a child at -10")
+	assert_false(DrawOrder.drawn_after(inside, root), "the outer parent (0) is drawn after it too")
+	var plain := _node_at(root, 30.0)
+	assert_true(DrawOrder.drawn_after(_node_at(plain, -100.0), plain), "a plain parent draws before its subtree, whatever its y")
+
+
 # --- the game's tree -----------------------------------------------------------------------------
 
 func test_a_solo_player_walks_from_behind_a_palm_to_in_front_of_it() -> void:

@@ -8,6 +8,8 @@ extends RefCounted
 ## - under a y-sorted node, its children, and the children of every y-sorted child below them, are
 ##   one list sorted by y in that node's space, ties in tree order; a node in that list that is not
 ##   y-sorted draws its whole subtree at its own place in it;
+## - a y-sorted node's own drawing is in that list too, at its own origin and first among equal y,
+##   so a child above that origin is drawn before its y-sorted parent (design.md K30);
 ## - elsewhere a node draws before its children, and children in tree order.
 ## Only CanvasItems of one canvas are compared: no CanvasLayer, top_level or show_behind_parent.
 
@@ -34,10 +36,12 @@ static func drawn_after(a: CanvasItem, b: CanvasItem) -> bool:
 	var z_b: int = absolute_z(b)
 	if z_a != z_b:
 		return z_a > z_b
-	if a == b or a.is_ancestor_of(b):
+	if a == b:
 		return false
+	if a.is_ancestor_of(b):
+		return not drawn_after(b, a)
 	if b.is_ancestor_of(a):
-		return true
+		return _drawn_after_ancestor(a, b)
 	var common: Node = common_ancestor(a, b)
 	var sorter := common as CanvasItem
 	if sorter == null or not sorter.y_sort_enabled:
@@ -49,6 +53,32 @@ static func drawn_after(a: CanvasItem, b: CanvasItem) -> bool:
 	if not is_equal_approx(y_a, y_b):
 		return y_a > y_b
 	return _later_in_tree(common, entry_a, entry_b)
+
+
+## `a` against its ancestor `b` at the same z. A plain `b` draws before its whole subtree. A
+## y-sorted `b` draws itself inside the outermost y-sorted list that holds it, at its own origin and
+## first among equal y (it is collected before its children), so a descendant whose entry in that
+## list lies above `b`'s origin is drawn before it.
+static func _drawn_after_ancestor(a: CanvasItem, b: CanvasItem) -> bool:
+	if not b.y_sort_enabled:
+		return true
+	var sorter: CanvasItem = top_sorter(b)
+	var y_a: float = y_in(sorter, sort_entry(sorter, a))
+	var y_b: float = y_in(sorter, b)
+	if is_equal_approx(y_a, y_b):
+		return true
+	return y_a > y_b
+
+
+## The outermost y-sorted node whose list holds `item`'s own drawing: `item` itself, or the highest
+## of its ancestors reached through y-sorted parents only.
+static func top_sorter(item: CanvasItem) -> CanvasItem:
+	var sorter: CanvasItem = item
+	var parent := sorter.get_parent() as CanvasItem
+	while parent != null and parent.y_sort_enabled:
+		sorter = parent
+		parent = sorter.get_parent() as CanvasItem
+	return sorter
 
 
 ## The node that stands for `item` in `sorter`'s y-sorted list: the first node below `sorter` on the
