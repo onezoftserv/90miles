@@ -136,7 +136,8 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - the key ramp stays in the composite (the slot is the shader's job);
   - the same look twice returns the cached result, another look a new one, and a fixture part that reuses a shipped id composes from the fixture after `clear_cache()`;
   - a look naming a missing part composes the default look's part for that layer and reports it;
-  - each animation family's head top gives the anchors of C1 (standing −28, crouch −22, swim −16, downed and dead −13 for `hair_0`);
+  - each animation family's head top gives the anchors of C1 (standing −28, crouch −22, swim −16, downed and dead −13 for `hair_0`), and for the other three slot looks the anchor is 1 px above the composite's topmost opaque row of that family (design.md C2);
+  - each of the four slot looks of `balsero_art.tres` composes with no fallback report, their `hair_id`s differ pairwise, their bodies are man, woman, man, woman, all three skin rows are used, and `look_for_slot` returns the default look and reports it for a slot outside 0–3 (art-pass "Four slots, four looks"; design.md C2);
   - every composed cell of every shipped body × outfit × hair has a closed outline (art-pass "Outlines");
   - the composed look has at most 48 unique frames with the ripple (art-pass "Frame budget");
   - each shipped skin row's swim frames with each hair, scored on the rows above the water line without the shader's ripple, reach `contrast_min` on shallows and deep by the better of outline ring and mean colour (art-pass "Actors stand out from the ground").
@@ -144,7 +145,7 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   Verify they fail.
 - [ ] 5.4 Write `game/tests/unit/test_player_art.gd`:
   - `balsero_frames.tres` has every animation of design.md D3 except `dive` for its facings, each frame an `AtlasTexture` region of the frame layout, within the budgets, and the `Look`'s `Ripple` `AnimatedSprite2D` plays `fx/dive_ripple.tres` while diving (design.md C1 D3);
-  - a solo player's `Look/Sprite` plays a `SpriteFrames` built from that template on the shipped look's composed atlas;
+  - a solo player's `Look/Sprite` plays a `SpriteFrames` built from that template on the composed atlas of slot 0's look, and a player whose `look_slot` is 1 plays the composite of slot 1's look (design.md C2);
   - a solo player at (100, 100) has its lowest opaque row ending at y 104, centred on x 100, with every frame placed at the same offset, and its collision shape is still the 6 px circle at the origin (art-pass "A solo player standing");
   - a crouching player keeps full 32×32 frames and the same feet line (art-pass "A solo player crouches in brush");
   - a slot-0 swimmer's material has `water_line_on` true, `water_line_y` 4.0 and `slot_row` 1, and no visible shadow, and a diver shows only the ripple (art-pass "Swim and dive"; design.md C1 D6);
@@ -160,7 +161,7 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - a rejoin within the downed window keeps slot 1;
   - a solo player is 0;
   - a spawn payload with a missing or out-of-range `look` gives 0;
-  - every peer composes the same look from the same resource, and no property or payload key beyond `look` is added (art-pass "Player look slots").
+  - every peer composes the same look for a given slot from the same resource: a host and one client both draw slot 0 in `balsero` and slot 1 in `balsera_triguena`, and no property or payload key beyond `look` is added (art-pass "Player look slots", "Four slots, four looks"; design.md C2).
 
   Write `game/tests/unit/test_player_pose_net.gd` (net harness): a host and one client both draw the client's player in the dive, swim, crouch and downed poses, in that order, as it dives, surfaces, crouches on the beach and is downed (art-pass "Poses follow the replicated state").
 
@@ -173,7 +174,7 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
 
   Verify all three fail.
 - [ ] 5.6 Make the player parts.
-  - Add the data classes `game/scripts/art/look_part.gd` (`LookPart`, a `ContentData`), `player_look_data.gd` (`PlayerLookData`) and `body_art.gd` (`BodyArt`) first, so the `.tres` files below load, as task 1.4 pairs `ArtTuning` with its `.tres`.
+  - Add the data classes `game/scripts/art/look_part.gd` (`LookPart`, a `ContentData`), `player_look_data.gd` (`PlayerLookData`) and `body_art.gd` (`BodyArt`, with `slot_looks: Array[PlayerLookData]` and `look_for_slot(slot)`; design.md C2) first, so the `.tres` files below load, as task 1.4 pairs `ArtTuning` with its `.tres`.
   - Fill `tools/art/look_parts.json` for:
     - `body_man`: MetroCity `Character Model.png` row 0's figure;
     - `body_woman`: row 2's figure;
@@ -187,9 +188,9 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
     - `game/assets/art/fx/dive_ripple.png` (2 frames) with `fx/License.txt` (own work), and `fx/dive_ripple.tres` (a `SpriteFrames`: `dive`, 2 frames at 4 fps on `dive_ripple.png`), which gives the PNG its referrer;
     - the `LookPart` `.tres` for each part, and `characters/parts/License.txt` (MetroCity 1.0 `Character Model.png`, `Hairs.png` and `Outfit5.png`, modified; own work: pose edits, recolours, the moreno row);
     - `tools/art/fixes/License.txt` (own work);
-    - `characters/looks/balsero.tres` (`body_man`, skin row 2, `outfit_tee_shorts`, `hair_0`, no item);
+    - the four slot looks of design.md C2, all in `outfit_tee_shorts` with no item: `characters/looks/balsero.tres` (`body_man`, skin row 2, `hair_0`), `balsera_triguena.tres` (`body_woman`, skin row 1, `hair_6`), `balsero_claro.tres` (`body_man`, skin row 0, `hair_7`) and `balsera_morena.tres` (`body_woman`, skin row 2, `hair_5`);
     - the template `characters/balsero_frames.tres` (`AtlasTexture` regions on `parts/body_man.png`, D3's fps);
-    - `characters/balsero_art.tres` (`BodyArt`: feet row 30 at +4, water row 19, swim drop 12, head gap 1, dive anchor −4, the default look).
+    - `characters/balsero_art.tres` (`BodyArt`: feet row 30 at +4, water row 19, swim drop 12, head gap 1, dive anchor −4, the default look `balsero.tres`, and `slot_looks` holding the four looks in slot order).
   - Add the MetroCity courtesy line to the credits and its row to `CREDITS.md`.
 
   Verify `python -I -m unittest discover -s tools/art`, `python -I tools/art/check.py game/assets/art` (and on `tools/art/fixes`), `test_art_tracked.gd` and `test_look_parts.gd` pass.
@@ -198,6 +199,7 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
     - `game/scripts/art/look_composer.gd` (`LookComposer`): `compose(look, catalog: ContentCatalog = null)`, where null means `ContentCatalog.new("res://assets/art/characters", {&"parts": LookPart})`, so task 5.3 can pass its fixture catalog; take the body sheet's image swapped from skin row 0 to the look's row with `PaletteSwap.swap_rows`; blend the outfit, hair and item sheets over it with `Image.blend_rect`; make an `ImageTexture`; copy a `SpriteFrames` from the template with every region pointed at it; record head tops per animation family; keep a static cache keyed by the catalog root and the look's `cache_key()`, with a test-only `clear_cache()` and no autoload.
     - `player_pose.gd` and `facing.gd`.
   - Scene `game/scenes/art/player_look.tscn/.gd` (`art_view`): a `Look` node holding the `AnimatedSprite2D` named `Sprite` (path `Look/Sprite`), with:
+    - the composite of `BodyArt.look_for_slot(look_slot)`, composed again whenever the slot is set (design.md C2);
     - one `player_look.gdshader` material per player, local to scene, with `slot_row` = `look_slot` + 1 (row 0 of `player_ramps.png` is the key ramp), `water_line_on` (bool) true while swimming or floating, and `water_line_y` (float, `Look/Sprite`-local px) = water row − 27 + swim drop = +4, with the swim drop applied through `offset`, never through the node's position (design.md C1 D6);
     - `flip_h` for left and the swim offset;
     - a `Ripple` `AnimatedSprite2D` playing `fx/dive_ripple.tres`, outside the composer's repointing, and the shadow.
@@ -217,9 +219,9 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - Tiny Dungeon then has no tracked `Pack:` block until task 6.3's `creatures/License.txt` names it as the crab's shape reference, so add its source to `test_art_credits.gd`'s `PENDING_SOURCES` until then (design.md K33).
 
   Verify 5.1–5.5, the rewritten tests, `test_inventory_hud_solo_run.gd`, `test_player_state_sync.gd` and `test_art_sim_invariance.gd` pass.
-- [ ] 5.8 Write `game/tests/manual/capture_looks.gd/.tscn`, which composes `PlayerLookData` variants (slots 0–3, skin rows 0–2, `hair_0` and `hair_3`) and saves `docs/art-pass/looks.png` (the four slots side by side, the three skin rows, `hair_0` against `hair_3` on the shipped body). Capture it and the crouch, swim, dive, downed and night looks. Run the import (twice), the smoke run and GUT.
-  - 1-player check: offline from the title, walk, run, crouch into brush (the hidden mark just above the head), swim, dive, surface, drop into the last stand and die. All of it in slot 0 azul (also while swimming) with the shipped look, facing where moving, clothing darkened at night like the sand, and no hitch on spawn beyond the first compose. Change `balsero.tres`'s `hair_id` to `hair_3` and see only the hair change, then put it back.
-  - Host-plus-client check: with a host and two clients, every peer shows slots 0, 1 and 2 on the same look; a client quitting and rejoining keeps its slot; teammates' poses match the host's states and turn with their motion; name tags, bubbles and marks follow the heads without overlapping; zero errors.
+- [ ] 5.8 Write `game/tests/manual/capture_looks.gd/.tscn`, which composes `PlayerLookData` variants (the four slot looks of design.md C2 in their slot colours, skin rows 0–2, `hair_0` and `hair_3`) and saves `docs/art-pass/looks.png` (the four slot looks side by side, the three skin rows, `hair_0` against `hair_3` on slot 0's body). Capture it and the crouch, swim, dive, downed and night looks. Run the import (twice), the smoke run and GUT.
+  - 1-player check: offline from the title, walk, run, crouch into brush (the hidden mark just above the head), swim, dive, surface, drop into the last stand and die. All of it in slot 0 azul (also while swimming) with slot 0's look, facing where moving, clothing darkened at night like the sand, and no hitch on spawn beyond the first compose. Change `balsero.tres`'s `hair_id` to `hair_3` and see only the hair change, then put it back.
+  - Host-plus-client check: with a host and two clients, every peer shows slots 0, 1 and 2, each in its slot's look and colour (design.md C2); a client quitting and rejoining keeps its slot; teammates' poses match the host's states and turn with their motion; name tags, bubbles and marks follow the heads without overlapping; zero errors.
 
 ## 6. Creatures
 

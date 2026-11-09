@@ -236,6 +236,28 @@ Amends D1, D3, D4, D6, D7, D8, D9, D20, D21, D25, the measured-packs table, the 
 - *Open question settled.* The default balsero wears the look above; the owner can change it in `balsero.tres`.
 - *Risks.* The shader must cut on node-local y, never `UV` (guarded by tasks 3.4 and 5.4). A lossy import of a part or ramp silently stops the exact-colour swaps (guarded by the import check). `get_image()` on the GL Compatibility renderer reads back from the GPU once per look in exported builds; if that ever fails, the part sheets import as `Image` (the probe showed `load()` returns one). A distinct look costs about 6.4 ms at its first spawn, so `player-looks` with four looks may compose behind the lobby. DB32 recolours shift hair hues (reviewed at the 5.8 captures). The overlay rim assumes every body shares MetroCity's mask (a test asserts it). The crouch rule shortens the shirt by 3 rows. Items worn on the back need per-facing order (Later, `player-looks`). The static cache never invalidates, so an editor tool that changes a part sheet sees stale composites until restart.
 
+### C2. One look per slot (owner decision, 2026-11-09)
+
+The owner chose "mixed per slot" over one shared look: each look slot draws its own balsero, so four players are told apart by figure, skin and hair as well as by shirt colour. This amends C1's D25 sentence "Every player draws it, and the slot recolours the T-shirt" and nothing else in C1: the parts, the composer, the shader and the pipeline are unchanged.
+
+- *The four looks.* Data only, four `PlayerLookData` files in `characters/looks/`:
+
+  | Slot | Look file | Body | Skin row | Hair |
+  |---|---|---|---|---|
+  | 0 (solo) | `balsero.tres` | `body_man` | 2 moreno | `hair_0` (short, dark brown) |
+  | 1 | `balsera_triguena.tres` | `body_woman` | 1 trigueña | `hair_6` (long black braids) |
+  | 2 | `balsero_claro.tres` | `body_man` | 0 claro | `hair_7` (short, charcoal) |
+  | 3 | `balsera_morena.tres` | `body_woman` | 2 morena | `hair_5` (orange braids, yellow clips) |
+
+  All four wear `outfit_tee_shorts` and no item, and the slot still recolours the T-shirt (art-pass "Clothing colours" is unchanged). `balsero.tres` stays the default look, the fallback for a missing part, and the look of the spec scenario "A look built from parts".
+- *Why these.* Two short hairs on the men and two long ones on the women give four silhouettes and three hair hues. Three skin rows serve four slots, so one repeats, on the other body. Grey `hair_1` was rejected for slot 2 because it changes the character's apparent age. The owner reviews the four at task 5.8's `looks.png`; changing one is a one-line data edit.
+- *Picking.* `BodyArt` (`balsero_art.tres`) gains `slot_looks: Array[PlayerLookData]` (four entries, index = slot) beside its default look, and `look_for_slot(slot: int) -> PlayerLookData`, which returns `slot_looks[slot]`, or the default look with a warning for a slot outside 0–3 or an empty entry. The `Look` scene composes `look_for_slot(look_slot)` whenever the slot is set.
+- *Nothing new on the wire.* Every peer derives the look from `look_slot` and the same shipped resource, so there is no new replicated property (the 21 of P1 stay) and no payload key beyond `look`. `player-looks` later replaces the table lookup with a validated look id in the spawn payload. A joiner who takes a dropped body's slot (art-pass "A joiner while a dropped body waits") shares its look as well as its colour until that body leaves.
+- *Head anchors.* Still measured per look at compose time (D20). The `hair_0` numbers hold for slot 0; for the other three looks the tests assert that the anchor is 1 px above the composite's topmost opaque row of each animation family, not fixed numbers.
+- *Cost.* About 6.4 ms per look at a slot's first spawn (about 26 ms across a four-player session, each at a join), cached after. Four 320×128 RGBA atlases are about 0.66 MB.
+- *Checks.* D21 already composes every shipped body × outfit × hair and scores every skin row × hair on water, so all four looks sit inside tested combinations. Added: each slot look composes with no fallback warning; the four `hair_id`s differ pairwise; the bodies are man, woman, man, woman; all three skin rows are used.
+- *Reference games.* DCSS derives the default doll from character data every client already has (`tilepick-p.cc` `tilep_race_default`, `tilep_job_default`): **adapted**, the look comes from the slot. Shattered Pixel Dungeon picks the sprite sheet by hero class (`HeroClass.spritesheet()`, used by `HeroSprite`): the same idea. Brogue CE has one player glyph (`Rogue.h` `G_PLAYER`): nothing to borrow.
+
 ### P. Players and the shell (2026-11-09)
 
 - **P1 (D22, Context).** The player's `StateSync` replicates **21** properties (`player.tscn` properties/0–20): `PlayerNet:net_ack_seq` was always one, and run-end added `SurvivalMeters:death_cause` (eb2118a). `test_player_state_sync.gd` pins that sorted list, so art-pass adds no property and `look_slot` stays a plain field; `test_art_sim_invariance.gd` compares the lists, never a count.
