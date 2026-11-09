@@ -268,7 +268,7 @@ class ArtPackTest(unittest.TestCase):
             self.assertEqual(len(steps), len(pack.archives))
             for archive, step in zip(pack.archives, steps):
                 self.assertIn("7-Zip", step)
-                self.assertIn(str(folder / "extracted" / archive.into), step)
+                self.assertIn((folder / "extracted" / archive.into).as_posix(), step)
             self.assertFalse((folder / "extracted").exists())
             self.assertFalse((folder / "License.txt").exists())
 
@@ -358,7 +358,7 @@ class ArtPackTest(unittest.TestCase):
             steps, _out = self._fetch(pack, dest, web)
             self.assertEqual(len(steps), 1)
             self.assertIn(pack.page, steps[0])
-            self.assertIn(str(dest / pack.folder), steps[0])
+            self.assertIn((dest / pack.folder).as_posix(), steps[0])
         self.assertEqual(web.requested, [pack.page])
 
 
