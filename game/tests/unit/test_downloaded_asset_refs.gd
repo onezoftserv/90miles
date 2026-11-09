@@ -1,7 +1,8 @@
 extends GutTest
 ## build-verification "No dependency on downloaded assets" (art-pass delta, design.md K10): no
-## tracked scene, resource, script or shader under res:// refers to a file inside a git-ignored
-## download folder. The guards under res://tests name those folders on purpose and are skipped.
+## tracked scene, resource, script or shader under res://, nor project.godot, refers to a file
+## inside a git-ignored download folder. Only the five test guards that name those folders in order
+## to forbid them are skipped (design.md K29); the rest of res://tests is scanned.
 
 const SMOKE_PATH: String = "res://tests/smoke.gd"
 ## A scene's text whose sprite points into the itch download folder ("A reference into a
@@ -34,12 +35,28 @@ func test_every_kind_of_tracked_file_is_scanned() -> void:
 		assert_has(files, path)
 
 
-func test_the_test_guards_and_addons_are_not_scanned() -> void:
+func test_the_tests_are_scanned_except_the_guards() -> void:
 	var files: PackedStringArray = DownloadedAssetRefs.tracked_files()
+	for path: String in ["res://tests/manual/capture_inventory_hud.tscn", "res://tests/fixtures/art/fixtures.tres", "res://tests/unit/test_art_tracked.gd", "res://tests/helpers/art_checks.gd"]:
+		assert_has(files, path)
+	for path: String in DownloadedAssetRefs.GUARD_FILES:
+		assert_does_not_have(files, path)
 	for path: String in files:
-		assert_false(path.begins_with("res://tests/"), path)
 		assert_false(path.begins_with("res://addons/"), path)
 		assert_false(path.begins_with("res://.godot/"), path)
+
+
+func test_each_guard_is_a_file_that_names_a_download_folder() -> void:
+	assert_eq(DownloadedAssetRefs.GUARD_FILES.size(), 5)
+	for path: String in DownloadedAssetRefs.GUARD_FILES:
+		assert_true(path.begins_with("res://tests/"), "%s is a test guard" % path)
+		assert_true(FileAccess.file_exists(path), "%s exists" % path)
+		var named: PackedStringArray = DownloadedAssetRefs.scan_text(path, FileAccess.get_file_as_string(path))
+		assert_false(named.is_empty(), "%s names a download folder, so it needs the exemption" % path)
+
+
+func test_the_project_file_is_scanned() -> void:
+	assert_has(DownloadedAssetRefs.tracked_files(), "res://project.godot")
 
 
 func test_a_reference_into_a_download_folder_fails_naming_the_file_and_the_path() -> void:

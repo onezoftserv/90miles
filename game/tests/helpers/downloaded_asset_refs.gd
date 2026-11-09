@@ -9,18 +9,36 @@ const IGNORED_PREFIXES: PackedStringArray = [
 	"res://assets/kenney/", "res://assets/oga/", "res://assets/itch/", "res://assets/audio/ambience/",
 ]
 const SCANNED_EXTENSIONS: PackedStringArray = ["tscn", "tres", "gd", "gdshader", "gdshaderinc"]
-## Never scanned: the addons, the import cache, the test guards that name the download folders
-## on purpose (smoke.gd, test_player_scene.gd, test_theme.gd and the test for this helper), and
-## the download folders themselves, which are git-ignored rather than tracked.
+## Scanned by name: the project file, which names the main scene, the theme and the icon.
+const SCANNED_FILES: PackedStringArray = ["res://project.godot"]
+## The test guards that name the download folders in order to forbid them (build-verification
+## delta; design.md K29). Every other file under res://tests is scanned, the hand-launched capture
+## scenes and the fixtures included.
+const GUARD_FILES: PackedStringArray = [
+	"res://tests/smoke.gd",
+	"res://tests/helpers/downloaded_asset_refs.gd",
+	"res://tests/unit/test_downloaded_asset_refs.gd",
+	"res://tests/unit/test_player_scene.gd",
+	"res://tests/unit/test_theme.gd",
+]
+## Never scanned: the addons, the import cache and the download folders themselves, which are
+## git-ignored rather than tracked.
 const SKIPPED_DIRS: PackedStringArray = [
-	"res://addons", "res://.godot", "res://tests",
+	"res://addons", "res://.godot",
 	"res://assets/kenney", "res://assets/oga", "res://assets/itch", "res://assets/audio/ambience",
 ]
 
 
-## Every scanned file under res://, sorted.
+## Every scanned file under res://, sorted: the project file and every scene, resource, script and
+## shader outside the skipped folders, but for the guards.
 static func tracked_files() -> PackedStringArray:
-	var found: PackedStringArray = _files_under("res://")
+	var found: PackedStringArray = []
+	for path: String in SCANNED_FILES:
+		if FileAccess.file_exists(path):
+			found.append(path)
+	for path: String in _files_under("res://"):
+		if not GUARD_FILES.has(path):
+			found.append(path)
 	found.sort()
 	return found
 
