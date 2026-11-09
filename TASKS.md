@@ -56,6 +56,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
   - [ ] Seed crossings and islands from `run_seed` (island-generation)
   - [ ] English summary strings (labels are Spanish only for now); the profanity toggle (Milestone G) switches the lines to their soft variants
   - [x] Reword ui-shell "Screen flow" ("then the title") when ui-shell is archived: "then the title or a new run"
+  - [ ] When the summary next changes, MODIFY ui-shell "Run summary" (a per-player list and "Volver al inicio") to match endings-progression's totals, cause and "Otra vez", so one spec owns the summary
   - [ ] A `hunger` or `bleeding` cause only if starvation or bleeding ever takes health; a co-op summary hand test in the Milestone B playtest
 - [ ] `secret-cay` (OpenSpec change written 2026-11-06; `escape-routes` is merged and archived, so it is ready to build): the four secret items (`brujula_rota`, `mapa_sin_norte`, `sombrero_cinta_roja`, `nota_llegaste_tarde`), `secret_tuning.tres`, concealment with a shimmer and a dig hold, hiding spots, the broken-compass needle on the HUD, the hidden cay `cayo_sin_norte` (off-graph) with its empty chest, note and hat, the note on a HUD label, the hunt and cay dev scenes, 1-player and host-plus-client tests. Nothing reaches a real run yet. Later, each when its capability exists:
   - [ ] Place the pieces in real runs (1 run in 3, two islands from 2 to 5): island-generation, the run seed and run state
