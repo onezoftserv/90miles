@@ -324,6 +324,12 @@ Amends D1, D3, D4, D6, D7, D8, D9, D20, D21, D25, the measured-packs table, the 
   - Pixelify Sans draws © as a 3 px ring at 16 px, so Kyrise's line reads like "° 2018" at a glance (`docs/art-pass/credits.png`). The text carries ©, as the pack's wording asks, so the data stays as it is.
   - `Flow.CREDITS` is appended to `GameShell.Flow`, so no existing flow value moves.
   - Captures: `capture_pixel_filter.gd` and `capture_inventory_hud.gd` take `--scale=1..4` (defaults 2 and 1, as before), and `capture_pixel_filter.gd --credits` saves the credits screen as `credits.png`. File names carry neither the scale nor, for `credits.png`, the filter, so each variant needs its own `--out`; `docs/art-pass/credits.png` is ×2 in *Nítido* (1280×720).
+- **K22 (2026-11-09; task 3.1; D22, P1).** How `test_art_sim_invariance.gd` keeps its two runs exact:
+  - Each run is built as `GameShell._build_run` builds a solo run (island, session with a fixed `run_seed`, furniture, the player, the pick-ups), stepped and freed inside the test function with no frame awaited, so the engine never processes it on its own. Awaiting a frame would let real physics steps tick the meters a varying number of times; disabling the subtree's processing instead takes the player's `CharacterBody2D` out of the physics space. The creature spawner's deferred `_begin` is called at once, and its queued call is dropped with the freed run.
+  - Each frame steps, in the engine's tree order, the session, its creatures, the body, `PlayerNet`, the spawner and any lit fire, then the sky with the weather rolls off.
+  - "Fixed intents": the built run steers to the three pick-ups nearest the solo spawn, presses E on each and crouches back, recording each frame's `MoveIntent`; the stripped run replays the recording, so both runs get the same intents whatever happens.
+  - The stripped run frees every `art_view` node before every frame, not once, so art that a later spawn brings (a creature, a pick-up) is stripped too.
+  - A frame's snapshot is the body's position, every property its `StateSync` lists (read live through the config, so a property added later is compared without editing the test), its energy and inventory, each creature's name, kind, position, facing, state and carried items, and the pick-ups still lying; the property paths are compared as lists.
 
 ## Open Questions
 
