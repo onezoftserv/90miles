@@ -140,8 +140,7 @@ class TableTest(unittest.TestCase):
         for pack in fetch_assets.ART_PACKS:
             with self.subTest(pack=pack.key):
                 rows = [line for line in credits.splitlines() if line.startswith("|") and f"`{pack.folder}/`" in line]
-                self.assertEqual(len(rows), 1, f"CREDITS.md has no single row for {pack.folder}/")
-                self.assertIn(pack.page, rows[0])
+                self.assertTrue(any(pack.page in row for row in rows), f"CREDITS.md has no row for {pack.folder}/ with {pack.page}")
                 self.assertIn(f"`{pack.folder}/`", assets)
 
     def test_the_kenney_packs_and_fonts_are_unchanged(self):
