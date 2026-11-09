@@ -205,9 +205,12 @@ def check_tree(root, palette_colours=None, outline_colours=None, licence_only=No
     outline = outline_colours or palette.outline_set()
     game = _godot_project(root)
     referrers = _referrer_text(root, game) if game else None
+    art = palette.ART.resolve()
     for path in pngs:
         shown = _shown(path, root)
-        relative = path.relative_to(root)
+        # Folder rules read from game/assets/art when the root lies inside it, so a run on one of
+        # its subfolders applies the same rules; from the root itself elsewhere (the fixtures).
+        relative = path.relative_to(art if root.is_relative_to(art) else root)
         if game:
             problems.extend(import_problems(path, shown))
             if f'"{_res_path(path, game)}"' not in referrers:
@@ -217,7 +220,7 @@ def check_tree(root, palette_colours=None, outline_colours=None, licence_only=No
         except png.PngError as error:
             problems.append(f"{shown} is not a readable PNG: {error}")
             continue
-        exempt = relative.parts[0] in PALETTE_EXEMPT_DIRS or (root == palette.ART.resolve() and relative.as_posix() in EXEMPT)
+        exempt = relative.parts[0] in PALETTE_EXEMPT_DIRS or (root.is_relative_to(art) and relative.as_posix() in EXEMPT)
         if not exempt:
             partial_ok = any(part in PARTIAL_ALPHA_DIRS for part in relative.parts[:-1])
             problems.extend(palette_problems(shown, image, colours, partial_ok))

@@ -40,6 +40,10 @@ class TrackedArtTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("0 problem(s)", result.stdout)
 
+    def test_a_subfolder_gets_the_same_folder_rules(self):
+        for folder in ("characters", "ui", "palette"):
+            self.assertEqual(check.check_tree(ART / folder), [], folder)
+
     def test_the_exemptions_name_existing_files_only(self):
         for relative in check.EXEMPT:
             self.assertTrue((ART / relative).exists(), f"{relative} is gone: drop it from check.EXEMPT")
