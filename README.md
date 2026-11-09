@@ -118,7 +118,7 @@ This clones Shattered Pixel Dungeon, Brogue CE and Dungeon Crawl Stone Soup into
 
 ### 7. Download free assets
 
-Follow `docs/ASSETS.md`. The script `tools/fetch_assets.py` downloads the Kenney packs and the two OFL pixel fonts; OpenGameArt, itch.io and freesound assets need a manual download.
+Follow `docs/ASSETS.md`. The script `python -I tools/fetch_assets.py` downloads the Kenney packs, the two OFL pixel fonts and the OpenGameArt art packs; for each itch.io pack it prints the page and the folder to download into (run it again afterwards to unpack), and `--list` shows every pack. Freesound assets need a manual download.
 
 ### 8. AWS backend
 
