@@ -167,8 +167,12 @@ func test_swap_rows_on_a_whole_sheet_matches_the_texel_mapping() -> void:
 
 # --- the shaders' sources ------------------------------------------------------------------------
 
+# `path`'s source without its comments, which may name UV or COLOR in prose.
 func _text(path: String) -> String:
-	return FileAccess.get_file_as_string(path)
+	var text: String = FileAccess.get_file_as_string(path)
+	text = RegEx.create_from_string("/\\*[\\s\\S]*?\\*/").sub(text, "", true)
+	# Not the "//" of a res:// path in an #include line.
+	return RegEx.create_from_string("(?<!:)//[^\\n]*").sub(text, "", true)
 
 
 # `path`'s source with each #include line replaced by the included file's source.
