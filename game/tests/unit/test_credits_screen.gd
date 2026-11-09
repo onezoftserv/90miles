@@ -60,6 +60,10 @@ func _down_event() -> InputEventAction:
 	return event
 
 
+func _credits() -> ArtCredits:
+	return load(ArtCredits.STANDARD_PATH) as ArtCredits
+
+
 # The page as the screen's plain-text line shows it, without its scheme.
 func _bare(url: String) -> String:
 	return url.trim_prefix("https://").trim_prefix("http://")
@@ -107,7 +111,7 @@ func test_pressing_credits_opens_the_credits_screen() -> void:
 func test_the_cc_by_packs_come_first_with_the_licence_address_and_source() -> void:
 	var shell := _shell()
 	var texts := _open_credits(shell).entry_texts()
-	var credits := ArtCredits.standard()
+	var credits: ArtCredits = _credits()
 	assert_eq(texts.size(), credits.entries.size(), "one line per credits entry")
 	var attribution: Array[ArtCredit] = []
 	for entry: ArtCredit in credits.entries:
@@ -131,7 +135,7 @@ func test_then_the_cc0_and_ofl_lines_from_the_credits_data() -> void:
 	var texts := _open_credits(shell).entry_texts()
 	var last_courtesy: int = -1
 	var first_font: int = texts.size()
-	for entry: ArtCredit in ArtCredits.standard().entries:
+	for entry: ArtCredit in _credits().entries:
 		var at := _index_of(texts, entry.line_es)
 		assert_gt(at, -1, "%s is listed" % entry.pack)
 		if entry.attribution_required:
@@ -150,7 +154,7 @@ func test_then_the_cc0_and_ofl_lines_from_the_credits_data() -> void:
 func test_a_modified_pack_is_marked() -> void:
 	var shell := _shell()
 	var texts := _open_credits(shell).entry_texts()
-	for entry: ArtCredit in ArtCredits.standard().entries:
+	for entry: ArtCredit in _credits().entries:
 		var text := texts[_index_of(texts, entry.line_es)]
 		assert_eq(text.contains("modificado"), entry.modified, entry.pack)
 

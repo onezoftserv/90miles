@@ -70,7 +70,7 @@ func _fixture_licences() -> Dictionary[String, String]:
 
 func test_a_solo_offline_game_reads_its_credits_from_the_data_alone() -> void:
 	assert_false(multiplayer.has_multiplayer_peer() and not multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "no network peer")
-	var credits: ArtCredits = ArtCredits.standard()
+	var credits: ArtCredits = _credits()
 	assert_not_null(credits, "%s loads as ArtCredits" % ArtCredits.STANDARD_PATH)
 	if credits == null:
 		return

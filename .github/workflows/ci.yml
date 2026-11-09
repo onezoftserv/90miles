@@ -77,8 +77,15 @@ jobs:
             echo "::error::errors during import"; exit 1
           fi
 
+      # smoke.gd fails on what it sees before it quits; leaks are printed after that, at exit, so
+      # this step also fails on any error line, as the import and run steps do.
       - name: Smoke run
-        run: timeout 60 "$GODOT" --headless --path game -s res://tests/smoke.gd
+        run: |
+          set -o pipefail
+          timeout 60 "$GODOT" --headless --path game -s res://tests/smoke.gd 2>&1 | tee smoke.log
+          if sed 's/\x1b\[[0-9;]*m//g' smoke.log | grep -E '^(ERROR|SCRIPT ERROR):'; then
+            echo "::error::errors during the smoke run"; exit 1
+          fi
 
       # Runs the real game loop (autoloads first, then the main scene) to catch runtime errors in
       # autoloads and scenes outside the smoke script, and resource leaks reported at exit.

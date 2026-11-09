@@ -142,7 +142,7 @@ func show_settings() -> void:
 ## title, as the settings screen does.
 func show_credits() -> void:
 	var credits_screen := _show(CREDITS_SCENE, Flow.CREDITS) as CreditsScreen
-	credits_screen.show_credits(ArtCredits.standard())
+	credits_screen.show_credits(load(ArtCredits.STANDARD_PATH) as ArtCredits)
 	credits_screen.back_requested.connect(show_title)
 
 
