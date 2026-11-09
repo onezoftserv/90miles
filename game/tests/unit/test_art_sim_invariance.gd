@@ -1,11 +1,20 @@
 extends GutTest
-## art-pass "Drawing never changes the simulation" ("Same run with and without art"; design.md D22
-## and P1), with exactly 1 player, offline: a solo sandbar with its creatures runs 600 physics
-## frames of fixed intents twice, once as built and once with every node of the `art_view` group
-## freed (before every frame, so art that a later spawn brings goes too), and every frame's player
-## position, synced state, meters and inventory and every creature's position and state are equal.
-## The player's synchronizer lists the same property paths both times, compared as lists, never as
-## a count (coop-networking and survival-meters own how many there are).
+## art-pass "Drawing never changes the simulation" ("Same run with and without art"; design.md D22,
+## P1, K22 and K34), with exactly 1 player, offline: a solo sandbar with its creatures runs 600
+## physics frames of fixed intents twice, and every frame's player position, synced state, meters
+## and inventory and every creature's position and state are equal.
+## - The built run steps the art too: after the simulation's callbacks, each frame calls the
+##   _physics_process and then the _process of every node in or under the `art_view` group whose
+##   callback is on, as the engine would.
+## - In the stripped run art never runs: a node entering the tree in or under `art_view` loses its
+##   script before its _ready, and every such node is freed before every frame (so art that a later
+##   spawn brings goes too). Code in an art script's _enter_tree would run before that, so the built
+##   run names any art script that has one.
+## - The player's synchronizer lists the same property paths both times, compared as lists, never as
+##   a count (coop-networking and survival-meters own how many there are).
+## The guard is itself tested: a bad look planted under the player in both runs, writing the
+## player's thirst as it becomes ready, each physics frame or each process frame, makes the runs
+## differ on the first frame.
 ## The built run walks to the three pick-ups nearest the spawn and presses E on each, then crouches
 ## back; its intents are recorded and the stripped run replays them exactly. Each run is built,
 ## stepped and freed with no frame awaited, so the engine never processes it on its own: the
@@ -15,8 +24,12 @@ extends GutTest
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
+const WRITING_LOOK: GDScript = preload("res://tests/fixtures/art/sim/sim_writing_look.gd")
+const ENTER_TREE_LOOK: GDScript = preload("res://tests/fixtures/art/sim/enter_tree_look.gd")
 const ART_GROUP: StringName = &"art_view"
 const FRAMES: int = 600
+## Enough frames for a planted bad look to show.
+const SHORT_FRAMES: int = 30
 const RUN_SEED: int = 90
 const PICKUPS_ON_ROUTE: int = 3
 ## Close enough to a pick-up that it is the nearest one in reach.
@@ -34,6 +47,12 @@ var dt: float = 1.0 / 60.0
 var intents: Array[MoveIntent] = []
 ## Art nodes freed during the stripped run.
 var stripped: int = 0
+## Art nodes whose script the stripped run detached as they entered the tree.
+var disarmed: int = 0
+## Art callbacks the runs called.
+var ticked: int = 0
+## Bad looks planted under the player in both runs, by where each writes (the guard's own tests).
+var planted: Array[StringName] = []
 # The built run's route: where to walk, then whether to press E there.
 var _route: Array[Vector2] = []
 var _leg: int = 0
@@ -43,12 +62,16 @@ var _pressing: int = 0
 func before_each() -> void:
 	dt = 1.0 / float(Engine.physics_ticks_per_second)
 	intents.clear()
+	planted.clear()
 	stripped = 0
+	disarmed = 0
+	ticked = 0
 	NetManager.start_solo()
 	WeatherManager.stop()
 
 
 func after_each() -> void:
+	_stop_disarming()
 	_free_run()
 	WeatherManager.sky.weather.rolls_enabled = true
 	WeatherManager.stop()
@@ -77,6 +100,8 @@ func _build() -> void:
 	island.place_pickups(session)
 	body = session.body(CoopSession.HOST_ID)
 	body.player_input.enabled = false
+	for writes_in: StringName in planted:
+		body.add_child(WRITING_LOOK.new(writes_in) as Node)
 	spawner = session.get_node(NodePath(SandbarIsland.CREATURES_NAME)) as CreatureSpawner
 	# The spawner's start is deferred to the next frame, which never comes while the run lives: it
 	# begins now, as it would then. Its queued call is dropped with the freed run.
@@ -97,7 +122,7 @@ func _free_run() -> void:
 
 
 # One physics frame in the engine's order (the session, its creatures, the body and its net, the
-# spawner, lit fires), then the clock.
+# spawner, lit fires, then the art's own callbacks), then the clock.
 func _frame(intent: MoveIntent) -> void:
 	body.intent = intent
 	session._physics_process(dt)
@@ -110,7 +135,45 @@ func _frame(intent: MoveIntent) -> void:
 		var fire := node as Fire
 		if fire != null and session.is_ancestor_of(fire):
 			fire._physics_process(dt)
+	_tick_art()
 	WeatherManager.sky.advance(dt)
+
+
+# The art's own callbacks, as the engine runs them after the simulation's: every node in or under
+# the art_view group whose callback is on, every _physics_process first, then every _process.
+func _tick_art() -> void:
+	var art: Array[Node] = _art_in_run()
+	for node: Node in art:
+		if node.is_physics_processing() and node.has_method(&"_physics_process"):
+			node.call(&"_physics_process", dt)
+			ticked += 1
+	for node: Node in art:
+		if node.is_processing() and node.has_method(&"_process"):
+			node.call(&"_process", dt)
+			ticked += 1
+
+
+# Every node of this run in or under the art_view group, each once, in tree order.
+func _art_in_run() -> Array[Node]:
+	var art: Array[Node] = []
+	for node: Node in get_tree().get_nodes_in_group(ART_GROUP):
+		if _in_run(node) and not _has_art_ancestor(node):
+			art.append(node)
+			art.append_array(node.find_children("*", "", true, false))
+	return art
+
+
+func _in_run(node: Node) -> bool:
+	return (is_instance_valid(session) and session.is_ancestor_of(node)) or (is_instance_valid(island) and island.is_ancestor_of(node))
+
+
+func _has_art_ancestor(node: Node) -> bool:
+	var parent: Node = node.get_parent()
+	while parent != null:
+		if parent.is_in_group(ART_GROUP):
+			return true
+		parent = parent.get_parent()
+	return false
 
 
 # Every art node goes at once, as if the art had never been built.
@@ -120,6 +183,40 @@ func _strip_art() -> void:
 			node.get_parent().remove_child(node)
 			node.free()
 			stripped += 1
+
+
+func _start_disarming() -> void:
+	get_tree().node_added.connect(_disarm)
+
+
+func _stop_disarming() -> void:
+	if get_tree().node_added.is_connected(_disarm):
+		get_tree().node_added.disconnect(_disarm)
+
+
+# In the stripped run art never runs: a node entering the tree in or under the art_view group loses
+# its script before its _ready, so none of its callbacks or signal handlers run, and _strip_art frees
+# it before the next frame. Its _enter_tree has run already: _scripts_with_enter_tree covers that.
+func _disarm(node: Node) -> void:
+	if not node.is_in_group(ART_GROUP) and not _has_art_ancestor(node):
+		return
+	if node.get_script() != null:
+		node.set_script(null)
+	disarmed += 1
+
+
+# The scripts of `nodes` that have an _enter_tree (their own or inherited).
+func _scripts_with_enter_tree(nodes: Array[Node]) -> PackedStringArray:
+	var found: PackedStringArray = []
+	for node: Node in nodes:
+		var script := node.get_script() as Script
+		if script == null or found.has(script.resource_path):
+			continue
+		for method: Dictionary in script.get_script_method_list():
+			if method["name"] == "_enter_tree":
+				found.append(script.resource_path)
+				break
+	return found
 
 
 # --- what a frame holds --------------------------------------------------------------------------
@@ -204,31 +301,34 @@ func _axis(gap: float) -> float:
 	return 0.0
 
 
-# --- the test ------------------------------------------------------------------------------------
+# --- the two runs --------------------------------------------------------------------------------
 
-func _built_run() -> Dictionary:
+func _built_run(frames: int) -> Dictionary:
 	_build()
 	_plan_route()
-	var frames: Array[Dictionary] = []
-	for i: int in FRAMES:
+	var enter_tree: PackedStringArray = _scripts_with_enter_tree(_art_in_run())
+	var snapshots: Array[Dictionary] = []
+	for i: int in frames:
 		var intent := _steer()
 		intents.append(intent)
 		_frame(intent)
-		frames.append(_snapshot())
-	var result := {"frames": frames, "paths": _sync_paths(), "creatures": spawner.creatures().size(), "art": get_tree().get_nodes_in_group(ART_GROUP).size()}
+		snapshots.append(_snapshot())
+	var result := {"frames": snapshots, "paths": _sync_paths(), "creatures": spawner.creatures().size(), "art": _art_in_run().size(), "enter_tree": enter_tree}
 	_free_run()
 	return result
 
 
-func _stripped_run() -> Dictionary:
+func _stripped_run(frames: int) -> Dictionary:
+	_start_disarming()
 	_build()
-	var frames: Array[Dictionary] = []
-	for i: int in FRAMES:
+	var snapshots: Array[Dictionary] = []
+	for i: int in frames:
 		_strip_art()
 		_frame(intents[i])
-		frames.append(_snapshot())
+		snapshots.append(_snapshot())
 	_strip_art()
-	var result := {"frames": frames, "paths": _sync_paths(), "art": get_tree().get_nodes_in_group(ART_GROUP).size()}
+	var result := {"frames": snapshots, "paths": _sync_paths(), "art": get_tree().get_nodes_in_group(ART_GROUP).size()}
+	_stop_disarming()
 	_free_run()
 	return result
 
@@ -256,9 +356,18 @@ func _differing_keys(a: Dictionary, b: Dictionary, prefix: String = "") -> Packe
 	return keys
 
 
+# The first difference between the runs, described.
+func _detail(built_frames: Array[Dictionary], bare_frames: Array[Dictionary], first: int) -> String:
+	if first < 0 or first >= mini(built_frames.size(), bare_frames.size()):
+		return ""
+	return "; ".join(_differing_keys(built_frames[first], bare_frames[first]))
+
+
+# --- the tests -----------------------------------------------------------------------------------
+
 func test_a_solo_sandbar_runs_the_same_with_and_without_art() -> void:
-	var built: Dictionary = _built_run()
-	var bare: Dictionary = _stripped_run()
+	var built: Dictionary = _built_run(FRAMES)
+	var bare: Dictionary = _stripped_run(FRAMES)
 	var built_frames: Array[Dictionary] = built["frames"]
 	var bare_frames: Array[Dictionary] = bare["frames"]
 	assert_eq(built_frames.size(), FRAMES)
@@ -268,13 +377,46 @@ func test_a_solo_sandbar_runs_the_same_with_and_without_art() -> void:
 	assert_false(last_inventory.is_empty(), "the scripted run picked something up")
 	assert_ne(built_frames[0]["position"], built_frames[FRAMES - 1]["position"], "the scripted run moved")
 	assert_eq(bare["art"], 0, "every art node was freed in the stripped run")
+	assert_eq(built["enter_tree"], PackedStringArray(), "no art script has an _enter_tree, which would run before the stripped run detaches it")
 	var first: int = _first_difference(built_frames, bare_frames)
-	var detail: String = ""
-	if first >= 0 and first < mini(built_frames.size(), bare_frames.size()):
-		detail = "; ".join(_differing_keys(built_frames[first], bare_frames[first]))
-	assert_eq(first, -1, "every frame equal with and without art (first difference: %s)" % detail)
+	assert_eq(first, -1, "every frame equal with and without art (first difference: %s)" % _detail(built_frames, bare_frames, first))
 	var built_paths: PackedStringArray = built["paths"]
 	var bare_paths: PackedStringArray = bare["paths"]
 	assert_false(built_paths.is_empty())
-	assert_eq(bare_paths, built_paths, "the player's synchronizer lists the same property paths")
-	gut.p("art nodes in the built run: %d; freed in the stripped run: %d; %d frames, %d creatures, inventory %s" % [built["art"], stripped, FRAMES, built["creatures"], last_inventory])
+	assert_eq(bare_paths, built_paths, "the player's synchronizer lists the same property paths, art never having run in the stripped run")
+	gut.p("art nodes in the built run: %d; art callbacks run: %d; disarmed and freed in the stripped run: %d and %d; %d frames, %d creatures, inventory %s" % [built["art"], ticked, disarmed, stripped, FRAMES, built["creatures"], last_inventory])
+
+
+# The guard itself: a bad look planted under the player in both runs makes them differ on the first
+# frame, naming the player's thirst, and was disarmed in the stripped run.
+func _assert_caught(writes_in: StringName) -> void:
+	planted.append(writes_in)
+	var built: Dictionary = _built_run(SHORT_FRAMES)
+	var bare: Dictionary = _stripped_run(SHORT_FRAMES)
+	var built_frames: Array[Dictionary] = built["frames"]
+	var bare_frames: Array[Dictionary] = bare["frames"]
+	var first: int = _first_difference(built_frames, bare_frames)
+	assert_eq(first, 0, "a look writing thirst in %s is caught on the first frame" % writes_in)
+	assert_string_contains(_detail(built_frames, bare_frames, first), "SurvivalMeters:thirst")
+	assert_gt(disarmed, 0, "the planted look was disarmed in the stripped run")
+	assert_eq(bare["art"], 0)
+
+
+func test_the_guard_catches_a_look_that_writes_as_it_becomes_ready() -> void:
+	_assert_caught(&"ready")
+
+
+func test_the_guard_catches_a_look_that_writes_each_physics_frame() -> void:
+	_assert_caught(&"physics_process")
+
+
+func test_the_guard_catches_a_look_that_writes_each_process_frame() -> void:
+	_assert_caught(&"process")
+
+
+func test_the_guard_names_an_art_script_with_an_enter_tree() -> void:
+	var with_enter_tree := autofree(ENTER_TREE_LOOK.new()) as Node
+	var without := autofree(WRITING_LOOK.new(&"process")) as Node
+	assert_true(with_enter_tree.is_in_group(ART_GROUP))
+	var nodes: Array[Node] = [with_enter_tree, without]
+	assert_eq(_scripts_with_enter_tree(nodes), PackedStringArray([ENTER_TREE_LOOK.resource_path]))
