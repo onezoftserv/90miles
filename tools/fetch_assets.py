@@ -77,10 +77,12 @@ class ArtPack:
     folder: str
     archives: tuple
     direct: bool
+    # The day `licence` was read from the pack's page; License.txt says so, beside the fetch date.
+    licence_read: str = "2026-11-08"
 
 
-## The licence wording is what each pack's page stated when the owner downloaded it (2026-11-08);
-## the archive names and extracted/ layout are those of that download.
+## The licence wording is what each pack's page stated when the owner downloaded it (2026-11-08,
+## each pack's licence_read); the archive names and extracted/ layout are those of that download.
 ART_PACKS = (
     ArtPack(
         "metrocity", "MetroCity Free Top Down Character Pack", "JIK-A-4",
@@ -302,8 +304,9 @@ def _unpack(archive: Archive, source: pathlib.Path, out: pathlib.Path, sevenzip:
 
 
 def write_licence(pack: ArtPack, folder: pathlib.Path, today: datetime.date) -> None:
+    """The pack's License.txt: the licence as read on `pack.licence_read`, and the day it was fetched."""
     (folder / LICENCE_FILE).write_text(
-        f"source: {pack.page}\nlicense: {pack.licence}\nread: {today.isoformat()}\n\n"
+        f"source: {pack.page}\nlicense: {pack.licence}\nread: {pack.licence_read}\nfetched: {today.isoformat()}\n\n"
         "License as recorded in tools/fetch_assets.py from the source page; check the page before relying on it. "
         "Keep this file beside the pack.\n",
         encoding="utf-8",

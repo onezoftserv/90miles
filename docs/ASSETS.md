@@ -55,7 +55,7 @@ python -I tools/fetch_assets.py             # fetch; prints the page and folder 
                                             # exits non-zero until every pack is in place
 ```
 
-Download each itch.io pack's archive into the folder it names, then run the script again: it unpacks it (a RAR with 7-Zip when `7z` is on `PATH`) and writes the pack's `License.txt` with the source and the date read.
+Download each itch.io pack's archive into the folder it names, then run the script again: it unpacks it (a RAR with 7-Zip when `7z` is on `PATH`) and writes the pack's `License.txt` with the source, the licence, the date the licence was read (2026-11-08) and the date it was fetched.
 
 **Make art.**
 

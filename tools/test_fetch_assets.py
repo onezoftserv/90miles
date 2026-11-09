@@ -198,7 +198,8 @@ class FreshCheckoutTest(unittest.TestCase):
         licence = (folder / "License.txt").read_text(encoding="utf-8").splitlines()
         self.assertIn(f"source: {pack.page}", licence)
         self.assertIn(f"license: {pack.licence}", licence)
-        self.assertIn("read: 2026-11-09", licence)
+        self.assertIn("read: 2026-11-08", licence, "the date the licence wording was read, not the fetch date")
+        self.assertIn("fetched: 2026-11-09", licence)
         for archive in pack.archives:
             self.assertTrue((folder / archive.name).is_file(), archive.name)
             if archive.kind == "zip":
@@ -253,7 +254,9 @@ class ArtPackTest(unittest.TestCase):
             steps, out = self._fetch(pack, dest)
             self.assertEqual(steps, [], out)
             self.assertTrue((folder / "extracted" / "animals" / "spritesheet.png").is_file())
-            self.assertIn("read: 2026-11-09", (folder / "License.txt").read_text(encoding="utf-8"))
+            licence = (folder / "License.txt").read_text(encoding="utf-8").splitlines()
+            self.assertIn("read: 2026-11-08", licence)
+            self.assertIn("fetched: 2026-11-09", licence)
 
     def test_a_rar_without_7zip_is_a_manual_step_naming_its_folder(self):
         pack = _pack("itch/metrocity")
