@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zlib
 
 import check
 import palette
@@ -29,6 +30,10 @@ OWN_WORK = "Work: fixture\nAuthor: 90 Millas\nLicence: All rights reserved (see 
 
 def _command(*args):
     return subprocess.run([sys.executable, "-I", str(HERE / "check.py"), *map(str, args)], capture_output=True, text=True)
+
+
+def _chunk(kind, data):
+    return len(data).to_bytes(4, "big") + kind + data + (zlib.crc32(kind + data) & 0xFFFFFFFF).to_bytes(4, "big")
 
 
 class TrackedArtTest(unittest.TestCase):
@@ -98,6 +103,23 @@ class LicenceTest(unittest.TestCase):
             self.assertIn("License.txt", problems[0])
             (fixes / "License.txt").write_text(OWN_WORK, encoding="utf-8")
             self.assertEqual(check.check_tree(fixes, licence_only=True), [])
+
+    def test_an_unreadable_png_is_named_and_the_scan_goes_on(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            folder = pathlib.Path(scratch) / "pieces"
+            folder.mkdir()
+            (folder / "License.txt").write_text(OWN_WORK, encoding="utf-8")
+            header = (2).to_bytes(4, "big") * 2 + bytes([8, 6, 0, 0, 0])
+            stream = b"\x78\x9c\xff\xff\xff\xff"  # a zlib header, then an invalid block
+            (folder / "a_corrupt.png").write_bytes(png.SIGNATURE + _chunk(b"IHDR", header) + _chunk(b"IDAT", stream) + _chunk(b"IEND", b""))
+            off = png.blank(1, 1)
+            off.set(0, 0, (0x12, 0x34, 0x56, 255))
+            png.write_png(folder / "b_off_palette.png", off)
+            result = _command(folder)
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("a_corrupt.png is not a readable PNG", result.stdout)
+            self.assertIn("b_off_palette.png", result.stdout, "the scan goes on past the unreadable file")
 
     def test_a_folder_under_tools_is_checked_for_its_licence_only(self):
         self.assertTrue(check.is_licence_only(HERE / "fixes"))

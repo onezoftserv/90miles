@@ -108,8 +108,10 @@ def main(argv=None):
     forced = png.parse_colour(args.outline) if args.outline else None
     if forced is not None and forced not in outline_colours:
         parser.error(f"{args.outline} is not in the outline set")
-    source = png.read_png(_resolve(args.source, args.packs))
-    over = png.read_png(_resolve(args.over, args.packs)) if args.over else None
+    source = _read(args.source, args.packs)
+    over = _read(args.over, args.packs) if args.over else None
+    if source is None or (args.over and over is None):
+        return 1
     if over is not None and (over.width, over.height) != (source.width, source.height):
         parser.error("--over must be the same size as the piece")
     result = rim(source, outline_colours, cell=args.cell, over=over, outline=forced, grow=args.grow)
@@ -117,6 +119,15 @@ def main(argv=None):
     png.write_png(args.target, result)
     print(f"rim: {args.source} -> {args.target}: {changed} pixel(s) changed")
     return 0
+
+
+def _read(path, packs):
+    """The PNG at `path` (tried under `packs` too), or None after one line saying why not."""
+    try:
+        return png.read_png(_resolve(path, packs))
+    except png.PngError as error:
+        print(f"rim: {path} is not a readable PNG: {error}", file=sys.stderr)
+        return None
 
 
 def _resolve(path, packs):

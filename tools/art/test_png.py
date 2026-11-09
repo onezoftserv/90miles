@@ -73,6 +73,12 @@ class PngTest(unittest.TestCase):
         with self.assertRaises(png.PngError):
             png.decode_png(b"GIF89a")
 
+    def test_keyed_transparency_reads_for_grey_and_rgb(self):
+        grey = png.decode_png(_png(2, 1, 8, 0, bytes([0, 7, 200]), extra=_chunk(b"tRNS", bytes([0, 7]))))
+        self.assertEqual([grey.alpha(x, 0) for x in range(2)], [0, 255])
+        rgb = png.decode_png(_png(2, 1, 8, 2, bytes([0, 1, 2, 3, 4, 5, 6]), extra=_chunk(b"tRNS", bytes([0, 1, 0, 2, 0, 3]))))
+        self.assertEqual([rgb.alpha(x, 0) for x in range(2)], [0, 255])
+
     def test_over_composites_top_over_bottom(self):
         bottom = png.blank(2, 1)
         bottom.set(0, 0, (0, 0, 255, 255))
@@ -93,6 +99,48 @@ class PngTest(unittest.TestCase):
     def test_colours_parse_and_print_as_hex(self):
         self.assertEqual(png.parse_colour("#5b6ee1"), (0x5B, 0x6E, 0xE1))
         self.assertEqual(png.colour_hex((0x5B, 0x6E, 0xE1)), "#5b6ee1")
+
+
+class MalformedPngTest(unittest.TestCase):
+    """The packs are untrusted: every malformed file is refused with PngError, never another error."""
+
+    def assertRefused(self, data, words):
+        with self.assertRaises(png.PngError) as caught:
+            png.decode_png(data)
+        self.assertIn(words, str(caught.exception))
+
+    def test_a_header_that_is_not_13_bytes_is_refused(self):
+        short = png.SIGNATURE + _chunk(b"IHDR", struct.pack(">IIBBBB", 1, 1, 8, 6, 0, 0)) + _chunk(b"IEND", b"")
+        self.assertRefused(short, "IHDR")
+        long = png.SIGNATURE + _chunk(b"IHDR", struct.pack(">IIBBBBBB", 1, 1, 8, 6, 0, 0, 0, 0)) + _chunk(b"IEND", b"")
+        self.assertRefused(long, "IHDR")
+
+    def test_a_corrupt_image_stream_is_refused(self):
+        corrupt = png.SIGNATURE + _chunk(b"IHDR", struct.pack(">IIBBBBB", 2, 2, 8, 6, 0, 0, 0)) + _chunk(b"IDAT", b"\x78\x9c\xff\xff\xff\xff") + _chunk(b"IEND", b"")
+        self.assertRefused(corrupt, "image data")
+
+    def test_a_transparency_chunk_that_does_not_fit_the_colour_type_is_refused(self):
+        raw_rgb = bytes([0, 1, 2, 3])
+        self.assertRefused(_png(1, 1, 8, 2, raw_rgb, extra=_chunk(b"tRNS", b"\x00")), "tRNS")
+        self.assertRefused(_png(1, 1, 8, 0, bytes([0, 7]), extra=_chunk(b"tRNS", b"\x00\x07\x00")), "tRNS")
+        self.assertRefused(_png(1, 1, 8, 6, bytes([0, 1, 2, 3, 4]), extra=_chunk(b"tRNS", b"\x00\x00")), "tRNS")
+        self.assertRefused(_png(1, 1, 8, 4, bytes([0, 1, 2]), extra=_chunk(b"tRNS", b"\x00\x00")), "tRNS")
+        indexed = _chunk(b"PLTE", bytes([1, 2, 3])) + _chunk(b"tRNS", bytes([0, 255]))
+        self.assertRefused(_png(1, 1, 8, 3, bytes([0, 0]), extra=indexed), "tRNS")
+
+    def test_an_unknown_interlace_compression_or_filter_method_is_refused(self):
+        raw = bytes([0, 1, 2, 3, 4])
+        for compression, filter_method, interlace in ((0, 0, 7), (1, 0, 0), (0, 1, 0)):
+            header = struct.pack(">IIBBBBB", 1, 1, 8, 6, compression, filter_method, interlace)
+            data = png.SIGNATURE + _chunk(b"IHDR", header) + _chunk(b"IDAT", zlib.compress(raw)) + _chunk(b"IEND", b"")
+            with self.subTest(compression=compression, filter=filter_method, interlace=interlace):
+                with self.assertRaises(png.PngError):
+                    png.decode_png(data)
+
+    def test_a_depth_the_colour_type_does_not_allow_is_refused(self):
+        self.assertRefused(_png(1, 1, 4, 2, bytes([0, 0, 0])), "depth 4")
+        palette = _chunk(b"PLTE", bytes([1, 2, 3]))
+        self.assertRefused(_png(1, 1, 16, 3, bytes([0, 0, 0]), extra=palette), "depth 16")
 
 
 if __name__ == "__main__":

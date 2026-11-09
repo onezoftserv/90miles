@@ -97,6 +97,9 @@ def main(argv=None):
     keep = any(part in PARTIAL_ALPHA_DIRS for part in target.resolve().parent.parts)
     try:
         out, changes = remap(png.read_png(source_path), palette.load_palette(args.palette), colour_map, keep, palette.key_ramp(), args.strict)
+    except png.PngError as error:
+        print(f"remap: {args.source} is not a readable PNG: {error}", file=sys.stderr)
+        return 1
     except RemapError as error:
         print(f"remap: {args.source}: {error}", file=sys.stderr)
         return 1

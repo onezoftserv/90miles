@@ -135,6 +135,18 @@ class RimCommandTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("outline set", result.stderr)
 
+    def test_the_command_refuses_an_unreadable_png_in_one_line(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            source = pathlib.Path(scratch) / "broken.png"
+            source.write_bytes(png.encode_png(ringed_frame())[:-20])
+            target = pathlib.Path(scratch) / "x.png"
+            result = subprocess.run([sys.executable, "-I", str(HERE / "rim.py"), str(source), str(target)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("broken.png", result.stderr)
+            self.assertIn("not a readable PNG", result.stderr)
+            self.assertFalse(target.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -76,6 +76,18 @@ class RemapCommandTest(unittest.TestCase):
             self.assertEqual(png.read_png(root / "out.png").alpha(0, 0), 0)
             self.assertEqual(png.read_png(root / "shadows" / "out.png").alpha(0, 0), 128)
 
+    def test_the_command_refuses_an_unreadable_png_in_one_line(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            source = pathlib.Path(scratch) / "broken.png"
+            source.write_bytes(png.encode_png(image_of((0, 0, 0, 255)))[:-20])
+            target = pathlib.Path(scratch) / "x.png"
+            result = subprocess.run([sys.executable, "-I", str(HERE / "remap.py"), str(source), str(target)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("broken.png", result.stderr)
+            self.assertIn("not a readable PNG", result.stderr)
+            self.assertFalse(target.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
