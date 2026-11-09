@@ -186,12 +186,12 @@ func _source(path: String) -> String:
 	return source
 
 
-# The body of `void <name>()`, braces matched.
+# The body of the function `name` (any return type and parameters), braces matched.
 func _body(source: String, name: String) -> String:
-	var start: int = source.find("void %s()" % name)
-	if start < 0:
+	var found := RegEx.create_from_string("\\b\\w+\\s+%s\\s*\\([^)]*\\)\\s*\\{" % name).search(source)
+	if found == null:
 		return ""
-	var open: int = source.find("{", start)
+	var open: int = found.get_end() - 1
 	var depth: int = 0
 	for i: int in range(open, source.length()):
 		if source[i] == "{":
@@ -211,6 +211,12 @@ func _varying_from(source: String, type: String, built_in: String) -> String:
 		if RegEx.create_from_string("varying\\s+%s\\s+%s\\s*;" % [type, name]).search(source) != null:
 			return name
 	return ""
+
+
+# Whether `code` holds `expected`, whitespace ignored on both sides.
+func _holds(code: String, expected: String) -> bool:
+	var space := RegEx.create_from_string("\\s+")
+	return space.sub(code, "", true).contains(space.sub(expected, "", true))
 
 
 func _statements_with(body: String, word: String) -> PackedStringArray:
@@ -241,6 +247,23 @@ func test_player_look_has_the_slot_and_water_line_uniforms() -> void:
 	assert_eq(types.get("slot_row", TYPE_NIL), TYPE_INT, "slot_row is an int")
 	assert_eq(types.get("water_line_on", TYPE_NIL), TYPE_BOOL, "water_line_on is a bool")
 	assert_eq(types.get("water_line_y", TYPE_NIL), TYPE_FLOAT, "water_line_y is a float")
+
+
+# "Clothing colours" as the game draws it: the shader's swap, which the reference mapping above
+# stands for. Each texel is compared with the 4 shades of the key ramp (row 0) and, on a match,
+# takes the same shade of the slot's row, keeping its alpha; fragment() swaps every texel to
+# slot_row (design.md K24, K32).
+func test_the_look_shader_swaps_the_key_ramp_to_the_same_shade_of_the_slot_row() -> void:
+	var source: String = _source(PLAYER_LOOK_SHADER)
+	assert_true(_holds(source, "const int ART_KEY_ROW = 0;"), "row 0 of the ramps is the key ramp")
+	assert_true(_holds(source, "const int ART_SHADES = %d;" % SHADES), "a ramp has %d shades" % SHADES)
+	var swap: String = _body(source, "art_swap_key")
+	assert_ne(swap, "", "art_swap_key is defined")
+	assert_true(_holds(swap, "for (int shade = 0; shade < ART_SHADES; shade++)"), "it tries each shade")
+	assert_true(_holds(swap, "art_same_rgb(texel.rgb, texelFetch(ramps, ivec2(shade, ART_KEY_ROW), 0).rgb)"), "against the key ramp's shade, column = shade")
+	assert_true(_holds(swap, "return vec4(texelFetch(ramps, ivec2(shade, row), 0).rgb, texel.a);"), "a match takes the same shade of `row`, alpha kept")
+	assert_true(_holds(swap, "return texel;"), "any other colour is unchanged")
+	assert_true(_holds(_body(source, "fragment"), "art_swap_key(texture(TEXTURE, UV), ramps, slot_row)"), "fragment() swaps every texel to slot_row")
 
 
 func test_the_water_line_cuts_on_a_node_local_y_never_on_uv() -> void:
