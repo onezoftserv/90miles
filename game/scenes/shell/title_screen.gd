@@ -8,6 +8,7 @@ signal solo_requested
 signal host_requested
 signal join_requested
 signal settings_requested
+signal credits_requested
 signal quit_requested
 
 ## One per menu button, in order.
@@ -16,6 +17,7 @@ const DESCRIPTIONS: Array[String] = [
 	"Abre una partida para hasta 4 jugadores. Los demás se unen por IP en el puerto UDP 7777.",
 	"Entra a la partida de un amigo con su dirección IP.",
 	"Tu nombre, pantalla completa y escala.",
+	"Quién hizo el arte y las fuentes del juego, y con qué licencias.",
 	"Cierra el juego.",
 ]
 
@@ -29,7 +31,7 @@ const DESCRIPTIONS: Array[String] = [
 
 func _ready() -> void:
 	version.text = "v%s" % ProjectSettings.get_setting("application/config/version", "")
-	var requests: Array[Signal] = [solo_requested, host_requested, join_requested, settings_requested, quit_requested]
+	var requests: Array[Signal] = [solo_requested, host_requested, join_requested, settings_requested, credits_requested, quit_requested]
 	var menu := buttons()
 	for i: int in menu.size():
 		menu[i].pressed.connect(requests[i].emit)

@@ -13,10 +13,12 @@ enum Flow {
 	SUMMARY,
 	SETTINGS,
 	HOST_LOST,
+	CREDITS,
 }
 
 const TITLE_SCENE: PackedScene = preload("res://scenes/shell/title_screen.tscn")
 const SETTINGS_SCENE: PackedScene = preload("res://scenes/shell/settings_screen.tscn")
+const CREDITS_SCENE: PackedScene = preload("res://scenes/shell/credits_screen.tscn")
 const JOIN_SCENE: PackedScene = preload("res://scenes/shell/join_screen.tscn")
 const SUMMARY_SCENE: PackedScene = preload("res://scenes/shell/summary_screen.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
@@ -125,6 +127,7 @@ func show_title() -> void:
 	title.host_requested.connect(start_host)
 	title.join_requested.connect(show_join)
 	title.settings_requested.connect(show_settings)
+	title.credits_requested.connect(show_credits)
 	title.quit_requested.connect(func() -> void: get_tree().quit())
 
 
@@ -133,6 +136,14 @@ func show_settings() -> void:
 	settings_screen.bind(settings)
 	settings_screen.back_requested.connect(show_title)
 	settings_screen.display_changed.connect(_on_display_changed)
+
+
+## art-pass "Credits screen": who made the art and fonts, offline; Volver and Esc go back to the
+## title, as the settings screen does.
+func show_credits() -> void:
+	var credits_screen := _show(CREDITS_SCENE, Flow.CREDITS) as CreditsScreen
+	credits_screen.show_credits(ArtCredits.standard())
+	credits_screen.back_requested.connect(show_title)
 
 
 func _on_display_changed() -> void:
