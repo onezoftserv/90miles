@@ -1,0 +1,7 @@
+	Fixture Pack (1.0)
+	https://example.com/fixture-pack
+
+Pack: Fixture Pack
+Author: A. Fixture
+Licence: CC0 1.0
+Files: piece.png

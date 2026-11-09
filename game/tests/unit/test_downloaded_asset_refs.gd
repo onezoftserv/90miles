@@ -44,7 +44,7 @@ func test_the_test_guards_and_addons_are_not_scanned() -> void:
 
 func test_a_reference_into_a_download_folder_fails_naming_the_file_and_the_path() -> void:
 	var text: String = FileAccess.get_file_as_string(FIXTURE_PATH)
-	assert_string_contains(text, FIXTURE_TARGET, "fixture text")
+	assert_string_contains(text, FIXTURE_TARGET)
 	var failures: PackedStringArray = DownloadedAssetRefs.scan_text(FIXTURE_AS, text)
 	assert_eq(failures.size(), 1)
 	if failures.size() == 1:

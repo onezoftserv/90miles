@@ -1,0 +1,5 @@
+Pack: Deed Only Pack
+Author: A. Fixture
+Licence: CC0 1.0
+Source: http://creativecommons.org/publicdomain/zero/1.0/
+Files: piece.png

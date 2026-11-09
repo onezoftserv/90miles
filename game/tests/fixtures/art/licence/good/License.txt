@@ -1,0 +1,20 @@
+	Fixture Pack (1.0)
+
+	Created by A. Fixture (www.example.com)
+
+	License: (Creative Commons Zero, CC0)
+	http://creativecommons.org/publicdomain/zero/1.0/
+
+	Donate:   http://donate.example.com/
+
+Pack: Fixture Pack (1.0)
+Author: A. Fixture
+Licence: CC0 1.0
+Source: https://example.com/fixture-pack
+Files: piece.png (modified)
+
+Work: 90 Millas recolour of piece.png
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: piece.png (recolour)
