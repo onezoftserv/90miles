@@ -83,6 +83,11 @@ Every character, creature, item and structure frame SHALL have a closed 1 px out
 - **WHEN** the rim step runs
 - **THEN** the edge pixels become outline colours and the figure's bounding box does not grow
 
+#### Scenario: A layered look is outlined as composed
+- **GIVEN** a solo player's look whose hair part, alone, has open edges where the body covers it
+- **WHEN** the outline check runs on the composed frames of that look
+- **THEN** every composed frame has a closed outline and the check passes
+
 ### Requirement: Pixel-exact import
 Every tracked image SHALL import lossless and without mipmaps and be drawn with nearest filtering at a whole-number scale, so each art pixel covers a whole number of screen pixels at 640×360 with the *Nítido* pixel filter.
 
@@ -133,7 +138,7 @@ A land layer's tile SHALL be picked from the state of its cell's four corners, a
 - **THEN** none holds an opaque colour of the sea or foam ramps
 
 ### Requirement: Scrolling sea
-Water cells SHALL show one moving sea under the land layers: a seamless water texture drifting at a constant speed, with shallows and brackish water drawn a palette step lighter than deep water, cell by cell, every colour on the master palette. The sea's motion comes from its own clock and never from simulation state.
+Water cells SHALL show one moving sea under the land layers: a seamless water texture drifting at a constant speed, with shallows drawn a palette step lighter than deep water and brackish water in a step of its own, cell by cell, every colour on the master palette. The sea's motion comes from its own clock and never from simulation state.
 
 #### Scenario: Shallows read lighter than deep water
 - **GIVEN** a shallows cell beside a deep cell
@@ -159,7 +164,7 @@ Every shore cell, a land cell whose sand tile has at least one water corner, SHA
 - **THEN** the foam starts on the row where the sand ends, with no gap and no second foam line
 
 ### Requirement: Tide pools and contact shade
-Tide pools SHALL be drawn as rock-pool tiles on their cells, and the ground at the foot of each palm, the workbench, the raft site and a layout's shaded cells (under the sandbar's lean-to, round the coast cay's watch post) SHALL get a soft shade decal, so tall things sit on the ground. Decals never block or change movement. A solo player sees the same pools and shade.
+Tide pools SHALL be drawn as rock-pool tiles on their cells, which the sand layer and the shoreline count as land, so a pool gets no foam ring; and the ground at the foot of each palm, the workbench, the raft site and a layout's shaded cells (under the sandbar's lean-to, round the coast cay's watch post) SHALL get a soft shade decal, so tall things sit on the ground. Decals never block or change movement. A solo player sees the same pools and shade.
 
 #### Scenario: Pools and shade on the sandbar
 - **GIVEN** the sandbar's three tide pools and six palms
@@ -214,12 +219,12 @@ A player SHALL be drawn in the pose for the state every peer already receives: i
 - **THEN** it shows the dead pose, which has no breathing frame, not the downed pose
 
 ### Requirement: Crouch pose
-While crouching, a player SHALL be drawn in the crouch pose at full width with the feet where they were, instead of a body squashed to 10 of its 16 px, and the hidden mark sits on the crouch pose's head anchor. Teammates see the same pose. A solo player sees their own crouch pose.
+While crouching, a player SHALL be drawn in the crouch pose at full width with the feet where they were, instead of a body squashed to 10 of its 16 px, and the hidden mark sits just above the crouch pose's head anchor. Teammates see the same pose. A solo player sees their own crouch pose.
 
 #### Scenario: A solo player crouches in brush
 - **GIVEN** a solo player standing in brush
 - **WHEN** they crouch until hidden
-- **THEN** the crouch frames are drawn at their full 32×32 size with the feet line unchanged, and the hidden mark sits on the crouch head anchor
+- **THEN** the crouch frames are drawn at their full 32×32 size with the feet line unchanged, and the hidden mark sits just above the crouch head anchor
 
 ### Requirement: Swimmers at the water line
 A swimming or floating player SHALL be drawn sunk so the water line lies on the feet line, with the rows above it at full opacity, the rows below fading into the sea, a 1 px light ripple along the line and no drop shadow; a diving player SHALL show only a small ripple ring where they are. A solo swimmer looks the same.
@@ -277,25 +282,30 @@ Each look slot SHALL recolour only the clothing ramp of the player frames to its
 - **THEN** every pair of mid tones differs in hue and has a contrast ratio of at least 1.3:1
 
 ### Requirement: Head anchor
-Each player pose SHALL have a head anchor, the point just above the top of the head, and the teammate name tag, the quick-chat speech bubble and the HUD marks over a player SHALL sit on it, so they follow the head as it crouches, swims, dives or lies downed. A solo player has no name tag and no quick chat; their own marks use the same anchor.
+Each player pose SHALL have a head anchor, the point just above the top of the head. The teammate name tag SHALL sit on it, and the quick-chat speech bubble, the HUD marks and the interact prompt over a player just above it or above the name tag, so none overlaps another and all follow the head as it crouches, swims, dives or lies downed. A solo player has no name tag and no quick chat; their own marks use the same anchor.
 
 #### Scenario: The tag follows a crouch into brush
 - **GIVEN** a client drawing a hurt teammate standing on brush, so the name tag shows on the standing anchor
 - **WHEN** the teammate crouches until hidden
-- **THEN** the name tag moves down to the crouch anchor and the hidden mark appears on the same anchor
+- **THEN** the name tag moves down to the crouch anchor and the hidden mark stays just above it
 
 #### Scenario: A solo player's mark
 - **GIVEN** a solo player crouching in brush until hidden
 - **WHEN** the HUD draws their mark
-- **THEN** it sits on the crouch anchor and no name tag is drawn
+- **THEN** it sits just above the crouch anchor and no name tag is drawn
+
+#### Scenario: The prompt over a downed teammate
+- **GIVEN** a co-op player within reach of a downed teammate whose name tag shows
+- **WHEN** the interact prompt is drawn
+- **THEN** the tag sits on the teammate's downed head anchor and the prompt just above the tag, overlapping it nowhere
 
 ### Requirement: Creature frames from data
-A creature SHALL be drawn from its data's sprite frames, playing the animation named after its current behaviour state in lower case (such as `circle`, `swoop` or `pinch`), else `move` while it moves, else `idle`; side-on frames are mirrored while it faces left. A new creature whose frames are named after its states is drawn with no script edited. Clients draw from the synced state and facing.
+A creature SHALL be drawn from its data's sprite frames, playing the animation named after its current behaviour state in lower case (such as `circle`, `swoop` or `pinch`), else `move` while it moves, else `idle`; side-on frames are mirrored while it faces left. A one-shot in the art data may show a state left within a tick. A new creature whose frames are named after its states is drawn with no script edited. Clients draw from the synced state and facing.
 
 #### Scenario: State names pick the animation
-- **GIVEN** a reef shark whose frames have `patrol`, `circle` and `strike` and no `retreat`
+- **GIVEN** a reef shark whose frames have `patrol`, `circle`, `strike` and `move` and no `retreat`, and whose art data plays `strike` once on entering `retreat`
 - **WHEN** it circles, strikes and then retreats while moving
-- **THEN** it plays `circle`, then `strike`, then `move`
+- **THEN** it plays `circle`, then `strike` once as it turns away, then `move`
 
 #### Scenario: A new creature needs no script
 - **GIVEN** a valid creature file `tiburon_prueba` with behaviour `patrol_circle_strike` and frames named `patrol` and `circle`
@@ -314,9 +324,9 @@ A creature SHALL count as moving while its drawn position changed within the las
 When a creature's frames have facing variants of an animation (`<name>_down`, `<name>_up`, `<name>_side`), the variant for its synced facing SHALL play, the larger of the horizontal and vertical facing winning; side variants are mirrored while it faces left. Frames without variants play as they are.
 
 #### Scenario: A gull flying north
-- **GIVEN** a seagull whose frames have `swoop_down`, `swoop_up` and `swoop_side`
+- **GIVEN** a test creature with the seagull's behaviour whose frames have `swoop_down`, `swoop_up` and `swoop_side`
 - **WHEN** it swoops facing mostly up
-- **THEN** it plays `swoop_up`
+- **THEN** it plays `swoop_up`, while the shipped seagull, which has only `idle_*` and `move_*`, plays `move_up`
 
 ### Requirement: The sandbar's creatures
 The reef shark SHALL be drawn as a dorsal fin above the surface over a dark body cut at the water line, the crossing's passing shark too; the land crab as a side-on crab that scuttles and raises its claws when it steals or pinches; the seagull standing in its nest palm's crown while perched, and flying, with its shadow on the ground below it, while it swoops, flees or returns. The same holds with exactly 1 player.
@@ -423,7 +433,7 @@ The crossing SHALL draw the same sea in its open-water step, scrolling with the 
 - **THEN** the open sea scrolls with the crossing, the deck shows the raft at its integrity, and the player is drawn over the sea, cut at the water line beside it
 
 #### Scenario: Riders and the shark over the sea and the deck
-- **GIVEN** a host and a client in a raft crossing with one rider aboard, one thrown in and the shark passing
+- **GIVEN** a host and a client in a raft crossing with one rider aboard, one thrown in and the shark passing that swimmer
 - **WHEN** both draw the crossing
 - **THEN** on both peers the rider aboard is drawn over the deck, and the swimmer and the shark over the sea
 

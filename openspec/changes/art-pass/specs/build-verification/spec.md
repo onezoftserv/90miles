@@ -3,10 +3,10 @@
 ## MODIFIED Requirements
 
 ### Requirement: No dependency on downloaded assets
-The smoke run and the unit tests SHALL pass on a checkout that has none of the git-ignored downloaded asset packs (`game/assets/kenney/`, `game/assets/oga/` and `game/assets/itch/`), and no tracked scene, resource, GDScript or shader under `game/` SHALL refer to a file inside those folders: art the game uses is copied into a tracked folder first. The pipeline tools under `tools/`, which read the packs as data, are outside this rule.
+The smoke run and the unit tests SHALL pass on a checkout that has none of the git-ignored downloaded asset folders (`game/assets/kenney/`, `game/assets/oga/`, `game/assets/itch/` and `game/assets/audio/ambience/`), and no tracked scene, resource, GDScript or shader under `game/` SHALL refer to a file inside those folders: art the game uses is copied into a tracked folder first. The pipeline tools under `tools/`, which read the packs as data, and the test guards under `game/tests/` that name these folders in order to forbid them, are outside this rule.
 
 #### Scenario: Clean CI checkout
-- **GIVEN** a checkout without `game/assets/kenney/`, `game/assets/oga/` and `game/assets/itch/`
+- **GIVEN** a checkout without `game/assets/kenney/`, `game/assets/oga/`, `game/assets/itch/` and `game/assets/audio/ambience/`
 - **WHEN** the import, smoke run and unit tests run
 - **THEN** all three pass
 
