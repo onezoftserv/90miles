@@ -1,8 +1,9 @@
 extends GutTest
 ## ui-shell "Title screen": the menu, the description of the focused option and the version.
+## art-pass adds "Créditos" before "Salir" (design.md P8).
 
 const TITLE_SCENE: PackedScene = preload("res://scenes/shell/title_screen.tscn")
-const LABELS: Array[String] = ["Jugar solo", "Hospedar partida", "Unirse", "Ajustes", "Salir"]
+const LABELS: Array[String] = ["Jugar solo", "Hospedar partida", "Unirse", "Ajustes", "Créditos", "Salir"]
 
 
 func _title() -> TitleScreen:
@@ -36,7 +37,7 @@ func test_focus_describes_the_option() -> void:
 func test_each_button_asks_the_shell_for_its_screen() -> void:
 	var title := _title()
 	watch_signals(title)
-	var expected: Array[String] = ["solo_requested", "host_requested", "join_requested", "settings_requested", "quit_requested"]
+	var expected: Array[String] = ["solo_requested", "host_requested", "join_requested", "settings_requested", "credits_requested", "quit_requested"]
 	for i: int in expected.size():
 		title.buttons()[i].pressed.emit()
 		assert_signal_emitted(title, expected[i])
