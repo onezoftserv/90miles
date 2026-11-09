@@ -38,7 +38,7 @@ Every image the game draws SHALL come from a tracked folder under `game/assets/a
 - **THEN** it fails and names the pack
 
 ### Requirement: Credits screen
-The title screen SHALL offer *Créditos*, a screen that shows every credits entry in Spanish, the CC-BY entries first, each with its author, "CC BY 4.0", the licence's address (`https://creativecommons.org/licenses/by/4.0/`) and its source page, readable at 640×360 in the project font, scrollable when longer than the screen, and returning to the title on back or Esc. It needs no network: a solo player, offline, reaches it from the title.
+The title screen SHALL offer *Créditos*, a screen that shows every credits entry in Spanish, the CC-BY entries first, then the CC0 packs and the OFL fonts, each CC-BY entry with its author, "CC BY 4.0", the licence's address (`https://creativecommons.org/licenses/by/4.0/`) and its source page, readable at 640×360 in the project font, scrollable when longer than the screen, and returning to the title on back or Esc. It needs no network: a solo player, offline, reaches it from the title.
 
 #### Scenario: A solo player reads the credits
 - **GIVEN** the title screen, offline, with no session
@@ -219,7 +219,7 @@ A player SHALL be drawn in the pose for the state every peer already receives: i
 - **THEN** it shows the dead pose, which has no breathing frame, not the downed pose
 
 ### Requirement: Crouch pose
-While crouching, a player SHALL be drawn in the crouch pose at full width with the feet where they were, instead of a body squashed to 10 of its 16 px, and the hidden mark sits just above the crouch pose's head anchor. Teammates see the same pose. A solo player sees their own crouch pose.
+While crouching, a player SHALL be drawn in the crouch pose at full width with the feet where they were, and the hidden mark sits just above the crouch pose's head anchor, or above the name tag while it shows ("Head anchor"). Teammates see the same pose. A solo player sees their own crouch pose.
 
 #### Scenario: A solo player crouches in brush
 - **GIVEN** a solo player standing in brush
@@ -282,12 +282,12 @@ Each look slot SHALL recolour only the clothing ramp of the player frames to its
 - **THEN** every pair of mid tones differs in hue and has a contrast ratio of at least 1.3:1
 
 ### Requirement: Head anchor
-Each player pose SHALL have a head anchor, the point just above the top of the head. The teammate name tag SHALL sit on it, and the quick-chat speech bubble, the HUD marks and the interact prompt over a player just above it or above the name tag, so none overlaps another and all follow the head as it crouches, swims, dives or lies downed. A solo player has no name tag and no quick chat; their own marks use the same anchor.
+Each player pose SHALL have a head anchor, the point just above the top of the head. The teammate name tag SHALL sit on it, and the hidden mark, the interact prompt and the quick-chat speech bubble over a player stack upward from just above it, or from above the name tag while it shows, in that order, so none overlaps another and all follow the head as it crouches, swims, dives or lies downed. A solo player has no name tag and no quick chat; their own marks use the same anchor.
 
 #### Scenario: The tag follows a crouch into brush
 - **GIVEN** a client drawing a hurt teammate standing on brush, so the name tag shows on the standing anchor
 - **WHEN** the teammate crouches until hidden
-- **THEN** the name tag moves down to the crouch anchor and the hidden mark stays just above it
+- **THEN** the name tag moves down to the crouch anchor and the hidden mark stays just above the tag
 
 #### Scenario: A solo player's mark
 - **GIVEN** a solo player crouching in brush until hidden
@@ -425,7 +425,7 @@ The raft build site SHALL show its stage: a staked outline while empty, the depo
 - **THEN** the deck shows worn, then breaking, and then no deck, because it sank
 
 ### Requirement: Crossing look
-The crossing SHALL draw the same sea in its open-water step, scrolling with the crossing's own scroll, under everything in the crossing; the raft deck by its integrity, above the sea and under every rider; and riders in the water cut at the water line. A client and a late joiner draw it from the crossing state they already receive. A solo crossing looks the same.
+The crossing SHALL draw the same sea in its deep-water step, scrolling with the crossing's own scroll, under everything in the crossing; the raft deck by its integrity, above the sea and under every rider; and riders in the water cut at the water line. A client and a late joiner draw it from the crossing state they already receive. A solo crossing looks the same.
 
 #### Scenario: A solo raft crossing
 - **GIVEN** a solo player who launched the raft

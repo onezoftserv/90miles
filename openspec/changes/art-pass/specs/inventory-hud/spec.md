@@ -3,12 +3,12 @@
 ## MODIFIED Requirements
 
 ### Requirement: Crouch cue
-While a player's movement state is crouch, their body SHALL be drawn in the crouch pose of art-pass's "Crouch pose" requirement, its full 32×32 frames with the feet line where it was and the head lower, and in its standing or moving pose otherwise; while they are also hidden, the hidden mark shows over the crouch pose's head anchor. Every peer draws it from the state the host replicates, so teammates see it too. A solo player sees their own body lowered.
+While a player's movement state is crouch, their body SHALL be drawn in the crouch pose of art-pass's "Crouch pose" requirement, its full 32×32 frames with the feet line where it was and the head lower, and otherwise in the pose art-pass's "Player poses" requirement gives its state (crawling also uses the crouch pose); while they are also hidden, the hidden mark shows over the crouch pose's head anchor. Every peer draws it from the state the host replicates, so teammates see it too. A solo player sees their own body lowered.
 
 #### Scenario: Solo crouch
 - **GIVEN** a solo player walking on sand
 - **WHEN** they hold C
-- **THEN** their body is drawn in the crouch pose at its full 32×32 frame size with its feet line unchanged, and in the standing pose again when they let go
+- **THEN** their body is drawn in the crouch pose at its full 32×32 frame size with its feet line unchanged, and in the walk pose again when they let go
 
 #### Scenario: A teammate crouches
 - **GIVEN** a host and a client
