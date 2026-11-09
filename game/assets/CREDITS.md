@@ -20,10 +20,11 @@ Kenney packs are fetched by `python -I tools/fetch_assets.py` and are git-ignore
 | UI 9-slices (Pixel UI Pack: `9-Slice/Ancient/tan`, `9-Slice/Colored/blue`, `blue_pressed`) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/pixel-ui-pack | `art/ui/panel_tan.png`, `button_blue.png`, `button_blue_pressed.png` (tracked copies; license: `art/ui/License.txt`) |
 | Player placeholder sprite (Tiny Dungeon, tile_0097, 16x16) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/tiny-dungeon | `art/characters/player_placeholder.png` (tracked copy; license: `art/characters/License.txt`) |
 | DawnBringer's 32-colour palette (DB32) | DawnBringer | None stated (a published list of 32 colours, credited as a courtesy) | https://lospec.com/palette-list/dawnbringer-32 | `art/palette/master_palette.png` and `master_palette.gpl` (entries 1-32) and the DB32 colours of `player_ramps.png` and `skin_ramps.png`, unmodified (tracked; license: `art/palette/License.txt`) |
+| Drop shadow (MetroCity Free Top Down Character Pack 1.0, `CharacterModel/Shadow.png`: its 12x7 ellipse) | JIK-A-4 | CC0 1.0 | https://jik-a-4.itch.io/metrocity-free-topdown-character-pack | `art/shadows/shadow_12x7.png`, cut out of the 32x32 frame, colour and alpha unchanged (tracked copy; the 8x4 and 6x3 shadows beside it are own work; license: `art/shadows/License.txt`) |
 
 ## Art direction C packs (downloaded 2026-11-08)
 
-Downloaded by hand with the owner's permission into git-ignored folders (`game/assets/oga/`, `game/assets/itch/`); each pack folder keeps its archive, a `License.txt` with the source page, the licence and the date read, and an `extracted/` folder. No file from them is tracked yet: the `art-pass` change copies only the files it uses into `game/assets/art/<area>/` with their licence and adds a row here for each tracked copy, saying whether it was modified. The CC-BY packs must also be credited on the in-game credits screen.
+Downloaded by hand with the owner's permission into git-ignored folders (`game/assets/oga/`, `game/assets/itch/`); each pack folder keeps its archive, a `License.txt` with the source page, the licence and the date read, and an `extracted/` folder. The `art-pass` change copies only the files it uses into `game/assets/art/<area>/` with their licence and adds a row to the Packs table above for each tracked copy, saying whether it was modified. The CC-BY packs must also be credited on the in-game credits screen.
 
 | Pack | Author | License | Source | Local folder |
 | --- | --- | --- | --- | --- |

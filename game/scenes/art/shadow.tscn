@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/art/shadow.gd" id="1_shadow"]
+[ext_resource type="Texture2D" path="res://assets/art/shadows/shadow_12x7.png" id="2_large"]
+[ext_resource type="Texture2D" path="res://assets/art/shadows/shadow_8x4.png" id="3_medium"]
+[ext_resource type="Texture2D" path="res://assets/art/shadows/shadow_6x3.png" id="4_small"]
+
+[node name="Shadow" type="Sprite2D" groups=["art_view"]]
+z_index = -1
+texture = ExtResource("2_large")
+script = ExtResource("1_shadow")
+textures = Array[Texture2D]([ExtResource("2_large"), ExtResource("3_medium"), ExtResource("4_small")])

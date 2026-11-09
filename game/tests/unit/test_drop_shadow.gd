@@ -83,17 +83,16 @@ func _assert_fills_its_box(image: Image, path: String) -> void:
 	assert_eq(used, Rect2i(Vector2i.ZERO, image.get_size()), "%s fills its %s box" % [path, image.get_size()])
 
 
-# And is the same mirrored left to right and top to bottom.
+# And is the same mirrored left to right, so it sits centred under the feet (MetroCity's is not
+# mirrored top to bottom: the frame's last row cuts its lower half).
 func _assert_mirrored(image: Image, path: String) -> void:
 	var w: int = image.get_width()
-	var h: int = image.get_height()
 	var odd: int = 0
-	for y: int in h:
+	for y: int in image.get_height():
 		for x: int in w:
-			var a: int = image.get_pixel(x, y).a8
-			if a != image.get_pixel(w - 1 - x, y).a8 or a != image.get_pixel(x, h - 1 - y).a8:
+			if image.get_pixel(x, y).a8 != image.get_pixel(w - 1 - x, y).a8:
 				odd += 1
-	assert_eq(odd, 0, "%s is symmetric" % path)
+	assert_eq(odd, 0, "%s is the same mirrored left to right" % path)
 
 
 func test_the_pickup_size_is_the_8_by_4_ellipse() -> void:
