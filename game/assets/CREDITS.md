@@ -1,6 +1,6 @@
 # Asset credits
 
-Every third-party asset in `game/assets/`, its author, license and source. Update this file whenever a pack is added (see `docs/ASSETS.md`). CC-BY assets must also appear on the in-game credits screen.
+Every third-party asset in `game/assets/`, its author, license and source. Update this file whenever a pack is added (see `docs/ASSETS.md`). CC-BY assets must also appear on the in-game credits screen, which reads `game/assets/art/credits.tres` (this file and the `License.txt` files do not ship in an exported build). `test_art_credits.gd` checks that every pack block in a `License.txt` under `game/assets/art/` has an entry there and a row here with its author and source, and, for CC BY, "CC BY 4.0".
 
 Kenney packs are fetched by `python -I tools/fetch_assets.py` and are git-ignored (`game/assets/kenney/`); each pack folder keeps its own `License.txt`.
 
@@ -19,6 +19,7 @@ Kenney packs are fetched by `python -I tools/fetch_assets.py` and are git-ignore
 | Particle Pack | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/particle-pack | `kenney/particles/particle-pack/` |
 | UI 9-slices (Pixel UI Pack: `9-Slice/Ancient/tan`, `9-Slice/Colored/blue`, `blue_pressed`) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/pixel-ui-pack | `art/ui/panel_tan.png`, `button_blue.png`, `button_blue_pressed.png` (tracked copies; license: `art/ui/License.txt`) |
 | Player placeholder sprite (Tiny Dungeon, tile_0097, 16x16) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/tiny-dungeon | `art/characters/player_placeholder.png` (tracked copy; license: `art/characters/License.txt`) |
+| DawnBringer's 32-colour palette (DB32) | DawnBringer | None stated (a published list of 32 colours, credited as a courtesy) | https://lospec.com/palette-list/dawnbringer-32 | `art/palette/master_palette.png` and `master_palette.gpl` (entries 1-32) and the DB32 colours of `player_ramps.png` and `skin_ramps.png`, unmodified (tracked; license: `art/palette/License.txt`) |
 
 ## Art direction C packs (downloaded 2026-11-08)
 

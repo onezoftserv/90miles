@@ -186,12 +186,12 @@ static func _block_problem(block: Dictionary) -> String:
 		return "has no Author: line"
 	if not (source.begins_with("https://") or source.begins_with("http://")):
 		return "gives '%s' as its source, not the pack's page" % source
-	if _is_licence_deed(source):
+	if is_licence_deed(source):
 		return "gives the licence deed %s as its source, not the pack's page" % source
 	return ""
 
 
-static func _is_licence_deed(url: String) -> bool:
+static func is_licence_deed(url: String) -> bool:
 	var host: String = url.get_slice("://", 1).get_slice("/", 0).to_lower()
 	for licence_host: String in LICENCE_HOSTS:
 		if host == licence_host or host.ends_with("." + licence_host):

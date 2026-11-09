@@ -5,6 +5,12 @@ extends Resource
 ## the credits screen reads and test_art_credits.gd checks against every License.txt under
 ## res://assets/art and game/assets/CREDITS.md.
 
+## The credits screen's groups, in its order (design.md D10): the CC BY packs whose licence asks
+## for the credit, then the courtesy lines (CC0 packs, the palette), then the OFL fonts.
+enum Group { ATTRIBUTION, COURTESY, FONT }
+
+const FONT_LICENCE_PREFIX: String = "SIL OFL"
+
 ## The pack's name as its author gives it.
 @export var pack: String = ""
 ## Who made it, as its licence or page names them (matched against License.txt and CREDITS.md).
@@ -22,3 +28,11 @@ extends Resource
 @export var attribution_required: bool = false
 ## The line the credits screen shows, in Spanish, ending with the source page.
 @export var line_es: String = ""
+
+
+func group() -> Group:
+	if attribution_required:
+		return Group.ATTRIBUTION
+	if licence.begins_with(FONT_LICENCE_PREFIX):
+		return Group.FONT
+	return Group.COURTESY

@@ -13,5 +13,12 @@ static func standard() -> ArtCredits:
 	return load(STANDARD_PATH) as ArtCredits
 
 
+## The entries grouped as the credits screen lists them (ArtCredit.Group's order: the CC BY packs,
+## the courtesy lines, the fonts), keeping the file's order within a group.
 func in_screen_order() -> Array[ArtCredit]:
-	return entries.duplicate()
+	var ordered: Array[ArtCredit] = []
+	for group: int in ArtCredit.Group.values():
+		for entry: ArtCredit in entries:
+			if entry.group() == group:
+				ordered.append(entry)
+	return ordered
