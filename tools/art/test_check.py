@@ -18,7 +18,7 @@ FIXTURES = palette.GAME / "tests" / "fixtures" / "art"
 ## water contrast, sea in land tiles and frame budgets).
 NAMED_FIXTURES = [
     "licence/no_licence", "licence/deed_only", "licence/vendor_only", "licence/no_source",
-    "licence/own_work_url", "refs/unreferred.png", "creatures/off_palette.png", "items/half_alpha.png",
+    "licence/own_work_url", "licence/missing_licence_line", "licence/missing_author", "refs/unreferred.png", "creatures/off_palette.png", "items/half_alpha.png",
     "items/no_rim.png", "import/lossy.png", "import/mipmapped.png",
 ]
 PASSING_FIXTURES = [
@@ -62,6 +62,12 @@ class FixtureTest(unittest.TestCase):
         text = "\n".join(self.problems)
         for fixture in NAMED_FIXTURES:
             self.assertIn(fixture, text)
+
+    def test_the_missing_key_fixtures_fail_for_their_missing_key(self):
+        for fixture, reason in (("licence/missing_licence_line", "has no Licence: line"), ("licence/missing_author", "has no Author: line")):
+            named = [problem for problem in self.problems if fixture + "/" in problem]
+            self.assertEqual(len(named), 1, named)
+            self.assertIn(reason, named[0])
 
     def test_the_passing_fixtures_are_not_named(self):
         for problem in self.problems:

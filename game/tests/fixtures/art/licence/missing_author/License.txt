@@ -1,0 +1,4 @@
+Pack: Anonymous Pack
+Licence: CC0 1.0
+Source: https://example.com/anonymous-pack
+Files: piece.png

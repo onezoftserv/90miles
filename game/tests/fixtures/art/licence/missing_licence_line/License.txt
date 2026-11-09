@@ -1,0 +1,4 @@
+Pack: Unlicensed Pack
+Author: A. Fixture
+Source: https://example.com/unlicensed-pack
+Files: piece.png

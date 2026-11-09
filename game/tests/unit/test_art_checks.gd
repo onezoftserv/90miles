@@ -98,6 +98,16 @@ func test_the_source_is_read_only_from_the_blocks_own_source_line() -> void:
 	_assert_one_naming(ArtChecks.check_licence_folders(folder), [folder, "Fixture Pack", "Source:"])
 
 
+func test_a_block_without_a_licence_line_fails_naming_it() -> void:
+	var folder: String = _fixture("licence/missing_licence_line")
+	_assert_one_naming(ArtChecks.check_licence_folders(folder), [folder, "Unlicensed Pack", "no Licence: line"])
+
+
+func test_a_pack_block_without_its_author_fails_naming_it() -> void:
+	var folder: String = _fixture("licence/missing_author")
+	_assert_one_naming(ArtChecks.check_licence_folders(folder), [folder, "Anonymous Pack", "no Author: line"])
+
+
 func test_an_own_work_block_names_90_millas_as_its_source() -> void:
 	var folder: String = _fixture("licence/own_work_url")
 	_assert_one_naming(ArtChecks.check_licence_folders(folder), [folder, "90 Millas (own work)"])
