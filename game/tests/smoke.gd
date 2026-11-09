@@ -10,8 +10,9 @@ extends SceneTree
 ## Folders whose scripts must compile. res://tests is included because GUT skips test files
 ## it cannot parse, including the suite-integrity test that guards against that.
 const SCRIPT_ROOTS: Array[String] = ["res://scripts", "res://scenes", "res://tests"]
-## Folders whose scenes and resources must load.
-const RESOURCE_ROOTS: Array[String] = ["res://scenes", "res://resources"]
+## Folders whose scenes and resources must load. res://assets/art holds the art resources
+## (sprite frames, look parts, credits), which must not depend on a download folder either.
+const RESOURCE_ROOTS: Array[String] = ["res://scenes", "res://resources", "res://assets/art"]
 const RESOURCE_EXTENSIONS: Array[String] = ["tscn", "tres", "res"]
 ## Git-ignored download folders (see .gitignore). Nothing committed may depend on them, or CI,
 ## which has none of them, breaks.
