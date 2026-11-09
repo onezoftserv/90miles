@@ -182,7 +182,7 @@ func _anchor(route: RouteData, sender: PlayerBody) -> Variant:
 	for node: Node in get_tree().get_nodes_in_group(PlayerBody.STRUCTURE_GROUP):
 		var structure := node as Node2D
 		if structure != null and structure.get_meta(&"recipe_id", &"") == route.starter_id:
-			var reach_px: float = InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX
+			var reach_px: float = PlayerBody.HOLD_REACH_PX
 			return structure.global_position if sender.global_position.distance_to(structure.global_position) <= reach_px else null
 	return null
 

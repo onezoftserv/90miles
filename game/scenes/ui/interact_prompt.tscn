@@ -1,0 +1,32 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/interact_prompt.gd" id="1_prompt"]
+[ext_resource type="Script" path="res://scripts/ui/hud_ring.gd" id="2_ring"]
+
+[node name="InteractPrompt" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+script = ExtResource("1_prompt")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 0
+mouse_filter = 2
+theme_type_variation = &"HudPanel"
+
+[node name="Ring" type="Control" parent="."]
+layout_mode = 0
+mouse_filter = 2
+script = ExtResource("2_ring")
+
+[node name="Bar" type="ColorRect" parent="."]
+visible = false
+layout_mode = 0
+offset_right = 48.0
+offset_bottom = 4.0
+mouse_filter = 2
+
+[node name="Fill" type="ColorRect" parent="Bar"]
+layout_mode = 0
+offset_bottom = 4.0
+mouse_filter = 2

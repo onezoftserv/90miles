@@ -25,6 +25,20 @@ func register(recipe: RecipeData) -> void:
 	_recipes[recipe.id] = recipe
 
 
+## Every recipe this player can name: the content's recipe files and those registered here, one per
+## id (a registered one in place of the file).
+func known_recipes() -> Array[RecipeData]:
+	var by_id: Dictionary[StringName, RecipeData] = {}
+	for id: StringName in GameState.content.list_ids(&"recipes"):
+		var recipe := GameState.content.get_entry(&"recipes", id) as RecipeData
+		if recipe != null:
+			by_id[id] = recipe
+	by_id.merge(_recipes, true)
+	var known: Array[RecipeData] = []
+	known.assign(by_id.values())
+	return known
+
+
 func recipe_for(id: StringName) -> RecipeData:
 	if _recipes.has(id):
 		return _recipes[id]
@@ -170,4 +184,4 @@ func _fast_item(recipe: RecipeData) -> ItemData:
 
 
 func _in_reach(node: Node2D) -> bool:
-	return body.global_position.distance_to(node.global_position) <= InteractionPicker.REACH_PX + PlayerBody.REACH_SLACK_PX
+	return body.global_position.distance_to(node.global_position) <= PlayerBody.HOLD_REACH_PX

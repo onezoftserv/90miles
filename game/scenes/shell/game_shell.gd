@@ -214,6 +214,9 @@ func _on_host_lost() -> void:
 	host_lost_screen = HOST_LOST_SCENE.instantiate() as HostLostScreen
 	add_child(host_lost_screen)
 	host_lost_screen.back_requested.connect(_leave_host_lost)
+	# The HUD reads bodies that are going: it takes no input until it is freed with the run.
+	if hud != null:
+		hud.set_screen_shown(true)
 	# The session is inside its own signal: free it after this frame.
 	_end_run.call_deferred()
 
@@ -297,6 +300,7 @@ func _enter_run() -> void:
 	tint = TINT_SCENE.instantiate() as DayNightTint
 	_world.add_child(tint)
 	hud = HUD_SCENE.instantiate() as RunHud
+	hud.world_view = world_view
 	add_child(hud)
 	hud.bind(session, session.multiplayer.get_unique_id(), session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer)
 	_wait_label = _make_wait_label()
@@ -405,8 +409,10 @@ func _check_run_over() -> void:
 	var made := RunSummary.collect(session, travel.islands_reached, WeatherManager.sky.clock.day,
 			clock.call() - _run_started_s, death_lines, GameState.content)
 	WeatherManager.stop()
-	# The HUD (and its pause menu) goes with the run: nothing under the summary can pause it.
+	# The HUD (and its pause menu) goes with the run: nothing under the summary can pause it. It
+	# stops taking input first, so no key reaches it in the frame before it is freed (inventory-hud).
 	if hud != null:
+		hud.set_screen_shown(true)
 		hud.queue_free()
 		hud = null
 	_wait_label = null

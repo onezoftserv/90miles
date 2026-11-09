@@ -3,6 +3,10 @@ extends RefCounted
 ## One player's interact button state: locks the target when the press starts, counts how long
 ## it has been held, uses the target when its hold time is reached, and resets on release.
 
+## A sum of frame deltas that falls this short of the hold time still counts as reaching it (the
+## HUD's PressTimer reads the same, so its ring ends on this frame).
+const TOLERANCE_S: float = 0.000001
+
 ## The interactable locked by the current press, or null.
 var target: Interactable = null
 var progress_s: float = 0.0
@@ -30,7 +34,7 @@ func update(held: bool, delta: float, by: Node, candidate: Interactable) -> bool
 	if completed:
 		return false
 	progress_s += delta
-	if progress_s >= target.hold_time_s - 0.000001:
+	if progress_s >= target.hold_time_s - TOLERANCE_S:
 		completed = true
 		target.use(by)
 		return true

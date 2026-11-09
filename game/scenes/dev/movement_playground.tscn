@@ -21,6 +21,7 @@ local_player = false
 position = Vector2(56, 200)
 script = ExtResource("3_interactable")
 hold_time_s = 0.0
+prompt_id = &"pick_up"
 
 [node name="Hud" type="CanvasLayer" parent="."]
 

@@ -15,6 +15,9 @@ const STRUCTURE_GROUP: StringName = &"built_structures"
 const TILE_SIZE: float = 16.0
 ## Leeway beyond the 1 tile reach before a timed press is dropped.
 const REACH_SLACK_PX: float = 2.0
+## How far a held press, a use on a teammate or a request at a bench or a site reaches: the
+## picker's 1 tile and the slack. The host and the HUD read this one number.
+const HOLD_REACH_PX: float = InteractionPicker.REACH_PX + REACH_SLACK_PX
 
 ## What this player wants to do now. Set by PlayerInput, tests or the network.
 var intent: MoveIntent = MoveIntent.new()
@@ -35,6 +38,9 @@ var downed: bool = false
 var left_island: bool = false
 ## A tied-down rider (crossing) cannot move but still interacts.
 var pinned: bool = false
+## A HUD panel holds the interact button (inventory-hud's crafting list, until interact is let go
+## after it closes): the local intent carries no interact press meanwhile.
+var hud_holds_interact: bool = false
 ## Scales the energy swimming spends: 0 where the crossing pays its own pace drain instead.
 var swim_energy_factor: float = 1.0
 var interaction_hold: InteractionHold = InteractionHold.new()
@@ -204,7 +210,7 @@ func _update_interaction(delta: float) -> void:
 	# A press still counting down is dropped when its target is out of reach; a completed one
 	# (a drag) stays, because the dragger walks faster than the body it drags.
 	var target: Interactable = interaction_hold.target
-	if is_instance_valid(target) and not interaction_hold.completed 			and global_position.distance_to(target.global_position) > InteractionPicker.REACH_PX + REACH_SLACK_PX:
+	if is_instance_valid(target) and not interaction_hold.completed 			and global_position.distance_to(target.global_position) > HOLD_REACH_PX:
 		interaction_hold.cancel(self)
 	# Only a fresh press picks a target; holding while walking into reach does nothing.
 	if pressed:

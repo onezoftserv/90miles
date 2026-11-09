@@ -8,10 +8,16 @@ static var _warned: Dictionary[int, bool] = {}
 
 
 static func all_hold(conditions: Array[ConditionData], actor: PlayerBody) -> bool:
+	return first_failing(conditions, actor) == null
+
+
+## The first of `conditions` that does not hold for `actor`, or null when they all do (the HUD
+## names the tool it lacks, inventory-hud "Refused uses").
+static func first_failing(conditions: Array[ConditionData], actor: PlayerBody) -> ConditionData:
 	for condition: ConditionData in conditions:
 		if not holds(condition, actor):
-			return false
-	return true
+			return condition
+	return null
 
 
 static func holds(condition: ConditionData, actor: PlayerBody) -> bool:

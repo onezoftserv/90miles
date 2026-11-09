@@ -99,6 +99,22 @@ texture_margin_top = 4.0
 texture_margin_right = 4.0
 texture_margin_bottom = 4.0
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slot"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.95686275, 0.9372549, 0.8784314, 0.35)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slot_selected"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.8, 0, 1)
+
 [resource]
 default_font = ExtResource("5_8pe67")
 default_font_size = 8
@@ -128,8 +144,16 @@ CheckBox/styles/focus = SubResource("StyleBoxFlat_8fmfx")
 HeadingLabel/base_type = &"Label"
 HeadingLabel/font_sizes/font_size = 16
 HeadingLabel/fonts/font = ExtResource("1_06db0")
+HudCount/base_type = &"Label"
+HudCount/colors/font_outline_color = Color(0.04, 0.08, 0.13, 1)
+HudCount/colors/font_shadow_color = Color(0, 0, 0, 0)
+HudCount/constants/outline_size = 1
 HudPanel/base_type = &"PanelContainer"
 HudPanel/styles/panel = SubResource("StyleBoxFlat_afeyr")
+HudSlot/base_type = &"Panel"
+HudSlot/styles/panel = SubResource("StyleBoxFlat_slot")
+HudSlotSelected/base_type = &"Panel"
+HudSlotSelected/styles/panel = SubResource("StyleBoxFlat_slot_selected")
 Label/colors/font_color = Color(0.95686275, 0.9372549, 0.8784314, 1)
 Label/colors/font_shadow_color = Color(0, 0, 0, 0.8)
 Label/constants/line_spacing = 2

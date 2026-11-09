@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/craft_list.gd" id="1_list"]
+
+[node name="CraftList" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+script = ExtResource("1_list")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 162.0
+offset_right = 244.0
+offset_bottom = 302.0
+mouse_filter = 2
+theme_type_variation = &"HudPanel"
