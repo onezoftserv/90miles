@@ -528,22 +528,20 @@ func _changed(a: Image, b: Image, classes: PackedByteArray, wanted: int) -> int:
 
 # Shore cells fully on screen: how many draw foam touching a land colour, and how many changed
 # between two images (the foam moving). Foam is a blue-white pixel brighter than the land's mean,
-# which holds under any tint, since the tint scales land and foam alike.
+# and land a pixel no bluer than it is red (sand, dune, brush and rock; the sea is blue); both hold
+# under the day-night tint, which scales them alike.
 func _foam(image: Image, later: Image) -> Dictionary:
 	var size: Vector2i = image.get_size()
 	var data: PackedByteArray = image.get_data()
 	var after: PackedByteArray = later.get_data() if later != null else PackedByteArray()
 	var classes: PackedByteArray = _classes(image)
-	var land_colours: Dictionary[int, bool] = {}
-	for i: int in classes.size():
-		if classes[i] == 1:
-			land_colours[(data[i * 4] << 16) | (data[i * 4 + 1] << 8) | data[i * 4 + 2]] = true
 	var bright: float = _mean(image, classes, 1) * 765.0
 	var from_island: Transform2D = island.get_global_transform_with_canvas()
 	var view := Rect2(Vector2.ZERO, Vector2(size))
 	var shore: int = 0
 	var touching: int = 0
 	var moved: PackedInt32Array = []
+	var bare: Array[Vector2i] = []
 	var built_size: Vector2i = (island.get("built") as Object).get("size")
 	for y: int in built_size.y:
 		for x: int in built_size.x:
@@ -563,19 +561,21 @@ func _foam(image: Image, later: Image) -> Dictionary:
 					if not after.is_empty() and (data[i * 4] != after[i * 4] or data[i * 4 + 1] != after[i * 4 + 1] or data[i * 4 + 2] != after[i * 4 + 2]):
 						changed += 1
 					var foam: bool = data[i * 4 + 2] > data[i * 4] + 20 and data[i * 4] + data[i * 4 + 1] + data[i * 4 + 2] > bright
-					if touches or not foam or land_colours.has((data[i * 4] << 16) | (data[i * 4 + 1] << 8) | data[i * 4 + 2]):
+					if touches or not foam:
 						continue
 					for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
 						var next: Vector2i = at + step
 						if Rect2i(Vector2i.ZERO, size).has_point(next):
 							var j: int = (next.y * size.x + next.x) * 4
-							if land_colours.has((data[j] << 16) | (data[j + 1] << 8) | data[j + 2]):
+							if data[j + 2] < data[j] + 12:
 								touches = true
 								break
 			if touches:
 				touching += 1
+			else:
+				bare.append(cell)
 			moved.append(changed)
-	return {"shore": shore, "touching": touching, "moved": moved}
+	return {"shore": shore, "touching": touching, "moved": moved, "bare": bare}
 
 
 func _check_shore_view(where: String) -> void:
@@ -598,7 +598,7 @@ func _check_shore_view(where: String) -> void:
 	if shore == 0:
 		_note("%s: no shore cell wholly in view" % where)
 		return
-	_check("%s: the foam touches the sand on every shore cell in view" % where, int(foam["touching"]) == shore, "%d of %d shore cells" % [foam["touching"], shore])
+	_check("%s: the foam touches the sand on every shore cell in view" % where, int(foam["touching"]) == shore, "%d of %d shore cells; without: %s" % [foam["touching"], shore, foam["bare"]])
 	_check("%s: the foam moves, and unevenly (cells change by different amounts in 0.25 s)" % where, moving > 0 and distinct.size() > 1, "%d of %d shore cells changed, %d distinct amounts" % [moving, shore, distinct.size()])
 
 
@@ -789,8 +789,9 @@ func _site(recipe_id: StringName, built: bool = false) -> Node2D:
 	return null
 
 
+# A built structure: the host spawns them into the session's Entities.
 func _structure(script_name: StringName) -> Node2D:
-	for node: Node in session.get_children():
+	for node: Node in session.get_node(^"Entities").get_children() + session.get_children():
 		var script: Script = node.get_script()
 		if script != null and script.get_global_name() == script_name and not node.is_queued_for_deletion():
 			return node as Node2D
@@ -930,13 +931,13 @@ func _looks() -> void:
 	await _seconds(0.5)
 	await _follow([_center(start)], 4.0, "swim back")
 	await _walk_to(from + Vector2(-TILE * 2.0, 0.0))
-	body.set("downed", true)
-	_hooked("the body downed for two frames (solo has no teammate to down it for)")
-	await _frames(3)
+	body.call("set_downed", true)
+	_hooked("the body downed for a moment through PlayerBody.set_downed (solo has no teammate to down it for)")
+	await _frames(6)
 	_check("downed: the downed look", _pose() == "DOWNED", _pose())
 	await _world_image("look_downed")
-	body.set("downed", false)
-	await _frames(3)
+	body.call("set_downed", false)
+	await _frames(6)
 	_check("back up: standing", _pose() == "STANDING", _pose())
 
 
