@@ -50,6 +50,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import compose  # noqa: E402
+import guard  # noqa: E402
 import palette  # noqa: E402
 import png  # noqa: E402
 
@@ -57,7 +58,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 DEFAULT_RECIPE = HERE / "terrain_tiles.json"
 DEFAULT_FIXES = HERE / "fixes" / "terrain"
 DEFAULT_OUT = palette.ART
-DOWNLOAD_FOLDERS = ("oga", "itch", "kenney")
+DOWNLOAD_FOLDERS = guard.DOWNLOAD_FOLDERS
 NAME = re.compile(r"^[a-z0-9_]+$")
 HAND = "hand"
 HAND_SOURCE = re.compile(r"^[a-z0-9_]+\.png$")
@@ -617,11 +618,7 @@ def _copies(entries, fixes):
 
 
 def _out_folder(out, packs):
-    out = pathlib.Path(out).resolve()
-    for folder in DOWNLOAD_FOLDERS:
-        if out.is_relative_to(pathlib.Path(packs).resolve() / folder):
-            raise TerrainError(f"{out} is inside the download folder {folder}/, where nothing is written")
-    return out
+    return guard.out_folder(out, packs, TerrainError)
 
 
 def _refuse_unread_fixes(recipe, fixes):

@@ -27,6 +27,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
+import guard  # noqa: E402
 import palette  # noqa: E402
 import png  # noqa: E402
 import poses  # noqa: E402
@@ -143,9 +144,9 @@ def build_part(part, packs, fixes, palette_colours, outline_colours, exclude=(),
 
 
 def build_parts(parts, packs, fixes, out, palette_colours, outline_colours, exclude=(), log=print):
-    """Builds and writes each part in order; an overlay's body is built before it or read from `out`."""
-    out = pathlib.Path(out)
-    out.mkdir(parents=True, exist_ok=True)
+    """Builds each part in order, then writes them all under `out`, so a refused part leaves none
+    behind; an overlay's body is built before it or read from `out`."""
+    out = guard.out_folder(out, packs, PartError)
     built = {}
     for part in parts:
         over = None
@@ -158,9 +159,11 @@ def build_parts(parts, packs, fixes, out, palette_colours, outline_colours, excl
             else:
                 raise PartError(f"{part.get('id', '?')}: its body {body_id} is not built (list it first)")
         sheet = build_part(part, packs, fixes, palette_colours, outline_colours, exclude, over, log)
-        png.write_png(out / f"{part['id']}.png", sheet)
-        log(f"compose: {part['id']} -> {out / (part['id'] + '.png')}")
         built[part["id"]] = sheet
+    out.mkdir(parents=True, exist_ok=True)
+    for part_id, sheet in built.items():
+        png.write_png(out / f"{part_id}.png", sheet)
+        log(f"compose: {part_id} -> {out / (part_id + '.png')}")
     return built
 
 
