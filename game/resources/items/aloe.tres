@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_effect"]
 [ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="2_use"]
 [ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_item"]
+[ext_resource type="Texture2D" uid="uid://dqww72km0klao" path="res://assets/art/items/aloe.png" id="icon_aloe"]
 
 [sub_resource type="Resource" id="Resource_sunburn"]
 script = ExtResource("1_effect")
@@ -25,6 +26,7 @@ effects = Array[ExtResource("1_effect")]([SubResource("Resource_sunburn"), SubRe
 
 [resource]
 script = ExtResource("3_item")
+sprite = ExtResource("icon_aloe")
 description_es = "La conoce cualquier cubano de más de cuarenta. Cura la quemadura y corta el sangrado."
 description_en = "Any Cuban over forty knows it. Soothes sunburn and stops bleeding."
 category = 2

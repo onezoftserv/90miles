@@ -1,0 +1,85 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/shell/credits_screen.gd" id="1_credits"]
+
+[node name="CreditsScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_credits")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 16.0
+offset_right = 608.0
+offset_bottom = 344.0
+
+[node name="Box" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="Panel/Box"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_colors/font_color = Color(0.23, 0.16, 0.09, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+text = "Créditos"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="List" type="VBoxContainer" parent="Panel/Box/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="AttributionHeading" type="Label" parent="Panel/Box/Scroll/List"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CreditsLabel"
+text = "Con licencia CC BY 4.0"
+horizontal_alignment = 1
+
+[node name="Attribution" type="VBoxContainer" parent="Panel/Box/Scroll/List"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="CourtesyHeading" type="Label" parent="Panel/Box/Scroll/List"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CreditsLabel"
+text = "Gracias también a"
+horizontal_alignment = 1
+
+[node name="Courtesy" type="VBoxContainer" parent="Panel/Box/Scroll/List"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="FontsHeading" type="Label" parent="Panel/Box/Scroll/List"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CreditsLabel"
+text = "Fuentes"
+horizontal_alignment = 1
+
+[node name="Fonts" type="VBoxContainer" parent="Panel/Box/Scroll/List"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Back" type="Button" parent="Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Volver"

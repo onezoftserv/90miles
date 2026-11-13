@@ -1,0 +1,130 @@
+[gd_resource type="Resource" script_class="ArtCredits" format=3]
+
+[ext_resource type="Script" path="res://scripts/art/art_credits.gd" id="1_credits"]
+[ext_resource type="Script" path="res://scripts/art/art_credit.gd" id="2_credit"]
+
+[sub_resource type="Resource" id="credit_dawnlike"]
+script = ExtResource("2_credit")
+pack = "DawnLike - 16x16 Universal Rogue-like tileset"
+author = "DragonDePlatino; palette by DawnBringer"
+licence = "CC BY 4.0"
+licence_url = "https://creativecommons.org/licenses/by/4.0/"
+source = "https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181"
+version = "1.81"
+modified = true
+attribution_required = true
+line_es = "DawnLike – 16x16 Universal Rogue-like tileset v1.81, de DragonDePlatino; paleta de DawnBringer (CC BY 4.0) – opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181"
+
+[sub_resource type="Resource" id="credit_tth_animals"]
+script = ExtResource("2_credit")
+pack = "Tiny, Tiny Heroes - Animals"
+author = "Kacper Woźniak (thkaspar)"
+licence = "CC BY 4.0"
+licence_url = "https://creativecommons.org/licenses/by/4.0/"
+source = "https://thkaspar.itch.io/tth-animals"
+modified = true
+attribution_required = true
+line_es = "Tiny, Tiny Heroes - Animals, de Kacper Woźniak (thkaspar) (CC BY 4.0) – thkaspar.itch.io/tth-animals"
+
+[sub_resource type="Resource" id="credit_kyrise"]
+script = ExtResource("2_credit")
+pack = "Kyrise's Free 16x16 RPG Icon Pack"
+author = "Kyrise"
+licence = "CC BY 4.0"
+licence_url = "https://creativecommons.org/licenses/by/4.0/"
+source = "https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack"
+version = "1.3"
+modified = true
+attribution_required = true
+line_es = "Kyrise's Free 16x16 RPG Icon Pack © 2018 Kyrise (CC BY 4.0) – kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack"
+
+[sub_resource type="Resource" id="credit_metrocity"]
+script = ExtResource("2_credit")
+pack = "MetroCity Free Top Down Character Pack"
+author = "JIK-A-4"
+licence = "CC0 1.0"
+licence_url = "https://creativecommons.org/publicdomain/zero/1.0/"
+source = "https://jik-a-4.itch.io/metrocity-free-topdown-character-pack"
+version = "1.0"
+modified = true
+line_es = "MetroCity Free Top Down Character Pack 1.0, de JIK-A-4 (CC0) – jik-a-4.itch.io/metrocity-free-topdown-character-pack"
+
+[sub_resource type="Resource" id="credit_zelda_like"]
+script = ExtResource("2_credit")
+pack = "Zelda-like tilesets and sprites"
+author = "ArMM1998"
+licence = "CC0 1.0"
+licence_url = "https://creativecommons.org/publicdomain/zero/1.0/"
+source = "https://opengameart.org/content/zelda-like-tilesets-and-sprites"
+modified = true
+line_es = "Zelda-like tilesets and sprites, de ArMM1998 (CC0) – opengameart.org/content/zelda-like-tilesets-and-sprites"
+
+[sub_resource type="Resource" id="credit_scallywag"]
+script = ExtResource("2_credit")
+pack = "Scallywag - Water and Islands"
+author = "Foozle, commissioned from Pixel Carvel"
+licence = "CC0 1.0"
+licence_url = "https://creativecommons.org/publicdomain/zero/1.0/"
+source = "https://foozlecc.itch.io/scallywag-water-islands"
+version = "1.0"
+modified = true
+line_es = "Scallywag - Water and Islands 1.0, de Foozle, dibujado por Pixel Carvel (CC0) – foozlecc.itch.io/scallywag-water-islands"
+
+[sub_resource type="Resource" id="credit_eldiran"]
+script = ExtResource("2_credit")
+pack = "16x16 Shoreline Wave Animation Tiles"
+author = "Eldiran"
+licence = "CC0 1.0"
+licence_url = "https://creativecommons.org/publicdomain/zero/1.0/"
+source = "https://opengameart.org/node/144858"
+modified = true
+line_es = "16x16 Shoreline Wave Animation Tiles, de Eldiran (CC0) – opengameart.org/node/144858"
+
+[sub_resource type="Resource" id="credit_kenney_pixel_ui"]
+script = ExtResource("2_credit")
+pack = "Pixel UI Pack"
+author = "Kenney (kenney.nl)"
+licence = "CC0 1.0"
+licence_url = "https://creativecommons.org/publicdomain/zero/1.0/"
+source = "https://kenney.nl/assets/pixel-ui-pack"
+line_es = "Pixel UI Pack, de Kenney (CC0) – kenney.nl/assets/pixel-ui-pack"
+
+[sub_resource type="Resource" id="credit_kenney_tiny_dungeon"]
+script = ExtResource("2_credit")
+pack = "Tiny Dungeon"
+author = "Kenney (kenney.nl)"
+licence = "CC0 1.0"
+licence_url = "https://creativecommons.org/publicdomain/zero/1.0/"
+source = "https://kenney.nl/assets/tiny-dungeon"
+version = "1.0"
+line_es = "Tiny Dungeon 1.0, de Kenney (CC0) – kenney.nl/assets/tiny-dungeon"
+
+[sub_resource type="Resource" id="credit_db32"]
+script = ExtResource("2_credit")
+pack = "DawnBringer's 32-colour palette (DB32)"
+author = "DawnBringer"
+licence = "None stated"
+source = "https://lospec.com/palette-list/dawnbringer-32"
+line_es = "Paleta DawnBringer 32 (DB32), de DawnBringer – lospec.com/palette-list/dawnbringer-32"
+
+[sub_resource type="Resource" id="credit_press_start_2p"]
+script = ExtResource("2_credit")
+pack = "Press Start 2P"
+author = "The Press Start 2P Project Authors (CodeMan38)"
+licence = "SIL OFL 1.1"
+licence_url = "https://openfontlicense.org/open-font-license-official-text/"
+source = "https://github.com/google/fonts/tree/main/ofl/pressstart2p"
+line_es = "Press Start 2P, de The Press Start 2P Project Authors (CodeMan38) (SIL OFL 1.1) – github.com/google/fonts/tree/main/ofl/pressstart2p"
+
+[sub_resource type="Resource" id="credit_pixelify_sans"]
+script = ExtResource("2_credit")
+pack = "Pixelify Sans"
+author = "The Pixelify Sans Project Authors"
+licence = "SIL OFL 1.1"
+licence_url = "https://openfontlicense.org/open-font-license-official-text/"
+source = "https://github.com/google/fonts/tree/main/ofl/pixelifysans"
+line_es = "Pixelify Sans, de The Pixelify Sans Project Authors (SIL OFL 1.1) – github.com/google/fonts/tree/main/ofl/pixelifysans"
+
+[resource]
+script = ExtResource("1_credits")
+entries = Array[ExtResource("2_credit")]([SubResource("credit_dawnlike"), SubResource("credit_tth_animals"), SubResource("credit_kyrise"), SubResource("credit_metrocity"), SubResource("credit_zelda_like"), SubResource("credit_scallywag"), SubResource("credit_eldiran"), SubResource("credit_kenney_pixel_ui"), SubResource("credit_kenney_tiny_dungeon"), SubResource("credit_db32"), SubResource("credit_press_start_2p"), SubResource("credit_pixelify_sans")])

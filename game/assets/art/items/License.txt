@@ -1,0 +1,17 @@
+Pack: Kyrise's Free 16x16 RPG Icon Pack (v1.3)
+Author: Kyrise
+Licence: CC BY 4.0
+Source: https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack
+Files: driftwood.png (redrawn by hand over icons/16x16/wood_01a.png as tools/art/fixes/items/driftwood.png: its silhouette less the right outline column, recoloured as bleached tan wood with new grain lines and a new end ring, outlined in black); rain_cup.png (icons/16x16/cup_01a.png, remapped to the master palette). Both made by tools/art/items.py from tools/art/item_icons.json.
+
+Pack: DawnLike - 16x16 Universal Rogue-like tileset v1.81
+Author: DragonDePlatino; palette by DawnBringer
+Licence: CC BY 4.0
+Source: https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181
+Files: knife.png (redrawn by hand over Items/ShortWep.png, column 0, row 0, the dagger, as tools/art/fixes/items/knife.png: a wider steel blade with a light edge, a bolster in place of the guard and a wooden handle, outlined in black). Made by tools/art/items.py from tools/art/item_icons.json.
+
+Work: 90 Millas item icons
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: coco.png, dry_grass.png, inner_tube.png, plastic_jug.png, rope.png, tarp.png, binoculars.png, nails.png, mirror.png, aloe.png, lighter.png (drawn by hand as tools/art/fixes/items/<id>.png and outlined by tools/art/items.py)

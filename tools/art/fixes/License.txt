@@ -1,0 +1,5 @@
+Work: 90 Millas player part fixes
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: body_man.png and body_woman.png (hand-fix overlays on the frame layout, blended last by compose.py: knees bent in the crouch cells, eyes shut in the dead cell; #ff00ff erases); terrain/ has its own License.txt

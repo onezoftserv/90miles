@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BodyArt" format=3]
+
+[ext_resource type="Script" path="res://scripts/art/body_art.gd" id="1_art"]
+[ext_resource type="Script" path="res://scripts/art/player_look_data.gd" id="2_look_script"]
+[ext_resource type="SpriteFrames" path="res://assets/art/characters/balsero_frames.tres" id="3_frames"]
+[ext_resource type="Resource" path="res://assets/art/characters/looks/balsero.tres" id="4_slot0"]
+[ext_resource type="Resource" path="res://assets/art/characters/looks/balsera_triguena.tres" id="5_slot1"]
+[ext_resource type="Resource" path="res://assets/art/characters/looks/balsero_claro.tres" id="6_slot2"]
+[ext_resource type="Resource" path="res://assets/art/characters/looks/balsera_morena.tres" id="7_slot3"]
+
+[resource]
+script = ExtResource("1_art")
+frames = ExtResource("3_frames")
+feet_row = 30
+feet_y = 4
+water_row = 19
+swim_drop_px = 12
+head_gap_px = 1
+dive_anchor_y = -4
+default_look = ExtResource("4_slot0")
+slot_looks = Array[ExtResource("2_look_script")]([ExtResource("4_slot0"), ExtResource("5_slot1"), ExtResource("6_slot2"), ExtResource("7_slot3")])

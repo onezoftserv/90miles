@@ -1,0 +1,38 @@
+{
+  "sources": {
+    "tth_animals": "itch/tth-animals/extracted/animals/spritesheet.png"
+  },
+  "sheets": [
+    {
+      "id": "reef_shark",
+      "size": [160, 16],
+      "cell": [32, 16],
+      "layers": [
+        {"hand": "reef_shark.png"}
+      ]
+    },
+    {
+      "id": "land_crab",
+      "size": [96, 16],
+      "cell": [16, 16],
+      "layers": [
+        {"hand": "land_crab.png"}
+      ]
+    },
+    {
+      "id": "seagull",
+      "size": [128, 48],
+      "cell": [16, 16],
+      "layers": [
+        {
+          "from": "tth_animals",
+          "rect": [128, 240, 128, 48],
+          "at": [0, 0],
+          "map": {"#3a4466": "#3f3f74", "#5a6988": "#847e87", "#c0cbdc": "#cbdbfc", "#f77622": "#df7126", "#feae34": "#fbf236"}
+        },
+        {"hand": "seagull_back.png"}
+      ],
+      "rim": true
+    }
+  ]
+}

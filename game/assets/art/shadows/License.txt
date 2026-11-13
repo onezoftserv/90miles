@@ -1,0 +1,11 @@
+Pack: MetroCity Free Top Down Character Pack (1.0)
+Author: JIK-A-4
+Licence: CC0 1.0
+Source: https://jik-a-4.itch.io/metrocity-free-topdown-character-pack
+Files: shadow_12x7.png (CharacterModel/Shadow.png: its 12x7 ellipse, x 10-21 and y 25-31, cut out of the 32x32 frame; colour and alpha unchanged)
+
+Work: 90 Millas smaller shadows
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: shadow_8x4.png and shadow_6x3.png (drawn after MetroCity's ellipse, in its colour and alpha)

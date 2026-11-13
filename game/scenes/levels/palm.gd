@@ -29,8 +29,3 @@ func _on_interacted(by: Node) -> void:
 	coconuts -= 1
 	for effect: EffectData in climb_effects:
 		EffectApplier.apply(effect, player, null)
-
-
-func _draw() -> void:
-	draw_rect(Rect2(-1.5, -2.0, 3.0, 8.0), Color(0.45, 0.3, 0.15))
-	draw_rect(Rect2(-7.0, -8.0, 14.0, 6.0), Color(0.2, 0.5, 0.2))

@@ -7,8 +7,9 @@ extends Control
 ## and the label where no content name applies, come from hud_text.tres under the interactable's
 ## prompt id; the content name comes from its owner (`Interactable.prompt_target`), and a thing
 ## that hides what it holds names only itself. Each frame it is placed from its target's canvas
-## position mapped into the HUD: centred over it at whole pixels, its bottom edge 12 px above (34
-## px above a player, over the name tag), at most 240 px wide, inside x 4-636, y 22-302 and off
+## position mapped into the HUD: centred over it at whole pixels, its bottom edge 12 px above (or,
+## over a player: 3 px above its name tag's label as placed on its head anchor, and above its hidden
+## mark; art-pass "Head anchor", design.md P5, P11), at most 240 px wide, inside x 4-636, y 22-302 and off
 ## every HUD panel; a first line too wide puts its target on a second line, and a line still too
 ## wide ends in "…". Drawn in the HUD layer, the night tint and the Suave filter leave it
 ## alone. It hides while the player is down or gone, the crafting list is open, the run is paused
@@ -33,8 +34,11 @@ const LINE_HEIGHT: float = 10.0
 const GLYPH_PX: float = HudStyle.GLYPH_PX
 const MAX_WIDTH: float = 240.0
 const RISE_PX: float = 12.0
-## Over a player the prompt clears the NameTag label, whose top is 31 px above the body.
-const PLAYER_RISE_PX: float = 34.0
+## Over a player the prompt's bottom sits this far above the top of the player's name tag label
+## (shown or not) and of its hidden mark.
+const PLAYER_GAP_PX: float = 3.0
+## Every prompt, so a speech bubble over a player can sit above it (design.md P11).
+const GROUP: StringName = &"interact_prompts"
 ## Where the prompt may sit: off the screen edges, below the top band's panels' row and above the
 ## inventory band.
 const BOUNDS: Rect2 = Rect2(4.0, 22.0, 632.0, 280.0)
@@ -66,6 +70,8 @@ var list_open: Callable = func() -> bool: return false
 var to_hud: Callable = func(point: Vector2) -> Vector2: return point
 ## The HUD rects the prompt keeps clear of; RunHud answers.
 var avoid: Callable = func() -> Array[Rect2]: return []
+## The hidden marks, which a prompt over a player sits above; RunHud sets it.
+var marks: BodyMarks = null
 ## The interactable the prompt is over, or null.
 var target: Interactable = null
 var _labels: Array[Label] = []
@@ -154,6 +160,7 @@ static func _off(rect: Rect2, blocker: Rect2) -> Rect2:
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Runs while the solo pause freezes the run, so the prompt hides under the pause menu.
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -225,6 +232,13 @@ func lines() -> PackedStringArray:
 ## The prompt's rect in HUD pixels.
 func prompt_rect() -> Rect2:
 	return get_global_rect()
+
+
+## The player the prompt is shown over, or null.
+func over_player() -> PlayerBody:
+	if not visible or not is_instance_valid(target):
+		return null
+	return target.prompt_player()
 
 
 ## The build progress the bar shows, 0 to 1, or below 0 with no bar on show.
@@ -302,9 +316,13 @@ func _show(shown: PackedStringArray) -> void:
 		shown[i] = InventoryStrip.cut(shown[i], floori((MAX_WIDTH - indent) / GLYPH_PX))
 		width = maxf(width, shown[i].length() * GLYPH_PX + indent)
 	var box := Vector2(width, shown.size() * LINE_HEIGHT)
-	var anchor: Vector2 = (to_hud.call(target.get_global_transform_with_canvas().origin) as Vector2).round()
-	var rise: float = PLAYER_RISE_PX if target.prompt_player() != null else RISE_PX
-	var rect := place(anchor, box, rise, avoid.call())
+	var player: PlayerBody = target.prompt_player()
+	var rect: Rect2
+	if player != null:
+		rect = place(_over_player(player), box, 0.0, avoid.call())
+	else:
+		var anchor: Vector2 = (to_hud.call(target.get_global_transform_with_canvas().origin) as Vector2).round()
+		rect = place(anchor, box, RISE_PX, avoid.call())
 	position = rect.position
 	size = rect.size
 	panel.position = Vector2.ZERO
@@ -315,6 +333,19 @@ func _show(shown: PackedStringArray) -> void:
 	_show_bar(shown.size() - 1)
 	_set_lines(shown, indents)
 	visible = true
+
+
+# Where the prompt's bottom centre goes over `player` (HUD pixels): measured from that player's
+# position, PLAYER_GAP_PX above its name tag's label on its current head anchor, whether the tag
+# shows or not, and above its hidden mark.
+func _over_player(player: PlayerBody) -> Vector2:
+	var canvas: Transform2D = player.get_global_transform_with_canvas()
+	var origin: Vector2 = (to_hud.call(canvas.origin) as Vector2).round()
+	var label_top: Vector2 = to_hud.call(canvas * Vector2(0.0, NameTag.label_top_over(player)))
+	var bottom: float = roundf(label_top.y) - PLAYER_GAP_PX
+	if is_instance_valid(marks) and marks.has_mark(player):
+		bottom = minf(bottom, marks.mark_rect(player).position.y - PLAYER_GAP_PX)
+	return Vector2(origin.x, bottom)
 
 
 # The bar on line `line`, filled to the progress, or hidden with no bar.

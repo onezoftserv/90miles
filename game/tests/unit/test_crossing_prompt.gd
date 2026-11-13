@@ -2,8 +2,8 @@ extends GutTest
 ## inventory-hud "Prompt verbs and targets" and "Prompt placement" on a crossing (CrossingRig, one
 ## offline session, no port open): the lashing reads "Amarrarse a la balsa" or "Soltarse de la
 ## balsa" by the rider's own state, a lone swimmer's climb point reads "Subir a la balsa" (both with
-## exactly 1 player), and a teammate's pull handle reads "Jalar a Papo" and sits 34 px above the
-## swimmer, as over any player, clear of the hurt swimmer's name tag. The prompt is ticked by hand.
+## exactly 1 player), and a teammate's pull handle reads "Jalar a Papo" and sits 3 px above the
+## swimmer's name tag label on its head anchor (art-pass design.md P5), as over any player, clear of the hurt swimmer's name tag. The prompt is ticked by hand.
 
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const STEP_S: float = 0.1
@@ -81,7 +81,11 @@ func test_a_pull_handle_names_the_swimmer_and_sits_above_their_name_tag() -> voi
 	assert_true(tag.visible, "the name tag shows over a hurt swimmer")
 	assert_eq(_lines(), PackedStringArray(["[E] Jalar a Papo"]))
 	var rect := hud.prompt.prompt_rect()
-	assert_eq(rect.end.y, _in_hud(papo).y - InteractPrompt.PLAYER_RISE_PX, "34 px above the swimmer, as over any player")
+	# art-pass "Head anchor" (design.md P5): 3 px above the tag's label on the swimmer's head anchor.
+	var anchor: float = (papo.get_node(^"BodyLook") as BodyLook).head_anchor_y()
+	assert_eq(tag.position.y, anchor - NameTag.ANCHOR_GAP_PX, "the tag on the swim head anchor")
+	var label_top: float = _in_hud(tag.label).y
+	assert_eq(rect.end.y, roundf(label_top) - 3.0, "3 px above the tag's label, as over any player")
 	var strip := tag.get_node(^"Strip") as Control
 	for part: Control in [tag.label, strip]:
 		var part_rect := Rect2(_in_hud(part), part.size)

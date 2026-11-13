@@ -1,0 +1,5 @@
+Work: 90 Millas fixture piece
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: https://example.com/our-art
+Files: piece.png

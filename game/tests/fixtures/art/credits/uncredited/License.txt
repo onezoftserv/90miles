@@ -1,0 +1,5 @@
+Pack: Tiburones de Prueba (1.0)
+Author: A. Fixture
+Licence: CC BY 4.0
+Source: https://example.com/tiburones-de-prueba
+Files: none; a CC-BY licence that credits.tres does not name (test_art_credits.gd)

@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="CreatureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="1_creature"]
+[ext_resource type="Texture2D" path="res://tests/fixtures/art/creatures/fin_dark.png" id="2_fin"]
+[ext_resource type="Texture2D" path="res://tests/fixtures/art/creatures/fin_black.png" id="3_fin"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_fixture"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_fin")
+}],
+"loop": true,
+"name": &"patrol",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_fin")
+}],
+"loop": true,
+"name": &"circle",
+"speed": 4.0
+}]
+
+[resource]
+script = ExtResource("1_creature")
+id = &"tiburon_prueba"
+name_es = "Tiburón de prueba"
+name_en = "Test shark"
+description_es = "Un tiburón de prueba: sus cuadros se llaman como sus estados y no tiene script propio."
+description_en = "A test shark: its frames are named after its states and it has no script of its own."
+category = 0
+health = 60
+speed_tiles_s = 2.0
+damage = 25.0
+attack_cooldown_s = 1.0
+domains = Array[int]([2, 1])
+behavior = 1
+disposition = 0
+keep_off_shore_tiles = 2
+circle_time_s = Vector2(6, 10)
+retreat_time_s = 4.0
+sprite_frames = SubResource("SpriteFrames_fixture")

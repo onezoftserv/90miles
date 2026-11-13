@@ -6,6 +6,11 @@ extends Node2D
 ## ends the crossing with a CrossingResult. Clients build the same node, receive the plan, the
 ## rider states and the result, and only show them. Coordinates are absolute: the node sits at
 ## (0, 0) and the sea at `origin`, far from the island, so riders keep their sync and meters.
+## The sea and the deck are drawn by two children, `Sea` (CrossingSea) at z -40 and `Deck`
+## (CrossingDeck) at z -20, because the node sorts at its own (0, 0) in the y-sorted session while
+## its riders are far north of it (art-pass "Draw order by foot position", "Crossing look";
+## design.md T5, T18). They read the crossing every frame and only show; the crossing never names
+## them, and freeing them changes nothing it does.
 
 ## Host and clients: the crossing ended with this result.
 signal ended(result: CrossingResult)
@@ -200,6 +205,12 @@ func sea_rect() -> Rect2:
 	return Rect2(origin, Vector2(SEA_TILES) * TILE_PX)
 
 
+## How far the sea has scrolled past the vessel, in px, wrapping at two lengths of the 32 px water
+## texture (design.md T18). Read-only: the crossing's sea look follows it.
+func scroll_px() -> float:
+	return _scroll_px
+
+
 ## Host: advances the crossing by `delta` seconds (the body of `_physics_process`).
 func advance(delta: float) -> void:
 	if finished or plan == null or not multiplayer.is_server():
@@ -327,21 +338,6 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_scroll_px = fmod(_scroll_px + tuning.scroll_tiles_per_s * TILE_PX * route.speed_multiplier * delta, TILE_PX * 4.0)
-	queue_redraw()
-
-
-func _draw() -> void:
-	var rect := sea_rect()
-	draw_rect(rect, Color(0.08, 0.28, 0.45))
-	for row: int in range(-1, SEA_TILES.y / 4 + 1):
-		var y: float = rect.position.y + row * TILE_PX * 4.0 + _scroll_px
-		if y >= rect.position.y and y < rect.end.y:
-			draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.2, 0.45, 0.62), 1.0)
-	if integrity.intact():
-		var deck := deck_rect()
-		draw_rect(deck, Color(0.55, 0.4, 0.22))
-		draw_rect(deck, Color(0.3, 0.2, 0.1), false)
-
 
 func _fire(event: CrossingBeat) -> void:
 	match event.kind:

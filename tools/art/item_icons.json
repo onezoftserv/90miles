@@ -1,0 +1,22 @@
+{
+  "sources": {
+    "kyrise": "itch/kyrise-icons/extracted/Kyrises_16x16_RPG_Icon_Pack_V1.3/Kyrise's 16x16 RPG Icon Pack - V1.3/icons/16x16"
+  },
+  "outline": "#000000",
+  "icons": [
+    {"id": "coco", "hand": "coco.png"},
+    {"id": "driftwood", "hand": "driftwood.png"},
+    {"id": "dry_grass", "hand": "dry_grass.png"},
+    {"id": "inner_tube", "hand": "inner_tube.png"},
+    {"id": "knife", "hand": "knife.png"},
+    {"id": "plastic_jug", "hand": "plastic_jug.png"},
+    {"id": "rain_cup", "from": "kyrise", "file": "cup_01a.png"},
+    {"id": "rope", "hand": "rope.png"},
+    {"id": "tarp", "hand": "tarp.png"},
+    {"id": "binoculars", "hand": "binoculars.png"},
+    {"id": "nails", "hand": "nails.png"},
+    {"id": "mirror", "hand": "mirror.png"},
+    {"id": "aloe", "hand": "aloe.png"},
+    {"id": "lighter", "hand": "lighter.png"}
+  ]
+}

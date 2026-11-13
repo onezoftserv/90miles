@@ -1,0 +1,48 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/art/terrain_view.gd" id="1_view"]
+[ext_resource type="Shader" path="res://scenes/art/sea/world_sea.gdshader" id="2_sea"]
+[ext_resource type="Shader" path="res://scenes/art/sea/shore.gdshader" id="3_shore"]
+[ext_resource type="TileSet" path="res://assets/art/terrain/terrain_tiles.tres" id="4_terrain"]
+[ext_resource type="TileSet" path="res://assets/art/sea/shore_tiles.tres" id="5_foam"]
+[ext_resource type="TileSet" path="res://assets/art/decals/decal_tiles.tres" id="6_decals"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sea"]
+resource_local_to_scene = true
+shader = ExtResource("2_sea")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_shore"]
+resource_local_to_scene = true
+shader = ExtResource("3_shore")
+
+[node name="TerrainView" type="Node2D" groups=["art_view"]]
+script = ExtResource("1_view")
+
+[node name="Sea" type="Polygon2D" parent="."]
+z_index = -40
+material = SubResource("ShaderMaterial_sea")
+
+[node name="Sand" type="TileMapLayer" parent="."]
+z_index = -30
+tile_set = ExtResource("4_terrain")
+
+[node name="Dune" type="TileMapLayer" parent="."]
+z_index = -29
+tile_set = ExtResource("4_terrain")
+
+[node name="Plain" type="TileMapLayer" parent="."]
+z_index = -27
+tile_set = ExtResource("4_terrain")
+
+[node name="Shore" type="TileMapLayer" parent="."]
+z_index = -26
+material = SubResource("ShaderMaterial_shore")
+tile_set = ExtResource("5_foam")
+
+[node name="Brush" type="TileMapLayer" parent="."]
+z_index = -25
+tile_set = ExtResource("4_terrain")
+
+[node name="Decals" type="TileMapLayer" parent="."]
+z_index = -10
+tile_set = ExtResource("6_decals")

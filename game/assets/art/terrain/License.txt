@@ -1,0 +1,11 @@
+Pack: Zelda-like tilesets and sprites
+Author: ArMM1998
+Licence: CC0 1.0
+Source: https://opengameart.org/content/zelda-like-tilesets-and-sprites
+Files: sand.png (gfx/Overworld.png: the beach's 3x3 pond block, its 2x2 island block and its plain sand tile, recoloured to the master palette, with the baked water strip and white foam rim keyed out; the islet and the two diagonal tiles are put together from quarters of those tiles; the four variants on row 4 are the plain tile reworked by hand); dune.png (the grass-on-sand 3x3 and 2x2 blocks, recoloured as pale sand, with the sand under them keyed out; the full tile is the block's fill colour); brush.png (the lone bush, recoloured: whole on the cell and a quarter of it on each land corner; row 4 holds it and three variants redrawn from it by hand); plain.png (five ground tiles, at tile columns and rows 12,13; 14,11; 14,12; 2,16 (casuarina, hammock and mangrove, each in its own colours) and 13,15, recoloured, each cut to the sand set's 16 shapes, with a darker rim on the rock, cliff, reef flat and coral cuts; the rock's full-tile variants on columns 16 to 18 are tile 12,14 and two copies of its full tile recracked by hand); dune_shore.png, brush_shore.png and plain_shore.png (the dune, brush and plain tiles above, cut again by the sand tile of each shore mask, for the cells where the sand under them ends at the water)
+
+Work: 90 Millas terrain hand work
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: tide_pool.png (the tide pool: an irregular pool with three stones and a wet-sand lip); sand.png (single-pixel fixes on the corner tiles); dune.png (the islet tile, the four full-tile variants on row 4 and the straight edge tiles' tufts painted out); brush.png (three bush variants on row 4); plain.png (the rock's two hand-drawn variants the canopy shadow pixels of the hammock and mangrove tiles, the cliff's lit lip and dark foot, and the wreck interior's boards, drawn over its pack tile)

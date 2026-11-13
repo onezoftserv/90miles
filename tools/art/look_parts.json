@@ -1,0 +1,105 @@
+{
+  "parts": [
+    {
+      "id": "body_man", "layer": "body", "band": 0, "outline": "#000000", "strict": true,
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/CharacterModel/Character Model.png",
+      "colour_map": {
+        "#ffecdb": "#ffedde", "#fff7f4": "#ffedde", "#fff6f2": "#ffedde", "#ffe0d2": "#ffedde",
+        "#ffd3aa": "#eec39a", "#e5bf9b": "#eec39a",
+        "#e1ad95": "#dca68d", "#e1aa91": "#dca68d", "#ea9578": "#dca68d", "#cf9d86": "#dca68d",
+        "#c4a68e": "#dca68d", "#c1a496": "#dca68d", "#b0886c": "#dca68d", "#b48d7c": "#dca68d",
+        "#ba917e": "#8f563b", "#ad8572": "#8f563b", "#9b7462": "#8f563b", "#7b6860": "#8f563b",
+        "#705e56": "#8f563b", "#594b45": "#8f563b", "#564842": "#8f563b", "#5f4f3f": "#8f563b",
+        "#403632": "#8f563b",
+        "#191919": "#000000", "#fff2ec": "#595652", "#d0d0d0": "#595652",
+        "#595959": "#595652", "#4f4f4f": "#595652"
+      }
+    },
+    {
+      "id": "body_woman", "layer": "body", "band": 2, "outline": "#000000", "strict": true,
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/CharacterModel/Character Model.png",
+      "colour_map": {
+        "#ffecdb": "#ffedde", "#fff7f4": "#ffedde", "#fff6f2": "#ffedde", "#ffe0d2": "#ffedde",
+        "#ffd3aa": "#eec39a", "#e5bf9b": "#eec39a",
+        "#e1ad95": "#dca68d", "#e1aa91": "#dca68d", "#ea9578": "#dca68d", "#cf9d86": "#dca68d",
+        "#c4a68e": "#dca68d", "#c1a496": "#dca68d", "#b0886c": "#dca68d", "#b48d7c": "#dca68d",
+        "#ba917e": "#8f563b", "#ad8572": "#8f563b", "#9b7462": "#8f563b", "#7b6860": "#8f563b",
+        "#705e56": "#8f563b", "#594b45": "#8f563b", "#564842": "#8f563b", "#5f4f3f": "#8f563b",
+        "#403632": "#8f563b",
+        "#191919": "#000000", "#fff2ec": "#595652", "#d0d0d0": "#595652",
+        "#595959": "#595652", "#4f4f4f": "#595652"
+      }
+    },
+    {
+      "id": "outfit_tee_shorts", "layer": "outfit", "band": 0, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Outfits/Outfit5.png",
+      "drop": ["#120308", "#da633d", "#b45131", "#812238"],
+      "colour_map": {
+        "#eeeeee": "#b4ffe8", "#d4d4d4": "#5ef0bc", "#bdbdbd": "#2bb88a", "#4c4c4c": "#157a5c",
+        "#2d95ec": "#8f974a", "#247cc6": "#8a6f30", "#1965a5": "#8a6f30", "#0f2e65": "#524b24"
+      }
+    },
+    {
+      "id": "hair_0", "layer": "hair", "band": 0, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
+      "colour_map": {
+        "#7a2500": "#663931", "#641703": "#45283c", "#480714": "#45283c", "#4b0802": "#222034",
+        "#4c0700": "#222034", "#320000": "#222034"
+      }
+    },
+    {
+      "id": "hair_1", "layer": "hair", "band": 1, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
+      "colour_map": {
+        "#fff1ef": "#ffffff", "#f0e1de": "#cbdbfc", "#e9d7d4": "#cbdbfc", "#daccc9": "#9badb7",
+        "#bfb6b3": "#9badb7", "#b0a6a3": "#847e87"
+      }
+    },
+    {
+      "id": "hair_2", "layer": "hair", "band": 2, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
+      "colour_map": {
+        "#ffc199": "#b57251", "#ff9b80": "#b57251", "#f8774d": "#8f563b", "#d63429": "#663931",
+        "#b12c23": "#663931", "#8c1a22": "#45283c", "#891a21": "#45283c"
+      }
+    },
+    {
+      "id": "hair_3", "layer": "hair", "band": 3, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
+      "colour_map": {
+        "#fba327": "#d9a066", "#cc741d": "#df7126", "#9f5413": "#8f563b", "#9e510d": "#8f563b",
+        "#451b1d": "#45283c", "#441319": "#45283c"
+      }
+    },
+    {
+      "id": "hair_4", "layer": "hair", "band": 4, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
+      "colour_map": {
+        "#fba327": "#d9a066", "#cc741d": "#df7126", "#9f5413": "#8f563b", "#9e510d": "#8f563b",
+        "#451b1d": "#45283c", "#441319": "#45283c"
+      }
+    },
+    {
+      "id": "hair_5", "layer": "hair", "band": 5, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
+      "colour_map": {
+        "#fba327": "#d9a066", "#e8941e": "#df7126", "#cc741d": "#df7126", "#bd600f": "#df7126",
+        "#9e510d": "#8f563b", "#591a22": "#45283c", "#441319": "#45283c"
+      }
+    },
+    {
+      "id": "hair_6", "layer": "hair", "band": 6, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
+      "colour_map": {
+        "#606060": "#595652", "#424242": "#323c39", "#242424": "#222034", "#000000": "#222034"
+      }
+    },
+    {
+      "id": "hair_7", "layer": "hair", "band": 7, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
+      "colour_map": {
+        "#464646": "#595652", "#242424": "#323c39"
+      }
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 extends GutTest
 ## inventory-hud "Prompt placement" with exactly 1 player, offline, inside the game shell, so the
 ## world draws in WorldView's SubViewport and the prompt is mapped from it into the HUD as in a
-## real run: centred over its target at whole pixels, its bottom edge 12 px above the target (34
-## px above a player, clear of the name tag), at most 240 px wide with "…", and kept inside
+## real run: centred over its target at whole pixels, its bottom edge 12 px above the target (over
+## a player 3 px above its name tag's label on its head anchor, art-pass design.md P5), at most 240 px wide with "…", and kept inside
 ## x 4-636, y 22-302 off every HUD panel, the secret-cay needle and note included (stand-ins in
 ## the HUD's avoid group, since secret-cay is not on this branch). The prompt is ticked by hand.
 
@@ -128,9 +128,12 @@ func test_over_a_downed_teammate_it_sits_above_the_name_tag() -> void:
 	var prompt := shell.hud.prompt
 	assert_same(prompt.target, papo.drag_handle)
 	assert_eq(prompt.lines()[0], "[E] Arrastrar a Papo")
+	# art-pass "Head anchor" (design.md P5): 3 px above the tag's label on the downed head anchor.
+	var anchor: float = (papo.get_node(^"BodyLook") as BodyLook).head_anchor_y()
+	assert_eq(tag.position.y, anchor - NameTag.ANCHOR_GAP_PX, "the tag on the downed head anchor")
 	var rect := prompt.prompt_rect()
-	assert_eq(rect.end.y, _in_hud(papo).y - 34.0, "34 px above a player")
 	var label_rect := Rect2(_in_hud(tag.label), tag.label.size)
+	assert_eq(rect.end.y, roundf(label_rect.position.y) - 3.0, "3 px above the tag's label")
 	assert_false(rect.intersects(label_rect), "%s clear of the tag %s" % [rect, label_rect])
 	assert_true(rect.end.y <= label_rect.position.y, "above it")
 

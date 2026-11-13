@@ -1,0 +1,7 @@
+Pipeline source for tools/art/structures.py (design.md K80): never drawn by the game.
+
+Work: 90 Millas structure hand work
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: palm_trunk.png and palm_crown.png (the palm's curved, ringed trunk and its crown of seven fronds); coconut.png and nest.png (the overlays' coconut and twig nest); fire_flames.png (four flicker frames on one foot row, in the Zelda-like flame's colours), fire_logs.png and fire_embers.png; catcher_tops.png (the open barrel top, empty and holding water); sign_post.png (the post under the board); bench_tools.png (a hammer and a knife on the bench); stake.png (the build-site marker); raft_tubes.png and raft_tubes_flat.png (the inner tubes, one going flat), raft_ropes.png, raft_ropes_worn.png and raft_ropes_breaking.png (the lashings), raft_worn.png and raft_breaking.png (cracks and chips, with #ff00ff erasing); site_stakes.png, site_pile.png, site_half.png and site_half_ropes.png (the raft site's stakes and string, the deposited tube and rope, the half-built deck's tubes and lashing); lean_to_frame.png, lean_to_roof.png and lean_to_eave.png (the lean-to's driftwood posts and dark inside, its frond roof and the frond tips under its eave). All drawn in master palette colours, without outlines: the builder rims each frame.

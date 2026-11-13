@@ -234,7 +234,7 @@ Generation: `IslandGenerator` builds a landmass from seeded integer steps (heigh
 | Waist | A palm-frond lean-to (the only shade) with the *sombrero de yarey con cinta roja* hanging on it, the warm embers, the smoking cigar stub, a knife, 2 rain cups, 3 palms with 7 coconuts |
 | East cove | A raft build site with at least the raft recipe's inputs on the sand (today 6 driftwood, 2 inner tubes, 3 rope) |
 | Waterline | The drag mark and the post with the cut mooring line |
-| North tip | The chest, on the land (non-shallows) cell farthest by walking from the landing (any one of them on a tie): open it (hold 1 s) and it holds only the note *Llegaste tarde* |
+| North tip | The chest, on the land (non-shallows) cell farthest by walking from the landing (any one of them on a tie): open it (hold 1 s) and it holds only the note *Llegaste tarde*. A tiny Platino figurine sits on its ledge (DawnLike's character, a courtesy to its author) |
 
 **Escape route.** Only the raft (the cay lists one route instead of rolling 2–3), which one player with an empty inventory can gather, build and launch alone. After the cay the party goes on to the island it was heading for.
 

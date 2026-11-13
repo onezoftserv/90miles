@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="1_creature"]
 [ext_resource type="Script" path="res://scripts/data/creature_spawn_rule_data.gd" id="2_rule"]
 [ext_resource type="Script" path="res://scripts/data/creature_counter_data.gd" id="3_counter"]
+[ext_resource type="SpriteFrames" path="res://assets/art/creatures/land_crab_frames.tres" id="9_frames"]
 
 [sub_resource type="Resource" id="Resource_rule"]
 script = ExtResource("2_rule")
@@ -34,6 +35,7 @@ description_en = "It comes out of the sand at night and carries off food left ly
 hint_es = "Enciende una candela y deja la comida a su luz."
 hint_en = "Light a fire and keep your food in its light."
 category = 1
+sprite_frames = ExtResource("9_frames")
 health = 3
 speed_tiles_s = 5.0
 damage = 5.0

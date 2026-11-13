@@ -4,9 +4,11 @@
 [ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_dk8nf"]
 [ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_s8n23"]
 [ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="4_a6vrq"]
+[ext_resource type="Texture2D" uid="uid://cywnd83obl0eq" path="res://assets/art/items/knife.png" id="icon_knife"]
 
 [resource]
 script = ExtResource("3_s8n23")
+sprite = ExtResource("icon_knife")
 category = 3
 tags = Array[int]([2, 3])
 durability = 40

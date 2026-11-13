@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="LookPart" format=3]
+
+[ext_resource type="Script" path="res://scripts/art/look_part.gd" id="1_part"]
+[ext_resource type="Texture2D" path="res://assets/art/characters/parts/body_woman.png" id="2_sheet"]
+
+[resource]
+script = ExtResource("1_part")
+id = &"body_woman"
+name_es = "Cuerpo de mujer"
+name_en = "Woman's body"
+layer = 0
+sheet = ExtResource("2_sheet")

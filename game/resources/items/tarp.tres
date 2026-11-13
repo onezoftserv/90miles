@@ -4,9 +4,11 @@
 [ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_2fkfh"]
 [ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_pbmxf"]
 [ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="4_m8v8u"]
+[ext_resource type="Texture2D" uid="uid://cmw53o1uuva2u" path="res://assets/art/items/tarp.png" id="icon_tarp"]
 
 [resource]
 script = ExtResource("3_pbmxf")
+sprite = ExtResource("icon_tarp")
 tags = Array[int]([4])
 weight = 2.0
 id = &"tarp"

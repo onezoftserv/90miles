@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="LookPart" format=3]
+
+[ext_resource type="Script" path="res://scripts/art/look_part.gd" id="1_part"]
+[ext_resource type="Texture2D" path="res://assets/art/characters/parts/hair_5.png" id="2_sheet"]
+
+[resource]
+script = ExtResource("1_part")
+id = &"hair_5"
+name_es = "Trenzas anaranjadas con presillas"
+name_en = "Orange braids with clips"
+layer = 2
+sheet = ExtResource("2_sheet")

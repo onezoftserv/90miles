@@ -1,0 +1,19 @@
+Pipeline source for tools/art/items.py (design.md K70): never drawn by the game.
+
+Work: 90 Millas item icons, hand-drawn sources
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: coco.png, dry_grass.png, inner_tube.png, plastic_jug.png, rope.png, tarp.png, binoculars.png, nails.png, mirror.png, aloe.png, lighter.png (16x16 icons drawn by hand in master palette colours; no pack pixels)
+
+Pack: Kyrise's Free 16x16 RPG Icon Pack (v1.3)
+Author: Kyrise
+Licence: CC BY 4.0
+Source: https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack
+Files: driftwood.png (16x16 icon redrawn by hand in master palette colours over the silhouette of icons/16x16/wood_01a.png, less its right outline column; the colours, grain lines and end ring are 90 Millas work)
+
+Pack: DawnLike - 16x16 Universal Rogue-like tileset v1.81
+Author: DragonDePlatino; palette by DawnBringer
+Licence: CC BY 4.0
+Source: https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181
+Files: knife.png (16x16 icon redrawn by hand in master palette colours from the dagger at Items/ShortWep.png, column 0, row 0: same pose, wider blade, bolster and handle drawn new)

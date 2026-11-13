@@ -1,0 +1,81 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/creatures/reef_shark.png" id="1_sheet"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 0, 32, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(32, 0, 32, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(64, 0, 32, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(96, 0, 32, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(128, 0, 32, 16)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0_0")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1_0")
+}],
+"loop": true,
+"name": &"patrol",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1_0")
+}],
+"loop": true,
+"name": &"circle",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1_0")
+}],
+"loop": true,
+"name": &"move",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4_0")
+}],
+"loop": false,
+"name": &"strike",
+"speed": 8.0
+}]

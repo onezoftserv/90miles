@@ -1,29 +1,22 @@
 class_name BodyLook
 extends Node
-## inventory-hud "Crouch cue" (design D9): how the player's body is drawn. While the body's
-## movement state is crouch, its sprite is drawn at 10 of its 16 px height with its bottom edge,
-## the feet, where it was; at full height otherwise. It reads the state every frame on every peer:
-## the host's own simulation, a client's prediction of its own player, or the state the host
-## replicates for everyone else, so teammates see a crouch too.
+## Where the player's drawn head is (art-pass "Head anchor"; design.md D20, P2): the head-anchor
+## component the name tag, the hidden mark (BodyMarks), the interact prompt and the speech bubble
+## place themselves by. The top of the head comes from the pose its states pick (`PlayerPose`), the
+## head tops measured on its look slot's composed look (`LookComposer`, cached) and
+## balsero_art.tres. It reads only the body's states and that data, never the `Look` node, and is
+## not drawing (`art_view`), so it works the same when the art is stripped. It reads the states
+## every time it is asked, on every peer: the host's own simulation, a client's prediction of its
+## own player, or the states the host replicates for everyone else.
 
-## The crouching body's drawn height in pixels.
-const CROUCH_HEIGHT_PX: float = 10.0
-
-## The sprite it draws lower, relative to this node.
-@export var sprite_path: NodePath = ^"../Sprite"
-
-## True while the body is drawn lowered.
-var lowered: bool = false
-var _sprite: Sprite2D
-var _base_position: Vector2 = Vector2.ZERO
-var _base_scale: Vector2 = Vector2.ONE
+## The pose the body's states pick now, as of the last `refresh()`.
+var pose: PlayerPose.Pose = PlayerPose.Pose.STANDING
+var _art: BodyArt = null
+var _composed: ComposedLook = null
+var _composed_slot: int = -1
 
 
 func _ready() -> void:
-	_sprite = get_node_or_null(sprite_path) as Sprite2D
-	if _sprite != null:
-		_base_position = _sprite.position
-		_base_scale = _sprite.scale
 	refresh()
 
 
@@ -31,41 +24,44 @@ func _process(_delta: float) -> void:
 	refresh()
 
 
-## Follows the body's movement state now.
+## Follows the body's states now.
 func refresh() -> void:
-	var body := get_parent() as PlayerBody
-	var next: bool = body != null and body.movement_state == MovementStep.Move.CROUCH
-	if next == lowered:
-		return
-	lowered = next
-	_apply()
+	pose = _pose_now()
 
 
-## The sprite's drawn rect in the body's own pixels (its origin at the body's).
-func drawn_rect() -> Rect2:
-	if _sprite == null:
-		return Rect2()
-	return _sprite.transform * _sprite.get_rect()
-
-
-## The top of the drawn body, in the body's own pixels (negative is above its origin).
+## The top of the drawn head in the current pose, in the body's own pixels (negative is above its
+## origin).
 func head_y() -> float:
-	return drawn_rect().position.y
+	return head_anchor_y() + float(_body_art().head_gap_px)
 
 
-# Lowered: the height scaled to CROUCH_HEIGHT_PX and the sprite moved down so its bottom edge stays.
-func _apply() -> void:
-	if _sprite == null:
-		return
-	if not lowered:
-		_sprite.scale = _base_scale
-		_sprite.position = _base_position
-		return
-	var local := _sprite.get_rect()
-	var full_height: float = local.size.y * _base_scale.y
-	if full_height <= 0.0:
-		return
-	var scale_y: float = _base_scale.y * CROUCH_HEIGHT_PX / full_height
-	var bottom: float = _base_position.y + local.end.y * _base_scale.y
-	_sprite.scale = Vector2(_base_scale.x, scale_y)
-	_sprite.position = Vector2(_base_position.x, bottom - local.end.y * scale_y)
+## The head anchor: 1 px above the drawn head in the current pose, in the body's own pixels.
+func head_anchor_y() -> float:
+	return float(composed_look().head_anchor(PlayerPose.family(_pose_now())))
+
+
+## The composed look of the body's slot, kept until the slot changes: the anchor is read every frame
+## by the name tag, the speech bubble and the prompt, and composing builds a catalog.
+func composed_look() -> ComposedLook:
+	var body := get_parent() as PlayerBody
+	var slot: int = body.look_slot if body != null else 0
+	if _composed == null or slot != _composed_slot:
+		_composed = LookComposer.compose(_body_art().look_for_slot(slot))
+		_composed_slot = slot
+	return _composed
+
+
+func _pose_now() -> PlayerPose.Pose:
+	var body := get_parent() as PlayerBody
+	if body == null:
+		return PlayerPose.Pose.STANDING
+	var meters := body.get_node_or_null(^"SurvivalMeters") as SurvivalMeters
+	var dead: bool = meters != null and meters.dead
+	# Whether the body moves does not change the head's family (standing and walking share it).
+	return PlayerPose.pick(body.movement_state, body.stealth_state, body.downed, dead, false)
+
+
+func _body_art() -> BodyArt:
+	if _art == null:
+		_art = BodyArt.standard()
+	return _art

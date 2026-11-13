@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="ArtTuning" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/palette/master_palette.png" id="1_vjeit"]
+[ext_resource type="Texture2D" path="res://assets/art/palette/player_ramps.png" id="2_gbhx4"]
+[ext_resource type="Script" path="res://scripts/art/art_tuning.gd" id="3_siayd"]
+[ext_resource type="Texture2D" path="res://assets/art/palette/skin_ramps.png" id="4_rth0l"]
+[ext_resource type="Texture2D" path="res://assets/art/sea/water.png" id="5_seaw"]
+[ext_resource type="Texture2D" path="res://assets/art/sea/water_ramps.png" id="6_sear"]
+
+[resource]
+script = ExtResource("3_siayd")
+contrast_min = 3.0
+slot_contrast_min = 1.3
+slot_hue_min_deg = 30.0
+max_unique_frames = 6
+max_creature_frames = 4
+max_character_frames = 48
+max_fps = 12.0
+outline_colors = PackedColorArray(0, 0, 0, 1, 0.13333334, 0.1254902, 0.20392157, 1, 0.27058825, 0.15686275, 0.23529412, 1, 0.19607843, 0.23529412, 0.22352941, 1)
+land_grounds = Dictionary[StringName, Color]({
+&"brush": Color(0.3310059, 0.5959509, 0.263319, 1),
+&"dune": Color(0.9589576, 0.8549288, 0.6958563, 1),
+&"sand": Color(0.9202704, 0.7458601, 0.5811121, 1)
+})
+water_grounds = Dictionary[StringName, Color]({
+&"brackish": Color(0.2842615, 0.5992659, 0.5051482, 1),
+&"deep": Color(0.2011814, 0.3947628, 0.5304272, 1),
+&"shallows": Color(0.4292789, 0.8268132, 0.9081233, 1)
+})
+master_palette = ExtResource("1_vjeit")
+player_ramps = ExtResource("2_gbhx4")
+skin_ramps = ExtResource("4_rth0l")
+sea_water = ExtResource("5_seaw")
+sea_ramps = ExtResource("6_sear")

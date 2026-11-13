@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ShelterArtData" format=3]
+
+[ext_resource type="Script" path="res://scripts/art/shelter_art_data.gd" id="1_data"]
+[ext_resource type="PackedScene" path="res://scenes/art/lean_to.tscn" id="2_lean_to"]
+
+[resource]
+script = ExtResource("1_data")
+shelters = Dictionary[StringName, PackedScene]({
+&"sandbar": ExtResource("2_lean_to")
+})

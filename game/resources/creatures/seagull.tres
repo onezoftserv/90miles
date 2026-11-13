@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="1_creature"]
 [ext_resource type="Script" path="res://scripts/data/creature_spawn_rule_data.gd" id="2_rule"]
 [ext_resource type="Script" path="res://scripts/data/creature_counter_data.gd" id="3_counter"]
+[ext_resource type="SpriteFrames" path="res://assets/art/creatures/seagull_frames.tres" id="9_frames"]
 
 [sub_resource type="Resource" id="Resource_rule"]
 script = ExtResource("2_rule")
@@ -29,6 +30,7 @@ description_en = "It nests in the palms and swoops on food it sees: what lies on
 hint_es = "Tapa la comida, aléjala de los nidos o espanta a la gaviota."
 hint_en = "Cover your food, keep it away from the nests, or shoo the gull."
 category = 1
+sprite_frames = ExtResource("9_frames")
 health = 2
 speed_tiles_s = 6.0
 damage = 0.0

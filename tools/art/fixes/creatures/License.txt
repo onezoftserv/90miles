@@ -1,0 +1,13 @@
+Pipeline source for tools/art/creatures.py (design.md K60): never drawn by the game.
+
+Pack: Tiny Dungeon
+Author: Kenney (kenney.nl)
+Licence: CC0 1.0
+Source: https://kenney.nl/assets/tiny-dungeon
+Files: none copied; Tiles/tile_0110.png (a crab) was the shape reference for land_crab.png
+
+Work: 90 Millas creature hand work
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: land_crab.png (the whole crab sheet, 6 frames of 16x16); reef_shark.png (the whole shark sheet: 5 frames of 32x16 with the fin, its base, the ripple row, the body under the water line and the strike's bow wave, spray and foam); seagull_back.png (an overlay pasted on the Tiny, Tiny Heroes seagull: the back facing's wing highlight and white tail tip, recoloured pack pixels in the master palette)

@@ -1,13 +1,13 @@
 extends GutTest
 ## inventory-hud "Crouch cue" (A teammate crouches) and "Hidden mark" (The client sees the host
 ## hide) over ENet on localhost (NetHarness), each peer with its own sandbar: every peer draws a
-## crouching player lowered and a hidden player marked from the movement and stealth states the
-## host already replicates. Keyboard input is off; intents are set on the bodies.
+## crouching player in the crouch pose (art-pass; design.md P2) and a hidden player marked from the
+## movement and stealth states the host already replicates. Keyboard input is off; intents are set
+## on the bodies.
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const TIMEOUT_S: float = 5.0
-const CROUCH_HEIGHT_PX: float = 10.0
 
 var net: NetHarness
 var islands: Array[SandbarIsland] = []
@@ -57,6 +57,14 @@ func _look(body: PlayerBody) -> BodyLook:
 	return body.get_node(^"BodyLook") as BodyLook
 
 
+func _pose(body: PlayerBody) -> PlayerPose.Pose:
+	return (body.get_node(^"Look") as PlayerLook).pose
+
+
+func _animation(body: PlayerBody) -> String:
+	return String((body.get_node(^"Look/Sprite") as AnimatedSprite2D).animation)
+
+
 func _brush_spot() -> Vector2:
 	var island := islands[0]
 	for y: int in island.built.size.y:
@@ -67,7 +75,8 @@ func _brush_spot() -> Vector2:
 	return Vector2(-1.0, -1.0)
 
 
-func test_the_host_draws_a_crouching_client_lowered() -> void:
+func test_the_host_draws_a_crouching_client_in_the_crouch_pose() -> void:
+	# inventory-hud "A teammate crouches".
 	var host := net.add_host(_setup)
 	var client := await net.join(_setup)
 	assert_not_null(client)
@@ -76,18 +85,20 @@ func test_the_host_draws_a_crouching_client_lowered() -> void:
 	net.silence_input()
 	var me: int = net.peer_id(client)
 	var on_host := host.body(me)
-	var full: float = _look(on_host).drawn_rect().size.y
-	assert_eq(full, 16.0, "standing, full height on the host")
-	var feet: float = _look(on_host).drawn_rect().end.y
-	net.own_body(client).intent = MoveIntent.create(Vector2.ZERO, false, true)
-	var lowered := func() -> bool:
-		return on_host.movement_state == MovementStep.Move.CROUCH and _look(on_host).drawn_rect().size.y == CROUCH_HEIGHT_PX
-	assert_true(await wait_until(lowered, TIMEOUT_S), "the host draws the client's player 10 px tall")
-	assert_eq(_look(on_host).drawn_rect().end.y, feet, "on its feet")
-	assert_eq(_look(net.own_body(client)).drawn_rect().size.y, CROUCH_HEIGHT_PX, "and the client draws its own player lowered")
-	net.own_body(client).intent = MoveIntent.new()
-	var standing := func() -> bool: return _look(on_host).drawn_rect().size.y == full
-	assert_true(await wait_until(standing, TIMEOUT_S), "full height again once the client stands")
+	var mine := net.own_body(client)
+	assert_ne(_pose(on_host), PlayerPose.Pose.CROUCH, "standing on the host")
+	var standing_head: float = _look(on_host).head_anchor_y()
+	mine.intent = MoveIntent.create(Vector2.ZERO, false, true)
+	var crouched := func() -> bool:
+		return on_host.movement_state == MovementStep.Move.CROUCH and _pose(on_host) == PlayerPose.Pose.CROUCH
+	assert_true(await wait_until(crouched, TIMEOUT_S), "the host draws the client's player crouching")
+	assert_true(_animation(on_host).begins_with("crouch_"), _animation(on_host))
+	assert_gt(_look(on_host).head_anchor_y(), standing_head, "its head lower")
+	var own_crouch := func() -> bool: return _pose(mine) == PlayerPose.Pose.CROUCH
+	assert_true(await wait_until(own_crouch, TIMEOUT_S), "and the client draws its own player crouching")
+	mine.intent = MoveIntent.new()
+	var standing := func() -> bool: return _pose(on_host) != PlayerPose.Pose.CROUCH and _look(on_host).head_anchor_y() == standing_head
+	assert_true(await wait_until(standing, TIMEOUT_S), "the walk pose again once the client stands")
 
 
 func test_the_client_marks_the_host_hidden_in_brush() -> void:

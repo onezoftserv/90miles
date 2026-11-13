@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="4_3jiyr"]
 [ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="5_e0jqk"]
 [ext_resource type="Script" path="res://scripts/data/data_part.gd" id="6_f78aa"]
+[ext_resource type="Texture2D" uid="uid://bok1jarajejfj" path="res://assets/art/items/coco.png" id="icon_coco"]
 
 [sub_resource type="Resource" id="Resource_joplc"]
 script = ExtResource("5_e0jqk")
@@ -65,6 +66,7 @@ effects = Array[ExtResource("1_vul6m")]([SubResource("Resource_mes4i"), SubResou
 
 [resource]
 script = ExtResource("3_0vw7p")
+sprite = ExtResource("icon_coco")
 description_es = "Hay que abrirlo con un cuchillo. Agua y un poco de comida."
 description_en = "Needs a blade to open. Water and a little food."
 category = 0

@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="TerrainArtData" format=3]
+
+[ext_resource type="Script" path="res://scripts/art/terrain_art_data.gd" id="1_art"]
+
+[resource]
+script = ExtResource("1_art")
+set_layers = Array[StringName]([&"Sand", &"Dune", &"Brush"])
+plain_layer = &"Plain"
+layer_of = Dictionary[int, StringName]({
+3: &"Sand",
+4: &"Dune",
+7: &"Brush",
+5: &"Plain",
+6: &"Plain",
+8: &"Plain",
+9: &"Plain",
+10: &"Plain",
+11: &"Plain",
+12: &"Plain",
+13: &"Plain",
+14: &"Plain"
+})
+plain_row = Dictionary[int, int]({
+6: 0,
+8: 1,
+13: 2,
+9: 3,
+10: 4,
+11: 5,
+12: 6,
+5: 7,
+14: 8
+})
+source_of = Dictionary[StringName, int]({
+&"Sand": 0,
+&"Dune": 1,
+&"Brush": 2,
+&"Plain": 3
+})
+shore_source_of = Dictionary[StringName, int]({
+&"Dune": 4,
+&"Brush": 5,
+&"Plain": 6
+})
+shore_row_stride = 16
+variant_mask = Dictionary[StringName, int]({
+&"Sand": 15,
+&"Dune": 15,
+&"Brush": 0
+})
+variant_count = Dictionary[StringName, int]({
+&"Sand": 4,
+&"Dune": 4,
+&"Brush": 4
+})
+plain_variants = Dictionary[int, int]({
+0: 3
+})
+depth_steps = Dictionary[int, int]({
+0: 0,
+1: 1,
+2: 2
+})
+land_step = 1

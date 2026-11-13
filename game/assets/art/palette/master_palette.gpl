@@ -1,0 +1,58 @@
+GIMP Palette
+Name: 90 Millas master palette
+Columns: 8
+# DawnBringer's 32-colour palette (DB32), then the 90 Millas added colours.
+# Outline set: black, valhalla, loulou and opal (the four darkest).
+  0   0   0	DB32 black #000000
+ 34  32  52	DB32 valhalla #222034
+ 69  40  60	DB32 loulou #45283c
+102  57  49	DB32 oiled cedar #663931
+143  86  59	DB32 rope #8f563b
+223 113  38	DB32 tahiti gold #df7126
+217 160 102	DB32 twine #d9a066
+238 195 154	DB32 pancho #eec39a
+251 242  54	DB32 golden fizz #fbf236
+153 229  80	DB32 atlantis #99e550
+106 190  48	DB32 christi #6abe30
+ 55 148 110	DB32 elf green #37946e
+ 75 105  47	DB32 dell #4b692f
+ 82  75  36	DB32 verdigris #524b24
+ 50  60  57	DB32 opal #323c39
+ 63  63 116	DB32 deep koamaru #3f3f74
+ 48  96 130	DB32 venice blue #306082
+ 91 110 225	DB32 royal blue #5b6ee1
+ 99 155 255	DB32 cornflower #639bff
+ 95 205 228	DB32 viking #5fcde4
+203 219 252	DB32 light steel blue #cbdbfc
+255 255 255	DB32 white #ffffff
+155 173 183	DB32 heather #9badb7
+132 126 135	DB32 topaz #847e87
+105 106 106	DB32 dim gray #696a6a
+ 89  86  82	DB32 smokey ash #595652
+118  66 138	DB32 clairvoyant #76428a
+172  50  50	DB32 brown #ac3232
+217  87  99	DB32 mandy #d95763
+215 123 186	DB32 plum #d77bba
+143 151  74	DB32 rain forest #8f974a
+138 111  48	DB32 stinger #8a6f30
+180 255 232	added key highlight #b4ffe8
+ 94 240 188	added key base #5ef0bc
+ 43 184 138	added key shade #2bb88a
+ 21 122  92	added key line #157a5c
+255 237 222	added skin claro highlight #ffedde
+220 166 141	added skin claro shade #dca68d
+181 114  81	added skin trigueno base #b57251
+246 220 180	added sand highlight #f6dcb4
+228 180 136	added sand ripple #e4b488
+192 138  90	added sand shade #c08a5a
+ 42  85 120	added deep sea dark #2a5578
+ 58 111 146	added deep sea light #3a6f92
+ 74 133 168	added deep sea glint #4a85a8
+ 84 195 220	added shallows dark #54c3dc
+112 213 233	added shallows light #70d5e9
+143 224 240	added shallows glint #8fe0f0
+ 53 132 108	added brackish dark #35846c
+ 61 143 119	added brackish base #3d8f77
+ 75 156 132	added brackish light #4b9c84
+ 98 174 150	added brackish glint #62ae96
+ 53 103 138	added deep sea mid #35678a

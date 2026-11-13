@@ -1,0 +1,5 @@
+Work: 90 Millas look fixtures
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: every PNG in this folder (fixture look parts for the look tests: a body, an outfit, a hair and a hair with an empty crouch cell; never drawn in the game)

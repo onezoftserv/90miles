@@ -60,7 +60,3 @@ func _on_interacted(by: Node) -> void:
 	if player == null or cups <= 0:
 		return
 	cups -= player.inventory.add(recipe.produces_item_id, cups)
-
-
-func _draw() -> void:
-	draw_rect(Rect2(-6.0, -6.0, 12.0, 12.0), Color(0.4, 0.6, 0.8, 0.8))

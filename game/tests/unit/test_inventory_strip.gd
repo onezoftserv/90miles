@@ -126,7 +126,8 @@ func test_a_stack_a_tool_and_an_empty_slot() -> void:
 	inventory.add(&"coco", 3)
 	inventory.add(&"knife", 1, 39)
 	var coco := strip.slot_view(0)
-	assert_eq(coco.name_label.text, "Coc")
+	assert_eq(StripIcon.item_shown(coco), "coco")
+	assert_eq(coco.name_label.text, "", "no letters under an icon")
 	assert_eq(coco.count_label.text, "3")
 	assert_eq(coco.count_label.theme_type_variation, &"HudCount")
 	assert_eq(coco.key_label.text, "1")
@@ -139,9 +140,10 @@ func test_a_stack_a_tool_and_an_empty_slot() -> void:
 		for j: int in range(i + 1, rows.size()):
 			assert_false(rows[i].intersects(rows[j]), "row %d %s clear of row %d %s" % [i, rows[i], j, rows[j]])
 	var knife := strip.slot_view(1)
-	assert_eq(knife.name_label.text, "Cuc")
+	assert_eq(StripIcon.item_shown(knife), "knife")
 	assert_eq(knife.count_label.text, "39", "uses left")
 	var empty := strip.slot_view(2)
+	assert_eq(StripIcon.item_shown(empty), "")
 	assert_eq(empty.name_label.text, "")
 	assert_eq(empty.count_label.text, "")
 	assert_false(empty.icon.visible)
@@ -149,10 +151,25 @@ func test_a_stack_a_tool_and_an_empty_slot() -> void:
 	assert_eq(strip.weight_label.text, "Peso 2,5/30")
 
 
+func test_an_item_without_an_icon_shows_its_first_three_letters() -> void:
+	var hud := _hud(_session())
+	var inventory := hud.strip.body.inventory
+	var plain := ItemData.new()
+	plain.id = &"sin_icono"
+	plain.name_es = "Sin icono"
+	plain.name_en = "No icon"
+	inventory.register(plain)
+	inventory.add(&"sin_icono", 1)
+	var slot := hud.strip.slot_view(0)
+	assert_eq(slot.name_label.text, "Sin", "the three-letter fallback")
+	assert_false(slot.icon.visible)
+	assert_eq(StripIcon.item_shown(slot), "")
+
+
 func test_a_single_item_shows_no_count() -> void:
 	var hud := _hud(_session())
 	hud.strip.body.inventory.add(&"driftwood", 1)
-	assert_eq(hud.strip.slot_view(0).name_label.text, "Mad")
+	assert_eq(StripIcon.item_shown(hud.strip.slot_view(0)), "driftwood")
 	assert_eq(hud.strip.slot_view(0).count_label.text, "")
 
 
@@ -262,10 +279,10 @@ func test_a_solo_pick_up_shows_on_the_same_frame() -> void:
 	var hud := _hud(session)
 	var me := session.body(1)
 	var coconut := session.spawn_pickup(&"coco", 1, me.position + Vector2(4.0, 0.0))
-	assert_eq(hud.strip.slot_view(0).name_label.text, "")
+	assert_eq(StripIcon.item_shown(hud.strip.slot_view(0)), "")
 	(coconut.get_node(^"Interactable") as Interactable).use(me)
 	assert_eq(me.inventory.slots[0].item_id, &"coco", "inventory slot 0 holds it")
-	assert_eq(hud.strip.slot_view(0).name_label.text, "Coc", "screen slot 1 shows it at once")
+	assert_eq(StripIcon.item_shown(hud.strip.slot_view(0)), "coco", "screen slot 1 shows it at once")
 	assert_eq(hud.strip.weight_label.text, "Peso 0,5/30")
 
 
@@ -278,14 +295,14 @@ func test_a_gull_taking_the_only_coconut_empties_its_slot_at_once() -> void:
 	add_child_autofree(strip)
 	strip.bind(body)
 	strip.select(0)
-	assert_eq(strip.slot_view(0).name_label.text, "Coc")
+	assert_eq(StripIcon.item_shown(strip.slot_view(0)), "coco")
 	rig.creature(&"seagull", Vector2i(4, 5))
 	var left_s: float = 10.0
 	while body.inventory.count_id(&"coco") > 0 and left_s > 0.0:
 		rig.run(CreatureRig.STEP_S)
 		left_s -= CreatureRig.STEP_S
 	assert_eq(body.inventory.count_id(&"coco"), 0, "the gull took it")
-	assert_eq(strip.slot_view(0).name_label.text, "", "the slot is empty on the same step")
+	assert_eq(StripIcon.item_shown(strip.slot_view(0)), "", "the slot is empty on the same step")
 	assert_eq(strip.selected, 0, "and stays selected")
 	assert_true(strip.slot_view(0).selected)
 
@@ -298,7 +315,7 @@ func test_a_reclaimed_body_fills_the_strip() -> void:
 	assert_null(hud.strip.body, "no body of its own yet")
 	session._rebind_body(7, 9)
 	assert_same(hud.strip.body, reclaimed)
-	assert_eq(hud.strip.slot_view(0).name_label.text, "Mad")
+	assert_eq(StripIcon.item_shown(hud.strip.slot_view(0)), "driftwood")
 	assert_eq(hud.strip.slot_view(0).count_label.text, "2")
 
 
@@ -308,7 +325,7 @@ func test_the_old_body_no_longer_redraws_the_strip() -> void:
 	var other := session.body(7)
 	hud.strip.bind(other, session)
 	session.body(1).inventory.add(&"coco", 1)
-	assert_eq(hud.strip.slot_view(0).name_label.text, "", "the first body is unbound")
+	assert_eq(StripIcon.item_shown(hud.strip.slot_view(0)), "", "the first body is unbound")
 
 
 func test_hidden_once_the_player_has_left_the_island() -> void:

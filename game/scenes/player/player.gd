@@ -43,6 +43,10 @@ var pinned: bool = false
 var hud_holds_interact: bool = false
 ## Scales the energy swimming spends: 0 where the crossing pays its own pace drain instead.
 var swim_energy_factor: float = 1.0
+## The look slot (0-3) the host gave this body in its spawn payload (art-pass "Player look slots"):
+## its clothing colour and look. A plain field, never replicated; set before the body enters the
+## tree. Solo is slot 0.
+var look_slot: int = 0
 var interaction_hold: InteractionHold = InteractionHold.new()
 ## False once coop-networking drives the body: PlayerNet then steps it per intent (host),
 ## predicts it (owning client) or draws it from host states (other clients).

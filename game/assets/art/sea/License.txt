@@ -1,0 +1,23 @@
+Pack: Scallywag - Water and Islands (1.0)
+Author: Foozle, commissioned from Pixel Carvel
+Licence: CC0 1.0
+Source: https://foozlecc.itch.io/scallywag-water-islands
+Files: water.png (Water and Island tiles.png: the 32x32 deep-water block at x 224, y 0, its four blues recoloured to the deep ramp of the master palette)
+
+Pack: 16x16 Shoreline Wave Animation Tiles
+Author: Eldiran
+Licence: CC0 1.0
+Source: https://opengameart.org/node/144858
+Files: foam.png (cc0waveanimtiles16x16.png: the 8 frames of the straight edge, read as a profile from the land outward and wrapped round each of the 16 sand shapes, so the foam starts on the pixel after the sand ends; only its white pixels are kept, tinted #cbdbfc from three pixels out, and the brown, the magenta and the label black are left out)
+
+Pack: Zelda-like tilesets and sprites
+Author: ArMM1998
+Licence: CC0 1.0
+Source: https://opengameart.org/content/zelda-like-tilesets-and-sprites
+Files: foam.png (the outline of the sand corner set, ../terrain/sand.png, that the foam is wrapped round; none of its pixels)
+
+Work: 90 Millas sea ramps
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: water_ramps.png (rows deep, shallows and brackish, four colours each, dark to light)

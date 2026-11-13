@@ -1,0 +1,71 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/creatures/land_crab.png" id="1_sheet"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(64, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(80, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(32, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(48, 0, 16, 16)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0_0")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1_0")
+}],
+"loop": true,
+"name": &"move",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5_0")
+}],
+"loop": true,
+"name": &"steal",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3_0")
+}],
+"loop": true,
+"name": &"pinch",
+"speed": 6.0
+}]
