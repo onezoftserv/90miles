@@ -158,6 +158,60 @@ func test_the_view_has_the_layers_of_d15_at_their_z() -> void:
 		assert_eq(((shore.material as ShaderMaterial).shader as Shader).resource_path, SHORE_SHADER)
 
 
+# The sea scenarios of "Scrolling sea" that can run without a window. That the drawn pixels of a
+# shallows cell are lighter than a deep cell's, as the eye sees them, is covered by task 4.6's capture.
+func test_the_sea_shader_runs_on_the_shader_clock_and_reads_the_mask() -> void:
+	var source: String = SeaShaderChecks.source()
+	assert_true(RegEx.create_from_string("\\bTIME\\b").search(source) != null, "the sea reads TIME, so it moves with nothing simulated")
+	for texture: String in ["depth_mask", "water", "ramps"]:
+		assert_true(RegEx.create_from_string("uniform\\s+sampler2D\\s+%s\\b" % texture).search(source) != null, "%s is a uniform texture" % texture)
+	var fragment: String = source.substr(source.find("void fragment"))
+	assert_true(fragment.contains("texture(depth_mask"), "fragment() samples the depth mask")
+	assert_true(fragment.contains("shallows_row") and fragment.contains("brackish_row") and fragment.contains("deep_row"), "and picks a ramp row by it")
+
+
+func test_the_islands_sea_drifts_five_px_a_second_east_and_holds_its_mask() -> void:
+	var island := _island(SANDBAR)
+	var material := (_view(island).get_node(^"Sea") as Polygon2D).material as ShaderMaterial
+	assert_eq(SeaShaderChecks.drift_of(material), Vector2(SeaShaderChecks.DRIFT_PX_PER_S, 0.0), "5 px/s east")
+	for name: StringName in [&"depth_mask", &"water", &"ramps"]:
+		assert_not_null(material.get_shader_parameter(name), "%s is set" % name)
+
+
+func test_a_shallows_cell_picks_the_shallows_row_and_a_deep_cell_the_deep_row() -> void:
+	var island := _island(SANDBAR)
+	var terrain: GridTerrain = island.terrain
+	var art: TerrainArtData = TerrainArt.data()
+	var deep_row: int = art.depth_steps[DataEnums.Terrain.DEEP]
+	var shallows_row: int = art.depth_steps[DataEnums.Terrain.SHALLOWS]
+	var brackish_row: int = art.depth_steps[DataEnums.Terrain.BRACKISH]
+	var material := (_view(island).get_node(^"Sea") as Polygon2D).material as ShaderMaterial
+	var mask := (material.get_shader_parameter(&"depth_mask") as Texture2D).get_image()
+	if mask == null or mask.is_empty():
+		pending("the dummy renderer keeps no image of the mask; task 4.6's capture covers it")
+		return
+	var checked: Dictionary[int, int] = {}
+	for cell: Vector2i in terrain.cells:
+		var kind: int = terrain.terrain_at(cell)
+		if kind != DataEnums.Terrain.DEEP and kind != DataEnums.Terrain.SHALLOWS and kind != DataEnums.Terrain.BRACKISH:
+			continue
+		var wanted: int = art.depth_steps[kind]
+		assert_eq(SeaShaderChecks.row_for(mask.get_pixelv(cell), deep_row, shallows_row, brackish_row), wanted, "cell %s (terrain %d) picks its own row" % [cell, kind])
+		checked[kind] = checked.get(kind, 0) + 1
+	assert_gt(checked.get(DataEnums.Terrain.DEEP, 0), 0, "the sandbar has deep cells")
+	assert_gt(checked.get(DataEnums.Terrain.SHALLOWS, 0), 0, "and shallows")
+	var ramps := (load(ArtTuning.STANDARD_PATH) as ArtTuning).sea_ramps.get_image()
+	var deep_light: float = _row_light(ramps, deep_row)
+	assert_gt(_row_light(ramps, shallows_row), deep_light, "the shallows ramp is lighter than the deep one")
+
+
+func _row_light(ramps: Image, row: int) -> float:
+	var total: float = 0.0
+	for shade: int in ramps.get_width():
+		total += ramps.get_pixel(shade, row).get_luminance()
+	return total / ramps.get_width()
+
+
 func test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule() -> void:
 	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
 		var island := _island(layout)
