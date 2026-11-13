@@ -47,8 +47,8 @@
       {"id": "cliff", "tile": [12, 13], "rim": "#323c39", "map": {"#79584f": "#323c39", "#94785c": "#696a6a", "#bc9a78": "#595652"}},
       {"id": "hammock", "tile": [3, 16], "map": {"#2eca5c": "#4b692f", "#50eb6c": "#6abe30", "#299750": "#37946e", "#2b7d4a": "#323c39", "#2d5b43": "#323c39", "#2b2f35": "#222034"}},
       {"id": "casuarina", "tile": [2, 16], "map": {"#2eca5c": "#8a6f30", "#50eb6c": "#8f974a"}},
-      {"id": "reef_flat", "tile": [14, 12], "map": {"#c0c0c0": "#9badb7", "#a3aab1": "#5fcde4", "#848a96": "#847e87"}},
-      {"id": "coral", "tile": [14, 12], "map": {"#c0c0c0": "#d95763", "#a3aab1": "#d77bba", "#848a96": "#ac3232"}},
+      {"id": "reef_flat", "tile": [14, 12], "rim": "#847e87", "map": {"#c0c0c0": "#9badb7", "#a3aab1": "#5fcde4", "#848a96": "#847e87"}},
+      {"id": "coral", "tile": [14, 12], "rim": "#8f563b", "map": {"#c0c0c0": "#b57251", "#a3aab1": "#dca68d", "#848a96": "#d95763"}},
       {"id": "mangrove", "tile": [4, 16], "map": {"#2eca5c": "#524b24", "#50eb6c": "#37946e", "#299750": "#4b692f", "#2b7d4a": "#323c39", "#2d5b43": "#323c39", "#2b2f35": "#222034"}},
       {"id": "wreck_interior", "tile": [13, 15], "map": {"#885040": "#45283c", "#a87848": "#663931", "#cf9054": "#8f563b"}}
     ]
@@ -72,13 +72,13 @@
     "land_rows": 6,
     "white": "#ffffff",
     "colour": "#ffffff",
-    "fade": {"from": 3, "colour": "#cbdbfc"}
+    "fade": {"from": 3, "colour": "#8fe0f0"}
   },
   "shade": {
     "shape": "sand",
     "colour": "#000000",
-    "alpha": 56,
-    "edge": [18, 38],
+    "alpha": 46,
+    "edge": [5, 10, 16, 22, 28, 34, 40],
     "spots": "shade_spots.png"
   },
   "copies": [
