@@ -17,7 +17,7 @@ const REFUSALS: Array[StringName] = [&"empty", &"no_use", &"down", &"at_sea", &"
 ## count ("%s x%d"), a build's progress ("%d %%"), what the list says is carried of an input
 ## ("%d/%d %s": carried, needed, name), the weight readout ("%s %s/%s": label, carried, limit)
 ## and the decimal separator its numbers use.
-const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point"]
+const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point", &"close_note"]
 
 ## Verb per ItemUseData.UseAction ("Beber").
 @export var use_verbs: Dictionary[ItemUseData.UseAction, PackedStringArray] = {}

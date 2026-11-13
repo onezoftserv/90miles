@@ -64,6 +64,18 @@ texture_margin_top = 4.0
 texture_margin_right = 4.0
 texture_margin_bottom = 4.0
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_note"]
+content_margin_left = 4.0
+content_margin_top = 3.0
+content_margin_right = 4.0
+content_margin_bottom = 3.0
+bg_color = Color(0.95686275, 0.9372549, 0.8784314, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.04, 0.08, 0.13, 1)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_afeyr"]
 content_margin_left = 3.0
 content_margin_top = 3.0
@@ -153,6 +165,12 @@ HudCount/base_type = &"Label"
 HudCount/colors/font_outline_color = Color(0.04, 0.08, 0.13, 1)
 HudCount/colors/font_shadow_color = Color(0, 0, 0, 0)
 HudCount/constants/outline_size = 1
+HudNote/base_type = &"PanelContainer"
+HudNote/styles/panel = SubResource("StyleBoxFlat_note")
+HudNoteText/base_type = &"Label"
+HudNoteText/colors/font_color = Color(0.04, 0.08, 0.13, 1)
+HudNoteText/colors/font_shadow_color = Color(0, 0, 0, 0)
+HudNoteText/constants/outline_size = 0
 HudPanel/base_type = &"PanelContainer"
 HudPanel/styles/panel = SubResource("StyleBoxFlat_afeyr")
 HudSlot/base_type = &"Panel"

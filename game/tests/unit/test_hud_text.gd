@@ -166,6 +166,8 @@ func test_spanish_comes_first() -> void:
 	assert_eq(text.refusal(&"at_sea"), "En plena travesía no se puede.")
 	assert_eq(text.line(&"weight"), "Peso")
 	assert_eq(text.line(&"missing"), "Falta:")
+	assert_eq(text.line(&"close_note") % "E", "[E] Cerrar")
+	assert_eq(text.line(&"close_note", "en") % "A", "[A] Close")
 
 
 func test_english_sits_beside_it_and_falls_back_to_spanish() -> void:
