@@ -1312,9 +1312,10 @@ func _host() -> void:
 		if peer_id != 1:
 			client_peer = peer_id
 	var client_body: Node2D = session.call("body", client_peer)
-	var picked: int = 0
+	# A lambda captures locals by value, so the count lives in an array.
+	var picked: Array[int] = [0]
 	if client_body != null:
-		client_body.get("inventory").connect(&"changed", func() -> void: picked += 1)
+		client_body.get("inventory").connect(&"changed", func() -> void: picked[0] += 1)
 	# The raft is built at once (the solo run plays the build), so the host can leave the moment
 	# the client does, and waits on it while the client looks round.
 	var site: Node2D = session.get_node_or_null(^"RaftSite")
@@ -1335,7 +1336,7 @@ func _host() -> void:
 			left = true
 			break
 		await physics_frame
-	_check("host: the client's pick-ups went through the host (its inventory changed here)", picked > 0, "%d change(s)" % picked)
+	_check("host: the client's pick-ups went through the host (its inventory changed here)", picked[0] > 0, "%d change(s)" % picked[0])
 	if not _check("host: the client left", left) or raft == null:
 		return
 	raft.set("integrity", HOST_RAFT_INTEGRITY)
@@ -1354,9 +1355,11 @@ func _host() -> void:
 	crossing.set("plan", (load(PLAN_PATH) as Script).call("create", 120.0, [] as Array[RefCounted]))
 	_hooked("host crossing plan 120 s, no beats")
 	print("ARTRUN host crossing started")
+	var known: Array = (session.call("peer_ids") as Array).duplicate()
 	var rejoined: bool = false
 	for i: int in 60 * physics_hz:
-		if (session.call("peer_ids") as Array).size() >= 2:
+		var now: Array = session.call("peer_ids")
+		if now.any(func(peer_id: int) -> bool: return not known.has(peer_id)):
 			rejoined = true
 			_note("the client came back %.1f s into the crossing" % float(crossing.get("elapsed_s")))
 			break
@@ -1446,6 +1449,7 @@ func _client() -> void:
 		await physics_frame
 	if not _check("client: the host's crossing is there", crossing != null):
 		return
+	_note("client: in the host's crossing at %.1f s of it" % float(crossing.get("elapsed_s")))
 	await _frames(20)
 	var integrity: float = float((crossing.get("integrity") as Object).get("value"))
 	var deck: Node = crossing.get_node(^"Deck")
