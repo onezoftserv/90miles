@@ -14,4 +14,5 @@ script = ExtResource("2_sea")
 [node name="Deck" type="Sprite2D" parent="." groups=["art_view"]]
 z_index = -20
 script = ExtResource("3_deck")
-water_line_row = 26
+water_line_row = 27
+foam_color = Color(0.56078434, 0.8784314, 0.9411765, 1)
