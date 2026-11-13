@@ -5,11 +5,11 @@ of --fixes it makes game/assets/art/creatures/<id>.png, one sheet per creature. 
 a frame cell and a list of layers pasted in order (an opaque pixel replaces):
 
 - {"hand": "<file>.png"}: a hand-drawn source of the fixes folder, the sheet's own size, already
-  in the master palette (the crab, the shark's fin, ripple and body).
+  in the master palette (the crab, the shark, and the overlay on the gull's back facing).
 - {"from": "<source>", "rect": [x, y, w, h], "at": [x, y]}: a rect cut from a pack sheet, every
   colour sent through "map" (a colour it does not name must already be in the palette), with
   "drop_lone" removing pixels that touch no other, and "outline" recolouring the piece's own edge
-  ring to one colour before it is pasted (the shark's splash, the gull's frames).
+  ring to one colour before it is pasted (the gull's frames).
 
 Then "rim" recolours each cell's edge ring to the nearest outline colour (rim.py), and every sheet
 must pass the palette, whole-alpha and outline rules cell by cell. Nothing is written inside a
