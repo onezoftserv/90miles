@@ -8,8 +8,8 @@ extends GutTest
 ## shadows on the ground; a perched gull stands at its palm's crown nest point and sorts over the
 ## crown, on the host and on a client and with exactly 1 player, offline.
 ##
-## The palm's art (group 8) is not made yet: the crown nest point is the creature art's perch lift
-## above the trunk base. Group 8 puts the crown's nest point there (see design.md K60).
+## The perched gull's feet are compared with the crown nest point of the real palm's look (group 8;
+## design.md K64).
 
 const FRAME_S: float = 1.0 / 60.0
 const TIMEOUT_S: float = 5.0
@@ -22,8 +22,6 @@ const SETTINGS_PATH: String = "user://test_creature_art_settings.cfg"
 const TILE: float = 16.0
 ## The gull's lift in flight (design.md D16).
 const AIR_LIFT_PX: float = 8.0
-## The crown's nest point is about 34 px above the trunk base (design.md D18).
-const NEST_POINT_PX: Vector2 = Vector2(30.0, 38.0)
 ## SwoopSteal's and PatrolCircleStrike's states.
 const PERCH: int = 0
 const SWOOP: int = 1
@@ -255,17 +253,23 @@ func test_a_flying_gulls_shadow_stays_on_the_ground_8_px_below_its_sprite() -> v
 	assert_true(sprite.animation.begins_with("move"), "flying")
 
 
-# A gull perched at its nest: the look node 1 px south, the feet on the nest point, no shadow, the
-# synced position untouched.
-func _assert_perched(gull: Creature, at: Vector2, peer: String) -> void:
-	var entry := _art().entry(&"seagull")
+# The palm as drawn: its look, after one step (design.md K64).
+func _palm_look(palm: Palm) -> StructureLook:
+	var look := palm.get_node(NodePath(StructureLook.NODE_NAME)) as StructureLook
+	look.step()
+	return look
+
+
+# A gull perched at its nest: the look node 1 px south, the feet on the palm look's nest point, no
+# shadow, the synced position untouched.
+func _assert_perched(gull: Creature, at: Vector2, palm: Palm, peer: String) -> void:
 	var look := _look(gull)
 	var sprite := _sprite(gull)
 	assert_eq(gull.position, at, "%s: the synced position untouched" % peer)
 	assert_true(gull.y_sort_enabled, "%s: Creature is y-sorted" % peer)
 	assert_eq(look.position, Vector2(0.0, 1.0), "%s: the look node 1 px south of the trunk base" % peer)
-	assert_eq(_feet_y(sprite), gull.global_position.y - entry.perch_lift_px, "%s: on the crown's nest point" % peer)
-	assert_between(entry.perch_lift_px, NEST_POINT_PX.x, NEST_POINT_PX.y, "about 34 px up")
+	var feet := Vector2(sprite.global_position.x, _feet_y(sprite))
+	assert_eq(feet, _palm_look(palm).nest_point(), "%s: the feet on the palm look's crown nest point" % peer)
 	assert_false(_shadow(gull).visible, "%s: no shadow of its own" % peer)
 	assert_true(sprite.animation.begins_with("idle"), "%s: standing" % peer)
 
@@ -287,10 +291,10 @@ func test_a_perched_gull_stands_in_the_crown_on_the_host_and_a_client() -> void:
 		palms.append(palm)
 	await wait_frames(3)
 	assert_eq(theirs.state_id, PERCH)
-	_assert_perched(gull, at, "host")
-	_assert_perched(theirs, at, "client")
-	assert_true(DrawOrder.drawn_after(_sprite(gull), palms[0]), "host: over the crown")
-	assert_true(DrawOrder.drawn_after(_sprite(theirs), palms[1]), "client: over the crown")
+	_assert_perched(gull, at, palms[0] as Palm, "host")
+	_assert_perched(theirs, at, palms[1] as Palm, "client")
+	assert_true(DrawOrder.drawn_after(_sprite(gull), _palm_look(palms[0] as Palm).still), "host: over the crown")
+	assert_true(DrawOrder.drawn_after(_sprite(theirs), _palm_look(palms[1] as Palm).still), "client: over the crown")
 
 
 func test_a_solo_players_perched_gull_sorts_over_its_palm_and_behind_a_player_south_of_it() -> void:
@@ -323,8 +327,9 @@ func test_a_solo_players_perched_gull_sorts_over_its_palm_and_behind_a_player_so
 	assert_not_null(palm, "the gull sits on a palm's trunk base")
 	if palm == null:
 		return
-	_assert_perched(gull, gull.position, "solo")
-	assert_true(DrawOrder.drawn_after(_sprite(gull), palm), "over the crown")
+	_assert_perched(gull, gull.position, palm, "solo")
+	assert_true(DrawOrder.drawn_after(_sprite(gull), _palm_look(palm).still), "over the crown")
+	assert_true(_palm_look(palm).nest.visible, "on a nest palm, its nest drawn")
 	body.global_position = palm.global_position + Vector2(0.0, TILE)
 	assert_true(DrawOrder.drawn_after(body, _sprite(gull)), "behind a player one tile south of the palm")
 	body.global_position = palm.global_position + Vector2(0.0, -TILE)
