@@ -32,6 +32,8 @@ const CORNER_SETS: Array[String] = ["sand", "dune", "brush"]
 const SHADE_SHEET: String = "res://assets/art/decals/shade.png"
 const PLAIN_SHEET: String = "res://assets/art/terrain/plain.png"
 const PLAIN_ROWS: int = 9
+## The most full-tile variants a plain row has (the rock's), on columns 16 and after.
+const PLAIN_VARIANTS_MAX: int = 3
 const WATER_RAMPS: String = "res://assets/art/sea/water_ramps.png"
 ## The shore sheets (design.md K39): column = the cell's sand mask, row = the layer's own mask
 ## (plain: 16 rows per terrain).
@@ -195,7 +197,7 @@ func test_each_plain_tile_has_the_outline_of_the_sand_tile_of_its_column() -> vo
 	var plain: Image = _sheet(PLAIN_SHEET)
 	if sand == null or plain == null:
 		return
-	assert_eq(plain.get_size(), Vector2i(16 * TILE, PLAIN_ROWS * TILE))
+	assert_eq(plain.get_size(), Vector2i((16 + PLAIN_VARIANTS_MAX) * TILE, PLAIN_ROWS * TILE))
 	for row: int in PLAIN_ROWS:
 		for mask: int in 16:
 			var tile: Image = plain.get_region(Rect2i(mask * TILE, row * TILE, TILE, TILE))
@@ -250,9 +252,10 @@ func test_the_corner_sets_hold_no_sea_or_foam_colour() -> void:
 
 
 ## The picks on row 4 replace the tile of one mask (sand and dune the full tile, brush the
-## islet), have that mask's corners and are all different (design.md K36).
+## islet), have that mask's corners and are all different, and none is the mirror of another,
+## which would flip the light (design.md K36).
 func test_the_variants_on_row_4_have_their_masks_corners_and_differ() -> void:
-	var counts: Dictionary[String, int] = {"sand": 4, "dune": 4, "brush": 2}
+	var counts: Dictionary[String, int] = {"sand": 4, "dune": 4, "brush": 4}
 	var variant_of: Dictionary[String, int] = {"sand": 15, "dune": 15, "brush": 0}
 	for id: String in counts:
 		var sheet: Image = _sheet("res://assets/art/terrain/%s.png" % id)
@@ -266,6 +269,217 @@ func test_the_variants_on_row_4_have_their_masks_corners_and_differ() -> void:
 				continue
 			assert_eq(_corners(sheet, Vector2i(column, 4)), variant_of[id], "%s variant %d: its corners" % [id, column])
 			assert_false(seen.has(tile.get_data()), "%s variant %d repeats another" % [id, column])
+			var mirror: Image = tile.duplicate() as Image
+			mirror.flip_x()
+			assert_false(seen.has(mirror.get_data()), "%s variant %d is the mirror of another" % [id, column])
+			seen.append(tile.get_data())
+
+
+## The pixels of `tile` other than `fill` with every pixel within three of them drawn (the tile's
+## outside counts as drawn): marks well inside the shape, such as a tuft, not its rim.
+func _deep_marks(tile: Image, fill: Color) -> int:
+	var count: int = 0
+	for y: int in TILE:
+		for x: int in TILE:
+			if tile.get_pixel(x, y).a == 0.0 or tile.get_pixel(x, y) == fill:
+				continue
+			var deep: bool = true
+			for dy: int in range(-3, 4):
+				for dx: int in range(-3, 4):
+					var at: Vector2i = Vector2i(x + dx, y + dy)
+					if Rect2i(0, 0, TILE, TILE).has_point(at) and tile.get_pixel(at.x, at.y).a == 0.0:
+						deep = false
+			if deep:
+				count += 1
+	return count
+
+
+## Design.md K39 (art round 2): a straight dune edge carries no tuft, so a long edge is not a row
+## of identical tufts (tufts come from the full-tile picks), and the islet has the pack edge's
+## character: a broken outline with gaps and 1-2 px spikes, and one small tuft.
+func test_the_dune_edges_carry_no_tuft_and_the_islet_is_ragged() -> void:
+	var sheet: Image = _sheet("res://assets/art/terrain/dune.png")
+	if sheet == null:
+		return
+	var fill: Color = sheet.get_pixel(3 * TILE, 3 * TILE)
+	for mask: int in [SEA_SOUTH, SEA_EAST, SEA_WEST, SEA_NORTH]:
+		var tile: Image = sheet.get_region(Rect2i(_mask_atlas(mask) * TILE, Vector2i(TILE, TILE)))
+		assert_eq(_deep_marks(tile, fill), 0, "dune mask %d has no tuft" % mask)
+	var islet: Image = sheet.get_region(Rect2i(0, 0, TILE, TILE))
+	var tuft: int = _deep_marks(islet, fill)
+	assert_true(tuft > 0 and tuft <= 12, "the islet has one small tuft (%d px)" % tuft)
+	var notches: int = 0
+	var spikes: int = 0
+	for y: int in TILE:
+		var first: int = -1
+		var last: int = -1
+		for x: int in TILE:
+			if islet.get_pixel(x, y).a > 0.0:
+				last = x
+				if first < 0:
+					first = x
+		for x: int in range(first + 1, last):
+			if islet.get_pixel(x, y).a == 0.0:
+				notches += 1
+		for x: int in TILE:
+			if islet.get_pixel(x, y).a == 0.0:
+				continue
+			var clear: int = 0
+			for dy: int in range(-1, 2):
+				for dx: int in range(-1, 2):
+					var at: Vector2i = Vector2i(x + dx, y + dy)
+					if not Rect2i(0, 0, TILE, TILE).has_point(at) or islet.get_pixel(at.x, at.y).a == 0.0:
+						clear += 1
+			if clear >= 5:
+				spikes += 1
+	assert_gte(notches, 2, "the islet's outline is broken, not a solid ring")
+	assert_gte(spikes, 3, "the islet's outline has 1-2 px spikes")
+
+
+## Design.md K39 (art round 2): the tide pool is an irregular pool, not a stone-ringed porthole:
+## it leaves at least one cell edge bare, holds water in two shades, three or four stones of
+## different sizes and a wet-sand lip, with the lip's dark colour under a south stone.
+func test_the_tide_pool_is_irregular_with_a_few_stones_and_a_wet_sand_lip() -> void:
+	var pool: Image = _sheet("res://assets/art/terrain/tide_pool.png")
+	if pool == null:
+		return
+	var water: Dictionary[Color, bool] = {}
+	var stones: Dictionary[Vector2i, bool] = {}
+	var lip: Dictionary[Color, int] = {Color.html("#d9a066"): 0, Color.html("#c08a5a"): 0}
+	var stone_colors: Array[Color] = [Color.html("#9badb7"), Color.html("#847e87"), Color.html("#696a6a"), Color.html("#595652")]
+	var edges: int = 0
+	for side: Rect2i in [Rect2i(0, 0, TILE, 1), Rect2i(0, TILE - 1, TILE, 1), Rect2i(0, 0, 1, TILE), Rect2i(TILE - 1, 0, 1, TILE)]:
+		if not pool.get_region(side).is_invisible():
+			edges += 1
+	assert_lt(edges, 4, "the pool does not touch all four cell edges")
+	for y: int in TILE:
+		for x: int in TILE:
+			var color: Color = pool.get_pixel(x, y)
+			if color.a == 0.0:
+				continue
+			if stone_colors.has(color):
+				stones[Vector2i(x, y)] = true
+			elif lip.has(color):
+				lip[color] += 1
+			else:
+				water[color] = true
+	assert_eq(water.size(), 2, "water in two shades")
+	for color: Color in lip:
+		assert_gt(lip[color], 0, "the lip has %s" % color.to_html(false))
+	var sizes: Array[int] = []
+	var seen: Dictionary[Vector2i, bool] = {}
+	var shadowed: bool = false
+	for start: Vector2i in stones:
+		if seen.has(start):
+			continue
+		var size: int = 0
+		var todo: Array[Vector2i] = [start]
+		seen[start] = true
+		while not todo.is_empty():
+			var at: Vector2i = todo.pop_back()
+			size += 1
+			var below: Vector2i = at + Vector2i.DOWN
+			if below.y < TILE and pool.get_pixel(below.x, below.y) == Color.html("#c08a5a") and at.y > TILE / 2:
+				shadowed = true
+			for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				if stones.has(at + step) and not seen.has(at + step):
+					seen[at + step] = true
+					todo.append(at + step)
+		sizes.append(size)
+	assert_true(sizes.size() >= 3 and sizes.size() <= 4, "three or four stones, not a ring (%s)" % [sizes])
+	sizes.sort()
+	for index: int in range(1, sizes.size()):
+		assert_ne(sizes[index], sizes[index - 1], "the stones differ in size (%s)" % [sizes])
+	assert_true(shadowed, "a south stone has the lip's dark colour under it")
+
+
+## Design.md K39 (art round 2): a plain row's full tile is seamless, so a field of it shows no
+## dash or line on every cell: each colour on its first column or row also appears within
+## SEAM_REACH pixels on the opposite edge. The pack's own rock, shingle, cliff, reef flat and
+## coral tiles hold a texel or two that meets its match two pixels along. The cliff (a ledge per
+## cell: a lit lip on top, a dark foot) and the wreck interior (planks: a board's lit top under the
+## seam of the cell above) are bands across the tile, so only their east edge is checked.
+const SEAM_REACH: Dictionary[int, int] = {0: 2, 1: 2, 2: 2, 3: 1, 4: 1, 5: 2, 6: 2, 7: 1, 8: 1}
+const BANDED_ROWS: Array[int] = [2, 8]
+
+
+func test_each_plain_full_tile_is_seamless() -> void:
+	var plain: Image = _sheet(PLAIN_SHEET)
+	if plain == null:
+		return
+	for row: int in SEAM_REACH:
+		var tile: Image = plain.get_region(Rect2i(15 * TILE, row * TILE, TILE, TILE))
+		var reach: int = SEAM_REACH[row]
+		for i: int in TILE:
+			var across: Array[Color] = []
+			var down: Array[Color] = []
+			for j: int in range(maxi(0, i - reach), mini(TILE, i + reach + 1)):
+				across.append(tile.get_pixel(TILE - 1, j))
+				down.append(tile.get_pixel(j, TILE - 1))
+			assert_true(across.has(tile.get_pixel(0, i)), "plain row %d: (0, %d) meets its colour on the east edge" % [row, i])
+			if not BANDED_ROWS.has(row):
+				assert_true(down.has(tile.get_pixel(i, 0)), "plain row %d: (%d, 0) meets its colour on the south edge" % [row, i])
+
+
+func _row_luminance(tile: Image, y: int) -> float:
+	var total: float = 0.0
+	for x: int in TILE:
+		total += ArtChecks.luminance(tile.get_pixel(x, y))
+	return total / TILE
+
+
+## Design.md K39 (art round 2): the cliff reads as a height, not as dark rock: its top row is
+## lighter and its bottom row darker than its middle. The wreck interior is long boards, not
+## brick paving: whole rows of one colour (the seams and the boards' lit tops) cross the tile,
+## and at most one vertical joint breaks a board.
+func test_the_cliff_has_a_lit_lip_and_a_dark_foot_and_the_wreck_has_long_boards() -> void:
+	var plain: Image = _sheet(PLAIN_SHEET)
+	if plain == null:
+		return
+	var cliff: Image = plain.get_region(Rect2i(15 * TILE, 2 * TILE, TILE, TILE))
+	var middle: float = (_row_luminance(cliff, 7) + _row_luminance(cliff, 8)) / 2.0
+	assert_gt(_row_luminance(cliff, 0), middle, "the cliff's top row is lit")
+	assert_lt(_row_luminance(cliff, TILE - 1), middle, "the cliff's foot is dark")
+	var wreck: Image = plain.get_region(Rect2i(15 * TILE, 8 * TILE, TILE, TILE))
+	var whole_rows: int = 0
+	for y: int in TILE:
+		var flat: bool = true
+		for x: int in TILE:
+			flat = flat and wreck.get_pixel(x, y) == wreck.get_pixel(0, y)
+		if flat:
+			whole_rows += 1
+	assert_gte(whole_rows, 5, "seams and board tops run across the whole tile")
+	var joints: int = 0
+	for x: int in TILE:
+		var dark_run: int = 0
+		for y: int in TILE:
+			dark_run = dark_run + 1 if ArtChecks.luminance(wreck.get_pixel(x, y)) < ArtChecks.luminance(Color.html("#663931")) else 0
+			if dark_run == 4:
+				joints += 1
+	assert_lte(joints, 1, "at most one board joint in the tile")
+
+
+## Design.md K39: a plain row's full-tile variants sit on columns 16 and after, as many as
+## `terrain_art.tres` counts for the row; each is a whole tile and none repeats the full tile
+## (column 15) or another variant.
+func test_the_plain_variants_are_whole_tiles_that_differ_and_match_the_data() -> void:
+	var plain: Image = _sheet(PLAIN_SHEET)
+	if plain == null:
+		return
+	var counts: Dictionary[int, int] = TerrainArt.data().plain_variants
+	assert_eq(counts.get(0, 0), 3, "the rock has the pack variant and two hand ones")
+	@warning_ignore("integer_division")
+	var columns: int = plain.get_width() / TILE
+	for row: int in PLAIN_ROWS:
+		var seen: Array[PackedByteArray] = [plain.get_region(Rect2i(15 * TILE, row * TILE, TILE, TILE)).get_data()]
+		for column: int in range(16, columns):
+			var tile: Image = plain.get_region(Rect2i(column * TILE, row * TILE, TILE, TILE))
+			var expected: bool = column - 16 < counts.get(row, 0)
+			assert_eq(not tile.is_invisible(), expected, "plain row %d column %d" % [row, column])
+			if not expected:
+				continue
+			assert_eq(_off_the_sand(tile, _sheet(SAND_SHEET), 15, true), 0, "plain row %d column %d is a whole tile" % [row, column])
+			assert_false(seen.has(tile.get_data()), "plain row %d column %d repeats another tile" % [row, column])
 			seen.append(tile.get_data())
 
 
@@ -350,7 +564,7 @@ func test_a_scrub_cell_inside_dune_gets_the_full_dune_tile_and_the_brush_islet()
 	var at: Vector2i = Vector2i(2, 2)
 	_assert_pick(_pick(TerrainArt.SAND, rows, at), 0, 4, "sand")
 	_assert_pick(_pick(TerrainArt.DUNE, rows, at), 1, 4, "dune")
-	_assert_pick(_pick(TerrainArt.BRUSH, rows, at), 2, 2, "brush")
+	_assert_pick(_pick(TerrainArt.BRUSH, rows, at), 2, 4, "brush")
 	assert_eq(_pick(TerrainArt.BRUSH, rows, Vector2i(2, 1)), {}, "dune is not in the brush layer")
 	var terrain: GridTerrain = TerrainRows.build(rows)
 	assert_eq(TerrainArt.layer_cells(TerrainArt.SAND, terrain, []).size(), 25, "sand counts every land kind")
@@ -382,6 +596,35 @@ func test_a_plain_cell_inland_takes_the_tile_of_its_own_mask() -> void:
 	assert_eq(corner.get(&"atlas"), Vector2i(8, 0), "only its SE corner has four rock cells round it")
 	assert_eq(_sand_mask(rows, Vector2i(1, 1)), 15, "the sand under it is whole")
 	assert_eq(_pick(TerrainArt.PLAIN, rows, Vector2i(0, 0)), {}, "sand is not in the plain layer")
+
+
+## Design.md K39: an inland whole plain tile (own mask 15, sand mask 15) takes the full tile or
+## one of its row's variants by the cell's hash, the same on every build; an edge or a shore cell
+## of the same patch never does.
+func test_an_inland_whole_rock_cell_takes_a_variant_by_its_hash() -> void:
+	var rows: PackedStringArray = PackedStringArray(["sssssssss"])
+	for _y: int in 7:
+		rows.append("srrrrrrrs")
+	rows.append("sssssssss")
+	var terrain: GridTerrain = TerrainRows.build(rows)
+	var columns: Dictionary[int, bool] = {}
+	for y: int in range(2, 7):
+		for x: int in range(2, 7):
+			var at: Vector2i = Vector2i(x, y)
+			var tile: Dictionary = _pick(TerrainArt.PLAIN, rows, at)
+			var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+			assert_eq(tile.get(&"source"), 3, "%s: the plain sheet" % at)
+			assert_eq(atlas.y, 0, "%s: the rock's row" % at)
+			assert_eq(atlas.x, 15 + (TerrainArt.cell_hash(&"test", at) >> 1) % 4, "%s: the full tile or a variant by the hash" % at)
+			assert_eq(TerrainArt.tile(TerrainArt.PLAIN, at, &"test", terrain, []), tile, "%s: the same on every build" % at)
+			columns[atlas.x] = true
+	assert_gt(columns.size(), 2, "25 inland cells show more than two of the four tiles")
+	assert_eq(_pick(TerrainArt.PLAIN, rows, Vector2i(1, 4)).get(&"atlas"), Vector2i(10, 0), "an edge cell keeps its own mask")
+	var hammock: GridTerrain = GridTerrain.new()
+	hammock.default_terrain = DataEnums.Terrain.BEACH
+	hammock.fill_rect(Rect2i(1, 1, 3, 3), DataEnums.Terrain.HAMMOCK)
+	var whole: Dictionary = TerrainArt.tile(TerrainArt.PLAIN, Vector2i(2, 2), &"test", hammock, [] as Array[Vector2i])
+	assert_eq(whole.get(&"atlas"), Vector2i(15, 3), "a row with no variants keeps its full tile")
 
 
 

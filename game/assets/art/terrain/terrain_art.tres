@@ -51,7 +51,10 @@ variant_mask = Dictionary[StringName, int]({
 variant_count = Dictionary[StringName, int]({
 &"Sand": 4,
 &"Dune": 4,
-&"Brush": 2
+&"Brush": 4
+})
+plain_variants = Dictionary[int, int]({
+0: 3
 })
 depth_steps = Dictionary[int, int]({
 0: 0,

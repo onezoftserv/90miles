@@ -104,7 +104,7 @@ static func corner_mask(layer: StringName, cell: Vector2i, terrain: GridTerrain,
 ## the cell is not in the layer. A cell of an upper layer takes the tile of its own mask from its
 ## own sheet when the sand under it is whole, and atlas (sand mask, own mask) of the layer's shore
 ## source otherwise (K39). A full tile, and the brush's islet, take one of the layer's picks by
-## the cell's hash.
+## the cell's hash; an inland whole plain tile takes its full tile or one of its row's variants.
 static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terrain: GridTerrain, pools: Array[Vector2i]) -> Dictionary:
 	if not is_member(layer, cell, terrain, pools):
 		return {}
@@ -119,6 +119,8 @@ static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terra
 		atlas = Vector2i(sand, art.shore_row_stride * row + own)
 	elif sand == FULL and own == art.variant_mask.get(layer, -1):
 		atlas = Vector2i(_variant(layer, cell, layout_id), PICK_ROW)
+	elif layer == PLAIN and own == FULL:
+		atlas = Vector2i(FULL + _plain_variant(row, cell, layout_id), row)
 	elif layer == PLAIN:
 		atlas = Vector2i(own, row)
 	else:
@@ -129,6 +131,11 @@ static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terra
 
 static func _variant(layer: StringName, cell: Vector2i, layout_id: StringName) -> int:
 	return (cell_hash(layout_id, cell) >> 1) % int(data().variant_count[layer])
+
+
+## 0 for the full tile, n for the row's n-th variant after it.
+static func _plain_variant(row: int, cell: Vector2i, layout_id: StringName) -> int:
+	return (cell_hash(layout_id, cell) >> 1) % (1 + int(data().plain_variants.get(row, 0)))
 
 
 # Whether `at` counts as land for `layer`; `own` is the terrain of the cell whose corners are asked,

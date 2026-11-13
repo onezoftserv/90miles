@@ -10,7 +10,9 @@ game/assets/art/:
   (the islet and the two diagonals) are put together from quarters of the cut tiles. A "stamp"
   set draws one pack tile on the cell and a quarter of it on each land corner (the brush).
 - terrain/plain.png: one row per plain terrain, the tile cut by the sand tile of mask m at
-  column m (column 15 is the whole tile), with an optional rim colour on the cut edge.
+  column m (column 15 is the whole tile), with an optional rim colour on the cut edge, and the
+  row's full-tile "variants" (a pack tile through the row's map, or "15", the full tile for hand
+  pixels) from column 16 on; the sheet is as wide as the row with the most variants needs.
 - terrain/<set>_shore.png and terrain/plain_shore.png, for a set or the plain rows with a
   "shore" entry: the upper layers' tiles for shore cells, where the sand under them is cut. The
   tile of the layer's own corner mask d, kept only on the sand tile of the cell's sand mask s
@@ -28,8 +30,10 @@ game/assets/art/:
   shade, and the two halves of a wide one) of the "spots" strip in the fixes folder.
 - "copies": hand-drawn sources of the fixes folder, checked and copied.
 
-Each set and the foam take a hand-fix overlay <name>.png from --fixes, blended last (an opaque
-pixel replaces, #ff00ff erases); the plain tiles and the foam follow the fixed sand. Every colour
+Each set, the plain sheet and the foam take a hand-fix overlay <name>.png from --fixes, blended
+last (an opaque pixel replaces, #ff00ff erases); the plain tiles and the foam follow the fixed
+sand. The plain overlay may touch only the full tiles and the variants (column 15 on): the cut
+tiles are made from the fixed full tile. Every colour
 must be in the master palette. Nothing is written inside a download folder, and nothing at all
 when a sheet is refused.
 
@@ -63,6 +67,8 @@ HALF = TILE // 2
 MASKS = 16
 SET_COLUMNS = 4
 VARIANT_ROW = MASKS // SET_COLUMNS
+FULL = MASKS - 1
+PLAIN_VARIANTS = 4
 NW, NE, SW, SE = 1, 2, 4, 8
 CLEAR = (0, 0, 0, 0)
 
@@ -400,10 +406,10 @@ def hand_cells(entry):
     return {(mask % SET_COLUMNS, mask // SET_COLUMNS) for mask in (mask_of(key, "tiles") for key, spec in tiles.items() if spec == HAND)}
 
 
-def fixed(sheet, fixes, file_name, hand=()):
+def fixed(sheet, fixes, file_name, hand=(), first_column=0):
     """The sheet with its hand-fix overlay from the fixes folder, when there is one. The overlay
     holds hand pixels only: one equal to the built pixel under it is refused, except in a `hand`
-    cell, which the overlay must cover whole."""
+    cell, which the overlay must cover whole; a pixel left of `first_column` is refused."""
     path = pathlib.Path(fixes) / file_name
     if not path.is_file():
         return sheet
@@ -419,6 +425,8 @@ def fixed(sheet, fixes, file_name, hand=()):
             if not overlay.alpha(x, y):
                 continue
             covered[cell] = covered.get(cell, 0) + 1
+            if cell[0] < first_column:
+                raise TerrainError(f"{file_name}: the overlay pixel ({x}, {y}) is on a cut tile; only column {first_column} and after take hand pixels (the cut tiles follow the full tile)")
             if cell not in hand and (out.get(x, y) == sheet.get(x, y) or not (out.alpha(x, y) or sheet.alpha(x, y))):
                 raise TerrainError(f"{file_name}: the overlay pixel ({x}, {y}) in cell {cell} is what the tool already builds, so it is not a hand pixel")
     for cell in sorted(hand):
@@ -435,25 +443,55 @@ def _shape(spec, sets, where):
     return sets[key]
 
 
-def build_plain(spec, sources, sets):
-    """One row per plain terrain: the tile cut by the shape set's tile of mask m at column m."""
+def _plain_variants(entry, full, made, name):
+    """The row's full-tile variants: "15" is the full tile (for hand pixels), [column, row] a pack tile."""
+    specs = member(entry, "variants", list, name)
+    if len(specs) > PLAIN_VARIANTS:
+        raise TerrainError(f"{name}: {len(specs)} variants, and a plain row holds {PLAIN_VARIANTS}")
+    tiles = []
+    for spec in specs:
+        if spec == str(FULL):
+            tiles.append(full.copy())
+        elif isinstance(spec, list):
+            tiles.append(made(spec, f"{name} variant"))
+        else:
+            raise TerrainError(f"{name}: a variant is \"{FULL}\" (the full tile, for hand pixels) or a [column, row] pack tile, not {spec!r}")
+    return tiles
+
+
+def build_plain(spec, sources, sets, fixes):
+    """One row per plain terrain: the full tile at column 15 and its variants after it, fixed by the
+    plain overlay, then the full tile cut by the shape set's tile of mask m at column m."""
     rows = need(spec, "rows", "plain")
     if not isinstance(rows, list) or not rows:
         raise TerrainError(f"plain: \"rows\" is a list of at least one row, not {rows!r}")
     shape = _shape(spec, sets, "plain")
     edges = [sheet_tile(shape, mask) for mask in range(MASKS)]
     fields = [shore_field(edge) for edge in edges]
-    sheet = png.blank(MASKS * TILE, len(rows) * TILE)
+    wholes = []
     for row, entry in enumerate(rows):
         if not isinstance(entry, dict):
             raise TerrainError(f"plain row {row} is not a table: {entry!r}")
         name = f"plain {entry.get('id', row)}"
-        tx, ty = tile_spec(need(entry, "tile", name), name)
-        full = recolour(cut(sources.sheet(need(spec, "source", "plain"), name), tx, ty, name), colour_map(entry, name), (), name)
-        for mask in range(MASKS):
+        mapping = colour_map(entry, name)
+
+        def made(tile, label, mapping=mapping):
+            tx, ty = tile_spec(tile, label)
+            return recolour(cut(sources.sheet(need(spec, "source", "plain"), label), tx, ty, label), mapping, (), label)
+
+        full = made(need(entry, "tile", name), name)
+        wholes.append([full] + _plain_variants(entry, full, made, name))
+    sheet = png.blank((FULL + max(len(tiles) for tiles in wholes)) * TILE, len(rows) * TILE)
+    for row, tiles in enumerate(wholes):
+        for index, tile in enumerate(tiles):
+            sheet.paste(tile, (FULL + index) * TILE, row * TILE)
+    sheet = fixed(sheet, fixes, "plain.png", first_column=FULL)
+    for row, entry in enumerate(rows):
+        full = sheet.crop(FULL * TILE, row * TILE, TILE, TILE)
+        for mask in range(FULL):
             tile = masked(full, edges[mask])
             if "rim" in entry:
-                tile = rimmed(tile, fields[mask], colour(entry["rim"], name))
+                tile = rimmed(tile, fields[mask], colour(entry["rim"], f"plain {entry.get('id', row)}"))
             sheet.paste(tile, mask * TILE, row * TILE)
     return sheet
 
@@ -587,16 +625,18 @@ def _out_folder(out, packs):
 
 
 def _refuse_unread_fixes(recipe, fixes):
-    """Raises on a PNG of the fixes folder that no step reads: an overlay is read by a set and by the
-    foam, a hand source by a copy or the shade spots; plain, shade, water and the shore sheets take none."""
+    """Raises on a PNG of the fixes folder that no step reads: an overlay is read by a set, the plain
+    sheet and the foam, a hand source by a copy or the shade spots; shade, water and the shore
+    sheets take none."""
     read = {f"{entry['id']}.png" for entry in recipe.get("sets", [])}
     read |= {"foam.png"} if "foam" in recipe else set()
+    read |= {"plain.png"} if "plain" in recipe else set()
     read |= {recipe["shade"]["spots"]} if "spots" in recipe.get("shade", {}) else set()
     read |= {entry["from"] for entry in recipe.get("copies", [])}
     folder = pathlib.Path(fixes)
     for path in sorted(folder.iterdir()) if folder.is_dir() else []:
         if path.is_file() and path.suffix.lower() == ".png" and path.name not in read:
-            raise TerrainError(f"{path.name}: no step of the recipe reads it (only the sets and the foam take an overlay) in {folder}")
+            raise TerrainError(f"{path.name}: no step of the recipe reads it (only the sets, the plain sheet and the foam take an overlay) in {folder}")
 
 
 def _refuse_final_paths(names, out, packs, fixes):
@@ -639,7 +679,7 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
         if key in recipe:
             section(recipe, key, kind)
     if "plain" in recipe:
-        plain = build_plain(recipe["plain"], sources, sets)
+        plain = build_plain(recipe["plain"], sources, sets, fixes)
         add("terrain/plain.png", plain)
         if "shore" in recipe["plain"]:
             spec = dict(recipe["plain"]["shore"]) if isinstance(recipe["plain"]["shore"], dict) else recipe["plain"]["shore"]
