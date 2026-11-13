@@ -27,7 +27,8 @@
         "10": [2, 4], "11": [2, 3], "12": [1, 5], "13": [0, 5], "14": [2, 5], "15": "#3abe41"
       },
       "quadrants": {"0": [8, 4, 2, 1], "6": [14, 15, 15, 7], "9": [15, 13, 11, 15]},
-      "variants": ["15", "15", "15", "15"]
+      "variants": ["15", "15", "15", "15"],
+      "shore": {"shape": "sand", "inset": 1}
     },
     {
       "id": "brush",
@@ -35,12 +36,14 @@
       "map": {"#62eb3d": "#99e550", "#2eca35": "#6abe30", "#29973b": "#37946e", "#2d5b3f": "#4b692f", "#302639": "#323c39"},
       "erase": [],
       "stamp": [2, 14],
-      "variants": ["0", "0h", "0", "0h"]
+      "variants": ["0", "0h"],
+      "shore": {"shape": "sand", "inset": 1, "rim": "#323c39"}
     }
   ],
   "plain": {
     "source": "overworld",
     "shape": "sand",
+    "shore": {"inset": 0},
     "rows": [
       {"id": "rock", "tile": [12, 13], "rim": "#696a6a", "map": {"#79584f": "#595652", "#94785c": "#847e87", "#bc9a78": "#696a6a"}},
       {"id": "shingle", "tile": [14, 11], "map": {"#c0c0c0": "#847e87", "#a3aab1": "#9badb7", "#848a96": "#696a6a"}},
@@ -69,7 +72,7 @@
     "origin": [1, 9],
     "step": 17,
     "frames": 8,
-    "land_rows": 6,
+    "land_rows": 9,
     "white": "#ffffff",
     "colour": "#ffffff",
     "fade": {"from": 3, "colour": "#8fe0f0"}

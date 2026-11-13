@@ -177,6 +177,45 @@ class ShadeTests(unittest.TestCase):
         self.assertTrue(terrain.shade_tile(png.blank(16, 16), BLACK, 60, (20, 40)).is_empty())
 
 
+class ShoreCutTests(unittest.TestCase):
+    def edge(self):
+        return filled(SAND, rows=range(0, 12))
+
+    def test_a_shore_cut_keeps_a_tile_only_on_the_shape(self):
+        edge = self.edge()
+        cut = terrain.shore_cut(filled(ROCK), edge, terrain.shore_field(edge))
+        self.assertEqual(opaque_rows(cut), list(range(0, 12)))
+        self.assertEqual(cut.colours(), {ROCK})
+
+    def test_an_inset_leaves_the_shapes_edge_pixels_bare_and_a_rim_colours_the_cut(self):
+        edge = self.edge()
+        cut = terrain.shore_cut(filled(ROCK), edge, terrain.shore_field(edge), inset=1, rim=BLACK)
+        self.assertEqual(opaque_rows(cut), list(range(0, 11)), "the sand's last row shows")
+        self.assertEqual({cut.get(x, 10)[:3] for x in range(16)}, {BLACK})
+        self.assertEqual({cut.get(x, 9)[:3] for x in range(16)}, {ROCK})
+
+    def test_a_shore_cut_never_adds_a_pixel_the_tile_does_not_have(self):
+        edge = self.edge()
+        tile = filled(ROCK, rows=range(4, 16))
+        cut = terrain.shore_cut(tile, edge, terrain.shore_field(edge), rim=BLACK)
+        self.assertEqual(opaque_rows(cut), list(range(4, 12)))
+
+    def test_a_shore_sheet_holds_own_mask_d_cut_by_sand_mask_s_at_column_s_row_d(self):
+        shape = terrain.set_sheet({mask: (filled(SAND) if mask == 15 else self.edge()) for mask in range(16)}, [])
+        rows = [[filled(ROCK) for _mask in range(16)], [filled(GRASS) for _mask in range(16)]]
+        sheet = terrain.shore_sheet(rows, shape)
+        self.assertEqual((sheet.width, sheet.height), (256, 512))
+        for s in range(16):
+            for d in range(16):
+                first = sheet.crop(s * 16, d * 16, 16, 16)
+                second = sheet.crop(s * 16, (16 + d) * 16, 16, 16)
+                if s == 15 or d & ~s:
+                    self.assertTrue(first.is_empty() and second.is_empty(), f"no tile at {s}, {d}")
+                else:
+                    self.assertEqual(opaque_rows(first), list(range(0, 12)), f"{s}, {d}")
+                    self.assertEqual((first.colours(), second.colours()), ({ROCK}, {GRASS}))
+
+
 class BuildTests(unittest.TestCase):
     def setUp(self):
         scratch = tempfile.TemporaryDirectory()
@@ -268,6 +307,30 @@ class BuildTests(unittest.TestCase):
         water = png.read_png(self.out / "sea" / "water.png")
         self.assertEqual(water.colours(), {DEEP})
 
+    def test_a_shore_entry_writes_the_layers_shore_sheet(self):
+        recipe = self.recipe()
+        recipe["sets"][1]["shore"] = {"shape": "sand", "inset": 1, "rim": "#000000"}
+        recipe["plain"]["shore"] = {}
+        self.build(recipe)
+        brush = png.read_png(self.out / "terrain" / "brush_shore.png")
+        self.assertEqual((brush.width, brush.height), (256, 256))
+        tile = brush.crop(3 * 16, 0, 16, 16)  # the islet bush on a cell whose sand ends on row 11
+        self.assertEqual(opaque_rows(tile)[-1], 10, "one pixel inside the sand's edge")
+        self.assertEqual({tile.get(x, 10)[:3] for x in range(16) if tile.alpha(x, 10)}, {BLACK})
+        self.assertTrue(brush.crop(15 * 16, 0, 16, 16).is_empty(), "the full sand tile has no shore")
+        self.assertTrue(brush.crop(1 * 16, 2 * 16, 16, 16).is_empty(), "mask 2 is not inside mask 1")
+        plain = png.read_png(self.out / "terrain" / "plain_shore.png")
+        self.assertEqual((plain.width, plain.height), (256, 256))
+        self.assertEqual(opaque_rows(plain.crop(3 * 16, 3 * 16, 16, 16)), list(range(0, 12)))
+
+    def test_a_shore_inset_is_a_small_whole_number(self):
+        for bad in (-1, 8, "1", 1.5, True):
+            recipe = self.recipe()
+            recipe["sets"][1]["shore"] = {"shape": "sand", "inset": bad}
+            with self.assertRaisesRegex(terrain.TerrainError, r"brush shore: \"inset\""):
+                self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+
     def test_a_fix_overlay_is_blended_last_and_shapes_the_foam(self):
         fix = png.blank(64, 80)
         for x in range(16):
@@ -303,13 +366,14 @@ class BuildTests(unittest.TestCase):
         grey.set(5, 5, ROCK + (30,))
         with self.assertRaisesRegex(terrain.TerrainError, r"decals/shade\.png: a half-transparent pixel"):
             self.build(spots=grey)
-        self.assertFalse((self.out / "decals").exists(), "nothing is written when a sheet is refused")
+        self.assertFalse(self.out.exists(), "nothing at all is written when a sheet is refused")
 
     def test_a_colour_outside_the_palette_is_refused_by_name(self):
         recipe = self.recipe()
         recipe["water"]["map"] = {png.colour_hex(BLUE): "#123456"}
         with self.assertRaisesRegex(terrain.TerrainError, r"sea/water\.png.*#123456"):
             self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing at all is written when a sheet is refused")
 
     def test_a_source_outside_the_packs_root_is_refused(self):
         recipe = self.recipe()

@@ -15,14 +15,18 @@ const SHEETS: Dictionary = {
 		"res://assets/art/terrain/dune.png",
 		"res://assets/art/terrain/brush.png",
 		"res://assets/art/terrain/plain.png",
+		"res://assets/art/terrain/dune_shore.png",
+		"res://assets/art/terrain/brush_shore.png",
+		"res://assets/art/terrain/plain_shore.png",
 	],
 	SHORE_TILES: ["res://assets/art/sea/foam.png"],
 	DECAL_TILES: ["res://assets/art/terrain/tide_pool.png", "res://assets/art/decals/shade.png"],
 }
-## Tiles per sheet: a corner set has 16 masks and 4 variants; plain.png 16 shapes of 9 terrains;
+## Tiles per sheet: a corner set has 16 masks and 4 variants (the brush 2); plain.png 16 shapes of
+## 9 terrains; a shore sheet the 65 pairs of an own mask inside a sand mask that has a shore;
 ## foam.png 8 frames of the 15 masks that have a shore; shade.png 16 masks and 3 spots.
 const TILE_COUNTS: Dictionary = {
-	TERRAIN_TILES: [20, 20, 20, 144],
+	TERRAIN_TILES: [20, 20, 18, 144, 65, 65, 585],
 	SHORE_TILES: [120],
 	DECAL_TILES: [1, 19],
 }

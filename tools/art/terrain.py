@@ -11,6 +11,12 @@ game/assets/art/:
   set draws one pack tile on the cell and a quarter of it on each land corner (the brush).
 - terrain/plain.png: one row per plain terrain, the tile cut by the sand tile of mask m at
   column m (column 15 is the whole tile), with an optional rim colour on the cut edge.
+- terrain/<set>_shore.png and terrain/plain_shore.png, for a set or the plain rows with a
+  "shore" entry: the upper layers' tiles for shore cells, where the sand under them is cut. The
+  tile of the layer's own corner mask d, kept only on the sand tile of the cell's sand mask s
+  (and "inset" pixels inside its edge, with an optional rim colour on the cut), sits at column s,
+  row d (plain: row 16 * terrain row + d). Only a d whose corners are all corners of s can
+  occur, and s 15 has no shore, so those cells are the only ones drawn.
 - sea/water.png, a rect of a pack sheet through its map, and sea/water_ramps.png, one row of
   colours per depth.
 - sea/foam.png: frame f of the shoreline strip wrapped round the sand tile of mask m, at column
@@ -212,6 +218,43 @@ def rimmed(tile, field, rim):
         if steps == 0 and out.alpha(x, y):
             out.set(x, y, rim + (255,))
     return out
+
+
+def shore_cut(tile, shape, field, inset=0, rim=None):
+    """The tile kept only where `shape` is drawn and at least `inset` pixels inside its edge
+    (`field` is the shape's shore field), with the rim colour on the kept pixels on that cut."""
+    depth = {(x, y): -steps for x, y, steps, _along in field}
+    out = png.blank(tile.width, tile.height)
+    for y in range(tile.height):
+        for x in range(tile.width):
+            if not tile.alpha(x, y) or not shape.alpha(x, y):
+                continue
+            inside = depth.get((x, y), TILE)
+            if inside < inset:
+                continue
+            out.set(x, y, rim + (255,) if rim is not None and inside == inset else tile.get(x, y))
+    return out
+
+
+def shore_sheet(rows, shape, inset=0, rims=None):
+    """Column s, row 16 * r + d: tile d of `rows[r]` (16 tiles by own corner mask) cut by the
+    shape set's tile of mask s, for every d whose corners are all corners of s, s below 15."""
+    sheet = png.blank(MASKS * TILE, len(rows) * MASKS * TILE)
+    for s in range(MASKS - 1):
+        edge = sheet_tile(shape, s)
+        field = shore_field(edge)
+        for r, tiles in enumerate(rows):
+            for d in range(MASKS):
+                if d & ~s == 0:
+                    sheet.paste(shore_cut(tiles[d], edge, field, inset, rims[r] if rims else None), s * TILE, (r * MASKS + d) * TILE)
+    return sheet
+
+
+def _shore_spec(spec, sets, where):
+    inset = spec.get("inset", 0)
+    if not isinstance(inset, int) or isinstance(inset, bool) or not 0 <= inset < HALF:
+        raise TerrainError(f"{where}: \"inset\" is a whole number of pixels from 0 to {HALF - 1}")
+    return _shape(spec, sets, where), inset
 
 
 class Sources:
@@ -446,8 +489,24 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
         sheet = build_set(entry, sources)
         sets[entry["id"]] = sheets[f"terrain/{entry['id']}.png"] = (fixed(sheet, fixes, f"{entry['id']}.png"), False)
     sets = {name: sheet for name, (sheet, _partial) in sets.items()}
+    for entry in recipe.get("sets", []):
+        if "shore" in entry:
+            name = f"{entry['id']} shore"
+            shape, inset = _shore_spec(entry["shore"], sets, name)
+            rim = colour(entry["shore"]["rim"], name) if "rim" in entry["shore"] else None
+            tiles = [sheet_tile(sets[entry["id"]], mask) for mask in range(MASKS)]
+            sheets[f"terrain/{entry['id']}_shore.png"] = (shore_sheet([tiles], shape, inset, [rim]), False)
     if "plain" in recipe:
-        sheets["terrain/plain.png"] = (build_plain(recipe["plain"], sources, sets), False)
+        plain = build_plain(recipe["plain"], sources, sets)
+        sheets["terrain/plain.png"] = (plain, False)
+        if "shore" in recipe["plain"]:
+            spec = dict(recipe["plain"]["shore"])
+            spec.setdefault("shape", recipe["plain"].get("shape"))
+            shape, inset = _shore_spec(spec, sets, "plain shore")
+            entries = recipe["plain"]["rows"]
+            rows = [[plain.crop(mask * TILE, row * TILE, TILE, TILE) for mask in range(MASKS)] for row in range(len(entries))]
+            rims = [colour(entry["rim"], "plain shore") if "rim" in entry else None for entry in entries]
+            sheets["terrain/plain_shore.png"] = (shore_sheet(rows, shape, inset, rims), False)
     if "water" in recipe:
         sheets["sea/water.png"] = (build_water(recipe["water"], sources), False)
         if "ramps" in recipe["water"]:
