@@ -5,6 +5,8 @@ sand edge and cut the water texture.
 
 Run: python -I -m unittest discover -s tools/art -p "test_*.py"
 """
+import contextlib
+import io
 import json
 import pathlib
 import tempfile
@@ -421,6 +423,127 @@ class BuildTests(unittest.TestCase):
             self.build(recipe, out=self.root)
         self.assertEqual((self.fixes / "pool.png").read_bytes(), png.encode_png(filled(ROCK)), "the hand source is not replaced")
         self.assertFalse((self.root / "terrain").exists(), "nothing at all is written")
+
+    def run_main(self, recipe, palette=None, files=None):
+        """terrain.main on the fixture with `recipe` written to a file: (exit code, what it printed on stderr)."""
+        png.write_png(self.fixes / "pool.png", filled(ROCK))
+        png.write_png(self.fixes / "spots.png", self.spots())
+        palette_path = palette or self.root / "palette.png"
+        if palette is None:
+            image = png.blank(len(PALETTE), 1)
+            for x, rgb in enumerate(PALETTE):
+                image.set(x, 0, rgb + (255,))
+            png.write_png(palette_path, image)
+        for relative, data in (files or {}).items():
+            (self.root / relative).write_bytes(data)
+        recipe_path = self.root / "recipe.json"
+        recipe_path.write_text(json.dumps(recipe), encoding="utf-8")
+        argv = ["--packs", str(self.packs), "--recipe", str(recipe_path), "--fixes", str(self.fixes), "--out", str(self.out),
+                "--palette", str(palette_path)]
+        errors = io.StringIO()
+        with contextlib.redirect_stderr(errors), contextlib.redirect_stdout(io.StringIO()):
+            code = terrain.main(argv)
+        return code, errors.getvalue()
+
+    def test_a_malformed_recipe_is_refused_naming_its_section_and_key_and_writes_nothing(self):
+        def set_(index, **changes):
+            return lambda r: r["sets"][index].update(changes)
+
+        def tile_of(index, key, value):
+            return lambda r: r["sets"][index]["tiles"].update({key: value})
+
+        def to(section, **changes):
+            return lambda r: r[section].update(changes)
+
+        cases = [
+            ("mask key text", tile_of(0, "x", [1, 0]), r'sand tiles: "x"'),
+            ("mask key 16", tile_of(0, "16", [1, 0]), r'sand tiles: "16"'),
+            ("mask key -1", tile_of(0, "-1", [1, 0]), r'sand tiles: "-1"'),
+            ("mask key 1.5", tile_of(0, "1.5", [1, 0]), r'sand tiles: "1.5"'),
+            ("tiles a list", set_(0, tiles=[]), r'sand: "tiles"'),
+            ("tile spec short", tile_of(0, "3", [1]), r'sand mask 3: a tile is'),
+            ("tile spec text", tile_of(0, "3", ["a", "b"]), r'sand mask 3: a tile is'),
+            ("tile spec number", tile_of(0, "3", 5), r'sand mask 3: a tile is'),
+            ("tile spec table", tile_of(0, "3", {"a": 1}), r'sand mask 3: a tile is'),
+            ("tile spec bool", tile_of(0, "3", [True, 0]), r'sand mask 3: a tile is'),
+            ("tile spec colour", tile_of(0, "3", "oops"), r"sand.*'oops'"),
+            ("quadrants a list", set_(0, quadrants=[]), r'sand: "quadrants"'),
+            ("quadrants mask 99", set_(0, quadrants={"99": [15, 15, 1, 1]}), r'sand quadrants: "99"'),
+            ("quadrants parts three", set_(0, quadrants={"0": [15, 15, 1]}), r'sand quadrants: "0" needs four'),
+            ("quadrants parts a number", set_(0, quadrants={"0": 5}), r'sand quadrants: "0" needs four'),
+            ("quadrants part text", set_(0, quadrants={"0": [15, "x", 1, 1]}), r'sand quadrants: "x"'),
+            ("quadrants part 16", set_(0, quadrants={"0": [15, 16, 1, 1]}), r'sand quadrants: "16"'),
+            ("map a list", set_(0, map=[]), r'sand: "map"'),
+            ("map colour", set_(0, map={"#10c010": 5}), r"sand"),
+            ("erase a number", set_(0, erase=5), r'sand: "erase"'),
+            ("erase colour", set_(0, erase=["red"]), r"sand.*'red'"),
+            ("variants text", set_(0, variants="15"), r'sand: "variants"'),
+            ("variant none", set_(0, variants=[None]), r"sand: variant None"),
+            ("stamp short", set_(1, stamp=[1]), r"brush stamp: a tile is"),
+            ("stamp number", set_(1, stamp=5), r"brush stamp: a tile is"),
+            ("a set not a table", lambda r: r["sets"].append(5), r"a set has no"),
+            ("sets a table", lambda r: r.update(sets={}), r'the recipe: "sets"'),
+            ("shore text (set)", set_(1, shore="x"), r'brush shore: "shore"'),
+            ("shore text (plain)", lambda r: r["plain"].update(shore="x"), r'plain shore: "shore"'),
+            ("plain a list", lambda r: r.update(plain=[]), r'the recipe: "plain"'),
+            ("plain rows empty", lambda r: r["plain"].update(rows=[]), r'plain: "rows"'),
+            ("plain rows text", lambda r: r["plain"].update(rows="x"), r'plain: "rows"'),
+            ("plain row not a table", lambda r: r["plain"].update(rows=[5]), r"plain row 0"),
+            ("plain tile short", lambda r: r["plain"]["rows"][0].update(tile=[1]), r"plain rock: a tile is"),
+            ("plain tile text", lambda r: r["plain"]["rows"][0].update(tile="x"), r"plain rock.*'x'"),
+            ("plain map a list", lambda r: r["plain"]["rows"][0].update(map=[]), r'plain rock: "map"'),
+            ("water a number", lambda r: r.update(water=5), r'the recipe: "water"'),
+            ("water rect short", to("water", rect=[1, 2]), r'water: "rect"'),
+            ("water rect text", to("water", rect="x"), r'water: "rect"'),
+            ("water rect non-number", to("water", rect=[0, 0, "a", 1]), r'water: "rect"'),
+            ("water map a list", to("water", map=[]), r'water: "map"'),
+            ("ramps text", to("water", ramps="x"), r"water ramps"),
+            ("ramps rows of numbers", to("water", ramps=[5]), r"water ramps"),
+            ("ramps empty row", to("water", ramps=[["#306082"], []]), r"water ramps"),
+            ("ramps colour", to("water", ramps=[["red"]]), r"water ramps.*'red'"),
+            ("foam step text", to("foam", step="a"), r'foam: "step"'),
+            ("foam step 0", to("foam", step=0), r'foam: "step"'),
+            ("foam frames 0", to("foam", frames=0), r'foam: "frames"'),
+            ("foam frames text", to("foam", frames="x"), r'foam: "frames"'),
+            ("foam frames float", to("foam", frames=1.5), r'foam: "frames"'),
+            ("foam origin short", to("foam", origin=[1]), r'foam: "origin"'),
+            ("foam land_rows text", to("foam", land_rows="x"), r'foam: "land_rows"'),
+            ("foam fade text", to("foam", fade="x"), r'foam: "fade"'),
+            ("foam fade from", to("foam", fade={"from": "a", "colour": "#ffffff"}), r'foam fade: "from"'),
+            ("foam no pixel at all", to("foam", white="#123456"), r"foam: no pixel at all"),
+            ("foam a list", lambda r: r.update(foam=[]), r'the recipe: "foam"'),
+            ("shade alpha text", to("shade", alpha="x"), r'shade: "alpha"'),
+            ("shade alpha 0", to("shade", alpha=0), r'shade: "alpha"'),
+            ("shade alpha 256", to("shade", alpha=256), r'shade: "alpha"'),
+            ("shade edge text", to("shade", edge="x"), r'shade: "edge"'),
+            ("shade edge item", to("shade", edge=["a"]), r'shade: "edge"'),
+            ("shade edge 0", to("shade", edge=[0]), r'shade: "edge"'),
+            ("shade a list", lambda r: r.update(shade=[]), r'the recipe: "shade"'),
+            ("copies a table", lambda r: r.update(copies={}), r'the recipe: "copies"'),
+            ("a copy not a table", lambda r: r.update(copies=[5]), r"a copy has no"),
+        ]
+        for label, change, message in cases:
+            recipe = self.recipe()
+            change(recipe)
+            code, printed = self.run_main(recipe)
+            self.assertEqual(code, 1, f"{label}: {printed}")
+            self.assertRegex(printed, r"^terrain: ", label)
+            self.assertRegex(printed, message, label)
+            self.assertFalse(self.out.exists(), f"{label}: nothing is written")
+
+    def test_a_missing_palette_and_corrupt_pngs_are_refused_with_their_path(self):
+        code, printed = self.run_main(self.recipe(), palette=self.root / "no_palette.png")
+        self.assertEqual((code, self.out.exists()), (1, False))
+        self.assertIn("no_palette.png", printed)
+        for relative, name in (("packs/oga/world.png", "world.png"), ("packs/oga/waves.png", "waves.png"), ("fixes/sand.png", "sand.png"),
+                               ("fixes/shade_spots.png", "shade_spots.png"), ("fixes/pool.png", "pool.png")):
+            self.setUp()
+            recipe = self.recipe()
+            recipe["shade"]["spots"] = "shade_spots.png" if name == "shade_spots.png" else "spots.png"
+            code, printed = self.run_main(recipe, files={relative: b"not a png at all"})
+            self.assertEqual(code, 1, name)
+            self.assertIn(name, printed)
+            self.assertFalse(self.out.exists(), name)
 
     def test_a_colour_outside_the_palette_is_refused_by_name(self):
         recipe = self.recipe()

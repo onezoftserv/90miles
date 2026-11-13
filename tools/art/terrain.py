@@ -86,6 +86,60 @@ def need(entry, key, where):
     return entry[key]
 
 
+def section(recipe, key, kind):
+    """The recipe's `key` section, which is a `kind` (dict or list); empty when it has none."""
+    value = recipe.get(key, kind())
+    if not isinstance(value, kind):
+        raise TerrainError(f"the recipe: \"{key}\" is a {'table' if kind is dict else 'list'}, not {value!r}")
+    return value
+
+
+def member(entry, key, kind, where):
+    """entry[key] when it is a `kind` (dict or list), else an empty one; the entry is a table."""
+    value = entry.get(key, kind())
+    if not isinstance(value, kind):
+        raise TerrainError(f"{where}: \"{key}\" is a {'table' if kind is dict else 'list'}, not {value!r}")
+    return value
+
+
+def whole(value, where, key, low=None, high=None):
+    """A whole number (never a bool) from `low` to `high`."""
+    if not isinstance(value, int) or isinstance(value, bool) or (low is not None and value < low) or (high is not None and value > high):
+        span = "" if low is None else f" from {low}" + ("" if high is None else f" to {high}")
+        raise TerrainError(f"{where}: \"{key}\" is a whole number{span}, not {value!r}")
+    return value
+
+
+def whole_list(value, count, where, key):
+    if not isinstance(value, list) or len(value) != count:
+        raise TerrainError(f"{where}: \"{key}\" is {count} whole numbers, not {value!r}")
+    return [whole(item, where, key) for item in value]
+
+
+def mask_of(value, where):
+    """A corner mask from 0 to 15, as a whole number or as digits."""
+    if isinstance(value, str) and value.isdigit() and value.isascii():
+        value = int(value)
+    if not isinstance(value, int) or isinstance(value, bool) or not 0 <= value < MASKS:
+        raise TerrainError(f"{where}: \"{value}\" is not a mask from 0 to {MASKS - 1}")
+    return value
+
+
+def tile_spec(spec, where):
+    """(column, row) of a [column, row] tile spec."""
+    if not isinstance(spec, list) or len(spec) != 2 or not all(isinstance(n, int) and not isinstance(n, bool) for n in spec):
+        raise TerrainError(f"{where}: a tile is \"#rrggbb\" or [column, row], not {spec!r}")
+    return spec[0], spec[1]
+
+
+def read_image(path):
+    """A PNG of the packs or the fixes folder; a refusal names the file."""
+    try:
+        return png.read_png(path)
+    except (png.PngError, OSError) as error:
+        raise TerrainError(f"{path}: {error}") from error
+
+
 def colour(text, where):
     try:
         return png.parse_colour(text)
@@ -93,8 +147,10 @@ def colour(text, where):
         raise TerrainError(f"{where}: {text!r} is not a #rrggbb colour") from error
 
 
-def colour_map(table, where):
-    return {colour(source, where): colour(target, where) for source, target in (table or {}).items()}
+def colour_map(entry, where):
+    """The colours of the entry's "map" table, source to target."""
+    table = member(entry, "map", dict, where)
+    return {colour(source, where): colour(target, where) for source, target in table.items()}
 
 
 def cut(sheet, tx, ty, name="tile"):
@@ -253,6 +309,8 @@ def shore_sheet(rows, shape, inset=0, rims=None):
 
 
 def _shore_spec(spec, sets, where):
+    if not isinstance(spec, dict):
+        raise TerrainError(f"{where}: \"shore\" is a table, not {spec!r}")
     inset = spec.get("inset", 0)
     if not isinstance(inset, int) or isinstance(inset, bool) or not 0 <= inset < HALF:
         raise TerrainError(f"{where}: \"inset\" is a whole number of pixels from 0 to {HALF - 1}")
@@ -277,7 +335,7 @@ class Sources:
                 raise TerrainError(f"{name}: {relative} is outside the packs root")
             if not path.is_file():
                 raise TerrainError(f"{name}: {path} not found (is --packs the folder holding itch/ and oga/?)")
-            self._sheets[key] = png.read_png(path)
+            self._sheets[key] = read_image(path)
         return self._sheets[key]
 
 
@@ -294,11 +352,18 @@ def _set_tiles(entry, made, name):
     if "stamp" in entry:
         stamp = made(entry["stamp"], "stamp")
         return {mask: stamped(stamp, mask) for mask in range(MASKS)}
-    tiles = {int(mask): made(spec, f"mask {mask}") for mask, spec in need(entry, "tiles", name).items()}
-    for mask, parts in entry.get("quadrants", {}).items():
-        if len(parts) != 4 or any(int(part) not in tiles for part in parts):
-            raise TerrainError(f"{name}: mask {mask} needs four cut masks (NW, NE, SW, SE), not {parts}")
-        tiles[int(mask)] = quadrants(*(tiles[int(part)] for part in parts))
+    listed = need(entry, "tiles", name)
+    if not isinstance(listed, dict):
+        raise TerrainError(f"{name}: \"tiles\" is a table of masks, not {listed!r}")
+    tiles = {mask_of(key, f"{name} tiles"): made(spec, f"mask {key}") for key, spec in listed.items()}
+    for key, parts in member(entry, "quadrants", dict, name).items():
+        mask = mask_of(key, f"{name} quadrants")
+        if not isinstance(parts, list) or len(parts) != 4:
+            raise TerrainError(f"{name} quadrants: \"{key}\" needs four cut masks (NW, NE, SW, SE), not {parts}")
+        cut_masks = [mask_of(part, f"{name} quadrants") for part in parts]
+        if any(part not in tiles for part in cut_masks):
+            raise TerrainError(f"{name} quadrants: \"{key}\" needs four cut masks (NW, NE, SW, SE), not {parts}")
+        tiles[mask] = quadrants(*(tiles[part] for part in cut_masks))
     return tiles
 
 
@@ -308,19 +373,19 @@ def build_set(entry, sources):
     if not NAME.match(name):
         raise TerrainError(f"set id {name!r} is not lower-case letters, digits and _")
     sheet = sources.sheet(need(entry, "source", name), name)
-    mapping = colour_map(entry.get("map"), name)
-    erase = {colour(text, name) for text in entry.get("erase", [])}
+    mapping = colour_map(entry, name)
+    erase = {colour(text, name) for text in member(entry, "erase", list, name)}
 
     def made(spec, label):
         if isinstance(spec, str):
             tile = png.Image(TILE, TILE, bytes(colour(spec, name) + (255,)) * (TILE * TILE))
         else:
-            tile = cut(sheet, int(spec[0]), int(spec[1]), f"{name} {label}")
+            tile = cut(sheet, *tile_spec(spec, f"{name} {label}"), f"{name} {label}")
         return recolour(tile, mapping, erase, f"{name} {label}")
 
     tiles = _set_tiles(entry, made, name)
     try:
-        return set_sheet(tiles, [_variant(tiles, spec, name) for spec in entry.get("variants", [])])
+        return set_sheet(tiles, [_variant(tiles, spec, name) for spec in member(entry, "variants", list, name)])
     except TerrainError as error:
         raise TerrainError(f"{name}: {error}") from error
 
@@ -331,7 +396,7 @@ def fixed(sheet, fixes, file_name):
     if not path.is_file():
         return sheet
     try:
-        return compose.apply_fix(sheet, png.read_png(path))
+        return compose.apply_fix(sheet, read_image(path))
     except compose.PartError as error:
         raise TerrainError(f"{path}: {error}") from error
 
@@ -346,16 +411,20 @@ def _shape(spec, sets, where):
 def build_plain(spec, sources, sets):
     """One row per plain terrain: the tile cut by the shape set's tile of mask m at column m."""
     rows = need(spec, "rows", "plain")
+    if not isinstance(rows, list) or not rows:
+        raise TerrainError(f"plain: \"rows\" is a list of at least one row, not {rows!r}")
     shape = _shape(spec, sets, "plain")
     edges = [sheet_tile(shape, mask) for mask in range(MASKS)]
     fields = [shore_field(edge) for edge in edges]
     sheet = png.blank(MASKS * TILE, len(rows) * TILE)
     for row, entry in enumerate(rows):
+        if not isinstance(entry, dict):
+            raise TerrainError(f"plain row {row} is not a table: {entry!r}")
         name = f"plain {entry.get('id', row)}"
-        tx, ty = need(entry, "tile", name)
-        whole = recolour(cut(sources.sheet(need(spec, "source", "plain"), name), tx, ty, name), colour_map(entry.get("map"), name), (), name)
+        tx, ty = tile_spec(need(entry, "tile", name), name)
+        full = recolour(cut(sources.sheet(need(spec, "source", "plain"), name), tx, ty, name), colour_map(entry, name), (), name)
         for mask in range(MASKS):
-            tile = masked(whole, edges[mask])
+            tile = masked(full, edges[mask])
             if "rim" in entry:
                 tile = rimmed(tile, fields[mask], colour(entry["rim"], name))
             sheet.paste(tile, mask * TILE, row * TILE)
@@ -364,16 +433,16 @@ def build_plain(spec, sources, sets):
 
 def build_water(spec, sources):
     sheet = sources.sheet(need(spec, "source", "water"), "water")
-    x, y, width, height = need(spec, "rect", "water")
+    x, y, width, height = whole_list(need(spec, "rect", "water"), 4, "water", "rect")
     if min(x, y) < 0 or min(width, height) < 1 or x + width > sheet.width or y + height > sheet.height:
         raise TerrainError(f"water: the rect {[x, y, width, height]} is off the {sheet.width}x{sheet.height} sheet")
-    return recolour(sheet.crop(x, y, width, height), colour_map(spec.get("map"), "water"), (), "water")
+    return recolour(sheet.crop(x, y, width, height), colour_map(spec, "water"), (), "water")
 
 
 def build_ramps(rows):
     """One row of colours per depth, dark to light."""
-    if not rows or any(len(row) != len(rows[0]) or not row for row in rows):
-        raise TerrainError("water: the ramps are not rows of one length")
+    if not isinstance(rows, list) or not rows or any(not isinstance(row, list) or not row or len(row) != len(rows[0]) for row in rows):
+        raise TerrainError(f"water ramps: not rows of colours of one length, {rows!r}")
     image = png.blank(len(rows[0]), len(rows))
     for y, row in enumerate(rows):
         for x, text in enumerate(row):
@@ -384,11 +453,13 @@ def build_ramps(rows):
 def build_foam(spec, sources, sets):
     """Frame f of the shoreline strip round the shape set's tile of mask m, at column f, row m."""
     strip = sources.sheet(need(spec, "source", "foam"), "foam")
-    x0, y0 = need(spec, "origin", "foam")
-    count = int(need(spec, "frames", "foam"))
+    x0, y0 = whole_list(need(spec, "origin", "foam"), 2, "foam", "origin")
+    count = whole(need(spec, "frames", "foam"), "foam", "frames", low=1)
+    step = whole(need(spec, "step", "foam"), "foam", "step", low=1)
+    land_rows = whole(need(spec, "land_rows", "foam"), "foam", "land_rows", low=0)
     frames = []
     for index in range(count):
-        x = x0 + index * int(need(spec, "step", "foam"))
+        x = x0 + index * step
         if min(x, y0) < 0 or x + TILE > strip.width or y0 + TILE > strip.height:
             raise TerrainError(f"foam: frame {index} is off the {strip.width}x{strip.height} sheet")
         frames.append(strip.crop(x, y0, TILE, TILE))
@@ -396,13 +467,15 @@ def build_foam(spec, sources, sets):
     tint = colour(need(spec, "colour", "foam"), "foam")
     fade = None
     if "fade" in spec:
-        fade = (int(need(spec["fade"], "from", "foam fade")), colour(need(spec["fade"], "colour", "foam fade"), "foam"))
+        if not isinstance(spec["fade"], dict):
+            raise TerrainError(f"foam: \"fade\" is a table, not {spec['fade']!r}")
+        fade = (whole(need(spec["fade"], "from", "foam fade"), "foam fade", "from", low=0), colour(need(spec["fade"], "colour", "foam fade"), "foam"))
     shape = _shape(spec, sets, "foam")
     sheet = png.blank(count * TILE, MASKS * TILE)
     for mask in range(MASKS):
         field = shore_field(sheet_tile(shape, mask))
         for index, frame in enumerate(frames):
-            piece = foam_piece(field, frame, int(need(spec, "land_rows", "foam")), white, tint, int(spec.get("feather", 0)), fade)
+            piece = foam_piece(field, frame, land_rows, white, tint, int(spec.get("feather", 0)), fade)
             sheet.paste(piece, index * TILE, mask * TILE)
     return sheet
 
@@ -435,14 +508,12 @@ def build_shade(spec, sets, fixes):
     m // 4), for a block of shaded cells, with the hand-drawn spot shades of "spots" on row 4."""
     shape = _shape(spec, sets, "shade")
     tint = colour(need(spec, "colour", "shade"), "shade")
-    alpha = int(need(spec, "alpha", "shade"))
-    edge = [int(step) for step in spec.get("edge", [])]
-    if not all(0 < step <= 255 for step in edge + [alpha]):
-        raise TerrainError("shade: an alpha is from 1 to 255")
+    alpha = whole(need(spec, "alpha", "shade"), "shade", "alpha", low=1, high=255)
+    edge = [whole(step, "shade", "edge", low=1, high=255) for step in member(spec, "edge", list, "shade")]
     sheet = set_sheet({mask: shade_tile(sheet_tile(shape, mask), tint, alpha, edge) for mask in range(MASKS)}, [])
     if "spots" in spec:
         source = spec["spots"]
-        spots = png.read_png(hand_source(source, fixes))
+        spots = read_image(hand_source(source, fixes))
         if (spots.width, spots.height) != (SET_COLUMNS * TILE, TILE):
             raise TerrainError(f"{source} is {spots.width}x{spots.height}, and the spot row is {SET_COLUMNS * TILE}x{TILE}")
         sheet.paste(spots, 0, VARIANT_ROW * TILE)
@@ -476,7 +547,7 @@ def _copies(entries, fixes):
             raise TerrainError(f"{target!r}: a copy goes to <folder>/<name>.png, in lower case")
         if target in copies:
             raise TerrainError(f"{target} is made twice")
-        copies[target] = (png.read_png(path), False)
+        copies[target] = (read_image(path), False)
     return copies
 
 
@@ -512,23 +583,28 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
         sheets[name] = (image, partial_alpha)
 
     sets = {}
-    for entry in recipe.get("sets", []):
+    entries = section(recipe, "sets", list)
+    for entry in entries:
         sheet = build_set(entry, sources)
         sets[entry["id"]] = fixed(sheet, fixes, f"{entry['id']}.png")
         add(f"terrain/{entry['id']}.png", sets[entry["id"]])
-    for entry in recipe.get("sets", []):
+    for entry in entries:
         if "shore" in entry:
             name = f"{entry['id']} shore"
             shape, inset = _shore_spec(entry["shore"], sets, name)
             rim = colour(entry["shore"]["rim"], name) if "rim" in entry["shore"] else None
             tiles = [sheet_tile(sets[entry["id"]], mask) for mask in range(MASKS)]
             add(f"terrain/{entry['id']}_shore.png", shore_sheet([tiles], shape, inset, [rim]))
+    for key, kind in (("plain", dict), ("water", dict), ("foam", dict), ("shade", dict)):
+        if key in recipe:
+            section(recipe, key, kind)
     if "plain" in recipe:
         plain = build_plain(recipe["plain"], sources, sets)
         add("terrain/plain.png", plain)
         if "shore" in recipe["plain"]:
-            spec = dict(recipe["plain"]["shore"])
-            spec.setdefault("shape", recipe["plain"].get("shape"))
+            spec = dict(recipe["plain"]["shore"]) if isinstance(recipe["plain"]["shore"], dict) else recipe["plain"]["shore"]
+            if isinstance(spec, dict):
+                spec.setdefault("shape", recipe["plain"].get("shape"))
             shape, inset = _shore_spec(spec, sets, "plain shore")
             entries = recipe["plain"]["rows"]
             rows = [[plain.crop(mask * TILE, row * TILE, TILE, TILE) for mask in range(MASKS)] for row in range(len(entries))]
@@ -539,10 +615,13 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
         if "ramps" in recipe["water"]:
             add("sea/water_ramps.png", build_ramps(recipe["water"]["ramps"]))
     if "foam" in recipe:
-        add("sea/foam.png", fixed(build_foam(recipe["foam"], sources, sets), fixes, "foam.png"))
+        foam = fixed(build_foam(recipe["foam"], sources, sets), fixes, "foam.png")
+        if foam.is_empty():
+            raise TerrainError("foam: no pixel at all (is \"white\" a colour of the strip?)")
+        add("sea/foam.png", foam)
     if "shade" in recipe:
         add("decals/shade.png", build_shade(recipe["shade"], sets, fixes), True)
-    for target, (image, partial_alpha) in _copies(recipe.get("copies", []), fixes).items():
+    for target, (image, partial_alpha) in _copies(section(recipe, "copies", list), fixes).items():
         add(target, image, partial_alpha)
     _refuse_final_paths(sheets, out, packs, fixes)
     for name, (image, partial_alpha) in sheets.items():
@@ -564,7 +643,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         build(load_recipe(args.recipe), args.packs, args.fixes, args.out, palette.load_palette(args.palette))
-    except (TerrainError, png.PngError) as error:
+    except (TerrainError, png.PngError, OSError) as error:
         print(f"terrain: {error}", file=sys.stderr)
         return 1
     return 0
