@@ -80,6 +80,7 @@ func test_the_tree_has_art_to_check() -> void:
 func test_the_exemptions_name_existing_files_only() -> void:
 	if EXEMPT.is_empty():
 		pass_test("no exemption left")
+	assert_eq(EXEMPT.size(), 0, "no art file is exempt any more: a new exemption needs a design note")
 	for path: String in EXEMPT:
 		assert_true(FileAccess.file_exists(path), "%s is gone: drop it from EXEMPT" % path)
 
