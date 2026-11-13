@@ -8,4 +8,4 @@ Work: 90 Millas terrain hand work
 Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
-Files: tide_pool.png (the rock pool tile); sand.png (single-pixel fixes on the corner tiles); dune.png (the islet tile and the four full-tile variants on row 4); brush.png (three bush variants on row 4); plain.png (the rock's two hand-drawn variants)
+Files: tide_pool.png (the rock pool tile); sand.png (single-pixel fixes on the corner tiles); dune.png (the islet tile, the four full-tile variants on row 4 and the straight edge tiles' tufts painted out); brush.png (three bush variants on row 4); plain.png (the rock's two hand-drawn variants)

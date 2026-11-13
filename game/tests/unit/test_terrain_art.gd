@@ -275,6 +275,67 @@ func test_the_variants_on_row_4_have_their_masks_corners_and_differ() -> void:
 			seen.append(tile.get_data())
 
 
+## The pixels of `tile` other than `fill` with every pixel within three of them drawn (the tile's
+## outside counts as drawn): marks well inside the shape, such as a tuft, not its rim.
+func _deep_marks(tile: Image, fill: Color) -> int:
+	var count: int = 0
+	for y: int in TILE:
+		for x: int in TILE:
+			if tile.get_pixel(x, y).a == 0.0 or tile.get_pixel(x, y) == fill:
+				continue
+			var deep: bool = true
+			for dy: int in range(-3, 4):
+				for dx: int in range(-3, 4):
+					var at: Vector2i = Vector2i(x + dx, y + dy)
+					if Rect2i(0, 0, TILE, TILE).has_point(at) and tile.get_pixel(at.x, at.y).a == 0.0:
+						deep = false
+			if deep:
+				count += 1
+	return count
+
+
+## Design.md K39 (art round 2): a straight dune edge carries no tuft, so a long edge is not a row
+## of identical tufts (tufts come from the full-tile picks), and the islet has the pack edge's
+## character: a broken outline with gaps and 1-2 px spikes, and one small tuft.
+func test_the_dune_edges_carry_no_tuft_and_the_islet_is_ragged() -> void:
+	var sheet: Image = _sheet("res://assets/art/terrain/dune.png")
+	if sheet == null:
+		return
+	var fill: Color = sheet.get_pixel(3 * TILE, 3 * TILE)
+	for mask: int in [SEA_SOUTH, SEA_EAST, SEA_WEST, SEA_NORTH]:
+		var tile: Image = sheet.get_region(Rect2i(_mask_atlas(mask) * TILE, Vector2i(TILE, TILE)))
+		assert_eq(_deep_marks(tile, fill), 0, "dune mask %d has no tuft" % mask)
+	var islet: Image = sheet.get_region(Rect2i(0, 0, TILE, TILE))
+	var tuft: int = _deep_marks(islet, fill)
+	assert_true(tuft > 0 and tuft <= 12, "the islet has one small tuft (%d px)" % tuft)
+	var notches: int = 0
+	var spikes: int = 0
+	for y: int in TILE:
+		var first: int = -1
+		var last: int = -1
+		for x: int in TILE:
+			if islet.get_pixel(x, y).a > 0.0:
+				last = x
+				if first < 0:
+					first = x
+		for x: int in range(first + 1, last):
+			if islet.get_pixel(x, y).a == 0.0:
+				notches += 1
+		for x: int in TILE:
+			if islet.get_pixel(x, y).a == 0.0:
+				continue
+			var clear: int = 0
+			for dy: int in range(-1, 2):
+				for dx: int in range(-1, 2):
+					var at: Vector2i = Vector2i(x + dx, y + dy)
+					if not Rect2i(0, 0, TILE, TILE).has_point(at) or islet.get_pixel(at.x, at.y).a == 0.0:
+						clear += 1
+			if clear >= 5:
+				spikes += 1
+	assert_gte(notches, 2, "the islet's outline is broken, not a solid ring")
+	assert_gte(spikes, 3, "the islet's outline has 1-2 px spikes")
+
+
 ## Design.md K39: a plain row's full-tile variants sit on columns 16 and after, as many as
 ## `terrain_art.tres` counts for the row; each is a whole tile and none repeats the full tile
 ## (column 15) or another variant.
