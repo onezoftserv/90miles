@@ -587,6 +587,19 @@ def _out_folder(out, packs):
     return out
 
 
+def _refuse_unread_fixes(recipe, fixes):
+    """Raises on a PNG of the fixes folder that no step reads: an overlay is read by a set and by the
+    foam, a hand source by a copy or the shade spots; plain, shade, water and the shore sheets take none."""
+    read = {f"{entry['id']}.png" for entry in recipe.get("sets", [])}
+    read |= {"foam.png"} if "foam" in recipe else set()
+    read |= {recipe["shade"]["spots"]} if "spots" in recipe.get("shade", {}) else set()
+    read |= {entry["from"] for entry in recipe.get("copies", [])}
+    folder = pathlib.Path(fixes)
+    for path in sorted(folder.iterdir()) if folder.is_dir() else []:
+        if path.is_file() and path.suffix.lower() == ".png" and path.name not in read:
+            raise TerrainError(f"{path.name}: no step of the recipe reads it (only the sets and the foam take an overlay) in {folder}")
+
+
 def _refuse_final_paths(names, out, packs, fixes):
     """Raises when a sheet's final path is under a download folder of the packs root or the fixes folder."""
     fixes = pathlib.Path(fixes).resolve()
@@ -651,6 +664,7 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
         add("decals/shade.png", build_shade(recipe["shade"], sets, fixes), True)
     for target, (image, partial_alpha) in _copies(section(recipe, "copies", list), fixes).items():
         add(target, image, partial_alpha)
+    _refuse_unread_fixes(recipe, fixes)
     _refuse_final_paths(sheets, out, packs, fixes)
     for name, (image, partial_alpha) in sheets.items():
         checked(image, name, palette_colours, partial_alpha)

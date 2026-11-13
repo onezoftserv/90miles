@@ -383,6 +383,27 @@ class BuildTests(unittest.TestCase):
         variant = png.read_png(self.out / "terrain" / "sand.png").crop(0, 64, 16, 16)
         self.assertEqual((variant.get(5, 5)[:3], variant.get(2, 2)[:3]), (ROCK, DEEP), "the recipe drives the variant")
 
+    def test_a_png_in_the_fixes_folder_that_no_step_reads_is_refused_by_name(self):
+        for stray in ("plain.png", "water.png", "shade.png", "sand_shore.png", "brush_shore.png", "plain_shore.png", "water_ramps.png", "nothing.png"):
+            png.write_png(self.fixes / stray, self.overlay((5, 5, DEEP)))
+            with self.assertRaisesRegex(terrain.TerrainError, rf"{stray}: no step of the recipe reads it"):
+                self.build()
+            (self.fixes / stray).unlink()
+        recipe = self.recipe()
+        del recipe["foam"]
+        png.write_png(self.fixes / "foam.png", png.blank(32, 256))
+        with self.assertRaisesRegex(terrain.TerrainError, r"foam\.png: no step of the recipe reads it"):
+            self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_every_png_the_recipe_reads_is_accepted_in_the_fixes_folder(self):
+        png.write_png(self.fixes / "brush.png", self.overlay((5, 5, DEEP)))
+        foam = png.blank(32, 256)
+        foam.set(3, 240, WHITE + (255,))
+        png.write_png(self.fixes / "foam.png", foam)
+        self.build()
+        self.assertTrue((self.out / "terrain" / "pool.png").exists())
+
     def test_a_plain_row_takes_a_rim_colour_on_its_cut_edge_and_the_foam_a_fade_colour(self):
         recipe = self.recipe()
         recipe["plain"]["rows"][0]["rim"] = "#000000"
