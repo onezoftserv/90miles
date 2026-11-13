@@ -452,6 +452,7 @@ func _save_window(name: String) -> Image:
 	var scale: int = maxi(1, int((shell.get("settings") as Object).get("ui_scale")))
 	var size: Vector2i = BASE_SIZE * scale
 	if image.get_size() != size:
+		_note("%s: the window drew %s, enlarged to %s" % [name, image.get_size(), size])
 		image.resize(size.x, size.y, Image.INTERPOLATE_NEAREST)
 	if not capture_dir.is_empty():
 		var path: String = capture_dir.path_join(name + ".png")
@@ -886,11 +887,12 @@ func _raft() -> void:
 			added.append("%s x%d" % [item_id, short])
 	if not added.is_empty():
 		_hooked("raft materials topped up: %s (the sandbar's driftwood went into the fire and catcher)" % ", ".join(added))
+	var at: Vector2 = site.global_position
 	var seen: PackedStringArray = await _work_site(site, "raft", 90.0)
 	await _frames(4)
 	_check("the raft site went marked, materials, half built", seen.has("marked") and seen.has("materials") and seen.has("half_built"), "%s" % seen)
 	var raft: Node2D = session.get_node_or_null(^"Raft")
-	_check("the raft stands whole in the site's place", raft != null and _frame(raft) == "whole" and raft.global_position.distance_to(site.global_position) < 1.0, _frame(raft) if raft != null else "no raft")
+	_check("the raft stands whole in the site's place", raft != null and _frame(raft) == "whole" and raft.global_position.distance_to(at) < 1.0, _frame(raft) if raft != null else "no raft")
 	await _world_image("raft_built")
 
 
@@ -1094,7 +1096,7 @@ func _crossing() -> void:
 	if not _check("the raft is there to launch", raft != null):
 		return
 	_set_day("crossing captures")
-	await _walk_to(raft.global_position + Vector2(0.0, -TILE))
+	await _walk_to(raft.global_position + Vector2(0.0, -4.0), 2.0)
 	await _frames(3)
 	_note("prompt at the raft: %s" % _prompt_lines())
 	Input.action_press(&"interact")
@@ -1324,7 +1326,7 @@ func _host() -> void:
 		return
 	raft.set("integrity", HOST_RAFT_INTEGRITY)
 	_hooked("host raft integrity %.0f" % HOST_RAFT_INTEGRITY)
-	await _walk_to(raft.global_position + Vector2(0.0, -TILE))
+	await _walk_to(raft.global_position + Vector2(0.0, -4.0), 2.0)
 	Input.action_press(&"interact")
 	var crossing: Node2D = null
 	for i: int in 6 * physics_hz:
