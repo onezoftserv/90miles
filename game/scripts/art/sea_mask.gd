@@ -17,11 +17,13 @@ static func depth_bytes(size: Vector2i, terrain: GridTerrain) -> PackedByteArray
 	return bytes
 
 
-## The foam phase of every cell: a shore cell's offset 0 to 7, 0 elsewhere.
-static func phase_bytes(layout_id: StringName, size: Vector2i, terrain: GridTerrain, pools: Array[Vector2i]) -> PackedByteArray:
+## The foam phase of every cell: a shore cell's offset 0 to 7, 0 elsewhere. A caller that has the
+## shore cells already passes them as `shore`; with none passed they are found here.
+static func phase_bytes(layout_id: StringName, size: Vector2i, terrain: GridTerrain, pools: Array[Vector2i], shore: Array[Vector2i] = []) -> PackedByteArray:
 	var bytes: PackedByteArray = PackedByteArray()
 	bytes.resize(size.x * size.y)
-	for cell: Vector2i in ShoreRule.shore_cells(terrain, pools):
+	var cells: Array[Vector2i] = shore if not shore.is_empty() else ShoreRule.shore_cells(terrain, pools)
+	for cell: Vector2i in cells:
 		if cell.x >= 0 and cell.y >= 0 and cell.x < size.x and cell.y < size.y:
 			bytes[cell.y * size.x + cell.x] = ShoreRule.phase(layout_id, cell)
 	return bytes

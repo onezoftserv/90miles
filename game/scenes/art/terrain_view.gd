@@ -81,11 +81,12 @@ func _build(source: Node, grid: GridTerrain) -> void:
 		for cell: Vector2i in TerrainArt.layer_cells(layer, grid, pools):
 			_put(tiles, cell, TerrainArt.tile(layer, cell, layout_id, grid, pools))
 	_shore.clear()
-	for cell: Vector2i in ShoreRule.shore_cells(grid, pools):
+	var shore_cells: Array[Vector2i] = ShoreRule.shore_cells(grid, pools)
+	for cell: Vector2i in shore_cells:
 		_put(_shore, cell, ShoreRule.foam_tile(cell, grid, pools))
 	_build_decals(grid, pools, palms, spots, built.raft_site if built != null else Vector2i(-1, -1))
 	depth_bytes = SeaMask.depth_bytes(grid_size, grid)
-	phase_bytes = SeaMask.phase_bytes(layout_id, grid_size, grid, pools)
+	phase_bytes = SeaMask.phase_bytes(layout_id, grid_size, grid, pools, shore_cells)
 	_build_sea()
 	var phases: Image = SeaMask.to_image(phase_bytes, grid_size, ShoreRule.FRAMES - 1)
 	(_shore.material as ShaderMaterial).set_shader_parameter(&"phase_mask", ImageTexture.create_from_image(phases))

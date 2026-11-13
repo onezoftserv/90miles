@@ -112,6 +112,19 @@ func test_neighbouring_shore_cells_start_at_most_two_steps_apart() -> void:
 		assert_gt(pairs, 100, "%s: the check met many neighbours" % layout.id)
 
 
+func test_the_phase_mask_takes_the_shore_cells_it_is_given_and_finds_them_when_not() -> void:
+	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
+		var built: IslandLayout = IslandLayout.build(layout)
+		var found: PackedByteArray = SeaMask.phase_bytes(layout.id, built.size, built.terrain, built.tide_pools)
+		var shore: Array[Vector2i] = ShoreRule.shore_cells(built.terrain, built.tide_pools)
+		assert_eq(SeaMask.phase_bytes(layout.id, built.size, built.terrain, built.tide_pools, shore), found, "%s: the same mask from the cells TerrainView already found" % layout.id)
+		var one: Array[Vector2i] = [shore[shore.size() >> 1]]
+		var only: PackedByteArray = SeaMask.phase_bytes(layout.id, built.size, built.terrain, built.tide_pools, one)
+		for cell: Vector2i in shore:
+			var expected: int = ShoreRule.phase(layout.id, cell) if cell == one[0] else 0
+			assert_eq(only[cell.y * built.size.x + cell.x], expected, "%s %s: only the cells it is given are read" % [layout.id, cell])
+
+
 func test_the_baked_phase_mask_holds_the_same_value_per_cell() -> void:
 	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
 		var built: IslandLayout = IslandLayout.build(layout)
