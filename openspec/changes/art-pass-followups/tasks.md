@@ -2,15 +2,15 @@
 
 ## 1. Interact priority (gull shoo over palm climb)
 
-- [ ] 1.1 Tests first in `test_interaction_picker.gd` (or the picker's existing test file): a higher priority within reach beats a nearer base one; equal priorities keep nearest-wins; a higher priority out of reach loses. Seen failing, then passing.
-- [ ] 1.2 Add `priority` to `Interactable`, use it in `InteractionPicker.pick`, set it on `creature.tscn`'s Interactable. Verify: 1.1 passes and the existing picker and prompt tests still pass.
-- [ ] 1.3 1-player test: a solo sandbar run with a perched gull at a nest palm; the player at the trunk's foot sees "[E] Espantar …", a press makes the gull flee, and holding E afterwards climbs the palm and adds a coconut. Verify: the test passes.
-- [ ] 1.4 Import (twice), smoke run and GUT pass.
+- [x] 1.1 Tests first in `test_interaction_picker.gd` (or the picker's existing test file): a higher priority within reach beats a nearer base one; equal priorities keep nearest-wins; a higher priority out of reach loses. Seen failing, then passing. Done 2026-11-13: six cases in `test_interaction.gd`, seen failing (no `priority`), then passing.
+- [x] 1.2 Add `priority` to `Interactable`, use it in `InteractionPicker.pick`, set it on `creature.tscn`'s Interactable. Verify: 1.1 passes and the existing picker and prompt tests still pass. Done 2026-11-13: `test_interaction.gd` 26 of 26.
+- [x] 1.3 1-player test: a solo sandbar run with a perched gull at a nest palm; the player at the trunk's foot sees "[E] Espantar …", a press makes the gull flee, and holding E afterwards climbs the palm and adds a coconut. Verify: the test passes. Done 2026-11-13: `test_interact_prompt.gd` "test_solo_shoos_the_gull_perched_over_its_palm_then_climbs"; a nest palm holds two gulls, a press shoos one.
+- [x] 1.4 Import (twice), smoke run and GUT pass. Done 2026-11-13: import 0 error lines, smoke 10 frames 0 problems, GUT 171 scripts 1530 of 1530.
 
 ## 2. The sign's verb
 
-- [ ] 2.1 Test first: a coast cay sign's prompt reads "[E] Mirar" (Spanish) and "[E] Look" (English); add `look_sign` to `test_hud_text.gd`'s prompt ids. Seen failing, then passing.
-- [ ] 2.2 Add the verb to `hud_text.tres` and set `prompt_id` in `IslandSign`. Verify: 2.1 passes. Import (twice), smoke run and GUT pass.
+- [x] 2.1 Test first: a coast cay sign's prompt reads "[E] Mirar" (Spanish) and "[E] Look" (English); add `look_sign` to `test_hud_text.gd`'s prompt ids. Seen failing, then passing. Done 2026-11-13: `test_coast_cay_solo.gd` "test_a_signs_prompt_reads_mirar" over all four signs, seen failing (`[E]` alone), then passing; `look_sign` in `test_hud_text.gd`.
+- [x] 2.2 Add the verb to `hud_text.tres` and set `prompt_id` in `IslandSign`. Verify: 2.1 passes. Import (twice), smoke run and GUT pass. Done 2026-11-13: same import, smoke and GUT as 1.4.
 
 ## 3. The playthrough harness
 
