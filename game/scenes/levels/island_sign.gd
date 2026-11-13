@@ -4,6 +4,9 @@ extends Interactable
 ## sticks. Using it shows its line in a speech bubble over it, on every peer; nothing else changes.
 ## The level places it in the session at the same path on every peer.
 
+## Its prompt reads "[E] Mirar": a radio and crossed sticks are looked at as much as read.
+const PROMPT_ID: StringName = &"look_sign"
+
 ## The two lines, set before it enters the tree.
 var line_es: String = ""
 var line_en: String = ""
@@ -16,6 +19,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	hold_time_s = 0.0
+	prompt_id = PROMPT_ID
 	interacted.connect(_on_interacted)
 
 
