@@ -396,8 +396,11 @@ func test_the_tide_pool_is_irregular_with_a_few_stones_and_a_wet_sand_lip() -> v
 ## Design.md K39 (art round 2): a plain row's full tile is seamless, so a field of it shows no
 ## dash or line on every cell: each colour on its first column or row also appears within
 ## SEAM_REACH pixels on the opposite edge. The pack's own rock, shingle, cliff, reef flat and
-## coral tiles hold a texel or two that meets its match two pixels along.
-const SEAM_REACH: Dictionary[int, int] = {0: 2, 1: 2, 2: 2, 3: 1, 4: 1, 5: 2, 6: 2, 7: 1}
+## coral tiles hold a texel or two that meets its match two pixels along. The cliff (a ledge per
+## cell: a lit lip on top, a dark foot) and the wreck interior (planks: a board's lit top under the
+## seam of the cell above) are bands across the tile, so only their east edge is checked.
+const SEAM_REACH: Dictionary[int, int] = {0: 2, 1: 2, 2: 2, 3: 1, 4: 1, 5: 2, 6: 2, 7: 1, 8: 1}
+const BANDED_ROWS: Array[int] = [2, 8]
 
 
 func test_each_plain_full_tile_is_seamless() -> void:
@@ -414,7 +417,46 @@ func test_each_plain_full_tile_is_seamless() -> void:
 				across.append(tile.get_pixel(TILE - 1, j))
 				down.append(tile.get_pixel(j, TILE - 1))
 			assert_true(across.has(tile.get_pixel(0, i)), "plain row %d: (0, %d) meets its colour on the east edge" % [row, i])
-			assert_true(down.has(tile.get_pixel(i, 0)), "plain row %d: (%d, 0) meets its colour on the south edge" % [row, i])
+			if not BANDED_ROWS.has(row):
+				assert_true(down.has(tile.get_pixel(i, 0)), "plain row %d: (%d, 0) meets its colour on the south edge" % [row, i])
+
+
+func _row_luminance(tile: Image, y: int) -> float:
+	var total: float = 0.0
+	for x: int in TILE:
+		total += ArtChecks.luminance(tile.get_pixel(x, y))
+	return total / TILE
+
+
+## Design.md K39 (art round 2): the cliff reads as a height, not as dark rock: its top row is
+## lighter and its bottom row darker than its middle. The wreck interior is long boards, not
+## brick paving: whole rows of one colour (the seams and the boards' lit tops) cross the tile,
+## and at most one vertical joint breaks a board.
+func test_the_cliff_has_a_lit_lip_and_a_dark_foot_and_the_wreck_has_long_boards() -> void:
+	var plain: Image = _sheet(PLAIN_SHEET)
+	if plain == null:
+		return
+	var cliff: Image = plain.get_region(Rect2i(15 * TILE, 2 * TILE, TILE, TILE))
+	var middle: float = (_row_luminance(cliff, 7) + _row_luminance(cliff, 8)) / 2.0
+	assert_gt(_row_luminance(cliff, 0), middle, "the cliff's top row is lit")
+	assert_lt(_row_luminance(cliff, TILE - 1), middle, "the cliff's foot is dark")
+	var wreck: Image = plain.get_region(Rect2i(15 * TILE, 8 * TILE, TILE, TILE))
+	var whole_rows: int = 0
+	for y: int in TILE:
+		var flat: bool = true
+		for x: int in TILE:
+			flat = flat and wreck.get_pixel(x, y) == wreck.get_pixel(0, y)
+		if flat:
+			whole_rows += 1
+	assert_gte(whole_rows, 5, "seams and board tops run across the whole tile")
+	var joints: int = 0
+	for x: int in TILE:
+		var dark_run: int = 0
+		for y: int in TILE:
+			dark_run = dark_run + 1 if ArtChecks.luminance(wreck.get_pixel(x, y)) < ArtChecks.luminance(Color.html("#663931")) else 0
+			if dark_run == 4:
+				joints += 1
+	assert_lte(joints, 1, "at most one board joint in the tile")
 
 
 ## Design.md K39: a plain row's full-tile variants sit on columns 16 and after, as many as

@@ -8,4 +8,4 @@ Work: 90 Millas terrain hand work
 Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
-Files: tide_pool.png (the tide pool: an irregular pool with three stones and a wet-sand lip); sand.png (single-pixel fixes on the corner tiles); dune.png (the islet tile, the four full-tile variants on row 4 and the straight edge tiles' tufts painted out); brush.png (three bush variants on row 4); plain.png (the rock's two hand-drawn variants and the canopy shadow pixels of the hammock and mangrove tiles)
+Files: tide_pool.png (the tide pool: an irregular pool with three stones and a wet-sand lip); sand.png (single-pixel fixes on the corner tiles); dune.png (the islet tile, the four full-tile variants on row 4 and the straight edge tiles' tufts painted out); brush.png (three bush variants on row 4); plain.png (the rock's two hand-drawn variants the canopy shadow pixels of the hammock and mangrove tiles, the cliff's lit lip and dark foot, and the wreck interior's boards, drawn over its pack tile)
