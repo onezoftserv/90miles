@@ -1,0 +1,42 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/structures/raft_site.png" id="1_sheet"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_marked_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 0, 64, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_materials_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(64, 0, 64, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_half_built_2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(128, 0, 64, 32)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_marked_0")
+}],
+"loop": true,
+"name": &"marked",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_materials_1")
+}],
+"loop": true,
+"name": &"materials",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_half_built_2")
+}],
+"loop": true,
+"name": &"half_built",
+"speed": 5.0
+}]

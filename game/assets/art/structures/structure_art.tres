@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="StructureArtData" format=3]
+
+[ext_resource type="Script" path="res://scripts/art/structure_art_data.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/palm.png" id="2_palm"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/palm_coconuts_1.png" id="3_coco1"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/palm_coconuts_2.png" id="4_coco2"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/palm_coconuts_3.png" id="5_coco3"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/palm_nest.png" id="6_nest"]
+[ext_resource type="SpriteFrames" path="res://assets/art/structures/fire_frames.tres" id="7_fire"]
+[ext_resource type="SpriteFrames" path="res://assets/art/structures/rain_catcher_frames.tres" id="8_catcher"]
+[ext_resource type="SpriteFrames" path="res://assets/art/structures/raft_frames.tres" id="9_raft"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/workbench.png" id="10_bench"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/stake.png" id="11_stake"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/sign_post.png" id="12_sign"]
+[ext_resource type="SpriteFrames" path="res://assets/art/structures/raft_site_frames.tres" id="13_site"]
+
+[resource]
+script = ExtResource("1_data")
+palm = ExtResource("2_palm")
+coconut_overlays = Array[Texture2D]([ExtResource("3_coco1"), ExtResource("4_coco2"), ExtResource("5_coco3")])
+nest = ExtResource("6_nest")
+nest_point = Vector2(0, -34)
+fire = ExtResource("7_fire")
+rain_catcher = ExtResource("8_catcher")
+raft = ExtResource("9_raft")
+stills = Dictionary[StringName, Texture2D]({
+&"island_sign": ExtResource("12_sign"),
+&"stake": ExtResource("11_stake"),
+&"workbench": ExtResource("10_bench")
+})
+site_frames = Dictionary[StringName, SpriteFrames]({
+&"raft": ExtResource("13_site")
+})
+shadows = Dictionary[StringName, int]({
+&"fire": -1,
+&"island_sign": 2,
+&"palm": 0,
+&"rain_catcher": 0,
+&"raft": -1,
+&"raft_site": -1,
+&"stake": 2,
+&"workbench": -1
+})
+shadow_offsets = Dictionary[StringName, Vector2]({
+&"island_sign": Vector2(0, -1),
+&"palm": Vector2(0, -2),
+&"rain_catcher": Vector2(0, -2),
+&"stake": Vector2(0, -1)
+})

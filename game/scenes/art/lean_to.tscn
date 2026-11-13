@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/structures/lean_to.png" id="1_lean_to"]
+
+[node name="LeanTo" type="Sprite2D" groups=["art_view"]]
+texture = ExtResource("1_lean_to")
+centered = false
+offset = Vector2(-32, -48)
