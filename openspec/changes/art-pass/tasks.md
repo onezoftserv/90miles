@@ -178,7 +178,7 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - Fill `tools/art/look_parts.json` for:
     - `body_man`: MetroCity `Character Model.png` row 0's figure;
     - `body_woman`: row 2's figure;
-    - `hair_0`–`hair_7`: `Hairs.png` bands 0–7, each remapped into a DB32 ramp: 0 dark brown, 1 cool grey, 2 red, 3–5 orange with 5's yellow clip, 6 black, 7 charcoal;
+    - `hair_0`–`hair_7`: `Hairs.png` bands 0–7, each remapped into a DB32 ramp: 0 dark brown, 1 cool grey, 2 chestnut brown, 3–5 orange with 5's yellow clip, 6 black, 7 charcoal;
     - `outfit_tee_shorts`: `Outfit5.png`, with the T-shirt's 4 greys mapped to the clothing key ramp, the blue shorts to DB32 khaki, and the shoe pixels dropped;
     - every part with outline colour `#000000` (design.md C1, D8).
   - Give each body part an explicit colour map to skin row 0 and the DB32 colours of design.md C1 D7's table, the mouth highlight `#fff6f2` to the skin highlight; never nearest-colour, since `#fff2ec` (underwear, top) is nearer the skin highlight than `#ffffff`.
@@ -188,7 +188,7 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
     - `game/assets/art/fx/dive_ripple.png` (2 frames) with `fx/License.txt` (own work), and `fx/dive_ripple.tres` (a `SpriteFrames`: `dive`, 2 frames at 4 fps on `dive_ripple.png`), which gives the PNG its referrer;
     - the `LookPart` `.tres` for each part, and `characters/parts/License.txt` (MetroCity 1.0 `Character Model.png`, `Hairs.png` and `Outfit5.png`, modified; own work: pose edits, recolours, the moreno row);
     - `tools/art/fixes/License.txt` (own work);
-    - the four slot looks of design.md C2, all in `outfit_tee_shorts` with no item: `characters/looks/balsero.tres` (`body_man`, skin row 2, `hair_0`), `balsera_triguena.tres` (`body_woman`, skin row 1, `hair_6`), `balsero_claro.tres` (`body_man`, skin row 0, `hair_7`) and `balsera_morena.tres` (`body_woman`, skin row 2, `hair_5`);
+    - the four slot looks of design.md C2, all in `outfit_tee_shorts` with no item: `characters/looks/balsero.tres` (`body_man`, skin row 2, `hair_0`), `balsera_triguena.tres` (`body_woman`, skin row 1, `hair_6`), `balsero_claro.tres` (`body_man`, skin row 0, `hair_3`) and `balsera_morena.tres` (`body_woman`, skin row 2, `hair_2`);
     - the template `characters/balsero_frames.tres` (`AtlasTexture` regions on `parts/body_man.png`, D3's fps);
     - `characters/balsero_art.tres` (`BodyArt`: feet row 30 at +4, water row 19, swim drop 12, head gap 1, dive anchor −4, the default look `balsero.tres`, and `slot_looks` holding the four looks in slot order).
   - Add the MetroCity courtesy line to the credits and its row to `CREDITS.md`.
