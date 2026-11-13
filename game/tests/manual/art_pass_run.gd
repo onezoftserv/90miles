@@ -97,7 +97,6 @@ var passes: int = 0
 var fails: int = 0
 var done: bool = false
 var physics_hz: int = 60
-var sky: Object = null
 var pose_names: Array = []
 var structure_art: Script = null
 var draw_order: Script = null
@@ -121,7 +120,6 @@ func _initialize() -> void:
 	pose_names = ((load(POSE_PATH) as Script).get_script_constant_map()["Pose"] as Dictionary).keys()
 	structure_art = load(STRUCTURE_ART_PATH)
 	draw_order = load(DRAW_ORDER_PATH)
-	sky = root.get_node(^"WeatherManager").get("sky")
 	if not capture_dir.is_empty():
 		DirAccess.make_dir_recursive_absolute(capture_dir)
 	var settings_path: String = "user://art_pass_run_%s.cfg" % mode
@@ -178,6 +176,11 @@ func _note(text: String) -> void:
 # A step the run cannot reach by playing, set through a test hook.
 func _hooked(text: String) -> void:
 	print("ARTRUN set %s" % text)
+
+
+# The game's one sky (WeatherManager.sky), made in the autoload's _ready.
+func _sky() -> Object:
+	return root.get_node(^"WeatherManager").get("sky")
 
 
 func _rendering() -> bool:
@@ -260,8 +263,8 @@ func _wait_run(timeout_s: float) -> bool:
 
 # Daylight past the dawn blend, and no weather rolls, so the colours are the art's own.
 func _set_day(why: String) -> void:
-	sky.call("start_at", DAY_S)
-	(sky.get("weather") as Object).set("rolls_enabled", false)
+	_sky().call("start_at", DAY_S)
+	(_sky().get("weather") as Object).set("rolls_enabled", false)
 	_hooked("day clock to %.0f s, weather rolls off (%s)" % [DAY_S, why])
 
 
@@ -522,8 +525,9 @@ func _changed(a: Image, b: Image, classes: PackedByteArray, wanted: int) -> int:
 	return count
 
 
-# Shore cells fully on screen: how many draw foam (near-white pixels) touching a land colour, and
-# how many changed between two images (the foam moving).
+# Shore cells fully on screen: how many draw foam touching a land colour, and how many changed
+# between two images (the foam moving). Foam is a blue-white pixel brighter than the land's mean,
+# which holds under any tint, since the tint scales land and foam alike.
 func _foam(image: Image, later: Image) -> Dictionary:
 	var size: Vector2i = image.get_size()
 	var data: PackedByteArray = image.get_data()
@@ -533,6 +537,7 @@ func _foam(image: Image, later: Image) -> Dictionary:
 	for i: int in classes.size():
 		if classes[i] == 1:
 			land_colours[(data[i * 4] << 16) | (data[i * 4 + 1] << 8) | data[i * 4 + 2]] = true
+	var bright: float = _mean(image, classes, 1) * 765.0
 	var from_island: Transform2D = island.get_global_transform_with_canvas()
 	var view := Rect2(Vector2.ZERO, Vector2(size))
 	var shore: int = 0
@@ -556,7 +561,8 @@ func _foam(image: Image, later: Image) -> Dictionary:
 					var i: int = at.y * size.x + at.x
 					if not after.is_empty() and (data[i * 4] != after[i * 4] or data[i * 4 + 1] != after[i * 4 + 1] or data[i * 4 + 2] != after[i * 4 + 2]):
 						changed += 1
-					if touches or mini(data[i * 4], mini(data[i * 4 + 1], data[i * 4 + 2])) < 215:
+					var foam: bool = data[i * 4 + 2] > data[i * 4] + 20 and data[i * 4] + data[i * 4 + 1] + data[i * 4 + 2] > bright
+					if touches or not foam or land_colours.has((data[i * 4] << 16) | (data[i * 4 + 1] << 8) | data[i * 4 + 2]):
 						continue
 					for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
 						var next: Vector2i = at + step
@@ -755,6 +761,8 @@ func _walk_to_bench() -> bool:
 func _choose_at_bench(row_name: String) -> bool:
 	if not await _walk_to_bench():
 		return false
+	if craft_list.call("is_open"):
+		await _tap(&"pause")
 	await _tap(&"interact")
 	await _frames(4)
 	if not _check("E at the bench opens the crafting list", craft_list.call("is_open")):
@@ -791,7 +799,16 @@ func _structure(script_name: StringName) -> Node2D:
 # Works a site by E and staying beside it; the frames seen on the way.
 func _work_site(site: Node2D, label: String, limit_s: float) -> PackedStringArray:
 	var seen: PackedStringArray = [_frame(site)]
-	await _walk_to(site.global_position + Vector2(0.0, 6.0), 4.0)
+	# Beside the site where the prompt is the site's own, not the bench's.
+	var aimed: bool = false
+	for offset: Vector2 in [Vector2(0.0, 12.0), Vector2(-12.0, 0.0), Vector2(12.0, 0.0), Vector2(0.0, -12.0), Vector2(0.0, 6.0)]:
+		await _walk_to(site.global_position + offset, 3.0)
+		await _frames(3)
+		var lines: PackedStringArray = _prompt_lines()
+		if not lines.is_empty() and lines[0].contains("Construir"):
+			aimed = true
+			break
+	_check("%s: the prompt beside the site reads '[E] Construir …'" % label, aimed, "prompt %s" % _prompt_lines())
 	await _tap(&"interact")
 	for i: int in ceili(limit_s * physics_hz):
 		if not is_instance_valid(site) or site.is_queued_for_deletion() or bool(site.get("built")):
@@ -840,7 +857,7 @@ func _rain_catcher() -> void:
 	if not _check("the rain catcher was built", catcher != null):
 		return
 	_check("the dry rain catcher shows empty", _frame(catcher) == "empty", _frame(catcher))
-	(sky.get("weather") as Object).call("start_weather", &"squall")
+	(_sky().get("weather") as Object).call("start_weather", &"squall")
 	_hooked("a squall started (WeatherCycle.start_weather)")
 	var filled: bool = false
 	for i: int in 120 * physics_hz:
@@ -851,7 +868,7 @@ func _rain_catcher() -> void:
 	await _frames(2)
 	_check("the rain catcher fills in the squall and shows water", filled and _frame(catcher) == "water", "cups %d, frame %s" % [catcher.get("cups"), _frame(catcher)])
 	await _world_image("rain_catcher_squall")
-	(sky.get("weather") as Object).call("start_weather", &"calm")
+	(_sky().get("weather") as Object).call("start_weather", &"calm")
 	_hooked("the weather back to calm")
 
 
@@ -951,51 +968,56 @@ func _nest_palm_and_gull() -> void:
 	_check("the nest palm shows its nest and its coconut", String(look.call("frame")) != "" and before >= 1, "frame %s, %d coconut(s) drawn" % [look.call("frame"), before])
 	var gulls: Array[Node2D] = _creatures(&"seagull")
 	var gull: Node2D = _nearest(gulls, palm.global_position)
-	_check("a gull perches in the nest palm's crown", gull != null and _state_of(gull) == "perch", "%d gull(s), state %s" % [gulls.size(), _state_of(gull) if gull != null else ""])
+	_check("a gull perches in the nest palm's crown", gull != null and _state_of(gull) == "perch" and gull.global_position.distance_to(palm.global_position) < TILE, "%d gull(s), state %s" % [gulls.size(), _state_of(gull) if gull != null else ""])
 	if not await _walk_to(palm.global_position + Vector2(0.0, 2.0)):
 		_check("walked to the nest palm", false)
 		return
 	await _frames(3)
 	var hold_s: float = float(palm.get("hold_s"))
 	var coco: int = _count(&"coco")
-	Input.action_press(&"interact")
-	await _seconds(hold_s + 0.4)
-	Input.action_release(&"interact")
-	await _frames(6)
-	_check("held E climbed the nest palm for a coconut", _count(&"coco") > coco, "coco %d -> %d" % [coco, _count(&"coco")])
-	_check("the coconut drops from the crown: the palm draws one fewer", int(look.call("coconuts_drawn")) == before - 1, "%d -> %d" % [before, look.call("coconuts_drawn")])
-	_check("the nest stays after the climb", String(look.call("frame")) != "")
-	var slot: int = _slot_of(&"coco")
-	if slot >= 0:
-		await _tap(StringName("slot_%d" % (slot + 1)))
-	if gull == null:
-		return
-	# Holding the coconut under the nest: the gull swoops.
-	var swooped: bool = false
+	var most: int = coco
+	var swooper: Node2D = null
 	var shadow_below: bool = false
 	var shooed: bool = false
 	var fled: bool = false
-	for i: int in 20 * physics_hz:
-		var state: String = _state_of(gull)
-		if state == "swoop":
-			if not swooped:
-				swooped = true
+	var selected: bool = false
+	var hold_frames: int = ceili((hold_s + 0.4) * physics_hz)
+	Input.action_press(&"interact")
+	# The climb, then up to 20 s holding the coconut under the nest: a gull swoops on it.
+	for i: int in hold_frames + 20 * physics_hz:
+		if i == hold_frames:
+			Input.action_release(&"interact")
+		most = maxi(most, _count(&"coco"))
+		if i > hold_frames and not selected and _slot_of(&"coco") >= 0:
+			selected = true
+			await _tap(StringName("slot_%d" % (_slot_of(&"coco") + 1)))
+		for each: Node2D in _creatures(&"seagull"):
+			if swooper == null and _state_of(each) == "swoop":
+				swooper = each
+				_note("a gull swoops %.1f s after the climb began, coconut held %s" % [i / float(physics_hz), _count(&"coco") > coco])
 				await _world_image("gull_swoop")
-			var gull_look: Node = _look_of(gull)
-			var sprite: Node2D = gull_look.get_node(^"Sprite")
-			var shadow: CanvasItem = gull_look.get_node(^"Shadow")
-			shadow_below = shadow_below or (shadow.visible and (shadow as Node2D).global_position.y > sprite.global_position.y)
-			if not shooed and _prompt_lines().size() > 0 and _prompt_lines()[0].contains("Espantar"):
+		if swooper != null and is_instance_valid(swooper):
+			var state: String = _state_of(swooper)
+			var gull_look: Node = _look_of(swooper)
+			var shadow: Node2D = gull_look.get_node(^"Shadow")
+			shadow_below = shadow_below or (shadow.visible and shadow.global_position.y > (gull_look.get_node(^"Sprite") as Node2D).global_position.y)
+			if state == "swoop" and not shooed and i > hold_frames and _prompt_lines().size() > 0 and _prompt_lines()[0].contains("Espantar"):
 				await _tap(&"interact")
 				shooed = true
-		elif state == "flee" and (swooped or shooed):
-			fled = true
-			break
+			elif state == "flee":
+				fled = true
+				await _seconds(0.5)
+				break
 		await physics_frame
-	_check("the gull swoops on the held coconut", swooped, "state %s" % _state_of(gull))
+	Input.action_release(&"interact")
+	_check("held E climbed the nest palm for a coconut", most > coco, "coco %d, most held %d, now %d" % [coco, most, _count(&"coco")])
+	_check("the coconut drops from the crown: the palm draws one fewer", int(look.call("coconuts_drawn")) == before - 1, "%d -> %d" % [before, look.call("coconuts_drawn")])
+	_check("the nest stays after the climb", String(look.call("frame")) != "")
+	_check("a gull swoops on the held coconut", swooper != null)
 	_check("in the air its shadow stays on the ground below it", shadow_below)
-	_check("a shoo (E on the gull) works, or the gull takes the coconut, and it flies off", fled, "shooed %s, state %s, coco %d" % [shooed, _state_of(gull), _count(&"coco")])
-	_note("after the gull: shooed %s, coconut kept %s, gull animation %s" % [shooed, _count(&"coco") > coco, _creature_anim(gull)])
+	_check("a shoo (E on the gull) works, or the gull takes the coconut, and it flies off", fled, "shooed %s, coco %d" % [shooed, _count(&"coco")])
+	if swooper != null and is_instance_valid(swooper):
+		_note("after the gull: shooed %s, coconut kept %s, gull state %s, animation %s" % [shooed, _count(&"coco") > coco, _state_of(swooper), _creature_anim(swooper)])
 	await _world_image("gull_flee")
 
 
@@ -1004,7 +1026,7 @@ func _nest_palm_and_gull() -> void:
 func _night(spawn: Vector2, day: Image) -> void:
 	await _walk_to(spawn)
 	await _seconds(0.5)
-	sky.call("start_at", NIGHT_START_S - 2.0)
+	_sky().call("start_at", NIGHT_START_S - 2.0)
 	_hooked("day clock to 2 s before night (played into night from there)")
 	await _seconds(3.0)
 	var night: Image = await _world_image("sandbar_night_view")
