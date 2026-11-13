@@ -1,0 +1,11 @@
+Pack: MetroCity Free Top Down Character Pack (1.0)
+Author: JIK-A-4
+Licence: CC0 1.0
+Source: https://jik-a-4.itch.io/metrocity-free-topdown-character-pack
+Files: body_man.png and body_woman.png (CharacterModel/Character Model.png, rows 0 and 2), outfit_tee_shorts.png (Outfits/Outfit5.png, the shoes dropped) and hair_0.png to hair_7.png (Hair/Hairs.png, bands 0-7); modified: cut to the frame layout, posed by tools/art/poses.py, recoloured to the master palette by the maps in tools/art/look_parts.json and rimmed in #000000 by tools/art/compose.py
+
+Work: 90 Millas player part edits
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: the crouch, swim, downed and dead cells of every sheet in this folder (pose rules), the knees in the crouch cells and the shut eyes in the dead cell of body_man.png and body_woman.png (tools/art/fixes/), the recolours (skin row 0, the clothing key ramp, the hair and shorts ramps) and the moreno skin row of palette/skin_ramps.png that the composer swaps to

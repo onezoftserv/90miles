@@ -269,7 +269,36 @@ func test_swimmers_stand_out_on_shallows_and_deep() -> void:
 				for slot_row: int in SLOT_ROWS:
 					var drawn: Image = PaletteSwap.swap_rows(composite, ramps, PaletteSwap.KEY_ROW, slot_row)
 					for cell: Vector2i in PoseRules.cells(&"swim"):
-						var label: String = "%s skin %d %s slot row %d swim %s" % [body, skin_row, hair, slot_row, cell]
-						var rect: Rect2i = Rect2i(cell * CELL, Vector2i(CELL.x, WATER_ROW))
-						failures.append_array(ArtChecks.check_water_contrast(label, drawn, rect, grounds, tuning.contrast_min))
+						for ground: StringName in grounds:
+							var ratio: float = _above_line_contrast(drawn, cell, grounds[ground])
+							if ratio < tuning.contrast_min:
+								failures.append("%s skin %d %s slot row %d swim %s: %.2f:1 on %s" % [body, skin_row, hair, slot_row, cell, ratio, ground])
 	assert_eq(failures.size(), 0, "%d failing frames, first: %s" % [failures.size(), str(failures.slice(0, 3))])
+
+
+func test_the_above_line_contrast_can_fail() -> void:
+	# A frame whose ring and fill are both the deep ground's colour.
+	var image: Image = Image.create_empty(32, 32, false, Image.FORMAT_RGBA8)
+	var deep: Color = _tuning().water_grounds[&"deep"]
+	image.fill_rect(Rect2i(10, 4, 12, 26), deep)
+	assert_lt(_above_line_contrast(image, Vector2i.ZERO, deep), _tuning().contrast_min)
+
+
+# The better contrast against `ground` of the outline ring and of the mean colour, over the opaque
+# texels above the water row of a cell. The ring is the cell's own edge (the cut at the line is
+# not an edge: the shader draws the ripple there).
+func _above_line_contrast(image: Image, cell: Vector2i, ground: Color) -> float:
+	var rect: Rect2i = Rect2i(cell * CELL, CELL)
+	var above: Array[Vector2i] = []
+	for y: int in range(rect.position.y, rect.position.y + WATER_ROW):
+		for x: int in range(rect.position.x, rect.end.x):
+			if image.get_pixel(x, y).a8 > 0:
+				above.append(Vector2i(x, y))
+	if above.is_empty():
+		return 1.0
+	var ring: Array[Vector2i] = []
+	for pixel: Vector2i in ArtChecks.edge_pixels(image, rect):
+		if pixel.y < rect.position.y + WATER_ROW:
+			ring.append(pixel)
+	var by_ring: float = ArtChecks.contrast_ratio(ArtChecks.mean_color(image, ring), ground) if not ring.is_empty() else 1.0
+	return maxf(by_ring, ArtChecks.contrast_ratio(ArtChecks.mean_color(image, above), ground))

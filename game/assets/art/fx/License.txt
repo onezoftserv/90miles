@@ -1,0 +1,5 @@
+Work: 90 Millas dive ripple
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: dive_ripple.png (2 frames of 16x8, drawn by hand in two palette colours; played by dive_ripple.tres)

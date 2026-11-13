@@ -1,0 +1,25 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/fx/dive_ripple.png" id="1_atlas"]
+
+[sub_resource type="AtlasTexture" id="cell_0_0"]
+atlas = ExtResource("1_atlas")
+region = Rect2(0, 0, 16, 8)
+
+[sub_resource type="AtlasTexture" id="cell_1_0"]
+atlas = ExtResource("1_atlas")
+region = Rect2(16, 0, 16, 8)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("cell_0_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("cell_1_0")
+}],
+"loop": true,
+"name": &"dive",
+"speed": 4.0
+}]
