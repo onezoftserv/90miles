@@ -109,7 +109,7 @@ python -I -m unittest discover -s tools -p 'test_fetch_assets.py'
 | Players (and later NPC bases) | MetroCity (32×32 frames); crouch, swim, downed and dead poses hand-edited from it | CC0 | `assets/art/characters/` | manual download, copied when used |
 | Beach, dune, brush, rock tiles (16×16) | ArMM1998 Zelda-like set, recoloured, its water strip and foam rim keyed out; islet and diagonal tiles hand-made | CC0 | `assets/art/terrain/` | manual download, copied when used |
 | Sea and shoreline | Scallywag water (texture), Eldiran shoreline (foam) | CC0 | `assets/art/sea/` | manual download, copied when used |
-| Shark, crab, gull sprites | DawnLike (shark, fin), hand-made crab, Tiny, Tiny Heroes gull | CC BY 4.0 / own | `assets/art/creatures/` | manual download, copied when used |
+| Shark, crab, gull sprites | Hand-made shark (DawnLike as its colour reference) and crab, Tiny, Tiny Heroes gull | CC BY 4.0 / own | `assets/art/creatures/` | manual download, copied when used |
 | Items: rope, jug, coconut, knife, tarp, cup, driftwood, dry grass, inner tube, binoculars, nails, mirror, aloe, lighter | Kyrise and DawnLike icons, hand-made for the rest | CC BY 4.0 / own | `assets/art/items/` | manual download, copied when used |
 | Palm, lean-to, workbench, fire, rain catcher, sign post, raft | Hand-made, kitbashed from Scallywag fronds and logs and Zelda-like props | CC0 / own | `assets/art/structures/` | — |
 | UI: panels, bars, buttons, cursor | Kenney "Pixel UI Pack" (tracked 9-slices in `assets/art/ui/`) | CC0 | `assets/kenney/ui/` | auto |
