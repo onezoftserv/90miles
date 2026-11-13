@@ -336,6 +336,63 @@ func test_the_dune_edges_carry_no_tuft_and_the_islet_is_ragged() -> void:
 	assert_gte(spikes, 3, "the islet's outline has 1-2 px spikes")
 
 
+## Design.md K39 (art round 2): the tide pool is an irregular pool, not a stone-ringed porthole:
+## it leaves at least one cell edge bare, holds water in two shades, three or four stones of
+## different sizes and a wet-sand lip, with the lip's dark colour under a south stone.
+func test_the_tide_pool_is_irregular_with_a_few_stones_and_a_wet_sand_lip() -> void:
+	var pool: Image = _sheet("res://assets/art/terrain/tide_pool.png")
+	if pool == null:
+		return
+	var water: Dictionary[Color, bool] = {}
+	var stones: Dictionary[Vector2i, bool] = {}
+	var lip: Dictionary[Color, int] = {Color.html("#d9a066"): 0, Color.html("#c08a5a"): 0}
+	var stone_colors: Array[Color] = [Color.html("#9badb7"), Color.html("#847e87"), Color.html("#696a6a"), Color.html("#595652")]
+	var edges: int = 0
+	for side: Rect2i in [Rect2i(0, 0, TILE, 1), Rect2i(0, TILE - 1, TILE, 1), Rect2i(0, 0, 1, TILE), Rect2i(TILE - 1, 0, 1, TILE)]:
+		if not pool.get_region(side).is_invisible():
+			edges += 1
+	assert_lt(edges, 4, "the pool does not touch all four cell edges")
+	for y: int in TILE:
+		for x: int in TILE:
+			var color: Color = pool.get_pixel(x, y)
+			if color.a == 0.0:
+				continue
+			if stone_colors.has(color):
+				stones[Vector2i(x, y)] = true
+			elif lip.has(color):
+				lip[color] += 1
+			else:
+				water[color] = true
+	assert_eq(water.size(), 2, "water in two shades")
+	for color: Color in lip:
+		assert_gt(lip[color], 0, "the lip has %s" % color.to_html(false))
+	var sizes: Array[int] = []
+	var seen: Dictionary[Vector2i, bool] = {}
+	var shadowed: bool = false
+	for start: Vector2i in stones:
+		if seen.has(start):
+			continue
+		var size: int = 0
+		var todo: Array[Vector2i] = [start]
+		seen[start] = true
+		while not todo.is_empty():
+			var at: Vector2i = todo.pop_back()
+			size += 1
+			var below: Vector2i = at + Vector2i.DOWN
+			if below.y < TILE and pool.get_pixel(below.x, below.y) == Color.html("#c08a5a") and at.y > TILE / 2:
+				shadowed = true
+			for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				if stones.has(at + step) and not seen.has(at + step):
+					seen[at + step] = true
+					todo.append(at + step)
+		sizes.append(size)
+	assert_true(sizes.size() >= 3 and sizes.size() <= 4, "three or four stones, not a ring (%s)" % [sizes])
+	sizes.sort()
+	for index: int in range(1, sizes.size()):
+		assert_ne(sizes[index], sizes[index - 1], "the stones differ in size (%s)" % [sizes])
+	assert_true(shadowed, "a south stone has the lip's dark colour under it")
+
+
 ## Design.md K39: a plain row's full-tile variants sit on columns 16 and after, as many as
 ## `terrain_art.tres` counts for the row; each is a whole tile and none repeats the full tile
 ## (column 15) or another variant.
