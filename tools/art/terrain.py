@@ -55,6 +55,7 @@ DEFAULT_FIXES = HERE / "fixes" / "terrain"
 DEFAULT_OUT = palette.ART
 DOWNLOAD_FOLDERS = ("oga", "itch", "kenney")
 NAME = re.compile(r"^[a-z0-9_]+$")
+HAND = "hand"
 HAND_SOURCE = re.compile(r"^[a-z0-9_]+\.png$")
 COPY_TARGET = re.compile(r"^[a-z0-9_]+/[a-z0-9_]+\.png$")
 TILE = 16
@@ -377,6 +378,8 @@ def build_set(entry, sources):
     erase = {colour(text, name) for text in member(entry, "erase", list, name)}
 
     def made(spec, label):
+        if spec == HAND:
+            return png.blank(TILE, TILE)
         if isinstance(spec, str):
             tile = png.Image(TILE, TILE, bytes(colour(spec, name) + (255,)) * (TILE * TILE))
         else:
@@ -390,15 +393,40 @@ def build_set(entry, sources):
         raise TerrainError(f"{name}: {error}") from error
 
 
-def fixed(sheet, fixes, file_name):
-    """The sheet with its hand-fix overlay from the fixes folder, when there is one."""
+def hand_cells(entry):
+    """The (column, row) cells of a set's sheet whose tile is "hand": blank, drawn whole by its overlay."""
+    tiles = entry.get("tiles")
+    if not isinstance(tiles, dict):
+        return set()
+    return {(mask % SET_COLUMNS, mask // SET_COLUMNS) for mask in (mask_of(key, "tiles") for key, spec in tiles.items() if spec == HAND)}
+
+
+def fixed(sheet, fixes, file_name, hand=()):
+    """The sheet with its hand-fix overlay from the fixes folder, when there is one. The overlay
+    holds hand pixels only: one equal to the built pixel under it is refused, except in a `hand`
+    cell, which the overlay must cover whole."""
     path = pathlib.Path(fixes) / file_name
     if not path.is_file():
         return sheet
+    overlay = read_image(path)
     try:
-        return compose.apply_fix(sheet, read_image(path))
+        out = compose.apply_fix(sheet, overlay)
     except compose.PartError as error:
         raise TerrainError(f"{path}: {error}") from error
+    covered = {}
+    for y in range(overlay.height):
+        for x in range(overlay.width):
+            cell = (x // TILE, y // TILE)
+            if not overlay.alpha(x, y):
+                continue
+            covered[cell] = covered.get(cell, 0) + 1
+            if cell not in hand and (out.get(x, y) == sheet.get(x, y) or not (out.alpha(x, y) or sheet.alpha(x, y))):
+                raise TerrainError(f"{file_name}: the overlay pixel ({x}, {y}) in cell {cell} is what the tool already builds, so it is not a hand pixel")
+    for cell in sorted(hand):
+        missing = TILE * TILE - covered.get(cell, 0)
+        if missing:
+            raise TerrainError(f"{file_name}: hand cell {cell} is not drawn whole by the overlay ({missing} of {TILE * TILE} pixels missing)")
+    return out
 
 
 def _shape(spec, sets, where):
@@ -586,7 +614,7 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
     entries = section(recipe, "sets", list)
     for entry in entries:
         sheet = build_set(entry, sources)
-        sets[entry["id"]] = fixed(sheet, fixes, f"{entry['id']}.png")
+        sets[entry["id"]] = fixed(sheet, fixes, f"{entry['id']}.png", hand_cells(entry))
         add(f"terrain/{entry['id']}.png", sets[entry["id"]])
     for entry in entries:
         if "shore" in entry:

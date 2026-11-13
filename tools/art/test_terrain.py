@@ -342,6 +342,47 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(opaque_rows(terrain.sheet_tile(png.read_png(self.out / "terrain" / "sand.png"), 3))[-1], 10)
         self.assertEqual(opaque_rows(png.read_png(self.out / "sea" / "foam.png").crop(0, 48, 16, 16)), [11])
 
+    def overlay(self, *pixels):
+        """A 64x80 sand overlay of (x, y, colour) pixels; a colour of None erases."""
+        fix = png.blank(64, 80)
+        for x, y, rgb in pixels:
+            fix.set(x, y, (0xFF, 0x00, 0xFF, 255) if rgb is None else rgb + (255,))
+        return fix
+
+    def test_an_overlay_pixel_that_is_already_what_the_tool_builds_is_refused_by_sheet_and_cell(self):
+        for pixel in ((5, 5, SAND), (50, 13, None), (20, 40, SAND)):
+            png.write_png(self.fixes / "sand.png", self.overlay(pixel))
+            cell = (pixel[0] // 16, pixel[1] // 16)
+            with self.assertRaisesRegex(terrain.TerrainError, rf"sand\.png.*\({pixel[0]}, {pixel[1]}\).*cell \({cell[0]}, {cell[1]}\)"):
+                self.build()
+        self.assertFalse(self.out.exists(), "nothing is written")
+        png.write_png(self.fixes / "sand.png", self.overlay((5, 5, DEEP), (50, 13, DEEP)))
+        self.build()
+
+    def test_a_hand_cell_is_a_blank_tile_the_overlay_must_cover_with_all_256_pixels(self):
+        recipe = self.recipe()
+        del recipe["sets"][0]["quadrants"]["0"]
+        recipe["sets"][0]["tiles"]["0"] = "hand"
+        png.write_png(self.fixes / "sand.png", self.overlay((5, 5, SAND)))
+        with self.assertRaisesRegex(terrain.TerrainError, r"sand\.png.*hand cell \(0, 0\)"):
+            self.build(recipe)
+        whole = [(x, y, SAND if (x + y) % 5 else None) for y in range(16) for x in range(16)]
+        png.write_png(self.fixes / "sand.png", self.overlay(*whole))
+        self.build(recipe)
+        islet = terrain.sheet_tile(png.read_png(self.out / "terrain" / "sand.png"), 0)
+        self.assertEqual((islet.get(1, 1)[:3], islet.alpha(5, 0)), (SAND, 0), "the hand pixels are the tile, #ff00ff left clear")
+
+    def test_a_map_change_reaches_the_variant_tile_under_the_hand_pixels(self):
+        png.write_png(self.fixes / "sand.png", self.overlay((2, 2 + 16 * 4, DEEP)))
+        self.build()
+        variant = png.read_png(self.out / "terrain" / "sand.png").crop(0, 64, 16, 16)
+        self.assertEqual((variant.get(5, 5)[:3], variant.get(2, 2)[:3]), (SAND, DEEP))
+        recipe = self.recipe()
+        recipe["sets"][0]["map"] = {png.colour_hex(GRASS): png.colour_hex(ROCK)}
+        self.build(recipe)
+        variant = png.read_png(self.out / "terrain" / "sand.png").crop(0, 64, 16, 16)
+        self.assertEqual((variant.get(5, 5)[:3], variant.get(2, 2)[:3]), (ROCK, DEEP), "the recipe drives the variant")
+
     def test_a_plain_row_takes_a_rim_colour_on_its_cut_edge_and_the_foam_a_fade_colour(self):
         recipe = self.recipe()
         recipe["plain"]["rows"][0]["rim"] = "#000000"
@@ -577,6 +618,19 @@ class BuildTests(unittest.TestCase):
         self.assertEqual([entry["id"] for entry in recipe["sets"]], ["sand", "dune", "brush"])
         self.assertEqual(len(recipe["plain"]["rows"]), 9)
         self.assertEqual(recipe["shade"]["shape"], "sand")
+
+
+    def test_the_tracked_overlays_hold_only_hand_pixels(self):
+        recipe = terrain.load_recipe(terrain.DEFAULT_RECIPE)
+        for entry in recipe["sets"][:2]:
+            overlay = png.read_png(terrain.DEFAULT_FIXES / f"{entry['id']}.png")
+            hand = terrain.hand_cells(entry)
+            for column in range(terrain.SET_COLUMNS):
+                cell = overlay.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16)
+                opaque = sum(1 for alpha in cell.pixels[3::4] if alpha)
+                self.assertLess(opaque, 40, f"{entry['id']} variant {column} is mask 15 plus a few hand pixels")
+            self.assertEqual(hand, {(0, 0)} if entry["id"] == "dune" else set(), entry["id"])
+            self.assertEqual(sum(1 for alpha in overlay.crop(0, 0, 16, 16).pixels[3::4] if alpha), 256 if hand else 0)
 
 
 if __name__ == "__main__":
