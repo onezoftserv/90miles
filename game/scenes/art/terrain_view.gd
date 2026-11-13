@@ -15,9 +15,12 @@ const LAND_LAYERS: Array[StringName] = [TerrainArt.SAND, TerrainArt.DUNE, Terrai
 const POOL_SOURCE: int = 0
 const SHADE_SOURCE: int = 1
 const PALM_SHADE: Vector2i = Vector2i(0, 4)
-## The two halves of the wide shade under the raft site: its west neighbour and its own cell.
+## The two halves of the wide shade under the raft site, on the two cells west of its own cell:
+## the site's cell is a shore cell, and a decal there would lie over the foam and the water.
 const WIDE_WEST: Vector2i = Vector2i(1, 4)
 const WIDE_EAST: Vector2i = Vector2i(2, 4)
+const WIDE_WEST_OFFSET: Vector2i = Vector2i(-2, 0)
+const WIDE_EAST_OFFSET: Vector2i = Vector2i(-1, 0)
 ## How far the sea reaches past the grid on each side, in px, for a camera at the island's edge.
 const SEA_MARGIN_PX: float = 640.0
 
@@ -112,7 +115,7 @@ func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vecto
 		if foot.x >= 0 and _decals.get_cell_source_id(foot) < 0:
 			_decals.set_cell(foot, SHADE_SOURCE, PALM_SHADE)
 	if raft_site.x >= 0:
-		for half: Dictionary in [{&"cell": raft_site + Vector2i.LEFT, &"atlas": WIDE_WEST}, {&"cell": raft_site, &"atlas": WIDE_EAST}]:
+		for half: Dictionary in [{&"cell": raft_site + WIDE_WEST_OFFSET, &"atlas": WIDE_WEST}, {&"cell": raft_site + WIDE_EAST_OFFSET, &"atlas": WIDE_EAST}]:
 			var cell: Vector2i = half[&"cell"]
 			if TerrainArt.depth_step(grid.terrain_at(cell)) < 0 and _decals.get_cell_source_id(cell) < 0:
 				_decals.set_cell(cell, SHADE_SOURCE, half[&"atlas"])

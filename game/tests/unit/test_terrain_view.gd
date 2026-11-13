@@ -308,8 +308,9 @@ func test_the_raft_site_holds_the_wide_shade_and_the_workbench_is_shaded() -> vo
 	var island := _island(SANDBAR)
 	var site: Vector2i = island.built.raft_site
 	assert_true(site.x > 0, "the sandbar has a raft site")
-	assert_eq(_tile_at(island, &"Decals", site), [SHADE_SOURCE, WIDE_EAST, 0], "the site's cell")
-	assert_eq(_tile_at(island, &"Decals", site + Vector2i.LEFT), [SHADE_SOURCE, WIDE_WEST, 0], "its west neighbour")
+	assert_eq(_tile_at(island, &"Decals", site + Vector2i(-1, 0)), [SHADE_SOURCE, WIDE_EAST, 0], "the cell west of the site")
+	assert_eq(_tile_at(island, &"Decals", site + Vector2i(-2, 0)), [SHADE_SOURCE, WIDE_WEST, 0], "two cells west")
+	assert_eq(_tile_at(island, &"Decals", site)[0], -1, "none on the site's own shore cell, where it would lie over the foam")
 	var bench: Vector2i = island.built.workbench
 	assert_true(bench.x > 0, "the sandbar has a workbench")
 	assert_eq(_tile_at(island, &"Decals", bench)[0], SHADE_SOURCE, "the workbench cell is shaded")
@@ -321,7 +322,7 @@ func test_the_coast_cays_shaded_cells_get_the_corner_set() -> void:
 	assert_gt(terrain.shaded.size(), 0)
 	var site: Vector2i = island.built.raft_site
 	for cell: Vector2i in terrain.shaded:
-		if island.built.tide_pools.has(cell) or cell == site or cell == site + Vector2i.LEFT:
+		if island.built.tide_pools.has(cell) or cell == site + Vector2i(-1, 0) or cell == site + Vector2i(-2, 0):
 			continue
 		var mask: int = TerrainView._shade_mask(cell, terrain)
 		@warning_ignore("integer_division")
