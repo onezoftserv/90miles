@@ -1,0 +1,54 @@
+{
+  "sources": {
+    "tth_animals": "itch/tth-animals/extracted/animals/spritesheet.png",
+    "dawnlike_effect": "oga/dawnlike/extracted/DawnLike_5/Objects/Effect0.png"
+  },
+  "sheets": [
+    {
+      "id": "reef_shark",
+      "size": [160, 16],
+      "cell": [32, 16],
+      "layers": [
+        {"hand": "reef_shark.png"},
+        {
+          "from": "dawnlike_effect",
+          "rect": [48, 338, 16, 8],
+          "at": [112, 1],
+          "map": {"#dfefd7": "#ffffff", "#6dc3cb": "#cbdbfc", "#8696a2": "#9badb7", "#597dcf": "#9badb7"},
+          "drop_lone": true,
+          "outline": "#000000"
+        },
+        {
+          "from": "dawnlike_effect",
+          "rect": [32, 338, 15, 5],
+          "at": [145, 4],
+          "map": {"#dfefd7": "#ffffff", "#6dc3cb": "#cbdbfc", "#8696a2": "#9badb7", "#597dcf": "#9badb7"},
+          "drop_lone": true,
+          "outline": "#000000"
+        }
+      ]
+    },
+    {
+      "id": "land_crab",
+      "size": [96, 16],
+      "cell": [16, 16],
+      "layers": [
+        {"hand": "land_crab.png"}
+      ]
+    },
+    {
+      "id": "seagull",
+      "size": [128, 48],
+      "cell": [16, 16],
+      "layers": [
+        {
+          "from": "tth_animals",
+          "rect": [128, 240, 128, 48],
+          "at": [0, 0],
+          "map": {"#3a4466": "#3f3f74", "#5a6988": "#847e87", "#c0cbdc": "#cbdbfc", "#f77622": "#df7126", "#feae34": "#fbf236"}
+        }
+      ],
+      "rim": true
+    }
+  ]
+}
