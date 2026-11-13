@@ -8,10 +8,6 @@ extends Node2D
 const SCENE: PackedScene = preload("res://scenes/creatures/creature.tscn")
 const SYNC_NAME: StringName = &"Sync"
 const SYNC_INTERVAL_S: float = 0.1
-const BODY_RADIUS_PX: float = 5.0
-const LAND_COLOR: Color = Color(0.85, 0.35, 0.2)
-const WATER_COLOR: Color = Color(0.35, 0.45, 0.55)
-const AIR_COLOR: Color = Color(0.92, 0.92, 0.95)
 
 var data: CreatureData
 var brain: CreatureBrain
@@ -42,7 +38,6 @@ func _ready() -> void:
 	interactable.hold_time_s = 0.0
 	interactable.enabled = shoo_counter != null
 	interactable.interacted.connect(_on_interacted)
-	queue_redraw()
 
 
 ## Adds the synchronizer that sends position, facing and state to the clients; the session does
@@ -109,19 +104,9 @@ func _physics_process(delta: float) -> void:
 		advance(delta)
 	elif brain != null:
 		brain.state = state_id
-	queue_redraw()
 
 
 func _on_interacted(by: Node) -> void:
 	if multiplayer.is_server() and by is Node2D:
 		shoo(by as Node2D)
 
-
-func _draw() -> void:
-	var color: Color = LAND_COLOR
-	if data != null and data.domains.has(CreatureData.Domain.AIR):
-		color = AIR_COLOR
-	elif data != null and data.domains.has(CreatureData.Domain.DEEP):
-		color = WATER_COLOR
-	draw_circle(Vector2.ZERO, BODY_RADIUS_PX, color)
-	draw_line(Vector2.ZERO, facing * BODY_RADIUS_PX * 1.6, color.darkened(0.4), 2.0)

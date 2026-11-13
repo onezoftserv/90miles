@@ -1,0 +1,23 @@
+Pack: DawnLike - 16x16 Universal Rogue-like tileset v1.81
+Author: DragonDePlatino; palette by DawnBringer
+Licence: CC BY 4.0
+Source: https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181
+Files: reef_shark.png, strike frames 2 and 3 (x 112-159): the splash and the falling spray are the white crests of the two water bursts of Objects/Effect0.png (x 48 and 32, y 338), recoloured to the master palette, their lone droplets dropped and their edge recoloured black; the fin is drawn in the grey ramp of the pack's sharks (Characters/Aquatic0.png), remapped
+
+Pack: Tiny, Tiny Heroes - Animals
+Author: Kacper Woźniak (thkaspar)
+Licence: CC BY 4.0
+Source: https://thkaspar.itch.io/tth-animals
+Files: seagull.png (animals/spritesheet.png: the seagull at columns 8-15 of rows 15-17, its side, front and back facings with 4 standing and 4 flying frames each, recoloured to the master palette; layout and shapes unchanged)
+
+Pack: Tiny Dungeon
+Author: Kenney (kenney.nl)
+Licence: CC0 1.0
+Source: https://kenney.nl/assets/tiny-dungeon
+Files: none copied; Tiles/tile_0110.png (a crab) was the shape reference for land_crab.png
+
+Work: 90 Millas creatures
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: land_crab.png (the land crab, drawn by hand side-on in 16x16 frames: idle, a scuttle, claws raised open and shut, and each claw raised alone); reef_shark.png (the dorsal fin, its black base, the ripple row and the dark body under the water line, drawn by hand in 32x16 frames); reef_shark_frames.tres, land_crab_frames.tres, seagull_frames.tres and creature_art.tres
