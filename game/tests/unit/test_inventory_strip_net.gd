@@ -45,9 +45,9 @@ func _hud(session: CoopSession) -> RunHud:
 	return hud
 
 
-func _slot_text(hud: RunHud, index: int) -> String:
-	var view := hud.strip.slot_view(index)
-	return view.name_label.text if view != null else ""
+## The id of the item slot `index` shows by its icon, "" when it shows none (design.md K5).
+func _slot_item(hud: RunHud, index: int) -> String:
+	return StripIcon.item_shown(hud.strip.slot_view(index))
 
 
 func test_a_clients_strip_waits_for_the_hosts_state() -> void:
@@ -59,8 +59,8 @@ func test_a_clients_strip_waits_for_the_hosts_state() -> void:
 	var hud := _hud(client)
 	assert_same(hud.strip.body, net.own_body(client), "the client's own player")
 	host.body(net.peer_id(client)).inventory.add(&"driftwood", 1)
-	assert_eq(_slot_text(hud, 0), "", "unchanged before the host's state arrives")
-	var arrived := func() -> bool: return _slot_text(hud, 0) == "Mad"
+	assert_eq(_slot_item(hud, 0), "", "unchanged before the host's state arrives")
+	var arrived := func() -> bool: return _slot_item(hud, 0) == "driftwood"
 	assert_true(await wait_until(arrived, TIMEOUT_S), "1 driftwood in screen slot 1")
 	assert_eq(hud.strip.slot_view(0).count_label.text, "")
 	assert_eq(hud.strip.weight_label.text, "Peso 2/30")
@@ -78,7 +78,7 @@ func test_a_clients_pick_up_reaches_its_strip() -> void:
 	mine.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
 	await wait_physics_frames(10)
 	mine.intent = MoveIntent.new()
-	var arrived := func() -> bool: return _slot_text(hud, 0) == "Mad"
+	var arrived := func() -> bool: return _slot_item(hud, 0) == "driftwood"
 	assert_true(await wait_until(arrived, TIMEOUT_S), "the driftwood the host gave shows in screen slot 1")
 	assert_eq(mine.inventory.count_id(&"driftwood"), 1)
 
@@ -93,9 +93,9 @@ func test_the_hosts_strip_shows_only_the_hosts_player() -> void:
 	assert_same(hud.strip.body, host.body(CoopSession.HOST_ID))
 	host.body(net.peer_id(client)).inventory.add(&"driftwood", 1)
 	await wait_physics_frames(5)
-	assert_eq(_slot_text(hud, 0), "", "the client's driftwood is not the host's")
+	assert_eq(_slot_item(hud, 0), "", "the client's driftwood is not the host's")
 	host.body(CoopSession.HOST_ID).inventory.add(&"coco", 2)
-	assert_eq(_slot_text(hud, 0), "Coc")
+	assert_eq(_slot_item(hud, 0), "coco")
 	assert_eq(hud.strip.slot_view(0).count_label.text, "2")
 
 
@@ -115,7 +115,7 @@ func test_a_rejoined_client_gets_its_reclaimed_bodys_strip() -> void:
 	var hud := _hud(back)
 	var reclaimed := func() -> bool:
 		var mine := net.own_body(back)
-		return mine != null and hud.strip.body == mine and _slot_text(hud, 0) == "Mad"
+		return mine != null and hud.strip.body == mine and _slot_item(hud, 0) == "driftwood"
 	assert_true(await wait_until(reclaimed, TIMEOUT_S), "the strip follows the reclaimed body")
 	assert_same(host.body(net.peer_id(back)), papo_body, "the same body on the host")
 	assert_eq(hud.strip.slot_view(0).count_label.text, "2")

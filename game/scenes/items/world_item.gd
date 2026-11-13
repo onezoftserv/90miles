@@ -2,7 +2,8 @@ class_name WorldItem
 extends Node2D
 ## An item lying on the ground (crafting-inventory "Pick-up"). Interacting applies on the host
 ## (the player's interaction runs there): what fits goes in the player's inventory, the rest
-## stays. Set item_id and count before it enters the tree.
+## stays. Set item_id and count before it enters the tree. Its Look child draws it (art-pass,
+## `art_view`).
 
 @export var item_id: StringName = &""
 @export var count: int = 1
@@ -37,7 +38,3 @@ func _on_interacted(by: Node) -> void:
 	if count <= 0:
 		interactable.enabled = false
 		queue_free()
-
-
-func _draw() -> void:
-	draw_rect(Rect2(-3.0, -3.0, 6.0, 6.0), Color(0.85, 0.8, 0.5))

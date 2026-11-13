@@ -28,11 +28,10 @@ const CC0_SOURCES: PackedStringArray = [
 	"https://kenney.nl/assets/tiny-dungeon",
 ]
 ## Packs credited ahead of their files (design.md K20, K33): each leaves this list in the group that
-## tracks its files (Kyrise in group 7), and a test fails while it names a pack that has a block.
-## Zelda-like, Scallywag and Eldiran left it with the terrain art (task 4.4), DawnLike and Tiny, Tiny
-## Heroes - Animals with the creature art (task 6.3).
+## tracks its files, and a test fails while it names a pack that has a block. Zelda-like, Scallywag
+## and Eldiran left it with the terrain art (task 4.4), DawnLike and Tiny, Tiny Heroes - Animals
+## with the creature art (task 6.3), Kyrise with the item icons (task 7.3). It is empty now.
 const PENDING_SOURCES: PackedStringArray = [
-	"https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack",
 ]
 const FONT_SOURCES: PackedStringArray = [
 	"https://github.com/google/fonts/tree/main/ofl/pressstart2p",
