@@ -8,4 +8,4 @@ Work: 90 Millas added colours and ramps
 Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
-Files: master_palette.png and master_palette.gpl (entries 33-39: the clothing key ramp and three skin colours; entries 40-52: three sand colours and the deep-sea, shallows and brackish water colours); player_ramps.png (the key ramp and the azul, rojo, amarillo and verde slot ramps); skin_ramps.png (the claro, trigueño and moreno ramps)
+Files: master_palette.png and master_palette.gpl (entries 33-39: the clothing key ramp and three skin colours; entries 40-52: three sand colours and the deep-sea, shallows and brackish water colours; entry 53: a deep-sea mid step, 2026-11-13); player_ramps.png (the key ramp and the azul, rojo, amarillo and verde slot ramps); skin_ramps.png (the claro, trigueño and moreno ramps)
