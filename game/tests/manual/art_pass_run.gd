@@ -1307,15 +1307,20 @@ func _host() -> void:
 	var picked: int = 0
 	if client_body != null:
 		client_body.get("inventory").connect(&"changed", func() -> void: picked += 1)
-	# The host builds the raft while the client looks round.
+	# The raft is built at once (the solo run plays the build), so the host can leave the moment
+	# the client does, and waits on it while the client looks round.
 	var site: Node2D = session.get_node_or_null(^"RaftSite")
 	if site != null:
 		for item_id: StringName in [&"driftwood", &"inner_tube", &"rope"]:
 			body.get("inventory").call("add", item_id, {&"driftwood": 6, &"inner_tube": 2, &"rope": 3}[item_id])
-		_hooked("host raft materials given")
-		await _work_site(site, "host raft", 90.0)
+		site.call("deposit", body)
+		site.call("work", 1.0)
+		_hooked("host raft built at once (BuildSite.deposit and work, as capture_crossing.gd)")
+	await _frames(4)
 	var raft: Node2D = session.get_node_or_null(^"Raft")
 	_check("host: the raft was built", raft != null and _frame(raft) == "whole")
+	if raft != null:
+		await _walk_to(raft.global_position + Vector2(0.0, -4.0), 2.0)
 	var left: bool = false
 	for i: int in 300 * physics_hz:
 		if session.call("is_dropped", client_peer) or not (session.call("peer_ids") as Array).has(client_peer):
@@ -1327,7 +1332,6 @@ func _host() -> void:
 		return
 	raft.set("integrity", HOST_RAFT_INTEGRITY)
 	_hooked("host raft integrity %.0f" % HOST_RAFT_INTEGRITY)
-	await _walk_to(raft.global_position + Vector2(0.0, -4.0), 2.0)
 	Input.action_press(&"interact")
 	var crossing: Node2D = null
 	for i: int in 6 * physics_hz:
