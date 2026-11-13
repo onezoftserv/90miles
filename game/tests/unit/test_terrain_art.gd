@@ -393,6 +393,30 @@ func test_the_tide_pool_is_irregular_with_a_few_stones_and_a_wet_sand_lip() -> v
 	assert_true(shadowed, "a south stone has the lip's dark colour under it")
 
 
+## Design.md K39 (art round 2): a plain row's full tile is seamless, so a field of it shows no
+## dash or line on every cell: each colour on its first column or row also appears within
+## SEAM_REACH pixels on the opposite edge. The pack's own rock, shingle, cliff, reef flat and
+## coral tiles hold a texel or two that meets its match two pixels along.
+const SEAM_REACH: Dictionary[int, int] = {0: 2, 1: 2, 2: 2, 3: 1, 4: 1, 5: 2, 6: 2, 7: 1}
+
+
+func test_each_plain_full_tile_is_seamless() -> void:
+	var plain: Image = _sheet(PLAIN_SHEET)
+	if plain == null:
+		return
+	for row: int in SEAM_REACH:
+		var tile: Image = plain.get_region(Rect2i(15 * TILE, row * TILE, TILE, TILE))
+		var reach: int = SEAM_REACH[row]
+		for i: int in TILE:
+			var across: Array[Color] = []
+			var down: Array[Color] = []
+			for j: int in range(maxi(0, i - reach), mini(TILE, i + reach + 1)):
+				across.append(tile.get_pixel(TILE - 1, j))
+				down.append(tile.get_pixel(j, TILE - 1))
+			assert_true(across.has(tile.get_pixel(0, i)), "plain row %d: (0, %d) meets its colour on the east edge" % [row, i])
+			assert_true(down.has(tile.get_pixel(i, 0)), "plain row %d: (%d, 0) meets its colour on the south edge" % [row, i])
+
+
 ## Design.md K39: a plain row's full-tile variants sit on columns 16 and after, as many as
 ## `terrain_art.tres` counts for the row; each is a whole tile and none repeats the full tile
 ## (column 15) or another variant.
