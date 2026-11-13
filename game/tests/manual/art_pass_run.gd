@@ -28,6 +28,7 @@ const BASE_SIZE: Vector2i = Vector2i(640, 360)
 const WATER_KINDS: Array[int] = [0, 1, 2]
 const DEEP: int = 0
 const CLIFF: int = 13
+const SCRUB: int = 7
 ## DayClock: day starts at 60 s, night at 420 s.
 const DAY_S: float = 120.0
 const NIGHT_START_S: float = 420.0
@@ -499,11 +500,23 @@ func _classes(image: Image) -> PackedByteArray:
 	return classes
 
 
+# A tide pool (one water cell in the land, design.md T3) has no foam ring, so it is not sea here.
+func _is_sea(cell: Vector2i) -> bool:
+	if not _is_water(cell):
+		return false
+	for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		if _is_water(cell + step):
+			return true
+	return false
+
+
 func _cell_class(cell: Vector2i) -> int:
+	if _is_water(cell) and not _is_sea(cell):
+		return 0
 	var water: int = 0
 	for dy: int in range(-1, 2):
 		for dx: int in range(-1, 2):
-			if _is_water(cell + Vector2i(dx, dy)):
+			if _is_sea(cell + Vector2i(dx, dy)):
 				water += 1
 	if water == 0:
 		return 1
@@ -550,6 +563,7 @@ func _foam(image: Image, later: Image) -> Dictionary:
 	var touching: int = 0
 	var moved: PackedInt32Array = []
 	var bare: Array[Vector2i] = []
+	var bushed: int = 0
 	var built_size: Vector2i = (island.get("built") as Object).get("size")
 	for y: int in built_size.y:
 		for x: int in built_size.x:
@@ -580,10 +594,12 @@ func _foam(image: Image, later: Image) -> Dictionary:
 								break
 			if touches:
 				touching += 1
+			elif _kind(cell) == SCRUB:
+				bushed += 1
 			else:
 				bare.append(cell)
 			moved.append(changed)
-	return {"shore": shore, "touching": touching, "moved": moved, "bare": bare}
+	return {"shore": shore, "touching": touching, "moved": moved, "bare": bare, "bushed": bushed}
 
 
 func _check_shore_view(where: String) -> void:
@@ -606,7 +622,8 @@ func _check_shore_view(where: String) -> void:
 	if shore == 0:
 		_note("%s: no shore cell wholly in view" % where)
 		return
-	_check("%s: the foam touches the sand on every shore cell in view" % where, int(foam["touching"]) == shore, "%d of %d shore cells; without: %s" % [foam["touching"], shore, foam["bare"]])
+	# A bush on a shore cell stands over its foam (design.md D15, K39), so those cells are counted apart.
+	_check("%s: the foam touches the sand on every shore cell in view not under a bush" % where, (foam["bare"] as Array).is_empty(), "%d of %d shore cells, %d under a bush; without foam: %s" % [foam["touching"], shore, foam["bushed"], foam["bare"]])
 	_check("%s: the foam moves, and unevenly (cells change by different amounts in 0.25 s)" % where, moving > 0 and distinct.size() > 1, "%d of %d shore cells changed, %d distinct amounts" % [moving, shore, distinct.size()])
 
 
@@ -806,19 +823,23 @@ func _structure(script_name: StringName) -> Node2D:
 	return null
 
 
+# Stands beside `node` where the prompt is the node's own (not the bench's or a fire's beside it).
+func _aim_at(node: Node2D) -> bool:
+	var wanted: Object = node.get("interactable")
+	for offset: Vector2 in [Vector2(0.0, 12.0), Vector2(-12.0, 0.0), Vector2(12.0, 0.0), Vector2(0.0, -12.0), Vector2(0.0, 6.0)]:
+		await _walk_to(node.global_position + offset, 3.0)
+		await _frames(3)
+		var target: Variant = prompt.get("target")
+		if is_instance_valid(target) and target == wanted and not _prompt_lines().is_empty():
+			return true
+	return false
+
+
 # Works a site by E and staying beside it; the frames seen on the way.
 func _work_site(site: Node2D, label: String, limit_s: float) -> PackedStringArray:
 	var seen: PackedStringArray = [_frame(site)]
-	# Beside the site where the prompt is the site's own, not the bench's.
-	var aimed: bool = false
-	for offset: Vector2 in [Vector2(0.0, 12.0), Vector2(-12.0, 0.0), Vector2(12.0, 0.0), Vector2(0.0, -12.0), Vector2(0.0, 6.0)]:
-		await _walk_to(site.global_position + offset, 3.0)
-		await _frames(3)
-		var lines: PackedStringArray = _prompt_lines()
-		if not lines.is_empty() and lines[0].contains("Construir"):
-			aimed = true
-			break
-	_check("%s: the prompt beside the site reads '[E] Construir …'" % label, aimed, "prompt %s" % _prompt_lines())
+	var aimed: bool = await _aim_at(site)
+	_check("%s: the prompt beside the site reads '[E] Construir …'" % label, aimed and _prompt_lines()[0].contains("Construir"), "prompt %s" % _prompt_lines())
 	await _tap(&"interact")
 	for i: int in ceili(limit_s * physics_hz):
 		if not is_instance_valid(site) or site.is_queued_for_deletion() or bool(site.get("built")):
@@ -845,10 +866,12 @@ func _fire() -> void:
 		return
 	_check("the fire burns: its look plays the lit flicker", _frame(fire) == "lit" and (_look_of(fire).get("sprite") as AnimatedSprite2D).is_playing(), _frame(fire))
 	await _world_image("fire_lit")
-	fire.call("advance", float(fire.get("burn_left_s")) + 0.1)
-	_hooked("the fire burned down (advance by its burn time; a fire's burn time is minutes)")
-	await _frames(3)
-	_check("the burnt-out fire shows its embers", _frame(fire) == "out", _frame(fire))
+	# Put out by a held E, as any player can.
+	var aimed: bool = await _aim_at(fire)
+	_check("the prompt beside the lit fire is the fire's own", aimed, "prompt %s" % _prompt_lines())
+	await _hold(&"interact", float((fire.get("tuning") as Object).get("fire_put_out_hold_s")) + 0.4)
+	await _frames(4)
+	_check("held E put the fire out: it shows its embers", not bool(fire.get("lit")) and _frame(fire) == "out", "lit %s, frame %s" % [fire.get("lit"), _frame(fire)])
 	await _world_image("fire_out")
 
 
@@ -1029,6 +1052,34 @@ func _nest_palm_and_gull() -> void:
 	_check("a shoo (E on the gull) works, or the gull takes the coconut, and it flies off", fled, "shooed %s, coco %d" % [shooed, _count(&"coco")])
 	if swooper != null and is_instance_valid(swooper):
 		_note("after the gull: shooed %s, coconut kept %s, gull state %s, animation %s" % [shooed, _count(&"coco") > coco, _state_of(swooper), _creature_anim(swooper)])
+	if not shooed:
+		await _shoo_perched(palm)
+
+
+# The other nest's gull, still perched: E on it (its prompt, not the palm's) sends it off.
+func _shoo_perched(climbed: Node2D) -> void:
+	var gull: Node2D = null
+	for each: Node2D in _creatures(&"seagull"):
+		if _state_of(each) == "perch" and each.global_position.distance_to(climbed.global_position) > TILE * 2.0:
+			gull = _nearest([each] if gull == null else [each, gull], body.global_position)
+	if not _check("another gull still perches for a shoo", gull != null):
+		return
+	var aimed: bool = await _aim_at(gull)
+	_check("beside its palm the prompt is the gull's shoo", aimed, "prompt %s" % _prompt_lines())
+	if not aimed:
+		return
+	_note("shoo prompt %s" % _prompt_lines())
+	await _tap(&"interact")
+	var fled: bool = false
+	for i: int in physics_hz:
+		if _state_of(gull) == "flee":
+			fled = true
+			break
+		await physics_frame
+	_check("E shoos the perched gull: it flies off", fled, "state %s" % _state_of(gull))
+	if fled:
+		await _seconds(0.4)
+		await _world_image("gull_shooed")
 	await _world_image("gull_flee")
 
 
