@@ -10,7 +10,8 @@ extends CanvasLayer
 ## and kept off every HUD panel (`panel_rects`). Key labels follow the last device the player used
 ## (`device`). While the pause menu, the run summary or the host-lost screen is up, the HUD takes
 ## no input (`input_open`); the shell says when a screen shows. The local player's press on a
-## workbench opens the crafting list (`craft_list`), which holds the input while open. A closed-eye
+## workbench opens the crafting list (`craft_list`), and on a flavour sign the sign note (`sign_note`);
+## each holds the input while open. A closed-eye
 ## mark shows over every hidden player (`marks`), placed like the prompt.
 
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
@@ -40,7 +41,8 @@ var device: InputLabels.Device = InputLabels.Device.KEYBOARD
 var notice: HudNotice
 ## The run summary or the host-lost screen is over the run (GameShell sets it).
 var screen_shown: bool = false
-## The crafting list is open and holds the input: the use button does nothing meanwhile.
+## The crafting list or the sign note is open and holds the input: the use button does nothing
+## meanwhile.
 var list_open: bool = false
 ## The world's view (GameShell's WorldView), which world-anchored marks are mapped through; null
 ## draws them at the world canvas's own pixels.
@@ -50,6 +52,7 @@ var world_view: Control = null
 @onready var strip: InventoryStrip = %Strip
 @onready var prompt: InteractPrompt = %Prompt
 @onready var craft_list: CraftList = %CraftList
+@onready var sign_note: SignNote = %SignNote
 @onready var marks: BodyMarks = %Marks
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
@@ -111,6 +114,10 @@ func _ready() -> void:
 	craft_list.opened.connect(func() -> void: list_open = true)
 	craft_list.closed.connect(func() -> void: list_open = false)
 	prompt.bench_pressed.connect(craft_list.open)
+	sign_note.input_open = input_open
+	sign_note.opened.connect(func() -> void: list_open = true)
+	sign_note.closed.connect(func() -> void: list_open = false)
+	prompt.sign_pressed.connect(sign_note.open)
 	marks.to_hud = world_to_hud
 
 
@@ -126,6 +133,7 @@ func _input(event: InputEvent) -> void:
 		device = next
 		strip.set_device(device)
 		prompt.set_device(device)
+		sign_note.set_device(device)
 	if not event is InputEventMouseButton:
 		return
 	var direction: int = 0
@@ -159,6 +167,7 @@ func set_screen_shown(value: bool) -> void:
 	strip.set_screen_shown(value)
 	prompt.screen_shown = value
 	craft_list.set_screen_shown(value)
+	sign_note.set_screen_shown(value)
 	marks.screen_shown = value
 
 
@@ -183,7 +192,7 @@ func panel_rects() -> Array[Rect2]:
 
 func _collect_panels(node: Node, into: Array[Rect2]) -> void:
 	for child: Node in node.get_children():
-		if child == prompt or child == craft_list:
+		if child == prompt or child == craft_list or child == sign_note:
 			continue
 		var box := child as PanelContainer
 		if box != null and box.theme_type_variation == HUD_PANEL and box.is_visible_in_tree():
@@ -238,6 +247,7 @@ func _bind_local(player: PlayerBody) -> void:
 	strip.bind(player, session)
 	prompt.bind(player, session)
 	craft_list.bind(player, session)
+	sign_note.bind(player, session)
 
 
 # A name can arrive after its player spawned (a join during the run): the tags follow the roster.

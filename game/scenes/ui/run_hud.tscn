@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/interact_prompt.tscn" id="5_prompt"]
 [ext_resource type="PackedScene" path="res://scenes/ui/craft_list.tscn" id="6_list"]
 [ext_resource type="Script" path="res://scripts/ui/body_marks.gd" id="7_marks"]
+[ext_resource type="PackedScene" path="res://scenes/ui/sign_note.tscn" id="8_note"]
 
 [node name="RunHud" type="CanvasLayer"]
 layer = 3
@@ -59,6 +60,9 @@ script = ExtResource("7_marks")
 unique_name_in_owner = true
 
 [node name="CraftList" parent="." instance=ExtResource("6_list")]
+unique_name_in_owner = true
+
+[node name="SignNote" parent="." instance=ExtResource("8_note")]
 unique_name_in_owner = true
 
 [node name="Prompt" parent="." instance=ExtResource("5_prompt")]

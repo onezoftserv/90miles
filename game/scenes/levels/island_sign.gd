@@ -1,8 +1,9 @@
 class_name IslandSign
 extends Interactable
 ## A flavour sign (island-generation "Flavour signs"): a wall slogan, a dead radio, two crossed
-## sticks. Using it shows its line in a speech bubble over it, on every peer; nothing else changes.
-## The level places it in the session at the same path on every peer.
+## sticks. Using it changes nothing: the reader's HUD opens a sign note with its line on the local
+## press (`SignNote`), so no peer but the reader sees it. The level places it in the session at the
+## same path on every peer.
 
 ## Its prompt reads "[E] Mirar": a radio and crossed sticks are looked at as much as read.
 const PROMPT_ID: StringName = &"look_sign"
@@ -20,7 +21,6 @@ func _init() -> void:
 func _ready() -> void:
 	hold_time_s = 0.0
 	prompt_id = PROMPT_ID
-	interacted.connect(_on_interacted)
 
 
 ## The line in `locale`.
@@ -28,12 +28,3 @@ func line(locale: String = "es") -> String:
 	if locale.begins_with("en") and not line_en.is_empty():
 		return line_en
 	return line_es
-
-
-# Host: tells every peer's session to show the bubble (the use runs only where the world is
-# authoritative).
-func _on_interacted(by: Node) -> void:
-	var session := get_parent() as CoopSession
-	if session == null or not by is PlayerBody or not session.multiplayer.is_server():
-		return
-	session.show_sign.rpc(String(name))
