@@ -548,7 +548,7 @@ func _changed(a: Image, b: Image, classes: PackedByteArray, wanted: int) -> int:
 
 
 # Shore cells fully on screen: how many draw foam touching a land colour, and how many changed
-# between two images (the foam moving). Foam is a blue-white pixel brighter than the land's mean,
+# between two images (the foam moving). Foam is a white or blue-white pixel brighter than the land's mean,
 # and land a pixel no bluer than it is red (sand, dune, brush and rock; the sea is blue); both hold
 # under the day-night tint, which scales them alike.
 func _foam(image: Image, later: Image) -> Dictionary:
@@ -583,7 +583,7 @@ func _foam(image: Image, later: Image) -> Dictionary:
 					var i: int = at.y * size.x + at.x
 					if not after.is_empty() and (data[i * 4] != after[i * 4] or data[i * 4 + 1] != after[i * 4 + 1] or data[i * 4 + 2] != after[i * 4 + 2]):
 						changed += 1
-					var foam: bool = data[i * 4 + 2] > data[i * 4] + 20 and data[i * 4] + data[i * 4 + 1] + data[i * 4 + 2] > bright
+					var foam: bool = data[i * 4 + 2] >= data[i * 4] and data[i * 4] + data[i * 4 + 1] + data[i * 4 + 2] > bright
 					if touches or not foam:
 						continue
 					for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
