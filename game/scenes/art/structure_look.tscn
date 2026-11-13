@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/art/structure_look.gd" id="1_look"]
+[ext_resource type="PackedScene" path="res://scenes/art/shadow.tscn" id="2_shadow"]
+
+[node name="Look" type="Node2D" groups=["art_view"]]
+script = ExtResource("1_look")
+
+[node name="Shadow" parent="." instance=ExtResource("2_shadow")]
+visible = false
+
+[node name="Still" type="Sprite2D" parent="."]
+visible = false
+centered = false
+
+[node name="Coconuts" type="Sprite2D" parent="."]
+visible = false
+centered = false
+
+[node name="Nest" type="Sprite2D" parent="."]
+visible = false
+centered = false
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+visible = false
+centered = false

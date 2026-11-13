@@ -19,7 +19,3 @@ func _on_interacted(by: Node) -> void:
 		return
 	for effect: EffectData in effects:
 		EffectApplier.apply(effect, player, null)
-
-
-func _draw() -> void:
-	draw_rect(Rect2(-4.0, -4.0, 8.0, 8.0), Color(0.35, 0.65, 0.6, 0.5), false)
