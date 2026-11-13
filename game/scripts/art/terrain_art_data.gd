@@ -27,6 +27,9 @@ const STANDARD_PATH: String = "res://assets/art/terrain/terrain_art.tres"
 ## the sheet). A layer with none has no entry.
 @export var variant_mask: Dictionary[StringName, int]
 @export var variant_count: Dictionary[StringName, int]
+## Per `plain.png` row, how many full-tile variants follow its full tile (columns 16 and after).
+## An inland whole tile takes the full tile or one of them; a row with none has no entry.
+@export var plain_variants: Dictionary[int, int]
 ## The depth-mask step of each water kind: deep, shallows and brackish all differ.
 @export var depth_steps: Dictionary[DataEnums.Terrain, int]
 ## What a land cell with no water beside it holds in the depth mask (its sea is never seen).
