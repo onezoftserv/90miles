@@ -1,10 +1,12 @@
 extends GutTest
-## inventory-hud "Crouch cue" and "Hidden mark" with exactly 1 player, offline (design D1, D9):
-## holding crouch draws the body at 10 of its 16 px with its feet where they were, and full height
-## again on release; crouching on brush puts a 7×5 closed-eye mark in the HUD layer, centred over
-## the body with its bottom edge 3 px above the head (above the name tag when one shows), and it
-## goes once the player steps onto sand; the night tint and the Suave filter do not touch it; a
-## submerged diver gets none. The body and the HUD are stepped by hand from the real input state.
+## inventory-hud "Crouch cue" and "Hidden mark" with exactly 1 player, offline (design D1, D9; as
+## art-pass changes them, design.md P2, P3, P7): holding crouch draws the body in the crouch pose,
+## its head lower, and the walk pose again on release; crouching on brush puts a 7×5 closed-eye mark
+## in the HUD layer, centred over the body with its bottom edge 3 px above the crouched head, just
+## above the crouch anchor and lower than a standing mark (above the name tag when one shows), and
+## it goes once the player steps onto sand; the night tint and the Suave filter do not touch it; a
+## submerged diver gets none. The body, its look and the HUD are stepped by hand from the real input
+## state.
 
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
@@ -21,6 +23,7 @@ const IN_BRUSH: Vector2i = Vector2i(9, 5)
 const MARK_SIZE: Vector2 = Vector2(7.0, 5.0)
 const HEAD_GAP_PX: float = 3.0
 const TEAMMATE: int = 7
+const ART_PATH: String = "res://assets/art/characters/balsero_art.tres"
 
 var session: CoopSession
 var hud: RunHud
@@ -73,10 +76,25 @@ func _look(body: PlayerBody) -> BodyLook:
 	return body.get_node(^"BodyLook") as BodyLook
 
 
-# One frame: the intent from the input, the body, its look, the HUD's marks.
+func _player_look(body: PlayerBody) -> PlayerLook:
+	return body.get_node(^"Look") as PlayerLook
+
+
+func _sprite(body: PlayerBody) -> AnimatedSprite2D:
+	return body.get_node(^"Look/Sprite") as AnimatedSprite2D
+
+
+# The head anchor of slot 0's look in a pose family, measured on its composite.
+func _anchor(family: StringName) -> float:
+	var art := load(ART_PATH) as BodyArt
+	return float(LookComposer.compose(art.look_for_slot(0)).head_anchor(family))
+
+
+# One frame: the intent from the input, the body, its looks, the HUD's marks.
 func _frame(body: PlayerBody) -> void:
 	body.intent = body.player_input.build_intent()
 	body.advance(STEP_S)
+	_player_look(body).step(STEP_S)
 	_look(body)._process(STEP_S)
 	hud.marks._process(STEP_S)
 
@@ -99,27 +117,31 @@ func _expected_mark(body: PlayerBody, top_y: float) -> Rect2:
 	return Rect2(Vector2(roundf(anchor.x - MARK_SIZE.x / 2.0), bottom - MARK_SIZE.y), MARK_SIZE)
 
 
-func test_holding_crouch_draws_the_body_10_px_tall_on_its_feet() -> void:
+func test_holding_crouch_draws_the_crouch_pose_and_letting_go_the_walk_pose() -> void:
+	# inventory-hud "Solo crouch".
 	var body := _solo(_grid(), Vector2i(20, 5))
 	var look := _look(body)
 	_frame(body)
-	var standing := look.drawn_rect()
-	assert_eq(standing.size, Vector2(16.0, 16.0), "16 px tall standing")
+	assert_eq(_player_look(body).pose, PlayerPose.Pose.STANDING)
+	assert_eq(String(_sprite(body).animation), "idle_down")
+	assert_eq(look.head_anchor_y(), _anchor(&"walk"), "the standing head")
 	_key(KEY_C, true)
 	_frame(body)
 	assert_eq(body.movement_state, MovementStep.Move.CROUCH)
-	var lowered := look.drawn_rect()
-	assert_eq(lowered.size.y, 10.0, "10 of its 16 px while crouching")
-	assert_eq(lowered.size.x, 16.0, "as wide as before")
-	assert_eq(lowered.end.y, standing.end.y, "its bottom edge, the feet, unchanged")
+	assert_eq(_player_look(body).pose, PlayerPose.Pose.CROUCH, "the crouch pose, not a squash")
+	assert_eq(String(_sprite(body).animation), "crouch_down")
+	assert_eq(_sprite(body).scale, Vector2.ONE, "never squashed")
+	assert_eq(look.head_anchor_y(), _anchor(&"crouch"), "the crouched head")
+	assert_gt(look.head_anchor_y(), _anchor(&"walk"), "lower than standing")
 	_frame(body)
-	assert_eq(look.drawn_rect(), lowered, "it stays lowered while crouch is held")
+	assert_eq(String(_sprite(body).animation), "crouch_down", "it stays crouched while crouch is held")
 	_key(KEY_C, false)
 	_frame(body)
 	assert_eq(body.movement_state, MovementStep.Move.WALK)
-	assert_eq(look.drawn_rect(), standing, "16 px again when they let go")
-	var sprite := body.get_node(^"Sprite") as Sprite2D
-	assert_eq(sprite.texture_filter, CanvasItem.TEXTURE_FILTER_NEAREST, "still nearest-filtered")
+	assert_has([PlayerPose.Pose.STANDING, PlayerPose.Pose.WALK], _player_look(body).pose, "the walk pose again when they let go")
+	assert_has(["idle_down", "walk_down"], String(_sprite(body).animation))
+	assert_eq(look.head_anchor_y(), _anchor(&"walk"))
+	assert_eq(_sprite(body).texture_filter, CanvasItem.TEXTURE_FILTER_NEAREST, "still nearest-filtered")
 
 
 func test_hidden_in_brush_the_mark_shows_over_the_head_until_sand() -> void:
@@ -132,8 +154,12 @@ func test_hidden_in_brush_the_mark_shows_over_the_head_until_sand() -> void:
 	assert_true(hud.marks.has_mark(body), "the mark shows over a hidden player")
 	assert_true(hud.is_ancestor_of(hud.marks), "drawn by the HUD")
 	assert_same(hud.marks.get_canvas_layer_node(), hud, "in the HUD's layer, not the world's")
-	var head_y: float = _look(body).drawn_rect().position.y
-	assert_eq(hud.marks.mark_rect(body), _expected_mark(body, head_y), "centred, its bottom 3 px above the crouched head")
+	# inventory-hud "Solo crouch in brush": just above the crouch anchor, lower than standing.
+	var head_y: float = _look(body).head_y()
+	assert_eq(head_y, _anchor(&"crouch") + 1.0, "the crouched head, 1 px under the crouch anchor")
+	var mark: Rect2 = hud.marks.mark_rect(body)
+	assert_eq(mark, _expected_mark(body, head_y), "centred, its bottom 3 px above the crouched head")
+	assert_gt(mark.end.y, _expected_mark(body, _anchor(&"walk") + 1.0).end.y, "lower than a standing mark")
 	assert_eq(hud.marks.mark_rects().size(), 1)
 	_key(KEY_D, true)
 	for i: int in 20:
@@ -249,9 +275,10 @@ func test_at_noche_with_suave_on_the_mark_keeps_its_colours() -> void:
 	_frame(body)
 	assert_eq(WeatherManager.phase(), DataEnums.DayPhase.NIGHT, "Noche")
 	assert_not_null(shell.world_view.material, "Suave is on")
-	var sprite := body.get_node(^"Sprite") as Sprite2D
+	var sprite := _sprite(body)
 	assert_false(_tint_on(sprite).is_equal_approx(Color.WHITE), "the night tints the world")
-	assert_true(_filtered(sprite), "and Suave filters it")
+	# design.md P7: Look/Sprite carries player_look.gdshader, so _filtered() would always pass on it.
+	assert_true(shell.world_view.is_ancestor_of(sprite), "and Suave, on the world view, filters it")
 	assert_true(hud.marks.has_mark(body), "still hidden at night")
 	assert_false(_filtered(hud.marks), "Suave does not filter the mark")
 	assert_false(shell.world_viewport.is_ancestor_of(hud.marks), "the mark is not in the world view")

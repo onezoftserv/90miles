@@ -127,7 +127,8 @@ func _capture_list() -> void:
 	await _frames(2)
 
 
-# Crouching in the brush: the body drawn lower and the closed-eye mark, by day and at Noche.
+# Crouching in the brush: the body in the crouch pose (art-pass, design.md K15), its head lower,
+# and the closed-eye mark just above it, by day and at Noche.
 func _capture_hidden() -> void:
 	var cell := _brush_cell()
 	_body.intent = MoveIntent.create(Vector2.ZERO, false, true)
