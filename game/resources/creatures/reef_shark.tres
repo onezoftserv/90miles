@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="1_creature"]
 [ext_resource type="Script" path="res://scripts/data/creature_spawn_rule_data.gd" id="2_rule"]
+[ext_resource type="SpriteFrames" path="res://assets/art/creatures/reef_shark_frames.tres" id="9_frames"]
 
 [sub_resource type="Resource" id="Resource_rule"]
 script = ExtResource("2_rule")
@@ -20,6 +21,7 @@ description_en = "It circles slowly around a swimmer and only strikes one who bl
 hint_es = "Sal del agua o quédate a un paso de la orilla; no nades herido ni agotado."
 hint_en = "Get out of the water or stay a step from shore; do not swim wounded or exhausted."
 category = 0
+sprite_frames = ExtResource("9_frames")
 creature_tags = Array[int]([0])
 health = 60
 speed_tiles_s = 2.0

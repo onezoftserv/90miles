@@ -2,10 +2,25 @@
 
 [ext_resource type="Script" path="res://scenes/creatures/creature.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="2_interactable"]
+[ext_resource type="Script" path="res://scenes/creatures/creature_look.gd" id="3_look"]
+[ext_resource type="Resource" path="res://assets/art/creatures/creature_art.tres" id="4_art"]
+[ext_resource type="PackedScene" path="res://scenes/art/shadow.tscn" id="5_shadow"]
 
 [node name="Creature" type="Node2D"]
+y_sort_enabled = true
 script = ExtResource("1_main")
 
 [node name="Interactable" type="Node2D" parent="."]
 script = ExtResource("2_interactable")
 prompt_id = &"shoo"
+
+[node name="Look" type="Node2D" parent="." groups=["art_view"]]
+script = ExtResource("3_look")
+art = ExtResource("4_art")
+
+[node name="Shadow" parent="Look" instance=ExtResource("5_shadow")]
+visible = false
+size = 2
+
+[node name="Sprite" type="AnimatedSprite2D" parent="Look"]
+visible = false
