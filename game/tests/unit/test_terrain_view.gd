@@ -25,6 +25,9 @@ const SHORE_SHADER: String = "res://scenes/art/sea/shore.gdshader"
 const POOL_SOURCE: int = 0
 const SHADE_SOURCE: int = 1
 const PALM_SHADE: Vector2i = Vector2i(0, 4)
+## The two halves of the wide spot shade on row 4, under the raft site (design.md K39).
+const WIDE_WEST: Vector2i = Vector2i(1, 4)
+const WIDE_EAST: Vector2i = Vector2i(2, 4)
 ## The bound on one island's layer build (design.md T12); about 300 ms on the dev laptop.
 const BUILD_BOUND_MS: float = 1500.0
 ## Frames a one-tile walk may take at walking speed, with room to spare.
@@ -220,6 +223,31 @@ func test_pools_get_the_pool_tile_and_palm_bases_the_shade() -> void:
 	assert_eq(island.built.palms.size(), 6)
 	for palm: Vector2i in island.built.palms:
 		assert_eq(_tile_at(island, &"Decals", palm), [SHADE_SOURCE, PALM_SHADE, 0], "palm base %s" % palm)
+
+
+func test_the_raft_site_holds_the_wide_shade_and_the_workbench_is_shaded() -> void:
+	var island := _island(SANDBAR)
+	var site: Vector2i = island.built.raft_site
+	assert_true(site.x > 0, "the sandbar has a raft site")
+	assert_eq(_tile_at(island, &"Decals", site), [SHADE_SOURCE, WIDE_EAST, 0], "the site's cell")
+	assert_eq(_tile_at(island, &"Decals", site + Vector2i.LEFT), [SHADE_SOURCE, WIDE_WEST, 0], "its west neighbour")
+	var bench: Vector2i = island.built.workbench
+	assert_true(bench.x > 0, "the sandbar has a workbench")
+	assert_eq(_tile_at(island, &"Decals", bench)[0], SHADE_SOURCE, "the workbench cell is shaded")
+
+
+func test_the_coast_cays_shaded_cells_get_the_corner_set() -> void:
+	var island := _island(COAST_CAY)
+	var terrain: GridTerrain = island.terrain
+	assert_gt(terrain.shaded.size(), 0)
+	var site: Vector2i = island.built.raft_site
+	for cell: Vector2i in terrain.shaded:
+		if island.built.tide_pools.has(cell) or cell == site or cell == site + Vector2i.LEFT:
+			continue
+		var mask: int = TerrainView._shade_mask(cell, terrain)
+		@warning_ignore("integer_division")
+		var atlas := Vector2i(mask % TerrainArt.COLUMNS, mask / TerrainArt.COLUMNS)
+		assert_eq(_tile_at(island, &"Decals", cell), [SHADE_SOURCE, atlas, 0], "shaded cell %s" % cell)
 
 
 func test_rock_on_the_coast_cay_takes_the_plain_tiles_of_its_own_mask() -> void:

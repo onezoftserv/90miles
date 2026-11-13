@@ -15,6 +15,9 @@ const LAND_LAYERS: Array[StringName] = [TerrainArt.SAND, TerrainArt.DUNE, Terrai
 const POOL_SOURCE: int = 0
 const SHADE_SOURCE: int = 1
 const PALM_SHADE: Vector2i = Vector2i(0, 4)
+## The two halves of the wide shade under the raft site: its west neighbour and its own cell.
+const WIDE_WEST: Vector2i = Vector2i(1, 4)
+const WIDE_EAST: Vector2i = Vector2i(2, 4)
 ## How far the sea reaches past the grid on each side, in px, for a camera at the island's edge.
 const SEA_MARGIN_PX: float = 640.0
 
@@ -61,11 +64,13 @@ func _build(source: Node, grid: GridTerrain) -> void:
 	_grid_cells = grid.cells.size()
 	var pools: Array[Vector2i] = []
 	var palms: Array[Vector2i] = []
+	var spots: Array[Vector2i] = []
 	var built := source.get(&"built") as IslandLayout
 	if built != null:
 		grid_size = built.size
 		pools = built.tide_pools
 		palms = built.palms
+		spots = [built.workbench]
 	else:
 		grid_size = _extent(grid)
 	var layout := source.get(&"layout") as IslandLayoutData
@@ -78,7 +83,7 @@ func _build(source: Node, grid: GridTerrain) -> void:
 	_shore.clear()
 	for cell: Vector2i in ShoreRule.shore_cells(grid, pools):
 		_put(_shore, cell, ShoreRule.foam_tile(cell, grid, pools))
-	_build_decals(grid, pools, palms)
+	_build_decals(grid, pools, palms, spots, built.raft_site if built != null else Vector2i(-1, -1))
 	depth_bytes = SeaMask.depth_bytes(grid_size, grid)
 	phase_bytes = SeaMask.phase_bytes(layout_id, grid_size, grid, pools)
 	_build_sea()
@@ -92,8 +97,8 @@ func _put(tiles: TileMapLayer, cell: Vector2i, tile: Dictionary) -> void:
 
 
 # Tide pools, then the shade of shaded cells as a corner set, then a foot shade under each palm
-# whose cell holds no decal yet.
-func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vector2i]) -> void:
+# and the workbench whose cell holds no decal yet, then the wide shade under the raft site.
+func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vector2i], spots: Array[Vector2i], raft_site: Vector2i) -> void:
 	_decals.clear()
 	for pool: Vector2i in pools:
 		_decals.set_cell(pool, POOL_SOURCE, Vector2i.ZERO)
@@ -102,9 +107,14 @@ func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vecto
 			var mask: int = _shade_mask(cell, grid)
 			@warning_ignore("integer_division")
 			_decals.set_cell(cell, SHADE_SOURCE, Vector2i(mask % TerrainArt.COLUMNS, mask / TerrainArt.COLUMNS))
-	for palm: Vector2i in palms:
-		if _decals.get_cell_source_id(palm) < 0:
-			_decals.set_cell(palm, SHADE_SOURCE, PALM_SHADE)
+	for foot: Vector2i in palms + spots:
+		if foot.x >= 0 and _decals.get_cell_source_id(foot) < 0:
+			_decals.set_cell(foot, SHADE_SOURCE, PALM_SHADE)
+	if raft_site.x >= 0:
+		for half: Dictionary in [{&"cell": raft_site + Vector2i.LEFT, &"atlas": WIDE_WEST}, {&"cell": raft_site, &"atlas": WIDE_EAST}]:
+			var cell: Vector2i = half[&"cell"]
+			if TerrainArt.depth_step(grid.terrain_at(cell)) < 0 and _decals.get_cell_source_id(cell) < 0:
+				_decals.set_cell(cell, SHADE_SOURCE, half[&"atlas"])
 
 
 # A corner of a shaded cell counts when the four cells round it are shaded (design.md K39).
