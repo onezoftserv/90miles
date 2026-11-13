@@ -12,6 +12,9 @@ const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const SANDBAR: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
 const COAST_CAY: IslandLayoutData = preload("res://resources/islands/coast_cay.tres")
 
+# The fire's logs fill its frame's last rows (design.md K84); only the flame above them flickers.
+const FIRE_BASE_TOP: int = 12
+
 var data: StructureArtData
 var body: PlayerBody
 # Sites and the rafts they become go here, so each test starts without leftovers.
@@ -26,6 +29,13 @@ func before_each() -> void:
 	body.player_input.enabled = false
 	arena = Node2D.new()
 	add_child_autofree(arena)
+
+
+func _frame_image(texture: Texture2D) -> Image:
+	var atlas := texture as AtlasTexture
+	if atlas == null:
+		return texture.get_image()
+	return atlas.atlas.get_image().get_region(Rect2i(atlas.region))
 
 
 func _raft_recipe() -> RecipeData:
@@ -114,6 +124,19 @@ func test_a_solo_fire_flickers_while_lit_and_shows_embers_once_out() -> void:
 	assert_eq(data.fire.get_frame_count(StructureArt.FIRE_LIT), 4, "a 4-frame flicker")
 	assert_eq(data.fire.get_frame_count(StructureArt.FIRE_OUT), 1)
 	assert_eq(data.fire.get_frame_texture(StructureArt.FIRE_LIT, 0).get_size(), Vector2(16, 16))
+	# The flicker moves only the flame: every lit frame differs from every other, and the logs'
+	# bottom rows are the same pixels in all four, so the base never jumps.
+	var frames: Array[Image] = []
+	for i: int in 4:
+		frames.append(_frame_image(data.fire.get_frame_texture(StructureArt.FIRE_LIT, i)))
+	for i: int in 4:
+		for j: int in range(i + 1, 4):
+			assert_ne(frames[i].get_data(), frames[j].get_data(), "lit frames %d and %d differ" % [i, j])
+		for y: int in range(FIRE_BASE_TOP, 16):
+			for x: int in 16:
+				if frames[i].get_pixel(x, y) != frames[0].get_pixel(x, y):
+					fail_test("lit frame %d moves the base at (%d, %d)" % [i, x, y])
+					return
 
 
 func test_the_rain_catcher_shows_water_while_it_holds_a_cup() -> void:
