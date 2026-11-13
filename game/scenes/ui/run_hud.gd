@@ -105,6 +105,7 @@ func _ready() -> void:
 	prompt.list_open = func() -> bool: return list_open
 	prompt.to_hud = world_to_hud
 	prompt.avoid = panel_rects
+	prompt.marks = marks
 	craft_list.notice = notice
 	craft_list.input_open = input_open
 	craft_list.opened.connect(func() -> void: list_open = true)

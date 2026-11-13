@@ -105,13 +105,13 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
 
 ## 5. Players
 
-- [ ] 5.1 Write `game/tests/unit/test_player_pose.gd` (pure, the table of design.md D3 as amended by C1):
+- [x] 5.1 Write `game/tests/unit/test_player_pose.gd` (pure, the table of design.md D3 as amended by C1):
   - standing, walk, run (walk frames at 12 fps), crouch, crawl, swim, float, dive, submerged, downed, dragged (the downed frames) and dead, with dead tested before downed (the solo last stand and death both set downed) and never picking the downed breathing frame (art-pass "Poses follow the replicated state", "Dead is not downed");
   - each pose names its animation in `balsero_frames.tres` and its sprite offset (swim and float 12 px lower, applied through `offset`; design.md C1 D6), and says whether the water line, the shadow and the dive ripple show; DIVE and SUBMERGED name no body animation: `Look/Sprite` is hidden and the ripple plays;
   - each pose gives its speed or still frame (walk 8 fps, run 12, crouch 4 while moving and frame 0 while still, crawl 2, swim 4, float swim frame 0, downed and dragged 1, dead its one frame); `downed`, dragged and `dead` use the side animation, mirrored when the facing is left, and keep the last side when the facing is up or down (art-pass "Player poses": dragged faces the drag).
 
-  Verify it fails.
-- [ ] 5.2 Write `game/tests/unit/test_player_facing.gd` (pure, from drawn positions over a 0.1 s window):
+  Verify it fails. Done 2026-11-13: 15 tests. Red: none of the seven files parses yet (no `PlayerPose`, `Facing`, `LookPart`, `PlayerLookData`, `BodyArt`, `LookComposer`, `ComposedLook` or `PlayerLook`), which `test_suite_integrity.gd` reports; the API they fix is design.md K50
+- [x] 5.2 Write `game/tests/unit/test_player_facing.gd` (pure, from drawn positions over a 0.1 s window):
   - moving 1 right and 3 up faces up;
   - a tie faces sideways;
   - below 0.05 tiles/s the last facing stays;
@@ -119,8 +119,8 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - a host-side body fed positions in bursts with 100 ms gaps while walking right keeps facing right (art-pass "A client's intents arrive in bursts");
   - a jump of more than 2 tiles within the window (landing, boarding, the throw-in) keeps the last facing (design.md P10).
 
-  Verify it fails.
-- [ ] 5.3 Write `game/tests/unit/test_look_parts.gd` and `game/tests/unit/test_look_composer.gd`, with fixture parts in `game/tests/fixtures/art/look/parts/` (passed to the composer as the catalog `ContentCatalog.new("res://tests/fixtures/art/look", {&"parts": LookPart})`), the rules of design.md C1 copied into `game/tests/helpers/pose_rules.gd`, and `LookComposer.clear_cache()` in `test_look_composer.gd`'s `before_each`. `test_look_parts.gd` uses only `LookPart` and `pose_rules.gd`, never `LookComposer`, so it can pass at task 5.6, before task 5.7 writes the composer.
+  Verify it fails. Done 2026-11-13: 10 tests, all one body observed frame by frame. Red: none of the seven files parses yet (no `PlayerPose`, `Facing`, `LookPart`, `PlayerLookData`, `BodyArt`, `LookComposer`, `ComposedLook` or `PlayerLook`), which `test_suite_integrity.gd` reports; the API they fix is design.md K50
+- [x] 5.3 Write `game/tests/unit/test_look_parts.gd` and `game/tests/unit/test_look_composer.gd`, with fixture parts in `game/tests/fixtures/art/look/parts/` (passed to the composer as the catalog `ContentCatalog.new("res://tests/fixtures/art/look", {&"parts": LookPart})`), the rules of design.md C1 copied into `game/tests/helpers/pose_rules.gd`, and `LookComposer.clear_cache()` in `test_look_composer.gd`'s `before_each`. `test_look_parts.gd` uses only `LookPart` and `pose_rules.gd`, never `LookComposer`, so it can pass at task 5.6, before task 5.7 writes the composer.
 
   Parts:
   - every `LookPart` under `res://assets/art/characters/parts/` is a 320×128 sheet on the frame layout with an opaque pixel in every cell of every pose it is not `hidden_in`, and empty cells in every pose it is;
@@ -142,8 +142,8 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - the composed look has at most 48 unique frames with the ripple (art-pass "Frame budget");
   - each shipped skin row's swim frames with each hair, scored on the rows above the water line without the shader's ripple, reach `contrast_min` on shallows and deep by the better of outline ring and mean colour (art-pass "Actors stand out from the ground").
 
-  Verify they fail.
-- [ ] 5.4 Write `game/tests/unit/test_player_art.gd`:
+  Verify they fail. Done 2026-11-13: `test_look_parts.gd` 11 tests, `test_look_composer.gd` 15, `PoseRules` and four fixture parts (design.md K51); red: neither parsed before task 5.6, and `test_look_composer.gd` still does not; its water case counts only the cell's own edge as the ring (K52); from task 5.6 `test_look_parts.gd` passes 11 of 11, and a hair_0 sheet with one pixel off the crouch mask and one off the chest-lift colour failed 2 of them, naming the part, the cell and the pixel
+- [x] 5.4 Write `game/tests/unit/test_player_art.gd`:
   - `balsero_frames.tres` has every animation of design.md D3 except `dive` for its facings, each frame an `AtlasTexture` region of the frame layout, within the budgets, and the `Look`'s `Ripple` `AnimatedSprite2D` plays `fx/dive_ripple.tres` while diving (design.md C1 D3);
   - a solo player's `Look/Sprite` plays a `SpriteFrames` built from that template on the composed atlas of slot 0's look, and a player whose `look_slot` is 1 plays the composite of slot 1's look (design.md C2);
   - a solo player at (100, 100) has its lowest opaque row ending at y 104, centred on x 100, with every frame placed at the same offset, and its collision shape is still the 6 px circle at the origin (art-pass "A solo player standing");
@@ -153,8 +153,8 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - a slot-0 swimmer's clothing above the line maps the key ramp to azul through the reference mapping (art-pass "A swimmer keeps its colours");
   - a solo, offline player who walks, crouches, swims and is downed is drawn from those cells of the composite (art-pass "A look built from parts").
 
-  Verify it fails.
-- [ ] 5.5 Write `game/tests/unit/test_look_slots.gd` (net harness):
+  Verify it fails. Done 2026-11-13: 12 tests on a solo, offline player scene, the look stepped by hand. Red: none of the seven files parses yet (no `PlayerPose`, `Facing`, `LookPart`, `PlayerLookData`, `BodyArt`, `LookComposer`, `ComposedLook` or `PlayerLook`), which `test_suite_integrity.gd` reports; the API they fix is design.md K50
+- [x] 5.5 Write `game/tests/unit/test_look_slots.gd` (net harness):
   - host 0, clients 1 and 2; after the first client is removed, a third client gets 1 and the second keeps 2;
   - with four players in slots 0–3, the slot-2 client dropped and a new client joining within 90 s, the new client gets 2 and no other body changes slot (art-pass "A joiner while a dropped body waits");
   - a late joiner draws every body in the host's slot;
@@ -172,8 +172,8 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - the interact prompt over a downed teammate sits 3 px above the name tag's label on that teammate's anchor and overlaps the tag nowhere (inventory-hud "Over a downed teammate"; design.md P5);
   - a downed teammate whose name tag shows, who has just said *¡Ayuda!*, with the drag prompt drawn for a nearby player: tag, prompt and bubble overlap nowhere, in that order upward; and a hidden crouching teammate who speaks has the bubble above the mark, overlapping it nowhere (art-pass "Head anchor"; design.md P11).
 
-  Verify all three fail.
-- [ ] 5.6 Make the player parts.
+  Verify all three fail. Done 2026-11-13: `test_look_slots.gd` 7 tests, `test_player_pose_net.gd` 1, `test_head_anchor.gd` 8. Red: none of the seven files parses yet (no `PlayerPose`, `Facing`, `LookPart`, `PlayerLookData`, `BodyArt`, `LookComposer`, `ComposedLook` or `PlayerLook`), which `test_suite_integrity.gd` reports; the API they fix is design.md K50
+- [x] 5.6 Make the player parts.
   - Add the data classes `game/scripts/art/look_part.gd` (`LookPart`, a `ContentData`), `player_look_data.gd` (`PlayerLookData`) and `body_art.gd` (`BodyArt`, with `slot_looks: Array[PlayerLookData]` and `look_for_slot(slot)`; design.md C2) first, so the `.tres` files below load, as task 1.4 pairs `ArtTuning` with its `.tres`.
   - Fill `tools/art/look_parts.json` for:
     - `body_man`: MetroCity `Character Model.png` row 0's figure;
@@ -193,8 +193,8 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
     - `characters/balsero_art.tres` (`BodyArt`: feet row 30 at +4, water row 19, swim drop 12, head gap 1, dive anchor −4, the default look `balsero.tres`, and `slot_looks` holding the four looks in slot order).
   - Add the MetroCity courtesy line to the credits and its row to `CREDITS.md`.
 
-  Verify `python -I -m unittest discover -s tools/art`, `python -I tools/art/check.py game/assets/art` (and on `tools/art/fixes`), `test_art_tracked.gd` and `test_look_parts.gd` pass.
-- [ ] 5.7 Build the runtime.
+  Verify `python -I -m unittest discover -s tools/art`, `python -I tools/art/check.py game/assets/art` (and on `tools/art/fixes`), `test_art_tracked.gd` and `test_look_parts.gd` pass. Done 2026-11-13: `LookPart`, `PlayerLookData`, `BodyArt`; `look_parts.json` with 11 parts (colour maps design.md K53, K54; the outfit's shoes cut by a new `drop` list); the two 142-pixel fix overlays (K55); 11 part sheets of 24–25 unique frames rebuilt byte for byte by `compose.py`; the 11 `LookPart` and 4 slot-look resources, `balsero_frames.tres` (14 animations, 33 regions), `balsero_art.tres`, `fx/dive_ripple.png` and `.tres` (K56); `License.txt` in `characters/parts/`, `fx/` and `tools/art/fixes/`, and the `CREDITS.md` row (the MetroCity line was already in `credits.tres`, K57). One departure: the underwear and top map to `#595652` (K53). `tools/art` 96 tests and `test_fetch_assets.py` 20 (1 skipped) pass, `check.py` prints 0 problems on `game/assets/art`, `tools/art` and `tools/art/fixes`, and GUT runs 154 of 161 scripts, 1317 of 1319 tests passing (`test_look_parts.gd` 11 of 11 and `test_art_tracked.gd` among them), the two failures being `test_suite_integrity.gd`'s report of the seven scripts task 5.7 makes parse
+- [x] 5.7 Build the runtime.
   - Scripts (`LookPart`, `PlayerLookData` and `BodyArt` came in task 5.6):
     - `game/scripts/art/look_composer.gd` (`LookComposer`): `compose(look, catalog: ContentCatalog = null)`, where null means `ContentCatalog.new("res://assets/art/characters", {&"parts": LookPart})`, so task 5.3 can pass its fixture catalog; take the body sheet's image swapped from skin row 0 to the look's row with `PaletteSwap.swap_rows`; blend the outfit, hair and item sheets over it with `Image.blend_rect`; make an `ImageTexture`; copy a `SpriteFrames` from the template with every region pointed at it; record head tops per animation family; keep a static cache keyed by the catalog root and the look's `cache_key()`, with a test-only `clear_cache()` and no autoload.
     - `player_pose.gd` and `facing.gd`.
@@ -218,7 +218,10 @@ and with two hand checks: a **1-player check** (solo, offline, from the title, n
   - Delete `art/characters/player_placeholder.png`, its import and `art/characters/License.txt`, drop its `CREDITS.md` row, and empty the exemption list of task 1.3.
   - Tiny Dungeon then has no tracked `Pack:` block until task 6.3's `creatures/License.txt` names it as the crab's shape reference, so add its source to `test_art_credits.gd`'s `PENDING_SOURCES` until then (design.md K33).
 
-  Verify 5.1–5.5, the rewritten tests, `test_inventory_hud_solo_run.gd`, `test_player_state_sync.gd` and `test_art_sim_invariance.gd` pass.
+  Verify 5.1–5.5, the rewritten tests, `test_inventory_hud_solo_run.gd`, `test_player_state_sync.gd` and `test_art_sim_invariance.gd` pass. Done 2026-11-13: `Facing`, `PlayerPose`, `LookComposer` with `ComposedLook`, the `Look` scene (`PlayerLook`: `Sprite`, `Ripple`, `Shadow`, one local material), `player.tscn` wired, the `look` key and `PlayerBody.look_slot`, `BodyLook` as the head-anchor component, and `NameTag`, `SpeechBubble`, `BodyMarks` and the interact prompt on the anchor with P11's stacking (design.md K59). Six tests rewritten (`test_player_scene`, `test_body_look`, `test_body_look_net`, `test_prompt_placement`, `test_crossing_prompt`, `test_art_sim_invariance`) and the capture comment updated. The placeholder, its import and `characters/License.txt` are deleted, both exemption lists emptied, and Tiny Dungeon added to `PENDING_SOURCES`. Slot 2 now wears `hair_3` (K58). Results:
+  - GUT: 161 scripts of 161 `test_*.gd` files, 1387 tests, all passing. The one `test_sandbar_net.gd` failure under load passed 7 of 7 when run alone, and the host-plus-client tests pass alone (10 of 10).
+  - Smoke: `10 frames, 0 problem(s)`.
+  - Every test file of 5.1–5.5 and every rewritten file was shown to fail on a deliberately broken runtime.
 - [ ] 5.8 Write `game/tests/manual/capture_looks.gd/.tscn`, which composes `PlayerLookData` variants (the four slot looks of design.md C2 in their slot colours, skin rows 0–2, `hair_0` and `hair_3`) and saves `docs/art-pass/looks.png` (the four slot looks side by side, the three skin rows, `hair_0` against `hair_3` on slot 0's body). Capture it and the crouch, swim, dive, downed and night looks. Run the import (twice), the smoke run and GUT.
   - 1-player check: offline from the title, walk, run, crouch into brush (the hidden mark just above the head), swim, dive, surface, drop into the last stand and die. All of it in slot 0 azul (also while swimming) with slot 0's look, facing where moving, clothing darkened at night like the sand, and no hitch on spawn beyond the first compose. Change `balsero.tres`'s `hair_id` to `hair_3` and see only the hair change, then put it back.
   - Host-plus-client check: with a host and two clients, every peer shows slots 0, 1 and 2, each in its slot's look and colour (design.md C2); a client quitting and rejoining keeps its slot; teammates' poses match the host's states and turn with their motion; name tags, bubbles and marks follow the heads without overlapping; zero errors.

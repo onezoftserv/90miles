@@ -12,7 +12,9 @@ sheet breaks the invariant of poses.invariant_problems.
 A part entry: {"id": "hair_0", "file": "itch/metrocity/<...>/Hairs.png" (under --packs),
 "band": 0 (the 32 px row), "layer": "body" | "outfit" | "hair" | "item", "outline": "#000000",
 optional "colour_map": {"#rrggbb": "#rrggbb"}, "strict": true (every colour outside the palette
-must be mapped), "over": "body_man" (the body sheet an overlay is rimmed over, built first)}.
+must be mapped), "drop": ["#rrggbb", ...] (pack colours cut from the walk frames before the rules,
+such as an outfit's shoes), "over": "body_man" (the body sheet an overlay is rimmed over, built
+first)}.
 
 Usage: python -I tools/art/compose.py [part ids] [--packs <dir>] [--parts look_parts.json]
        [--fixes tools/art/fixes] [--out game/assets/art/characters/parts]
@@ -75,6 +77,24 @@ def apply_fix(sheet, fix):
     return out
 
 
+def drop_colours(walk, colours):
+    """The walk frames with every pixel of `colours` ("#rrggbb") made transparent."""
+    dropped = {png.parse_colour(colour) for colour in colours}
+    if not dropped:
+        return walk
+    out = {}
+    for facing, frames in walk.items():
+        out[facing] = []
+        for frame in frames:
+            frame = frame.copy()
+            for y in range(frame.height):
+                for x in range(frame.width):
+                    if frame.get(x, y)[:3] in dropped:
+                        frame.set(x, y, (0, 0, 0, 0))
+            out[facing].append(frame)
+    return out
+
+
 def _validated(part, packs):
     for key in ("id", "file", "band", "layer", "outline"):
         if key not in part:
@@ -98,7 +118,7 @@ def _validated(part, packs):
 def build_part(part, packs, fixes, palette_colours, outline_colours, exclude=(), over=None, log=print):
     """One part's sheet: cut, rules, fix, remap, rim."""
     part_id, source = _validated(part, packs)
-    walk = poses.cut_walk_frames(png.read_png(source), part["band"], part_id)
+    walk = drop_colours(poses.cut_walk_frames(png.read_png(source), part["band"], part_id), part.get("drop", []))
     sheet = poses.build_sheet(walk, part_id)
     fix_path = pathlib.Path(fixes) / f"{part_id}.png"
     exempt = frozenset()

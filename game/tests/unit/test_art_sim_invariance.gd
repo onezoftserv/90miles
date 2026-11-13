@@ -375,11 +375,18 @@ func _detail(built_frames: Array[Dictionary], bare_frames: Array[Dictionary], fi
 
 func test_a_solo_sandbar_runs_the_same_with_and_without_art() -> void:
 	var built: Dictionary = _built_run(FRAMES)
+	var ticked_built: int = ticked
 	var bare: Dictionary = _stripped_run(FRAMES)
 	var built_frames: Array[Dictionary] = built["frames"]
 	var bare_frames: Array[Dictionary] = bare["frames"]
 	assert_eq(built_frames.size(), FRAMES)
 	assert_eq(bare_frames.size(), FRAMES)
+	# design.md K34: from task 5.7 the run holds art (the player's look), so both runs compare
+	# something: the built run ran its callbacks and the stripped run disarmed and freed it.
+	assert_gt(built["art"], 0, "the built run holds art nodes")
+	assert_gt(ticked_built, 0, "and ran their callbacks")
+	assert_gt(disarmed, 0, "the stripped run disarmed the art as it entered")
+	assert_gt(stripped, 0, "and freed it")
 	assert_gt(built["creatures"], 0, "the sandbar's creatures are on, as in a real run")
 	var last_inventory: Array = built_frames[FRAMES - 1]["inventory"]
 	assert_false(last_inventory.is_empty(), "the scripted run picked something up")

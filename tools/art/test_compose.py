@@ -108,6 +108,11 @@ class ComposeTest(unittest.TestCase):
         self.assertIn((0x5E, 0xF0, 0xBC), shirt.colours())
         self.assertEqual(shirt.get(11, 20), (0x5E, 0xF0, 0xBC, 255), "its left side lies on the body")
 
+    def test_dropped_colours_are_cut_before_the_rules(self):
+        shirt = dict(self.parts[1], drop=["#808080"])
+        built = self.build([self.parts[0], shirt])
+        self.assertEqual(built["shirt_fixture"].colours(), set(), "every shirt pixel dropped, in every pose")
+
     def test_a_rule_that_pushes_a_pixel_out_fails_naming_the_part_and_the_cell(self):
         wide = [{"id": "body_wide", "file": "itch/fake/Wide.png", "band": 0, "layer": "body", "outline": "#000000"}]
         with self.assertRaises(poses.PoseError) as caught:

@@ -33,9 +33,9 @@ PARTIAL_ALPHA_DIRS = ("shadows", "decals")
 OUTLINE_DIRS = ("creatures", "items", "structures")
 ITEM_CELL = 16
 PALETTE_EXEMPT_DIRS = ("ui",)
-## Temporary, relative to game/assets/art: the Kenney placeholder predates the master palette.
-## Task 5.7 deletes it and empties this list (and the one in test_art_tracked.gd).
-EXEMPT = ("characters/player_placeholder.png",)
+## Temporary exemptions, relative to game/assets/art (and the list in test_art_tracked.gd). Task 5.7
+## deleted the Kenney placeholder, the last one; a file listed here must exist.
+EXEMPT = ()
 REFERRER_SKIPPED = ("tests", ".godot", "addons", "assets/kenney", "assets/oga", "assets/itch", "assets/audio/ambience")
 KEY_LINE = re.compile(r"^([A-Z][A-Za-z]*):(?:\s+(.*))?$")
 MAX_LISTED = 3

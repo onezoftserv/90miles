@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scenes/player/player.gd" id="1_body"]
 [ext_resource type="Script" path="res://scripts/components/survival_meters.gd" id="2_meters"]
 [ext_resource type="Script" path="res://scripts/player/player_input.gd" id="3_input"]
-[ext_resource type="Texture2D" path="res://assets/art/characters/player_placeholder.png" id="4_sprite"]
+[ext_resource type="PackedScene" path="res://scenes/art/player_look.tscn" id="4_look"]
 
 [ext_resource type="Script" path="res://scripts/interaction/drag_handle.gd" id="5_drag"]
 [ext_resource type="Script" path="res://scripts/net/player_net.gd" id="6_net"]
@@ -84,9 +84,7 @@ collision_layer = 2
 collision_mask = 1
 script = ExtResource("1_body")
 
-[node name="Sprite" type="Sprite2D" parent="."]
-texture_filter = 1
-texture = ExtResource("4_sprite")
+[node name="Look" parent="." instance=ExtResource("4_look")]
 
 [node name="BodyLook" type="Node" parent="."]
 script = ExtResource("9_look")
