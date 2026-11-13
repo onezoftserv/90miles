@@ -55,6 +55,7 @@ DEFAULT_FIXES = HERE / "fixes" / "terrain"
 DEFAULT_OUT = palette.ART
 DOWNLOAD_FOLDERS = ("oga", "itch", "kenney")
 NAME = re.compile(r"^[a-z0-9_]+$")
+HAND_SOURCE = re.compile(r"^[a-z0-9_]+\.png$")
 TILE = 16
 HALF = TILE // 2
 MASKS = 16
@@ -405,6 +406,16 @@ def build_foam(spec, sources, sets):
     return sheet
 
 
+def hand_source(source, fixes):
+    """The path of a hand-drawn source: a bare lower-case .png name, a file of the fixes folder."""
+    if not isinstance(source, str) or not HAND_SOURCE.match(source):
+        raise TerrainError(f"{source!r}: a hand-drawn source is a lower-case name ending in .png, in {fixes}")
+    path = pathlib.Path(fixes) / source
+    if not path.is_file():
+        raise TerrainError(f"{source}: no such hand-drawn source in {fixes}")
+    return path
+
+
 def shade_tile(shape, tint, alpha, edge):
     """A shadow in the shape of a tile: the tint at `alpha`, and at the alphas of `edge` on the
     pixels nearest the shape's edge (the outermost first), so it ends softly."""
@@ -429,11 +440,8 @@ def build_shade(spec, sets, fixes):
         raise TerrainError("shade: an alpha is from 1 to 255")
     sheet = set_sheet({mask: shade_tile(sheet_tile(shape, mask), tint, alpha, edge) for mask in range(MASKS)}, [])
     if "spots" in spec:
-        source = str(spec["spots"])
-        path = pathlib.Path(fixes) / source
-        if pathlib.PurePosixPath(source).name != source or not path.is_file():
-            raise TerrainError(f"{source}: no such hand-drawn source in {fixes}")
-        spots = png.read_png(path)
+        source = spec["spots"]
+        spots = png.read_png(hand_source(source, fixes))
         if (spots.width, spots.height) != (SET_COLUMNS * TILE, TILE):
             raise TerrainError(f"{source} is {spots.width}x{spots.height}, and the spot row is {SET_COLUMNS * TILE}x{TILE}")
         sheet.paste(spots, 0, VARIANT_ROW * TILE)
@@ -460,11 +468,9 @@ def _copies(entries, fixes, out):
     """{target: (image, partial alpha allowed)} for the hand-drawn sources of the fixes folder."""
     copies = {}
     for entry in entries:
-        source = str(need(entry, "from", "a copy"))
+        source = need(entry, "from", "a copy")
         target = str(need(entry, "to", "a copy"))
-        path = pathlib.Path(fixes) / source
-        if pathlib.PurePosixPath(source).name != source or not path.is_file():
-            raise TerrainError(f"{source}: no such hand-drawn source in {fixes}")
+        path = hand_source(source, fixes)
         if not (out / target).resolve().is_relative_to(out) or not target.endswith(".png"):
             raise TerrainError(f"{target}: a copy goes to a .png under the out folder")
         copies[target] = (png.read_png(path), bool(entry.get("partial_alpha", False)))

@@ -368,6 +368,21 @@ class BuildTests(unittest.TestCase):
             self.build(spots=grey)
         self.assertFalse(self.out.exists(), "nothing at all is written when a sheet is refused")
 
+    def test_a_hand_source_is_a_bare_file_name_in_the_fixes_folder(self):
+        outside = self.root / "outside.png"
+        png.write_png(outside, filled(DEEP))
+        bad_names = ["..\\outside.png", str(outside), "sub/x.png", "../x.png", "Pool.png", "pool.PNG", "pool", ""]
+        for bad in bad_names:
+            for key in ("copies", "spots"):
+                recipe = self.recipe()
+                if key == "copies":
+                    recipe["copies"][0]["from"] = bad
+                else:
+                    recipe["shade"]["spots"] = bad
+                with self.assertRaisesRegex(terrain.TerrainError, r"a hand-drawn source is a lower-case name ending in \.png", msg=f"{key} {bad!r}"):
+                    self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+
     def test_a_colour_outside_the_palette_is_refused_by_name(self):
         recipe = self.recipe()
         recipe["water"]["map"] = {png.colour_hex(BLUE): "#123456"}
