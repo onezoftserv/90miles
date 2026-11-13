@@ -26,9 +26,9 @@ const REFERRER_SKIPPED: PackedStringArray = [
 	"res://addons", "res://.godot", "res://tests",
 	"res://assets/kenney", "res://assets/oga", "res://assets/itch", "res://assets/audio/ambience",
 ]
-## Temporary: the 16x16 Kenney placeholder predates the master palette (design.md D7). Task 5.7
-## deletes it with the new player sheet and empties this list.
-const EXEMPT: PackedStringArray = ["res://assets/art/characters/player_placeholder.png"]
+## Temporary exemptions from the palette and alpha rules. Task 5.7 deleted the Kenney placeholder,
+## the last one; a file listed here must exist.
+const EXEMPT: PackedStringArray = []
 
 
 func _tuning() -> ArtTuning:

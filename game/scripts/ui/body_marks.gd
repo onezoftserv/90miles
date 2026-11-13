@@ -22,6 +22,8 @@ const EYE_PIXELS: Array[Vector2i] = [
 	Vector2i(1, 2), Vector2i(3, 2),
 ]
 const TAG_NAME: StringName = &"NameTag"
+## Every mark layer, so a speech bubble over a player can sit above its mark (design.md P11).
+const GROUP: StringName = &"body_marks"
 
 ## The run's session (its players), or null.
 var session: CoopSession = null
@@ -35,6 +37,7 @@ var _rects: Array[Rect2] = []
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_NONE
 

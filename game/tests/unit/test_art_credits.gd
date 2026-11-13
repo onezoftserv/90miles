@@ -35,6 +35,9 @@ const PENDING_SOURCES: PackedStringArray = [
 	"https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181",
 	"https://thkaspar.itch.io/tth-animals",
 	"https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack",
+	# Task 5.7 deleted the player placeholder; task 6.3 names Tiny Dungeon as the crab's shape
+	# reference (design.md K33).
+	"https://kenney.nl/assets/tiny-dungeon",
 ]
 const FONT_SOURCES: PackedStringArray = [
 	"https://github.com/google/fonts/tree/main/ofl/pressstart2p",

@@ -175,7 +175,7 @@ func test_a_solo_player_standing_at_100_100() -> void:
 			sprite.frame = index
 			assert_eq(sprite.offset, OFFSET, "%s[%d] at the same offset" % [name, index])
 			assert_eq(_frame(body).get_size(), Vector2(CELL, CELL))
-	var shape := body.get_node(^"CollisionShape2D") as CollisionShape2D
+	var shape := body.get_node(^"CollisionShape") as CollisionShape2D
 	assert_eq((shape.shape as CircleShape2D).radius, 6.0)
 	assert_eq(shape.position, Vector2.ZERO)
 

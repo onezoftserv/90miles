@@ -64,6 +64,8 @@ const HOST_ID: int = 1
 const DEFAULT_LOCALE: String = "es"
 ## Connected players at most (dropped players waiting to be removed do not count).
 const MAX_PLAYERS: int = NetPeers.MAX_PLAYERS
+## Look slots 0-3, one per player (art-pass "Player look slots").
+const LOOK_SLOTS: int = 4
 ## A peer may shoo a creature at most this often.
 const SHOO_INTERVAL_S: float = 0.25
 ## A dropped client's player stays downed this long before it is removed.
@@ -1089,7 +1091,24 @@ func _add_player(peer_id: int) -> void:
 		spot = spawn_points[_joined % spawn_points.size()]
 	_joined += 1
 	_limits[peer_id] = PeerLimits.new()
-	player_spawner.spawn({"peer": peer_id, "position": spot})
+	player_spawner.spawn({"peer": peer_id, "position": spot, "look": _free_look_slot()})
+
+
+# art-pass "Player look slots" (design.md D5): the lowest slot no body holds; with every slot held
+# (four players, one of them dropped and waiting), the lowest slot a dropped body holds, shared until
+# that body is removed. Removing a body frees its slot.
+func _free_look_slot() -> int:
+	var held: Dictionary[int, bool] = {}
+	for peer_id: int in _bodies:
+		held[_bodies[peer_id].look_slot] = true
+	for slot: int in LOOK_SLOTS:
+		if not held.has(slot):
+			return slot
+	for slot: int in LOOK_SLOTS:
+		for peer_id: int in _dropped:
+			if _bodies.has(peer_id) and _bodies[peer_id].look_slot == slot:
+				return slot
+	return 0
 
 
 # Runs on every peer: on the host through spawn(), on clients when the host's spawn arrives.
@@ -1099,9 +1118,11 @@ func _spawn_player(data: Variant) -> Node:
 	var spot: Vector2 = info.get("position") if info.get("position") is Vector2 else Vector2.ZERO
 	if not spot.is_finite():
 		spot = Vector2.ZERO
+	var look: Variant = info.get("look", 0)
 	var new_body := PLAYER_SCENE.instantiate() as PlayerBody
 	new_body.name = str(peer_id)
 	new_body.position = spot
+	new_body.look_slot = look if look is int and look >= 0 and look < LOOK_SLOTS else 0
 	new_body.terrain = terrain
 	new_body.climate = climate
 	var role := PlayerNet.role_for(multiplayer.is_server(), multiplayer.get_unique_id(), peer_id)
