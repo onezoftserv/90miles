@@ -65,7 +65,7 @@ const DEFAULT_LOCALE: String = "es"
 ## Connected players at most (dropped players waiting to be removed do not count).
 const MAX_PLAYERS: int = NetPeers.MAX_PLAYERS
 ## Look slots 0-3, one per player (art-pass "Player look slots").
-const LOOK_SLOTS: int = 4
+const LOOK_SLOTS: int = NetPeers.MAX_PLAYERS
 ## A peer may shoo a creature at most this often.
 const SHOO_INTERVAL_S: float = 0.25
 ## A dropped client's player stays downed this long before it is removed.

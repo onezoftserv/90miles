@@ -59,7 +59,7 @@ func _show_slot(slot: int) -> void:
 	sprite.sprite_frames = composed.frames
 	if _material != null:
 		# Row 0 of player_ramps.png is the key ramp.
-		_material.set_shader_parameter(&"slot_row", clampi(slot, 0, 3) + 1)
+		_material.set_shader_parameter(&"slot_row", clampi(slot, 0, NetPeers.MAX_PLAYERS - 1) + 1)
 
 
 func _draw_pose() -> void:
