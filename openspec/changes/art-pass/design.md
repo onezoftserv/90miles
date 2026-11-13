@@ -380,6 +380,33 @@ The owner chose "mixed per slot" over one shared look: each look slot draws its 
   - The paths-list comparison now means something: an art node that added a replicated property in `_ready` would add it only in the built run. `test_player_state_sync.gd`'s sorted list still pins the 21 paths (P1).
   - The guard is tested. A fixture look (`tests/fixtures/art/sim/sim_writing_look.gd`) is planted under the player in both runs, inside a plain holder so that it enters with its parent's subtree, writing the player's thirst as it becomes ready, each physics frame or each process frame. Each makes the runs differ on the first frame, naming `SurvivalMeters:thirst`, and so does one added to the player on its own. With the old harness all three found no difference. A fixture with an `_enter_tree` (`enter_tree_look.gd`) is named. These run 30 frames each.
   - Today the solo sandbar has no art node, so the main comparison still compares two runs without art. From task 5.7 it also asserts that the built run holds art nodes and runs their callbacks.
+- **K35 (2026-11-12; task 4.4; D11–D13).** The terrain art is made by a tool, never drawn straight into `game/`. `tools/art/terrain.py` builds every sheet of `terrain/`, `sea/` and `decals/` from the recipe `tools/art/terrain_tiles.json` and three packs under `--packs`: Zelda-like `Overworld.png`, Scallywag's `Water and Island tiles.png` and Eldiran's `cc0waveanimtiles16x16.png`. Hand work is tracked in `tools/art/fixes/terrain/`, with its own `License.txt`: an overlay `<sheet>.png` is blended last (an opaque pixel replaces, `#ff00ff` erases; `compose.apply_fix`, as for the player parts), and `tide_pool.png` and `shade_spots.png` are checked and copied. That folder is pipeline source outside `game/`, so the game never loads it. The tool refuses a colour outside the master palette, writes nothing when a sheet is refused and never writes inside a download folder; `test_terrain.py` tests its rules offline on a fixture pack. Run again on the same packs it gives the nine tracked PNGs byte for byte (checked 2026-11-12).
+- **K36 (2026-11-12; task 4.4; D11, T13).** A corner set is one 64×80 sheet: the tile of corner mask m (NW 1, NE 2, SW 4, SE 8; a corner counts when it is land) sits at column m % 4, row m // 4, and row 4 holds up to four variants of the full tile. `sand.png` and `dune.png` cut their edge and corner tiles from the pack and put the islet (mask 0) and the two diagonals (6, 9) together from quarters of those; the overlays then fix single pixels on the sand, draw the dune's islet and rework the full-tile variants. `brush.png` is a "stamp" set, the pack's round bush on the cell and a quarter of it on each land corner, because brush is almost all islet tiles (T13). Three `TileSet` resources hold the sheets, and `TerrainArtData` names their source ids: `terrain/terrain_tiles.tres` 0 sand, 1 dune, 2 brush, 3 plain; `sea/shore_tiles.tres` 0 foam; `decals/decal_tiles.tres` 0 tide pool, 1 shade. `test_terrain_tile_sets.gd` pins them: 16 px tiles, no physics, navigation or occlusion layer, a tile exactly where its sheet has art, and no texture padding on the foam source.
+- **K37 (2026-11-12; task 4.4; D13).** The foam is wrapped round the sand, not cut piece by piece. Task 4.4 asked for Eldiran's straight edge shifted toward the land, its curve cut into two corner tiles, and the diagonal and islet pieces composed by hand. Instead the tool reads Eldiran's straight frame as a profile outward from the land and lays it round each of the 16 sand shapes: a pixel n steps out from the sand edge takes row `land_rows` − 1 + n of the frame (`land_rows` 6), so the foam starts on the pixel after the sand ends on every edge, corner, diagonal and the islet, by one rule and with no hand-drawn piece. `sea/foam.png` (128×256) holds frame f of mask m at column f, row m (8 frames; row 15, the full tile, is empty). Only the frame's white is kept, drawn `#ffffff`, and `#cbdbfc` from three pixels out. `test_terrain_art.gd` checks the layout, that the straight foam edge starts on the row after the sand's last row with no empty row in it, that on all four straight edges the foam follows the sand line by line, and that the wash stays within 2 rows of the sand's edge in every frame ("Foam meets the sand").
+- **K38 (2026-11-12; task 4.4; D12, T4, K16).** `sea/water.png` is a 32×32 rect of Scallywag's deep water mapped to four colours, and `sea/water_ramps.png` (4×3) has one row per depth step, dark to light: row 0 deep (the texture's own four colours), row 1 shallows, row 2 brackish. Task 4.5's `world_sea.gdshader` swaps the texture's colours to the row its depth mask picks, as `art_swap_key` does with the slot ramps. Both textures are `ArtTuning` fields (`sea_water`, `sea_ramps`), so the sea's material and the contrast checks read them from one place. The master palette grows by 13 colours to 52 (entries 40–52: three sands and the deep, shallows and brackish ramps; `MAX_COLORS` stays 64). `test_art_palette.gd` checks that the ramps are three depth steps of palette colours and that the water texture is 32 px and drawn in the deep row.
+- **K39 (2026-11-12; task 4.4; T6, T14, D11).** Two more departures from task 4.4's wording, as built.
+  - Plain tiles are atlas tiles, not alternatives. `terrain/plain.png` (256×144) has one row per plain terrain (rock, shingle, cliff, hammock, casuarina, reef flat, coral, mangrove, wreck interior) and one column per sand corner mask: the tile cut by the sand tile of that mask, column 15 the whole tile, with a rim colour on the cut edge of rock and cliff. T14's "masked alternative" therefore reads "the atlas tile in the column of the cell's sand corner mask", and tasks 4.3 and 4.5 use atlas coordinates (mask, terrain row) with alternative 0.
+  - The shade decal `decals/shade.png` is a corner set in the sand set's outline (black at alpha 56, thinner on its edge pixels; a corner counts when the four cells round it are shaded) for blocks of shaded cells such as the hut's, with the hand-drawn soft spots on row 4: a one-cell foot shade for a palm base (T6) and the two halves of a wide one.
+
+### L. Lanes built in parallel (2026-11-12)
+
+Groups 5, 6, 7 and 8 are built on their own branches, cut from the terrain art commit, while group 4 goes on. Each lane writes its build notes under its own heading below, numbered from the range given, so the branches merge without conflicts. Group 4's notes continue in K above from K40.
+
+#### Players (group 5): K50–K59
+
+No notes yet.
+
+#### Creatures (group 6): K60–K69
+
+No notes yet.
+
+#### Items (group 7): K70–K79
+
+No notes yet.
+
+#### Structures (group 8): K80–K89
+
+No notes yet.
 
 ## Open Questions
 

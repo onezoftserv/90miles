@@ -4,6 +4,8 @@
 [ext_resource type="Texture2D" path="res://assets/art/palette/player_ramps.png" id="2_gbhx4"]
 [ext_resource type="Script" path="res://scripts/art/art_tuning.gd" id="3_siayd"]
 [ext_resource type="Texture2D" path="res://assets/art/palette/skin_ramps.png" id="4_rth0l"]
+[ext_resource type="Texture2D" path="res://assets/art/sea/water.png" id="5_seaw"]
+[ext_resource type="Texture2D" path="res://assets/art/sea/water_ramps.png" id="6_sear"]
 
 [resource]
 script = ExtResource("3_siayd")
@@ -28,3 +30,5 @@ water_grounds = Dictionary[StringName, Color]({
 master_palette = ExtResource("1_vjeit")
 player_ramps = ExtResource("2_gbhx4")
 skin_ramps = ExtResource("4_rth0l")
+sea_water = ExtResource("5_seaw")
+sea_ramps = ExtResource("6_sear")

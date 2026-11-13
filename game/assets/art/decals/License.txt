@@ -1,0 +1,11 @@
+Pack: Zelda-like tilesets and sprites
+Author: ArMM1998
+Licence: CC0 1.0
+Source: https://opengameart.org/content/zelda-like-tilesets-and-sprites
+Files: shade.png, rows 0 to 3 (the outline of the sand corner set, ../terrain/sand.png, filled with black at alpha 56 and thinned to alphas 18 and 38 on its edge pixels; none of its pixels)
+
+Work: 90 Millas shade spots
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: shade.png, row 4 (the soft foot shade and the two halves of the wide shade, black at alphas 20, 40 and 64)

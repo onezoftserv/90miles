@@ -32,6 +32,10 @@ const STANDARD_PATH: String = "res://resources/art_tuning.tres"
 @export var player_ramps: Texture2D
 ## Rows 0 claro (the body sheets are drawn in it), 1 trigueño and 2 moreno; same columns.
 @export var skin_ramps: Texture2D
+## The sea's seamless 32×32 water texture, drawn in the deep ramp's four colours (design.md K38).
+@export var sea_water: Texture2D
+## Rows 0 deep (the water texture's own colours), 1 shallows and 2 brackish; columns dark to light.
+@export var sea_ramps: Texture2D
 
 
 static func standard() -> ArtTuning:

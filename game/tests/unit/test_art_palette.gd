@@ -1,7 +1,8 @@
 extends GutTest
 ## art-pass "Master palette", "Clothing colours" ("Four slots read apart") and "Actors stand out
 ## from the ground" ("An outline colour that blends in") on the shipped palette files and art
-## tuning (task 1.4; design.md D6, D7, D21 and C1 D7).
+## tuning (task 1.4; design.md D6, D7, D21 and C1 D7), and "Scrolling sea" on the sea's water
+## texture and its depth ramps (task 4.4; design.md D12, K38).
 
 const DB32: PackedStringArray = [
 	"000000", "222034", "45283c", "663931", "8f563b", "df7126", "d9a066", "eec39a",
@@ -22,6 +23,11 @@ const SLOT_MIDS: PackedStringArray = ["5b6ee1", "ac3232", "fbf236", "6abe30"]
 const MAX_COLORS: int = 64
 const SHADES: int = 4
 const BASE_SHADE: int = 1
+## design.md K38: the sea ramps' rows; each runs dark to light and row 0 is the water texture's own.
+const SEA_ROWS: PackedStringArray = ["deep", "shallows", "brackish"]
+const DEEP_ROW: int = 0
+const SHALLOWS_ROW: int = 1
+const WATER_SIZE: Vector2i = Vector2i(32, 32)
 
 
 func _tuning() -> ArtTuning:
@@ -80,6 +86,49 @@ func test_the_tuning_and_its_three_palette_textures_load() -> void:
 	assert_eq(tuning.player_ramps.resource_path, "res://assets/art/palette/player_ramps.png")
 	assert_eq(tuning.skin_ramps.resource_path, "res://assets/art/palette/skin_ramps.png")
 	assert_true(FileAccess.file_exists("res://assets/art/palette/master_palette.gpl"))
+
+
+func test_the_sea_ramps_are_three_depth_steps_of_palette_colours() -> void:
+	var tuning: ArtTuning = _tuning()
+	assert_eq(tuning.sea_ramps.resource_path, "res://assets/art/sea/water_ramps.png")
+	var palette: Dictionary = _palette()
+	var ramps: Array[PackedColorArray] = _rows(tuning.sea_ramps)
+	assert_eq(ramps.size(), SEA_ROWS.size(), "deep, shallows, brackish")
+	if ramps.size() != SEA_ROWS.size():
+		return
+	var seen: Array[int] = []
+	for step: int in ramps.size():
+		var row: PackedColorArray = ramps[step]
+		assert_eq(row.size(), SHADES, SEA_ROWS[step])
+		for shade: int in row.size():
+			assert_eq(row[shade].a8, 255, "ramp colours are opaque")
+			assert_true(palette.has(ArtChecks.rgb_key(row[shade])), "%s %s" % [SEA_ROWS[step], ArtChecks.hex(row[shade])])
+			if shade > 0:
+				assert_gt(ArtChecks.luminance(row[shade]), ArtChecks.luminance(row[shade - 1]), "%s runs dark to light" % SEA_ROWS[step])
+		seen.append_array(_keys(row))
+	assert_true(_distinct(seen), "each depth step has colours of its own")
+	for shade: int in SHADES:
+		assert_gt(ArtChecks.luminance(ramps[SHALLOWS_ROW][shade]), ArtChecks.luminance(ramps[DEEP_ROW][shade]), "shallows are lighter than deep water")
+
+
+func test_the_water_texture_is_32_px_and_drawn_in_the_deep_ramp() -> void:
+	var tuning: ArtTuning = _tuning()
+	assert_eq(tuning.sea_water.resource_path, "res://assets/art/sea/water.png")
+	var water: Image = ArtChecks.read_png(tuning.sea_water.resource_path)
+	assert_eq(water.get_size(), WATER_SIZE)
+	var deep: Dictionary = ArtChecks.palette_from_colors(_rows(tuning.sea_ramps)[DEEP_ROW])
+	var used: Dictionary = {}
+	var holes: int = 0
+	for y: int in water.get_height():
+		for x: int in water.get_width():
+			var color: Color = water.get_pixel(x, y)
+			if color.a8 < 255:
+				holes += 1
+			used[ArtChecks.rgb_key(color)] = true
+	assert_eq(holes, 0, "the water has no holes")
+	assert_eq(used.size(), SHADES, "all four deep colours are used")
+	for key: int in used:
+		assert_true(deep.has(key), "water colour #%06x is in the deep ramp" % key)
 
 
 func test_the_thresholds_and_budgets_are_design_d21s() -> void:

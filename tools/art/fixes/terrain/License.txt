@@ -1,0 +1,13 @@
+Pipeline source for tools/art/terrain.py (design.md K35): never drawn by the game.
+
+Pack: Zelda-like tilesets and sprites
+Author: ArMM1998
+Licence: CC0 1.0
+Source: https://opengameart.org/content/zelda-like-tilesets-and-sprites
+Files: sand.png, row 4 (gfx/Overworld.png: its sand tile recoloured to the master palette, then reworked by hand into four variants: the ripples calmed in patches, pebbles added)
+
+Work: 90 Millas terrain hand fixes
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: sand.png (rows 0 to 3: single-pixel fixes on the corner tiles, #ff00ff erasing); dune.png (the islet tile and the four full-tile variants, with #ff00ff erasing round the islet); tide_pool.png (the rock pool tile); shade_spots.png (the soft foot shade and the two halves of the wide shade, black at alphas 20, 40 and 64)

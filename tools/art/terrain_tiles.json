@@ -1,0 +1,87 @@
+{
+  "sources": {
+    "overworld": "oga/zelda-like/extracted/gfx_3/gfx/Overworld.png",
+    "scallywag": "itch/scallywag-water-islands/extracted/Foozle_2DT0014_Scallywag_WaterAndIslands/Foozle_2DT0014_Scallywag_WaterAndIslands/Water and Island tiles.png",
+    "eldiran": "oga/eldiran-shoreline/cc0waveanimtiles16x16.png"
+  },
+  "sets": [
+    {
+      "id": "sand",
+      "source": "overworld",
+      "map": {"#e0f878": "#eec39a", "#a0f868": "#e4b488", "#82d749": "#d9a066", "#3abe41": "#c08a5a"},
+      "erase": ["#ffffff", "#5aaee4", "#1e7cb8", "#165c88", "#2996db"],
+      "tiles": {
+        "1": [16, 10], "2": [15, 10], "3": [16, 6], "4": [16, 9], "5": [15, 7], "7": [15, 6], "8": [15, 9],
+        "10": [17, 7], "11": [17, 6], "12": [16, 8], "13": [15, 8], "14": [17, 8], "15": [1, 4]
+      },
+      "quadrants": {"0": [8, 4, 2, 1], "6": [14, 15, 15, 7], "9": [15, 13, 11, 15]},
+      "variants": ["15", "15", "15", "15"]
+    },
+    {
+      "id": "dune",
+      "source": "overworld",
+      "map": {"#3abe41": "#f6dcb4", "#6add4b": "#eec39a", "#328e41": "#d9a066", "#9acd62": "#eec39a", "#74cd58": "#eec39a"},
+      "erase": ["#e0f878", "#a0f868"],
+      "tiles": {
+        "1": [1, 7], "2": [0, 7], "3": [1, 3], "4": [1, 6], "5": [0, 4], "7": [0, 3], "8": [0, 6],
+        "10": [2, 4], "11": [2, 3], "12": [1, 5], "13": [0, 5], "14": [2, 5], "15": "#3abe41"
+      },
+      "quadrants": {"0": [8, 4, 2, 1], "6": [14, 15, 15, 7], "9": [15, 13, 11, 15]},
+      "variants": ["15", "15", "15", "15"]
+    },
+    {
+      "id": "brush",
+      "source": "overworld",
+      "map": {"#62eb3d": "#99e550", "#2eca35": "#6abe30", "#29973b": "#37946e", "#2d5b3f": "#4b692f", "#302639": "#323c39"},
+      "erase": [],
+      "stamp": [2, 14],
+      "variants": ["0", "0h", "0", "0h"]
+    }
+  ],
+  "plain": {
+    "source": "overworld",
+    "shape": "sand",
+    "rows": [
+      {"id": "rock", "tile": [12, 13], "rim": "#696a6a", "map": {"#79584f": "#595652", "#94785c": "#847e87", "#bc9a78": "#696a6a"}},
+      {"id": "shingle", "tile": [14, 11], "map": {"#c0c0c0": "#847e87", "#a3aab1": "#9badb7", "#848a96": "#696a6a"}},
+      {"id": "cliff", "tile": [12, 13], "rim": "#323c39", "map": {"#79584f": "#323c39", "#94785c": "#696a6a", "#bc9a78": "#595652"}},
+      {"id": "hammock", "tile": [3, 16], "map": {"#2eca5c": "#4b692f", "#50eb6c": "#6abe30", "#299750": "#37946e", "#2b7d4a": "#323c39", "#2d5b43": "#323c39", "#2b2f35": "#222034"}},
+      {"id": "casuarina", "tile": [2, 16], "map": {"#2eca5c": "#8a6f30", "#50eb6c": "#8f974a"}},
+      {"id": "reef_flat", "tile": [14, 12], "map": {"#c0c0c0": "#9badb7", "#a3aab1": "#5fcde4", "#848a96": "#847e87"}},
+      {"id": "coral", "tile": [14, 12], "map": {"#c0c0c0": "#d95763", "#a3aab1": "#d77bba", "#848a96": "#ac3232"}},
+      {"id": "mangrove", "tile": [4, 16], "map": {"#2eca5c": "#524b24", "#50eb6c": "#37946e", "#299750": "#4b692f", "#2b7d4a": "#323c39", "#2d5b43": "#323c39", "#2b2f35": "#222034"}},
+      {"id": "wreck_interior", "tile": [13, 15], "map": {"#885040": "#45283c", "#a87848": "#663931", "#cf9054": "#8f563b"}}
+    ]
+  },
+  "water": {
+    "source": "scallywag",
+    "rect": [224, 0, 32, 32],
+    "map": {"#0061af": "#2a5578", "#1c85d9": "#306082", "#5abcde": "#3a6f92", "#a1e7ff": "#4a85a8"},
+    "ramps": [
+      ["#2a5578", "#306082", "#3a6f92", "#4a85a8"],
+      ["#54c3dc", "#5fcde4", "#70d5e9", "#8fe0f0"],
+      ["#35846c", "#3d8f77", "#4b9c84", "#62ae96"]
+    ]
+  },
+  "foam": {
+    "source": "eldiran",
+    "shape": "sand",
+    "origin": [1, 9],
+    "step": 17,
+    "frames": 8,
+    "land_rows": 6,
+    "white": "#ffffff",
+    "colour": "#ffffff",
+    "fade": {"from": 3, "colour": "#cbdbfc"}
+  },
+  "shade": {
+    "shape": "sand",
+    "colour": "#000000",
+    "alpha": 56,
+    "edge": [18, 38],
+    "spots": "shade_spots.png"
+  },
+  "copies": [
+    {"from": "tide_pool.png", "to": "terrain/tide_pool.png"}
+  ]
+}
