@@ -4,7 +4,7 @@ extends SceneTree
 ## nodes draw. Windowed (never in CI) it can save captures; headless it skips the pixel checks:
 ##   godot --path game -s res://tests/manual/art_pass_run.gd -- --mode=solo [--capture=<dir>]
 ##   godot --headless --path game -s res://tests/manual/art_pass_run.gd -- --mode=host
-##   godot --headless --path game -s res://tests/manual/art_pass_run.gd -- --mode=client --port=<n> [--host-tiles=<hash>]
+##   godot --headless --path game -s res://tests/manual/art_pass_run.gd -- --mode=client --port=<n> [--host-tiles=<hash>] [--tag=<x>]
 ## The host listens on port 0 and prints "ARTRUN host listening <port>"; the client is given that
 ## port. Each check prints "ARTRUN PASS|FAIL <what> | <detail>", and the run quits non-zero on a
 ## fail. Where a step needs game time, weather or materials the run cannot reach by playing, it is
@@ -43,6 +43,8 @@ const CLIENT_NAME: String = "Papo"
 const HOST_RAFT_INTEGRITY: float = 60.0
 ## The host's crossing sends the shark past at this time, after the client is back.
 const HOST_SHARK_AT_S: float = 12.0
+## What a shark pass takes off the vessel (CrossingTuning.shark_hit): a client back after it sees 40.
+const SHARK_HIT: float = 20.0
 ## Seconds the client waits after leaving before it joins the host's crossing again.
 const REJOIN_AFTER_S: float = 5.0
 ## The solo crossing: a squall throws the rider in, then the shark passes.
@@ -85,6 +87,8 @@ var collector: Collector = Collector.new()
 var mode: String = "solo"
 var port: int = 0
 var host_tiles: String = ""
+## A second client on the same machine passes --tag=<x>: its own settings file, so its own identity.
+var tag: String = ""
 var capture_dir: String = ""
 var shell: Node = null
 var session: Node = null
@@ -116,6 +120,8 @@ func _initialize() -> void:
 			port = arg.trim_prefix("--port=").to_int()
 		elif arg.begins_with("--capture="):
 			capture_dir = arg.trim_prefix("--capture=")
+		elif arg.begins_with("--tag="):
+			tag = arg.trim_prefix("--tag=")
 		elif arg.begins_with("--host-tiles="):
 			host_tiles = arg.trim_prefix("--host-tiles=")
 	physics_hz = Engine.physics_ticks_per_second
@@ -124,9 +130,9 @@ func _initialize() -> void:
 	draw_order = load(DRAW_ORDER_PATH)
 	if not capture_dir.is_empty():
 		DirAccess.make_dir_recursive_absolute(capture_dir)
-	var settings_path: String = "user://art_pass_run_%s.cfg" % mode
+	var settings_path: String = "user://art_pass_run_%s%s.cfg" % [mode, tag]
 	var config := ConfigFile.new()
-	config.set_value("player", "name", CLIENT_NAME if mode == "client" else "Yuni")
+	config.set_value("player", "name", (CLIENT_NAME + tag) if mode == "client" else "Yuni")
 	config.set_value("display", "fullscreen", false)
 	config.set_value("display", "ui_scale", 2)
 	config.set_value("display", "pixel_filter", 0)
@@ -1456,7 +1462,7 @@ func _client() -> void:
 	await _frames(20)
 	var integrity: float = float((crossing.get("integrity") as Object).get("value"))
 	var deck: Node = crossing.get_node(^"Deck")
-	_check("client: joining mid-crossing, the deck shows the host's integrity", is_equal_approx(integrity, HOST_RAFT_INTEGRITY) and String(deck.get("frame_name")) == String(structure_art.call("raft_frame", HOST_RAFT_INTEGRITY)), "integrity %.1f, frame %s" % [integrity, deck.get("frame_name")])
+	_check("client: joining mid-crossing, the deck shows the host's integrity", (is_equal_approx(integrity, HOST_RAFT_INTEGRITY) or is_equal_approx(integrity, HOST_RAFT_INTEGRITY - SHARK_HIT)) and String(deck.get("frame_name")) == String(structure_art.call("raft_frame", integrity)), "integrity %.1f, frame %s" % [integrity, deck.get("frame_name")])
 	var host_rider: Node2D = crossing.call("body_of", 1)
 	_check("client: the host's rider is on the deck, over the sea", host_rider != null and (crossing.call("deck_rect") as Rect2).grow(4.0).has_point(host_rider.global_position) and draw_order.call("drawn_after", host_rider, deck))
 	var shark_seen: bool = false
