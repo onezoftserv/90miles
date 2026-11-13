@@ -56,6 +56,7 @@ DEFAULT_OUT = palette.ART
 DOWNLOAD_FOLDERS = ("oga", "itch", "kenney")
 NAME = re.compile(r"^[a-z0-9_]+$")
 HAND_SOURCE = re.compile(r"^[a-z0-9_]+\.png$")
+COPY_TARGET = re.compile(r"^[a-z0-9_]+/[a-z0-9_]+\.png$")
 TILE = 16
 HALF = TILE // 2
 MASKS = 16
@@ -464,16 +465,18 @@ def checked(image, name, palette_colours, partial_alpha=False):
     return image
 
 
-def _copies(entries, fixes, out):
+def _copies(entries, fixes):
     """{target: (image, partial alpha allowed)} for the hand-drawn sources of the fixes folder."""
     copies = {}
     for entry in entries:
         source = need(entry, "from", "a copy")
-        target = str(need(entry, "to", "a copy"))
+        target = need(entry, "to", "a copy")
         path = hand_source(source, fixes)
-        if not (out / target).resolve().is_relative_to(out) or not target.endswith(".png"):
-            raise TerrainError(f"{target}: a copy goes to a .png under the out folder")
-        copies[target] = (png.read_png(path), bool(entry.get("partial_alpha", False)))
+        if not isinstance(target, str) or not COPY_TARGET.match(target):
+            raise TerrainError(f"{target!r}: a copy goes to <folder>/<name>.png, in lower case")
+        if target in copies:
+            raise TerrainError(f"{target} is made twice")
+        copies[target] = (png.read_png(path), False)
     return copies
 
 
@@ -485,26 +488,44 @@ def _out_folder(out, packs):
     return out
 
 
+def _refuse_final_paths(names, out, packs, fixes):
+    """Raises when a sheet's final path is under a download folder of the packs root or the fixes folder."""
+    fixes = pathlib.Path(fixes).resolve()
+    for name in names:
+        path = (out / name).resolve()
+        for folder in DOWNLOAD_FOLDERS:
+            if path.is_relative_to(pathlib.Path(packs).resolve() / folder):
+                raise TerrainError(f"{name}: would be written inside the download folder {folder}/, where nothing is written")
+        if path.is_relative_to(fixes):
+            raise TerrainError(f"{name}: would be written inside the fixes folder {fixes}, which holds hand sources")
+
+
 def build(recipe, packs, fixes, out, palette_colours, log=print):
     """Builds every sheet of the recipe, checks them all, then writes them under `out`."""
     out = _out_folder(out, packs)
     sources = Sources(need(recipe, "sources", "the recipe"), packs)
-    sets = {}
     sheets = {}
+
+    def add(name, image, partial_alpha=False):
+        if name in sheets:
+            raise TerrainError(f"{name} is made twice")
+        sheets[name] = (image, partial_alpha)
+
+    sets = {}
     for entry in recipe.get("sets", []):
         sheet = build_set(entry, sources)
-        sets[entry["id"]] = sheets[f"terrain/{entry['id']}.png"] = (fixed(sheet, fixes, f"{entry['id']}.png"), False)
-    sets = {name: sheet for name, (sheet, _partial) in sets.items()}
+        sets[entry["id"]] = fixed(sheet, fixes, f"{entry['id']}.png")
+        add(f"terrain/{entry['id']}.png", sets[entry["id"]])
     for entry in recipe.get("sets", []):
         if "shore" in entry:
             name = f"{entry['id']} shore"
             shape, inset = _shore_spec(entry["shore"], sets, name)
             rim = colour(entry["shore"]["rim"], name) if "rim" in entry["shore"] else None
             tiles = [sheet_tile(sets[entry["id"]], mask) for mask in range(MASKS)]
-            sheets[f"terrain/{entry['id']}_shore.png"] = (shore_sheet([tiles], shape, inset, [rim]), False)
+            add(f"terrain/{entry['id']}_shore.png", shore_sheet([tiles], shape, inset, [rim]))
     if "plain" in recipe:
         plain = build_plain(recipe["plain"], sources, sets)
-        sheets["terrain/plain.png"] = (plain, False)
+        add("terrain/plain.png", plain)
         if "shore" in recipe["plain"]:
             spec = dict(recipe["plain"]["shore"])
             spec.setdefault("shape", recipe["plain"].get("shape"))
@@ -512,16 +533,18 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
             entries = recipe["plain"]["rows"]
             rows = [[plain.crop(mask * TILE, row * TILE, TILE, TILE) for mask in range(MASKS)] for row in range(len(entries))]
             rims = [colour(entry["rim"], "plain shore") if "rim" in entry else None for entry in entries]
-            sheets["terrain/plain_shore.png"] = (shore_sheet(rows, shape, inset, rims), False)
+            add("terrain/plain_shore.png", shore_sheet(rows, shape, inset, rims))
     if "water" in recipe:
-        sheets["sea/water.png"] = (build_water(recipe["water"], sources), False)
+        add("sea/water.png", build_water(recipe["water"], sources))
         if "ramps" in recipe["water"]:
-            sheets["sea/water_ramps.png"] = (build_ramps(recipe["water"]["ramps"]), False)
+            add("sea/water_ramps.png", build_ramps(recipe["water"]["ramps"]))
     if "foam" in recipe:
-        sheets["sea/foam.png"] = (fixed(build_foam(recipe["foam"], sources, sets), fixes, "foam.png"), False)
+        add("sea/foam.png", fixed(build_foam(recipe["foam"], sources, sets), fixes, "foam.png"))
     if "shade" in recipe:
-        sheets["decals/shade.png"] = (build_shade(recipe["shade"], sets, fixes), True)
-    sheets.update(_copies(recipe.get("copies", []), fixes, out))
+        add("decals/shade.png", build_shade(recipe["shade"], sets, fixes), True)
+    for target, (image, partial_alpha) in _copies(recipe.get("copies", []), fixes).items():
+        add(target, image, partial_alpha)
+    _refuse_final_paths(sheets, out, packs, fixes)
     for name, (image, partial_alpha) in sheets.items():
         checked(image, name, palette_colours, partial_alpha)
     for name, (image, _partial) in sheets.items():

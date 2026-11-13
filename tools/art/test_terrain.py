@@ -383,6 +383,45 @@ class BuildTests(unittest.TestCase):
                     self.build(recipe)
         self.assertFalse(self.out.exists(), "nothing is written")
 
+    def test_a_copy_goes_to_a_folder_and_a_lower_case_png_name(self):
+        for bad in ("../x.png", "/x.png", "C:/x.png", "x.png", "a/b/c.png", "terrain\\x.png", "Terrain/x.png", "terrain/x.PNG", "terrain/x", ""):
+            recipe = self.recipe()
+            recipe["copies"][0]["to"] = bad
+            with self.assertRaisesRegex(terrain.TerrainError, r"a copy goes to <folder>/<name>\.png", msg=repr(bad)):
+                self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_no_sheet_is_made_twice(self):
+        def twice(change):
+            recipe = self.recipe()
+            change(recipe)
+            with self.assertRaisesRegex(terrain.TerrainError, r"made twice"):
+                self.build(recipe)
+        twice(lambda r: r["sets"].append(dict(r["sets"][0])))
+        twice(lambda r: r["sets"].append(dict(r["sets"][1], id="plain")))
+        twice(lambda r: r["sets"].append(dict(r["sets"][1], id="sand_shore")) or r["sets"][0].update(shore={"shape": "sand"}))
+        twice(lambda r: r["copies"][0].update({"to": "terrain/sand.png"}))
+        twice(lambda r: r["copies"][0].update({"to": "terrain/plain.png"}))
+        twice(lambda r: r["copies"][0].update({"to": "sea/water.png"}))
+        twice(lambda r: r["copies"][0].update({"to": "sea/water_ramps.png"}))
+        twice(lambda r: r["copies"][0].update({"to": "sea/foam.png"}))
+        twice(lambda r: r["copies"][0].update({"to": "decals/shade.png"}))
+        twice(lambda r: r["copies"].append(dict(r["copies"][0])))
+        twice(lambda r: r["plain"].update(shore={}) or r["copies"][0].update({"to": "terrain/plain_shore.png"}))
+        self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_nothing_is_written_under_a_download_folder_or_the_fixes_folder(self):
+        recipe = self.recipe()
+        recipe["copies"][0]["to"] = "oga/made.png"
+        with self.assertRaisesRegex(terrain.TerrainError, r"download folder oga/"):
+            self.build(recipe, out=self.packs)
+        self.assertFalse((self.packs / "oga" / "made.png").exists())
+        recipe["copies"][0]["to"] = "fixes/pool.png"
+        with self.assertRaisesRegex(terrain.TerrainError, r"the fixes folder"):
+            self.build(recipe, out=self.root)
+        self.assertEqual((self.fixes / "pool.png").read_bytes(), png.encode_png(filled(ROCK)), "the hand source is not replaced")
+        self.assertFalse((self.root / "terrain").exists(), "nothing at all is written")
+
     def test_a_colour_outside_the_palette_is_refused_by_name(self):
         recipe = self.recipe()
         recipe["water"]["map"] = {png.colour_hex(BLUE): "#123456"}
