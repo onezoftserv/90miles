@@ -5,13 +5,16 @@ extends GutTest
 ## texel, opaque texels only), and source checks on the art shaders: player_look.gdshader's
 ## uniforms and its cut on a node-local y (never UV, which is atlas space for an AtlasTexture
 ## frame), and every art shader multiplying by the vertex COLOR carried in a varying, never by the
-## fragment's incoming COLOR (task 4.5 adds the sea and shore shaders to MODULATE_SHADERS). The
+## fragment's incoming COLOR (the island's sea and shore shaders too, task 4.5; not ui-shell's
+## shell/sea.gdshader). The
 ## ramps are read from the raw PNGs (design.md K15).
 
 const PLAYER_LOOK_SHADER: String = "res://scenes/art/player_look.gdshader"
 const WATERLINE_SHADER: String = "res://scenes/art/waterline.gdshader"
 ## Every art shader that draws a node's texture: each must carry modulate through a varying.
-const MODULATE_SHADERS: PackedStringArray = [PLAYER_LOOK_SHADER, WATERLINE_SHADER]
+const WORLD_SEA_SHADER: String = "res://scenes/art/sea/world_sea.gdshader"
+const SHORE_SHADER: String = "res://scenes/art/sea/shore.gdshader"
+const MODULATE_SHADERS: PackedStringArray = [PLAYER_LOOK_SHADER, WATERLINE_SHADER, WORLD_SEA_SHADER, SHORE_SHADER]
 ## Every art shader that cuts by row: each must cut on a node-local y.
 const WATER_LINE_SHADERS: PackedStringArray = [PLAYER_LOOK_SHADER, WATERLINE_SHADER]
 const SHADES: int = 4

@@ -25,7 +25,7 @@ const SHORE_SHADER: String = "res://scenes/art/sea/shore.gdshader"
 const POOL_SOURCE: int = 0
 const SHADE_SOURCE: int = 1
 const PALM_SHADE: Vector2i = Vector2i(0, 4)
-## The bound on one island's layer build (design.md T12); measured near 100 ms on the dev laptop.
+## The bound on one island's layer build (design.md T12); about 300 ms on the dev laptop.
 const BUILD_BOUND_MS: float = 1500.0
 ## Frames a one-tile walk may take at walking speed, with room to spare.
 const WALK_FRAMES: int = 240

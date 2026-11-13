@@ -1,8 +1,9 @@
 class_name SandbarIsland
 extends Node2D
 ## A handmade island (island-generation "Handmade sandbar", "Handmade coast cay" and "Any handmade
-## layout builds the island"), built from the layout it is given: terrain and shade, the palms, the
-## workbench, the lagoon, the signs and the pick-ups. The layout is set before the island enters
+## layout builds the island"), built from the layout it is given: the grid, the palms, the
+## workbench, the lagoon, the signs and the pick-ups. Its `Terrain` child (TerrainView) draws the
+## ground from the grid on every peer and only reads it. The layout is set before the island enters
 ## the tree (the sandbar is the default). Terrain, palms, workbench, drinking spots and signs are
 ## built on every peer from the same data; the pick-ups are placed and refreshed by the host alone,
 ## through the session's pick-up spawner. The class keeps its name from the first island.
@@ -18,7 +19,6 @@ const SQUALL_ID: StringName = &"squall"
 const DRINK_SPOT_NAME: String = "DrinkSpot%d"
 const SIGN_NAME: String = "Sign%d"
 const RAFT_SCENE: PackedScene = preload("res://scenes/structures/raft.tscn")
-const POOL_COLOR: Color = Color(0.45, 0.8, 0.85, 0.6)
 
 ## The island to build. Setting it rebuilds the terrain, bounds and lists below, so set it before
 ## the island enters the tree.
@@ -63,7 +63,6 @@ func _ready() -> void:
 		palm.climb_effects = layout.climb_effects
 		palm.hold_s = layout.climb_hold_s
 		palms.add_child(palm)
-	queue_redraw()
 
 
 func _exit_tree() -> void:
@@ -205,8 +204,3 @@ func _on_weather_changed(weather_id: StringName) -> void:
 	if is_instance_valid(_session) and _session.multiplayer.is_server():
 		_refill(_session, false)
 
-
-func _draw() -> void:
-	DevIslandTerrain.draw(self, terrain)
-	for pool: Vector2i in built.tide_pools:
-		draw_rect(Rect2(Vector2(pool * IslandLayout.TILE), Vector2(IslandLayout.TILE, IslandLayout.TILE)), POOL_COLOR)

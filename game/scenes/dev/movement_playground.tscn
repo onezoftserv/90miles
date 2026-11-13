@@ -6,10 +6,13 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/meters_hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" path="res://scenes/world/day_night_tint.tscn" id="5_tint"]
 [ext_resource type="PackedScene" path="res://scenes/ui/horizon_line.tscn" id="6_line"]
+[ext_resource type="PackedScene" path="res://scenes/art/terrain_view.tscn" id="7_terrain"]
 
 [node name="MovementPlayground" type="Node2D"]
 y_sort_enabled = true
 script = ExtResource("1_playground")
+
+[node name="Terrain" parent="." instance=ExtResource("7_terrain")]
 
 [node name="Player1" parent="." instance=ExtResource("2_player")]
 position = Vector2(40, 200)

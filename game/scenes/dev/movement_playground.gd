@@ -3,7 +3,8 @@ extends Node2D
 ## Manual-test island for player-movement and survival-meters: land, brush, shallow, deep and
 ## brackish water, a shaded hut, one interactable, two players under the sky clock (WeatherManager,
 ## starting at 10:00), the local player's meters HUD, and the crafting-inventory supplies (a
-## workbench, a coconut, a knife, driftwood, dry grass and a tarp to pick up). Everything is drawn with colored rectangles, no textures.
+## workbench, a coconut, a knife, driftwood, dry grass and a tarp to pick up). Its `Terrain` child
+## (TerrainView) draws the ground's tile layers and sea from `terrain`, as on the islands.
 
 const TILE: int = DevIslandTerrain.TILE
 const HUT: Rect2i = DevIslandTerrain.HUT
@@ -16,6 +17,7 @@ const WORKBENCH_CELL: Vector2i = Vector2i(8, 2)
 ## 10:00, seconds since dawn.
 const START_TIME_S: float = 120.0
 
+## Filled in _init, before the Terrain child reads it as it becomes ready.
 var terrain: GridTerrain = GridTerrain.new()
 ## Starts at 10:00 on the one clock (WeatherManager), so heat rises outside the hut in the
 ## midday sun and sunstroke can be tried by hand. Read once the scene is ready: when the
@@ -25,8 +27,11 @@ var terrain: GridTerrain = GridTerrain.new()
 @onready var hud: MetersHud = $Hud/MetersHud
 
 
+func _init() -> void:
+	DevIslandTerrain.fill(terrain)
+
+
 func _ready() -> void:
-	_build_terrain()
 	_place_supplies()
 	WeatherManager.start(START_TIME_S)
 	var hud_bound: bool = false
@@ -63,12 +68,7 @@ func _cell_center(cell: Vector2i) -> Vector2:
 	return (Vector2(cell) + Vector2(0.5, 0.5)) * TILE
 
 
-func _build_terrain() -> void:
-	DevIslandTerrain.fill(terrain)
-
-
 func _draw() -> void:
-	DevIslandTerrain.draw(self, terrain)
 	for child: Node in get_children():
 		if child is Interactable:
 			draw_circle((child as Interactable).position, 4.0, Color("8b5a2b"))
