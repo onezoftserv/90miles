@@ -32,6 +32,8 @@ const CORNER_SETS: Array[String] = ["sand", "dune", "brush"]
 const SHADE_SHEET: String = "res://assets/art/decals/shade.png"
 const PLAIN_SHEET: String = "res://assets/art/terrain/plain.png"
 const PLAIN_ROWS: int = 9
+## The most full-tile variants a plain row has (the rock's), on columns 16 and after.
+const PLAIN_VARIANTS_MAX: int = 3
 const WATER_RAMPS: String = "res://assets/art/sea/water_ramps.png"
 ## The shore sheets (design.md K39): column = the cell's sand mask, row = the layer's own mask
 ## (plain: 16 rows per terrain).
@@ -195,7 +197,7 @@ func test_each_plain_tile_has_the_outline_of_the_sand_tile_of_its_column() -> vo
 	var plain: Image = _sheet(PLAIN_SHEET)
 	if sand == null or plain == null:
 		return
-	assert_eq(plain.get_size(), Vector2i(16 * TILE, PLAIN_ROWS * TILE))
+	assert_eq(plain.get_size(), Vector2i((16 + PLAIN_VARIANTS_MAX) * TILE, PLAIN_ROWS * TILE))
 	for row: int in PLAIN_ROWS:
 		for mask: int in 16:
 			var tile: Image = plain.get_region(Rect2i(mask * TILE, row * TILE, TILE, TILE))
@@ -266,6 +268,30 @@ func test_the_variants_on_row_4_have_their_masks_corners_and_differ() -> void:
 				continue
 			assert_eq(_corners(sheet, Vector2i(column, 4)), variant_of[id], "%s variant %d: its corners" % [id, column])
 			assert_false(seen.has(tile.get_data()), "%s variant %d repeats another" % [id, column])
+			seen.append(tile.get_data())
+
+
+## Design.md K39: a plain row's full-tile variants sit on columns 16 and after, as many as
+## `terrain_art.tres` counts for the row; each is a whole tile and none repeats the full tile
+## (column 15) or another variant.
+func test_the_plain_variants_are_whole_tiles_that_differ_and_match_the_data() -> void:
+	var plain: Image = _sheet(PLAIN_SHEET)
+	if plain == null:
+		return
+	var counts: Dictionary[int, int] = TerrainArt.data().plain_variants
+	assert_eq(counts.get(0, 0), 3, "the rock has the pack variant and two hand ones")
+	@warning_ignore("integer_division")
+	var columns: int = plain.get_width() / TILE
+	for row: int in PLAIN_ROWS:
+		var seen: Array[PackedByteArray] = [plain.get_region(Rect2i(15 * TILE, row * TILE, TILE, TILE)).get_data()]
+		for column: int in range(16, columns):
+			var tile: Image = plain.get_region(Rect2i(column * TILE, row * TILE, TILE, TILE))
+			var expected: bool = column - 16 < counts.get(row, 0)
+			assert_eq(not tile.is_invisible(), expected, "plain row %d column %d" % [row, column])
+			if not expected:
+				continue
+			assert_eq(_off_the_sand(tile, _sheet(SAND_SHEET), 15, true), 0, "plain row %d column %d is a whole tile" % [row, column])
+			assert_false(seen.has(tile.get_data()), "plain row %d column %d repeats another tile" % [row, column])
 			seen.append(tile.get_data())
 
 
@@ -382,6 +408,35 @@ func test_a_plain_cell_inland_takes_the_tile_of_its_own_mask() -> void:
 	assert_eq(corner.get(&"atlas"), Vector2i(8, 0), "only its SE corner has four rock cells round it")
 	assert_eq(_sand_mask(rows, Vector2i(1, 1)), 15, "the sand under it is whole")
 	assert_eq(_pick(TerrainArt.PLAIN, rows, Vector2i(0, 0)), {}, "sand is not in the plain layer")
+
+
+## Design.md K39: an inland whole plain tile (own mask 15, sand mask 15) takes the full tile or
+## one of its row's variants by the cell's hash, the same on every build; an edge or a shore cell
+## of the same patch never does.
+func test_an_inland_whole_rock_cell_takes_a_variant_by_its_hash() -> void:
+	var rows: PackedStringArray = PackedStringArray(["sssssssss"])
+	for _y: int in 7:
+		rows.append("srrrrrrrs")
+	rows.append("sssssssss")
+	var terrain: GridTerrain = TerrainRows.build(rows)
+	var columns: Dictionary[int, bool] = {}
+	for y: int in range(2, 7):
+		for x: int in range(2, 7):
+			var at: Vector2i = Vector2i(x, y)
+			var tile: Dictionary = _pick(TerrainArt.PLAIN, rows, at)
+			var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+			assert_eq(tile.get(&"source"), 3, "%s: the plain sheet" % at)
+			assert_eq(atlas.y, 0, "%s: the rock's row" % at)
+			assert_eq(atlas.x, 15 + (TerrainArt.cell_hash(&"test", at) >> 1) % 4, "%s: the full tile or a variant by the hash" % at)
+			assert_eq(TerrainArt.tile(TerrainArt.PLAIN, at, &"test", terrain, []), tile, "%s: the same on every build" % at)
+			columns[atlas.x] = true
+	assert_gt(columns.size(), 2, "25 inland cells show more than two of the four tiles")
+	assert_eq(_pick(TerrainArt.PLAIN, rows, Vector2i(1, 4)).get(&"atlas"), Vector2i(10, 0), "an edge cell keeps its own mask")
+	var hammock: GridTerrain = GridTerrain.new()
+	hammock.default_terrain = DataEnums.Terrain.BEACH
+	hammock.fill_rect(Rect2i(1, 1, 3, 3), DataEnums.Terrain.HAMMOCK)
+	var whole: Dictionary = TerrainArt.tile(TerrainArt.PLAIN, Vector2i(2, 2), &"test", hammock, [] as Array[Vector2i])
+	assert_eq(whole.get(&"atlas"), Vector2i(15, 3), "a row with no variants keeps its full tile")
 
 
 

@@ -424,7 +424,7 @@ class BuildTests(unittest.TestCase):
         self.assertEqual((variant.get(5, 5)[:3], variant.get(2, 2)[:3]), (ROCK, DEEP), "the recipe drives the variant")
 
     def test_a_png_in_the_fixes_folder_that_no_step_reads_is_refused_by_name(self):
-        for stray in ("plain.png", "water.png", "shade.png", "sand_shore.png", "brush_shore.png", "plain_shore.png", "water_ramps.png", "nothing.png"):
+        for stray in ("water.png", "shade.png", "sand_shore.png", "brush_shore.png", "plain_shore.png", "water_ramps.png", "nothing.png"):
             png.write_png(self.fixes / stray, self.overlay((5, 5, DEEP)))
             with self.assertRaisesRegex(terrain.TerrainError, rf"{stray}: no step of the recipe reads it"):
                 self.build()
@@ -454,6 +454,60 @@ class BuildTests(unittest.TestCase):
         self.assertEqual((edge.get(4, 11)[:3], edge.get(4, 10)[:3]), (BLACK, ROCK))
         self.assertEqual(plain.crop(15 * 16, 0, 16, 16), filled(ROCK), "the whole tile has no rim")
         self.assertEqual(png.read_png(self.out / "sea" / "foam.png").colours(), {ROCK})
+
+    def plain_overlay(self, width, *pixels):
+        """A plain.png overlay `width` columns wide of (x, y, colour) pixels."""
+        fix = png.blank(width * 16, 16)
+        for x, y, rgb in pixels:
+            fix.set(x, y, rgb + (255,))
+        return fix
+
+    def test_a_plain_row_lists_full_tile_variants_from_column_16(self):
+        recipe = self.recipe()
+        row = recipe["plain"]["rows"][0]
+        row["map"][png.colour_hex(BLUE)] = png.colour_hex(DEEP)
+        row["variants"] = [[2, 0], "15"]
+        png.write_png(self.fixes / "plain.png", self.plain_overlay(18, (17 * 16 + 3, 4, BLACK)))
+        self.build(recipe)
+        plain = png.read_png(self.out / "terrain" / "plain.png")
+        self.assertEqual((plain.width, plain.height), (18 * 16, 16), "the sheet grows to the right")
+        self.assertEqual(plain.crop(16 * 16, 0, 16, 16), filled(DEEP), "a pack tile through the row's map")
+        variant = plain.crop(17 * 16, 0, 16, 16)
+        self.assertEqual((variant.get(3, 4)[:3], variant.get(5, 5)[:3]), (BLACK, ROCK), "the full tile with its hand pixels")
+        self.assertEqual(plain.crop(15 * 16, 0, 16, 16), filled(ROCK), "the full tile itself is not changed")
+        self.assertEqual(plain.crop(14 * 16, 0, 16, 16).get(3, 4)[:3], ROCK, "the cut tiles follow the full tile, not a variant")
+
+    def test_the_plain_overlay_fixes_the_full_tile_and_the_cut_tiles_follow_it(self):
+        recipe = self.recipe()
+        recipe["plain"]["shore"] = {}
+        png.write_png(self.fixes / "plain.png", self.plain_overlay(16, (15 * 16 + 4, 5, BLACK)))
+        self.build(recipe)
+        plain = png.read_png(self.out / "terrain" / "plain.png")
+        self.assertEqual((plain.width, plain.height), (256, 16), "no variants, no wider")
+        for mask in (15, 14, 3):
+            self.assertEqual(plain.crop(mask * 16, 0, 16, 16).get(4, 5)[:3], BLACK, f"column {mask}")
+        shore = png.read_png(self.out / "terrain" / "plain_shore.png")
+        self.assertEqual(shore.crop(3 * 16, 3 * 16, 16, 16).get(4, 5)[:3], BLACK, "and so does the shore sheet")
+
+    def test_a_plain_overlay_pixel_on_a_cut_column_or_of_the_wrong_size_is_refused(self):
+        png.write_png(self.fixes / "plain.png", self.plain_overlay(16, (3 * 16 + 4, 5, BLACK)))
+        with self.assertRaisesRegex(terrain.TerrainError, r"plain\.png.*\(52, 5\).*column 15"):
+            self.build()
+        png.write_png(self.fixes / "plain.png", self.plain_overlay(16, (15 * 16 + 4, 5, ROCK)))
+        with self.assertRaisesRegex(terrain.TerrainError, r"plain\.png.*\(244, 5\).*not a hand pixel"):
+            self.build()
+        png.write_png(self.fixes / "plain.png", self.plain_overlay(17, (15 * 16 + 4, 5, BLACK)))
+        with self.assertRaisesRegex(terrain.TerrainError, r"plain\.png"):
+            self.build()
+        self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_a_plain_row_has_at_most_four_variants_of_its_own_tiles(self):
+        for bad in (["15"] * 5, ["14"], "15", [[0]], [[9, 9]]):
+            recipe = self.recipe()
+            recipe["plain"]["rows"][0]["variants"] = bad
+            with self.assertRaisesRegex(terrain.TerrainError, r"plain rock"):
+                self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
 
     def test_the_shade_set_follows_the_sand_shape_and_its_last_row_holds_the_spots(self):
         self.build()
@@ -750,6 +804,16 @@ class BuildTests(unittest.TestCase):
         self.assertEqual([row["id"] for row in recipe["plain"]["rows"]],
                          ["rock", "shingle", "cliff", "hammock", "casuarina", "reef_flat", "coral", "mangrove", "wreck_interior"])
         self.assertEqual(recipe["shade"]["shape"], "sand")
+
+    def test_the_tracked_rock_has_the_pack_variant_and_two_hand_ones_that_keep_its_border(self):
+        rock = terrain.load_recipe(terrain.DEFAULT_RECIPE)["plain"]["rows"][0]
+        self.assertEqual((rock["tile"], rock["variants"]), ([12, 13], [[12, 14], "15", "15"]))
+        overlay = png.read_png(terrain.DEFAULT_FIXES / "plain.png")
+        for column in (17, 18):
+            cell = overlay.crop(column * 16, 0, 16, 16)
+            self.assertGreater(sum(1 for alpha in cell.pixels[3::4] if alpha), 0, f"column {column} has hand pixels")
+            border = [(x, y) for y in range(16) for x in range(16) if x in (0, 15) or y in (0, 15)]
+            self.assertEqual([at for at in border if cell.alpha(*at)], [], f"column {column} keeps the full tile's border, so any two join")
 
 
     def test_the_tracked_overlays_hold_only_hand_pixels(self):
