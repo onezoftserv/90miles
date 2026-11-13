@@ -137,6 +137,13 @@ func _build_sea() -> void:
 	var tile: float = float(IslandLayout.TILE)
 	var area := Rect2(Vector2.ZERO, Vector2(grid_size) * tile).grow(SEA_MARGIN_PX)
 	_sea.polygon = PackedVector2Array([area.position, Vector2(area.end.x, area.position.y), area.end, Vector2(area.position.x, area.end.y)])
+	setup_sea(_sea.material as ShaderMaterial, depth_bytes, grid_size, tile)
+
+
+## Sets the sea shader's parameters on `material` for a grid of `cells` columns and rows of
+## `cell_px` each, with `depth_bytes` as its depth steps: the one setup both the island's sea and the
+## crossing's (CrossingSea) use, so they cannot drift apart.
+static func setup_sea(material: ShaderMaterial, depth_bytes: PackedByteArray, cells: Vector2i, cell_px: float) -> void:
 	var art: TerrainArtData = TerrainArt.data()
 	var deep: int = art.depth_steps[DataEnums.Terrain.DEEP]
 	var brackish: int = art.depth_steps[DataEnums.Terrain.BRACKISH]
@@ -145,14 +152,13 @@ func _build_sea() -> void:
 	for index: int in depth_bytes.size():
 		channels[index * 2] = 0 if depth_bytes[index] == deep else 255
 		channels[index * 2 + 1] = 255 if depth_bytes[index] == brackish else 0
-	var mask := Image.create_from_data(grid_size.x, grid_size.y, false, Image.FORMAT_RG8, channels)
+	var mask := Image.create_from_data(cells.x, cells.y, false, Image.FORMAT_RG8, channels)
 	var tuning := load(ArtTuning.STANDARD_PATH) as ArtTuning
-	var material := _sea.material as ShaderMaterial
 	material.set_shader_parameter(&"water", tuning.sea_water)
 	material.set_shader_parameter(&"ramps", tuning.sea_ramps)
 	material.set_shader_parameter(&"depth_mask", ImageTexture.create_from_image(mask))
-	material.set_shader_parameter(&"grid_cells", Vector2(grid_size))
-	material.set_shader_parameter(&"cell_px", tile)
+	material.set_shader_parameter(&"grid_cells", Vector2(cells))
+	material.set_shader_parameter(&"cell_px", cell_px)
 	material.set_shader_parameter(&"deep_row", deep)
 	material.set_shader_parameter(&"shallows_row", art.depth_steps[DataEnums.Terrain.SHALLOWS])
 	material.set_shader_parameter(&"brackish_row", brackish)

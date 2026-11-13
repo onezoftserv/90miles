@@ -48,18 +48,7 @@ func _build(rect: Rect2) -> void:
 	depth_bytes = PackedByteArray()
 	depth_bytes.resize(cells.x * cells.y)
 	depth_bytes.fill(deep)
-	var channels := PackedByteArray()
-	channels.resize(depth_bytes.size() * 2)
-	var mask := Image.create_from_data(cells.x, cells.y, false, Image.FORMAT_RG8, channels)
-	var tuning := load(ArtTuning.STANDARD_PATH) as ArtTuning
 	var sea := ShaderMaterial.new()
 	sea.shader = SEA_SHADER
-	sea.set_shader_parameter(&"water", tuning.sea_water)
-	sea.set_shader_parameter(&"ramps", tuning.sea_ramps)
-	sea.set_shader_parameter(&"depth_mask", ImageTexture.create_from_image(mask))
-	sea.set_shader_parameter(&"grid_cells", Vector2(cells))
-	sea.set_shader_parameter(&"cell_px", Crossing.TILE_PX)
-	sea.set_shader_parameter(&"deep_row", deep)
-	sea.set_shader_parameter(&"shallows_row", art.depth_steps[DataEnums.Terrain.SHALLOWS])
-	sea.set_shader_parameter(&"brackish_row", art.depth_steps[DataEnums.Terrain.BRACKISH])
+	TerrainView.setup_sea(sea, depth_bytes, cells, Crossing.TILE_PX)
 	material = sea

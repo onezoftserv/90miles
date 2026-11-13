@@ -212,6 +212,31 @@ func _row_light(ramps: Image, row: int) -> float:
 	return total / ramps.get_width()
 
 
+func test_one_helper_sets_every_sea_parameter_for_the_island_and_the_crossing() -> void:
+	var art: TerrainArtData = TerrainArt.data()
+	var deep: int = art.depth_steps[DataEnums.Terrain.DEEP]
+	var shallows: int = art.depth_steps[DataEnums.Terrain.SHALLOWS]
+	var depth := PackedByteArray([deep, shallows, shallows, deep, deep, deep])
+	var material := ShaderMaterial.new()
+	material.shader = load(SEA_SHADER) as Shader
+	TerrainView.setup_sea(material, depth, Vector2i(3, 2), 16.0)
+	for name: StringName in [&"water", &"ramps", &"depth_mask", &"grid_cells", &"cell_px", &"deep_row", &"shallows_row", &"brackish_row"]:
+		assert_not_null(material.get_shader_parameter(name), "%s is set" % name)
+	assert_eq(material.get_shader_parameter(&"grid_cells"), Vector2(3, 2))
+	assert_eq(material.get_shader_parameter(&"cell_px"), 16.0)
+	assert_eq(int(material.get_shader_parameter(&"deep_row")), deep)
+	assert_eq(int(material.get_shader_parameter(&"shallows_row")), shallows)
+	# The island's and the crossing's seas set up through it: the same rows and textures.
+	var island := _island(SANDBAR)
+	var island_sea := (_view(island).get_node(^"Sea") as Polygon2D).material as ShaderMaterial
+	var crossing_sea := CrossingSea.new()
+	autofree(crossing_sea)
+	crossing_sea.call(&"_build", Rect2(Vector2.ZERO, Vector2(64.0, 64.0)))
+	var other := crossing_sea.material as ShaderMaterial
+	for name: StringName in [&"water", &"ramps", &"deep_row", &"shallows_row", &"brackish_row"]:
+		assert_eq(other.get_shader_parameter(name), island_sea.get_shader_parameter(name), "%s: the same on both" % name)
+
+
 func test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule() -> void:
 	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
 		var island := _island(layout)
