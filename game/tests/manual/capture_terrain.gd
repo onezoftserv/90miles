@@ -3,11 +3,14 @@ extends Node
 ## windowed (it needs a real renderer, so never headless and never in CI). It builds the real
 ## SandbarIsland scene for the sandbar and the coast cay, each whole in a SubViewport the island's
 ## size, and saves them; then four captures of one stretch of the sandbar's shore a quarter second
-## apart, enlarged ×4; then a solo run through the game shell at 2×, as the player sees it:
+## apart, enlarged ×4; the whole sandbar again under the night tint (task 4.6); then a solo run
+## through the game shell at 2×, as the player sees it:
 ##   godot --path game res://tests/manual/capture_terrain.tscn -- --out=<dir>
-## Writes <dir>/sandbar_day.png, coast_cay_day.png, shore_0.png … shore_3.png and sandbar_game.png.
+## Writes <dir>/sandbar_day.png, coast_cay_day.png, shore_0.png … shore_3.png, sandbar_night.png
+## and sandbar_game.png.
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
+const TINT_SCENE: PackedScene = preload("res://scenes/world/day_night_tint.tscn")
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const LAYOUTS: Dictionary[String, String] = {
 	"sandbar_day": "res://resources/islands/sandbar.tres",
@@ -20,6 +23,8 @@ const SHORE_CELLS: Rect2i = Rect2i(28, 18, 14, 8)
 const SHORE_ZOOM: int = 4
 const SHORE_SHOTS: int = 4
 const SHORE_STEP_S: float = 0.25
+## Night: a quarter of the way into the night phase, past the dusk blend (as capture_looks.gd).
+const NIGHT_S: float = DayClock.NIGHT_START_S + 75.0
 
 var _out_dir: String = ""
 
@@ -48,6 +53,10 @@ func _ready() -> void:
 		image.resize(shore_px.size.x * SHORE_ZOOM, shore_px.size.y * SHORE_ZOOM, Image.INTERPOLATE_NEAREST)
 		_save(image, "shore_%d" % shot)
 		await get_tree().create_timer(SHORE_STEP_S).timeout
+	WeatherManager.sky.start_at(NIGHT_S)
+	shore_view.add_child(TINT_SCENE.instantiate())
+	await _frames(SETTLE_FRAMES)
+	_save(shore_view.get_texture().get_image(), "sandbar_night")
 	shore_view.queue_free()
 	await _game_view()
 	get_tree().quit()
