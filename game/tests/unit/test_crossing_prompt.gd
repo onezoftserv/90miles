@@ -85,7 +85,7 @@ func test_a_pull_handle_names_the_swimmer_and_sits_above_their_name_tag() -> voi
 	var anchor: float = (papo.get_node(^"BodyLook") as BodyLook).head_anchor_y()
 	assert_eq(tag.position.y, anchor - NameTag.ANCHOR_GAP_PX, "the tag on the swim head anchor")
 	var label_top: float = _in_hud(tag.label).y
-	assert_eq(rect.end.y, roundf(label_top) - InteractPrompt.PLAYER_GAP_PX, "3 px above the tag's label, as over any player")
+	assert_eq(rect.end.y, roundf(label_top) - 3.0, "3 px above the tag's label, as over any player")
 	var strip := tag.get_node(^"Strip") as Control
 	for part: Control in [tag.label, strip]:
 		var part_rect := Rect2(_in_hud(part), part.size)
