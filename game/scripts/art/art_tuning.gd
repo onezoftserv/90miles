@@ -22,7 +22,9 @@ const STANDARD_PATH: String = "res://resources/art_tuning.tres"
 ## The palette's darkest colours, used for every outline (design.md D7, D8).
 @export var outline_colors: PackedColorArray
 ## Mean colour of each land ground (sand, dune, brush) and each water ground (shallows, deep,
-## brackish). Provisional DawnBringer colours until task 4.5 measures them from the made art.
+## brackish), measured from the made art in task 4.5 (design.md K47): sand and dune the mean of
+## the full-tile picks every whole cell draws, brush its full tile, and each sea step the mean
+## world_sea.gdshader draws (the lighter of two water samples, in that step's ramp).
 @export var land_grounds: Dictionary[StringName, Color]
 @export var water_grounds: Dictionary[StringName, Color]
 ## One pixel per colour: DawnBringer's 32 and the added colours (at most 64 in all).

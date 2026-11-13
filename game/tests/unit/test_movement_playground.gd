@@ -1,6 +1,7 @@
 extends GutTest
 ## player-movement: the manual-test playground scene loads, has the terrain the spec needs and
-## two players, and needs no textures of its own.
+## two players, and draws its ground as tile layers built from its own GridTerrain (art-pass;
+## design.md T16).
 
 const PLAYGROUND_PATH := "res://scenes/dev/movement_playground.tscn"
 const T := DataEnums.Terrain
@@ -92,9 +93,25 @@ func test_players_share_a_midday_climate() -> void:
 		assert_eq(body.climate, playground.climate)
 
 
-func test_scene_draws_without_textures() -> void:
-	for dependency: String in ResourceLoader.get_dependencies(PLAYGROUND_PATH):
-		assert_false(dependency.get_extension() in ["png", "jpg", "webp", "svg"], dependency)
+func test_the_playground_builds_its_tile_layers_from_its_grid_terrain() -> void:
+	var view := playground.get_node_or_null(^"Terrain") as TerrainView
+	assert_not_null(view, "a TerrainView named Terrain")
+	if view == null:
+		return
+	var none: Array[Vector2i] = []
+	for layer: StringName in [&"Sand", &"Dune", &"Brush", &"Plain"]:
+		var tiles := view.get_node(NodePath(layer)) as TileMapLayer
+		var cells: Array[Vector2i] = TerrainArt.layer_cells(layer, playground.terrain, none)
+		assert_eq(tiles.get_used_cells().size(), cells.size(), "%s: one tile per member cell" % layer)
+		var wrong: int = 0
+		for cell: Vector2i in cells:
+			var tile: Dictionary = TerrainArt.tile(layer, cell, view.layout_id, playground.terrain, none)
+			if tiles.get_cell_source_id(cell) != tile[&"source"] or tiles.get_cell_atlas_coords(cell) != tile[&"atlas"]:
+				wrong += 1
+		assert_eq(wrong, 0, "%s: every cell is TerrainArt's tile for the playground's grid" % layer)
+	assert_gt((view.get_node(^"Sand") as TileMapLayer).get_used_cells().size(), 0, "the beach is drawn")
+	assert_gt((view.get_node(^"Shore") as TileMapLayer).get_used_cells().size(), 0, "the beach has foam")
+	assert_eq(view.depth_bytes, SeaMask.depth_bytes(view.grid_size, playground.terrain), "the sea's depth mask")
 
 
 func test_the_playground_has_a_day_night_tint() -> void:
