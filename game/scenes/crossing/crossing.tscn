@@ -1,12 +1,18 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scenes/crossing/crossing.gd" id="1_crossing"]
+[ext_resource type="Script" path="res://scenes/crossing/crossing_sea.gd" id="2_sea"]
+[ext_resource type="Script" path="res://scenes/crossing/crossing_deck.gd" id="3_deck"]
 
 [node name="Crossing" type="Node2D"]
 script = ExtResource("1_crossing")
 
-[node name="Sea" type="Node2D" parent="." groups=["art_view"]]
+[node name="Sea" type="Polygon2D" parent="." groups=["art_view"]]
 z_index = -40
+script = ExtResource("2_sea")
 
-[node name="Deck" type="Node2D" parent="." groups=["art_view"]]
+[node name="Deck" type="Sprite2D" parent="." groups=["art_view"]]
 z_index = -20
+script = ExtResource("3_deck")
+water_line_row = 27
+foam_color = Color(0.56078434, 0.8784314, 0.9411765, 1)
