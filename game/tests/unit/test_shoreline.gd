@@ -65,7 +65,7 @@ func test_tide_pools_get_no_foam_ring() -> void:
 	assert_false(_shore(rows).has(Vector2i(2, 2)))
 	assert_eq(_shore(rows).size(), 16)
 	var terrain: GridTerrain = TerrainRows.build(rows)
-	assert_eq(ShoreRule.shore_cells(terrain, []).size(), 16 + 9, "without the list the pool and its 8 neighbours get foam")
+	assert_eq(ShoreRule.shore_cells(terrain, []).size(), 16 + 8, "without the list the pool's 8 neighbours get foam")
 	var built: IslandLayout = IslandLayout.build(SANDBAR)
 	assert_eq(built.tide_pools.size(), 3)
 	var with_pools: Array[Vector2i] = ShoreRule.shore_cells(built.terrain, built.tide_pools)
@@ -76,9 +76,9 @@ func test_tide_pools_get_no_foam_ring() -> void:
 
 
 func test_the_shore_cell_counts_of_the_two_islands() -> void:
-	# design.md T12
+	# design.md T12 (292 without the pools, 24 fewer with them; T3)
 	var sandbar: IslandLayout = IslandLayout.build(SANDBAR)
-	assert_eq(ShoreRule.shore_cells(sandbar.terrain, sandbar.tide_pools).size(), 292)
+	assert_eq(ShoreRule.shore_cells(sandbar.terrain, sandbar.tide_pools).size(), 268, "T12's 292 counts the 24 cells round the pools, which T3 takes away")
 	var cay: IslandLayout = IslandLayout.build(COAST_CAY)
 	assert_eq(ShoreRule.shore_cells(cay.terrain, cay.tide_pools).size(), 265)
 

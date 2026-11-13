@@ -435,9 +435,9 @@ func test_the_three_water_kinds_have_their_own_depth_step() -> void:
 
 
 func test_layer_cell_counts_of_the_two_islands() -> void:
-	# design.md T12: the sandbar and the coast cay set about 1,800 and 2,000 cells
+	# design.md T12: about 1,800 and 2,000 cells. The sandbar's Sand is T12's 991 plus its 3 tide pools (T3)
 	var expected: Dictionary[StringName, Array] = {
-		&"sandbar": [991, 422, 84, 0],
+		&"sandbar": [994, 422, 84, 0],
 		&"coast_cay": [1021, 393, 29, 256],
 	}
 	var layouts: Dictionary[StringName, IslandLayoutData] = {&"sandbar": SANDBAR, &"coast_cay": COAST_CAY}
@@ -505,3 +505,16 @@ func test_a_solo_player_arrives_on_drawn_ground_offline() -> void:
 	for cell: Vector2i in [built.solo_spawn, built.landing_cells()[0]]:
 		assert_true(TerrainArt.is_member(TerrainArt.SAND, cell, built.terrain, built.tide_pools), "%s is sand" % cell)
 		assert_false(TerrainArt.tile(TerrainArt.SAND, cell, SANDBAR.id, built.terrain, built.tide_pools).is_empty())
+
+
+func test_the_depth_mask_holds_one_step_per_cell_and_pools_are_shallows() -> void:
+	# design.md D12, T3, T4
+	var rows: PackedStringArray = PackedStringArray(["..~,", ".s~,", "spss"])
+	var terrain: GridTerrain = TerrainRows.build(rows)
+	var mask: PackedByteArray = SeaMask.depth_bytes(Vector2i(4, 3), terrain)
+	assert_eq(mask.size(), 12)
+	assert_eq(mask[0], TerrainArt.depth_step(DataEnums.Terrain.DEEP))
+	assert_eq(mask[2], TerrainArt.depth_step(DataEnums.Terrain.SHALLOWS))
+	assert_eq(mask[3], TerrainArt.depth_step(DataEnums.Terrain.BRACKISH))
+	assert_eq(mask[9], TerrainArt.depth_step(DataEnums.Terrain.SHALLOWS), "a tide pool is shallows")
+	assert_eq(mask[5], TerrainArt.depth_step(DataEnums.Terrain.DEEP), "land holds the commonest water step beside it, the lower step on a tie (3 deep, 3 shallows)")
