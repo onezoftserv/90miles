@@ -484,3 +484,33 @@ static func _mask_key(image: Image) -> String:
 		for x: int in image.get_width():
 			bits.append(1 if image.get_pixel(x, y).a8 > 0 else 0)
 	return "%dx%d:%s" % [image.get_width(), image.get_height(), bits.hex_encode()]
+
+
+# --- Item icons ----------------------------------------------------------------------------------
+
+## An item's icon (art-pass "Item icons"; design.md D17, D21).
+const ICON_SIZE: Vector2i = Vector2i(16, 16)
+## The box one pixel in from each edge of the icon that the item stays inside.
+const ICON_BOX: Rect2i = Rect2i(1, 1, 14, 14)
+
+
+## The item file at `path` has a 16x16 icon, its opaque texels inside ICON_BOX and its edge in
+## `outline` colours; each failure names the file.
+static func check_item_icon(path: String, item: ItemData, outline: Dictionary) -> PackedStringArray:
+	if item == null:
+		return PackedStringArray(["%s is not an item" % path])
+	if item.sprite == null:
+		return PackedStringArray(["%s has no icon" % path])
+	var image: Image = read_png(item.sprite.resource_path)
+	if image == null:
+		return PackedStringArray(["%s: its icon %s is not a readable PNG" % [path, item.sprite.resource_path]])
+	if image.get_size() != ICON_SIZE:
+		return PackedStringArray(["%s: its icon is %s, not 16x16" % [path, image.get_size()]])
+	var used: Rect2i = image.get_used_rect()
+	if used.size == Vector2i.ZERO:
+		return PackedStringArray(["%s: its icon is empty" % path])
+	var failures: PackedStringArray = []
+	if not ICON_BOX.encloses(used):
+		failures.append("%s: its icon spans %s, outside the 14x14 box %s" % [path, used, ICON_BOX])
+	failures.append_array(check_outline("%s icon" % path, image, outline, ICON_SIZE))
+	return failures
