@@ -267,3 +267,254 @@ func test_the_variants_on_row_4_have_their_masks_corners_and_differ() -> void:
 			assert_eq(_corners(sheet, Vector2i(column, 4)), variant_of[id], "%s variant %d: its corners" % [id, column])
 			assert_false(seen.has(tile.get_data()), "%s variant %d repeats another" % [id, column])
 			seen.append(tile.get_data())
+
+
+# --- The rules that pick a tile for a cell (task 4.1; design.md D11, D14, K39, K40) ---
+
+const SANDBAR: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
+const COAST_CAY: IslandLayoutData = preload("res://resources/islands/coast_cay.tres")
+const TERRAIN_TILES: String = "res://assets/art/terrain/terrain_tiles.tres"
+## A full tile, and the brush's islet, are picks on row 4 of their sheet (design.md K36).
+const PICK_ROW: int = 4
+const ART_SCRIPTS: Array[String] = [
+	"res://scripts/art/terrain_art.gd",
+	"res://scripts/art/terrain_art_data.gd",
+	"res://scripts/art/shore_rule.gd",
+	"res://scripts/art/sea_mask.gd",
+]
+
+
+func _mask_atlas(mask: int) -> Vector2i:
+	@warning_ignore("integer_division")
+	return Vector2i(mask % SET_COLUMNS, mask / SET_COLUMNS)
+
+
+## The tile `layer` gives the cell `at` of the hand-made `rows` ({} when the cell is not in it).
+func _pick(layer: StringName, rows: PackedStringArray, at: Vector2i) -> Dictionary:
+	return TerrainArt.tile(layer, at, &"test", TerrainRows.build(rows), TerrainRows.pools(rows))
+
+
+func _sand_mask(rows: PackedStringArray, at: Vector2i) -> int:
+	return TerrainArt.corner_mask(TerrainArt.SAND, at, TerrainRows.build(rows), TerrainRows.pools(rows))
+
+
+func _assert_pick(tile: Dictionary, source: int, row_four: int, label: String) -> void:
+	assert_eq(tile.get(&"source"), source, "%s: source" % label)
+	assert_eq(tile.get(&"alternative"), 0, "%s: alternative" % label)
+	var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+	assert_eq(atlas.y, PICK_ROW, "%s: a pick on row 4" % label)
+	assert_true(atlas.x >= 0 and atlas.x < row_four, "%s: one of its %d picks" % [label, row_four])
+
+
+func test_full_edge_and_outer_corner_tiles() -> void:
+	var rows: PackedStringArray = PackedStringArray([".....", ".sss.", ".sss.", ".sss.", "....."])
+	assert_eq(_sand_mask(rows, Vector2i(2, 2)), 15, "the middle cell has four land corners")
+	_assert_pick(_pick(TerrainArt.SAND, rows, Vector2i(2, 2)), 0, 4, "full tile")
+	var edge: Dictionary = _pick(TerrainArt.SAND, rows, Vector2i(2, 3))
+	assert_eq(_sand_mask(rows, Vector2i(2, 3)), SEA_SOUTH)
+	assert_eq(edge.get(&"source"), 0)
+	assert_eq(edge.get(&"atlas"), _mask_atlas(SEA_SOUTH), "the straight south edge")
+	var corner: Dictionary = _pick(TerrainArt.SAND, rows, Vector2i(3, 3))
+	assert_eq(corner.get(&"atlas"), _mask_atlas(1), "the south-east outer corner has only its NW corner on land")
+	assert_eq(_pick(TerrainArt.SAND, rows, Vector2i(0, 0)), {}, "a water cell has no sand tile")
+
+
+func test_inner_corner_has_water_at_its_north_west() -> void:
+	# art-pass "Inner corner"
+	var rows: PackedStringArray = PackedStringArray([".ss", "sss", "sss"])
+	assert_eq(_sand_mask(rows, Vector2i(1, 1)), 14, "every corner but the NW one is land")
+	assert_eq(_pick(TerrainArt.SAND, rows, Vector2i(1, 1)).get(&"atlas"), _mask_atlas(14))
+
+
+func test_both_diagonal_tiles() -> void:
+	var ne_sw: PackedStringArray = PackedStringArray([".ss", "sss", "ss."])
+	var nw_se: PackedStringArray = PackedStringArray(["ss.", "sss", ".ss"])
+	assert_eq(_sand_mask(ne_sw, Vector2i(1, 1)), 2 + 4)
+	assert_eq(_pick(TerrainArt.SAND, ne_sw, Vector2i(1, 1)).get(&"atlas"), _mask_atlas(6))
+	assert_eq(_sand_mask(nw_se, Vector2i(1, 1)), 1 + 8)
+	assert_eq(_pick(TerrainArt.SAND, nw_se, Vector2i(1, 1)).get(&"atlas"), _mask_atlas(9))
+
+
+func test_a_lone_land_cell_gets_the_islet_tile() -> void:
+	# art-pass "Lone land cell"
+	var rows: PackedStringArray = PackedStringArray(["...", ".s.", "..."])
+	assert_eq(_sand_mask(rows, Vector2i(1, 1)), 0)
+	var tile: Dictionary = _pick(TerrainArt.SAND, rows, Vector2i(1, 1))
+	assert_eq(tile.get(&"source"), 0)
+	assert_eq(tile.get(&"atlas"), Vector2i(0, 0), "mask 0 is the islet")
+
+
+func test_a_scrub_cell_inside_dune_gets_the_full_dune_tile_and_the_brush_islet() -> void:
+	# art-pass "Scrub inside a dune"
+	var rows: PackedStringArray = PackedStringArray(["sssss", "sddds", "sdbds", "sddds", "sssss"])
+	var at: Vector2i = Vector2i(2, 2)
+	_assert_pick(_pick(TerrainArt.SAND, rows, at), 0, 4, "sand")
+	_assert_pick(_pick(TerrainArt.DUNE, rows, at), 1, 4, "dune")
+	_assert_pick(_pick(TerrainArt.BRUSH, rows, at), 2, 2, "brush")
+	assert_eq(_pick(TerrainArt.BRUSH, rows, Vector2i(2, 1)), {}, "dune is not in the brush layer")
+	var terrain: GridTerrain = TerrainRows.build(rows)
+	assert_eq(TerrainArt.layer_cells(TerrainArt.SAND, terrain, []).size(), 25, "sand counts every land kind")
+	assert_eq(TerrainArt.layer_cells(TerrainArt.DUNE, terrain, []).size(), 9, "dune counts dune and scrub")
+	assert_eq(TerrainArt.layer_cells(TerrainArt.BRUSH, terrain, []).size(), 1, "brush counts scrub only")
+
+
+func test_an_upper_layer_cell_beside_water_takes_the_shore_tile_of_its_sand_mask() -> void:
+	# design.md K39: (sand mask, 16 x terrain row + own mask) of the layer's shore source
+	var dune: PackedStringArray = PackedStringArray([".....", ".ddd.", ".ddd.", ".ddd.", "....."])
+	var tile: Dictionary = _pick(TerrainArt.DUNE, dune, Vector2i(2, 3))
+	assert_eq(tile.get(&"source"), 4, "the dune shore source")
+	assert_eq(tile.get(&"atlas"), Vector2i(SEA_SOUTH, SEA_SOUTH), "sand mask 3 over own mask 3")
+	_assert_pick(_pick(TerrainArt.DUNE, dune, Vector2i(2, 2)), 1, 4, "dune interior")
+	var brush: PackedStringArray = PackedStringArray(["...", ".b.", "..."])
+	var islet: Dictionary = _pick(TerrainArt.BRUSH, brush, Vector2i(1, 1))
+	assert_eq(islet.get(&"source"), 5, "the brush shore source")
+	assert_eq(islet.get(&"atlas"), Vector2i(0, 0), "a lone bush: sand mask 0, own mask 0, no variant")
+	var rock: PackedStringArray = PackedStringArray([".....", ".rrr.", ".rrr.", ".rrr.", "....."])
+	var plain: Dictionary = _pick(TerrainArt.PLAIN, rock, Vector2i(2, 3))
+	assert_eq(plain.get(&"source"), 6, "the plain shore source")
+	assert_eq(plain.get(&"atlas"), Vector2i(SEA_SOUTH, SEA_SOUTH), "rock is row 0")
+
+
+func test_a_plain_cell_inland_takes_the_tile_of_its_own_mask() -> void:
+	var rows: PackedStringArray = PackedStringArray(["sssss", "srrrs", "srrrs", "srrrs", "sssss"])
+	var corner: Dictionary = _pick(TerrainArt.PLAIN, rows, Vector2i(1, 1))
+	assert_eq(corner.get(&"source"), 3)
+	assert_eq(corner.get(&"atlas"), Vector2i(8, 0), "only its SE corner has four rock cells round it")
+	assert_eq(_sand_mask(rows, Vector2i(1, 1)), 15, "the sand under it is whole")
+	assert_eq(_pick(TerrainArt.PLAIN, rows, Vector2i(0, 0)), {}, "sand is not in the plain layer")
+
+
+
+func test_tide_pool_cells_count_as_land_for_the_sand_layer_only() -> void:
+	# design.md T3: the pool is shallows to the grid, land to the art
+	var rows: PackedStringArray = PackedStringArray(["sssss", "sssss", "sspss", "sssss", "sssss"])
+	var terrain: GridTerrain = TerrainRows.build(rows)
+	var pools: Array[Vector2i] = TerrainRows.pools(rows)
+	assert_eq(pools, [Vector2i(2, 2)] as Array[Vector2i])
+	assert_eq(TerrainArt.corner_mask(TerrainArt.SAND, Vector2i(1, 1), terrain, pools), 15, "no inner corner at the pool")
+	assert_eq(TerrainArt.corner_mask(TerrainArt.SAND, Vector2i(1, 1), terrain, []), 7, "without the list it is a water corner")
+	assert_true(TerrainArt.is_member(TerrainArt.SAND, Vector2i(2, 2), terrain, pools))
+	assert_false(TerrainArt.is_member(TerrainArt.SAND, Vector2i(2, 2), terrain, []))
+	assert_false(TerrainArt.is_member(TerrainArt.DUNE, Vector2i(2, 2), terrain, pools), "a pool is not dune")
+	assert_eq(terrain.terrain_at(Vector2i(2, 2)), DataEnums.Terrain.SHALLOWS, "the grid is unchanged")
+
+
+func test_each_land_terrain_has_a_tile_in_the_terrain_art_data() -> void:
+	# art-pass "Every terrain kind has a tile"; design.md T4
+	var tile_set: TileSet = load(TERRAIN_TILES) as TileSet
+	assert_not_null(tile_set)
+	var land: int = 0
+	for kind: DataEnums.Terrain in DataEnums.Terrain.values():
+		if TerrainQuery.is_water(kind):
+			continue
+		land += 1
+		var label: String = DataEnums.Terrain.keys()[kind]
+		var terrain: GridTerrain = GridTerrain.new()
+		terrain.default_terrain = DataEnums.Terrain.DEEP
+		terrain.fill_rect(Rect2i(0, 0, 5, 5), kind)
+		var layers: Array[StringName] = TerrainArt.layers_for(kind)
+		assert_true(layers.has(TerrainArt.SAND), "%s lies on the sand" % label)
+		for layer: StringName in layers:
+			for at: Vector2i in [Vector2i(2, 2), Vector2i(2, 4), Vector2i(0, 0)]:
+				var tile: Dictionary = TerrainArt.tile(layer, at, &"test", terrain, [] as Array[Vector2i])
+				var source: TileSetAtlasSource = tile_set.get_source(tile.get(&"source", -1)) as TileSetAtlasSource if tile_set.has_source(tile.get(&"source", -1)) else null
+				assert_not_null(source, "%s on %s at %s has a source" % [label, layer, at])
+				if source != null:
+					assert_true(source.has_tile(tile[&"atlas"]), "%s on %s at %s: tile %s" % [label, layer, at, tile[&"atlas"]])
+	assert_eq(land, 12, "twelve land kinds")
+
+
+func test_the_three_water_kinds_have_their_own_depth_step() -> void:
+	var steps: Array[int] = []
+	for kind: DataEnums.Terrain in [DataEnums.Terrain.DEEP, DataEnums.Terrain.SHALLOWS, DataEnums.Terrain.BRACKISH]:
+		var step: int = TerrainArt.depth_step(kind)
+		assert_true(step >= 0, "%s has a step" % DataEnums.Terrain.keys()[kind])
+		assert_false(steps.has(step), "%s repeats a step" % DataEnums.Terrain.keys()[kind])
+		steps.append(step)
+	assert_eq(TerrainArt.depth_step(DataEnums.Terrain.BEACH), -1, "land has no depth step")
+
+
+func test_layer_cell_counts_of_the_two_islands() -> void:
+	# design.md T12: about 1,800 and 2,000 cells. The sandbar's Sand is T12's 991 plus its 3 tide pools (T3)
+	var expected: Dictionary[StringName, Array] = {
+		&"sandbar": [994, 422, 84, 0],
+		&"coast_cay": [1021, 393, 29, 256],
+	}
+	var layouts: Dictionary[StringName, IslandLayoutData] = {&"sandbar": SANDBAR, &"coast_cay": COAST_CAY}
+	for id: StringName in layouts:
+		var built: IslandLayout = IslandLayout.build(layouts[id])
+		var layers: Array[StringName] = [TerrainArt.SAND, TerrainArt.DUNE, TerrainArt.BRUSH, TerrainArt.PLAIN]
+		for index: int in layers.size():
+			assert_eq(TerrainArt.layer_cells(layers[index], built.terrain, built.tide_pools).size(), expected[id][index], "%s: %s" % [id, layers[index]])
+
+
+## Every layer's tile of every cell of `layout`, by layer and cell.
+func _all_tiles(layout: IslandLayoutData) -> Dictionary:
+	var built: IslandLayout = IslandLayout.build(layout)
+	var found: Dictionary = {}
+	for layer: StringName in [TerrainArt.SAND, TerrainArt.DUNE, TerrainArt.BRUSH, TerrainArt.PLAIN]:
+		for cell: Vector2i in TerrainArt.layer_cells(layer, built.terrain, built.tide_pools):
+			found["%s %s" % [layer, cell]] = TerrainArt.tile(layer, cell, layout.id, built.terrain, built.tide_pools)
+	return found
+
+
+func test_variants_come_from_the_layout_and_the_cell_and_repeat_across_builds() -> void:
+	# art-pass "Same layout, same variants"
+	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
+		var first: Dictionary = _all_tiles(layout)
+		assert_eq(_all_tiles(layout), first, "%s: two builds agree" % layout.id)
+		var picks: Dictionary[Vector2i, bool] = {}
+		for key: String in first:
+			var atlas: Vector2i = first[key][&"atlas"]
+			if atlas.y == PICK_ROW:
+				picks[atlas] = true
+		assert_gt(picks.size(), 1, "%s: the picks are not all the same tile" % layout.id)
+	assert_eq(TerrainArt.cell_hash(&"sandbar", Vector2i(3, 4)), TerrainArt.cell_hash(&"sandbar", Vector2i(3, 4)))
+	assert_ne(TerrainArt.cell_hash(&"sandbar", Vector2i(3, 4)), TerrainArt.cell_hash(&"coast_cay", Vector2i(3, 4)), "the layout is part of the seed")
+	assert_ne(TerrainArt.cell_hash(&"sandbar", Vector2i(3, 4)), TerrainArt.cell_hash(&"sandbar", Vector2i(4, 3)), "so is the cell")
+
+
+func test_building_the_art_leaves_the_spawners_next_roll_alone() -> void:
+	# art-pass "Same layout, same variants"; design.md D14
+	var world: CreatureWorld = CreatureWorld.new()
+	world.rng.seed = CreatureSpawner.WORLD_SEED
+	var without_art: int = world.rng.randi()
+	world.rng.seed = CreatureSpawner.WORLD_SEED
+	_all_tiles(SANDBAR)
+	_all_tiles(COAST_CAY)
+	assert_eq(world.rng.randi(), without_art)
+	seed(5)
+	var global_roll: int = randi()
+	seed(5)
+	_all_tiles(SANDBAR)
+	assert_eq(randi(), global_roll, "the global generator is untouched too")
+
+
+func test_the_art_scripts_call_no_random_number_generator() -> void:
+	for path: String in ART_SCRIPTS:
+		var source: String = FileAccess.get_file_as_string(path)
+		assert_false(source.is_empty(), "%s exists" % path)
+		for word: String in ["RandomNumberGenerator", "randi", "randf", "shuffle", "pick_random"]:
+			assert_false(source.contains(word), "%s calls %s" % [path, word])
+
+
+func test_a_solo_player_arrives_on_drawn_ground_offline() -> void:
+	# one player, no host, no peer: the layout alone says where they land and what is drawn there
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	assert_gt(built.landing_cells().size(), 0)
+	for cell: Vector2i in [built.solo_spawn, built.landing_cells()[0]]:
+		assert_true(TerrainArt.is_member(TerrainArt.SAND, cell, built.terrain, built.tide_pools), "%s is sand" % cell)
+		assert_false(TerrainArt.tile(TerrainArt.SAND, cell, SANDBAR.id, built.terrain, built.tide_pools).is_empty())
+
+
+func test_the_depth_mask_holds_one_step_per_cell_and_pools_are_shallows() -> void:
+	# design.md D12, T3, T4
+	var rows: PackedStringArray = PackedStringArray(["..~,", ".s~,", "spss"])
+	var terrain: GridTerrain = TerrainRows.build(rows)
+	var mask: PackedByteArray = SeaMask.depth_bytes(Vector2i(4, 3), terrain)
+	assert_eq(mask.size(), 12)
+	assert_eq(mask[0], TerrainArt.depth_step(DataEnums.Terrain.DEEP))
+	assert_eq(mask[2], TerrainArt.depth_step(DataEnums.Terrain.SHALLOWS))
+	assert_eq(mask[3], TerrainArt.depth_step(DataEnums.Terrain.BRACKISH))
+	assert_eq(mask[9], TerrainArt.depth_step(DataEnums.Terrain.SHALLOWS), "a tide pool is shallows")
+	assert_eq(mask[5], TerrainArt.depth_step(DataEnums.Terrain.DEEP), "land holds the commonest water step beside it, the lower step on a tie (3 deep, 3 shallows)")
