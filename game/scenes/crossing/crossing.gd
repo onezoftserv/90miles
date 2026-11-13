@@ -6,10 +6,11 @@ extends Node2D
 ## ends the crossing with a CrossingResult. Clients build the same node, receive the plan, the
 ## rider states and the result, and only show them. Coordinates are absolute: the node sits at
 ## (0, 0) and the sea at `origin`, far from the island, so riders keep their sync and meters.
-## The sea and the deck are drawn on two children, `Sea` at z -40 and `Deck` at z -20, because the
-## node sorts at its own (0, 0) in the y-sorted session while its riders are far north of it
-## (art-pass "Draw order by foot position"; design.md T5). They only show; freeing them changes
-## nothing the crossing does.
+## The sea and the deck are drawn by two children, `Sea` (CrossingSea) at z -40 and `Deck`
+## (CrossingDeck) at z -20, because the node sorts at its own (0, 0) in the y-sorted session while
+## its riders are far north of it (art-pass "Draw order by foot position", "Crossing look";
+## design.md T5, T18). They read the crossing every frame and only show; the crossing never names
+## them, and freeing them changes nothing it does.
 
 ## Host and clients: the crossing ended with this result.
 signal ended(result: CrossingResult)
@@ -65,9 +66,6 @@ var _resync_left_s: float = 0.0
 var _scroll_px: float = 0.0
 # Events up to this time have fired (a hair past the clock, so 0.1 s steps meet exact times).
 var _fired_to_s: float = -1.0
-
-@onready var _sea_view: Node2D = $Sea
-@onready var _deck_view: Node2D = $Deck
 
 
 ## Builds the crossing for `peer_ids` under `session`. The host rolls and sends the plan; a client
@@ -207,6 +205,12 @@ func sea_rect() -> Rect2:
 	return Rect2(origin, Vector2(SEA_TILES) * TILE_PX)
 
 
+## How far the sea has scrolled past the vessel, in px, wrapping at two lengths of the 32 px water
+## texture (design.md T18). Read-only: the crossing's sea look follows it.
+func scroll_px() -> float:
+	return _scroll_px
+
+
 ## Host: advances the crossing by `delta` seconds (the body of `_physics_process`).
 func advance(delta: float) -> void:
 	if finished or plan == null or not multiplayer.is_server():
@@ -332,35 +336,8 @@ func _physics_process(delta: float) -> void:
 	advance(delta)
 
 
-func _ready() -> void:
-	_sea_view.draw.connect(_draw_sea)
-	_deck_view.draw.connect(_draw_deck)
-
-
 func _process(delta: float) -> void:
 	_scroll_px = fmod(_scroll_px + tuning.scroll_tiles_per_s * TILE_PX * route.speed_multiplier * delta, TILE_PX * 4.0)
-	if is_instance_valid(_sea_view):
-		_sea_view.queue_redraw()
-	if is_instance_valid(_deck_view):
-		_deck_view.queue_redraw()
-
-
-# The children sit at the crossing's own (0, 0), so they draw in its coordinates.
-func _draw_sea() -> void:
-	var rect := sea_rect()
-	_sea_view.draw_rect(rect, Color(0.08, 0.28, 0.45))
-	for row: int in range(-1, SEA_TILES.y / 4 + 1):
-		var y: float = rect.position.y + row * TILE_PX * 4.0 + _scroll_px
-		if y >= rect.position.y and y < rect.end.y:
-			_sea_view.draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.2, 0.45, 0.62), 1.0)
-
-
-func _draw_deck() -> void:
-	if integrity.intact():
-		var deck := deck_rect()
-		_deck_view.draw_rect(deck, Color(0.55, 0.4, 0.22))
-		_deck_view.draw_rect(deck, Color(0.3, 0.2, 0.1), false)
-
 
 func _fire(event: CrossingBeat) -> void:
 	match event.kind:
