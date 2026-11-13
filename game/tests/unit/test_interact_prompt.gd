@@ -227,6 +227,46 @@ func test_the_sandbars_prompts() -> void:
 	assert_eq(_first_line(), "[E] Espantar Gaviota")
 
 
+# art-pass-followups: at a nest palm the perched gull's shoo wins over the palm's climb, on the
+# prompt and on the press; with the gull gone the palm is climbed. One player, offline.
+func test_solo_shoos_the_gull_perched_over_its_palm_then_climbs() -> void:
+	var body := _run(true)
+	# The creature spawner starts on the next frame.
+	await wait_process_frames(2)
+	# A nest palm holds two gulls (creatures-ai "Seagull swoop and steal").
+	var palm: Palm = null
+	var gulls: Array[Creature] = []
+	for child: Node in island.get_node("Palms").get_children():
+		gulls.clear()
+		for node: Node in session.entities.get_children():
+			var creature := node as Creature
+			if creature != null and creature.data.id == SEAGULL_ID and (child as Palm).global_position.distance_to(creature.global_position) < 0.5:
+				gulls.append(creature)
+		if not gulls.is_empty():
+			palm = child as Palm
+			break
+	assert_not_null(palm, "gulls perched on a nest palm")
+	if palm == null:
+		return
+	palm.coconuts = 3
+	_stand(body, palm.global_position)
+	assert_eq(_first_line(), "[E] Espantar Gaviota", "the shoo, not the climb")
+	body.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	body.advance(STEP_S)
+	var fled: Array[Creature] = gulls.filter(func(gull: Creature) -> bool: return gull.brain.state == SwoopSteal.State.FLEE)
+	assert_eq(fled.size(), 1, "the press shoos one gull")
+	assert_eq(body.inventory.count_id(&"coco"), 0, "and does not climb")
+	body.intent = MoveIntent.create(Vector2.ZERO, false, false, false)
+	body.advance(STEP_S)
+	# Every gull of the palm fled out of reach (their flight is the brain's; the test moves them).
+	for gull: Creature in gulls:
+		gull.global_position = palm.global_position + Vector2(0.0, -6.0 * TILE)
+	_stand(body, palm.global_position)
+	assert_eq(_first_line(), "[E] Trepar Mata de coco")
+	_hold(body, 2.5)
+	assert_eq(body.inventory.count_id(&"coco"), 1, "the climb gives a coconut")
+
+
 func test_a_bare_palm_still_reads_climb_and_the_climb_is_free() -> void:
 	var body := _run()
 	var palm := _palm(0)

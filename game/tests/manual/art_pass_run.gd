@@ -42,6 +42,8 @@ const DEADLINE_S: float = 2700.0
 const CLIENT_NAME: String = "Papo"
 ## The integrity the host sets on its raft before it leaves, which a late client must see.
 const HOST_RAFT_INTEGRITY: float = 60.0
+## How long the host's crossing runs: A and the host ride it through, B joins it a few seconds in.
+const HOST_CROSSING_S: float = 45.0
 ## The host's crossing sends the shark past at this time, after the client is back.
 const HOST_SHARK_AT_S: float = 12.0
 ## What a shark pass takes off the vessel (CrossingTuning.shark_hit): a client back after it sees 40.
@@ -52,6 +54,14 @@ const REJOIN_AFTER_S: float = 5.0
 const CROSSING_S: float = 30.0
 const SQUALL_AT_S: float = 3.0
 const SHARK_AT_S: float = 12.0
+## Foam is at least this many times bluer than the land's mean (blue over red; 1.52 times it by day is
+## the old "blue no less than red") and brighter than the land; a land neighbour is a pixel that is not foam
+## and not water (more than WATER_BLUER times as blue as the land: the sea reads about 4 times by day and by
+## night). Ratios of ratios, so the day-night tint cancels.
+const FOAM_BLUER: float = 1.5
+const WATER_BLUER: float = 2.5
+## The shore cell the art-pass run looked at first (task 4.6): logged whenever it is wholly in view.
+const PROBE_CELL: Vector2i = Vector2i(47, 19)
 
 
 class Collector extends Logger:
@@ -91,6 +101,11 @@ var host_tiles: String = ""
 ## A second client on the same machine passes --tag=<x>: its own settings file, so its own identity.
 var tag: String = ""
 var capture_dir: String = ""
+## Solo only: --only=foam runs just the shore views by day and by night (a quick way to tune the foam check);
+## --only=cay travels straight to the coast cay and runs its steps.
+var only: String = ""
+## Host only: how many clients play (2: A rides, B leaves and joins; 1: one untagged client rides).
+var clients: int = 2
 var shell: Node = null
 var session: Node = null
 var island: Node2D = null
@@ -103,6 +118,8 @@ var land: AStarGrid2D = null
 var passes: int = 0
 var fails: int = 0
 var done: bool = false
+## True from the moment a run is entered until the harness leaves it: a wait then fails fast if the shell leaves the run.
+var in_run: bool = false
 var physics_hz: int = 60
 var pose_names: Array = []
 var structure_art: Script = null
@@ -121,6 +138,10 @@ func _initialize() -> void:
 			port = arg.trim_prefix("--port=").to_int()
 		elif arg.begins_with("--capture="):
 			capture_dir = arg.trim_prefix("--capture=")
+		elif arg.begins_with("--clients="):
+			clients = arg.trim_prefix("--clients=").to_int()
+		elif arg.begins_with("--only="):
+			only = arg.trim_prefix("--only=")
 		elif arg.begins_with("--tag="):
 			tag = arg.trim_prefix("--tag=")
 		elif arg.begins_with("--host-tiles="):
@@ -170,6 +191,8 @@ func _on_deadline() -> void:
 # --- checks, input and time ----------------------------------------------------------------------
 
 func _check(label: String, ok: bool, detail: String = "") -> bool:
+	if mode == "client" and not label.begins_with("client"):
+		label = "client%s: %s" % [tag, label]
 	if ok:
 		passes += 1
 	else:
@@ -235,10 +258,23 @@ func _credits_visit() -> void:
 	var title: Control = shell.get("screen")
 	if not _check("the game opens on the title", title != null and shell.get("flow") == FLOW_TITLE):
 		return
+	var buttons: Array = title.call("buttons")
+	# The title takes focus where the mouse pointer rests over a button (this window opens under it), so the
+	# first button is not always the focused one: the walk down starts from it.
+	if root.gui_get_focus_owner() != buttons[0]:
+		_note("the title opened with focus on button %d (the mouse pointer rests over it); focus put on Jugar solo for the keyboard walk" % buttons.find(root.gui_get_focus_owner()))
+		(buttons[0] as Control).grab_focus()
+		await _frames(2)
+	var trail: PackedStringArray = [str(buttons.find(root.gui_get_focus_owner()))]
 	for i: int in CREDITS_INDEX:
 		await _tap(&"ui_down")
-	var buttons: Array = title.call("buttons")
-	_check("four downs focus Créditos", root.gui_get_focus_owner() == buttons[CREDITS_INDEX], str(root.gui_get_focus_owner()))
+		trail.append(str(buttons.find(root.gui_get_focus_owner())))
+	var focused: bool = root.gui_get_focus_owner() == buttons[CREDITS_INDEX]
+	_check("four downs focus Créditos", focused, "%s (button index after each down: %s)" % [root.gui_get_focus_owner(), ", ".join(trail)])
+	if not focused:
+		# Do not press whatever did get focus (it can be Salir): carry on from Créditos.
+		(buttons[CREDITS_INDEX] as Control).grab_focus()
+		await _frames(2)
 	await _tap(&"ui_accept")
 	await _frames(6)
 	var screen: Control = shell.get("screen")
@@ -265,6 +301,7 @@ func _wait_run(timeout_s: float) -> bool:
 				strip = hud.get("strip")
 				prompt = hud.get("prompt")
 				craft_list = hud.get("craft_list")
+				in_run = true
 				return true
 		await physics_frame
 	return false
@@ -438,11 +475,26 @@ func _follow(waypoints: Array[Vector2], within: float, label: String) -> bool:
 
 # --- captures and pixels --------------------------------------------------------------------------
 
+# Waits for the next drawn frame. A window that is not drawing (minimized) gives up after 3 s, so the run
+# goes on with the last frame instead of hanging.
+func _drawn() -> void:
+	var state: Array[bool] = [false]
+	var mark: Callable = func() -> void: state[0] = true
+	RenderingServer.frame_post_draw.connect(mark, CONNECT_ONE_SHOT)
+	for i: int in 3 * physics_hz:
+		if state[0]:
+			return
+		await physics_frame
+	if RenderingServer.frame_post_draw.is_connected(mark):
+		RenderingServer.frame_post_draw.disconnect(mark)
+	_note("the window drew no frame in 3 s (minimized?); using the last one")
+
+
 # The world view as rendered now (640x360), saved as <name>.png when --capture is set; null headless.
 func _world_image(name: String = "") -> Image:
 	if not _rendering():
 		return null
-	await RenderingServer.frame_post_draw
+	await _drawn()
 	var viewport: SubViewport = shell.get("world_viewport")
 	var image: Image = viewport.get_texture().get_image()
 	image.convert(Image.FORMAT_RGBA8)
@@ -456,7 +508,7 @@ func _world_image(name: String = "") -> Image:
 func _save_window(name: String) -> Image:
 	if not _rendering():
 		return null
-	await RenderingServer.frame_post_draw
+	await _drawn()
 	var image: Image = root.get_texture().get_image()
 	var scale: int = maxi(1, int((shell.get("settings") as Object).get("ui_scale")))
 	var size: Vector2i = BASE_SIZE * scale
@@ -536,6 +588,18 @@ func _mean(image: Image, classes: PackedByteArray, wanted: int) -> float:
 	return total / count if count > 0 else -1.0
 
 
+# The mean colour of the pixels of class `wanted`, per channel in 0-255, or (-1, -1, -1) with none.
+func _mean_rgb(image: Image, classes: PackedByteArray, wanted: int) -> Vector3:
+	var data: PackedByteArray = image.get_data()
+	var total := Vector3.ZERO
+	var count: int = 0
+	for i: int in classes.size():
+		if classes[i] == wanted:
+			total += Vector3(data[i * 4], data[i * 4 + 1], data[i * 4 + 2])
+			count += 1
+	return total / count if count > 0 else Vector3(-1.0, -1.0, -1.0)
+
+
 # Pixels of class `wanted` that differ between two images.
 func _changed(a: Image, b: Image, classes: PackedByteArray, wanted: int) -> int:
 	var da: PackedByteArray = a.get_data()
@@ -548,21 +612,27 @@ func _changed(a: Image, b: Image, classes: PackedByteArray, wanted: int) -> int:
 
 
 # Shore cells fully on screen: how many draw foam touching a land colour, and how many changed
-# between two images (the foam moving). Foam is a white or blue-white pixel brighter than the land's mean,
-# and land a pixel no bluer than it is red (sand, dune, brush and rock; the sea is blue); both hold
-# under the day-night tint, which scales them alike.
+# between two images (the foam moving). The day-night tint scales every channel of land and foam
+# alike, and warms both, so "white" and "blue" mean nothing at night: the test is relative to the land's
+# own mean colour in the same image. A foam pixel is brighter than the land's mean and clearly bluer
+# than it (its blue-to-red ratio at FOAM_BLUER times the land mean's ratio or more); a land
+# neighbour is any pixel that is neither foam nor water (sand, dune, brush, rock, the dark wet rim).
 func _foam(image: Image, later: Image) -> Dictionary:
 	var size: Vector2i = image.get_size()
 	var data: PackedByteArray = image.get_data()
 	var after: PackedByteArray = later.get_data() if later != null else PackedByteArray()
 	var classes: PackedByteArray = _classes(image)
-	var bright: float = _mean(image, classes, 1) * 765.0
+	var land_rgb: Vector3 = _mean_rgb(image, classes, 1)
+	var bright: float = land_rgb.x + land_rgb.y + land_rgb.z
+	var land_ratio: float = _bluish(land_rgb.x, land_rgb.z)
 	var from_island: Transform2D = island.get_global_transform_with_canvas()
 	var view := Rect2(Vector2.ZERO, Vector2(size))
 	var shore: int = 0
 	var touching: int = 0
 	var moved: PackedInt32Array = []
 	var bare: Array[Vector2i] = []
+	var bare_at: Array[Vector2i] = []
+	var results: Dictionary[Vector2i, String] = {}
 	var bushed: int = 0
 	var covered: Dictionary[Vector2i, bool] = _covered()
 	var built_size: Vector2i = (island.get("built") as Object).get("size")
@@ -583,24 +653,42 @@ func _foam(image: Image, later: Image) -> Dictionary:
 					var i: int = at.y * size.x + at.x
 					if not after.is_empty() and (data[i * 4] != after[i * 4] or data[i * 4 + 1] != after[i * 4 + 1] or data[i * 4 + 2] != after[i * 4 + 2]):
 						changed += 1
-					var foam: bool = data[i * 4 + 2] >= data[i * 4] and data[i * 4] + data[i * 4 + 1] + data[i * 4 + 2] > bright
+					var foam: bool = _is_foam(data[i * 4], data[i * 4 + 1], data[i * 4 + 2], land_ratio, bright)
 					if touches or not foam:
 						continue
 					for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
 						var next: Vector2i = at + step
 						if Rect2i(Vector2i.ZERO, size).has_point(next):
 							var j: int = (next.y * size.x + next.x) * 4
-							if data[j + 2] < data[j] + 12:
+							if _is_land(data[j], data[j + 1], data[j + 2], land_ratio, bright):
 								touches = true
 								break
+			results[cell] = "foam touches the sand" if touches else "no foam"
 			if touches:
 				touching += 1
 			elif _kind(cell) == SCRUB or covered.has(cell):
 				bushed += 1
 			else:
 				bare.append(cell)
+				bare_at.append(Vector2i(corner))
 			moved.append(changed)
-	return {"shore": shore, "touching": touching, "moved": moved, "bare": bare, "bushed": bushed}
+	return {"shore": shore, "touching": touching, "moved": moved, "bare": bare, "bare_at": bare_at, "results": results, "bushed": bushed, "land_rgb": land_rgb, "land_ratio": land_ratio}
+
+
+# Foam: brighter than the land's mean (`bright`, the sum of its channels) and FOAM_BLUER times bluer. Pale
+# foam can be as blue as the sea (143, 224, 240 by day), so it is told from it by being brighter than the land.
+func _is_foam(red: int, green: int, blue: int, land_ratio: float, bright: float) -> bool:
+	return _bluish(red, blue) >= land_ratio * FOAM_BLUER and red + green + blue > bright
+
+
+# Land: neither foam nor water (not more than WATER_BLUER times the land's blue over red).
+func _is_land(red: int, green: int, blue: int, land_ratio: float, bright: float) -> bool:
+	return _bluish(red, blue) <= land_ratio * WATER_BLUER and not _is_foam(red, green, blue, land_ratio, bright)
+
+
+# Blue over red (each plus one, so a black pixel is 1): the one ratio the tint leaves alone.
+func _bluish(red: float, blue: float) -> float:
+	return (blue + 1.0) / (red + 1.0)
 
 
 # Cells a thing stands over (a structure's frame, a player, a pick-up, a palm), whose foam it hides.
@@ -638,6 +726,14 @@ func _check_shore_view(where: String) -> void:
 	var second: Image = await _world_image()
 	var foam: Dictionary = _foam(first, second)
 	var shore: int = foam["shore"]
+	var land_rgb: Vector3 = foam["land_rgb"]
+	_note("%s: land mean (%.0f, %.0f, %.0f), blue/red %.3f; foam needs >= %.3f, water above %.3f" % [where, land_rgb.x, land_rgb.y, land_rgb.z, foam["land_ratio"], float(foam["land_ratio"]) * FOAM_BLUER, float(foam["land_ratio"]) * WATER_BLUER])
+	var sea_rgb: Vector3 = _mean_rgb(first, _classes(first), 2)
+	var sea_ratio: float = _bluish(sea_rgb.x, sea_rgb.z)
+	_note("%s: open sea mean (%.0f, %.0f, %.0f), blue/red %.3f: it %s the foam test (it must not)" % [where, sea_rgb.x, sea_rgb.y, sea_rgb.z, sea_ratio, "PASSES" if _is_foam(int(sea_rgb.x), int(sea_rgb.y), int(sea_rgb.z), foam["land_ratio"], land_rgb.x + land_rgb.y + land_rgb.z) else "fails"])
+	var results: Dictionary = foam["results"]
+	if results.has(PROBE_CELL):
+		_note("%s: shore cell %s: %s" % [where, PROBE_CELL, results[PROBE_CELL]])
 	var moved: PackedInt32Array = foam["moved"]
 	var moving: int = 0
 	var distinct: Dictionary[int, bool] = {}
@@ -649,7 +745,7 @@ func _check_shore_view(where: String) -> void:
 		_note("%s: no shore cell wholly in view" % where)
 		return
 	# A bush on a shore cell stands over its foam (design.md D15, K39), so those cells are counted apart.
-	_check("%s: the foam touches the sand on every shore cell in view not under a bush" % where, (foam["bare"] as Array).is_empty(), "%d of %d shore cells, %d under a bush or a thing standing on it; without foam: %s" % [foam["touching"], shore, foam["bushed"], foam["bare"]])
+	_check("%s: the foam touches the sand on every shore cell in view not under a bush" % where, (foam["bare"] as Array).is_empty(), "%d of %d shore cells, %d under a bush or a thing standing on it; without foam: %s (view pixels %s)" % [foam["touching"], shore, foam["bushed"], foam["bare"], foam["bare_at"]])
 	_check("%s: the foam moves, and unevenly (cells change by different amounts in 0.25 s)" % where, moving > 0 and distinct.size() > 1, "%d of %d shore cells changed, %d distinct amounts" % [moving, shore, distinct.size()])
 
 
@@ -666,6 +762,12 @@ func _solo() -> void:
 	_set_day("4.6 day captures")
 	await _frames(30)
 	var spawn: Vector2 = body.global_position
+	if only == "foam":
+		await _foam_only(spawn)
+		return
+	if only == "cay":
+		await _cay_only()
+		return
 	var day: Image = await _world_image("sandbar_day_view")
 	_check_no_magenta(day, "the sandbar by day")
 	await _check_shore_view("spawn_day")
@@ -683,6 +785,29 @@ func _solo() -> void:
 	await _crossing()
 	await _coast_cay()
 	await _binoculars_swim()
+
+
+# --only=cay: the run travels straight to the coast cay (the host's travel_to, as a crossing's end calls it),
+# then the coast cay steps run.
+func _cay_only() -> void:
+	session.call("travel_to", "coast_cay", {1: {"health": 100.0, "energy": 100.0}}, 100.0)
+	_hooked("travelled to the coast cay at once (CoopSession.travel_to)")
+	await _frames(30)
+	await _coast_cay()
+
+
+# --only=foam: the shore views by day, then by night.
+func _foam_only(spawn: Vector2) -> void:
+	await _world_image("sandbar_day_view")
+	await _check_shore_view("spawn_day")
+	await _crescent_walk("day")
+	await _walk_to(spawn)
+	_sky().call("start_at", NIGHT_START_S - 2.0)
+	_hooked("day clock to 2 s before night")
+	await _seconds(3.0)
+	await _world_image("sandbar_night_view")
+	await _check_shore_view("spawn_night")
+	await _crescent_walk("night")
 
 
 # The crescent's ends and middle, walked on foot, with the shore checked at each.
@@ -802,11 +927,24 @@ func _pick_up_everything(where: String) -> void:
 
 # --- 8.5: fire, rain catcher, raft ------------------------------------------------------------------
 
+# Stands where the prompt is the bench's own: the first spot beside it, then the others (a fire or a
+# site placed at the bench can be nearer than the bench from the first).
 func _walk_to_bench() -> bool:
 	var bench: Node2D = session.get_node_or_null(^"HutWorkbench")
 	if not _check("the hut's workbench exists", bench != null):
 		return false
-	return _check("walked to the bench", await _walk_to(bench.global_position + Vector2(0.0, 10.0)))
+	if craft_list.call("is_open"):
+		await _tap(&"pause")
+	var wanted: Object = bench.get("interactable")
+	var walked: bool = false
+	for offset: Vector2 in [Vector2(0.0, 10.0), Vector2(0.0, -10.0), Vector2(-10.0, 0.0), Vector2(10.0, 0.0), Vector2(0.0, 4.0), Vector2(0.0, -4.0)]:
+		if not await _walk_to(bench.global_position + offset):
+			continue
+		walked = true
+		await _frames(3)
+		if prompt.get("target") == wanted:
+			return _check("walked to the bench, where the prompt is the bench's own", true, "beside it at %s" % offset)
+	return _check("walked to the bench, where the prompt is the bench's own", false, "walked %s, prompt %s" % [walked, _prompt_lines()])
 
 
 # Opens the bench's list and chooses the row named `row_name` with list_down and E.
@@ -866,7 +1004,7 @@ func _work_site(site: Node2D, label: String, limit_s: float) -> PackedStringArra
 	var seen: PackedStringArray = [_frame(site)]
 	var aimed: bool = await _aim_at(site)
 	_check("%s: the prompt beside the site reads '[E] Construir …'" % label, aimed and _prompt_lines()[0].contains("Construir"), "prompt %s" % _prompt_lines())
-	await _tap(&"interact")
+	await _press_interact()
 	for i: int in ceili(limit_s * physics_hz):
 		if not is_instance_valid(site) or site.is_queued_for_deletion() or bool(site.get("built")):
 			break
@@ -1017,22 +1155,114 @@ func _shark_offshore() -> void:
 	_check("only its fin shows: cut at the water line, no shadow", sprite.material is ShaderMaterial and not shadow.visible)
 
 
-func _nest_palm_and_gull() -> void:
+const SHOO_PROMPT: String = "[E] Espantar Gaviota"
+const CLIMB_PROMPT: String = "[E] Trepar Mata de coco"
+
+
+# What the prompt shows now, its lines joined (a wide one is cut over two lines).
+func _prompt_text() -> String:
+	return " ".join(_prompt_lines())
+
+
+# The gulls perched in `palm`'s crown now, oldest name first.
+func _perched_at(palm: Node2D) -> Array[Node2D]:
+	var found: Array[Node2D] = []
+	for each: Node2D in _creatures(&"seagull"):
+		if _state_of(each) == "perch" and each.global_position.distance_to(palm.global_position) < TILE:
+			found.append(each)
+	found.sort_custom(func(a: Node2D, b: Node2D) -> bool: return String(a.name) < String(b.name))
+	return found
+
+
+# Waits up to `timeout_s` for the prompt to read exactly `wanted`, nudging the player round `palm`
+# when the first spot does not show it.
+func _prompt_becomes(wanted: String, timeout_s: float) -> bool:
+	for i: int in ceili(timeout_s * physics_hz):
+		if _prompt_text() == wanted:
+			return true
+		await physics_frame
+	return false
+
+
+# Stands at the palm's foot, then, if the prompt is not `wanted`, tries the spots round the gulls.
+func _stand_for_prompt(palm: Node2D, gulls: Array[Node2D], wanted: String) -> bool:
+	if not await _walk_to(palm.global_position + Vector2(0.0, 2.0)):
+		return false
+	await _frames(3)
+	if await _prompt_becomes(wanted, 1.0):
+		return true
+	for gull: Node2D in gulls:
+		for offset: Vector2 in [Vector2(0.0, 6.0), Vector2(0.0, 10.0), Vector2(-6.0, 6.0), Vector2(6.0, 6.0)]:
+			await _walk_to(gull.global_position + offset, 2.0)
+			await _frames(3)
+			if await _prompt_becomes(wanted, 0.5):
+				return true
+	return false
+
+
+func _nearest_nest_palm() -> Node2D:
 	var palms: Node = island.get_node(^"Palms")
 	var nests: Array = (island.get("layout") as Object).get("nest_palms")
-	var palm: Node2D = _nearest(nests.map(func(index: int) -> Node: return palms.get_child(index)), body.global_position)
+	return _nearest(nests.map(func(index: int) -> Node: return palms.get_child(index)), body.global_position)
+
+
+# At a nest palm with its two gulls perched, the prompt is the gull's "[E] Espantar Gaviota", not the
+# palm's climb; E sends a gull off (FLEE), again for the second; with none left in reach the prompt reads
+# "[E] Trepar Mata de coco". True when it ends there. Solo, host-side and on a client (a client reads the
+# gulls' states the host syncs).
+func _shoo_pair(palm: Node2D) -> bool:
+	var pair: Array[Node2D] = _perched_at(palm)
+	var coco_start: int = _count(&"coco")
+	if not _check("two gulls perch in the nest palm's crown", pair.size() == 2, "%d perched, %d gull(s) in all" % [pair.size(), _creatures(&"seagull").size()]):
+		return false
+	if not _check("beside the perched gulls the prompt is the gull's shoo, not the palm's climb", await _stand_for_prompt(palm, pair, SHOO_PROMPT), "prompt %s" % [_prompt_lines()]):
+		return false
+	await _world_image("gull_perched_prompt")
+	var fled_names: Array[String] = []
+	for turn: int in 2:
+		var waiting: Array[Node2D] = []
+		for each: Node2D in pair:
+			if not fled_names.has(String(each.name)):
+				waiting.append(each)
+		if turn > 0:
+			await _seconds(0.5)
+		if turn > 0 and not _check("second gull: the prompt is still the gull's shoo", await _prompt_becomes(SHOO_PROMPT, 2.0), "prompt %s" % [_prompt_lines()]):
+			return false
+		await _press_interact()
+		var gone: Node2D = null
+		for i: int in physics_hz * 3:
+			for each: Node2D in waiting:
+				if _state_of(each) == "flee":
+					gone = each
+					break
+			if gone != null:
+				break
+			await physics_frame
+		if not _check("E sent gull %d off: it flies (FLEE) and the palm was not climbed" % (turn + 1), gone != null and _count(&"coco") == coco_start, "states %s, coconuts held %d (%d before)" % [pair.map(func(each: Node2D) -> String: return _state_of(each)), _count(&"coco"), coco_start]):
+			return false
+		fled_names.append(String(gone.name))
+		if turn == 0:
+			await _seconds(0.3)
+			await _world_image("gull_shooed")
+			if not _check("the other gull stays perched after the first shoo", _state_of(waiting[0] if waiting[0] != gone else waiting[1]) == "perch"):
+				return false
+	_check("both gulls of the palm are away (flee or return)", pair.all(func(each: Node2D) -> bool: return _state_of(each) != "perch"), "%s" % [pair.map(func(each: Node2D) -> String: return _state_of(each))])
+	if not _check("no gull in reach: the prompt is the palm's, '[E] Trepar Mata de coco'", await _prompt_becomes(CLIMB_PROMPT, 3.0), "prompt %s" % [_prompt_lines()]):
+		return await _stand_for_prompt(palm, [] as Array[Node2D], CLIMB_PROMPT)
+	return true
+
+
+# Task 6.5, the shoo shown, then the climb for a coconut, and with it in hand a gull back from its
+# flight swoops on it.
+func _nest_palm_and_gull() -> void:
+	var palm: Node2D = _nearest_nest_palm()
 	if not _check("a nest palm", palm != null):
 		return
 	var look: Node = _look_of(palm)
 	var before: int = int(look.call("coconuts_drawn"))
 	_check("the nest palm shows its nest and its coconut", String(look.call("frame")) != "" and before >= 1, "frame %s, %d coconut(s) drawn" % [look.call("frame"), before])
-	var gulls: Array[Node2D] = _creatures(&"seagull")
-	var gull: Node2D = _nearest(gulls, palm.global_position)
-	_check("a gull perches in the nest palm's crown", gull != null and _state_of(gull) == "perch" and gull.global_position.distance_to(palm.global_position) < TILE, "%d gull(s), state %s" % [gulls.size(), _state_of(gull) if gull != null else ""])
-	if not await _walk_to(palm.global_position + Vector2(0.0, 2.0)):
-		_check("walked to the nest palm", false)
+	if not await _shoo_pair(palm):
 		return
-	await _frames(3)
 	var hold_s: float = float(palm.get("hold_s"))
 	var coco: int = _count(&"coco")
 	var most: int = coco
@@ -1043,8 +1273,9 @@ func _nest_palm_and_gull() -> void:
 	var selected: bool = false
 	var hold_frames: int = ceili((hold_s + 0.4) * physics_hz)
 	Input.action_press(&"interact")
-	# The climb, then up to 20 s holding the coconut under the nest: a gull swoops on it.
-	for i: int in hold_frames + 20 * physics_hz:
+	# The climb, then up to 50 s holding the coconut under the nest: the shooed gulls are back within
+	# 30 s and one swoops on it.
+	for i: int in hold_frames + 50 * physics_hz:
 		if i == hold_frames:
 			Input.action_release(&"interact")
 		most = maxi(most, _count(&"coco"))
@@ -1061,7 +1292,7 @@ func _nest_palm_and_gull() -> void:
 			var gull_look: Node = _look_of(swooper)
 			var shadow: Node2D = gull_look.get_node(^"Shadow")
 			shadow_below = shadow_below or (shadow.visible and shadow.global_position.y > (gull_look.get_node(^"Sprite") as Node2D).global_position.y)
-			if state == "swoop" and not shooed and i > hold_frames and _prompt_lines().size() > 0 and _prompt_lines()[0].contains("Espantar"):
+			if state == "swoop" and not shooed and i > hold_frames and _prompt_text() == SHOO_PROMPT:
 				await _tap(&"interact")
 				shooed = true
 			elif state == "flee":
@@ -1075,37 +1306,9 @@ func _nest_palm_and_gull() -> void:
 	_check("the nest stays after the climb", String(look.call("frame")) != "")
 	_check("a gull swoops on the held coconut", swooper != null)
 	_check("in the air its shadow stays on the ground below it", shadow_below)
-	_check("a shoo (E on the gull) works, or the gull takes the coconut, and it flies off", fled, "shooed %s, coco %d" % [shooed, _count(&"coco")])
+	_check("the swooping gull flies off (shooed with E, or away with the coconut)", fled, "shooed %s, coco %d" % [shooed, _count(&"coco")])
 	if swooper != null and is_instance_valid(swooper):
 		_note("after the gull: shooed %s, coconut kept %s, gull state %s, animation %s" % [shooed, _count(&"coco") > coco, _state_of(swooper), _creature_anim(swooper)])
-	if not shooed:
-		await _shoo_perched(palm)
-
-
-# The other nest's gull, still perched: E on it (its prompt, not the palm's) sends it off.
-func _shoo_perched(climbed: Node2D) -> void:
-	var gull: Node2D = null
-	for each: Node2D in _creatures(&"seagull"):
-		if _state_of(each) == "perch" and each.global_position.distance_to(climbed.global_position) > TILE * 2.0:
-			gull = _nearest([each] if gull == null else [each, gull], body.global_position)
-	if not _check("another gull still perches for a shoo", gull != null):
-		return
-	var aimed: bool = await _aim_at(gull)
-	_check("beside its palm the prompt is the gull's shoo", aimed, "prompt %s" % _prompt_lines())
-	if not aimed:
-		return
-	_note("shoo prompt %s" % _prompt_lines())
-	await _tap(&"interact")
-	var fled: bool = false
-	for i: int in physics_hz:
-		if _state_of(gull) == "flee":
-			fled = true
-			break
-		await physics_frame
-	_check("E shoos the perched gull: it flies off", fled, "state %s" % _state_of(gull))
-	if fled:
-		await _seconds(0.4)
-		await _world_image("gull_shooed")
 	await _world_image("gull_flee")
 
 
@@ -1291,20 +1494,7 @@ func _coast_cay() -> void:
 	shell.call("apply_pixel_filter")
 	_hooked("window scale and pixel filter through the settings object (Ajustes offers the same)")
 	await _frames(10)
-	var sign: Node2D = null
-	for child: Node in session.get_children():
-		var script: Script = child.get_script()
-		if script != null and script.get_global_name() == &"IslandSign":
-			sign = _nearest([child] if sign == null else [child, sign], body.global_position)
-	if _check("the coast cay has a sign", sign != null):
-		_check("the sign shows its post", _frame(sign) == "island_sign", _frame(sign))
-		if await _walk_to(sign.global_position + Vector2(0.0, 8.0), 4.0):
-			await _frames(3)
-			await _tap(&"interact")
-			await _frames(6)
-			var bubble: Node = sign.get_node_or_null(^"SpeechBubble")
-			_check("E reads the sign: its line shows over it", bubble != null, "prompt %s" % _prompt_lines())
-			await _world_image("coast_cay_sign")
+	await _read_sign()
 	await _pick_up_everything("coast cay")
 
 
@@ -1350,7 +1540,39 @@ func _binoculars_swim() -> void:
 	_check("the swim ends on the coast cay", landed)
 
 
-# --- host plus client -------------------------------------------------------------------------------
+# --- host plus clients ------------------------------------------------------------------------------
+# One host and two clients play the same route. Client A (any tag but B) plays it by input from the
+# bench to the coast cay's sign and rides the crossing through with the host. Client B (--tag=B)
+# takes the first look, waits well away from the raft watching the host's synced frames, leaves the
+# moment the crossing starts and joins it again. What only the host may set (the day, materials in a
+# client's inventory, the squall, the raft's wear, the crossing's plan) the host harness sets when it
+# sees the client reach each step: its body's position, its inventory, the structures in the session.
+
+# Polls `ready` on each physics frame for up to `timeout_s`. It says what it waits for, and a timeout is
+# a FAIL that names it (never a hang).
+func _wait_for(what: String, ready: Callable, timeout_s: float) -> bool:
+	_note("waiting for %s (up to %.0f s)" % [what, timeout_s])
+	var started: int = Time.get_ticks_msec()
+	for i: int in ceili(timeout_s * physics_hz):
+		if ready.call():
+			_note("got %s after %.1f s" % [what, (Time.get_ticks_msec() - started) / 1000.0])
+			return true
+		if in_run and shell.get("flow") != FLOW_RUN:
+			_check("the run ended while waiting for %s" % what, false, "flow %s" % shell.get("flow"))
+			return false
+		await physics_frame
+	_check("timed out after %.0f s waiting for %s" % [timeout_s, what], false)
+	return false
+
+
+# E as a player presses it: a tap solo and on the host, a short hold on a client, so the host's
+# intent queue sees the press for sure.
+func _press_interact() -> void:
+	if mode == "client":
+		await _hold(&"interact", 0.3)
+	else:
+		await _tap(&"interact")
+
 
 # A hash of every cell of every tile layer the island's terrain view draws.
 func _tiles_hash() -> String:
@@ -1368,6 +1590,111 @@ func _tiles_hash() -> String:
 	return "%d-%s" % [layers.size(), "|".join(text).sha256_text().substr(0, 16)]
 
 
+# The peer whose lobby name ends with `suffix` (the clients are "Papo" plus their tag), or 0.
+func _peer_named(suffix: String) -> int:
+	var names: Dictionary = session.get("roster")
+	for peer_id: int in names:
+		if peer_id != 1 and String(names[peer_id]).ends_with(suffix):
+			return peer_id
+	return 0
+
+
+func _on_coast_cay() -> bool:
+	var now: Node = shell.get("island")
+	return now != null and (now.get("layout") as Object).get("id") == &"coast_cay"
+
+
+# Whether any peer id in the session is not in `known`.
+func _new_peer(known: Array) -> bool:
+	for peer_id: int in session.call("peer_ids"):
+		if not known.has(peer_id):
+			return true
+	return false
+
+
+# The coconuts the nest palms still hold, as the host has them.
+func _nest_coconuts(palms: Array[Node2D]) -> int:
+	var total: int = 0
+	for palm: Node2D in palms:
+		total += int(palm.get("coconuts"))
+	return total
+
+
+# Adds to `fled` every gull that is in flight from a shoo now; true once two have been.
+func _two_gulls_fled(fled: Dictionary) -> bool:
+	for each: Node2D in _creatures(&"seagull"):
+		if _state_of(each) == "flee":
+			fled[String(each.name)] = true
+	return fled.size() >= 2
+
+
+# DataEnums.ItemTag.TINDER is the one tag a recipe here asks for; dry grass is its item.
+const TAG_ITEMS: Dictionary[int, StringName] = {13: &"dry_grass"}
+
+
+# Host: tops up `target`'s inventory (a client's, which only the host may change) with what `recipe`
+# still needs from what the player holds.
+func _feed(target: Node, recipe: Object, why: String) -> void:
+	var inventory: Object = target.get("inventory")
+	var gave: PackedStringArray = []
+	var inputs: Dictionary = recipe.get("inputs")
+	for id: StringName in inputs:
+		var short: int = int(inputs[id]) - int(inventory.call("count_id", id))
+		if short > 0:
+			gave.append("%s x%d (%d fit)" % [id, short, int(inventory.call("add", id, short))])
+	var tags: Dictionary = recipe.get("input_tags")
+	for tag: int in tags:
+		var short_tag: int = int(tags[tag]) - int(inventory.call("count_tag", tag))
+		if short_tag > 0 and TAG_ITEMS.has(tag):
+			gave.append("%s x%d (%d fit)" % [TAG_ITEMS[tag], short_tag, int(inventory.call("add", TAG_ITEMS[tag], short_tag))])
+	_hooked("%s: %s" % [why, ", ".join(gave) if not gave.is_empty() else "nothing was short"])
+
+
+# Whether the local player holds what `site` still lacks.
+func _inputs_in_hand(site: Node) -> bool:
+	if not is_instance_valid(site) or site.is_queued_for_deletion():
+		return false
+	var items: Dictionary = site.call("missing_items")
+	for id: StringName in items:
+		if _count(id) < int(items[id]):
+			return false
+	var tags: Dictionary = site.call("missing_tags")
+	for tag: int in tags:
+		if int(body.get("inventory").call("count_tag", tag)) < int(tags[tag]):
+			return false
+	return true
+
+
+# The nearest walkable cell centre at least `at_least` px from `from` that the local body can walk to.
+func _far_cell(from: Vector2, at_least: float) -> Vector2:
+	var size: Vector2i = (island.get("built") as Object).get("size")
+	var found: Array[Vector2i] = []
+	for y: int in size.y:
+		for x: int in size.x:
+			var cell := Vector2i(x, y)
+			if not land.is_point_solid(cell) and _center(cell).distance_to(from) >= at_least:
+				found.append(cell)
+	found.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return _center(a).distance_to(from) < _center(b).distance_to(from))
+	var here: Vector2i = _cell_of(body.global_position)
+	for cell: Vector2i in found.slice(0, 60):
+		if not land.get_id_path(here, cell, true).is_empty():
+			return _center(cell)
+	return body.global_position
+
+
+# The raft site's frame, followed as it changes (appended to `seen`, then the raft's); true once the raft stands.
+func _watch_raft_site(seen: Array[String]) -> bool:
+	var site: Node = session.get_node_or_null(^"RaftSite")
+	if site != null and not site.is_queued_for_deletion():
+		var now: String = _frame(site)
+		if seen[-1] != now:
+			seen.append(now)
+	var raft: Node = session.get_node_or_null(^"Raft")
+	if raft != null and not seen.has("raft " + _frame(raft)):
+		seen.append("raft " + _frame(raft))
+	return raft != null and _frame(raft) == "whole"
+
+
 func _host() -> void:
 	await _credits_visit()
 	shell.set("port", 0)
@@ -1377,14 +1704,9 @@ func _host() -> void:
 		return
 	var enet: ENetMultiplayerPeer = session.multiplayer.multiplayer_peer as ENetMultiplayerPeer
 	print("ARTRUN host listening %d" % enet.host.get_local_port())
-	var joined: bool = false
-	for i: int in 120 * physics_hz:
-		if (session.get("roster") as Dictionary).size() >= 2:
-			joined = true
-			break
-		await physics_frame
-	if not _check("a client joined the lobby", joined):
+	if not await _wait_for("%d client(s) in the lobby" % clients, func() -> bool: return (session.get("roster") as Dictionary).size() > clients, 180.0):
 		return
+	_check("%d client(s) joined the lobby" % clients, true)
 	await _seconds(1.0)
 	_check("begin_run started the run", session.call("begin_run") == true)
 	if not _check("the host entered the run", await _wait_run(10.0)):
@@ -1392,38 +1714,103 @@ func _host() -> void:
 	_build_land()
 	_set_day("host-plus-client captures")
 	print("ARTRUN host tiles %s" % _tiles_hash())
-	var client_peer: int = 0
-	for peer_id: int in session.call("peer_ids"):
-		if peer_id != 1:
-			client_peer = peer_id
-	var client_body: Node2D = session.call("body", client_peer)
-	# A lambda captures locals by value, so the count lives in an array.
-	var picked: Array[int] = [0]
-	if client_body != null:
-		client_body.get("inventory").connect(&"changed", func() -> void: picked[0] += 1)
-	# The raft is built at once (the solo run plays the build), so the host can leave the moment
-	# the client does, and waits on it while the client looks round.
-	var site: Node2D = session.get_node_or_null(^"RaftSite")
-	if site != null:
-		for item_id: StringName in [&"driftwood", &"inner_tube", &"rope"]:
-			body.get("inventory").call("add", item_id, {&"driftwood": 6, &"inner_tube": 2, &"rope": 3}[item_id])
-		site.call("deposit", body)
-		site.call("work", 1.0)
-		_hooked("host raft built at once (BuildSite.deposit and work, as capture_crossing.gd)")
-	await _frames(4)
-	var raft: Node2D = session.get_node_or_null(^"Raft")
-	_check("host: the raft was built", raft != null and _frame(raft) == "whole")
-	if raft != null:
-		await _walk_to(raft.global_position + Vector2(0.0, -4.0), 2.0)
-	var left: bool = false
-	for i: int in 300 * physics_hz:
-		if session.call("is_dropped", client_peer) or not (session.call("peer_ids") as Array).has(client_peer):
-			left = true
-			break
-		await physics_frame
-	_check("host: the client's pick-ups went through the host (its inventory changed here)", picked[0] > 0, "%d change(s)" % picked[0])
-	if not _check("host: the client left", left) or raft == null:
+	await _host_route()
+
+
+# The host's half of the route: it waits for each step the clients play, sets what only it may set,
+# and asserts the host's own truth.
+func _host_route() -> void:
+	var a_peer: int = _peer_named("A" if clients >= 2 else "")
+	var b_peer: int = _peer_named("B") if clients >= 2 else 0
+	var a_body: Node2D = session.call("body", a_peer)
+	if not _check("host: client A (the rider) has a body here", a_body != null, "peer %d, roster %s" % [a_peer, session.get("roster")]):
 		return
+	var b_body: Node2D = session.call("body", b_peer) if b_peer != 0 else null
+	# A lambda captures locals by value, so the counts live in an array.
+	var picks: Array[int] = [0, 0]
+	a_body.get("inventory").connect(&"changed", func() -> void: picks[0] += 1)
+	if b_body != null:
+		b_body.get("inventory").connect(&"changed", func() -> void: picks[1] += 1)
+	# 1 and 2. The first look (the clients' pick-ups go through the host) and the lean-to (A stands in its
+	# shade): one wait, with the shade sighting latched, since A passes through it quickly.
+	var shaded: Dictionary = _terrain().get("shaded")
+	var shade_cell: Array[Vector2i] = []
+	var first_steps: Callable = func() -> bool:
+		if shade_cell.is_empty() and is_instance_valid(a_body) and shaded.has(_cell_of(a_body.global_position)):
+			shade_cell.append(_cell_of(a_body.global_position))
+		return picks[0] > 0 and (b_body == null or picks[1] > 0) and not shade_cell.is_empty()
+	if not await _wait_for("the clients' pick-ups to change their inventories here and A to stand in the lean-to's shade", first_steps, 400.0):
+		return
+	_check("host: the clients' pick-ups went through the host (their inventories changed here)", true, "A %d change(s), B %d" % [picks[0], picks[1]])
+	_check("host: A's body stood in the shade under the lean-to (the host's own truth)", true, "cell %s" % [shade_cell])
+	# 3. The nest palm: A shoos both gulls, then climbs.
+	_set_day("a gull shoo and a climb need daylight")
+	var palms: Node = island.get_node(^"Palms")
+	var nest_palms: Array[Node2D] = []
+	for index: int in ((island.get("layout") as Object).get("nest_palms") as Array):
+		nest_palms.append(palms.get_child(index) as Node2D)
+	var coconuts_before: int = _nest_coconuts(nest_palms)
+	var fled: Dictionary = {}
+	if not await _wait_for("A to shoo both gulls of a nest palm (two gulls in FLEE here)", _two_gulls_fled.bind(fled), 400.0):
+		return
+	_check("host: A's two shoos sent two gulls into flight (their states on the host)", true, "%s" % [fled.keys()])
+	if not await _wait_for("A's coconut in its inventory here", func() -> bool: return int(a_body.get("inventory").call("count_id", &"coco")) >= 1, 120.0):
+		return
+	_check("host: A's climb put a coconut in A's inventory here and took one off the nest palm", _nest_coconuts(nest_palms) == coconuts_before - 1, "nest coconuts %d -> %d" % [coconuts_before, _nest_coconuts(nest_palms)])
+	# 4. The fire at the bench, then put out.
+	_set_day("the fire")
+	if not await _wait_for("A's fire site (placed at the bench)", func() -> bool: return _site(&"fire") != null, 300.0):
+		return
+	_feed(a_body, _site(&"fire").get("recipe"), "A's inventory topped up for the fire (the host owns it)")
+	if not await _wait_for("A's fire to be built", func() -> bool: return _structure(&"Fire") != null, 180.0):
+		return
+	var fire: Node2D = _structure(&"Fire")
+	_check("host: the fire A built burns here", bool(fire.get("lit")), "lit %s" % fire.get("lit"))
+	if not await _wait_for("A to put the fire out (held E)", func() -> bool: return not is_instance_valid(fire) or not bool(fire.get("lit")), 120.0):
+		return
+	_check("host: A's held E put the fire out here (embers, off the lit fires)", not bool(fire.get("lit")) and not fire.is_in_group(&"lit_fires"), "lit %s" % fire.get("lit"))
+	# 5. The rain catcher: a squall fills it, A takes the cup.
+	_set_day("the rain catcher")
+	if not await _wait_for("A's rain-catcher site", func() -> bool: return _site(&"rain_catcher") != null, 300.0):
+		return
+	_feed(a_body, _site(&"rain_catcher").get("recipe"), "A's inventory topped up for the rain catcher")
+	if not await _wait_for("A's rain catcher to be built", func() -> bool: return _structure(&"RainCatcher") != null, 180.0):
+		return
+	var catcher: Node2D = _structure(&"RainCatcher")
+	_check("host: the rain catcher stands dry", int(catcher.get("cups")) == 0, "%d cup(s)" % catcher.get("cups"))
+	(_sky().get("weather") as Object).call("start_weather", &"squall")
+	_hooked("a squall started (WeatherCycle.start_weather)")
+	if not await _wait_for("the squall to fill the host's rain catcher", func() -> bool: return int(catcher.get("cups")) > 0, 150.0):
+		return
+	_check("host: the squall filled the rain catcher (the host's truth)", true, "%d cup(s), frame %s" % [catcher.get("cups"), _frame(catcher)])
+	if not await _wait_for("A to take the cup (a rain cup in A's inventory here)", func() -> bool: return int(a_body.get("inventory").call("count_id", &"rain_cup")) >= 1, 240.0):
+		return
+	_check("host: A's E at the catcher moved the cup into A's inventory here", int(catcher.get("cups")) == 0, "%d cup(s) left" % catcher.get("cups"))
+	(_sky().get("weather") as Object).call("start_weather", &"calm")
+	_hooked("the weather back to calm")
+	# 6. The raft: A builds it through its stages.
+	_set_day("the raft")
+	var raft_site: Node2D = session.get_node_or_null(^"RaftSite")
+	if not _check("host: the sandbar has its raft site", raft_site != null):
+		return
+	var at: Vector2 = raft_site.global_position
+	_check("host: the untouched raft site shows its marks", _frame(raft_site) == "marked", _frame(raft_site))
+	if not await _wait_for("A beside the raft site", func() -> bool: return a_body.global_position.distance_to(at) <= 4.0 * TILE, 300.0):
+		return
+	_feed(a_body, raft_site.get("recipe"), "A's inventory topped up for the raft")
+	var seen: Array[String] = [_frame(raft_site)]
+	if not await _wait_for("A to build the raft (the host's site frames are read meanwhile)", _watch_raft_site.bind(seen), 360.0):
+		return
+	_check("host: A's raft site went marked, materials, half built, and the raft stands whole", seen.has("marked") and seen.has("materials") and seen.has("half_built") and seen.has("raft whole"), "%s" % [seen])
+	# 7. The launch: the host holds E at the raft with A beside it; B stays away.
+	var raft: Node2D = session.get_node_or_null(^"Raft")
+	await _walk_to(raft.global_position + Vector2(0.0, -4.0), 2.0)
+	if not await _wait_for("A beside the raft to board", func() -> bool: return a_body.global_position.distance_to(raft.global_position) <= 3.0 * TILE, 120.0):
+		return
+	if b_body != null:
+		var gap: float = b_body.global_position.distance_to(raft.global_position)
+		_check("host: B stands outside the raft's boarding radius (so it is not a rider)", gap > 5.0 * TILE, "%.0f px away" % gap)
+	var known: Array = (session.call("peer_ids") as Array).duplicate()
 	raft.set("integrity", HOST_RAFT_INTEGRITY)
 	_hooked("host raft integrity %.0f" % HOST_RAFT_INTEGRITY)
 	Input.action_press(&"interact")
@@ -1435,27 +1822,80 @@ func _host() -> void:
 			break
 		await physics_frame
 	Input.action_release(&"interact")
-	if not _check("host: holding E launched the raft", crossing != null):
+	if not _check("host: holding E launched the raft with A beside it", crossing != null):
 		return
 	var shark_beat: Array[RefCounted] = [(load(BEAT_PATH) as Script).call("create", HOST_SHARK_AT_S, 2)]
-	crossing.set("plan", (load(PLAN_PATH) as Script).call("create", 120.0, shark_beat))
-	_hooked("host crossing plan 120 s, a shark pass at %.0f s" % HOST_SHARK_AT_S)
+	crossing.set("plan", (load(PLAN_PATH) as Script).call("create", HOST_CROSSING_S, shark_beat))
+	_hooked("host crossing plan %.0f s, a shark pass at %.0f s" % [HOST_CROSSING_S, HOST_SHARK_AT_S])
 	print("ARTRUN host crossing started")
-	var known: Array = (session.call("peer_ids") as Array).duplicate()
-	var rejoined: bool = false
-	for i: int in 60 * physics_hz:
-		var now: Array = session.call("peer_ids")
-		if now.any(func(peer_id: int) -> bool: return not known.has(peer_id)):
-			rejoined = true
-			_note("the client came back %.1f s into the crossing" % float(crossing.get("elapsed_s")))
+	var site_after: Node2D = session.get_node_or_null(^"RaftSite")
+	_note("host after the launch: Raft %s, RaftSite %s, structures %s" % [session.get_node_or_null(^"Raft"), _frame(site_after) if site_after != null else "none", _structure_frames()])
+	var riders: Array[int] = (crossing.call("peers") as Array[int]).duplicate()
+	riders.sort()
+	_check("host: the crossing carries the host and A only", str(riders) == str([1, a_peer]), "riders %s" % [riders])
+	if b_peer != 0:
+		if await _wait_for("B to join again during the crossing", _new_peer.bind(known), 90.0):
+			_check("host: B joined again during the crossing", true)
+			_note("B came back %.1f s into the crossing" % float(crossing.get("elapsed_s")))
+			_check("host: the deck at %.0f shows worn" % HOST_RAFT_INTEGRITY, String(crossing.get_node(^"Deck").get("frame_name")) == "worn")
+	# 8. The arrival: the party moves on once B's dropped body is gone (nobody left on the sandbar).
+	if not await _wait_for("the party to land on the coast cay", _on_coast_cay, 420.0):
+		return
+	await _frames(30)
+	island = shell.get("island")
+	_build_land()
+	_set_day("coast cay")
+	var size: Vector2i = (island.get("built") as Object).get("size")
+	var landed: PackedStringArray = []
+	for peer_id: int in [1, a_peer]:
+		var rider: Node2D = session.call("body", peer_id)
+		var cell: Vector2i = _cell_of(rider.global_position) if rider != null else Vector2i(-1, -1)
+		if rider == null or bool(rider.get("left_island")) or not Rect2i(Vector2i.ZERO, size).has_point(cell) or _is_water(cell):
+			landed.append("peer %d at %s" % [peer_id, cell])
+	_check("host: the host and A landed on the coast cay's ground, in play", landed.is_empty(), "not landed: %s" % [landed])
+	_check("host: the crossing is over and the run goes on", (shell.get("crossings") as Array).is_empty() and shell.get("flow") == FLOW_RUN)
+	# 9. The sign: A reads it, and the host's session shows the bubble too.
+	if not await _wait_for("A to read the coast cay's sign (its bubble shows here)", func() -> bool: return _sign_with_bubble() != null, 300.0):
+		return
+	_check("host: A's reading made the sign's bubble show on the host too", true)
+	await _wait_for("A to leave", func() -> bool: return not (session.multiplayer.get_peers() as PackedInt32Array).has(a_peer), 180.0)
+
+
+func _signs() -> Array[Node2D]:
+	var found: Array[Node2D] = []
+	for child: Node in session.get_children():
+		var script: Script = child.get_script()
+		if script != null and script.get_global_name() == &"IslandSign":
+			found.append(child as Node2D)
+	return found
+
+
+func _sign_with_bubble() -> Node2D:
+	for each: Node2D in _signs():
+		if each.get_node_or_null(^"SpeechBubble") != null:
+			return each
+	return null
+
+
+# Walks to the nearest sign, checks its prompt and reads it: the bubble shows over it.
+func _read_sign() -> void:
+	var sign: Node2D = _nearest(_signs(), body.global_position)
+	if not _check("the coast cay has a sign", sign != null):
+		return
+	_check("the sign shows its post", _frame(sign) == "island_sign", _frame(sign))
+	if not await _walk_to(sign.global_position + Vector2(0.0, 8.0), 4.0):
+		return
+	await _frames(3)
+	_check("beside the sign the prompt reads '[E] Mirar'", await _prompt_becomes("[E] Mirar", 2.0), "prompt %s" % [_prompt_lines()])
+	await _press_interact()
+	var bubble: Node = null
+	for i: int in 3 * physics_hz:
+		bubble = sign.get_node_or_null(^"SpeechBubble")
+		if bubble != null:
 			break
 		await physics_frame
-	_check("host: the client joined again during the crossing", rejoined)
-	_check("host: the deck at %.0f shows worn" % HOST_RAFT_INTEGRITY, String(crossing.get_node(^"Deck").get("frame_name")) == "worn")
-	for i: int in 30 * physics_hz:
-		if (session.call("peer_ids") as Array).size() <= 1:
-			break
-		await physics_frame
+	_check("E reads the sign: its line shows over it", bubble != null, "prompt %s" % [_prompt_lines()])
+	await _world_image("coast_cay_sign" if mode == "solo" else "client_coast_cay_sign")
 
 
 func _client() -> void:
@@ -1466,6 +1906,15 @@ func _client() -> void:
 	_check("the client is not the host", not session.multiplayer.is_server())
 	_build_land()
 	await _frames(30)
+	await _client_first_look()
+	if tag == "B":
+		await _client_rejoiner()
+	else:
+		await _client_rider()
+
+
+# The first look every client takes: the island, the creatures' frames, the pick-ups through the host.
+func _client_first_look() -> void:
 	var tiles: String = _tiles_hash()
 	print("ARTRUN client tiles %s" % tiles)
 	if not host_tiles.is_empty():
@@ -1475,12 +1924,23 @@ func _client() -> void:
 	var flicker: Dictionary[String, int] = {}
 	var last: Dictionary[String, String] = {}
 	var wrong: PackedStringArray = []
+	# Facings: each creature's synced facing (sent by the host, never set here) and the sprite's flip
+	# drawn from it; a facing that changes on this client can only have come from the host.
+	var facings: Dictionary[String, Dictionary] = {}
+	var misdrawn: PackedStringArray = []
 	for i: int in 4 * physics_hz:
 		for child: Node in session.get_node(^"Entities").get_children():
 			if child.get("data") == null:
 				continue
 			var anim: String = _creature_anim(child)
 			var key: String = String(child.name)
+			var facing: Vector2 = child.get("facing")
+			if not facings.has(key):
+				facings[key] = {}
+			facings[key][facing] = true
+			var sprite: AnimatedSprite2D = _look_of(child).get_node(^"Sprite")
+			if sprite.visible and sprite.flip_h != CreatureAnim.flipped(sprite.animation, facing) and misdrawn.size() < 5:
+				misdrawn.append("%s %s facing %s flip %s" % [key, anim, facing, sprite.flip_h])
 			if last.has(key) and last[key] != anim and ((last[key] == "move") != (anim == "move")) and (last[key] == "idle" or anim == "idle"):
 				flicker[key] = flicker.get(key, 0) + 1
 			last[key] = anim
@@ -1489,6 +1949,12 @@ func _client() -> void:
 		if flicker[key] > 2:
 			wrong.append("%s %d" % [key, flicker[key]])
 	_check("client: %d creature(s) play their frames with no move/idle flicker" % last.size(), not last.is_empty() and wrong.is_empty(), ", ".join(wrong))
+	var turned: PackedStringArray = []
+	for key: String in facings:
+		if facings[key].size() > 1:
+			turned.append("%s %s" % [key, str(facings[key].keys())])
+	_check("client: each creature faces as its synced facing says", misdrawn.is_empty(), ", ".join(misdrawn))
+	_check("client: creature facings arrive from the host (a facing changed on this client)", not turned.is_empty(), "; ".join(turned))
 	# Icons and pick-ups through the host.
 	var bad: PackedStringArray = []
 	for item: Node2D in _pickups():
@@ -1496,11 +1962,19 @@ func _client() -> void:
 			bad.append(String(item.get("item_id")))
 	_check("client: every pick-up shows its icon on the ground", bad.is_empty() and not _pickups().is_empty(), ", ".join(bad))
 	var got: int = 0
-	for attempt: int in 2:
-		var item: Node2D = _nearest(_pickups(), body.global_position)
-		if item == null or not await _walk_to(item.global_position):
+	for attempt: int in 4:
+		if got >= 2:
 			break
+		var item: Node2D = _nearest(_pickups(), body.global_position)
+		if item == null:
+			break
+		# The other client may take it first: read what is needed before the walk, and look again after.
 		var item_id: StringName = item.get("item_id")
+		var item_at: Vector2 = item.global_position
+		if not await _walk_to(item_at):
+			break
+		if not is_instance_valid(item):
+			continue
 		var before: int = _count(item_id)
 		Input.action_press(&"interact")
 		for i: int in 2 * physics_hz:
@@ -1510,7 +1984,7 @@ func _client() -> void:
 		Input.action_release(&"interact")
 		if _count(item_id) > before and _strip_icon_ok(item_id):
 			got += 1
-	_check("client: two pick-ups arrived from the host and show their icons in the strip", got == 2, "%d" % got)
+	_check("client: two pick-ups arrived from the host and show their icons in the strip", got >= 2, "%d" % got)
 	# Structures: the same frames as the host draws from the same state.
 	var structures: PackedStringArray = []
 	for node: Node in [session.get_node_or_null(^"HutWorkbench"), session.get_node_or_null(^"RaftSite"), session.get_node_or_null(^"Raft")]:
@@ -1520,31 +1994,175 @@ func _client() -> void:
 		structures.append("%s %d" % [palm.name, _look_of(palm).call("coconuts_drawn")])
 	_note("client structures: %s" % ", ".join(structures))
 	await _save_window("client_run")
-	shell.call("back_to_title")
-	_note("left; joining again in %.0f s" % REJOIN_AFTER_S)
-	await _seconds(REJOIN_AFTER_S)
-	shell.call("_join", "127.0.0.1", port)
-	if not _check("client: joined again", await _wait_run(60.0)):
+
+
+# --- client A: the rider --------------------------------------------------------------------------------
+
+func _client_rider() -> void:
+	var me: int = session.multiplayer.get_unique_id()
+	await _lean_to()
+	await _seconds(1.0)
+	if not await _client_palm():
 		return
-	var crossing: Node2D = null
+	if not await _client_fire():
+		return
+	if not await _client_catcher():
+		return
+	if not await _client_raft():
+		return
+	if not await _client_cross(me):
+		return
+	await _client_cay(me)
+	shell.call("back_to_title")
+	await _seconds(1.0)
+
+
+func _client_palm() -> bool:
+	var palm: Node2D = _nearest_nest_palm()
+	if not _check("client: a nest palm", palm != null):
+		return false
+	var look: Node = _look_of(palm)
+	var drawn_before: int = int(look.call("coconuts_drawn"))
+	if not await _shoo_pair(palm):
+		return false
+	var coco: int = _count(&"coco")
+	await _hold(&"interact", float(palm.get("hold_s")) + 0.4)
+	var got: bool = false
 	for i: int in 10 * physics_hz:
-		var crossings: Array = shell.get("crossings")
-		if not crossings.is_empty():
-			crossing = crossings[0]
+		if _count(&"coco") > coco:
+			got = true
 			break
 		await physics_frame
-	if not _check("client: the host's crossing is there", crossing != null):
+	_check("client: held E climbed the nest palm and the host's coconut reached the strip", got and _strip_icon_ok(&"coco"), "coco %d -> %d" % [coco, _count(&"coco")])
+	_note("the palm this client draws: %d coconut(s) before, %d after (a client's palm follows its own state, art-pass D18; the host's count is asserted on the host)" % [drawn_before, look.call("coconuts_drawn")])
+	await _save_window("client_palm_climb")
+	return got
+
+
+func _client_fire() -> bool:
+	if not await _choose_at_bench("Fogata"):
+		return false
+	if not await _wait_for("the fire site from the host's spawner", func() -> bool: return _site(&"fire") != null, 10.0):
+		return false
+	var site: Node2D = _site(&"fire")
+	_check("client: the unbuilt fire site shows its stake", _frame(site) == "stake", _frame(site))
+	if not await _wait_for("the fire's inputs in A's inventory (the host tops it up)", func() -> bool: return _inputs_in_hand(site), 180.0):
+		return false
+	await _work_site(site, "fire", 90.0)
+	if not await _wait_for("the built fire", func() -> bool: return _structure(&"Fire") != null, 15.0):
+		return false
+	var fire: Node2D = _structure(&"Fire")
+	_check("client: the fire A built is there and lit (its spawn payload says lit)", bool(fire.get("lit")) and _frame(fire) == "lit", "lit %s, frame %s" % [fire.get("lit"), _frame(fire)])
+	await _save_window("client_fire_lit")
+	var aimed: bool = await _aim_at(fire)
+	_check("client: the prompt beside the lit fire is the fire's own", aimed, "prompt %s" % [_prompt_lines()])
+	await _hold(&"interact", float((fire.get("tuning") as Object).get("fire_put_out_hold_s")) + 0.4)
+	await _frames(10)
+	_note("after the put-out the fire this client draws: frame %s, lit %s (a client's fire follows its own state, art-pass D18; the host's put-out is asserted on the host)" % [_frame(fire), fire.get("lit")])
+	await _save_window("client_fire_out")
+	return true
+
+
+func _client_catcher() -> bool:
+	if not await _choose_at_bench("Recogedor de lluvia"):
+		return false
+	if not await _wait_for("the rain-catcher site from the host's spawner", func() -> bool: return _site(&"rain_catcher") != null, 10.0):
+		return false
+	var site: Node2D = _site(&"rain_catcher")
+	if not await _wait_for("the catcher's inputs in A's inventory (the host tops it up)", func() -> bool: return _inputs_in_hand(site), 180.0):
+		return false
+	await _work_site(site, "rain catcher", 90.0)
+	if not await _wait_for("the built rain catcher", func() -> bool: return _structure(&"RainCatcher") != null, 15.0):
+		return false
+	var catcher: Node2D = _structure(&"RainCatcher")
+	_check("client: the new rain catcher shows empty", _frame(catcher) == "empty", _frame(catcher))
+	if not await _wait_for("the squall the host starts once the catcher stands (this client's sky says squall)", _squall_on_sky, 120.0):
+		return false
+	await _save_window("client_rain_catcher_squall")
+	var wanted: Object = catcher.get("interactable")
+	var taken: bool = false
+	for turn: int in 40:
+		if _count(&"rain_cup") >= 1:
+			taken = true
+			break
+		if is_instance_valid(prompt.get("target")) and prompt.get("target") == wanted:
+			await _press_interact()
+		else:
+			await _aim_at(catcher)
+		await _seconds(4.0)
+	_check("client: after the squall a press at the catcher put a rain cup in the strip (the host's cup)", taken and _strip_icon_ok(&"rain_cup"), "rain cups %d" % _count(&"rain_cup"))
+	_note("the rain catcher this client draws after the squall: frame %s, %d cup(s) (a client's catcher follows its own state, art-pass D18; the host's fill is asserted on the host)" % [_frame(catcher), catcher.get("cups")])
+	await _save_window("client_rain_catcher_taken")
+	return taken
+
+
+func _squall_on_sky() -> bool:
+	var current: Object = (_sky().get("weather") as Object).get("current")
+	return current != null and current.get("id") == &"squall"
+
+
+func _client_raft() -> bool:
+	var site: Node2D = session.get_node_or_null(^"RaftSite")
+	if not _check("client: the sandbar has its raft site", site != null):
+		return false
+	_check("client: the untouched raft site shows its marks", _frame(site) == "marked", _frame(site))
+	var at: Vector2 = site.global_position
+	await _aim_at(site)
+	if not await _wait_for("the raft's inputs in A's inventory (the host tops it up when A is beside the site)", func() -> bool: return _inputs_in_hand(site), 180.0):
+		return false
+	var seen: PackedStringArray = await _work_site(site, "raft", 240.0)
+	_check("client: the raft site went marked, materials, half built (the host's synced frames)", seen.has("marked") and seen.has("materials") and seen.has("half_built"), "%s" % [seen])
+	if not await _wait_for("the raft on this client", func() -> bool: return session.get_node_or_null(^"Raft") != null, 20.0):
+		return false
+	var raft: Node2D = session.get_node(^"Raft")
+	_check("client: the raft stands whole in the site's place", _frame(raft) == "whole" and raft.global_position.distance_to(at) < 1.0, "%s at %s" % [_frame(raft), raft.global_position])
+	await _save_window("client_raft_built")
+	return true
+
+
+# Beside the raft, A waits for the host's launch and rides.
+func _client_cross(me: int) -> bool:
+	var raft: Node2D = session.get_node(^"Raft")
+	await _walk_to(raft.global_position + Vector2(0.0, 12.0), 2.0)
+	_note("prompt at the raft: %s" % [_prompt_lines()])
+	if not await _wait_for("the host's crossing to start with A beside the raft", func() -> bool: return not (shell.get("crossings") as Array).is_empty(), 300.0):
+		return false
+	var crossing: Node2D = (shell.get("crossings") as Array)[0]
+	_check("client: A rides the host's crossing, aboard", (crossing.call("peers") as Array).has(me) and int(crossing.call("rider_state", me)) == ABOARD, "peers %s, state %s" % [crossing.call("peers"), crossing.call("rider_state", me)])
+	await _check_crossing_view(crossing, "riding it", me)
+	return await _wait_for("the party to land on the coast cay (A's island changes)", _on_coast_cay, 420.0)
+
+
+func _client_cay(me: int) -> void:
+	await _frames(20)
+	island = shell.get("island")
+	body = session.call("body", me)
+	_build_land()
+	_check("client: the crossing ended on the coast cay, still in the run", _on_coast_cay() and shell.get("flow") == FLOW_RUN)
+	if not await _wait_for("A landed in play", func() -> bool: return not bool(body.get("left_island")), 20.0):
 		return
-	_note("client: in the host's crossing at %.1f s of it" % float(crossing.get("elapsed_s")))
+	var size: Vector2i = (island.get("built") as Object).get("size")
+	var cell: Vector2i = _cell_of(body.global_position)
+	_check("client: A stands on the coast cay's ground", Rect2i(Vector2i.ZERO, size).has_point(cell) and not _is_water(cell), "cell %s" % cell)
+	await _save_window("client_coast_cay_landing")
+	await _read_sign()
+
+
+# What a client on a crossing sees of the host's: the deck at the host's integrity, the host's rider on it,
+# the shark passing at the water line. `me` is the peer of a client that rides it too (0 for none).
+func _check_crossing_view(crossing: Node2D, how: String, me: int = 0) -> void:
 	await _frames(20)
 	var integrity: float = float((crossing.get("integrity") as Object).get("value"))
 	var deck: Node = crossing.get_node(^"Deck")
-	_check("client: joining mid-crossing, the deck shows the host's integrity", (is_equal_approx(integrity, HOST_RAFT_INTEGRITY) or is_equal_approx(integrity, HOST_RAFT_INTEGRITY - SHARK_HIT)) and String(deck.get("frame_name")) == String(structure_art.call("raft_frame", integrity)), "integrity %.1f, frame %s" % [integrity, deck.get("frame_name")])
+	_check("client: %s, the deck shows the host's integrity" % how, (is_equal_approx(integrity, HOST_RAFT_INTEGRITY) or is_equal_approx(integrity, HOST_RAFT_INTEGRITY - SHARK_HIT)) and String(deck.get("frame_name")) == String(structure_art.call("raft_frame", integrity)), "integrity %.1f, frame %s" % [integrity, deck.get("frame_name")])
 	var host_rider: Node2D = crossing.call("body_of", 1)
-	_check("client: the host's rider is on the deck, over the sea", host_rider != null and (crossing.call("deck_rect") as Rect2).grow(4.0).has_point(host_rider.global_position) and draw_order.call("drawn_after", host_rider, deck))
+	_check("client: %s, the host's rider is on the deck, over the sea" % how, host_rider != null and (crossing.call("deck_rect") as Rect2).grow(4.0).has_point(host_rider.global_position) and draw_order.call("drawn_after", host_rider, deck))
+	if me != 0:
+		_check("client: %s, this client's own rider is on the deck, over the sea" % how, (crossing.call("deck_rect") as Rect2).grow(4.0).has_point(body.global_position) and draw_order.call("drawn_after", body, deck), "at %s, deck %s" % [body.global_position, crossing.call("deck_rect")])
+	await _save_window("client_crossing_%s" % how.replace(" ", "_"))
 	var shark_seen: bool = false
 	var shark_drawn: bool = false
-	for i: int in 15 * physics_hz:
+	for i: int in 20 * physics_hz:
 		for shark: Node2D in _creatures(&"reef_shark"):
 			if shark.global_position.distance_to(crossing.call("deck_center")) < TILE * 10.0:
 				shark_seen = true
@@ -1553,10 +2171,59 @@ func _client() -> void:
 		if shark_drawn:
 			break
 		await physics_frame
-	_check("client: the host's shark passes the deck, at the water line, over the sea", shark_seen and shark_drawn, "seen %s" % shark_seen)
+	_check("client: %s, the host's shark passes the deck, at the water line, over the sea" % how, shark_seen and shark_drawn, "seen %s" % shark_seen)
+	await _world_image("client_crossing_shark_%s" % how.replace(" ", "_"))
+
+
+# --- client B: the one that leaves and joins the crossing --------------------------------------------------
+
+func _client_rejoiner() -> void:
+	var site: Node2D = session.get_node_or_null(^"RaftSite")
+	if not _check("client: B sees the raft site", site != null):
+		return
+	var at: Vector2 = site.global_position
+	await _walk_to(_far_cell(at, 8.0 * TILE))
+	_check("client: B waits well outside the raft's boarding radius", body.global_position.distance_to(at) > 5.0 * TILE, "%.0f px away" % body.global_position.distance_to(at))
+	var seen: Array[String] = [_frame(site)]
+	var launched: Callable = func() -> bool:
+		_watch_raft_site(seen)
+		return not (shell.get("crossings") as Array).is_empty()
+	if not await _wait_for("the host's crossing to start (B reads the raft site's synced frames meanwhile)", launched, 900.0):
+		return
+	_check("client: B saw the raft site go marked, materials, half built and the raft stand whole (the host's synced frames)", seen.has("marked") and seen.has("materials") and seen.has("half_built") and seen.has("raft whole"), "%s" % [seen])
+	_note("B's view of A's structures before it leaves: %s (they follow B's own state, art-pass D18)" % [_structure_frames()])
+	in_run = false
+	shell.call("back_to_title")
+	_note("the crossing started; B left, and joins again in %.0f s" % REJOIN_AFTER_S)
+	await _seconds(REJOIN_AFTER_S)
+	shell.call("_join", "127.0.0.1", port)
+	if not _check("client: joined again", await _wait_run(60.0)):
+		return
+	if not await _wait_for("the host's crossing on the rejoined client", func() -> bool: return not (shell.get("crossings") as Array).is_empty(), 10.0):
+		return
+	var crossing: Node2D = (shell.get("crossings") as Array)[0]
+	_note("client: in the host's crossing at %.1f s of it" % float(crossing.get("elapsed_s")))
+	await _check_crossing_view(crossing, "joining mid-crossing")
+	# What the rejoined client's sandbar shows: the raft left with the crossing, a fresh site is marked, and
+	# the structures A built are there.
+	var site_now: Node2D = session.get_node_or_null(^"RaftSite")
+	_check("client: joining mid-crossing, the sandbar shows no stale raft and a fresh marked site", session.get_node_or_null(^"Raft") == null and site_now != null and _frame(site_now) == "marked", "raft %s, site %s" % [session.get_node_or_null(^"Raft"), _frame(site_now) if site_now != null else "none"])
+	var kinds: PackedStringArray = _structure_frames()
+	_check("client: joining mid-crossing, B sees the fire and the rain catcher A built", kinds.size() == 2, "%s" % [kinds])
+	_note("the structures the rejoined client draws: %s (a joiner's copies follow their own state, art-pass D18)" % [kinds])
 	await _world_image("client_crossing")
 	shell.call("back_to_title")
 	await _seconds(1.0)
+
+
+# The fire and the rain catcher in the session, with the frame this peer draws for each.
+func _structure_frames() -> PackedStringArray:
+	var found: PackedStringArray = []
+	for child: Node in session.get_node(^"Entities").get_children() + session.get_children():
+		var script: Script = child.get_script()
+		if script != null and [&"Fire", &"RainCatcher"].has(script.get_global_name()):
+			found.append("%s %s" % [script.get_global_name(), _frame(child)])
+	return found
 
 
 # --- the end ----------------------------------------------------------------------------------------

@@ -6,7 +6,7 @@ extends GutTest
 const SCENES_ROOT: String = "res://scenes"
 const PLAIN_INTERACTABLE: String = "res://scripts/interaction/interactable.gd"
 ## Design D4's prompt ids.
-const PROMPT_IDS: Array[StringName] = [&"pick_up", &"climb_palm", &"workbench", &"build", &"put_out", &"take_water", &"launch", &"shoo", &"drag", &"tie_down", &"untie", &"climb_aboard", &"pull"]
+const PROMPT_IDS: Array[StringName] = [&"pick_up", &"climb_palm", &"workbench", &"build", &"put_out", &"take_water", &"launch", &"shoo", &"drag", &"tie_down", &"untie", &"climb_aboard", &"pull", &"look_sign"]
 ## The prompt ids whose target is a fixed label rather than a content name.
 const LABELLED_PROMPTS: Array[StringName] = [&"climb_palm", &"workbench", &"put_out", &"launch", &"tie_down", &"untie", &"climb_aboard"]
 

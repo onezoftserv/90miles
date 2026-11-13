@@ -206,6 +206,21 @@ func test_solo_reads_the_wall() -> void:
 	assert_eq(body.meters.thirst, thirst_before)
 
 
+# art-pass-followups: a sign's prompt has its verb, "[E] Mirar" (Spanish) and "[E] Look".
+func test_a_signs_prompt_reads_mirar() -> void:
+	var shell := await _on_the_cay()
+	var body := shell.session.body(1)
+	var found: Array[IslandSign] = []
+	for node: Node in shell.session.get_children():
+		if node is IslandSign:
+			found.append(node as IslandSign)
+	assert_false(found.is_empty(), "the cay has signs")
+	var words := HudText.load_default()
+	for sign_node: IslandSign in found:
+		assert_eq(InteractPrompt.head_parts(sign_node, body, "E", words, "es"), PackedStringArray(["[E] Mirar", ""]), String(sign_node.name))
+		assert_eq(InteractPrompt.head_parts(sign_node, body, "E", words, "en"), PackedStringArray(["[E] Look", ""]), String(sign_node.name))
+
+
 func test_solo_takes_the_post_nails_and_builds_a_raft() -> void:
 	var shell := await _on_the_cay()
 	var body := shell.session.body(1)
