@@ -54,6 +54,49 @@ func test_disabled_interactables_are_skipped() -> void:
 	assert_eq(InteractionPicker.pick(Vector2.ZERO, _candidates([near, farther])), farther)
 
 
+# art-pass-followups D1: the highest priority in reach wins, then the nearest.
+func test_a_higher_priority_in_reach_beats_a_nearer_one() -> void:
+	var coconut := _interactable(Vector2(0.2 * TILE, 0.0))
+	var gull := _interactable(Vector2(0.8 * TILE, 0.0))
+	gull.priority = 1
+	assert_eq(InteractionPicker.pick(Vector2.ZERO, _candidates([coconut, gull])), gull)
+
+
+func test_a_higher_priority_on_the_same_spot_wins_whichever_comes_first() -> void:
+	var palm := _interactable(Vector2(0.5 * TILE, 0.0))
+	var gull := _interactable(Vector2(0.5 * TILE, 0.0))
+	gull.priority = 1
+	assert_eq(InteractionPicker.pick(Vector2.ZERO, _candidates([palm, gull])), gull)
+	assert_eq(InteractionPicker.pick(Vector2.ZERO, _candidates([gull, palm])), gull)
+
+
+func test_equal_priorities_keep_nearest_wins() -> void:
+	var far := _interactable(Vector2(0.8 * TILE, 0.0))
+	var near := _interactable(Vector2(0.3 * TILE, 0.0))
+	far.priority = 1
+	near.priority = 1
+	assert_eq(InteractionPicker.pick(Vector2.ZERO, _candidates([far, near])), near)
+
+
+func test_a_higher_priority_out_of_reach_loses() -> void:
+	var coconut := _interactable(Vector2(0.5 * TILE, 0.0))
+	var gull := _interactable(Vector2(1.5 * TILE, 0.0))
+	gull.priority = 1
+	assert_eq(InteractionPicker.pick(Vector2.ZERO, _candidates([coconut, gull])), coconut)
+
+
+func test_a_disabled_higher_priority_is_skipped() -> void:
+	var coconut := _interactable(Vector2(0.5 * TILE, 0.0))
+	var gull := _interactable(Vector2(0.2 * TILE, 0.0))
+	gull.priority = 1
+	gull.enabled = false
+	assert_eq(InteractionPicker.pick(Vector2.ZERO, _candidates([coconut, gull])), coconut)
+
+
+func test_things_have_the_base_priority() -> void:
+	assert_eq(_interactable(Vector2.ZERO).priority, 0)
+
+
 func test_empty_candidates_pick_nothing() -> void:
 	assert_null(InteractionPicker.pick(Vector2.ZERO, _candidates([])))
 

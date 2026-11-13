@@ -19,6 +19,10 @@ const DEFAULT_HOLD_TIME_S: float = 2.0
 @export var prompt_id: StringName = &""
 ## The prompt names only this interactable, never what it holds.
 @export var hides_contents: bool = false
+## Within reach the highest priority wins, then the nearest (player-movement "Interaction"):
+## things keep 0; a creature that can be shooed sets 1 in its scene, so a perched gull is shooed
+## before its palm is climbed.
+@export var priority: int = 0
 ## Disabled interactables are skipped by the picker and cannot be used.
 var enabled: bool = true
 

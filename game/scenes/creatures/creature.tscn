@@ -13,6 +13,7 @@ script = ExtResource("1_main")
 [node name="Interactable" type="Node2D" parent="."]
 script = ExtResource("2_interactable")
 prompt_id = &"shoo"
+priority = 1
 
 [node name="Look" type="Node2D" parent="." groups=["art_view"]]
 script = ExtResource("3_look")
