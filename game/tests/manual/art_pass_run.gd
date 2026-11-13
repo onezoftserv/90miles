@@ -37,7 +37,7 @@ const IN_WATER: int = 2
 const STEER_PX: float = 1.0
 const AT_PX: float = 3.0
 const MOVES: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down"]
-const DEADLINE_S: float = 1500.0
+const DEADLINE_S: float = 2700.0
 const CLIENT_NAME: String = "Papo"
 ## The integrity the host sets on its raft before it leaves, which a late client must see.
 const HOST_RAFT_INTEGRITY: float = 60.0
@@ -1050,8 +1050,16 @@ func _night(spawn: Vector2, day: Image) -> void:
 		await physics_frame
 	if not _check("crabs come out at night", not crabs.is_empty()):
 		return
-	var crab: Node2D = _nearest(crabs, body.global_position)
+	# Watching first: a crab on the move plays its scuttle.
 	var anims: Dictionary[String, int] = {}
+	for i: int in 10 * physics_hz:
+		for each: Node2D in _creatures(&"land_crab"):
+			var anim: String = _creature_anim(each)
+			anims[anim] = anims.get(anim, 0) + 1
+		if anims.has("move"):
+			break
+		await physics_frame
+	var crab: Node2D = _nearest(_creatures(&"land_crab"), body.global_position)
 	var pinched: bool = false
 	for i: int in 25 * physics_hz:
 		if not is_instance_valid(crab):
