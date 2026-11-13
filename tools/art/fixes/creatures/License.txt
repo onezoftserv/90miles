@@ -10,4 +10,4 @@ Work: 90 Millas creature hand work
 Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
-Files: land_crab.png (the whole crab sheet, 6 frames of 16x16); reef_shark.png (the shark sheet under the pack splash: 5 frames of 32x16 with the fin, its base, the ripple row and the body under the water line)
+Files: land_crab.png (the whole crab sheet, 6 frames of 16x16); reef_shark.png (the whole shark sheet: 5 frames of 32x16 with the fin, its base, the ripple row, the body under the water line and the strike's bow wave, spray and foam); seagull_back.png (an overlay pasted on the Tiny, Tiny Heroes seagull: the back facing's wing highlight and white tail tip, recoloured pack pixels in the master palette)
