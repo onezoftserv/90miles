@@ -1,0 +1,709 @@
+{
+  "sources": {
+    "overworld": "oga/zelda-like/extracted/gfx_3/gfx/Overworld.png",
+    "objects": "oga/zelda-like/extracted/gfx_3/gfx/objects.png",
+    "scallywag": "itch/scallywag-water-islands/extracted/Foozle_2DT0014_Scallywag_WaterAndIslands/Foozle_2DT0014_Scallywag_WaterAndIslands/Water and Island tiles.png"
+  },
+  "maps": {
+    "frond": {
+      "#2fbd36": "#99e550",
+      "#1faa26": "#6abe30",
+      "#0c9714": "#6abe30",
+      "#098910": "#4b692f",
+      "#06760d": "#4b692f",
+      "#05680b": "#323c39",
+      "#554536": "#663931",
+      "#685441": "#8f563b",
+      "#765f4a": "#8f563b",
+      "#554434": "#663931"
+    },
+    "flame": {
+      "#ffffff": "#ffffff",
+      "#f8f880": "#fbf236",
+      "#f8b838": "#df7126",
+      "#a97a1e": "#ac3232"
+    },
+    "barrel": {
+      "#a08366": "#c08a5a",
+      "#88635a": "#8f563b",
+      "#68464d": "#663931",
+      "#492d3b": "#45283c",
+      "#332541": "#222034"
+    },
+    "bench": {
+      "#bc9a78": "#e4b488",
+      "#94785c": "#c08a5a",
+      "#79584f": "#8f563b",
+      "#563a3f": "#663931"
+    },
+    "board": {
+      "#ab9559": "#d9a066",
+      "#a87848": "#c08a5a",
+      "#885040": "#8f563b",
+      "#603038": "#663931",
+      "#302838": "#45283c"
+    },
+    "log": {
+      "#563a3f": "#663931",
+      "#79584f": "#8f563b",
+      "#94785c": "#c08a5a",
+      "#c8b060": "#d9a066",
+      "#e0d078": "#eec39a",
+      "#331f29": "#45283c"
+    }
+  },
+  "parts": {
+    "log": [
+      {
+        "cut": "overworld",
+        "rect": [
+          48,
+          80,
+          44,
+          16
+        ],
+        "map": "log",
+        "at": [
+          0,
+          0
+        ]
+      }
+    ],
+    "log_left": [
+      {
+        "cut": "overworld",
+        "rect": [
+          48,
+          80,
+          22,
+          16
+        ],
+        "map": "log",
+        "at": [
+          0,
+          0
+        ]
+      }
+    ],
+    "log_right": [
+      {
+        "cut": "overworld",
+        "rect": [
+          70,
+          80,
+          22,
+          16
+        ],
+        "map": "log",
+        "at": [
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "sheets": [
+    {
+      "out": "structures/palm.png",
+      "frame": [
+        32,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "palm_trunk.png"
+          },
+          {
+            "hand": "palm_crown.png"
+          },
+          {
+            "cut": "scallywag",
+            "rect": [
+              96,
+              96,
+              16,
+              16
+            ],
+            "map": "frond",
+            "flip": "hv",
+            "at": [
+              4,
+              10
+            ]
+          },
+          {
+            "cut": "scallywag",
+            "rect": [
+              96,
+              96,
+              16,
+              16
+            ],
+            "map": "frond",
+            "flip": "v",
+            "at": [
+              12,
+              10
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/palm_coconuts_1.png",
+      "frame": [
+        32,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "coconut.png",
+            "at": [
+              10,
+              15
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/palm_coconuts_2.png",
+      "frame": [
+        32,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "coconut.png",
+            "at": [
+              10,
+              15
+            ]
+          },
+          {
+            "hand": "coconut.png",
+            "at": [
+              16,
+              15
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/palm_coconuts_3.png",
+      "frame": [
+        32,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "coconut.png",
+            "at": [
+              10,
+              15
+            ]
+          },
+          {
+            "hand": "coconut.png",
+            "at": [
+              16,
+              15
+            ]
+          },
+          {
+            "hand": "coconut.png",
+            "at": [
+              13,
+              18
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/palm_nest.png",
+      "frame": [
+        32,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "nest.png",
+            "at": [
+              11,
+              11
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/fire.png",
+      "frame": [
+        16,
+        16
+      ],
+      "frames": [
+        [
+          {
+            "hand": "fire_flames.png",
+            "rect": [
+              0,
+              0,
+              10,
+              11
+            ],
+            "at": [
+              3,
+              1
+            ]
+          },
+          {
+            "hand": "fire_logs.png",
+            "at": [
+              0,
+              11
+            ]
+          }
+        ],
+        [
+          {
+            "hand": "fire_flames.png",
+            "rect": [
+              10,
+              0,
+              10,
+              11
+            ],
+            "at": [
+              3,
+              1
+            ]
+          },
+          {
+            "hand": "fire_logs.png",
+            "at": [
+              0,
+              11
+            ]
+          }
+        ],
+        [
+          {
+            "hand": "fire_flames.png",
+            "rect": [
+              20,
+              0,
+              10,
+              11
+            ],
+            "at": [
+              3,
+              1
+            ]
+          },
+          {
+            "hand": "fire_logs.png",
+            "at": [
+              0,
+              11
+            ]
+          }
+        ],
+        [
+          {
+            "hand": "fire_flames.png",
+            "rect": [
+              30,
+              0,
+              10,
+              11
+            ],
+            "at": [
+              3,
+              1
+            ]
+          },
+          {
+            "hand": "fire_logs.png",
+            "at": [
+              0,
+              11
+            ]
+          }
+        ],
+        [
+          {
+            "hand": "fire_embers.png",
+            "at": [
+              0,
+              11
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/rain_catcher.png",
+      "frame": [
+        16,
+        24
+      ],
+      "frames": [
+        [
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "map": "barrel",
+            "at": [
+              0,
+              1
+            ]
+          },
+          {
+            "hand": "catcher_tops.png",
+            "rect": [
+              0,
+              0,
+              16,
+              9
+            ],
+            "at": [
+              0,
+              1
+            ]
+          }
+        ],
+        [
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "map": "barrel",
+            "at": [
+              0,
+              1
+            ]
+          },
+          {
+            "hand": "catcher_tops.png",
+            "rect": [
+              16,
+              0,
+              16,
+              9
+            ],
+            "at": [
+              0,
+              1
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/workbench.png",
+      "frame": [
+        32,
+        16
+      ],
+      "frames": [
+        [
+          {
+            "cut": "overworld",
+            "rect": [
+              451,
+              76,
+              16,
+              16
+            ],
+            "map": "bench",
+            "erase": [
+              "#2eca35",
+              "#328e41"
+            ],
+            "at": [
+              0,
+              0
+            ]
+          },
+          {
+            "cut": "overworld",
+            "rect": [
+              477,
+              76,
+              16,
+              16
+            ],
+            "map": "bench",
+            "erase": [
+              "#2eca35",
+              "#328e41"
+            ],
+            "at": [
+              16,
+              0
+            ]
+          },
+          {
+            "hand": "bench_tools.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/sign_post.png",
+      "frame": [
+        16,
+        16
+      ],
+      "frames": [
+        [
+          {
+            "cut": "overworld",
+            "rect": [
+              560,
+              32,
+              16,
+              13
+            ],
+            "map": "board",
+            "at": [
+              0,
+              0
+            ]
+          },
+          {
+            "hand": "sign_post.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/stake.png",
+      "frame": [
+        16,
+        16
+      ],
+      "frames": [
+        [
+          {
+            "hand": "stake.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/raft.png",
+      "frame": [
+        64,
+        32
+      ],
+      "frames": [
+        [
+          {
+            "hand": "raft_tubes.png"
+          },
+          {
+            "part": "log",
+            "at": [
+              10,
+              0
+            ]
+          },
+          {
+            "part": "log",
+            "at": [
+              10,
+              7
+            ]
+          },
+          {
+            "part": "log",
+            "at": [
+              10,
+              14
+            ]
+          },
+          {
+            "hand": "raft_ropes.png"
+          }
+        ],
+        [
+          {
+            "hand": "raft_tubes.png"
+          },
+          {
+            "part": "log",
+            "at": [
+              13,
+              0
+            ]
+          },
+          {
+            "part": "log",
+            "at": [
+              8,
+              7
+            ]
+          },
+          {
+            "part": "log",
+            "at": [
+              10,
+              14
+            ]
+          },
+          {
+            "hand": "raft_ropes_worn.png"
+          },
+          {
+            "hand": "raft_worn.png"
+          }
+        ],
+        [
+          {
+            "hand": "raft_tubes_flat.png"
+          },
+          {
+            "part": "log_left",
+            "at": [
+              8,
+              8
+            ]
+          },
+          {
+            "part": "log_right",
+            "at": [
+              36,
+              7
+            ]
+          },
+          {
+            "part": "log",
+            "at": [
+              10,
+              14
+            ]
+          },
+          {
+            "hand": "raft_ropes_breaking.png"
+          },
+          {
+            "hand": "raft_breaking.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/raft_site.png",
+      "frame": [
+        64,
+        32
+      ],
+      "frames": [
+        [
+          {
+            "hand": "site_stakes.png"
+          }
+        ],
+        [
+          {
+            "hand": "site_stakes.png"
+          },
+          {
+            "hand": "site_pile.png"
+          },
+          {
+            "part": "log_left",
+            "at": [
+              22,
+              5
+            ]
+          },
+          {
+            "part": "log_right",
+            "at": [
+              25,
+              11
+            ]
+          }
+        ],
+        [
+          {
+            "hand": "site_stakes.png"
+          },
+          {
+            "hand": "site_half.png"
+          },
+          {
+            "part": "log_left",
+            "at": [
+              8,
+              7
+            ]
+          },
+          {
+            "part": "log_right",
+            "at": [
+              24,
+              7
+            ]
+          },
+          {
+            "part": "log_left",
+            "at": [
+              8,
+              14
+            ]
+          },
+          {
+            "part": "log_right",
+            "at": [
+              22,
+              14
+            ]
+          },
+          {
+            "hand": "site_half_ropes.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/lean_to.png",
+      "frame": [
+        64,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "lean_to_frame.png"
+          },
+          {
+            "hand": "lean_to_roof.png"
+          },
+          {
+            "hand": "lean_to_eave.png"
+          }
+        ]
+      ]
+    }
+  ]
+}
