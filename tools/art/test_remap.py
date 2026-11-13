@@ -88,6 +88,19 @@ class RemapCommandTest(unittest.TestCase):
             self.assertIn("not a readable PNG", result.stderr)
             self.assertFalse(target.exists())
 
+    def test_the_command_refuses_a_target_inside_a_pack_folder(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = pathlib.Path(scratch)
+            source = root / "in.png"
+            png.write_png(source, image_of((0, 0, 0, 255)))
+            (root / "packs" / "oga").mkdir(parents=True)
+            target = root / "packs" / "oga" / "out.png"
+            result = subprocess.run([sys.executable, "-I", str(HERE / "remap.py"), str(source), str(target), "--packs", str(root / "packs")], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("download folder oga/", result.stderr)
+            self.assertFalse(target.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

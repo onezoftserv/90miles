@@ -127,6 +127,18 @@ class ComposeTest(unittest.TestCase):
             with self.assertRaises(compose.PartError):
                 self.build([part])
 
+    def test_nothing_is_written_when_a_later_part_is_refused(self):
+        bad = {"id": "hair_bad", "file": "itch/fake/Hairs.png", "band": 1, "layer": "hair", "outline": "#000000", "over": "no_such_body"}
+        with self.assertRaises(compose.PartError):
+            self.build(self.parts[:1] + [bad])
+        self.assertEqual(list(self.out.glob("*.png")) if self.out.exists() else [], [], "the first part was not left behind")
+
+    def test_an_out_folder_inside_a_pack_folder_is_refused_before_anything_is_made(self):
+        inside = self.packs / "itch" / "made"
+        with self.assertRaisesRegex(compose.PartError, "download folder itch/"):
+            compose.build_parts(self.parts[:1], self.packs, self.fixes, inside, PALETTE, OUTLINE_SET, log=lambda *_: None)
+        self.assertFalse(inside.exists())
+
     def test_an_overlay_needs_its_body_built_first(self):
         with self.assertRaises(compose.PartError) as caught:
             self.build([self.parts[2]])

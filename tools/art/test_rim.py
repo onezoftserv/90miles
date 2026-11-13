@@ -135,6 +135,19 @@ class RimCommandTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("outline set", result.stderr)
 
+    def test_the_command_refuses_a_target_inside_a_pack_folder(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = pathlib.Path(scratch)
+            source = root / "frame.png"
+            png.write_png(source, ringed_frame())
+            (root / "packs" / "kenney").mkdir(parents=True)
+            target = root / "packs" / "kenney" / "rimmed.png"
+            result = subprocess.run([sys.executable, "-I", str(HERE / "rim.py"), str(source), str(target), "--packs", str(root / "packs")], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("download folder kenney/", result.stderr)
+            self.assertFalse(target.exists())
+
     def test_the_command_refuses_an_unreadable_png_in_one_line(self):
         with tempfile.TemporaryDirectory() as scratch:
             source = pathlib.Path(scratch) / "broken.png"
