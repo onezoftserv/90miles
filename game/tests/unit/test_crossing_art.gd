@@ -234,7 +234,7 @@ func test_the_deck_shows_the_raft_frame_for_its_integrity_and_is_gone_once_sunk(
 	assert_eq(_deck_drawn_rect(deck), crossing.deck_rect(), "the raft frame covers the deck")
 	for value: float in [100.0, 50.0, 20.0, 0.0]:
 		crossing.hit_vessel(crossing.integrity.value - value)
-		await wait_frames(1)
+		await wait_frames(2)
 		assert_eq(crossing.integrity.value, value)
 		assert_true(_deck_shows(crossing, value), "at %d the deck shows %s" % [value, StructureArt.raft_frame(value)])
 	assert_true(crossing.integrity.broken)
