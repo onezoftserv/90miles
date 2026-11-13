@@ -41,6 +41,8 @@ const DEADLINE_S: float = 2700.0
 const CLIENT_NAME: String = "Papo"
 ## The integrity the host sets on its raft before it leaves, which a late client must see.
 const HOST_RAFT_INTEGRITY: float = 60.0
+## The host's crossing sends the shark past at this time, after the client is back.
+const HOST_SHARK_AT_S: float = 12.0
 ## Seconds the client waits after leaving before it joins the host's crossing again.
 const REJOIN_AFTER_S: float = 5.0
 ## The solo crossing: a squall throws the rider in, then the shark passes.
@@ -1352,8 +1354,9 @@ func _host() -> void:
 	Input.action_release(&"interact")
 	if not _check("host: holding E launched the raft", crossing != null):
 		return
-	crossing.set("plan", (load(PLAN_PATH) as Script).call("create", 120.0, [] as Array[RefCounted]))
-	_hooked("host crossing plan 120 s, no beats")
+	var shark_beat: Array[RefCounted] = [(load(BEAT_PATH) as Script).call("create", HOST_SHARK_AT_S, 2)]
+	crossing.set("plan", (load(PLAN_PATH) as Script).call("create", 120.0, shark_beat))
+	_hooked("host crossing plan 120 s, a shark pass at %.0f s" % HOST_SHARK_AT_S)
 	print("ARTRUN host crossing started")
 	var known: Array = (session.call("peer_ids") as Array).duplicate()
 	var rejoined: bool = false
@@ -1456,6 +1459,18 @@ func _client() -> void:
 	_check("client: joining mid-crossing, the deck shows the host's integrity", is_equal_approx(integrity, HOST_RAFT_INTEGRITY) and String(deck.get("frame_name")) == String(structure_art.call("raft_frame", HOST_RAFT_INTEGRITY)), "integrity %.1f, frame %s" % [integrity, deck.get("frame_name")])
 	var host_rider: Node2D = crossing.call("body_of", 1)
 	_check("client: the host's rider is on the deck, over the sea", host_rider != null and (crossing.call("deck_rect") as Rect2).grow(4.0).has_point(host_rider.global_position) and draw_order.call("drawn_after", host_rider, deck))
+	var shark_seen: bool = false
+	var shark_drawn: bool = false
+	for i: int in 15 * physics_hz:
+		for shark: Node2D in _creatures(&"reef_shark"):
+			if shark.global_position.distance_to(crossing.call("deck_center")) < TILE * 10.0:
+				shark_seen = true
+				var sprite: AnimatedSprite2D = _look_of(shark).get_node(^"Sprite")
+				shark_drawn = sprite.visible and sprite.material is ShaderMaterial and draw_order.call("drawn_after", shark, crossing.get_node(^"Sea"))
+		if shark_drawn:
+			break
+		await physics_frame
+	_check("client: the host's shark passes the deck, at the water line, over the sea", shark_seen and shark_drawn, "seen %s" % shark_seen)
 	await _world_image("client_crossing")
 	shell.call("back_to_title")
 	await _seconds(1.0)
