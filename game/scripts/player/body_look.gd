@@ -12,6 +12,8 @@ extends Node
 ## The pose the body's states pick now, as of the last `refresh()`.
 var pose: PlayerPose.Pose = PlayerPose.Pose.STANDING
 var _art: BodyArt = null
+var _composed: ComposedLook = null
+var _composed_slot: int = -1
 
 
 func _ready() -> void:
@@ -35,10 +37,18 @@ func head_y() -> float:
 
 ## The head anchor: 1 px above the drawn head in the current pose, in the body's own pixels.
 func head_anchor_y() -> float:
+	return float(composed_look().head_anchor(PlayerPose.family(_pose_now())))
+
+
+## The composed look of the body's slot, kept until the slot changes: the anchor is read every frame
+## by the name tag, the speech bubble and the prompt, and composing builds a catalog.
+func composed_look() -> ComposedLook:
 	var body := get_parent() as PlayerBody
 	var slot: int = body.look_slot if body != null else 0
-	var composed: ComposedLook = LookComposer.compose(_body_art().look_for_slot(slot))
-	return float(composed.head_anchor(PlayerPose.family(_pose_now())))
+	if _composed == null or slot != _composed_slot:
+		_composed = LookComposer.compose(_body_art().look_for_slot(slot))
+		_composed_slot = slot
+	return _composed
 
 
 func _pose_now() -> PlayerPose.Pose:

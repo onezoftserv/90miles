@@ -217,3 +217,15 @@ func test_every_peer_draws_a_slot_from_the_same_look_and_sends_only_the_look_key
 				keys.append(str(key))
 			keys.sort()
 			assert_eq(keys, PAYLOAD_KEYS, "the spawn payload adds only look")
+
+
+# The slot count is the player cap, written once: the session's slots and the look's clamp derive
+# from NetPeers.MAX_PLAYERS, and balsero_art.tres holds one look for each.
+func test_the_slot_count_is_the_player_cap_in_every_place_that_uses_it() -> void:
+	assert_eq(CoopSession.LOOK_SLOTS, NetPeers.MAX_PLAYERS)
+	assert_eq((load(ART_PATH) as BodyArt).slot_looks.size(), NetPeers.MAX_PLAYERS, "balsero_art.tres has a look per player")
+	var session_source: String = FileAccess.get_file_as_string("res://scenes/net/coop_session.gd")
+	assert_true(session_source.contains("const LOOK_SLOTS: int = NetPeers.MAX_PLAYERS"), "LOOK_SLOTS is derived, not typed")
+	var look_source: String = FileAccess.get_file_as_string("res://scenes/art/player_look.gd")
+	assert_true(look_source.contains("clampi(slot, 0, NetPeers.MAX_PLAYERS - 1)"), "PlayerLook's clamp is derived too")
+	assert_false(look_source.contains("clampi(slot, 0, 3)"), "with no literal left")

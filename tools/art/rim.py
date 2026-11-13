@@ -18,6 +18,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
+import guard  # noqa: E402
 import palette  # noqa: E402
 import png  # noqa: E402
 
@@ -108,6 +109,11 @@ def main(argv=None):
     forced = png.parse_colour(args.outline) if args.outline else None
     if forced is not None and forced not in outline_colours:
         parser.error(f"{args.outline} is not in the outline set")
+    try:
+        guard.out_folder(args.target, args.packs)
+    except ValueError as error:
+        print(f"rim: {error}", file=sys.stderr)
+        return 1
     source = _read(args.source, args.packs)
     over = _read(args.over, args.packs) if args.over else None
     if source is None or (args.over and over is None):

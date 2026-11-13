@@ -31,6 +31,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
+import guard  # noqa: E402
 import palette  # noqa: E402
 import png  # noqa: E402
 import rim  # noqa: E402
@@ -39,7 +40,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 DEFAULT_RECIPE = HERE / "structure_sheets.json"
 DEFAULT_FIXES = HERE / "fixes" / "structures"
 DEFAULT_OUT = palette.ART
-DOWNLOAD_FOLDERS = ("oga", "itch", "kenney")
+DOWNLOAD_FOLDERS = guard.DOWNLOAD_FOLDERS
 FLIPS = ("", "h", "v", "hv")
 TURNS = (0, 90, 180, 270)
 MAX_DEPTH = 4
@@ -266,11 +267,7 @@ def checked(image, name, cell, palette_colours, outline_colours):
 
 
 def _out_folder(out, packs):
-    out = pathlib.Path(out).resolve()
-    for folder in DOWNLOAD_FOLDERS:
-        if out.is_relative_to(pathlib.Path(packs).resolve() / folder):
-            raise StructureError(f"{out} is inside the download folder {folder}/, where nothing is written")
-    return out
+    return guard.out_folder(out, packs, StructureError)
 
 
 def build(recipe, packs, fixes, out, palette_colours, outline_colours, log=print):

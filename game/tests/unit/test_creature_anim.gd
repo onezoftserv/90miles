@@ -203,3 +203,42 @@ func test_the_shipped_shark_art_plays_strike_on_entering_retreat() -> void:
 	if art == null:
 		return
 	assert_eq(art.entry(&"reef_shark").one_shots, {&"retreat": &"strike"} as Dictionary[StringName, StringName])
+
+
+# --- the shipped sandbar creatures ---------------------------------------------------------------
+
+func test_the_shipped_land_crab_plays_steal_in_its_stealing_state_and_pinch_in_its_pinching_state() -> void:
+	var frames := load("res://assets/art/creatures/land_crab_frames.tres") as SpriteFrames
+	assert_not_null(frames, "the crab's frames load")
+	if frames == null:
+		return
+	var states: Array[StringName] = NightThief.new().names()
+	var art := (load(SHARK_ART) as CreatureArt).entry(&"land_crab")
+	for state: StringName in [&"STEAL", &"PINCH"]:
+		assert_true(states.has(state), "NightThief has a %s state" % state)
+		var anim := CreatureAnim.new()
+		anim.observe(Vector2.ZERO, FRAME_S)
+		var playing: StringName = anim.update(frames, art, state, Vector2.DOWN, FRAME_S)
+		assert_eq(playing, StringName(String(state).to_lower()), "the crab plays %s while it is in %s, standing still" % [state.to_lower(), state])
+	var wandering := CreatureAnim.new()
+	wandering.observe(Vector2.ZERO, FRAME_S)
+	assert_eq(wandering.update(frames, art, &"WANDER", Vector2.DOWN, FRAME_S), &"idle", "and idles while it wanders, standing still")
+
+
+# One player, nothing else: each shipped creature plays an animation its own frames have, named by
+# a state of its own brain, so none shows another's pictures or falls back to a blank.
+func test_each_shipped_creature_plays_a_named_animation_from_its_own_frames() -> void:
+	var art := load(SHARK_ART) as CreatureArt
+	var cases: Dictionary[StringName, StringName] = {&"land_crab": &"STEAL", &"reef_shark": &"CIRCLE", &"seagull": &"PERCH"}
+	for id: StringName in cases:
+		var data := load("res://resources/creatures/%s.tres" % id) as CreatureData
+		assert_not_null(data, "%s loads" % id)
+		if data == null or data.sprite_frames == null:
+			continue
+		var names: PackedStringArray = data.sprite_frames.get_animation_names()
+		var anim := CreatureAnim.new()
+		anim.observe(Vector2.ZERO, FRAME_S)
+		var playing: StringName = anim.update(data.sprite_frames, art.entry(id), cases[id], Vector2.RIGHT, FRAME_S)
+		assert_true(names.has(String(playing)), "%s plays %s from its own frames %s" % [id, playing, names])
+		if names.has(String(cases[id]).to_lower()):
+			assert_eq(playing, StringName(String(cases[id]).to_lower()), "%s plays the animation named for its state" % id)

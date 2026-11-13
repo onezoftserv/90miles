@@ -289,3 +289,21 @@ func test_a_solo_player_who_walks_crouches_swims_and_is_downed_is_drawn_from_tho
 	_step(body, 2)
 	assert_eq(String(_sprite(body).animation), "dead", "dead, never the downed breathing frame")
 	assert_eq(_cell_of(_frame(body)), Vector2i(2, 3))
+
+
+# "Pixel-exact import": drawn at a whole-number scale. The 640x360 base picture is enlarged by the
+# window's viewport stretch in whole steps only, and every canvas texture is drawn with nearest
+# filtering, so an art pixel covers a whole number of screen pixels.
+func test_the_project_enlarges_the_640_by_360_picture_in_whole_steps() -> void:
+	assert_eq(int(ProjectSettings.get_setting("display/window/size/viewport_width")), 640)
+	assert_eq(int(ProjectSettings.get_setting("display/window/size/viewport_height")), 360)
+	assert_eq(String(ProjectSettings.get_setting("display/window/stretch/mode")), "viewport", "the base picture is enlarged, not redrawn")
+	assert_eq(String(ProjectSettings.get_setting("display/window/stretch/scale_mode")), "integer", "by whole numbers")
+	assert_eq(int(ProjectSettings.get_setting("rendering/textures/canvas_textures/default_texture_filter")), 0, "with nearest filtering (the setting's 0 is Nearest, 1 Linear)")
+	var window_size := Vector2i(
+			int(ProjectSettings.get_setting("display/window/size/window_width_override")),
+			int(ProjectSettings.get_setting("display/window/size/window_height_override")))
+	assert_eq(window_size.x % 640, 0, "the default window is a whole multiple of the base width")
+	assert_eq(window_size.y % 360, 0, "and of its height")
+	@warning_ignore("integer_division")
+	assert_eq(window_size.x / 640, window_size.y / 360, "the same one")

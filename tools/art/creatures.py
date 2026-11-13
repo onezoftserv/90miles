@@ -27,6 +27,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
+import guard  # noqa: E402
 import palette  # noqa: E402
 import png  # noqa: E402
 import rim  # noqa: E402
@@ -36,7 +37,7 @@ DEFAULT_RECIPE = HERE / "creature_sheets.json"
 DEFAULT_FIXES = HERE / "fixes" / "creatures"
 DEFAULT_OUT = palette.ART
 FOLDER = "creatures"
-DOWNLOAD_FOLDERS = ("oga", "itch", "kenney")
+DOWNLOAD_FOLDERS = guard.DOWNLOAD_FOLDERS
 NAME = re.compile(r"^[a-z0-9_]+$")
 NEIGHBOURS = ((1, 0), (-1, 0), (0, 1), (0, -1))
 
@@ -219,11 +220,7 @@ def build_sheet(entry, sources, fixes, allowed, outline):
 
 
 def _out_folder(out, packs):
-    out = pathlib.Path(out).resolve()
-    for folder in DOWNLOAD_FOLDERS:
-        if out.is_relative_to(pathlib.Path(packs).resolve() / folder):
-            raise CreatureArtError(f"{out} is inside the download folder {folder}/, where nothing is written")
-    return out
+    return guard.out_folder(out, packs, CreatureArtError)
 
 
 def build(recipe, packs, fixes, out, palette_colours, outline_colours, log=print):

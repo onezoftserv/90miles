@@ -17,6 +17,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
+import guard  # noqa: E402
 import palette  # noqa: E402
 import png  # noqa: E402
 
@@ -94,6 +95,11 @@ def main(argv=None):
         source_path = pathlib.Path(args.packs) / source_path
     colour_map = parse_map(json.loads(pathlib.Path(args.map).read_text(encoding="utf-8"))) if args.map else None
     target = pathlib.Path(args.target)
+    try:
+        guard.out_folder(target, args.packs, RemapError)
+    except RemapError as error:
+        print(f"remap: {error}", file=sys.stderr)
+        return 1
     keep = any(part in PARTIAL_ALPHA_DIRS for part in target.resolve().parent.parts)
     try:
         out, changes = remap(png.read_png(source_path), palette.load_palette(args.palette), colour_map, keep, palette.key_ramp(), args.strict)

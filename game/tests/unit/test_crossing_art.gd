@@ -178,6 +178,7 @@ func _assert_sea_is_deep_shader(crossing: Crossing, peer: String) -> void:
 	assert_not_null(material.get_shader_parameter(&"depth_mask"), "%s: the mask is set" % peer)
 	assert_not_null(material.get_shader_parameter(&"water"), "%s: so is the water texture" % peer)
 	assert_not_null(material.get_shader_parameter(&"ramps"), "%s: and its ramps" % peer)
+	assert_eq(SeaShaderChecks.drift_of(material), Vector2(SeaShaderChecks.DRIFT_PX_PER_S, 0.0), "%s: it drifts 5 px/s east, as the islands' sea does" % peer)
 
 
 # The sea moved with `crossing.scroll_px()` and covers the whole sea rect at this scroll.
