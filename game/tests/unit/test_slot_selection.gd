@@ -210,7 +210,7 @@ func test_the_selection_stays_on_a_slot_that_empties() -> void:
 	inventory.remove_id(&"coco", 1)
 	assert_eq(hud.strip.selected, 1, "screen slot 2 stays selected")
 	assert_true(hud.strip.slot_view(1).selected)
-	assert_eq(hud.strip.slot_view(1).name_label.text, "")
+	assert_eq(StripIcon.item_shown(hud.strip.slot_view(1)), "")
 
 
 func test_selecting_a_knife_is_not_holding_it() -> void:

@@ -49,13 +49,13 @@ func _hud(session: CoopSession) -> RunHud:
 	return hud
 
 
-func _slot_text(hud: RunHud, index: int) -> String:
-	var view := hud.strip.slot_view(index)
-	return view.name_label.text if view != null else ""
+## The id of the item slot `index` shows by its icon, "" when it shows none (design.md K5).
+func _slot_item(hud: RunHud, index: int) -> String:
+	return StripIcon.item_shown(hud.strip.slot_view(index))
 
 
 func _shows_cup(hud: RunHud) -> Callable:
-	return func() -> bool: return _slot_text(hud, 0) == "Vas"
+	return func() -> bool: return _slot_item(hud, 0) == "rain_cup"
 
 
 func test_a_client_drinks_through_the_host() -> void:
@@ -70,14 +70,14 @@ func test_a_client_drinks_through_the_host() -> void:
 	on_host.inventory.add(&"rain_cup", 1)
 	assert_true(await wait_until(_shows_cup(hud), TIMEOUT_S), "the cup reached the client's strip")
 	var seen_at_send: Array[String] = []
-	hud.strip.use_sent.connect(func(_slot: int, _use: int, _peer: int) -> void: seen_at_send.append(_slot_text(hud, 0)))
+	hud.strip.use_sent.connect(func(_slot: int, _use: int, _peer: int) -> void: seen_at_send.append(_slot_item(hud, 0)))
 	Input.action_press(InventoryStrip.USE_ACTION)
 	var drunk := func() -> bool: return on_host.inventory.count_id(&"rain_cup") == 0
 	assert_true(await wait_until(drunk, TIMEOUT_S), "the host removes the cup")
 	Input.action_release(InventoryStrip.USE_ACTION)
 	assert_almost_eq(on_host.meters.thirst, 75.0, 1.0, "the host sets thirst 75")
-	assert_eq(seen_at_send, ["Vas"] as Array[String], "the client changed nothing itself when it sent")
-	var emptied := func() -> bool: return _slot_text(hud, 0) == ""
+	assert_eq(seen_at_send, ["rain_cup"] as Array[String], "the client changed nothing itself when it sent")
+	var emptied := func() -> bool: return _slot_item(hud, 0) == ""
 	assert_true(await wait_until(emptied, TIMEOUT_S), "the client's strip shows the slot empty once the state arrives")
 	assert_signal_emit_count(hud.strip, "use_sent", 1)
 
@@ -98,7 +98,7 @@ func test_a_client_revives_the_downed_hosts_player() -> void:
 	assert_true(fallen.meters.downed, "the host's player is down, not in a last stand")
 	var seen := func() -> bool:
 		var mirror := client.body(CoopSession.HOST_ID)
-		return mirror != null and mirror.meters.downed and _slot_text(hud, 0) == "Vas" \
+		return mirror != null and mirror.meters.downed and _slot_item(hud, 0) == "rain_cup" \
 			and mirror.global_position.distance_to(net.own_body(client).global_position) <= InteractionPicker.REACH_PX \
 			and hud.strip.item_line.text.contains(": ")
 	assert_true(await wait_until(seen, TIMEOUT_S), "the client sees the host down, half a tile away, and names them")
@@ -152,7 +152,7 @@ func test_a_rejoined_client_uses_its_reclaimed_bodys_cup() -> void:
 	var hud := _hud(back)
 	var reclaimed := func() -> bool:
 		var mine := net.own_body(back)
-		return mine != null and hud.strip.body == mine and _slot_text(hud, 0) == "Vas"
+		return mine != null and hud.strip.body == mine and _slot_item(hud, 0) == "rain_cup"
 	assert_true(await wait_until(reclaimed, TIMEOUT_S), "the strip follows the reclaimed body")
 	Input.action_press(InventoryStrip.USE_ACTION)
 	var drunk := func() -> bool: return papo_body.inventory.count_id(&"rain_cup") == 0

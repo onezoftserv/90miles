@@ -4,9 +4,11 @@
 [ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_wnbp7"]
 [ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_f5l4m"]
 [ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="4_18pgr"]
+[ext_resource type="Texture2D" uid="uid://b3hv2p2e8knmc" path="res://assets/art/items/dry_grass.png" id="icon_dry_grass"]
 
 [resource]
 script = ExtResource("3_f5l4m")
+sprite = ExtResource("icon_dry_grass")
 tags = Array[int]([4, 13, 10])
 stack_size = 10
 weight = 0.2

@@ -4,9 +4,11 @@
 [ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_mnl5a"]
 [ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_nj3ul"]
 [ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="4_eohqa"]
+[ext_resource type="Texture2D" uid="uid://bsmom5o4lp6w3" path="res://assets/art/items/driftwood.png" id="icon_driftwood"]
 
 [resource]
 script = ExtResource("3_nj3ul")
+sprite = ExtResource("icon_driftwood")
 tags = Array[int]([4, 10])
 stack_size = 10
 weight = 2.0

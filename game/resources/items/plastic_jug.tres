@@ -1,9 +1,11 @@
 [gd_resource type="Resource" script_class="ItemData" format=3]
 
 [ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://b458sfo7w1nim" path="res://assets/art/items/plastic_jug.png" id="icon_plastic_jug"]
 
 [resource]
 script = ExtResource("1_item")
+sprite = ExtResource("icon_plastic_jug")
 tags = Array[int]([4, 9])
 stack_size = 3
 weight = 0.5

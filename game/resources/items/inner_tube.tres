@@ -1,9 +1,11 @@
 [gd_resource type="Resource" script_class="ItemData" format=3]
 
 [ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://bbrf5oguyklpj" path="res://assets/art/items/inner_tube.png" id="icon_inner_tube"]
 
 [resource]
 script = ExtResource("1_item")
+sprite = ExtResource("icon_inner_tube")
 tags = Array[int]([4])
 stack_size = 2
 weight = 2.0
