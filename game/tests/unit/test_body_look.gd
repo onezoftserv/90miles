@@ -320,3 +320,21 @@ func test_the_night_tint_reaches_the_clothing_through_the_looks_material() -> vo
 	assert_not_null(ramps, "the clothing ramps are the material's")
 	var clothing: Color = ramps.get_image().get_pixel(1, int(material.get_shader_parameter(&"slot_row")))
 	assert_false((clothing * tint).is_equal_approx(clothing), "the clothing drawn at night is not the clothing by day")
+
+
+# Reading the head anchor every frame must not compose again: BodyLook keeps the composed look of
+# the slot it last read, and swaps it only when the body's slot changes.
+func test_two_reads_of_the_head_anchor_use_one_composed_look_per_slot() -> void:
+	var body := _solo(_grid(), Vector2i(20, 5))
+	var look := _look(body)
+	var first: ComposedLook = look.composed_look()
+	assert_not_null(first)
+	look.head_anchor_y()
+	look.head_anchor_y()
+	assert_same(look.composed_look(), first, "the same object after two reads")
+	assert_same(first, LookComposer.compose((load(ART_PATH) as BodyArt).look_for_slot(0)), "and the composer's own for slot 0")
+	body.look_slot = 1
+	var second: ComposedLook = look.composed_look()
+	assert_not_same(second, first, "another slot, another composed look")
+	look.head_anchor_y()
+	assert_same(look.composed_look(), second, "kept again")
