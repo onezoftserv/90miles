@@ -61,8 +61,7 @@ func test_the_parts_licence_and_credit_are_committed() -> void:
 	assert_string_contains(licence, "Source: " + METROCITY_SOURCE)
 	var credits := FileAccess.get_file_as_string("res://assets/CREDITS.md")
 	var row: String = ""
-	for line: String in credits.split("
-"):
+	for line: String in credits.split("\n"):
 		if line.contains("`art/characters/parts/`"):
 			row = line
 	assert_string_contains(row, METROCITY_SOURCE, "a CREDITS.md row for the MetroCity character parts")

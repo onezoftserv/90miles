@@ -59,7 +59,7 @@
       "id": "hair_2", "layer": "hair", "band": 2, "outline": "#000000", "strict": true, "over": "body_man",
       "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
       "colour_map": {
-        "#ffc199": "#d95763", "#ff9b80": "#d95763", "#f8774d": "#ac3232", "#d63429": "#ac3232",
+        "#ffc199": "#b57251", "#ff9b80": "#b57251", "#f8774d": "#8f563b", "#d63429": "#663931",
         "#b12c23": "#663931", "#8c1a22": "#45283c", "#891a21": "#45283c"
       }
     },
@@ -91,7 +91,7 @@
       "id": "hair_6", "layer": "hair", "band": 6, "outline": "#000000", "strict": true, "over": "body_man",
       "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
       "colour_map": {
-        "#606060": "#595652", "#424242": "#323c39", "#242424": "#222034"
+        "#606060": "#595652", "#424242": "#323c39", "#242424": "#222034", "#000000": "#222034"
       }
     },
     {
