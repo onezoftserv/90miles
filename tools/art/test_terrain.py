@@ -5,6 +5,8 @@ sand edge and cut the water texture.
 
 Run: python -I -m unittest discover -s tools/art -p "test_*.py"
 """
+import contextlib
+import io
 import json
 import pathlib
 import tempfile
@@ -115,6 +117,28 @@ class PieceTests(unittest.TestCase):
         self.assertEqual(out.alpha(4, 12), 0)
 
 
+def land_where(keep):
+    """A sand tile with land on the pixels `keep(x, y)` picks."""
+    tile = png.blank(16, 16)
+    for y in range(16):
+        for x in range(16):
+            if keep(x, y):
+                tile.set(x, y, SAND + (255,))
+    return tile
+
+
+def touching_land_edge(tile, x, y):
+    """Whether a land pixel has a water pixel among the 8 round it."""
+    return any(not tile.alpha(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+               if (dx or dy) and 0 <= x + dx < 16 and 0 <= y + dy < 16)
+
+
+def touching_land(tile, x, y):
+    """Whether any of the 8 pixels round (x, y) is land."""
+    return any(tile.alpha(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+               if (dx or dy) and 0 <= x + dx < 16 and 0 <= y + dy < 16)
+
+
 class FoamTests(unittest.TestCase):
     def frame(self):
         """An Eldiran-like frame: land on rows 0 to 5, a foam line on row 6 and a wash on row 5."""
@@ -144,17 +168,35 @@ class FoamTests(unittest.TestCase):
         self.assertTrue(terrain.foam_piece(terrain.shore_field(filled(SAND)), self.frame(), 6, WHITE, WHITE).is_empty())
         self.assertTrue(terrain.foam_piece(terrain.shore_field(png.blank(16, 16)), self.frame(), 6, WHITE, WHITE).is_empty())
 
-    def test_the_feather_thins_the_foam_from_that_distance_on(self):
-        frame = self.frame()
-        for y in range(7, 10):
-            for x in range(16):
-                frame.set(x, y, WHITE + (255,))
-        field = terrain.shore_field(filled(SAND, rows=range(0, 12)))
-        whole = terrain.foam_piece(field, frame, 6, WHITE, WHITE)
-        thin = terrain.foam_piece(field, frame, 6, WHITE, WHITE, feather=4)
-        self.assertEqual(sum(1 for x in range(16) if whole.alpha(x, 15)), 16)
-        self.assertEqual(sum(1 for x in range(16) if thin.alpha(x, 15)), 8)
-        self.assertEqual(sum(1 for x in range(16) if thin.alpha(x, 14)), 16)
+    def shapes(self):
+        return {
+            "outer corner": land_where(lambda x, y: x < 8 and y < 8),
+            "inner corner": land_where(lambda x, y: x < 8 or y < 8),
+            "diagonal": land_where(lambda x, y: x + y < 15),
+            "islet": land_where(lambda x, y: (x - 7.5) ** 2 + (y - 7.5) ** 2 <= 20),
+        }
+
+    def test_the_shore_field_counts_steps_from_the_edge_all_the_way_round_a_corner_or_an_islet(self):
+        for name, tile in self.shapes().items():
+            field = terrain.shore_field(tile)
+            self.assertEqual(len(field), 256, name)
+            for x, y, steps, _along in field:
+                if tile.alpha(x, y):
+                    self.assertEqual(steps == 0, touching_land_edge(tile, x, y), f"{name}: last sand pixel at ({x}, {y})")
+                    self.assertLessEqual(steps, 0, name)
+                else:
+                    self.assertEqual(steps == 1, touching_land(tile, x, y), f"{name}: first water pixel at ({x}, {y})")
+                    self.assertGreaterEqual(steps, 1, name)
+
+    def test_the_foam_has_no_gap_round_a_corner_or_an_islet(self):
+        for name, tile in self.shapes().items():
+            piece = terrain.foam_piece(terrain.shore_field(tile), self.frame(), 6, WHITE, WHITE)
+            first_water = {(x, y) for y in range(16) for x in range(16) if not tile.alpha(x, y) and touching_land(tile, x, y)}
+            on_first_row = {(x, y) for y in range(16) for x in range(16) if piece.alpha(x, y) and not tile.alpha(x, y)}
+            self.assertEqual(on_first_row & first_water, first_water, f"{name}: a first water pixel has no foam")
+            self.assertTrue(first_water, name)
+            for x, y in first_water:
+                self.assertEqual(piece.get(x, y), WHITE + (255,), name)
 
     def test_the_fade_colours_the_foam_from_that_distance_on(self):
         frame = self.frame()
@@ -340,6 +382,68 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(opaque_rows(terrain.sheet_tile(png.read_png(self.out / "terrain" / "sand.png"), 3))[-1], 10)
         self.assertEqual(opaque_rows(png.read_png(self.out / "sea" / "foam.png").crop(0, 48, 16, 16)), [11])
 
+    def overlay(self, *pixels):
+        """A 64x80 sand overlay of (x, y, colour) pixels; a colour of None erases."""
+        fix = png.blank(64, 80)
+        for x, y, rgb in pixels:
+            fix.set(x, y, (0xFF, 0x00, 0xFF, 255) if rgb is None else rgb + (255,))
+        return fix
+
+    def test_an_overlay_pixel_that_is_already_what_the_tool_builds_is_refused_by_sheet_and_cell(self):
+        for pixel in ((5, 5, SAND), (50, 13, None), (20, 40, SAND)):
+            png.write_png(self.fixes / "sand.png", self.overlay(pixel))
+            cell = (pixel[0] // 16, pixel[1] // 16)
+            with self.assertRaisesRegex(terrain.TerrainError, rf"sand\.png.*\({pixel[0]}, {pixel[1]}\).*cell \({cell[0]}, {cell[1]}\)"):
+                self.build()
+        self.assertFalse(self.out.exists(), "nothing is written")
+        png.write_png(self.fixes / "sand.png", self.overlay((5, 5, DEEP), (50, 13, DEEP)))
+        self.build()
+
+    def test_a_hand_cell_is_a_blank_tile_the_overlay_must_cover_with_all_256_pixels(self):
+        recipe = self.recipe()
+        del recipe["sets"][0]["quadrants"]["0"]
+        recipe["sets"][0]["tiles"]["0"] = "hand"
+        png.write_png(self.fixes / "sand.png", self.overlay((5, 5, SAND)))
+        with self.assertRaisesRegex(terrain.TerrainError, r"sand\.png.*hand cell \(0, 0\)"):
+            self.build(recipe)
+        whole = [(x, y, SAND if (x + y) % 5 else None) for y in range(16) for x in range(16)]
+        png.write_png(self.fixes / "sand.png", self.overlay(*whole))
+        self.build(recipe)
+        islet = terrain.sheet_tile(png.read_png(self.out / "terrain" / "sand.png"), 0)
+        self.assertEqual((islet.get(1, 1)[:3], islet.alpha(5, 0)), (SAND, 0), "the hand pixels are the tile, #ff00ff left clear")
+
+    def test_a_map_change_reaches_the_variant_tile_under_the_hand_pixels(self):
+        png.write_png(self.fixes / "sand.png", self.overlay((2, 2 + 16 * 4, DEEP)))
+        self.build()
+        variant = png.read_png(self.out / "terrain" / "sand.png").crop(0, 64, 16, 16)
+        self.assertEqual((variant.get(5, 5)[:3], variant.get(2, 2)[:3]), (SAND, DEEP))
+        recipe = self.recipe()
+        recipe["sets"][0]["map"] = {png.colour_hex(GRASS): png.colour_hex(ROCK)}
+        self.build(recipe)
+        variant = png.read_png(self.out / "terrain" / "sand.png").crop(0, 64, 16, 16)
+        self.assertEqual((variant.get(5, 5)[:3], variant.get(2, 2)[:3]), (ROCK, DEEP), "the recipe drives the variant")
+
+    def test_a_png_in_the_fixes_folder_that_no_step_reads_is_refused_by_name(self):
+        for stray in ("plain.png", "water.png", "shade.png", "sand_shore.png", "brush_shore.png", "plain_shore.png", "water_ramps.png", "nothing.png"):
+            png.write_png(self.fixes / stray, self.overlay((5, 5, DEEP)))
+            with self.assertRaisesRegex(terrain.TerrainError, rf"{stray}: no step of the recipe reads it"):
+                self.build()
+            (self.fixes / stray).unlink()
+        recipe = self.recipe()
+        del recipe["foam"]
+        png.write_png(self.fixes / "foam.png", png.blank(32, 256))
+        with self.assertRaisesRegex(terrain.TerrainError, r"foam\.png: no step of the recipe reads it"):
+            self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_every_png_the_recipe_reads_is_accepted_in_the_fixes_folder(self):
+        png.write_png(self.fixes / "brush.png", self.overlay((5, 5, DEEP)))
+        foam = png.blank(32, 256)
+        foam.set(3, 240, WHITE + (255,))
+        png.write_png(self.fixes / "foam.png", foam)
+        self.build()
+        self.assertTrue((self.out / "terrain" / "pool.png").exists())
+
     def test_a_plain_row_takes_a_rim_colour_on_its_cut_edge_and_the_foam_a_fade_colour(self):
         recipe = self.recipe()
         recipe["plain"]["rows"][0]["rim"] = "#000000"
@@ -368,6 +472,181 @@ class BuildTests(unittest.TestCase):
             self.build(spots=grey)
         self.assertFalse(self.out.exists(), "nothing at all is written when a sheet is refused")
 
+    def test_a_hand_source_is_a_bare_file_name_in_the_fixes_folder(self):
+        outside = self.root / "outside.png"
+        png.write_png(outside, filled(DEEP))
+        bad_names = ["..\\outside.png", str(outside), "sub/x.png", "../x.png", "Pool.png", "pool.PNG", "pool", ""]
+        for bad in bad_names:
+            for key in ("copies", "spots"):
+                recipe = self.recipe()
+                if key == "copies":
+                    recipe["copies"][0]["from"] = bad
+                else:
+                    recipe["shade"]["spots"] = bad
+                with self.assertRaisesRegex(terrain.TerrainError, r"a hand-drawn source is a lower-case name ending in \.png", msg=f"{key} {bad!r}"):
+                    self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_a_copy_goes_to_a_folder_and_a_lower_case_png_name(self):
+        for bad in ("../x.png", "/x.png", "C:/x.png", "x.png", "a/b/c.png", "terrain\\x.png", "Terrain/x.png", "terrain/x.PNG", "terrain/x", ""):
+            recipe = self.recipe()
+            recipe["copies"][0]["to"] = bad
+            with self.assertRaisesRegex(terrain.TerrainError, r"a copy goes to <folder>/<name>\.png", msg=repr(bad)):
+                self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_no_sheet_is_made_twice(self):
+        def twice(change):
+            recipe = self.recipe()
+            change(recipe)
+            with self.assertRaisesRegex(terrain.TerrainError, r"made twice"):
+                self.build(recipe)
+        twice(lambda r: r["sets"].append(dict(r["sets"][0])))
+        twice(lambda r: r["sets"].append(dict(r["sets"][1], id="plain")))
+        twice(lambda r: r["sets"].append(dict(r["sets"][1], id="sand_shore")) or r["sets"][0].update(shore={"shape": "sand"}))
+        twice(lambda r: r["copies"][0].update({"to": "terrain/sand.png"}))
+        twice(lambda r: r["copies"][0].update({"to": "terrain/plain.png"}))
+        twice(lambda r: r["copies"][0].update({"to": "sea/water.png"}))
+        twice(lambda r: r["copies"][0].update({"to": "sea/water_ramps.png"}))
+        twice(lambda r: r["copies"][0].update({"to": "sea/foam.png"}))
+        twice(lambda r: r["copies"][0].update({"to": "decals/shade.png"}))
+        twice(lambda r: r["copies"].append(dict(r["copies"][0])))
+        twice(lambda r: r["plain"].update(shore={}) or r["copies"][0].update({"to": "terrain/plain_shore.png"}))
+        self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_nothing_is_written_under_a_download_folder_or_the_fixes_folder(self):
+        recipe = self.recipe()
+        recipe["copies"][0]["to"] = "oga/made.png"
+        with self.assertRaisesRegex(terrain.TerrainError, r"download folder oga/"):
+            self.build(recipe, out=self.packs)
+        self.assertFalse((self.packs / "oga" / "made.png").exists())
+        recipe["copies"][0]["to"] = "fixes/pool.png"
+        with self.assertRaisesRegex(terrain.TerrainError, r"the fixes folder"):
+            self.build(recipe, out=self.root)
+        self.assertEqual((self.fixes / "pool.png").read_bytes(), png.encode_png(filled(ROCK)), "the hand source is not replaced")
+        self.assertFalse((self.root / "terrain").exists(), "nothing at all is written")
+
+    def run_main(self, recipe, palette=None, files=None):
+        """terrain.main on the fixture with `recipe` written to a file: (exit code, what it printed on stderr)."""
+        png.write_png(self.fixes / "pool.png", filled(ROCK))
+        png.write_png(self.fixes / "spots.png", self.spots())
+        palette_path = palette or self.root / "palette.png"
+        if palette is None:
+            image = png.blank(len(PALETTE), 1)
+            for x, rgb in enumerate(PALETTE):
+                image.set(x, 0, rgb + (255,))
+            png.write_png(palette_path, image)
+        for relative, data in (files or {}).items():
+            (self.root / relative).write_bytes(data)
+        recipe_path = self.root / "recipe.json"
+        recipe_path.write_text(json.dumps(recipe), encoding="utf-8")
+        argv = ["--packs", str(self.packs), "--recipe", str(recipe_path), "--fixes", str(self.fixes), "--out", str(self.out),
+                "--palette", str(palette_path)]
+        errors = io.StringIO()
+        with contextlib.redirect_stderr(errors), contextlib.redirect_stdout(io.StringIO()):
+            code = terrain.main(argv)
+        return code, errors.getvalue()
+
+    def test_a_malformed_recipe_is_refused_naming_its_section_and_key_and_writes_nothing(self):
+        def set_(index, **changes):
+            return lambda r: r["sets"][index].update(changes)
+
+        def tile_of(index, key, value):
+            return lambda r: r["sets"][index]["tiles"].update({key: value})
+
+        def to(section, **changes):
+            return lambda r: r[section].update(changes)
+
+        cases = [
+            ("mask key text", tile_of(0, "x", [1, 0]), r'sand tiles: "x"'),
+            ("mask key 16", tile_of(0, "16", [1, 0]), r'sand tiles: "16"'),
+            ("mask key -1", tile_of(0, "-1", [1, 0]), r'sand tiles: "-1"'),
+            ("mask key 1.5", tile_of(0, "1.5", [1, 0]), r'sand tiles: "1.5"'),
+            ("tiles a list", set_(0, tiles=[]), r'sand: "tiles"'),
+            ("tile spec short", tile_of(0, "3", [1]), r'sand mask 3: a tile is'),
+            ("tile spec text", tile_of(0, "3", ["a", "b"]), r'sand mask 3: a tile is'),
+            ("tile spec number", tile_of(0, "3", 5), r'sand mask 3: a tile is'),
+            ("tile spec table", tile_of(0, "3", {"a": 1}), r'sand mask 3: a tile is'),
+            ("tile spec bool", tile_of(0, "3", [True, 0]), r'sand mask 3: a tile is'),
+            ("tile spec colour", tile_of(0, "3", "oops"), r"sand.*'oops'"),
+            ("quadrants a list", set_(0, quadrants=[]), r'sand: "quadrants"'),
+            ("quadrants mask 99", set_(0, quadrants={"99": [15, 15, 1, 1]}), r'sand quadrants: "99"'),
+            ("quadrants parts three", set_(0, quadrants={"0": [15, 15, 1]}), r'sand quadrants: "0" needs four'),
+            ("quadrants parts a number", set_(0, quadrants={"0": 5}), r'sand quadrants: "0" needs four'),
+            ("quadrants part text", set_(0, quadrants={"0": [15, "x", 1, 1]}), r'sand quadrants: "x"'),
+            ("quadrants part 16", set_(0, quadrants={"0": [15, 16, 1, 1]}), r'sand quadrants: "16"'),
+            ("map a list", set_(0, map=[]), r'sand: "map"'),
+            ("map colour", set_(0, map={"#10c010": 5}), r"sand"),
+            ("erase a number", set_(0, erase=5), r'sand: "erase"'),
+            ("erase colour", set_(0, erase=["red"]), r"sand.*'red'"),
+            ("variants text", set_(0, variants="15"), r'sand: "variants"'),
+            ("variant none", set_(0, variants=[None]), r"sand: variant None"),
+            ("stamp short", set_(1, stamp=[1]), r"brush stamp: a tile is"),
+            ("stamp number", set_(1, stamp=5), r"brush stamp: a tile is"),
+            ("a set not a table", lambda r: r["sets"].append(5), r"a set has no"),
+            ("sets a table", lambda r: r.update(sets={}), r'the recipe: "sets"'),
+            ("shore text (set)", set_(1, shore="x"), r'brush shore: "shore"'),
+            ("shore text (plain)", lambda r: r["plain"].update(shore="x"), r'plain shore: "shore"'),
+            ("plain a list", lambda r: r.update(plain=[]), r'the recipe: "plain"'),
+            ("plain rows empty", lambda r: r["plain"].update(rows=[]), r'plain: "rows"'),
+            ("plain rows text", lambda r: r["plain"].update(rows="x"), r'plain: "rows"'),
+            ("plain row not a table", lambda r: r["plain"].update(rows=[5]), r"plain row 0"),
+            ("plain tile short", lambda r: r["plain"]["rows"][0].update(tile=[1]), r"plain rock: a tile is"),
+            ("plain tile text", lambda r: r["plain"]["rows"][0].update(tile="x"), r"plain rock.*'x'"),
+            ("plain map a list", lambda r: r["plain"]["rows"][0].update(map=[]), r'plain rock: "map"'),
+            ("water a number", lambda r: r.update(water=5), r'the recipe: "water"'),
+            ("water rect short", to("water", rect=[1, 2]), r'water: "rect"'),
+            ("water rect text", to("water", rect="x"), r'water: "rect"'),
+            ("water rect non-number", to("water", rect=[0, 0, "a", 1]), r'water: "rect"'),
+            ("water map a list", to("water", map=[]), r'water: "map"'),
+            ("ramps text", to("water", ramps="x"), r"water ramps"),
+            ("ramps rows of numbers", to("water", ramps=[5]), r"water ramps"),
+            ("ramps empty row", to("water", ramps=[["#306082"], []]), r"water ramps"),
+            ("ramps colour", to("water", ramps=[["red"]]), r"water ramps.*'red'"),
+            ("foam step text", to("foam", step="a"), r'foam: "step"'),
+            ("foam step 0", to("foam", step=0), r'foam: "step"'),
+            ("foam frames 0", to("foam", frames=0), r'foam: "frames"'),
+            ("foam frames text", to("foam", frames="x"), r'foam: "frames"'),
+            ("foam frames float", to("foam", frames=1.5), r'foam: "frames"'),
+            ("foam origin short", to("foam", origin=[1]), r'foam: "origin"'),
+            ("foam land_rows text", to("foam", land_rows="x"), r'foam: "land_rows"'),
+            ("foam fade text", to("foam", fade="x"), r'foam: "fade"'),
+            ("foam fade from", to("foam", fade={"from": "a", "colour": "#ffffff"}), r'foam fade: "from"'),
+            ("foam no pixel at all", to("foam", white="#123456"), r"foam: no pixel at all"),
+            ("foam a list", lambda r: r.update(foam=[]), r'the recipe: "foam"'),
+            ("shade alpha text", to("shade", alpha="x"), r'shade: "alpha"'),
+            ("shade alpha 0", to("shade", alpha=0), r'shade: "alpha"'),
+            ("shade alpha 256", to("shade", alpha=256), r'shade: "alpha"'),
+            ("shade edge text", to("shade", edge="x"), r'shade: "edge"'),
+            ("shade edge item", to("shade", edge=["a"]), r'shade: "edge"'),
+            ("shade edge 0", to("shade", edge=[0]), r'shade: "edge"'),
+            ("shade a list", lambda r: r.update(shade=[]), r'the recipe: "shade"'),
+            ("copies a table", lambda r: r.update(copies={}), r'the recipe: "copies"'),
+            ("a copy not a table", lambda r: r.update(copies=[5]), r"a copy has no"),
+        ]
+        for label, change, message in cases:
+            recipe = self.recipe()
+            change(recipe)
+            code, printed = self.run_main(recipe)
+            self.assertEqual(code, 1, f"{label}: {printed}")
+            self.assertRegex(printed, r"^terrain: ", label)
+            self.assertRegex(printed, message, label)
+            self.assertFalse(self.out.exists(), f"{label}: nothing is written")
+
+    def test_a_missing_palette_and_corrupt_pngs_are_refused_with_their_path(self):
+        code, printed = self.run_main(self.recipe(), palette=self.root / "no_palette.png")
+        self.assertEqual((code, self.out.exists()), (1, False))
+        self.assertIn("no_palette.png", printed)
+        for relative, name in (("packs/oga/world.png", "world.png"), ("packs/oga/waves.png", "waves.png"), ("fixes/sand.png", "sand.png"),
+                               ("fixes/shade_spots.png", "shade_spots.png"), ("fixes/pool.png", "pool.png")):
+            self.setUp()
+            recipe = self.recipe()
+            recipe["shade"]["spots"] = "shade_spots.png" if name == "shade_spots.png" else "spots.png"
+            code, printed = self.run_main(recipe, files={relative: b"not a png at all"})
+            self.assertEqual(code, 1, name)
+            self.assertIn(name, printed)
+            self.assertFalse(self.out.exists(), name)
+
     def test_a_colour_outside_the_palette_is_refused_by_name(self):
         recipe = self.recipe()
         recipe["water"]["map"] = {png.colour_hex(BLUE): "#123456"}
@@ -386,11 +665,81 @@ class BuildTests(unittest.TestCase):
             self.build(out=self.packs / "oga" / "made")
         self.assertFalse((self.packs / "oga" / "made").exists())
 
-    def test_main_prints_the_error_and_returns_1(self):
-        recipe_path = self.root / "recipe.json"
-        recipe_path.write_text(json.dumps({"sources": {}, "sets": [{"id": "sand", "source": "nowhere"}]}), encoding="utf-8")
-        code = terrain.main(["--packs", str(self.packs), "--recipe", str(recipe_path), "--fixes", str(self.fixes), "--out", str(self.out)])
-        self.assertEqual(code, 1)
+    def test_main_returns_0_and_writes_the_sheets(self):
+        code, printed = self.run_main(self.recipe())
+        self.assertEqual((code, printed), (0, ""))
+        self.assertEqual(len(list(self.out.rglob("*.png"))), 8)
+        self.assertEqual(png.read_png(self.out / "terrain" / "pool.png"), filled(ROCK))
+
+    def test_main_prints_the_error_after_terrain_on_stderr_and_returns_1(self):
+        recipe = self.recipe()
+        recipe["sets"][0]["source"] = "nowhere"
+        code, printed = self.run_main(recipe)
+        self.assertEqual((code, printed), (1, "terrain: sand: no source named 'nowhere'\n"))
+        self.assertFalse(self.out.exists())
+
+    def test_a_set_whose_full_tile_is_a_colour_fill_has_it_on_every_pixel(self):
+        recipe = self.recipe()
+        recipe["sets"][0]["tiles"]["15"] = png.colour_hex(GRASS)
+        self.build(recipe)
+        sand = png.read_png(self.out / "terrain" / "sand.png")
+        self.assertEqual(terrain.sheet_tile(sand, 15), filled(SAND))
+        self.assertEqual(sand.crop(0, 64, 16, 16), filled(SAND), "the variants start from the filled tile")
+
+    def test_every_refusal_of_the_builder_names_what_is_wrong(self):
+        def sand(**changes):
+            return lambda r: r["sets"][0].update(changes)
+
+        def edit(section, **changes):
+            return lambda r: r[section].update(changes)
+
+        def tile(mask, value):
+            return lambda r: r["sets"][0]["tiles"].update({mask: value})
+
+        cases = [
+            ("set id", sand(id="Bad Id"), r"set id 'Bad Id' is not lower-case"),
+            ("set without id", lambda r: r["sets"][0].pop("id"), r'a set has no "id"'),
+            ("set without tiles", lambda r: r["sets"][0].pop("tiles"), r'sand has no "tiles"'),
+            ("set without source", lambda r: r["sets"][0].pop("source"), r'sand has no "source"'),
+            ("no sources", lambda r: r.pop("sources"), r'the recipe has no "sources"'),
+            ("unknown source", sand(source="nowhere"), r"sand: no source named 'nowhere'"),
+            ("pack file missing", lambda r: r["sources"].update(world="oga/none.png"), r"sand: .*none\.png not found"),
+            ("tile off the sheet", tile("3", [9, 9]), r"sand mask 3: tile \(9, 9\) is off the 64x32 sheet"),
+            ("colour not named", sand(map={}), r"sand mask 1: the recipe does not name #10c010"),
+            ("five variants", sand(variants=["15"] * 5), r"sand: 5 variants, and row 4 holds 4"),
+            ("variant not a mask", sand(variants=["x"]), r"sand: variant 'x' is not a mask of the set"),
+            ("no tile for a mask", lambda r: r["sets"][0]["tiles"].pop("14"), r"sand: no tile for mask 14"),
+            ("plain shape not built", lambda r: r["plain"].update(shape="ghost"), r"plain: its shape set 'ghost' is not built"),
+            ("foam shape not built", edit("foam", shape="ghost"), r"foam: its shape set 'ghost' is not built"),
+            ("shade shape not built", edit("shade", shape="ghost"), r"shade: its shape set 'ghost' is not built"),
+            ("shore shape not built", lambda r: r["sets"][1].update(shore={"shape": "ghost"}), r"brush shore: its shape set 'ghost' is not built"),
+            ("water rect off the sheet", edit("water", rect=[32, 0, 64, 32]), r"water: the rect \[32, 0, 64, 32\] is off the 64x32 sheet"),
+            ("foam frame off the sheet", edit("foam", frames=50), r"foam: frame \d+ is off the 35x32 sheet"),
+            ("spots missing", lambda r: r["shade"].update(spots="gone.png"), r"gone\.png: no such hand-drawn source"),
+            ("copy missing", lambda r: r["copies"][0].update({"from": "gone.png"}), r"gone\.png: no such hand-drawn source"),
+        ]
+        for label, change, message in cases:
+            recipe = self.recipe()
+            change(recipe)
+            with self.assertRaisesRegex(terrain.TerrainError, message, msg=label):
+                self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+        png.write_png(self.fixes / "sand.png", png.blank(8, 8))
+        with self.assertRaisesRegex(terrain.TerrainError, r"sand\.png: the fix overlay is 8x8, not 64x80"):
+            self.build()
+
+    def test_a_recipe_file_that_cannot_be_read_is_refused_by_path(self):
+        missing = self.root / "none.json"
+        with self.assertRaisesRegex(terrain.TerrainError, r"none\.json"):
+            terrain.load_recipe(missing)
+        broken = self.root / "broken.json"
+        broken.write_text("{not json", encoding="utf-8")
+        with self.assertRaisesRegex(terrain.TerrainError, r"broken\.json"):
+            terrain.load_recipe(broken)
+        for text in ("[]", "{}", '{"sources": []}'):
+            broken.write_text(text, encoding="utf-8")
+            with self.assertRaisesRegex(terrain.TerrainError, r'broken\.json has no "sources" table'):
+                terrain.load_recipe(broken)
 
     def test_the_tracked_recipe_names_only_sources_under_the_download_folders(self):
         recipe = terrain.load_recipe(terrain.DEFAULT_RECIPE)
@@ -398,8 +747,22 @@ class BuildTests(unittest.TestCase):
         for relative in recipe["sources"].values():
             self.assertIn(relative.split("/")[0], terrain.DOWNLOAD_FOLDERS)
         self.assertEqual([entry["id"] for entry in recipe["sets"]], ["sand", "dune", "brush"])
-        self.assertEqual(len(recipe["plain"]["rows"]), 9)
+        self.assertEqual([row["id"] for row in recipe["plain"]["rows"]],
+                         ["rock", "shingle", "cliff", "hammock", "casuarina", "reef_flat", "coral", "mangrove", "wreck_interior"])
         self.assertEqual(recipe["shade"]["shape"], "sand")
+
+
+    def test_the_tracked_overlays_hold_only_hand_pixels(self):
+        recipe = terrain.load_recipe(terrain.DEFAULT_RECIPE)
+        for entry in recipe["sets"][:2]:
+            overlay = png.read_png(terrain.DEFAULT_FIXES / f"{entry['id']}.png")
+            hand = terrain.hand_cells(entry)
+            for column in range(terrain.SET_COLUMNS):
+                cell = overlay.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16)
+                opaque = sum(1 for alpha in cell.pixels[3::4] if alpha)
+                self.assertLess(opaque, 40, f"{entry['id']} variant {column} is mask 15 plus a few hand pixels")
+            self.assertEqual(hand, {(0, 0)} if entry["id"] == "dune" else set(), entry["id"])
+            self.assertEqual(sum(1 for alpha in overlay.crop(0, 0, 16, 16).pixels[3::4] if alpha), 256 if hand else 0)
 
 
 if __name__ == "__main__":
