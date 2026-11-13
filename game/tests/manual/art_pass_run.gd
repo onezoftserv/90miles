@@ -1916,7 +1916,8 @@ func _read_sign() -> void:
 		_check("the note shows the sign's line", sign_note.call("text_shown") == line, "note '%s'" % sign_note.call("text_shown"))
 		_check("and the close line", sign_note.call("close_text") == "[E] Cerrar", "close '%s'" % sign_note.call("close_text"))
 		_check("no speech bubble shows over the sign", sign.get_node_or_null(^"SpeechBubble") == null)
-		await _world_image("coast_cay_sign" if mode == "solo" else "client_coast_cay_sign")
+		# The note is on the HUD, so the capture is the window's, not the world view's.
+		await _save_window("coast_cay_sign_note" if mode == "solo" else "client_coast_cay_sign_note")
 		await _walk_to(sign.global_position + Vector2(0.0, 40.0), 4.0)
 		await _frames(3)
 		_check("walking away closes the note", not sign_note.call("is_open"))

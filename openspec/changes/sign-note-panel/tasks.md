@@ -36,8 +36,8 @@
 
 ## 3. Checks
 
-- [ ] 3.1 Update the manual harness `game/tests/manual/art_pass_run.gd`: the sign step checks the note (open, text, closes on walking away) instead of the bubble. Run it solo in a window and save a capture of the note to `docs/art-pass/`, a window capture at 1×. Look at the capture.
-- [ ] 3.2 Run the import (twice), the smoke run and GUT, and `openspec validate sign-note-panel --strict`. Run the game once through the Godot MCP and read a sign. Update `TASKS.md`.
+- [x] 3.1 Update the manual harness `game/tests/manual/art_pass_run.gd`: the sign step checks the note (open, text, closes on walking away) instead of the bubble. Run it solo in a window and save a capture of the note to `docs/art-pass/`, a window capture at 1×. Look at the capture. Done 2026-11-13: the sign step checks the note (open, line, close line, no bubble, closes on walking away) and saves a window capture; solo coast cay run in a window 29 of 29; `docs/art-pass/coast_cay_sign_note.png` is the window at 2× (1280×720), the crossed sticks' line on 3 lines with "[E] Cerrar", looked at.
+- [x] 3.2 Run the import (twice), the smoke run and GUT, and `openspec validate sign-note-panel --strict`. Run the game once through the Godot MCP and read a sign. Update `TASKS.md`. Done 2026-11-13: import 0 error lines, smoke 10 frames 0 problems, GUT 173 scripts 1543 of 1543 (after group 2; since then only the manual harness changed, which parses), change valid. The game was played in a window through the harness instead of the Godot MCP: it read the crossed sticks and walked away. `TASKS.md` updated.
 
 ## Workflow follow-up
 
