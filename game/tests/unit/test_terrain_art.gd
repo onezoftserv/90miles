@@ -252,9 +252,10 @@ func test_the_corner_sets_hold_no_sea_or_foam_colour() -> void:
 
 
 ## The picks on row 4 replace the tile of one mask (sand and dune the full tile, brush the
-## islet), have that mask's corners and are all different (design.md K36).
+## islet), have that mask's corners and are all different, and none is the mirror of another,
+## which would flip the light (design.md K36).
 func test_the_variants_on_row_4_have_their_masks_corners_and_differ() -> void:
-	var counts: Dictionary[String, int] = {"sand": 4, "dune": 4, "brush": 2}
+	var counts: Dictionary[String, int] = {"sand": 4, "dune": 4, "brush": 4}
 	var variant_of: Dictionary[String, int] = {"sand": 15, "dune": 15, "brush": 0}
 	for id: String in counts:
 		var sheet: Image = _sheet("res://assets/art/terrain/%s.png" % id)
@@ -268,6 +269,9 @@ func test_the_variants_on_row_4_have_their_masks_corners_and_differ() -> void:
 				continue
 			assert_eq(_corners(sheet, Vector2i(column, 4)), variant_of[id], "%s variant %d: its corners" % [id, column])
 			assert_false(seen.has(tile.get_data()), "%s variant %d repeats another" % [id, column])
+			var mirror: Image = tile.duplicate() as Image
+			mirror.flip_x()
+			assert_false(seen.has(mirror.get_data()), "%s variant %d is the mirror of another" % [id, column])
 			seen.append(tile.get_data())
 
 
@@ -376,7 +380,7 @@ func test_a_scrub_cell_inside_dune_gets_the_full_dune_tile_and_the_brush_islet()
 	var at: Vector2i = Vector2i(2, 2)
 	_assert_pick(_pick(TerrainArt.SAND, rows, at), 0, 4, "sand")
 	_assert_pick(_pick(TerrainArt.DUNE, rows, at), 1, 4, "dune")
-	_assert_pick(_pick(TerrainArt.BRUSH, rows, at), 2, 2, "brush")
+	_assert_pick(_pick(TerrainArt.BRUSH, rows, at), 2, 4, "brush")
 	assert_eq(_pick(TerrainArt.BRUSH, rows, Vector2i(2, 1)), {}, "dune is not in the brush layer")
 	var terrain: GridTerrain = TerrainRows.build(rows)
 	assert_eq(TerrainArt.layer_cells(TerrainArt.SAND, terrain, []).size(), 25, "sand counts every land kind")

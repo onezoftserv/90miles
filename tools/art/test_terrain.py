@@ -805,6 +805,15 @@ class BuildTests(unittest.TestCase):
                          ["rock", "shingle", "cliff", "hammock", "casuarina", "reef_flat", "coral", "mangrove", "wreck_interior"])
         self.assertEqual(recipe["shade"]["shape"], "sand")
 
+    def test_the_tracked_brush_has_four_hand_drawn_variants_not_mirrors(self):
+        brush = terrain.load_recipe(terrain.DEFAULT_RECIPE)["sets"][2]
+        self.assertEqual(brush["variants"], ["0", "0", "0", "0"])
+        overlay = png.read_png(terrain.DEFAULT_FIXES / "brush.png")
+        for column in (1, 2, 3):
+            cell = overlay.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16)
+            self.assertGreater(sum(1 for alpha in cell.pixels[3::4] if alpha), 20, f"variant {column} is redrawn by hand")
+        self.assertTrue(overlay.crop(0, 0, 64, 64).is_empty(), "the masks keep the pack's bush")
+
     def test_the_tracked_rock_has_the_pack_variant_and_two_hand_ones_that_keep_its_border(self):
         rock = terrain.load_recipe(terrain.DEFAULT_RECIPE)["plain"]["rows"][0]
         self.assertEqual((rock["tile"], rock["variants"]), ([12, 13], [[12, 14], "15", "15"]))
