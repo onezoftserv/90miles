@@ -1,0 +1,30 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/structures/rain_catcher.png" id="1_sheet"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_empty_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 0, 16, 24)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_water_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(16, 0, 16, 24)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_empty_0")
+}],
+"loop": true,
+"name": &"empty",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_water_1")
+}],
+"loop": true,
+"name": &"water",
+"speed": 5.0
+}]
