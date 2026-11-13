@@ -302,8 +302,10 @@ func test_host_and_client_draw_riders_and_the_shark_over_the_sea_and_the_deck() 
 	host_crossing.threats.resolve(CrossingBeat.create(1.0, SHARK), host_crossing)
 	var sea := host_crossing.sea_rect()
 	var states := func() -> bool:
-		return client_crossing.rider_state(client_id) == Crossing.Rider.IN_WATER and _sharks_in(client, sea).size() == 1 and _deck_shows(client_crossing, host_crossing.integrity.value)
-	assert_true(await wait_until(states, TIMEOUT_S), "the client has the swimmer, the shark and the worn deck")
+		var theirs := client_crossing.body_of(client_id)
+		return client_crossing.rider_state(client_id) == Crossing.Rider.IN_WATER and theirs != null and not client_crossing.deck_rect().has_point(theirs.global_position) \
+				and _sharks_in(client, sea).size() == 1 and _deck_shows(client_crossing, host_crossing.integrity.value)
+	assert_true(await wait_until(states, TIMEOUT_S), "the client has the swimmer where the host put it, the shark and the worn deck")
 	await wait_frames(3)
 	for side: Array in [["host", host, host_crossing], ["client", client, client_crossing]]:
 		var peer: String = side[0]
