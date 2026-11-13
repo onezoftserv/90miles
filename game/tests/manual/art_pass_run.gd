@@ -564,6 +564,7 @@ func _foam(image: Image, later: Image) -> Dictionary:
 	var moved: PackedInt32Array = []
 	var bare: Array[Vector2i] = []
 	var bushed: int = 0
+	var covered: Dictionary[Vector2i, bool] = _covered()
 	var built_size: Vector2i = (island.get("built") as Object).get("size")
 	for y: int in built_size.y:
 		for x: int in built_size.x:
@@ -594,12 +595,37 @@ func _foam(image: Image, later: Image) -> Dictionary:
 								break
 			if touches:
 				touching += 1
-			elif _kind(cell) == SCRUB:
+			elif _kind(cell) == SCRUB or covered.has(cell):
 				bushed += 1
 			else:
 				bare.append(cell)
 			moved.append(changed)
 	return {"shore": shore, "touching": touching, "moved": moved, "bare": bare, "bushed": bushed}
+
+
+# Cells a thing stands over (a structure's frame, a player, a pick-up, a palm), whose foam it hides.
+func _covered() -> Dictionary[Vector2i, bool]:
+	var cells: Dictionary[Vector2i, bool] = {}
+	var things: Array[Node] = []
+	for path: NodePath in [^"Entities", ^"Pickups", ^"Players"]:
+		var parent: Node = session.get_node_or_null(path)
+		if parent != null:
+			things.append_array(parent.get_children())
+	for path: NodePath in [^"HutWorkbench", ^"RaftSite", ^"Raft"]:
+		if session.get_node_or_null(path) != null:
+			things.append(session.get_node(path))
+	things.append_array(island.get_node(^"Palms").get_children())
+	if island.get_node_or_null(^"Shelter") != null:
+		things.append(island.get_node(^"Shelter"))
+	for thing: Node in things:
+		var at: Node2D = thing as Node2D
+		if at == null:
+			continue
+		var cell: Vector2i = _cell_of(at.global_position)
+		for dy: int in range(-2, 1):
+			for dx: int in range(-2, 3):
+				cells[cell + Vector2i(dx, dy)] = true
+	return cells
 
 
 func _check_shore_view(where: String) -> void:
@@ -623,7 +649,7 @@ func _check_shore_view(where: String) -> void:
 		_note("%s: no shore cell wholly in view" % where)
 		return
 	# A bush on a shore cell stands over its foam (design.md D15, K39), so those cells are counted apart.
-	_check("%s: the foam touches the sand on every shore cell in view not under a bush" % where, (foam["bare"] as Array).is_empty(), "%d of %d shore cells, %d under a bush; without foam: %s" % [foam["touching"], shore, foam["bushed"], foam["bare"]])
+	_check("%s: the foam touches the sand on every shore cell in view not under a bush" % where, (foam["bare"] as Array).is_empty(), "%d of %d shore cells, %d under a bush or a thing standing on it; without foam: %s" % [foam["touching"], shore, foam["bushed"], foam["bare"]])
 	_check("%s: the foam moves, and unevenly (cells change by different amounts in 0.25 s)" % where, moving > 0 and distinct.size() > 1, "%d of %d shore cells changed, %d distinct amounts" % [moving, shore, distinct.size()])
 
 
