@@ -1924,12 +1924,23 @@ func _client_first_look() -> void:
 	var flicker: Dictionary[String, int] = {}
 	var last: Dictionary[String, String] = {}
 	var wrong: PackedStringArray = []
+	# Facings: each creature's synced facing (sent by the host, never set here) and the sprite's flip
+	# drawn from it; a facing that changes on this client can only have come from the host.
+	var facings: Dictionary[String, Dictionary] = {}
+	var misdrawn: PackedStringArray = []
 	for i: int in 4 * physics_hz:
 		for child: Node in session.get_node(^"Entities").get_children():
 			if child.get("data") == null:
 				continue
 			var anim: String = _creature_anim(child)
 			var key: String = String(child.name)
+			var facing: Vector2 = child.get("facing")
+			if not facings.has(key):
+				facings[key] = {}
+			facings[key][facing] = true
+			var sprite: AnimatedSprite2D = _look_of(child).get_node(^"Sprite")
+			if sprite.visible and sprite.flip_h != CreatureAnim.flipped(sprite.animation, facing) and misdrawn.size() < 5:
+				misdrawn.append("%s %s facing %s flip %s" % [key, anim, facing, sprite.flip_h])
 			if last.has(key) and last[key] != anim and ((last[key] == "move") != (anim == "move")) and (last[key] == "idle" or anim == "idle"):
 				flicker[key] = flicker.get(key, 0) + 1
 			last[key] = anim
@@ -1938,6 +1949,12 @@ func _client_first_look() -> void:
 		if flicker[key] > 2:
 			wrong.append("%s %d" % [key, flicker[key]])
 	_check("client: %d creature(s) play their frames with no move/idle flicker" % last.size(), not last.is_empty() and wrong.is_empty(), ", ".join(wrong))
+	var turned: PackedStringArray = []
+	for key: String in facings:
+		if facings[key].size() > 1:
+			turned.append("%s %s" % [key, str(facings[key].keys())])
+	_check("client: each creature faces as its synced facing says", misdrawn.is_empty(), ", ".join(misdrawn))
+	_check("client: creature facings arrive from the host (a facing changed on this client)", not turned.is_empty(), "; ".join(turned))
 	# Icons and pick-ups through the host.
 	var bad: PackedStringArray = []
 	for item: Node2D in _pickups():
