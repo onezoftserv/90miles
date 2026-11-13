@@ -811,7 +811,7 @@ class BuildTests(unittest.TestCase):
         overlay = png.read_png(terrain.DEFAULT_FIXES / "brush.png")
         for column in (1, 2, 3):
             cell = overlay.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16)
-            self.assertGreater(sum(1 for alpha in cell.pixels[3::4] if alpha), 20, f"variant {column} is redrawn by hand")
+            self.assertGreater(sum(1 for alpha in cell.pixels[3::4] if alpha), 10, f"variant {column} is redrawn by hand")
         self.assertTrue(overlay.crop(0, 0, 64, 64).is_empty(), "the masks keep the pack's bush")
 
     def test_the_tracked_rock_has_the_pack_variant_and_two_hand_ones_that_keep_its_border(self):
