@@ -12,7 +12,7 @@ extends Control
 ## mark; art-pass "Head anchor", design.md P5, P11), at most 240 px wide, inside x 4-636, y 22-302 and off
 ## every HUD panel; a first line too wide puts its target on a second line, and a line still too
 ## wide ends in "…". Drawn in the HUD layer, the night tint and the Suave filter leave it
-## alone. It hides while the player is down or gone, the crafting list is open, the run is paused
+## alone. It hides while the player is down or gone, the crafting list or a sign note is open, the run is paused
 ## or a screen is shown.
 ## A fresh interact press (the local body's intent, which is what the host's hold sees) locks the
 ## target as InteractionHold does (`PressTimer`): until release the prompt stays on it even when
@@ -26,6 +26,8 @@ extends Control
 
 ## The local player's press landed on a workbench: the HUD opens the crafting list there.
 signal bench_pressed(bench: Workbench)
+## The local player's press landed on a flavour sign: the HUD opens the sign note on this peer only.
+signal sign_pressed(sign_node: IslandSign)
 
 const INTERACT_ACTION: StringName = &"interact"
 const KEY_FORMAT: String = "[%s]"
@@ -64,7 +66,7 @@ var device: InputLabels.Device = InputLabels.Device.KEYBOARD
 var screen_shown: bool = false
 ## Whether the HUD takes input now (no pause menu, summary or host-lost screen); RunHud answers.
 var input_open: Callable = func() -> bool: return true
-## Whether the crafting list holds the input; RunHud answers.
+## Whether the crafting list or a sign note holds the input; RunHud answers.
 var list_open: Callable = func() -> bool: return false
 ## Maps a point of the world's canvas (the world view's own pixels, camera applied) into the HUD.
 var to_hud: Callable = func(point: Vector2) -> Vector2: return point
@@ -268,6 +270,9 @@ func _lock_pressed() -> void:
 		var bench := target.get_parent() as Workbench
 		if bench != null:
 			bench_pressed.emit(bench)
+		var sign_node := target as IslandSign
+		if sign_node != null:
+			sign_pressed.emit(sign_node)
 
 
 # What the host's press would reach now: the picker's choice among this peer's interactables.

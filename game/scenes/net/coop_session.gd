@@ -885,16 +885,6 @@ func travel_to(layout_id: String, arrivals: Dictionary, raft_integrity: float) -
 	island_travel_requested.emit(id, clean, maxf(raft_integrity, 0.0))
 
 
-## Every peer: the host tells the sign named `sign_name` (a plain child name) to show its line.
-@rpc("authority", "call_local", "reliable")
-func show_sign(sign_name: String) -> void:
-	if not _is_from_host() or _is_unsafe_node_name(sign_name):
-		return
-	var marker := get_node_or_null(NodePath(sign_name)) as IslandSign
-	if marker != null:
-		show_bubble(marker, marker.line(locale))
-
-
 # The RPC being handled came from the host, or is the host calling itself (a local call has no sender).
 func _is_from_host() -> bool:
 	var sender: int = multiplayer.get_remote_sender_id()

@@ -184,26 +184,138 @@ func test_the_lagoon_never_runs_dry() -> void:
 	assert_eq(body.meters.thirst, 60.0, "every drink counts, however many")
 
 
-func test_solo_reads_the_wall() -> void:
-	var shell := await _on_the_cay()
+# --- the sign note (sign-note-panel), exactly 1 player, offline ---------------------------------------
+# The body, the prompt and the note are stepped by hand from the real input state, with no frame awaited
+# after the run is set up.
+
+func _release_keys() -> void:
+	for keycode: Key in [KEY_E, KEY_ESCAPE, KEY_F]:
+		_key(keycode, false)
+	get_tree().paused = false
+
+
+func _key(keycode: Key, pressed: bool) -> void:
+	var event := InputEventKey.new()
+	event.physical_keycode = keycode
+	event.keycode = keycode
+	event.pressed = pressed
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+
+
+# One frame: the intent from the input, the body (the host's interaction), the prompt, the note.
+func _frame(shell: GameShell) -> void:
 	var body := shell.session.body(1)
-	var slogan: IslandSign = null
+	body.intent = body.player_input.build_intent()
+	body.advance(0.1)
+	shell.hud.prompt.tick(0.1)
+	shell.hud.sign_note._process(0.1)
+
+
+func _tap(shell: GameShell, keycode: Key) -> void:
+	_key(keycode, true)
+	_frame(shell)
+	_key(keycode, false)
+	_frame(shell)
+
+
+func _sign_with(shell: GameShell, prefix: String) -> IslandSign:
 	for node: Node in shell.session.get_children():
 		var sign_node := node as IslandSign
-		if sign_node != null and sign_node.line_es.begins_with("«AQUÍ NO SE RINDE"):
-			slogan = sign_node
-	assert_not_null(slogan, "the slogan is on the wall")
+		if sign_node != null and sign_node.line_es.begins_with(prefix):
+			return sign_node
+	return null
+
+
+# A solo player beside the dead radio with its note open, in Spanish.
+func _reading(shell: GameShell) -> IslandSign:
+	var radio := _sign_with(shell, "Un radio ruso")
+	assert_not_null(radio, "the radio is on the cay")
+	var body := shell.session.body(1)
+	body.global_position = radio.global_position + Vector2(0.0, 8.0)
+	_frame(shell)
+	assert_same(shell.hud.prompt.target, radio, "the radio is the candidate")
+	_tap(shell, KEY_E)
+	return radio
+
+
+func test_solo_reads_the_radio_in_a_note_and_walks_away() -> void:
+	var shell := await _on_the_cay()
+	var body := shell.session.body(1)
 	var inventory_before: Array = body.inventory.to_net()
 	var health_before: float = body.meters.health
-	var thirst_before: float = body.meters.thirst
-	body.global_position = slogan.global_position
-	slogan.use(body)
-	var bubble := slogan.get_node_or_null(NodePath(CoopSession.BUBBLE_NAME)) as SpeechBubble
-	assert_not_null(bubble, "a speech bubble over the sign")
-	assert_eq(bubble.text, slogan.line_es, "the Spanish line")
+	var radio := _reading(shell)
+	var note := shell.hud.sign_note
+	assert_true(note.is_open(), "E opens the note")
+	assert_eq(note.text_shown(), radio.line_es, "the Spanish line")
+	assert_eq(note.close_text(), "[E] Cerrar")
+	assert_false(get_tree().paused, "the clock keeps running")
+	assert_true(shell.session.can_process())
+	assert_true(body.hud_holds_interact)
+	assert_null(radio.get_node_or_null(NodePath(CoopSession.BUBBLE_NAME)), "no speech bubble over the sign")
 	assert_eq(body.inventory.to_net(), inventory_before)
 	assert_eq(body.meters.health, health_before)
-	assert_eq(body.meters.thirst, thirst_before)
+	body.global_position = radio.global_position + Vector2(0.0, 32.0)
+	_frame(shell)
+	assert_false(note.is_open(), "2 tiles away closes it")
+	_release_keys()
+
+
+func test_e_again_closes_the_note_and_picks_nothing_up() -> void:
+	var shell := await _on_the_cay()
+	var body := shell.session.body(1)
+	var radio := _reading(shell)
+	var drop := shell.session.spawn_pickup(&"driftwood", 1, body.global_position + Vector2(6.0, 0.0))
+	var inventory_before: Array = body.inventory.to_net()
+	_tap(shell, KEY_E)
+	assert_false(shell.hud.sign_note.is_open(), "E closes the note")
+	assert_eq(body.inventory.to_net(), inventory_before, "nothing is picked up")
+	assert_true(is_instance_valid(drop) and drop.interactable.enabled, "the pickup beside it stays on the ground")
+	assert_false(body.hud_holds_interact, "released, interact is the player's again")
+	assert_not_null(radio)
+	_release_keys()
+
+
+func test_esc_closes_the_note_without_pausing_and_a_second_esc_pauses() -> void:
+	var shell := await _on_the_cay()
+	_reading(shell)
+	_tap(shell, KEY_ESCAPE)
+	assert_false(shell.hud.sign_note.is_open(), "the first Esc closes the note")
+	assert_false(get_tree().paused, "and does not pause")
+	assert_false(shell.hud.pause_menu.visible)
+	_tap(shell, KEY_ESCAPE)
+	assert_true(shell.hud.pause_menu.visible, "the second opens the pause menu")
+	assert_true(get_tree().paused)
+	_release_keys()
+
+
+func test_f_with_a_rain_cup_uses_nothing_while_the_note_is_open() -> void:
+	var shell := await _on_the_cay()
+	var body := shell.session.body(1)
+	body.inventory.add(&"rain_cup", 1)
+	body.meters.thirst = 50.0
+	shell.hud.strip.select(0)
+	_reading(shell)
+	assert_true(shell.hud.sign_note.is_open())
+	_key(KEY_F, true)
+	for i: int in 10:
+		_frame(shell)
+		shell.hud.strip._process(0.1)
+	assert_true(shell.hud.sign_note.is_open(), "the note stays open")
+	assert_eq(body.inventory.count_id(&"rain_cup"), 1, "nothing is used")
+	assert_true(body.meters.thirst <= 50.0, "no drink")
+	_release_keys()
+
+
+func test_going_down_closes_the_note() -> void:
+	var shell := await _on_the_cay()
+	var body := shell.session.body(1)
+	_reading(shell)
+	body.set_downed(true)
+	_frame(shell)
+	assert_false(shell.hud.sign_note.is_open())
+	body.set_downed(false)
+	_release_keys()
 
 
 # art-pass-followups: a sign's prompt has its verb, "[E] Mirar" (Spanish) and "[E] Look".

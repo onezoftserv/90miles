@@ -113,6 +113,7 @@ var hud: Node = null
 var strip: Control = null
 var prompt: Control = null
 var craft_list: Control = null
+var sign_note: Control = null
 var body: Node2D = null
 var land: AStarGrid2D = null
 var passes: int = 0
@@ -301,6 +302,7 @@ func _wait_run(timeout_s: float) -> bool:
 				strip = hud.get("strip")
 				prompt = hud.get("prompt")
 				craft_list = hud.get("craft_list")
+				sign_note = hud.get("sign_note")
 				in_run = true
 				return true
 		await physics_frame
@@ -1854,10 +1856,12 @@ func _host_route() -> void:
 			landed.append("peer %d at %s" % [peer_id, cell])
 	_check("host: the host and A landed on the coast cay's ground, in play", landed.is_empty(), "not landed: %s" % [landed])
 	_check("host: the crossing is over and the run goes on", (shell.get("crossings") as Array).is_empty() and shell.get("flow") == FLOW_RUN)
-	# 9. The sign: A reads it, and the host's session shows the bubble too.
-	if not await _wait_for("A to read the coast cay's sign (its bubble shows here)", func() -> bool: return _sign_with_bubble() != null, 300.0):
+	# 9. The sign: A reads it on its own HUD; nothing about it reaches the host (no bubble, no note).
+	if not await _wait_for("A to stand at the coast cay's sign", func() -> bool: return _a_beside_a_sign(a_peer), 300.0):
 		return
-	_check("host: A's reading made the sign's bubble show on the host too", true)
+	await _frames(30)
+	_check("host: A's reading shows no bubble over any sign here", _sign_with_bubble() == null)
+	_check("host: and no sign note opened on the host's HUD", not sign_note.call("is_open"))
 	await _wait_for("A to leave", func() -> bool: return not (session.multiplayer.get_peers() as PackedInt32Array).has(a_peer), 180.0)
 
 
@@ -1877,7 +1881,19 @@ func _sign_with_bubble() -> Node2D:
 	return null
 
 
-# Walks to the nearest sign, checks its prompt and reads it: the bubble shows over it.
+# Whether peer `peer`'s body (as the host has it) is within a tile and a half of a sign.
+func _a_beside_a_sign(peer: int) -> bool:
+	var rider: Node2D = session.call("body", peer)
+	if rider == null:
+		return false
+	for each: Node2D in _signs():
+		if rider.global_position.distance_to(each.global_position) <= 24.0:
+			return true
+	return false
+
+
+# Walks to the nearest sign, checks its prompt and reads it: the sign note opens on the HUD with the
+# sign's line and the close line, and closes when the player walks away.
 func _read_sign() -> void:
 	var sign: Node2D = _nearest(_signs(), body.global_position)
 	if not _check("the coast cay has a sign", sign != null):
@@ -1888,14 +1904,23 @@ func _read_sign() -> void:
 	await _frames(3)
 	_check("beside the sign the prompt reads '[E] Mirar'", await _prompt_becomes("[E] Mirar", 2.0), "prompt %s" % [_prompt_lines()])
 	await _press_interact()
-	var bubble: Node = null
+	var opened: bool = false
 	for i: int in 3 * physics_hz:
-		bubble = sign.get_node_or_null(^"SpeechBubble")
-		if bubble != null:
+		opened = sign_note.call("is_open")
+		if opened:
 			break
 		await physics_frame
-	_check("E reads the sign: its line shows over it", bubble != null, "prompt %s" % [_prompt_lines()])
-	await _world_image("coast_cay_sign" if mode == "solo" else "client_coast_cay_sign")
+	_check("E reads the sign: its note opens on the HUD", opened, "prompt %s" % [_prompt_lines()])
+	if opened:
+		var line: String = sign.call("line", session.get("locale"))
+		_check("the note shows the sign's line", sign_note.call("text_shown") == line, "note '%s'" % sign_note.call("text_shown"))
+		_check("and the close line", sign_note.call("close_text") == "[E] Cerrar", "close '%s'" % sign_note.call("close_text"))
+		_check("no speech bubble shows over the sign", sign.get_node_or_null(^"SpeechBubble") == null)
+		# The note is on the HUD, so the capture is the window's, not the world view's.
+		await _save_window("coast_cay_sign_note" if mode == "solo" else "client_coast_cay_sign_note")
+		await _walk_to(sign.global_position + Vector2(0.0, 40.0), 4.0)
+		await _frames(3)
+		_check("walking away closes the note", not sign_note.call("is_open"))
 
 
 func _client() -> void:

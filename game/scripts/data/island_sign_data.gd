@@ -1,8 +1,8 @@
 class_name IslandSignData
 extends DataPart
 ## A glyph of a handmade island's map that stands for a sign: a wall slogan, a dead radio, two
-## crossed sticks. Interacting with it shows its line in a speech bubble; reading changes nothing
-## else. One glyph, one cell. Spanish first.
+## crossed sticks. Interacting with it opens a sign note with its line on the reader's HUD; reading changes
+## nothing else. One glyph, one cell. Spanish first.
 
 ## The character in the layout's rows.
 @export var glyph: String = ""
