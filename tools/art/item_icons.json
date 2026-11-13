@@ -1,0 +1,26 @@
+{
+  "sources": {
+    "kyrise": "itch/kyrise-icons/extracted/Kyrises_16x16_RPG_Icon_Pack_V1.3/Kyrise's 16x16 RPG Icon Pack - V1.3/icons/16x16",
+    "dawnlike": "oga/dawnlike/extracted/DawnLike_5/Items"
+  },
+  "outline": "#000000",
+  "icons": [
+    {"id": "coco", "hand": "coco.png"},
+    {"id": "driftwood", "from": "kyrise", "file": "wood_01a.png", "erase_columns": [15],
+     "map": {"#9b6742": "#9badb7", "#bb7b4d": "#cbdbfc", "#885f33": "#847e87", "#714627": "#696a6a", "#4c2e19": "#595652", "#342214": "#323c39", "#0d0d0d": "#000000"}},
+    {"id": "dry_grass", "hand": "dry_grass.png"},
+    {"id": "inner_tube", "hand": "inner_tube.png"},
+    {"id": "knife", "from": "dawnlike", "file": "ShortWep.png", "cell": [0, 0],
+     "map": {"#6dc3cb": "#9badb7", "#dfefd7": "#ffffff", "#597dcf": "#696a6a", "#d37d2c": "#c08a5a", "#864d30": "#663931"}},
+    {"id": "plastic_jug", "hand": "plastic_jug.png"},
+    {"id": "rain_cup", "from": "kyrise", "file": "cup_01a.png"},
+    {"id": "rope", "from": "dawnlike", "file": "Tool.png", "cell": [2, 2], "shift": [0, -1],
+     "map": {"#452434": "#663931", "#864d30": "#8f563b", "#d37d2c": "#d9a066", "#dbd75d": "#eec39a", "#d3aa9a": "#eec39a", "#4d494d": "#45283c"}},
+    {"id": "tarp", "hand": "tarp.png"},
+    {"id": "binoculars", "hand": "binoculars.png"},
+    {"id": "nails", "hand": "nails.png"},
+    {"id": "mirror", "hand": "mirror.png"},
+    {"id": "aloe", "hand": "aloe.png"},
+    {"id": "lighter", "hand": "lighter.png"}
+  ]
+}

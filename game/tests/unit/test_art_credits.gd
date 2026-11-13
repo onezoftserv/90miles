@@ -30,11 +30,9 @@ const CC0_SOURCES: PackedStringArray = [
 ## Packs credited ahead of their files (design.md K20, K33): each leaves this list in the group that
 ## tracks its files (DawnLike and Tiny, Tiny Heroes - Animals in group 6, Kyrise in group 7), and a
 ## test fails while it names a pack that has a block. Zelda-like, Scallywag and Eldiran left it with
-## the terrain art (task 4.4).
+## the terrain art (task 4.4), Kyrise and DawnLike with the item icons (task 7.3).
 const PENDING_SOURCES: PackedStringArray = [
-	"https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181",
 	"https://thkaspar.itch.io/tth-animals",
-	"https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack",
 ]
 const FONT_SOURCES: PackedStringArray = [
 	"https://github.com/google/fonts/tree/main/ofl/pressstart2p",
