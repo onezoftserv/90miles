@@ -255,14 +255,13 @@ def shore_field(sand):
     return [_shore_point(x, y, land, False) for x, y in water] + [_shore_point(x, y, water, True) for x, y in land]
 
 
-def foam_piece(field, frame, land_rows, white, tint, feather=0, fade=None):
-    """One frame of a straight shoreline strip wrapped round a sand tile's edge. From `feather`
-    steps out, every other pixel is dropped, so the band does not end on a straight cut; with
-    `fade` (steps, colour) the foam takes that colour from that many steps out."""
+def foam_piece(field, frame, land_rows, white, tint, fade=None):
+    """One frame of a straight shoreline strip wrapped round a sand tile's edge; with `fade`
+    (steps, colour) the foam takes that colour from that many steps out."""
     piece = png.blank(TILE, TILE)
     for x, y, steps, along in field:
         row = land_rows - 1 + steps
-        if not 0 <= row < frame.height or (feather and steps >= feather and (along + steps) % 2):
+        if not 0 <= row < frame.height:
             continue
         pixel = frame.get(along % frame.width, row)
         if pixel[3] and pixel[:3] == white:
@@ -503,7 +502,7 @@ def build_foam(spec, sources, sets):
     for mask in range(MASKS):
         field = shore_field(sheet_tile(shape, mask))
         for index, frame in enumerate(frames):
-            piece = foam_piece(field, frame, land_rows, white, tint, int(spec.get("feather", 0)), fade)
+            piece = foam_piece(field, frame, land_rows, white, tint, fade)
             sheet.paste(piece, index * TILE, mask * TILE)
     return sheet
 
@@ -565,7 +564,7 @@ def checked(image, name, palette_colours, partial_alpha=False):
 
 
 def _copies(entries, fixes):
-    """{target: (image, partial alpha allowed)} for the hand-drawn sources of the fixes folder."""
+    """{target: image} for the hand-drawn sources of the fixes folder."""
     copies = {}
     for entry in entries:
         source = need(entry, "from", "a copy")
@@ -575,7 +574,7 @@ def _copies(entries, fixes):
             raise TerrainError(f"{target!r}: a copy goes to <folder>/<name>.png, in lower case")
         if target in copies:
             raise TerrainError(f"{target} is made twice")
-        copies[target] = (read_image(path), False)
+        copies[target] = read_image(path)
     return copies
 
 
@@ -662,8 +661,8 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
         add("sea/foam.png", foam)
     if "shade" in recipe:
         add("decals/shade.png", build_shade(recipe["shade"], sets, fixes), True)
-    for target, (image, partial_alpha) in _copies(section(recipe, "copies", list), fixes).items():
-        add(target, image, partial_alpha)
+    for target, image in _copies(section(recipe, "copies", list), fixes).items():
+        add(target, image)
     _refuse_unread_fixes(recipe, fixes)
     _refuse_final_paths(sheets, out, packs, fixes)
     for name, (image, partial_alpha) in sheets.items():

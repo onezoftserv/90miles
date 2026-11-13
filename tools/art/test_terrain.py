@@ -117,6 +117,28 @@ class PieceTests(unittest.TestCase):
         self.assertEqual(out.alpha(4, 12), 0)
 
 
+def land_where(keep):
+    """A sand tile with land on the pixels `keep(x, y)` picks."""
+    tile = png.blank(16, 16)
+    for y in range(16):
+        for x in range(16):
+            if keep(x, y):
+                tile.set(x, y, SAND + (255,))
+    return tile
+
+
+def touching_land_edge(tile, x, y):
+    """Whether a land pixel has a water pixel among the 8 round it."""
+    return any(not tile.alpha(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+               if (dx or dy) and 0 <= x + dx < 16 and 0 <= y + dy < 16)
+
+
+def touching_land(tile, x, y):
+    """Whether any of the 8 pixels round (x, y) is land."""
+    return any(tile.alpha(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+               if (dx or dy) and 0 <= x + dx < 16 and 0 <= y + dy < 16)
+
+
 class FoamTests(unittest.TestCase):
     def frame(self):
         """An Eldiran-like frame: land on rows 0 to 5, a foam line on row 6 and a wash on row 5."""
@@ -146,17 +168,35 @@ class FoamTests(unittest.TestCase):
         self.assertTrue(terrain.foam_piece(terrain.shore_field(filled(SAND)), self.frame(), 6, WHITE, WHITE).is_empty())
         self.assertTrue(terrain.foam_piece(terrain.shore_field(png.blank(16, 16)), self.frame(), 6, WHITE, WHITE).is_empty())
 
-    def test_the_feather_thins_the_foam_from_that_distance_on(self):
-        frame = self.frame()
-        for y in range(7, 10):
-            for x in range(16):
-                frame.set(x, y, WHITE + (255,))
-        field = terrain.shore_field(filled(SAND, rows=range(0, 12)))
-        whole = terrain.foam_piece(field, frame, 6, WHITE, WHITE)
-        thin = terrain.foam_piece(field, frame, 6, WHITE, WHITE, feather=4)
-        self.assertEqual(sum(1 for x in range(16) if whole.alpha(x, 15)), 16)
-        self.assertEqual(sum(1 for x in range(16) if thin.alpha(x, 15)), 8)
-        self.assertEqual(sum(1 for x in range(16) if thin.alpha(x, 14)), 16)
+    def shapes(self):
+        return {
+            "outer corner": land_where(lambda x, y: x < 8 and y < 8),
+            "inner corner": land_where(lambda x, y: x < 8 or y < 8),
+            "diagonal": land_where(lambda x, y: x + y < 15),
+            "islet": land_where(lambda x, y: (x - 7.5) ** 2 + (y - 7.5) ** 2 <= 20),
+        }
+
+    def test_the_shore_field_counts_steps_from_the_edge_all_the_way_round_a_corner_or_an_islet(self):
+        for name, tile in self.shapes().items():
+            field = terrain.shore_field(tile)
+            self.assertEqual(len(field), 256, name)
+            for x, y, steps, _along in field:
+                if tile.alpha(x, y):
+                    self.assertEqual(steps == 0, touching_land_edge(tile, x, y), f"{name}: last sand pixel at ({x}, {y})")
+                    self.assertLessEqual(steps, 0, name)
+                else:
+                    self.assertEqual(steps == 1, touching_land(tile, x, y), f"{name}: first water pixel at ({x}, {y})")
+                    self.assertGreaterEqual(steps, 1, name)
+
+    def test_the_foam_has_no_gap_round_a_corner_or_an_islet(self):
+        for name, tile in self.shapes().items():
+            piece = terrain.foam_piece(terrain.shore_field(tile), self.frame(), 6, WHITE, WHITE)
+            first_water = {(x, y) for y in range(16) for x in range(16) if not tile.alpha(x, y) and touching_land(tile, x, y)}
+            on_first_row = {(x, y) for y in range(16) for x in range(16) if piece.alpha(x, y) and not tile.alpha(x, y)}
+            self.assertEqual(on_first_row & first_water, first_water, f"{name}: a first water pixel has no foam")
+            self.assertTrue(first_water, name)
+            for x, y in first_water:
+                self.assertEqual(piece.get(x, y), WHITE + (255,), name)
 
     def test_the_fade_colours_the_foam_from_that_distance_on(self):
         frame = self.frame()
@@ -625,11 +665,81 @@ class BuildTests(unittest.TestCase):
             self.build(out=self.packs / "oga" / "made")
         self.assertFalse((self.packs / "oga" / "made").exists())
 
-    def test_main_prints_the_error_and_returns_1(self):
-        recipe_path = self.root / "recipe.json"
-        recipe_path.write_text(json.dumps({"sources": {}, "sets": [{"id": "sand", "source": "nowhere"}]}), encoding="utf-8")
-        code = terrain.main(["--packs", str(self.packs), "--recipe", str(recipe_path), "--fixes", str(self.fixes), "--out", str(self.out)])
-        self.assertEqual(code, 1)
+    def test_main_returns_0_and_writes_the_sheets(self):
+        code, printed = self.run_main(self.recipe())
+        self.assertEqual((code, printed), (0, ""))
+        self.assertEqual(len(list(self.out.rglob("*.png"))), 8)
+        self.assertEqual(png.read_png(self.out / "terrain" / "pool.png"), filled(ROCK))
+
+    def test_main_prints_the_error_after_terrain_on_stderr_and_returns_1(self):
+        recipe = self.recipe()
+        recipe["sets"][0]["source"] = "nowhere"
+        code, printed = self.run_main(recipe)
+        self.assertEqual((code, printed), (1, "terrain: sand: no source named 'nowhere'\n"))
+        self.assertFalse(self.out.exists())
+
+    def test_a_set_whose_full_tile_is_a_colour_fill_has_it_on_every_pixel(self):
+        recipe = self.recipe()
+        recipe["sets"][0]["tiles"]["15"] = png.colour_hex(GRASS)
+        self.build(recipe)
+        sand = png.read_png(self.out / "terrain" / "sand.png")
+        self.assertEqual(terrain.sheet_tile(sand, 15), filled(SAND))
+        self.assertEqual(sand.crop(0, 64, 16, 16), filled(SAND), "the variants start from the filled tile")
+
+    def test_every_refusal_of_the_builder_names_what_is_wrong(self):
+        def sand(**changes):
+            return lambda r: r["sets"][0].update(changes)
+
+        def edit(section, **changes):
+            return lambda r: r[section].update(changes)
+
+        def tile(mask, value):
+            return lambda r: r["sets"][0]["tiles"].update({mask: value})
+
+        cases = [
+            ("set id", sand(id="Bad Id"), r"set id 'Bad Id' is not lower-case"),
+            ("set without id", lambda r: r["sets"][0].pop("id"), r'a set has no "id"'),
+            ("set without tiles", lambda r: r["sets"][0].pop("tiles"), r'sand has no "tiles"'),
+            ("set without source", lambda r: r["sets"][0].pop("source"), r'sand has no "source"'),
+            ("no sources", lambda r: r.pop("sources"), r'the recipe has no "sources"'),
+            ("unknown source", sand(source="nowhere"), r"sand: no source named 'nowhere'"),
+            ("pack file missing", lambda r: r["sources"].update(world="oga/none.png"), r"sand: .*none\.png not found"),
+            ("tile off the sheet", tile("3", [9, 9]), r"sand mask 3: tile \(9, 9\) is off the 64x32 sheet"),
+            ("colour not named", sand(map={}), r"sand mask 1: the recipe does not name #10c010"),
+            ("five variants", sand(variants=["15"] * 5), r"sand: 5 variants, and row 4 holds 4"),
+            ("variant not a mask", sand(variants=["x"]), r"sand: variant 'x' is not a mask of the set"),
+            ("no tile for a mask", lambda r: r["sets"][0]["tiles"].pop("14"), r"sand: no tile for mask 14"),
+            ("plain shape not built", lambda r: r["plain"].update(shape="ghost"), r"plain: its shape set 'ghost' is not built"),
+            ("foam shape not built", edit("foam", shape="ghost"), r"foam: its shape set 'ghost' is not built"),
+            ("shade shape not built", edit("shade", shape="ghost"), r"shade: its shape set 'ghost' is not built"),
+            ("shore shape not built", lambda r: r["sets"][1].update(shore={"shape": "ghost"}), r"brush shore: its shape set 'ghost' is not built"),
+            ("water rect off the sheet", edit("water", rect=[32, 0, 64, 32]), r"water: the rect \[32, 0, 64, 32\] is off the 64x32 sheet"),
+            ("foam frame off the sheet", edit("foam", frames=50), r"foam: frame \d+ is off the 35x32 sheet"),
+            ("spots missing", lambda r: r["shade"].update(spots="gone.png"), r"gone\.png: no such hand-drawn source"),
+            ("copy missing", lambda r: r["copies"][0].update({"from": "gone.png"}), r"gone\.png: no such hand-drawn source"),
+        ]
+        for label, change, message in cases:
+            recipe = self.recipe()
+            change(recipe)
+            with self.assertRaisesRegex(terrain.TerrainError, message, msg=label):
+                self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+        png.write_png(self.fixes / "sand.png", png.blank(8, 8))
+        with self.assertRaisesRegex(terrain.TerrainError, r"sand\.png: the fix overlay is 8x8, not 64x80"):
+            self.build()
+
+    def test_a_recipe_file_that_cannot_be_read_is_refused_by_path(self):
+        missing = self.root / "none.json"
+        with self.assertRaisesRegex(terrain.TerrainError, r"none\.json"):
+            terrain.load_recipe(missing)
+        broken = self.root / "broken.json"
+        broken.write_text("{not json", encoding="utf-8")
+        with self.assertRaisesRegex(terrain.TerrainError, r"broken\.json"):
+            terrain.load_recipe(broken)
+        for text in ("[]", "{}", '{"sources": []}'):
+            broken.write_text(text, encoding="utf-8")
+            with self.assertRaisesRegex(terrain.TerrainError, r'broken\.json has no "sources" table'):
+                terrain.load_recipe(broken)
 
     def test_the_tracked_recipe_names_only_sources_under_the_download_folders(self):
         recipe = terrain.load_recipe(terrain.DEFAULT_RECIPE)
@@ -637,7 +747,8 @@ class BuildTests(unittest.TestCase):
         for relative in recipe["sources"].values():
             self.assertIn(relative.split("/")[0], terrain.DOWNLOAD_FOLDERS)
         self.assertEqual([entry["id"] for entry in recipe["sets"]], ["sand", "dune", "brush"])
-        self.assertEqual(len(recipe["plain"]["rows"]), 9)
+        self.assertEqual([row["id"] for row in recipe["plain"]["rows"]],
+                         ["rock", "shingle", "cliff", "hammock", "casuarina", "reef_flat", "coral", "mangrove", "wreck_interior"])
         self.assertEqual(recipe["shade"]["shape"], "sand")
 
 
