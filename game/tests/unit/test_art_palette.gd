@@ -26,6 +26,9 @@ const BASE_SHADE: int = 1
 ## design.md K38: the sea ramps' rows; each runs dark to light and row 0 is the water texture's own.
 const SEA_ROWS: PackedStringArray = ["deep", "shallows", "brackish"]
 const DEEP_ROW: int = 0
+## The most contrast between the deep ramp's darkest and lightest step (it was 1.95:1, which made
+## the open sea busier than the shallows).
+const DEEP_SPREAD_MAX: float = 1.5
 const SHALLOWS_ROW: int = 1
 const WATER_SIZE: Vector2i = Vector2i(32, 32)
 
@@ -109,6 +112,9 @@ func test_the_sea_ramps_are_three_depth_steps_of_palette_colours() -> void:
 	assert_true(_distinct(seen), "each depth step has colours of its own")
 	for shade: int in SHADES:
 		assert_gt(ArtChecks.luminance(ramps[SHALLOWS_ROW][shade]), ArtChecks.luminance(ramps[DEEP_ROW][shade]), "shallows are lighter than deep water")
+	# Design.md K39 (art round 2): the open sea is calm, its light steps close to its base.
+	var deep: PackedColorArray = ramps[DEEP_ROW]
+	assert_lte(ArtChecks.contrast_ratio(deep[0], deep[SHADES - 1]), DEEP_SPREAD_MAX, "the deep ramp's lightest step is near its base")
 
 
 func test_the_water_texture_is_32_px_and_drawn_in_the_deep_ramp() -> void:
