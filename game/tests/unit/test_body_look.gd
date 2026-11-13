@@ -287,3 +287,36 @@ func test_at_noche_with_suave_on_the_mark_keeps_its_colours() -> void:
 		at_night.append(colour * _tint_on(hud.marks))
 	assert_eq(at_night, by_day, "the same colours as by day")
 	assert_eq(by_day.size(), 2, "the outline and the eye")
+
+
+# The night tint is a CanvasModulate on the world's canvas; the body's Look/Sprite draws through
+# player_look.gdshader, which multiplies its colours by the modulate it is given. So the tint reaches
+# the clothing through the look's material: the sprite sits under the tint, its own modulates leave it
+# alone, and the clothing the shader draws at night is the ramp colour times the tint, not the ramp
+# colour. (Task 4.6's capture shows it in a window.)
+func test_the_night_tint_reaches_the_clothing_through_the_looks_material() -> void:
+	var shell := _shell_smooth()
+	session = shell.session
+	var body := session.body(CoopSession.HOST_ID)
+	var sprite := _sprite(body)
+	var material := sprite.material as ShaderMaterial
+	assert_not_null(material, "Look/Sprite draws through a shader material")
+	if material == null:
+		return
+	assert_eq(material.shader.resource_path, "res://scenes/art/player_look.gdshader")
+	var vertex: String = material.shader.code.substr(material.shader.code.find("void vertex"))
+	vertex = vertex.substr(0, vertex.find("}"))
+	assert_true(vertex.contains("art_modulate = COLOR"), "the material takes the node's colour into a varying")
+	assert_true(material.shader.code.contains("* art_modulate"), "and multiplies what it draws by it")
+	WeatherManager.sky.start_at(NIGHT_S)
+	shell.tint._process(0.0)
+	assert_eq(WeatherManager.phase(), DataEnums.DayPhase.NIGHT, "Noche")
+	assert_true(shell.world_view.is_ancestor_of(sprite), "the sprite is in the tinted world")
+	var tint: Color = _tint_on(sprite)
+	assert_false(tint.is_equal_approx(Color.WHITE), "the night tints the sprite")
+	assert_eq(sprite.modulate, Color.WHITE, "nothing on the sprite undoes it")
+	assert_eq(sprite.self_modulate, Color.WHITE)
+	var ramps := material.get_shader_parameter(&"ramps") as Texture2D
+	assert_not_null(ramps, "the clothing ramps are the material's")
+	var clothing: Color = ramps.get_image().get_pixel(1, int(material.get_shader_parameter(&"slot_row")))
+	assert_false((clothing * tint).is_equal_approx(clothing), "the clothing drawn at night is not the clothing by day")
