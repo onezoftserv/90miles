@@ -35,13 +35,12 @@ func light() -> void:
 			player.meters.morale_event(SurvivalMeters.MoraleEvent.FIRE_LIT)
 
 
-# Burning from now on: in the lit fires, interactable, drawn lit.
+# Burning from now on: in the lit fires, interactable (its look reads `lit`).
 func _burn() -> void:
 	lit = true
 	burn_left_s = tuning.fire_burn_s
 	add_to_group(PlayerBody.FIRE_GROUP)
 	interactable.enabled = true
-	queue_redraw()
 
 
 func put_out() -> void:
@@ -49,7 +48,6 @@ func put_out() -> void:
 	burn_left_s = 0.0
 	remove_from_group(PlayerBody.FIRE_GROUP)
 	interactable.enabled = false
-	queue_redraw()
 
 
 ## Burns down by `delta`; goes out at 0.
@@ -68,7 +66,3 @@ func _physics_process(delta: float) -> void:
 
 func _on_interacted(_by: Node) -> void:
 	put_out()
-
-
-func _draw() -> void:
-	draw_circle(Vector2.ZERO, 5.0, Color(1.0, 0.55, 0.1) if lit else Color(0.25, 0.2, 0.2))

@@ -194,6 +194,8 @@ def layers_of(entries, recipe, offset=(0, 0), depth=0):
         moved = (at[0] + offset[0], at[1] + offset[1])
         if "part" in layer:
             parts = recipe.get("parts", {})
+            if not isinstance(layer["part"], str):
+                raise StructureError(f"{layer['part']!r} is not a part name")
             if layer["part"] not in parts:
                 raise StructureError(f"no part named {layer['part']!r} in the recipe")
             flat.extend(layers_of(parts[layer["part"]], recipe, moved, depth + 1))

@@ -64,6 +64,13 @@ func _walkable_palm(island: SandbarIsland) -> Palm:
 	return null
 
 
+# The palm as drawn: its look's palm sprite (task 8.4), read after one step.
+func _crown(palm: Palm) -> Sprite2D:
+	var look := palm.get_node(NodePath(StructureLook.NODE_NAME)) as StructureLook
+	look.step()
+	return look.still
+
+
 # The island's ground layers: every tile layer it builds (task 4.5), however it is made.
 func _ground_layers(island: SandbarIsland) -> Array[Node]:
 	return island.find_children("*", "TileMapLayer", true, false)
@@ -142,7 +149,10 @@ func test_a_solo_player_walks_from_behind_a_palm_to_in_front_of_it() -> void:
 	var palm_path: NodePath = palm.get_path()
 	var body_parent: Node = body.get_parent()
 	var palm_parent: Node = palm.get_parent()
-	assert_true(DrawOrder.drawn_after(palm, body), "one tile north: the crown is drawn over the player")
+	var crown := _crown(palm)
+	assert_true(crown.visible, "the real palm is drawn")
+	assert_true(crown.get_rect().has_point(body.global_position - palm.global_position), "the player one tile north is under the crown's frame")
+	assert_true(DrawOrder.drawn_after(crown, body), "one tile north: the crown is drawn over the player")
 	body.intent = MoveIntent.create(Vector2.DOWN, false, false, false)
 	var frames: int = 0
 	while body.global_position.y < palm.global_position.y + TILE and frames < WALK_FRAMES:
@@ -150,7 +160,7 @@ func test_a_solo_player_walks_from_behind_a_palm_to_in_front_of_it() -> void:
 		frames += 1
 	body.intent = MoveIntent.new()
 	assert_gte(body.global_position.y, palm.global_position.y + TILE, "walked to one tile south in %d frames" % frames)
-	assert_true(DrawOrder.drawn_after(body, palm), "one tile south: the player is drawn over the palm")
+	assert_true(DrawOrder.drawn_after(body, crown), "one tile south: the player is drawn over the palm")
 	assert_eq(body.get_path(), body_path, "the player's node did not move")
 	assert_eq(palm.get_path(), palm_path, "the palm's node did not move")
 	assert_same(body.get_parent(), body_parent)
@@ -195,8 +205,8 @@ func test_ground_is_under_the_player_and_overhead_text_over_a_crown() -> void:
 	var bubble := shell.session.show_bubble(body, "¡Ayuda!")
 	assert_eq(tag.z_index, OVERHEAD_Z, "the name tag's z")
 	assert_eq(bubble.z_index, OVERHEAD_Z, "the speech bubble's z")
-	assert_true(DrawOrder.drawn_after(tag, palm), "a tag over a player behind a palm shows over the crown")
-	assert_true(DrawOrder.drawn_after(bubble, palm), "so does a bubble")
+	assert_true(DrawOrder.drawn_after(tag, _crown(palm)), "a tag over a player behind a palm shows over the crown")
+	assert_true(DrawOrder.drawn_after(bubble, _crown(palm)), "so does a bubble")
 
 
 func test_the_name_tag_and_speech_bubble_scenes_draw_at_20() -> void:

@@ -231,7 +231,3 @@ func _complete_spawned() -> void:
 func _mark_built() -> void:
 	built = true
 	interactable.enabled = false
-
-
-func _draw() -> void:
-	draw_rect(Rect2(-6.0, -6.0, 12.0, 12.0), Color(0.6, 0.5, 0.3, 0.6), false)

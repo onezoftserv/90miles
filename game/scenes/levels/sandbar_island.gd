@@ -6,9 +6,12 @@ extends Node2D
 ## ground from the grid on every peer and only reads it. The layout is set before the island enters
 ## the tree (the sandbar is the default). Terrain, palms, workbench, drinking spots and signs are
 ## built on every peer from the same data; the pick-ups are placed and refreshed by the host alone,
-## through the session's pick-up spawner. The class keeps its name from the first island.
+## through the session's pick-up spawner. The class keeps its name from the first island. The
+## shelter `shelter_art.tres` names for the layout (the sandbar's lean-to) stands over the hut on
+## every peer, drawing only.
 
 const PALM_SCENE: PackedScene = preload("res://scenes/levels/palm.tscn")
+const SHELTER_NAME: StringName = &"Shelter"
 const BENCH_NAME: StringName = &"HutWorkbench"
 const ROUTES_NAME: StringName = &"Routes"
 const CREATURES_NAME: StringName = &"Creatures"
@@ -63,6 +66,26 @@ func _ready() -> void:
 		palm.climb_effects = layout.climb_effects
 		palm.hold_s = layout.climb_hold_s
 		palms.add_child(palm)
+	_place_shelter()
+
+
+# The layout's shelter, if the art data names one, with its origin on the hut's back edge (the top
+# edge of the hut's northmost row), centred on the hut, so it sorts with the palms and the session.
+func _place_shelter() -> void:
+	var scene: PackedScene = ShelterArtData.standard().shelter_for(layout.id)
+	if scene == null or built.hut_cells.is_empty():
+		return
+	var west: int = built.hut_cells[0].x
+	var east: int = west
+	var back: int = built.hut_cells[0].y
+	for cell: Vector2i in built.hut_cells:
+		west = mini(west, cell.x)
+		east = maxi(east, cell.x)
+		back = mini(back, cell.y)
+	var shelter := scene.instantiate() as Node2D
+	shelter.name = SHELTER_NAME
+	shelter.position = Vector2((west + east + 1) * IslandLayout.TILE / 2.0, back * IslandLayout.TILE)
+	add_child(shelter)
 
 
 func _exit_tree() -> void:

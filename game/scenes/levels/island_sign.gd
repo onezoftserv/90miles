@@ -9,6 +9,11 @@ var line_es: String = ""
 var line_en: String = ""
 
 
+# The level makes signs with new(), so the sign post's look is added here (drawing only).
+func _init() -> void:
+	add_child(StructureLook.create())
+
+
 func _ready() -> void:
 	hold_time_s = 0.0
 	interacted.connect(_on_interacted)
@@ -28,7 +33,3 @@ func _on_interacted(by: Node) -> void:
 	if session == null or not by is PlayerBody or not session.multiplayer.is_server():
 		return
 	session.show_sign.rpc(String(name))
-
-
-func _draw() -> void:
-	draw_rect(Rect2(-3.0, -5.0, 6.0, 8.0), Color(0.85, 0.8, 0.6, 0.8), false)

@@ -31,8 +31,3 @@ func _on_interacted(by: Node) -> void:
 	var routes := get_tree().get_first_node_in_group(IslandRoutes.GROUP) as IslandRoutes
 	if routes != null and by is PlayerBody and multiplayer.is_server():
 		routes.start_for(routes.peer_of(by as PlayerBody), recipe_id)
-
-
-func _draw() -> void:
-	draw_rect(Rect2(-9.0, -5.0, 18.0, 10.0), Color(0.55, 0.4, 0.22))
-	draw_rect(Rect2(-9.0, -5.0, 18.0, 10.0), Color(0.3, 0.2, 0.1), false)

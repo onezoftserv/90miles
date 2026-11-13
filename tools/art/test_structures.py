@@ -117,6 +117,12 @@ class PieceTests(unittest.TestCase):
         with self.assertRaisesRegex(structures.StructureError, "no part"):
             structures.layers_of([{"part": "none"}], recipe)
 
+    def test_a_part_name_that_is_not_text_is_refused(self):
+        recipe = {"parts": {"log": [{"hand": "a.png"}]}}
+        for name in (["log"], {"log": 1}, 3):
+            with self.assertRaisesRegex(structures.StructureError, "is not a part name"):
+                structures.layers_of([{"part": name}], recipe)
+
     def test_parts_that_name_themselves_are_refused(self):
         recipe = {"parts": {"loop": [{"part": "loop"}]}}
         with self.assertRaisesRegex(structures.StructureError, "too deep"):

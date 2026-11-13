@@ -6,7 +6,6 @@ extends Node2D
 ## every `Workbench.new()` has one: the HUD opens the crafting list when the local player's press
 ## lands on it, and on the host the press changes nothing (nothing listens to `interacted`).
 
-const SIZE: Vector2 = Vector2(14.0, 8.0)
 const INTERACTABLE_NAME: StringName = &"Interactable"
 const PROMPT_ID: StringName = &"workbench"
 
@@ -18,7 +17,5 @@ func _init() -> void:
 	interactable.hold_time_s = 0.0
 	interactable.prompt_id = PROMPT_ID
 	add_child(interactable)
-
-
-func _draw() -> void:
-	draw_rect(Rect2(-SIZE / 2.0, SIZE), Color(0.45, 0.33, 0.2))
+	# Drawing only (art-pass "Camp structures"; design.md T7): every bench made with new() has it.
+	add_child(StructureLook.create())
