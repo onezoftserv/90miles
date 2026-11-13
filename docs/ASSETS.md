@@ -1,12 +1,12 @@
 # 90 Millas — Free Assets
 
-Every asset source is free for commercial use and for redistribution of the raw files in this public repository. Downloaded packs are git-ignored (`game/assets/kenney/`, `game/assets/oga/`, `game/assets/itch/`) and keep their own license file next to them. Only the files the game actually uses are copied into tracked folders under `game/assets/art/<area>/`, each with its `License.txt`, and no tracked scene, resource, GDScript or shader under `game/` may refer to a git-ignored folder (`CREDITS.md` and the pipeline tools in `tools/` name those folders on purpose).
+Every asset source is free for commercial use and for redistribution of the raw files in this public repository. Downloaded packs are git-ignored (`game/assets/kenney/`, `game/assets/oga/`, `game/assets/itch/`, `game/assets/audio/ambience/`) and keep their own license file next to them. Only the files the game actually uses are copied into tracked folders under `game/assets/art/<area>/`, each with its `License.txt`, and no tracked scene, resource, GDScript or shader under `game/` may refer to a git-ignored folder (`CREDITS.md` and the pipeline tools in `tools/` name those folders on purpose).
 
 `tools/fetch_assets.py` downloads the packs marked **auto** and the OpenGameArt art packs below; for the rest, whose site requires a login or a click, it prints the page and the target folder (see Pipeline).
 
 ## Art direction (decided 2026-11-08)
 
-Direction C, **"GBA tropic"**: a bright *A Link to the Past* / Pokémon look with saturated colours, 1 px dark outlines and 2–3 tone shading, in a 3/4 view. Tiles are 16×16. Players are about 16×28 figures (chibi, about 2 heads tall) in 32×32 frames, anchored bottom-centre on a one-tile (16 px) footprint, with the head about one tile into the row above; collision stays a small circle at the feet. This replaces the 2026-11-05 decision of 16×16 characters on Kenney bases. Pieces no pack has (the climbable palm with coconuts and gull nests, the raft and its damage states, coconut, inner tube, plastic jug, tarp and other island item icons, the Cuban cast's extra poses such as crouch, swim, downed, drag and carry, mangroves, sea grapes, a thatched bohío and palm-frond lean-to, portraits) are made by editing and kitbashing the CC0 and CC-BY pack pieces by hand to one shared master palette, rough first and refinable. The first pass is the OpenSpec change `art-pass`.
+Direction C, **"GBA tropic"**: a bright *A Link to the Past* / Pokémon look with saturated colours, 1 px dark outlines and 2–3 tone shading, in a 3/4 view. Tiles are 16×16. Players are about 14×29 figures (chibi, about 2 heads tall) in 32×32 frames, anchored bottom-centre on a one-tile (16 px) footprint, with the head about one tile into the row above; collision stays a small circle at the feet. This replaces the 2026-11-05 decision of 16×16 characters on Kenney bases. Pieces no pack has (the climbable palm with coconuts and gull nests, the raft and its damage states, coconut, inner tube, plastic jug, tarp and other island item icons, the Cuban cast's extra poses such as crouch, swim, downed, drag and carry, mangroves, sea grapes, a thatched bohío and palm-frond lean-to, portraits) are made by editing and kitbashing the CC0 and CC-BY pack pieces by hand to one shared master palette, rough first and refinable. The first pass is the OpenSpec change `art-pass`.
 
 ## Downloaded art packs (2026-11-08, with the owner's permission)
 
@@ -24,16 +24,30 @@ Direction C, **"GBA tropic"**: a bright *A Link to the Past* / Pokémon look wit
 
 The installed Kenney packs (all CC0) may fill gaps, but their flat or outline-free styles must pass the same palette and outline rules. DawnLike's own README asks users to hide its "Platino" sprite somewhere in the game; that is a request, not a licence term.
 
+**What `art-pass` uses (final, 2026-11-13).** Tracked copies, each listed in `game/assets/CREDITS.md` and its folder's `License.txt`:
+
+- MetroCity: the player body, hair and outfit parts (`characters/parts/`) and the 12×7 drop shadow (`shadows/`).
+- Zelda-like: the sand, dune, brush and plain ground tiles (`terrain/`), whose sand outline also shapes the foam (`sea/foam.png`) and the shade decal (`decals/`); the barrel, bench, sign board and log of the rain catcher, workbench, sign post, raft and raft site (`structures/`).
+- Scallywag – Water and Islands: the sea texture (`sea/water.png`) and one palm frond (`structures/palm.png`).
+- Eldiran's shoreline: the foam's 8 frames (`sea/foam.png`).
+- Tiny, Tiny Heroes – Animals: the seagull (`creatures/seagull.png`).
+- Kyrise: the driftwood (redrawn over its log) and rain-cup icons (`items/`).
+- DawnLike: the knife icon, redrawn over its dagger (`items/`); its sharks are the shape and colour reference for the own-work shark, none of their pixels copied.
+- Kenney: the Pixel UI Pack's 9-slices (`ui/`); Tiny Dungeon's crab as the shape reference for the own-work land crab, none copied.
+- Not used by `art-pass`: Scallywag – Ships and Shikashi's icons (both "later" above), and the other Kenney packs.
+
+Everything else under `game/assets/art/` is own work (the crab, the shark, eleven item icons, the palm, fire, lean-to and other structure parts, the dive ripple, the tide pool, the smaller shadows and the added palette ramps), made by the tracked tools in `tools/art/` from hand sources in `tools/art/fixes/`.
+
 ## Style guide
 
-- **Palette:** one master palette, at most 64 colours: DawnBringer's 32 plus the tropical, sea and skin ramps the packs need (`game/assets/art/palette/master_palette.png`). Every world image uses only its colours, fully opaque or fully transparent; only drop shadows and shade decals (`shadows/`, `decals/`) use partial alpha. Pack art, DawnLike included, is remapped to it (baked half-transparent shadows removed) and fixed by hand.
+- **Palette:** one master palette, at most 64 colours (52 today): DawnBringer's 32 plus the tropical, sea and skin ramps the packs need (`game/assets/art/palette/master_palette.png`). Every world image uses only its colours, fully opaque or fully transparent; only drop shadows and shade decals (`shadows/`, `decals/`) use partial alpha. Pack art, DawnLike included, is remapped to it (baked half-transparent shadows removed) and fixed by hand.
 - **Outlines:** a closed 1 px outline in one of the palette's darkest colours on every character, creature, item and structure frame, added by the pipeline's rim step (which recolours a piece's own edge ring, or grows one where there is none); none on terrain, water, foam, shadows or decals.
-- **Characters:** 32×32 frames on one fixed feet line (the bottom edge of the standing frame's lowest opaque row) 4 px below the body position, so the walk keeps its bob; down, up and side facings (side mirrored); a head anchor per pose for the name tag, speech bubble, HUD marks and, later, the gull perch. Clothing in a key ramp that a palette swap recolours per player; skin and hair in their own reserved ramps.
+- **Characters:** figures about 14×29 in 32×32 frames on one fixed feet line (the bottom edge of the standing frame's lowest opaque row) 4 px below the body position, so the walk keeps its bob; down, up and side facings (side mirrored); a head anchor per pose for the name tag, speech bubble, HUD marks and, later, the gull perch. Clothing in a key ramp that a palette swap recolours per player; skin and hair in their own reserved ramps.
 - **Frame budget:** at most 6 unique frames per actor or structure animation and facing, at most 4 per creature animation, at most 48 per character, at most 12 fps; holds repeat frames. Terrain, sea and foam overlays (the 8-frame shoreline) are exempt.
 - **Terrain:** corner-matched land tiles with a transparent water side and no water or foam of their own; one foam line per shore, drawn on the land side.
 - **Creatures:** side-on frames mirrored by facing; animations named after the behaviour states (`circle`, `swoop`, `pinch`…), with `move` and `idle` as fallbacks.
 - **Items:** 16×16 icons with the item inside the 14×14 box one pixel in from the edge, one silhouette per item, raised 3 px on the ground (5 px for an item under 8 px tall) over a small shadow.
-- **Readability:** on land the dark outline carries the contrast (every outline colour reaches 3:1 against sand, dune and brush); on water, swimmers and the shark fin reach 3:1 against shallows and deep water with their outline ring or their mean colour. Every actor and item has a drop shadow except swimmers and the shark fin, which are cut at the water line.
+- **Readability:** on land the dark outline carries the contrast (every outline colour reaches 3:1 against sand, dune and brush); on water, swimmers and the shark fin reach 3:1 against shallows and deep water with their outline ring or their mean colour. Every actor and item has a drop shadow (12×7 for players, 8×4 for pick-ups, 6×3 for the smallest) except swimmers and the shark fin, which are cut at the water line.
 
 ## Pipeline
 
@@ -108,7 +122,7 @@ python -I -m unittest discover -s tools -p 'test_fetch_assets.py'
 | Asset | Source | License | Notes |
 | --- | --- | --- | --- |
 | Mangroves, sea grapes, dunes, reef and coral, cliffs, casuarina, wrecks | Hand-made from the Zelda-like and Scallywag pieces | CC0 / own | The first art pass gives these terrains a plain tile; full edge sets come later |
-| Lighthouse, bohío, bunker, wreck interiors | Zelda-like `Inner.png` and `cave.png` for interiors, hand-pixel the rest at the 28 px people scale | CC0 / own | The Zelda-like houses were drawn for a 22 px hero, so doors need resizing |
+| Lighthouse, bohío, bunker, wreck interiors | Zelda-like `Inner.png` and `cave.png` for interiors, hand-pixel the rest at the 29 px people scale | CC0 / own | The Zelda-like houses were drawn for a 20 px hero, so doors need resizing |
 | Patrol boat, cutter, dinghy, skiff, more rafts | Hand-pixel; Scallywag Ships as a reference only (straight-down, ship scale) | CC0 / own | The raft and its damage states come first, in `art-pass` |
 | Almendrón: a 1950s American car seen from above, no make, badge or logo, with four drums lashed under it and a welded propeller; it is a vessel (`Vessel.CAR`), drawn as a car at sea | Hand-pixel (no free pack has it); boat sprites as a base | — | Rare vessel (about 1 run in 4 sees the route); the sprite is the joke. Never copy a real model's grille or badge |
 | Surfboard with a sail, with a rider; a board is a vessel (`Vessel.BOARD`), one per rider | Hand-pixel | — | No maker's logo on the board |
