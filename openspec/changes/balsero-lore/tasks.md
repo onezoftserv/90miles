@@ -37,10 +37,10 @@ Groups 1–5 are docs and specs, done in this change (no file under `game/` chan
 
 ## 7. Code: creatures (change `creature-perch-ride`; Tier B)
 
-- [ ] 7.1 Add `game/scripts/ai/ambient.gd` (songbird, booby, sperm whale, pelican) and a GUT test with 1 player
-- [ ] 7.2 Append `CreatureData.Behavior.PERCH_RIDE` (after `TRADE_OR_ROB`) and `game/scripts/ai/perch_ride.gd`: head perch, turn with the player, shoo and re-land (solo circles, 5 s), wait overhead when its player falls in, theft once per 60 s at 50% from held food only, the most-food pick with the run-seed tie-break
-- [ ] 7.3 GUT tests: the final crossing places the galleguito with 1 player and with 4 even when rolled threats are capped; +10 morale once per player; `galleguito_a_bordo` set once; the `pluma_galleguito` counter blocks theft on the galleguito and on the island gull; theft is held-only and at most twice in 120 s
-- [ ] 7.4 Verify the import, smoke run, GUT and a 300-frame run pass with no `ERROR:` lines
+- [x] 7.1 Add `game/scripts/ai/ambient.gd` (songbird, booby, sperm whale, pelican) and a GUT test with 1 player
+- [x] 7.2 Append `CreatureData.Behavior.PERCH_RIDE` (after `TRADE_OR_ROB`) and `game/scripts/ai/perch_ride.gd`: head perch, turn with the player, shoo and re-land (solo circles, 5 s), wait overhead when its player falls in, theft once per 60 s at 50% from held food only, the most-food pick with the run-seed tie-break
+- [x] 7.3 GUT tests: the final crossing places the galleguito with 1 player and with 4 even when rolled threats are capped; +10 morale once per player; `galleguito_a_bordo` set once; the `pluma_galleguito` counter blocks theft on the galleguito and on the island gull; theft is held-only and at most twice in 120 s
+- [x] 7.4 Verify the import, smoke run, GUT and a 300-frame run pass with no `ERROR:` lines
 
 ## 8. Content batch 11, balsero gear (19 files)
 

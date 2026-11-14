@@ -46,19 +46,19 @@ Test-first: each task writes its GUT test before the code, and every test that i
 
 ## 5. Perched on every peer
 
-- [ ] 5.1 Add `Creature.perch_peer` to `attach_sync` (spawn and always), and in `CreatureLook` draw a perched creature at its rider's body: head lift from `BodyLook.head_y()`, sorted over the rider, facing the rider's `PlayerLook.facing`. A 1-player look test draws it on the solo player's head and turns it with them.
-- [ ] 5.2 Write `test_perch_ride_net.gd` (host plus client, NetHarness). It checks:
+- [x] 5.1 Add `Creature.perch_peer` to `attach_sync` (spawn and always), and in `CreatureLook` draw a perched creature at its rider's body: head lift from `BodyLook.head_y()`, sorted over the rider, facing the rider's `PlayerLook.facing`. A 1-player look test draws it on the solo player's head and turns it with them.
+- [x] 5.2 Write `test_perch_ride_net.gd` (host plus client, NetHarness). It checks:
   - a client rider sees the gull on its own player's head while walking;
   - a client's shoo from beside the host's player hops it to the client's head, and one from 6 tiles is refused;
   - a client that joins mid-crossing sees it on the host player's head;
   - a rejoined rider keeps it, and its +10 morale is not paid twice.
-- [ ] 5.3 Add `game/tests/manual/perch_ride_run.gd` (host and client as two processes, the fixture catalog, FINAL family by hook); run a host and a client locally and record the `PERCHRUN` lines in the PR
-- [ ] 5.4 Run the import, the smoke run, GUT and a 300-frame headless run of the game; all pass with no `ERROR:` lines (balsero-lore 7.4)
+- [x] 5.3 Add `game/tests/manual/perch_ride_run.tscn` (script `perch_ride_run.gd`) (host and client as two processes, the fixture catalog, FINAL family by hook); run a host and a client locally and record the `PERCHRUN` lines in the PR
+- [x] 5.4 Run the import, the smoke run, GUT and a 300-frame headless run of the game; all pass with no `ERROR:` lines (balsero-lore 7.4)
 
 ## 6. Docs and task lists
 
-- [ ] 6.1 Tick `balsero-lore` tasks 7.1–7.4. In `TASKS.md`, note under content-batch-12 that the scripts are in, that `galleguito` needs a FINAL-family island to meet a real run, and that the rabihorcado, the pelican's theft, the whale's wake and the songbird's noise flee are waiting on fishing, a wake rule and the noise bus. Add a history line.
-- [ ] 6.2 Verify `openspec validate creature-perch-ride --type change --strict` and `openspec validate --all` pass
+- [x] 6.1 Tick `balsero-lore` tasks 7.1–7.4. In `TASKS.md`, note under content-batch-12 that the scripts are in, that `galleguito` needs a FINAL-family island to meet a real run, and that the rabihorcado, the pelican's theft, the whale's wake and the songbird's noise flee are waiting on fishing, a wake rule and the noise bus. Add a history line.
+- [x] 6.2 Verify `openspec validate creature-perch-ride --type change --strict` and `openspec validate --all` pass
 
 ## Workflow follow-up
 
