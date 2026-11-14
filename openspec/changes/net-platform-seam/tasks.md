@@ -74,11 +74,12 @@ No existing file under `game/tests` is edited.
 
 ## 3. NetManager through the backend (tests first)
 
-- [ ] 3.1 Write `game/tests/helpers/fake_net_backend.gd`:
+- [x] 3.1 Write `game/tests/helpers/fake_net_backend.gd`:
   - `defer_frames`, `refuse_host`, `refuse_join`, `answer`, `deliver_after_leave`, `start_failure` and `launch`;
   - `calls` and `poll_count`;
   - a static lobby table of token to ENet port, with `make(timeout_s)`, `reset()` and `accept_invite(target)`.
-- [ ] 3.2 Write `game/tests/unit/test_net_requests.gd`. It starts with three 1-player offline tests:
+  - Done 2026-11-14, with its `.uid`. It compiles in the red run and is driven by `SceneTree.process_frame`. Beyond the list (design.md "Changes from the build plan"): `offered` and `last_offered()`, `open_lobby(port)` and `has_lobby(token)`, address targets, and `reset()` closing every peer a fake opened.
+- [x] 3.2 Write `game/tests/unit/test_net_requests.gd`. It starts with three 1-player offline tests:
   - solo never touches the backend: a refusing fake with a start failure, then `start_solo()`, gives the offline peer, unique id 1 and `is_server()`, and `calls` holds only "start";
   - a late peer after going solo is closed;
   - a startup failure refuses host and join, but not solo.
@@ -95,7 +96,15 @@ No existing file under `game/tests` is edited.
   - restoring the backend returns to ENet.
 
   See them fail.
-- [ ] 3.3 In `NetManager`:
+  - Done 2026-11-14: 18 tests.
+    - Red first: run alone (`-gconfig= -gtest=<file>`), the suite stopped at parse errors ("Cannot infer the type of "request" variable…": `request_host` and `request_join` did not exist yet). GUT printed "Nothing was run" and exited 0.
+    - Beyond the list:
+      - ENet requests are READY before they return;
+      - a join by token connects to the lobby's port;
+      - a join still connecting times out, and the watchdog stops once the host is reached;
+      - transport failures carry UNREACHABLE and HOST_LEFT, with "leave" called;
+      - the failure lines and the lobby note come from the table, in Spanish and English.
+- [x] 3.3 In `NetManager`:
   - `request_host` and `request_join`;
   - `_go_offline` and `_on_answered` with the fixed ordering from design.md;
   - the watchdog and `poll`, with `PROCESS_MODE_ALWAYS`;
@@ -105,7 +114,14 @@ No existing file under `game/tests` is edited.
   - the backend chosen once in `_ready` with `NetBackendTable.pick(OS.has_feature)`.
 
   Add no const, enum, preload, inner class or export.
-- [ ] 3.4 3.2 passes. `test_net_manager.gd`, `test_coop_session_disconnect.gd` and `test_core_services.gd` pass unchanged. Run the import, smoke and GUT.
+  - Done 2026-11-14. Every old member, signal and return code is kept, and the file names no transport peer class and no `NetPeers` factory call. Small additions are listed in design.md "Changes from the build plan".
+- [x] 3.4 3.2 passes. `test_net_manager.gd`, `test_coop_session_disconnect.gd` and `test_core_services.gd` pass unchanged. Run the import, smoke and GUT.
+  - Done 2026-11-14:
+    - Run alone, unchanged: `test_net_requests` 18/18 (194 asserts), `test_net_manager` 8/8, `test_coop_session_disconnect` 8/8, `test_core_services` 10/10, `test_enet_backend` 12/12 and `test_net_backend_table` 13/13.
+    - Import ×2 clean; smoke "10 frames, 0 problem(s)".
+    - GUT: 176 scripts (+1), 1586 tests (+18), 1586 passing, 54964 asserts (+198), 0 failing, no leak at exit, no orphans in the new suite.
+    - The new suite accounts for 194 of the added asserts. The other 4 come from existing suites; not traced per suite.
+    - `GameShell` is unchanged. It still builds a client's run before `NetManager.join()`, so that run now sees one extra offline-to-offline peer swap. `test_shell_sky`, `test_lobby_screen`, `test_game_shell` and the NetHarness suites stay green.
 
 ## 4. Contract and seam (tests first)
 

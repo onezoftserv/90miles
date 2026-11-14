@@ -460,3 +460,20 @@ Recorded while building group 2 (2026-11-14).
   - A line is formatted only when its placeholders match the arguments given. Otherwise it shows as written, with no format error.
 - **`EnetBackend.join()`** fails INVALID_TARGET for a target `check_target` refuses, and UNREACHABLE only when ENet cannot create the client.
 - **`EnetBackend.launch_target()`** parses `--connect=` itself, with the join screen's rules, instead of calling `JoinScreen.parse_address`. That keeps `scripts/net/` free of a dependency on a scene script.
+
+Recorded while building group 3 (2026-11-14).
+
+- **Refusals record their reason.** Step 1 of a request (a startup failure, or a target `check_target` refuses) changes no peer, session or backend state, and calls nothing. It does set `last_failure`, as a failure inside the call does, so the shell has one place to read the reason.
+- **The watchdog answers for the backend.** When the timeout runs out on a request still pending, `NetManager` calls `request.fail(TIMED_OUT)`, which takes the late-failure path. When the request is READY but its peer has not reached the host, `NetManager` goes offline, sets TIMED_OUT and emits `join_failed`.
+- **Going offline after a failure inside the call.** A host or join that failed inside the call still counts as asked. The next time the game goes offline, `backend.leave()` runs, in case the backend opened something before it failed.
+- **`use_backend`:**
+  - Every swap, not only `null`, forgets a kept outside join and clears `last_failure`. A kept target belongs to the backend that produced it.
+  - `null` builds a fresh backend from the table's startup pick, and runs its `start()` with no arguments.
+- **Small additions to the `NetManager` interface:** `failure_text()` and `lobby_note()` take an optional `locale` ("es" by default). `lobby_note()` is "" while not hosting.
+- **`FakeNetBackend`:**
+  - `check_target` accepts any non-empty token; an unknown token fails inside `join()` with NOT_FOUND. It also accepts an address the join screen would accept, and joins it directly. Group 5's join-screen tests need that.
+  - It adds `offered` and `last_offered()`, so the late-peer tests can see the peer that was closed.
+  - `open_lobby(port)` lists an outside ENet server under a token, and `has_lobby(token)` checks one.
+  - `reset()` also closes every peer any fake opened.
+  - Its servers always open on port 0, because other GUT runs may share the machine.
+- **The shell is not changed until group 5.** `GameShell._join()` still builds the client's run before `NetManager.join()`, so that run sees one extra offline-to-offline peer swap from step 2. It is harmless, and every shell and harness suite stays green. Group 5 moves the build after the peer is installed (D2).
