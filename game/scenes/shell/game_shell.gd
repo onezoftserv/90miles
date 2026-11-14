@@ -436,21 +436,25 @@ func _check_run_over() -> void:
 
 func _process(_delta: float) -> void:
 	if _wait_label != null and session != null:
-		var text: String = _waiting_text()
+		var text: String = waiting_text(session)
 		_wait_label.text = text
 		_wait_label.visible = not text.is_empty()
 
 
-# A rider whose crossing ended sees who is still playing while they wait on the shore.
-func _waiting_text() -> String:
-	var own := session.body(session.multiplayer.get_unique_id())
+## What this peer's rider sees while waiting on the shore after their crossing ended: who is still
+## playing, a disconnected one marked (escape-routes "Split parties"). "" for anyone not waiting.
+static func waiting_text(run_session: CoopSession) -> String:
+	var own := run_session.body(run_session.multiplayer.get_unique_id())
 	if own == null or not own.left_island or own.meters.dead:
 		return ""
 	var names: Array[String] = []
-	for peer_id: int in session.peer_ids():
-		var other := session.body(peer_id)
+	for peer_id: int in run_session.peer_ids():
+		var other := run_session.body(peer_id)
 		if not other.left_island and not other.meters.dead:
-			names.append(session.player_name(peer_id))
+			var shown: String = run_session.player_name(peer_id)
+			if run_session.is_dropped(peer_id):
+				shown += " (desconectado)"
+			names.append(shown)
 	if names.is_empty():
 		return ""
 	return "En la orilla. Esperando a: %s" % ", ".join(names)

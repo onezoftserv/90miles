@@ -12,6 +12,19 @@ A handmade layout marked off-graph (the secret cay) SHALL never be generated, en
 
 ## MODIFIED Requirements
 
+### Requirement: Any handmade layout builds the island
+The island scene SHALL build whatever handmade layout it is given before it enters the tree (terrain, palms, pick-ups, markers, bounds, drinking spots, signs), so the sandbar and the coast cay share one scene and one code path, and the creature spawner reads the layout's chain family. A layout with no workbench gets none, and a layout marked off-graph (the secret cay, secret-cay) gets no creature spawner. With exactly 1 player nothing differs.
+
+#### Scenario: The island scene builds the coast cay
+- GIVEN the island scene with the coast cay layout set before it enters the tree
+- WHEN it is built
+- THEN its terrain, bounds and palms are the coast cay's, not the sandbar's
+
+#### Scenario: No workbench and no creatures on the secret cay
+- **GIVEN** one offline player and the island scene with the secret cay layout set before it enters the tree
+- **WHEN** it is built and furnished
+- **THEN** its size, palms, coconuts and spawn points are the cay's, and the session holds no workbench and no creature spawner
+
 ### Requirement: Escape routes
 Each island SHALL expose 2–3 escape-route POIs chosen from the chain's allowed list, with at least one always-buildable route (raft) unless the chain says otherwise. An island set up for exactly one living, connected player SHALL also expose at least one reachable route that needs no background skill and no starting item (docs/GAME_DESIGN.md §10), even where the chain overrides the raft rule. Solo otherwise uses the same base numbers as co-op. An off-graph handmade layout (the secret cay, secret-cay) exposes only the routes its layout lists instead of 2–3; the cay lists only the raft, which one player with an empty inventory can gather, build and launch, so it meets the solo guarantee. (Changes docs/ISLANDS.md "Each island rolls 2–3 escape routes" for off-graph layouts.)
 
