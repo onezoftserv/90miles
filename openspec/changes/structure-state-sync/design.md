@@ -136,6 +136,9 @@ Test topology (`NetHarness`): each peer has its own branch with its own `SceneMu
 - [A merge conflict with the sibling session's `coop_session.gd` work] → the edit is three lines in `request_join` and the signal list. It is rebased on `main` before the PR.
 - [Synchronizers on spawned structures log engine errors when a peer closes under them] → `NetHarness.teardown` frees sessions before closing peers, as it already does for players and creatures.
 
-## Open Questions
+## Settled
 
-- Decisions sent to the coordinating session on 2026-11-14, each with the recommendation first: the raft treated as already correct (D2); the split mechanism (D3, D5); the `join_state_sent` hook (D6). The answers are recorded here before apply.
+- The owner answered the three decisions on 2026-11-14 through the coordinating session, picking each recommendation:
+  - D2: test only, with no raft or site code change.
+  - D3 and D5: split by node, with a synchronizer for the fire and the rain catcher and `PalmSync` with index-keyed host RPCs for palms.
+  - D6: the `join_state_sent(peer)` signal in `coop_session.gd`.

@@ -2,20 +2,25 @@
 
 ## 1. Fire and rain catcher on every peer
 
-- [ ] 1.1 Tests first, in a new `game/tests/unit/test_structure_sync_net.gd` (NetHarness, a bench at the same path on every peer, as in `test_build_site_net.gd`):
+- [x] 1.1 Tests first, in a new `game/tests/unit/test_structure_sync_net.gd` (NetHarness, a bench at the same path on every peer, as in `test_build_site_net.gd`):
   - A connected client sees the host's new fire lit from the first frame its copy exists.
   - It sees the fire put out on the host, then a second fire burnt out (`advance` past `fire_burn_s`). Each time: `lit` is false, the fire is not in `PlayerBody.FIRE_GROUP`, its interactable is off and its look shows `out`.
   - It sees the catcher fill in a squall on the host (`cups` 1, look `water`), then empty when the host's player takes the cup (`cups` 0, look `empty`).
   - A late joiner gets a fire put out before it came, out, and a filled catcher holding 1 cup.
   - A client that puts out its own copy changes neither the host's fire nor another client's.
   - Then see them fail.
-- [ ] 1.2 Tests first, offline with 1 player, in a new `game/tests/unit/test_structure_sync.gd`. Setting `Fire.lit` false, then true, before and after `_ready`, moves the fire out of and back into the lit fires and toggles its interactable, with no morale event. Then see it fail.
-- [ ] 1.3 Implement design D3 and D4:
+  - Done 2026-11-14: 5 tests. Before the fix, 4 failed (put out and burnt out, fill and empty, late joiner). The first-frame-lit and own-copy tests passed before too and stay as guards on D4's ordering.
+- [x] 1.2 Tests first, offline with 1 player, in a new `game/tests/unit/test_structure_sync.gd`. Setting `Fire.lit` false, then true, before and after `_ready`, moves the fire out of and back into the lit fires and toggles its interactable, with no morale event. Then see it fail.
+  - Done 2026-11-14: 2 tests. The after-ready one failed before the setter; the before-ready one passed before too and stays as a guard.
+- [x] 1.3 Implement design D3 and D4:
   - The `Fire.lit` setter, with `_ready`, `_burn` and `put_out` going through it.
   - `Fire.attach_sync` and `RainCatcher.attach_sync`.
   - `SitePlacer.make_structure` attaches the sync and applies the payload's `lit` on the host too.
   - Verify: 1.1 and 1.2 pass, and so do `test_build_site_net.gd`, `test_structure_looks.gd`, `test_art_sim_invariance.gd` and the crafting tests ("One fire, once": morale +5 once).
-- [ ] 1.4 Import (twice), smoke run and GUT pass, with no engine error lines.
+  - Done 2026-11-14: `SitePlacer.state_sync` builds the synchronizer (spawn, on change) and `make_structure` calls `attach_sync`. `from_payload` lost its `on_host` parameter (one call in `coop_session.gd`).
+- [x] 1.4 Import (twice), smoke run and GUT pass, with no engine error lines.
+  - Done 2026-11-14: second import 0 `ERROR` lines; smoke "10 frames, 0 problem(s)"; GUT 175 scripts, 1550 of 1550.
+  - The log's 6 `ERROR` lines are the baseline's own: three refused forged RPCs and the content validator's broken fixture, each asserted by its test.
 
 ## 2. Palms on every peer
 

@@ -1156,7 +1156,7 @@ func _spawn_entity(data: Variant) -> Node:
 		KIND_CREATURE:
 			return _make_creature(info.get("id"), entity_name, spot)
 		KIND_SITE, KIND_STRUCTURE:
-			return SitePlacer.from_payload(kind, info, entity_name, spot, climate, multiplayer.is_server())
+			return SitePlacer.from_payload(kind, info, entity_name, spot, climate)
 	return null
 
 
