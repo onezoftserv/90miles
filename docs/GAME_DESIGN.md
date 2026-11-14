@@ -295,7 +295,7 @@ Claude Haiku 4.5 on Amazon Bedrock generates dialogue for **important NPCs and t
 | Pathfinding and AI | AStarGrid2D; state machines per creature | Brogue Dijkstra maps |
 | Data | Custom Resources (.tres) for items, creatures, NPCs, recipes | DCSS data files |
 | Survival meters | `SurvivalMeters` component, host-synced | Original |
-| Multiplayer | ENet, MultiplayerSpawner, MultiplayerSynchronizer | Godot docs |
+| Multiplayer | ENet by default behind a platform backend (net-platform); MultiplayerSpawner, MultiplayerSynchronizer | Godot docs |
 | Weather and day-night | `WeatherManager` autoload driving CanvasModulate and spawns | Original |
 | Stealth | Light cones with Area2D, noise events on a bus | Brogue stealth |
 | Dialogue | `DialogueService` autoload with cache + fallback | Original |

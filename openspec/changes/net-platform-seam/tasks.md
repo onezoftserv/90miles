@@ -211,12 +211,25 @@ No existing file under `game/tests` is edited.
 
 ## 6. Docs
 
-- [ ] 6.1 In `docs/GAME_DESIGN.md` §17, change the Multiplayer row to: "ENet by default behind a platform backend (net-platform); MultiplayerSpawner, MultiplayerSynchronizer". No numbers change.
-- [ ] 6.2 In `TASKS.md`:
+- [x] 6.1 In `docs/GAME_DESIGN.md` §17, change the Multiplayer row to: "ENet by default behind a platform backend (net-platform); MultiplayerSpawner, MultiplayerSynchronizer". No numbers change.
+  - Done 2026-11-14: only the row's middle cell changed; its "Godot docs" cell and every other row are as they were.
+- [x] 6.2 In `TASKS.md`:
   - Add `net-platform-seam` under Milestone G (v1), noting that the owner chose the seam now and Steam in v2 (2026-11-14).
   - The v2 "Steam/relay joining" item stays, and gains a pointer to design.md's "Deferred to the Steam change".
-- [ ] 6.3 Here, record the archive-time hand edit of the coop-networking Purpose line ("…through a platform backend (ENet by default).").
-- [ ] 6.4 Run the import, smoke and GUT.
+  - Done 2026-11-14:
+    - The Milestone G item is unticked, since group 7 and the owner's review are open. It carries the owner note "seam now, Steam in v2, core UI only (2026-11-14)" and says there is no Steam, EOS or console code, so it agrees with the 2026-11-08 line above it.
+    - "Steam/relay joining" stays unticked in v2, and points to this change's design.md, "Deferred to the Steam change (v2)", by the change's name, since the path moves when the change is archived.
+- [x] 6.3 Here, record the archive-time hand edit of the coop-networking Purpose line ("…through a platform backend (ENet by default).").
+  - Done 2026-11-14. At archive, edit the Purpose line of `openspec/specs/coop-networking/spec.md` by hand:
+    - from "Host-and-join co-op for 1–4 players using Godot high-level multiplayer over ENet."
+    - to "Host-and-join co-op for 1–4 players using Godot high-level multiplayer through a platform backend (ENet by default)."
+    - A Purpose line is not a requirement, so no delta carries it (design.md "Risks / Trade-offs"). The main spec is not edited before the archive.
+- [x] 6.4 Run the import, smoke and GUT.
+  - Done 2026-11-14 (group 6 changed docs only, nothing under `game/`):
+    - Import ×2 clean; smoke "10 frames, 0 problem(s)".
+    - GUT, second full run: 179 scripts, 1614 tests, 1614 passing, 0 failing, 55237 asserts, exit 0, no leak at exit, no "Nothing was run". That is the 5.4 total, and against the 1.1 baseline +6 scripts, +71 tests and +690 asserts. Orphans are reported only by older suites, none by this change's suites.
+    - The first full run had 1 failure: `test_crossing_art.gd` `test_a_solo_crossing_sea_follows_the_crossing_scroll`, "solo: the scrolled sea still covers the crossing's sea" (1613/1614, 55236/55237). Run alone it passed 1 time in 3. It is an art-pass test, and this change touches no crossing or art script. Other Godot processes were running on the laptop at the time.
+    - The likely cause, not proven: the rig adds the crossing to the tree before `setup()` moves its origin. `CrossingSea` builds its polygon in `_ready` and rebuilds it only in `_process`, while `wait_frames(2)` counts physics frames. Under load, two physics steps can pass before a process frame runs. Left for the art-pass owner, since no existing test may be edited here.
 
 ## 7. Verification
 
@@ -238,6 +251,6 @@ No existing file under `game/tests` is edited.
 
 ## Workflow follow-up
 
-- Archive after the owner's review.
+- Archive after the owner's review, with the coop-networking Purpose hand edit in 6.3. The new `net-platform` spec also needs its own Purpose line then, if the archive leaves a placeholder.
 - **Later (v2):** the Steam change, built from design.md's "Deferred to the Steam change". Its questions Q3–Q7 go to the owner then.
 - **Possibly earlier**, if the owner wants it: a small change for Q5 (`submit_intent` unreliable, with stale `seq` dropped on the host), tied to the open ENet throttle follow-up.

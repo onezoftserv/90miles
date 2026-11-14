@@ -109,6 +109,7 @@ Voice acting, cloned voices, runtime TTS, challenges, seeded and daily runs, and
 - [ ] Profanity toggle, English localization pass
 - [ ] Set pieces (Brogue machines): six from `docs/ISLANDS.md`
 - [ ] A dead co-op player spectates a living teammate, a key cycling between them, instead of watching their own body (owner, 2026-11-08)
+- [ ] `net-platform-seam` (OpenSpec change written 2026-11-14; owner: seam now, Steam in v2, core UI only (2026-11-14)): a platform backend seam under the `NetManager` autoload, with ENet as the only backend and no Steam, EOS or console code. Hosting and joining become requests that may finish later and can be cancelled, and the shell builds a run only once the peer is installed; every failure carries a reason shown from data, Spanish first; a join from outside the game (ENet's `--connect=<address[:port]>`) starts on the title or waits for it; the lobby names the port opened and says "Abriendo la partida…" on a slower backend. Nothing an ENet player sees changes, and solo makes no backend call. Built test-first on `feat/net-platform-seam` (groups 1–6); the run checks, the host-plus-client hand check and CI (group 7) and the owner's review are still open
 
 ## 10. Content batches (data entry, parallel to milestones C–E)
 
@@ -156,7 +157,7 @@ Voice (was in Milestone G):
 
 Other (was in Milestone G):
 - [ ] Challenges, seeds, daily run
-- [ ] Steam/relay joining
+- [ ] Steam/relay joining: a Steam backend behind the `net-platform-seam` seam; its plan, data row, two-machine verify list and open questions Q3–Q7 are in that change's design.md, "Deferred to the Steam change (v2)"
 
 ## Done
 
