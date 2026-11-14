@@ -165,7 +165,7 @@
 - The feather tests duplicate `seagull.tres` in code and add the counter. A fixture `ItemData` for the feather is registered in the inventory.
 
 **D10. Manual two-process run.**
-- `game/tests/manual/perch_ride_run.gd`, run with `--mode=host` and `--mode=client --port=<n>`. Each process builds a session and the sandbar, as the net tests do, with the fixture catalog.
+- `game/tests/manual/perch_ride_run.gd`, run with `--mode=host` and `--mode=client`. Both default to UDP port 7786 (seven sessions share this machine and would collide on 7777), and `--port=<n>` overrides it. Each process builds a session and the sandbar, as the net tests do, with the fixture catalog.
 - The host launches a crossing for its own player and attaches the crossing creatures with the FINAL family. This is the test hook that stands in for a final island.
 - The client joins mid-crossing. It checks that the galleguito is drawn on the host player's head while the host walks, and prints `PERCHRUN PASS|FAIL`.
 
