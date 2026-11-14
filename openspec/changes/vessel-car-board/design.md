@@ -156,7 +156,7 @@ Content-batch-11 must give `tabla_vela`'s use `spends_use = false`, as `binocula
 
 **Recipe.** In `structure_sheets.json`:
 
-- `structures/car.png`, 64×32 with 3 frames: the body, plus four `barrel` cuts from the Zelda-like `objects.png` (the existing `barrel` map) lashed at the corners, plus a propeller pixel at the stern.
+- `structures/car.png`, 64×32 with 3 frames: the body, plus four `barrel` cuts from the Zelda-like `Overworld.png` (the rain catcher's barrel and its `barrel` map) turned on their sides as drums, two behind the car and two in its wheel wells, plus an outboard shaft at the stern.
 - `structures/board.png`, 16×32 with 3 frames.
 
 **Build.** Run with `--packs C:/Users/liann/src/90miles/game/assets` (read-only). Re-running must leave every existing sheet byte-identical; `git diff --stat` shows only the new files.

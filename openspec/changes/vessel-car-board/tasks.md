@@ -39,7 +39,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 4. Per-rider boards (crossing "Per-rider boards", "Board hits", "Board rescue")
 
-- [x] 4.1 Write `test_crossing_board.gd` first, with in-process riders through `CrossingRig` (a route-object overload). The cases:
+- [x] 4.1 Write `test_crossing_board.gd` first, with in-process riders through `CrossingRig` (the fixture routes load by id from the catalog's cache, so no overload is needed). The cases:
   - solo: one board at 60, no lashing, no shared deck;
   - 3 riders: a squall puts every board at 30 and every rider in the water;
   - solo: a rock and then a shark break the board, and a 3 s hold does not climb;
@@ -110,7 +110,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 7. Art (crossing "Vessel look on the crossing")
 
-- [x] 7.1 Draw the hand pieces as master-palette pixel grids, written with `tools/art/png.py` (no Pillow): `car_body`, `car_worn`, `car_breaking`, `board`, `board_worn`, `board_breaking` in `tools/art/fixes/structures/`. There is no maker's badge, grille logo or board logo. Add the `car` (64×32, 3 frames, with four `barrel` cuts from the Zelda-like `objects.png` and a propeller) and `board` (16×32, 3 frames) sheets to `tools/art/structure_sheets.json`. Run `python -I tools/art/structures.py --packs C:/Users/liann/src/90miles/game/assets`. Verify:
+- [x] 7.1 Draw the hand pieces as master-palette pixel grids, written with `tools/art/png.py` (no Pillow): `car_body`, `car_worn`, `car_breaking`, `board`, `board_worn`, `board_breaking` in `tools/art/fixes/structures/`. There is no maker's badge, grille logo or board logo. Add the `car` (64×32, 3 frames, with four `barrel` cuts from the Zelda-like `Overworld.png`, the recipe's existing barrel, and a propeller) and `board` (16×32, 3 frames) sheets to `tools/art/structure_sheets.json`. Run `python -I tools/art/structures.py --packs C:/Users/liann/src/90miles/game/assets`. Verify:
   - the python art tests pass (`python -I -m unittest discover -s tools/art -p "test_*.py"`; pytest is not installed);
   - `check.py` passes on the new sheets;
   - every existing sheet is byte-identical (`git status` shows only the new files).
