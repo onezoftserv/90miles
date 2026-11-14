@@ -24,7 +24,7 @@ How the tests are written:
 - [ ] 0.1 Get the owner's answers to the ten decisions in proposal.md.
   - Where an answer differs from the recommended option, first update proposal.md, design.md, the three spec deltas and these tasks.
   - Verify: `openspec validate guardacostas-stealth --type change --strict` passes.
-- [ ] 0.2 Wait for `structure-state-sync` (PR #42) to merge.
+- [ ] 0.2 Wait for `structure-state-sync` (PR #42) and `creature-perch-ride` (PR #46) to merge.
   - Branch from the updated `main`.
   - Re-read these files as merged: `fire.gd`, `coop_session.gd`, `creature.gd`, `creature_spawner.gd`, `creature_world.gd`, `player.gd`, `player_net.gd`, `movement_model.gd`, `body_marks.gd`, `effect_applier.gd`, `sandbar_island.gd`, `horizon_line.gd`, `difficulty_scaling.gd` and `patrol_data.gd`.
   - If they drift from design.md, note the drift in a new design.md section, "Changes from the build plan".
@@ -44,15 +44,16 @@ How the tests are written:
 - [ ] 1.3 Add fixtures under `game/tests/fixtures/`. Verify each loads in `test_patrol_data.gd`:
   - `weather/fog_test.tres`: a `WeatherData` with `disabled_senses` [SIGHT];
   - `items/noise_test.tres`: an item whose use carries a NOISE effect of radius 15;
-  - a small inline island layout helper for the loop tests.
+  - a small inline island layout helper for the loop tests;
+  - `content/creatures/patrol_test.tres`: a copy of the patrol boat with a 45° cone and a 90 s lap, for "Retuned by data". It must live in the catalog, after `creature-perch-ride`'s fixtures, because `CoopSession.spawn_creature` re-reads a creature's data by id.
 - [ ] 1.4 Run the import, smoke run and GUT commands, and verify all three pass.
 
 ## 2. The loop (pure)
 
 - [ ] 2.1 Write `game/tests/unit/test_patrol_loop.gd`. Verify it fails. It checks, on `sandbar.tres` and `coast_cay.tres` and on a small inline island:
-  - The hull pushed out 4 tiles has every half-tile sample on deep water.
-  - The perimeter is within 1 tile of 179 on the sandbar and 191 on the coast cay.
-  - The lap starts at the most easterly point and runs clockwise as drawn: the first step goes north.
+  - The loop (hull edges offset 4 tiles, mitred) has every half-tile sample on deep water, and no sample closer than 4 tiles to the hull.
+  - The perimeter is within 1 tile of 180 on the sandbar and 195 on the coast cay.
+  - The lap starts at the most easterly point and runs clockwise as seen on screen: the first step goes south.
   - `pose_at(t)` is the start point at 0 and at the lap's end, and moves at perimeter / lap tiles per second.
   - The phase is HORIZON in [0, 20), LAP in [20, 120) and AWAY in [120, 180).
   - Experiencia level 2 makes the period 200 s and leaves the lap at 100 s.
@@ -80,7 +81,12 @@ How the tests are written:
   - the meter resets after a spot;
   - a dead or dropped player is cleared.
 - [ ] 3.3 Implement `game/scripts/stealth/searchlight.gd` and `spot_meter.gd`, plus the Stealth seam, which sums `PATROL_SPOT_TIME` modifiers and gives 0 today. Verify both tests pass.
-- [ ] 3.4 Run the import, smoke run and GUT commands, and verify all three pass.
+- [ ] 3.4 Write `game/tests/unit/test_patrol_coverage.gd`, which pins the tuning. Verify it passes, and record its run time in design.md "Changes from the build plan" if it takes over 2 s.
+
+  It steps one lap at 0.1 s on each island with the real loop, beam and meter. A still, unhidden player on every land cell must be spotted on 45% ± 3% of the sandbar's land and 34% ± 3% of the coast cay's (design.md's table). It also checks that the sandbar's raft site is never lit and the coast cay's is.
+
+  If the owner picked other numbers in decision 4, use the matching row of the table.
+- [ ] 3.5 Run the import, smoke run and GUT commands, and verify all three pass.
 
 ## 4. Hidden states
 

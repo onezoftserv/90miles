@@ -85,7 +85,7 @@ A patrol boat in sight SHALL also be alerted by smoke: a lit fire within 2 tiles
 #### Scenario: Fire in the hut
 - **GIVEN** a fire inside the ruined hut at night
 - **WHEN** the patrol passes
-- **THEN** no smoke event fires and the party is not spotted
+- **THEN** no smoke alert is raised and the party is not spotted
 
 #### Scenario: A beach fire at night
 - **GIVEN** a solo player's lit fire 1 tile from the sea at night

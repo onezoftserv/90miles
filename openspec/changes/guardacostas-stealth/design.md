@@ -37,17 +37,22 @@ See proposal.md "Why" for the motivation and the owner decisions. This section c
 
 ### The geometry, measured
 
-Measured with a throwaway script over the two layouts in `game/resources/islands/`. "Sea" means deep or shallow water joined to the map edge, so the coast cay's brackish lagoon is not sea.
+Measured with throwaway scripts over the two layouts in `game/resources/islands/`. "Sea" means deep or shallow water joined to the map edge, so the coast cay's brackish lagoon is not sea.
+
+The loop is the decision 3 algorithm: hull edges offset by 4 tiles, mitred, and sampled every half tile. The lap simulation steps one 100 s lap at 0.1 s with the triangle-wave beam (decision 4) and the meter (fill 1, drain 0.5, spot at 2 s). It counts land cells where a still, unhidden player would be spotted.
 
 | | Sandbar (80×72, 991 land) | Coast cay (88×64, 1,021 land) |
 | --- | --- | --- |
 | Farthest land from the sea | 5.7 tiles | 6.3 tiles |
 | Land more than 2 / 3 / 6 tiles from the sea | 617 / 413 / 0 | 632 / 436 / 2 |
-| Hull + 4 tiles: perimeter, every vertex on deep water | 179 tiles, yes | 191 tiles, yes |
-| Land within 10 tiles of that loop | 702 (70%) | 715 (70%) |
-| Raft site lit from that loop | no (inside the C's bay) | yes |
-| Roofed cells lit from that loop | 12 of 12 (all hidden anyway) | 15 of 15 |
-| Windward pass only (lane 4–6 tiles east of the east-most land) | 78–122 cells: the C's tips | 107–157 cells, all rock on the point |
+| Loop: perimeter, all samples on deep water, nearest point to the hull | 180 tiles, yes, 4.00 | 195 tiles, yes, 4.00 |
+| Boat speed for a 100 s lap | 1.80 tiles/s | 1.95 tiles/s |
+| Land lit at some point in one lap | 680 (68%) | 621 (60%) |
+| Land where a still player is spotted in one lap (120° arc, 30°/s) | 452 (45%) | 350 (34%) |
+| Same, strict reset at 20°/s / 180° arc / 90° arc | 48% / 31% / 58% | 36% / 20% / 42% |
+| Same, with a 120 s / 140 s lap | 58% / 62% | 42% / 51% |
+| Raft site spotted in one lap (recommended numbers) | no (inside the C's bay) | yes |
+| Windward pass only (lane 4–6 tiles east of the east-most land), land within 10 tiles | 78–122 cells: the C's tips | 107–157 cells, all rock on the point |
 
 ## Goals / Non-Goals
 
@@ -97,11 +102,13 @@ The patrol rule's `party_rate_mult_per_extra_player` is 1.0, so the generic ×1.
 ### 3. The loop is the island's convex hull, pushed out
 
 1. Take the convex hull of the land cell centres (monotone chain, over the island's integer cells).
-2. Push each vertex out by `route_offshore_tiles` (4) along the average of its two edge normals.
+2. Offset each hull edge outward by `route_offshore_tiles` (4), and join each pair of neighbouring edges at their intersection (a miter). Every point of the loop is then at least 4 tiles from the hull. A push of the vertices along their bisectors would leave the edges closer than 4.
 3. Sample the polygon every half tile. A sample that is not deep water pushes the whole polygon one more tile, at most 4 times. If it still fails, the island gets no patrol and a warning is logged; a test proves that both islands pass at 4.
-4. The lap starts at the polygon's most easterly point (on a tie, the most northerly) and runs clockwise as drawn: north along the east side first.
+4. The lap starts at the polygon's most easterly point (on a tie, the most northerly) and runs clockwise as seen on screen: south along the east side first.
 
-The pose at time `t` into the lap is the point at arc length `perimeter × t / lap_s`. Speed is therefore `perimeter / lap_s`: 1.79 tiles/s on the sandbar and 1.91 tiles/s on the coast cay.
+The pose at time `t` into the lap is the point at arc length `perimeter × t / lap_s`. Speed is therefore `perimeter / lap_s`: 1.80 tiles/s on the sandbar (180 tiles) and 1.95 tiles/s on the coast cay (195 tiles).
+
+The beam's phase restarts with each lap, so every lap on one island sweeps the same cells at the same moments. That is "learn the loop" made literal. It also means a cell the beam misses is missed every lap, which the playtest should judge.
 
 The loop's phases, with `period = route_period_s + 10 × experiencia`:
 
@@ -148,7 +155,11 @@ The reference games roll per turn: Brogue rolls 25% to notice and 97% to keep tr
 - Otherwise it loses `drain_per_s` (0.5) per second, never going below 0.
 - At `spot_time_s + stealth bonus` the player is spotted, by the boat whose cone lit them on that tick (the nearest, if several did), and the meter resets.
 
-The drain is what makes the sweep fair. The middle of the arc is lit for exactly 2 s per swing, so with a reset on leaving the light a still player would be caught or not by rounding error. With the drain, a still player in the open is caught within two swings, and one who steps out within 2 s is not. Threshold checks use the same tolerance as `MovementModel` (1e-6).
+The drain is what makes the sweep fair. Seen from a stopped boat, the middle of the arc is lit for exactly 2 s per swing, so with a reset on leaving the light a still player would be caught or not by rounding error. With the drain, a still player in the open in front of a stopped boat (an alert) is caught within two swings, and one who steps out within 2 s is not.
+
+While the boat is moving, a beach cell sees only about one swing per lap. The lap simulation in the table above gives the result: one lap spots a still, unhidden player on 45% of the sandbar's land and 34% of the coast cay's.
+
+Threshold checks use the same tolerance as `MovementModel` (1e-6).
 
 The meter lives on `PlayerBody` (host-owned) and is sent as `PlayerNet.net_spot`, as a fraction from 0 to 1. A dead or dropped player's meter is cleared.
 
@@ -321,7 +332,7 @@ Brogue CE is under `reference/BrogueCE/src/brogue/`. SPD is under `reference/sha
 - **Borrowed: noise sends the hearer to a place, not to the player** (`beckon`, ~1176). A smoke or noise alert searches the source, and only a real spot locks.
 - **Borrowed: tall grass blocks sight** (`levels/Terrain.java`: `HIGH_GRASS` is `LOS_BLOCKING`, ~103). This supports "crouch in brush" as a hard hide, not a softer chance.
 - **Rejected: SmokeScreen hiding everyone** (`levels/Level.java` `updateFieldOfView`, ~1347). In 90 Millas smoke gives you away. Only fog hides, and it does so by turning the light off.
-- **Rejected: `AlarmTrap` beckoning every mob on the level.** Too blunt for a beach.
+- **Rejected: `AlarmTrap` beckoning every mob on the level** (`levels/traps/AlarmTrap.java` `activate`, ~41). Too blunt for a beach.
 
 ### DCSS
 
@@ -343,7 +354,8 @@ Brogue CE is under `reference/BrogueCE/src/brogue/`. SPD is under `reference/sha
 
 ## Risks / Trade-offs
 
-- **[The hull loop lights 70% of each island.]** That is much harder than the current windward wording. → It is owner decision 3. The sandbar's bay and raft site stay dark, its scrub band is everywhere, and the lap and offset are data, so a playtest can soften it without code.
+- **[The hull loop lights 68% of the sandbar and 60% of the coast cay.]** One lap spots a still, unhidden player on 45% and 34% of the land. That is much harder than the current windward wording. → It is owner decisions 3 and 4, with the simulated figures shown. The sandbar's bay and raft site stay dark, its scrub band is everywhere, and the lap, arc and offset are data, so a playtest can retune them without code. Task 3.4 pins the simulated shares, so a retune shows up as a deliberate test edit.
+- **[Shared files with `creature-perch-ride` (PR #46).]** It adds synced fields to `creature.gd`, a line to `creature_spawner.gd` and a process priority to `creature_look.gd`. → Rebase on it before building (task 0.2). The patrol look keeps its process priority. Test patrols are catalog fixtures, because `spawn_creature` re-reads data by id.
 - **[Every day fire is seen.]** No land is more than 6.3 tiles from the sea, so day fires on islands 1 and 2 always alert a boat in sight. → It is owner decision 5, with the measurement shown. Until capture exists, an alert has no lasting cost. Fires matter at night, and night has the 2-tile rule.
 - **[Spot meter edge cases at 60 Hz.]** → Meter arithmetic uses the model's 1e-6 tolerance, and the tests step whole seconds, as `test_movement_model.gd` does.
 - **[Files shared with in-flight changes.]** PR #42 (`fire.gd`, `coop_session.gd`) and `net-platform-seam` (`net_manager.gd`, `game_shell.gd`; not touched here) are in flight. → The build rebases on main after #42 merges (task 0.2). This change only adds lines to `fire.gd` (`smoke_rose` in `light()`) and `coop_session.gd` (adding the bus child).

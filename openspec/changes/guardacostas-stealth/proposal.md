@@ -54,13 +54,16 @@ Not yet answered. The numbers in the What Changes list and in the specs follow t
    b. As (a), plus a stand-in cost so being spotted hurts now: −10 morale for the spotted player. The capture change removes it.
    c. As (a), but hiding does not break a lock. This is Don't Starve Together's Bush Hat rule: once the light is locked, it follows the player until they get out of range.
 3. **The loop's shape.**
-   a. *Recommended:* a loop round the whole island, 4 tiles outside its convex hull. That is about 180–190 tiles of deep water on both islands, so the boat moves at about 1.9 tiles/s. Each 3-minute period is a 20 s horizon light, then a 100 s lap that starts and ends at the windward (east) end, then 60 s out of sight. The light reaches about 70% of the land on both islands. It never reaches the sandbar's raft site, but it does reach the coast cay's. This matches BESTIARY's "a fixed loop around coast-chain islands".
+   a. *Recommended:* a loop round the whole island, 4 tiles outside its convex hull. That is 180 tiles of deep water on the sandbar and 195 on the coast cay, so the boat moves at 1.8–1.95 tiles/s. Each 3-minute period is a 20 s horizon light, then a 100 s lap that starts and ends at the windward (east) end, then 60 s out of sight. In one lap the sweeping light falls on 68% of the sandbar's land and 60% of the coast cay's. It never reaches the sandbar's raft site, which sits inside the bay, but it does reach the coast cay's. This matches BESTIARY's "a fixed loop around coast-chain islands".
    b. A pass along the windward (east) side only, as the spec reads now. The light then reaches only 8–12% of the sandbar (the tips of its C) and only the coast cay's rocky point, where the observation post hides you anyway. The lee side is a refuge, so the patrol is mostly scenery.
    c. Circling without stopping: one lap per 3 minutes at about 1 tile/s, never out of sight. There is no horizon light; the warning is the boat rounding the point.
 4. **The cone, its sweep and the spot timing.**
-   a. *Recommended:* the spec's cone (60°, 10 tiles, 30°/s), sweeping back and forth over a 120° arc that faces the island, so a full sweep takes 8 s. A spot meter fills 1 s per second in the light and drains 0.5 s per second out of it. At 2 s the player is spotted, plus 1 s per Stealth level up to +3, and no skills exist yet. A still player in the open is caught within two sweeps. A player who gets out of the light within 2 s is not.
-   b. A strict reset with a slower sweep: the player must be lit for 2 s in a row, and the count resets when the light moves off. The sweep slows to 20°/s, so a still player in the open is lit for 3 s per sweep and caught on the first one. The beam is easier to outrun.
-   c. As (a), but over a 180° arc, so a full sweep takes 12 s. Each spot on the beach is lit half as often, which is gentler.
+   The percentages below come from a simulation of one 100 s lap on each island. They give the share of the land where a player standing still and not hidden gets spotted.
+
+   a. *Recommended:* the spec's cone (60°, 10 tiles, 30°/s), sweeping back and forth over a 120° arc that faces the island, so a full sweep takes 8 s. A spot meter fills 1 s per second in the light and drains 0.5 s per second out of it. At 2 s the player is spotted, plus 1 s per Stealth level up to +3, and no skills exist yet. A still player in the open is caught on 45% of the sandbar's land and 34% of the coast cay's. While the boat is stopped for an alert, they are caught within two sweeps. A player who gets out of the light within 2 s is never caught.
+   b. A strict reset with a slower sweep: the player must be lit for 2 s in a row, and the count resets when the light moves off. The sweep slows to 20°/s. A still player is caught on 48% of the sandbar's land and 36% of the coast cay's. The slower beam is easier to step out of.
+   c. As (a), but over a 180° arc, so a full sweep takes 12 s. Each spot on the beach is lit less often: 31% and 20%. Gentler.
+   d. As (a), but over a 90° arc: 58% and 42%. Harsher. A 140 s lap does about as much (62% and 51%), but it leaves only 20 s out of sight.
 5. **Smoke.**
    a. *Recommended:* the spec's rule. While a boat is in sight, a smoke alert is raised by a lit fire within 2 tiles of the sea at night, or by any lit fire within 6 tiles of the sea by day. Each fire alerts once per lap, and a fire on a roofed cell (the hut, the post) never alerts at night. Measured on both islands: no land cell is more than 6.3 tiles from the sea, so every day fire is seen. At night 62% of the sandbar's land is safe for a fire, the hut included. The 20 s of horizon light is the time to put a fire out.
    b. BESTIARY's wording, "2 tiles from cover": at night a fire is seen unless brush, rock or a roof is within 2 tiles of it. By day, as in (a).
@@ -104,7 +107,7 @@ The loudhailer lines are drafts for the owner's voice pass. They stay in formal 
 ## Not in this change
 
 The following come later, each in its own change:
-- in `guardacostas-capture`: chase, the shore squad, capture, freeing a captive, `la_captura` with Rodríguez, the persuasion check, the restart on the previous island, and capture on the final crossing;
+- in `guardacostas-capture`: chase, the shore squad, capture, freeing a captive, `la_captura` with Rodríguez, the persuasion check, the restart on the previous island, and capture on the final crossing. That change will modify this change's Alert, whose ending it replaces. It will also modify the main spec's "Chase and shore squad", which says that being spotted starts a chase; until then the two read side by side;
 - with the mid and far chains and the final crossing: patrols there ("Fade with distance");
 - with the cutter boss: the crossing's searchlight beat;
 - with their own changes: the jet ski, the patrol dinghy and logbook set pieces, the Stealth skill, Ex-militar's quieter steps, El Chino's slower spotting, Tania's loop prediction, and a fog weather file;
@@ -137,7 +140,9 @@ The following come later, each in its own change:
   - `player-movement`: MODIFIED Walk, run, crouch (mangrove and roofed cells).
 - **Sequencing:**
   - Rebase on `structure-state-sync` (PR #42) before building. It gives `fire.gd` a `lit` setter and `attach_sync`, and both changes touch `fire.gd` and `coop_session.gd`.
+  - Rebase on `creature-perch-ride` (PR #46) as well. It adds synced fields to `creature.gd`, one line to `creature_spawner.gd` and a process priority to `creature_look.gd`, and this change edits all three. Its note says `CoopSession.spawn_creature` re-reads a creature's data from the catalog by id, so this change's test patrols are fixture files in the catalog, not copies made in code.
   - `net-platform-seam` touches `net_manager.gd` and `game_shell.gd`, which this change does not.
+  - None of the open changes' deltas modifies a requirement this change modifies.
   - `vessel-car-board` (PR #48) adds no noise. Its almendrón's alert chance stays `RouteData.patrol_alert_chance`, which the capture change reads.
 - **Docs, after the owner confirms:**
   - `docs/BESTIARY.md` patrol entry: the loop, arc, meter and alert;
