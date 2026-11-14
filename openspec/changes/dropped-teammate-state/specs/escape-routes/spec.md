@@ -43,6 +43,11 @@ When a route takes a subset of the party, the island SHALL remain active for the
 - WHEN the client drops
 - THEN the run stays open and the client's player is removed only after the full 90 s
 
+#### Scenario: On the last island the short hold ends the run
+- GIVEN a 2-player run on the coast cay, which names no next island, where the first player's crossing has ended and the second drops there
+- WHEN 30 s pass without the second player rejoining
+- THEN the second player is removed and counts as dead, and the run is over
+
 #### Scenario: The waiting line marks a dropped teammate
 - GIVEN a 2-player run where the first player's crossing has ended and the second, Papo, drops on the sandbar
 - WHEN the first player looks at their waiting line

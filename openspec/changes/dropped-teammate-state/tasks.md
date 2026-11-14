@@ -48,6 +48,10 @@ Group 3 follows option A of design D3, which the owner chose on 2026-11-14.
     - nobody waiting;
     - solo.
   - After 3.2, all of them pass.
+  - Added after review, 2026-11-14:
+    - "On the last island the short hold ends the run" (and its escape-routes scenario).
+    - The removal and nobody-waiting cases now skip to 5 s short of the deadline, not 1 s.
+    - `test_coast_cay_net.gd` 13 of 13.
 - [x] 3.2 Make the changes:
   - `IslandTravel.check()` sorts each body as waiting, a dropped holder or playing (D4).
   - Add `DROPPED_HOLD_S = 30.0`.

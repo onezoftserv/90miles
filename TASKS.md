@@ -191,7 +191,7 @@ Other (was in Milestone G):
 - 2026-11-13: `sign-note-panel` built on `feat/sign-note-panel` (GUT 173 scripts, 1543 tests, all passing; import and smoke clean): reading a flavour sign opens a cream note with dark text on the reader's own HUD under the day phase, 240 px wide, the line word-wrapped (at most 8 lines, held by a data test) and "[E] Cerrar"; it never pauses, closes on E, Esc, walking away, going down or a screen, and teammates see nothing; the world bubble and `CoopSession.show_sign` are gone. Owner decisions 2026-11-13: a note panel as Shattered Pixel Dungeon's `WndStory`, reader only. Capture in `docs/art-pass/coast_cay_sign_note.png`.
 - 2026-11-14: `dropped-teammate-state` built test-first on `claude/dropped-teammate-state-c41a51`.
   - Results:
-    - Second import 0 error lines; smoke clean.
+    - GUT 175 scripts, 1561 of 1561 (the last-island case added after it passes on its own). Second import 0 error lines; smoke clean.
     - Host plus two clients with `art_pass_run.gd`: host 35 of 35, A 67 of 67, B 23 of 23, 0 error lines. The party landed 30.2 s after the crossing ended and B left (about 90 s before).
   - What changed:
     - The host writes a dropped flag into the body's synced state (`PlayerNet.net_dropped`, sent at spawn). A dropped teammate's row reads "Desconectado" on the host, the clients and late joiners.
