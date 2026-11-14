@@ -96,8 +96,10 @@ const WORLD_STATE_TYPES: Dictionary[String, int] = {
 	"waiting": TYPE_ARRAY,
 	"raft": TYPE_FLOAT,
 }
-## The most players in a `waiting` list or an arrivals message.
-const MAX_ARRIVALS: int = MAX_PLAYERS
+## The most players in a `waiting` list or an arrivals message: a sanity bound on a host message,
+## not the player cap. Dropped bodies hold no place in the cap, so four connected players and dropped
+## ones waiting can arrive together (dropped-teammate-state D5).
+const MAX_ARRIVALS: int = 2 * MAX_PLAYERS
 
 ## Where players appear, in join order (the host first). Set by the level.
 @export var spawn_points: Array[Vector2] = [Vector2.ZERO]
@@ -458,6 +460,13 @@ func is_dropped(peer_id: int) -> bool:
 ## Host: seconds before a dropped client's player is removed (0 if it is not dropped).
 func disconnect_time_left(peer_id: int) -> float:
 	return _dropped.get(peer_id, 0.0)
+
+
+## Host: cuts a dropped player's time left to at most `at_most_s` (escape-routes "Split parties":
+## IslandTravel does it when dropped players are all that keep riders waiting). Nothing elsewhere.
+func shorten_drop(peer_id: int, at_most_s: float) -> void:
+	if multiplayer.is_server() and _dropped.has(peer_id):
+		_dropped[peer_id] = minf(_dropped[peer_id], at_most_s)
 
 
 ## Host: the difficulty for an island set up now, from the living, connected players (dropped

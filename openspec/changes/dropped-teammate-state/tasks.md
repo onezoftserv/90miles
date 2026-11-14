@@ -39,21 +39,40 @@ Group 3 follows option A of design D3, which the owner chose on 2026-11-14.
   - New, "the waiting line": the host and Dayana wait and Papo drops on the sandbar; `GameShell.waiting_text` reads "En la orilla. Esperando a: Papo (desconectado)" for Dayana's branch.
   - 1 player, offline, in `test_coast_cay_solo.gd`: the crossing's end loads the coast cay at once, nothing is dropped and no countdown runs.
   - Verify: the tests are seen failing, then passing.
-- [ ] 3.2 Make the changes:
+  - Done 2026-11-14. With a stub `DROPPED_HOLD_S` and a static `waiting_text` that marks nothing, these failed:
+    - the removal case, at 90 s, not 30 s;
+    - the waiting line, which read "Esperando a: Papo".
+  - These passed as guards before and after:
+    - the rejoin within the hold;
+    - the rider in a crossing;
+    - nobody waiting;
+    - solo.
+  - After 3.2, all of them pass.
+- [x] 3.2 Make the changes:
   - `IslandTravel.check()` sorts each body as waiting, a dropped holder or playing (D4).
   - Add `DROPPED_HOLD_S = 30.0`.
   - `IslandTravel` re-checks on `player_disconnected`.
   - Add `CoopSession.shorten_drop(peer, at_most_s)`, host only.
   - Turn `GameShell._waiting_text` into a static `waiting_text(session)` that marks a dropped teammate (D6).
   - Verify: 3.1 passes, and `test_coast_cay_net.gd`, `test_coast_cay_solo.gd`, `test_crossing_join.gd` and `test_game_shell.gd` pass. Import (twice), smoke run and GUT pass.
+  - Done 2026-11-14: those suites pass (12, 18, 7 and 17 tests). Import, smoke and GUT are the same run as 4.2's.
 
 ## 4. Arrivals past four bodies (D5)
 
-- [ ] 4.1 Tests first:
+- [x] 4.1 Tests first:
   - In the test file that covers `checked_arrivals` (or a new `test_arrivals_cap.gd`): `checked_arrivals` keeps 8 entries and refuses 9, and `checked_world_state` keeps a `waiting` list of 5.
   - Over `NetHarness`, a host and three clients. One client's crossing ends and it drops while waiting, and a fourth client joins. The other four then end their crossings, and the coast cay loads at once with all five bodies landed, not 90 s later.
   - Verify: the tests are seen failing, then passing.
-- [ ] 4.2 Set `MAX_ARRIVALS` to `2 * MAX_PLAYERS`. Verify: 4.1 passes, and import (twice), smoke run and GUT pass.
+  - Done 2026-11-14 in `test_arrivals_cap.gd`.
+    - On the old cap the two unit cases failed, and the five-body case crashed the engine (signal 11).
+    - Cause: a refused landing re-queued `_travel_when_idle` within the same deferred flush, forever (design D5).
+    - With that loop fixed, the old cap fails cleanly: the coast cay never loads.
+    - A fourth case, "a refused landing does not spin the host", guards the loop fix.
+- [x] 4.2 Set `MAX_ARRIVALS` to `2 * MAX_PLAYERS`, and keep `_travel_queued` up while `_travel_when_idle` runs (design D5, found while applying). Verify: 4.1 passes, and import (twice), smoke run and GUT pass.
+  - Done 2026-11-14:
+    - `test_arrivals_cap.gd` 4 of 4.
+    - Second import 0 error lines; smoke 10 frames, 0 problems.
+    - GUT: 175 scripts, 1560 of 1561. The one failure is `test_crossing_art.gd` "the scrolled sea still covers the crossing's sea", which reads the sea after a wall-clock wait and is not touched here. It passed 3 of 3 alone and in the previous full run.
 
 ## 5. Integration
 

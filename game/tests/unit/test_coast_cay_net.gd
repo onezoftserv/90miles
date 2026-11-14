@@ -257,10 +257,105 @@ func test_a_removed_player_counts_as_dead_for_the_load() -> void:
 	_end_crossing(host, 1, 88.0, 42.0, 55.0)
 	net.drop(client)
 	assert_true(await wait_until(func() -> bool: return host.is_dropped(client_id), TIMEOUT_S))
+	# dropped-teammate-state: the dropped body alone keeps the waiting rider from landing, so its
+	# time is cut to the short hold.
+	assert_lte(host.disconnect_time_left(client_id), IslandTravel.DROPPED_HOLD_S, "cut to the short hold")
+	assert_eq(IslandTravel.DROPPED_HOLD_S, 30.0)
+	host._physics_process(IslandTravel.DROPPED_HOLD_S - 1.0)
 	await wait_frames(5)
 	assert_eq(_island_id(host), SANDBAR, "a dropped player may come back: the sandbar stays open")
-	host._physics_process(CoopSession.DISCONNECT_DOWNED_S + 1.0)
-	assert_true(await wait_until(func() -> bool: return _island_id(host) == COAST, TIMEOUT_S), "removed: nobody living is left on the sandbar")
+	host._physics_process(2.0)
+	assert_true(await wait_until(func() -> bool: return _island_id(host) == COAST, TIMEOUT_S), "removed after 30 s: nobody living is left on the sandbar")
 	assert_eq(host.removed_names(), ["Papo"] as Array[String])
 	assert_eq(host.body(1).position, _landing(host, 0))
 	assert_eq(host.body(1).meters.health, 88.0)
+
+
+# --- dropped-teammate-state: the short hold ---------------------------------------------------
+
+func test_a_dropped_player_back_within_the_short_hold_plays_on() -> void:
+	var host := net.add_host(_setup)
+	var client := await net.join(_as(papo, "Papo"))
+	assert_not_null(client)
+	assert_true(await net.settle())
+	net.silence_input()
+	var old_id: int = net.peer_id(client)
+	var papo_body := host.body(old_id)
+	_end_crossing(host, 1, 88.0, 42.0, 55.0)
+	net.drop(client)
+	assert_true(await wait_until(func() -> bool: return host.is_dropped(old_id), TIMEOUT_S))
+	host._physics_process(20.0)
+	assert_true(host.is_dropped(old_id), "10 s of the hold left")
+	var back := await net.join(_as(papo, "Papo"))
+	assert_not_null(back, "Papo joins again 20 s after the drop")
+	if back == null:
+		return
+	var new_id: int = net.peer_id(back)
+	assert_same(host.body(new_id), papo_body, "his own body")
+	assert_false(papo_body.downed, "standing again")
+	assert_false(papo_body.left_island, "on the sandbar, playing")
+	host._physics_process(IslandTravel.DROPPED_HOLD_S)
+	await wait_frames(5)
+	assert_eq(_island_id(host), SANDBAR, "the sandbar stays the live island")
+	assert_true(host.body(1).left_island, "the host still waits")
+	assert_eq(_travel(host).check(), IslandTravel.Outcome.PLAYING)
+	assert_eq(host.removed_names(), [] as Array[String], "nobody removed")
+
+
+func test_a_dropped_rider_in_a_crossing_holds_the_load() -> void:
+	var pair := await _pair()
+	var host := pair[0]
+	var client_id: int = net.peer_id(pair[1])
+	_end_crossing(host, 1, 90.0, 40.0, 60.0)
+	# The client set off by a route and is still crossing (left, not yet held).
+	(host.get_node("Routes") as IslandRoutes).departed[client_id] = &"raft"
+	net.drop(pair[1])
+	assert_true(await wait_until(func() -> bool: return host.is_dropped(client_id), TIMEOUT_S))
+	assert_gt(host.disconnect_time_left(client_id), IslandTravel.DROPPED_HOLD_S, "a crossing rider's hold is not cut")
+	host._physics_process(IslandTravel.DROPPED_HOLD_S + 1.0)
+	await wait_frames(5)
+	assert_eq(_island_id(host), SANDBAR, "the crossing still runs: the sandbar stays live")
+	assert_eq(_travel(host).check(), IslandTravel.Outcome.PLAYING)
+	_end_crossing(host, client_id, 70.0, 55.0, 80.0)
+	assert_true(await wait_until(func() -> bool: return _island_id(host) == COAST, TIMEOUT_S), "the crossing ended: the party lands")
+	assert_eq(host.body(1).position, _landing(host, 0))
+	assert_eq(host.body(client_id).position, _landing(host, 1), "the dropped rider lands with the rest")
+
+
+func test_nobody_waiting_keeps_the_full_hold() -> void:
+	var pair := await _pair()
+	var host := pair[0]
+	var client := pair[1]
+	var client_id: int = net.peer_id(client)
+	host.body(1).meters.dead = true
+	host.body(1).meters.died.emit()
+	assert_eq(_travel(host).check(), IslandTravel.Outcome.PLAYING, "the client still plays")
+	net.drop(client)
+	assert_true(await wait_until(func() -> bool: return host.is_dropped(client_id), TIMEOUT_S))
+	assert_gt(host.disconnect_time_left(client_id), IslandTravel.DROPPED_HOLD_S, "nobody waits: the full 90 s")
+	host._physics_process(CoopSession.DISCONNECT_DOWNED_S - 1.0)
+	await wait_frames(5)
+	assert_eq(_travel(host).check(), IslandTravel.Outcome.PLAYING, "a drop never ends the run early")
+	assert_eq(host.removed_names(), [] as Array[String])
+	assert_eq(_island_id(host), SANDBAR)
+
+
+func test_the_waiting_line_marks_a_dropped_teammate() -> void:
+	var host := net.add_host(_setup)
+	var dayana := await net.join(_as(PlayerIdentity.create(), "Dayana"))
+	var client := await net.join(_as(papo, "Papo"))
+	assert_not_null(dayana)
+	assert_not_null(client)
+	if dayana == null or client == null:
+		return
+	assert_true(await net.settle())
+	net.silence_input()
+	var papo_id: int = net.peer_id(client)
+	_end_crossing(host, 1, 90.0, 40.0, 60.0)
+	_end_crossing(host, net.peer_id(dayana), 80.0, 50.0, 0.0)
+	assert_eq(GameShell.waiting_text(dayana), "En la orilla. Esperando a: Papo", "Papo still plays")
+	net.drop(client)
+	var marked := func() -> bool: return GameShell.waiting_text(dayana) == "En la orilla. Esperando a: Papo (desconectado)"
+	assert_true(await wait_until(marked, TIMEOUT_S), "Dayana's line: %s" % GameShell.waiting_text(dayana))
+	assert_eq(GameShell.waiting_text(host), "En la orilla. Esperando a: Papo (desconectado)", "and the host's")
+	assert_true(host.is_dropped(papo_id))

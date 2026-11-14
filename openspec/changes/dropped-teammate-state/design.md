@@ -87,11 +87,17 @@ The specs and tasks are written for A, the owner's choice.
 
 **D5. Arrivals cap: `MAX_ARRIVALS = 2 × MAX_PLAYERS`.**
 - `checked_arrivals` and the world state's `waiting` list are sanity bounds on a host message. They are not the player cap.
-- Four connected players plus a dropped waiting rider is a legal state, and today it is refused on every peer until the removal, about 90 s later.
-- Doubling covers four connected plus four dropped bodies. More than that needs four drop-and-replace cycles inside 90 s; the landing then waits for removals, as today.
+- Four connected players plus a dropped waiting rider is a legal state, and every peer refuses that landing.
+- Doubling covers four connected plus four dropped bodies. More than that needs four drop-and-replace cycles inside 90 s; the landing then waits for removals.
+- **Found while applying, 2026-11-14: a refused landing crashed the host.**
+  - `_travel_when_idle` cleared `_travel_queued` before calling `check()`.
+  - That `check()` queued `_travel_when_idle` again, inside the same deferred-call flush.
+  - So a refused `travel_to` (more arrivals than the cap, or an unknown next island) re-ran forever within one frame, sending a reliable RPC on each pass, until the engine crashed with signal 11. The five-body test crashed this way on the old cap.
+  - The fix: the flag now drops after the attempt. A refused landing waits for the next change and is tried again then.
+  - This is a two-line reorder in `island_travel.gd`, with its own regression test.
 
 **D6. The waiting line.**
-- `GameShell._waiting_text` appends " (desconectado)" to the name of a dropped teammate it lists, from `session.is_dropped`, which now works on clients.
+- `GameShell.waiting_text(session)` (now static, so tests can read it without a shell) appends " (desconectado)" to the name of a dropped teammate it lists, from `session.is_dropped`, which now works on clients.
 - The line is a sentence, so the word is lower case. It keeps the standard Spanish of the HUD's other state words.
 
 **D7. Tests.**
@@ -102,7 +108,7 @@ The specs and tasks are written for A, the owner's choice.
 
 - **[`_dropped` and the flag disagree on the host]** → Both are written in the same two functions, and the host-plus-client tests assert both.
 - **[The flag lags the drop by up to one 50 ms sync]** → The HUD row refreshes every frame, so it shows within a frame of arrival.
-- **[Option A removes a player whose network failed just after the last crossing ended]** → They had the crossing's length plus up to 30 s, and they can join the next island as a new player ("Rejoin after removal"). This is the trade-off the owner is asked about.
+- **[Option A removes a player whose network failed just after the last crossing ended]** → They had the crossing's length plus up to 30 s, and they can join the next island as a new player ("Rejoin after removal"). The owner accepted this trade-off when they chose A.
 - **[Edits to `coop_session.gd` collide with `structure-sync`]** → The edits are a few lines in named functions plus one const. Rebase on `main` before the PR.
 - **[A new synced field changes the frame the art-invariance test snapshots]** → `test_art_sim_invariance.gd` reads the field list live, so the new field is covered rather than broken.
 
