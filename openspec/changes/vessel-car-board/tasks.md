@@ -1,6 +1,6 @@
 # Tasks
 
-The tasks follow the recommended answers to design.md Q1–Q4. If the coordinator chooses otherwise, this list is updated before apply.
+The tasks follow the owner's answers to design.md Q1–Q4 (2026-11-14: the recommended option on all four).
 
 Every group ends with all of these clean:
 - the import (`godot --headless --path game --import`, twice on a fresh checkout);

@@ -82,7 +82,7 @@ When `shark` is true and the route lists `SHARK_ATTACK`, the riders aboard the h
 
 `hit_vessel` returns the hit vessel's deck centre, so `CreatureThreats` shows the shark beside the board it hit. A squall calls a separate `hit_every_vessel` and then applies the squall dump as today, which on a board route throws every board rider in.
 
-*Recommended, pending the coordinator (Q2).* Alternatives:
+*Chosen by the owner (Q2, 2026-11-14).* Rejected:
 - A target rolled by the host into the plan. Fair, but it changes the plan's wire format and snapshot.
 - The weakest board. Concentrates deaths.
 
@@ -209,21 +209,21 @@ Read in `reference/`; ideas only, no code.
 - *Borrowed:* DCSS and SPD's "check everything, then spend" order (D6).
 - *Rejected:* Brogue's spend-anyway, because the spec says a refused start spends nothing.
 
-## Open decisions (sent to the coordinating session; recommended first)
+## Decisions taken (owner, 2026-11-14; the recommended option on all four)
 
 - **Q1. Route files and task 6.4's deferred tests.**
-  - *(a, recommended)* `almendron`, `tabla` and `llave_almendron` stay in content-batch-11, as the manifest says; this change tests with fixture routes in `game/tests/fixtures/routes/`. The almendrón's solo build test (60 s with pliers, 60 energy) moves to content-batch-11 (task 8.3), with its recipe and items. The `almendron_hundido` gate test moves to the change that builds capture at sea, which also needs `FLAG_SET` and chain rows. Both are added as unticked tasks.
+  - *(a, chosen)* `almendron`, `tabla` and `llave_almendron` stay in content-batch-11, as the manifest says; this change tests with fixture routes in `game/tests/fixtures/routes/`. The almendrón's solo build test (60 s with pliers, 60 energy) moves to content-batch-11 (task 8.3), with its recipe and items. The `almendron_hundido` gate test moves to the change that builds capture at sea, which also needs `FLAG_SET` and chain rows. Both are added as unticked tasks.
   - *(b)* Ship the two routes here too. Their starters (`tabla_vela`, `almendron_flotante`) do not exist, so the content validator would fail unless half of batch 11 came along.
 - **Q2. Which board a shark or rock hits in co-op.** A squall hits every board in every option.
-  - *(a, recommended)* Round-robin over intact boards in rider order.
+  - *(a, chosen)* Round-robin over intact boards in rider order.
   - *(b)* A target rolled by the host into the plan.
   - *(c)* The weakest board.
 - **Q3. Rescue and tying down on a board.**
-  - *(a, recommended)* No lashing on a board. The 3 s self-climb, and a teammate's 2 s pull onto the swimmer's own board.
+  - *(a, chosen)* No lashing on a board. The 3 s self-climb, and a teammate's 2 s pull onto the swimmer's own board.
   - *(b)* Self-climb only.
   - *(c)* A lashing on each board, as on the raft, so a squall need not dump a tied rider.
 - **Q4. The car on arrival.**
-  - *(a, recommended)* Beach nothing for now: the result keeps its integrity and never becomes a raft. Beaching the car at its own site waits for content-batch-11's `almendron_flotante` structure and the chain islands, recorded as a task.
+  - *(a, chosen)* Beach nothing for now: the result keeps its integrity and never becomes a raft. Beaching the car at its own site waits for content-batch-11's `almendron_flotante` structure and the chain islands, recorded as a task.
   - *(b)* Build a generic beached-vessel structure now.
 
 ## Risks / Trade-offs
