@@ -7,13 +7,18 @@ extends Node2D
 ##   godot --path game res://scenes/dev/<scene>.tscn -- --host[=port]
 ##   godot --path game res://scenes/dev/<scene>.tscn -- --join=address[:port]
 ## or from its panel. Solo opens no port. It prints "secret:" lines so two headless processes can
-## be checked from their logs. Neither scene's layout is offered by any run.
+## be checked from their logs. `--autopilot` walks the local player to each of the scene's targets
+## in turn and holds interact there, so two headless processes play it with nobody at the keys.
+## Neither scene's layout is offered by any run.
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const LOG_PREFIX: String = "secret:"
 const RUN_START_TIME_S: float = 0.0
+const AUTOPILOT: String = "--autopilot"
+## The autopilot holds interact once its player is this close to the target.
+const ARRIVED_PX: float = 6.0
 
 ## The handmade layout this scene builds.
 @export var layout: IslandLayoutData = null
@@ -23,8 +28,10 @@ var session: CoopSession = null
 var hud: RunHud = null
 ## "solo", "host", "join", or "" before it starts.
 var mode: String = ""
-## Extra flags this scene reads beside CoopPlayground's (`--with-pieces`).
+## Extra flags this scene reads beside CoopPlayground's (`--autopilot`, `--with-pieces`).
 var flags: PackedStringArray = PackedStringArray()
+## The local player walks to the targets by itself (`--autopilot`).
+var autopilot: bool = false
 
 var _panel: PanelContainer = null
 var _address: LineEdit = null
@@ -75,6 +82,7 @@ func start(args: Dictionary) -> bool:
 		return false
 	mode = args["mode"]
 	flags = args.get("flags", PackedStringArray())
+	autopilot = flags.has(AUTOPILOT)
 	_panel.visible = false
 	_build()
 	log_line("started %s as peer %d on %s" % [mode, session.multiplayer.get_unique_id(), layout.id])
@@ -89,7 +97,34 @@ func log_line(line: String) -> void:
 
 ## The scene's own extra flags.
 func _known_flags() -> PackedStringArray:
-	return PackedStringArray()
+	return PackedStringArray([AUTOPILOT])
+
+
+## What the autopilot walks to next, or null when it is done.
+func _autopilot_target() -> Node2D:
+	return null
+
+
+func _physics_process(_delta: float) -> void:
+	if autopilot and session != null:
+		_steer()
+
+
+# The local player's intent: run to the target, then hold interact on it.
+func _steer() -> void:
+	var body := session.body(session.multiplayer.get_unique_id())
+	if body == null:
+		return
+	body.player_input.enabled = false
+	var target := _autopilot_target()
+	if target == null:
+		body.intent = MoveIntent.new()
+		return
+	var offset: Vector2 = target.global_position - body.global_position
+	if offset.length() > ARRIVED_PX:
+		body.intent = MoveIntent.create(offset.normalized(), true, false, false)
+	else:
+		body.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
 
 
 ## After the island, the session and the HUD exist (every peer); the host has placed the pick-ups.

@@ -26,6 +26,19 @@ func _on_built() -> void:
 			log_line("no hiding spots on %s" % layout.id)
 
 
+# The nearest concealed piece still lying on the island.
+func _autopilot_target() -> Node2D:
+	var body := session.body(session.multiplayer.get_unique_id())
+	var best: Node2D = null
+	for node: Node in session.pickups.get_children():
+		var item := node as WorldItem
+		if item == null or item.is_queued_for_deletion() or not item.concealed or body == null:
+			continue
+		if best == null or item.global_position.distance_to(body.global_position) < best.global_position.distance_to(body.global_position):
+			best = item
+	return best
+
+
 # A client logs each concealed piece the host's spawner brings, to compare with the host's cells.
 func _on_pickup_spawned(node: Node) -> void:
 	var item := node as WorldItem
