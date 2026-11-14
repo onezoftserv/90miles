@@ -211,6 +211,57 @@ Read in `reference/`; ideas only, no code.
 - *Borrowed:* DCSS and SPD's "check everything, then spend" order (D6).
 - *Rejected:* Brogue's spend-anyway, because the spec says a refused start spends nothing.
 
+**Don't Starve Together** (added 2026-11-14 at the owner's request, after the build)
+
+DST is closed source, so this section draws on its wiki only (dontstarve.wiki.gg, pages Boat, Floating Platform, Boat Patch, Ocean/DST, Oar, Mast, Steering Wheel, Waves). It takes ideas only: no code, data, text or art.
+
+- **One boat, one health bar, for the whole crew.**
+  - What DST does:
+    - A boat has one durability meter (200) and holds any number of players.
+    - At 0 it sinks, and everyone aboard goes down with it.
+  - *Borrowed, as already built:*
+    - This is our raft and car: one shared `VesselIntegrity` and one deck for every rider.
+    - A broken shared vessel throws everyone in.
+  - *Not followed for the board:* the owner's design makes the board one per rider, so it stays per-rider. DST shows no rule that argues against this, since the board is meant as the lonely, fragile option.
+- **Leaks.**
+  - What DST does:
+    - Damage can open a leak that keeps draining the boat (small leak −0.5/s, large −1/s) until someone patches it.
+    - Patches include the Boat Patch, Tree Jam and Trusty Tape; a Kelp Patch holds for 4–6 min.
+    - Boards and logs repair the boat outright.
+    - Bumpers reduce collision damage and leaks.
+  - *Rejected for this change:*
+    - Our crossings last 60–90 s, so a leak would just be a slower hit.
+    - Patching at sea would need repair items and a repair action on the crossing, and no spec has those yet.
+    - It would change the shared crossing for every route, beyond group 6's scope.
+  - *Recorded as an idea:* a later "repair at sea" change could give the raft and car a leak-and-patch rule, with tarp or rope as the patch.
+- **Falling overboard.**
+  - What DST does:
+    - A player in the ocean drowns: they reappear on the nearest coast with stat penalties, and sunk items are lost.
+    - Nobody swims, so a Personal Floater or Inflatable Vest is the only protection.
+    - The plank lets a player abandon ship on purpose.
+  - *Rejected:*
+    - Our crossing is built around swimming back: the 3 s climb and a teammate's 2 s pull.
+    - In a roguelite a drowning that respawns on the coast would cancel the crossing's risk.
+    - Deep-water item loss is rejected here for the same reason as Brogue's.
+  - *Kept as is:* stepping off the deck onto water already throws a rider in, which matches the plank.
+- **Sinking leaves salvage.**
+  - What DST does: a sunk boat leaves 3 Boards and half the build materials of what stood on it.
+  - *Rejected for now:*
+    - The owner chose that nothing is beached yet (Q4).
+    - A sunk board or car leaving salvage at sea needs pick-ups on the crossing, which do not exist.
+- **Sails, oars, anchor and steering.**
+  - What DST does:
+    - Each extra mast adds less speed (30 % less than the one before), and speed is capped.
+    - Rowing too fast soaks the rower.
+    - The steering wheel needs a mast.
+    - Anchor time grows with depth.
+  - *Rejected:* our crossing scrolls on its own and nobody steers. The route's `speed_multiplier` already carries the board's and car's speed as data.
+- **Waves.**
+  - What DST does: a wave hit applies 9 wetness and pushes items on the water. DST's waves come from creatures and bosses.
+  - *Rejected:* our squall beat already does the knock-in, and there is no wetness meter.
+
+**Outcome:** DST confirms the shared-vessel rules already built and shows no clearly better rule for anything group 6 builds. No owner decision changes, and the design and code are unchanged.
+
 ## Decisions taken (owner, 2026-11-14; the recommended option on all four)
 
 - **Q1. Route files and task 6.4's deferred tests.**
