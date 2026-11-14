@@ -8,8 +8,9 @@ extends Node
 ## the host on --port=7789, the client still on --port=7788.
 ## Options (either role): --seconds=<s> measured time before quitting, --idle=<s> wait before
 ## hosting or joining, --stall-ms=<ms> --stall-at=<s> --stall-for=<s> block every frame of this
-## process for that long in that window (a loaded machine), --transfer=ordered|unreliable|reliable
-## the transfer mode this process sends submit_intent with, --tag=<x> a label on every line.
+## process for that long in that window (a loaded machine), --tag=<x> a label on every line.
+## The intent RPC's transfer mode cannot be overridden here: Node.rpc_config at run time loses to
+## the script's @rpc annotation (intent-delivery design.md), so edit the annotation to compare.
 ## --open-throttle keeps ENet's packet throttle open (deceleration 0) from the moment each end knows
 ## the link: the host on peer_connected, the client on connected_to_server. --throttle-accel=<n>
 ## sets the acceleration that goes with it (ENet's default is 2).
@@ -39,11 +40,6 @@ const SNAP_PX: float = 0.5
 const DEADLINE_SLACK_S: float = 20.0
 const THROTTLE_INTERVAL_MS: int = 5000
 const THROTTLE_ACCELERATION: int = 2
-const TRANSFER_MODES: Dictionary = {
-	"ordered": MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED,
-	"unreliable": MultiplayerPeer.TRANSFER_MODE_UNRELIABLE,
-	"reliable": MultiplayerPeer.TRANSFER_MODE_RELIABLE,
-}
 
 
 ## Runs a callable every physics frame at a chosen priority.
@@ -65,7 +61,6 @@ var stall_ms: int = 0
 var stall_at_s: float = 0.0
 var stall_for_s: float = 0.0
 var open_throttle: bool = false
-var transfer: String = "ordered"
 var tag: String = "-"
 var requests_hz: float = 0.0
 var throttle_accel: int = THROTTLE_ACCELERATION
@@ -103,12 +98,6 @@ func _ready() -> void:
 	playground = PLAYGROUND_SCENE.instantiate() as CoopPlayground
 	add_child(playground)
 	session = playground.session
-	session.rpc_config(&"submit_intent", {
-		"rpc_mode": MultiplayerAPI.RPC_MODE_ANY_PEER,
-		"transfer_mode": TRANSFER_MODES.get(transfer, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED),
-		"call_local": true,
-		"channel": 0,
-	})
 	session.player_spawned.connect(_on_player_spawned)
 	if open_throttle:
 		session.multiplayer.peer_connected.connect(_open_throttle)
@@ -125,7 +114,7 @@ func _ready() -> void:
 	after.hook = _after_body
 	after.process_physics_priority = 50
 	add_child(after)
-	_log("started transfer=%s open_throttle=%s stall=%dms@%.0f+%.0fs requests=%.1f/s" % [transfer, open_throttle, stall_ms, stall_at_s, stall_for_s, requests_hz])
+	_log("started open_throttle=%s stall=%dms@%.0f+%.0fs requests=%.1f/s" % [open_throttle, stall_ms, stall_at_s, stall_for_s, requests_hz])
 
 
 func _process(_delta: float) -> void:
@@ -337,8 +326,6 @@ func _parse(args: PackedStringArray) -> void:
 				stall_for_s = value.to_float()
 			"--open-throttle":
 				open_throttle = true
-			"--transfer":
-				transfer = value
 			"--tag":
 				tag = value
 			"--throttle-accel":

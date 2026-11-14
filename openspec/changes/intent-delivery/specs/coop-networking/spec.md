@@ -16,9 +16,9 @@ Each intent message a client sends SHALL carry its newest movement intent and th
 - **THEN** the host applies 41 and 42 once each and nothing else, and the rate limits are charged for those two only
 
 #### Scenario: Messages arrive out of order
-- **GIVEN** a client that sends a message carrying intents 10 to 12 and then one carrying 11 to 13
+- **GIVEN** a host that has applied a client's intents up to number 9, and a client that sends a message carrying intents 10 to 12 and then one carrying 10 to 13
 - **WHEN** the second arrives before the first
-- **THEN** the host applies 11, 12 and 13 once each and ignores the first message when it comes
+- **THEN** the host applies 10, 11, 12 and 13 once each and ignores the first message when it comes
 
 #### Scenario: Solo player sends one intent a frame
 - **GIVEN** a solo player, offline, walking east for 60 frames
@@ -41,22 +41,22 @@ On a link that loses no packets, the transport SHALL deliver every unreliable me
 ## MODIFIED Requirements
 
 ### Requirement: Per-peer rate limits
-The host SHALL limit each client to 90 intents per second with a burst of 90, and to 1.05 s of simulated movement per second of real time with 1.25 s of slack, each intent counting at least one 1/60 s frame and at most 0.1 s. An intent counts once, when the host first applies it; repeats of it cost nothing. Every player, solo included, gets 3 quick-chat phrases in a burst, then one every 2 s. Over-limit messages are dropped. The host's own (solo) player's intents are never limited.
+The host SHALL limit each client to 90 intents per second with a burst of 90, and to 1 s of simulated movement per second of real time with 1.25 s of slack, each intent counting at least one 1/60 s frame and at most 0.1 s. An intent counts once, when the host first applies it; repeats of it cost nothing. Every player, solo included, gets 3 quick-chat phrases in a burst, then one every 2 s. Over-limit messages are dropped. The host's own (solo) player's intents are never limited.
 
 #### Scenario: Client claims extra time
 - **GIVEN** a client whose player is walking east
 - **WHEN** it sends, within 1 s, 60 intents that each claim 0.1 s
-- **THEN** the host moves that player at most 9.2 tiles (2.3 s of walking at 4 tiles/s)
+- **THEN** the host moves that player at most 9 tiles (2.25 s of walking at 4 tiles/s)
 
 #### Scenario: Client after a host hitch
 - **GIVEN** a client walking east whose host has been sending states every frame
 - **WHEN** one host frame lasts 1 s, so the client's 60 intents of that second arrive together
 - **THEN** the host applies all 60 and the client's player is not corrected
 
-#### Scenario: The limit refills after a hitch
-- **GIVEN** a client whose simulated-time slack a hitch has used up
-- **WHEN** it then walks for 30 s at one intent per 1/60 s frame with arrivals up to 20 ms early or late
-- **THEN** no intent is refused after the first 2 s, and the full 1.25 s of slack is back by the end
+#### Scenario: Jitter after a hitch
+- **GIVEN** a client walking east whose host has just had a 1 s frame and applied the backlog
+- **WHEN** the client walks on for 30 s at one intent per 1/60 s frame, with arrivals up to 20 ms early or late
+- **THEN** the host applies every intent
 
 #### Scenario: Solo player during a long frame
 - **GIVEN** a solo player walking east

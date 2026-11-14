@@ -38,13 +38,13 @@ The groups below follow the recommended answers to Q1 to Q3 in design.md. They a
 ## 3. Rate-limit headroom (Q3)
 
 - [ ] 3.1 Tests first in `test_coop_session_rate_limits.gd`:
-  - The constants: burst 90, slack 1.25 s, refill 1.05 s per s.
-  - "Client claims extra time" (at most 9.2 tiles in 1 s).
+  - The constants: burst 90, slack 1.25 s, refill 1.0 s per s.
+  - "Client claims extra time" (at most 9 tiles in 1 s).
   - "Client after a host hitch": 60 intents of 1/60 s arrive at one instant after 1 s of host time, and all are queued.
-  - "The limit refills after a hitch": from an empty bucket, 30 s of intents with ±20 ms of jitter; none is refused after 2 s, and 1.25 s of slack is back.
+  - "Jitter after a hitch": after that backlog, 30 s of intents with ±20 ms of jitter; none is refused.
   - The existing over-budget and tiny-step cases are updated to the new slack.
   - Verify: seen failing, then passing.
-- [ ] 3.2 Change the numbers in `PeerLimits` and update the doc comment. Verify: 3.1 passes, and so does `test_coop_session_rate_limits.gd` as a whole.
+- [ ] 3.2 Change the numbers in `PeerLimits` and update the doc comment, and raise `PlayerNet.MAX_QUEUED` to 90 (a test in `test_player_net.gd`: 75 intents queued at once are all stepped). Verify: 3.1 passes, and so does `test_coop_session_rate_limits.gd` as a whole.
 - [ ] 3.3 Run the import, the smoke run and GUT. Verify: as in 1.4.
 
 ## 4. Measured again, two processes
