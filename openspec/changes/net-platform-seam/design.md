@@ -512,3 +512,14 @@ Recorded while building group 4 (2026-11-14).
     - the walk finds over 100 files;
     - they include `game_shell.gd`, `coop_session.gd` under `res://scenes/net/`, `net_manager.gd` and a `.tscn`;
     - `net_peers.gd` itself does give hits.
+
+Recorded while building group 5 (2026-11-14).
+
+- **`start_solo()` ends the run first.** It now calls `_end_run()` before `NetManager.start_solo()`, like every request, so the rule "freed at once, before the peer is closed" holds for solo too. `_build_run()` ended the run anyway, just after the peer swap; from the title and from "Otra vez" nothing changes.
+- **Outside joins are taken on the next idle step.** `_on_outside_join` defers `_take_outside_join`, as `show_title()` does. A platform reports an invite from `backend.poll()`, inside `NetManager._process`, and taking it at once would ask the backend for a join from inside its own poll (D3: no shell handler runs inside `NetManager`'s call). `_take_outside_join` checks again before it takes the kept target, so a target is consumed only when it starts.
+- **When a join from outside the game may start.** The flow is TITLE, SETTINGS, CREDITS or JOIN, and also no join of this shell is under way, no run exists and `NetManager.pending_request()` is null. The flow alone is not enough: `_join()` called from the title (test_shell_sky) leaves the title showing with a join under way.
+- **A join failure that is not this shell's is ignored.** `_on_join_failed` acts only while a join of this shell is under way or the join screen shows. That keeps test_lobby_screen.gd:97's bare `join_failed.emit()` on the join screen, and stops a stray signal from ending a solo run. `_on_host_failed` likewise acts only while this shell's last request is a host.
+- **The opening lobby is a separate screen.** `_show_opening()` shows a lobby with `show_opening()` and only wires Salir, since `show_lobby()` reads `session.roster` and no session exists yet. When hosting is ready, `_on_hosting()` shows a fresh lobby with `show_lobby(true)`, so the opening state never needs undoing.
+- **A failed host off the title.** `_show_host_failure()` shows the title first when it is not showing, then writes the reason's line. On the title, the title already showing is kept, as before.
+- **`show_failed()` undoes `show_connecting()`.** It makes the field editable again and re-enables "Conectar"; a blank text shows `FAILED`.
+- **The new suite frees its shells before `NetManager.leave()`.** GUT runs `after_each` before autofree, so `test_shell_platform.gd` adds its shells itself and ends their run and frees them first in `after_each`.

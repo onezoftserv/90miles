@@ -152,7 +152,7 @@ No existing file under `game/tests` is edited.
 
 ## 5. Shell and screens (tests first)
 
-- [ ] 5.1 Write `game/tests/unit/test_shell_platform.gd`. It starts with three 1-player offline tests:
+- [x] 5.1 Write `game/tests/unit/test_shell_platform.gd`. It starts with three 1-player offline tests:
   - **Solo from the title with a broken platform:** use a fake with PLATFORM_UNAVAILABLE that refuses everything.
     - "Jugar solo" gives RUN with one body on the offline peer.
     - Death shows the summary, and "Otra vez" reaches RUN offline.
@@ -179,7 +179,11 @@ No existing file under `game/tests` is edited.
   - **ENet wording is kept on a taken port:** the title shows "No se pudo abrir el puerto %d.".
 
   See them fail.
-- [ ] 5.2 In `game_shell.gd`:
+  - Done 2026-11-14: 13 tests, with its `.uid`.
+    - Red first: run alone (`-gconfig= -gtest=<file>`), the suite stopped at a parse error (`Cannot find member "OPENING" in base "LobbyScreen"`). GUT printed "Nothing was run" and exited 0. The solo test alone would likely have passed on the old shell; the parse error is the only red seen.
+    - The outside join during a solo run also checks the summary is not interrupted, and starts on "Volver al inicio" (the net-platform scenario).
+    - Mutation run, after 5.2: with the outside-join guard always true and `_join_target` building the run before the request (the old order), 2 tests failed (11/13): the solo-run outside join and the pending joiner (session and island present while pending, and the session ran as host). The source was restored and the suite is 13/13 again.
+- [x] 5.2 In `game_shell.gd`:
   - `_end_run()` before every request;
   - `_join_target`, and `_continue` as the one continuation;
   - `_on_hosting` and `_on_joining`;
@@ -188,13 +192,21 @@ No existing file under `game/tests` is edited.
   - outside joins (taken at once on TITLE, SETTINGS, CREDITS or an idle JOIN, otherwise when the title next shows);
   - lobby addresses and the note from `NetManager`;
   - `IP.get_local_addresses()` removed.
-- [ ] 5.3 In `join_screen.gd`, add `show_failed(text)` and `show_connecting(label)`. In `lobby_screen.gd`, add `OPENING` and `show_opening()`. No `.tscn` changes.
-- [ ] 5.4 These pass, with no test file edited:
+  - Done 2026-11-14. Small choices are in design.md "Changes from the build plan" (group 5): `start_solo()` ends the run first, outside joins are taken on the next idle step, and a join failure that is not this shell's is ignored.
+- [x] 5.3 In `join_screen.gd`, add `show_failed(text)` and `show_connecting(label)`. In `lobby_screen.gd`, add `OPENING` and `show_opening()`. No `.tscn` changes.
+  - Done 2026-11-14. `show_failed("")` shows `FAILED`, and `show_failed` makes the field editable again after `show_connecting`. No `.tscn` changed.
+- [x] 5.4 These pass, with no test file edited:
   - 5.1 and the seam scan;
   - `test_lobby_screen.gd`, `test_shell_sky.gd`, `test_run_restart.gd`, `test_game_shell.gd` and `test_title_screen.gd`;
   - the NetHarness suites.
 
   Run the import, smoke and GUT.
+  - Done 2026-11-14:
+    - Run alone, unchanged: `test_shell_platform` 13/13 (133 asserts), `test_transport_seam` 3/3 (the seam scan is green), `test_lobby_screen` 9/9, `test_shell_sky` 11/11, `test_run_restart` 6/6, `test_game_shell` 17/17, `test_title_screen` 6/6, `test_net_requests` 18/18 and `test_net_manager` 8/8.
+    - Import ×2 clean; smoke "10 frames, 0 problem(s)".
+    - GUT: 179 scripts (+1), 1614 tests (+13), 1614 passing, 0 failing, 55237 asserts (+135), exit 0, no leak at exit. The 30 NetHarness suites are in that run.
+    - The new suite accounts for 133 of the added asserts. The other 2 come from existing suites (the seam scan has 17 asserts both red and green); not traced per suite.
+    - Orphans are reported only by suites that had them before. `test_use_on_crossing`, `test_coast_cay_solo` and `test_crossing_solo` give the same counts with the HEAD shell; none come from `test_shell_platform` or the shell suites.
 
 ## 6. Docs
 
