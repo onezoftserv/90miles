@@ -6,11 +6,11 @@ extends Node2D
 ## ends the crossing with a CrossingResult. Clients build the same node, receive the plan, the
 ## rider states and the result, and only show them. Coordinates are absolute: the node sits at
 ## (0, 0) and the sea at `origin`, far from the island, so riders keep their sync and meters.
-## The sea and the deck are drawn by children, `Sea` (CrossingSea) at z -40 and `Deck`
-## (CrossingDeck) and `Boards` (CrossingBoards) at z -20, because the node sorts at its own (0, 0) in the y-sorted session while
-## its riders are far north of it (art-pass "Draw order by foot position", "Crossing look";
-## design.md T5, T18). They read the crossing every frame and only show; the crossing never names
-## them, and freeing them changes nothing it does.
+## The sea and the deck are drawn by children, `Sea` (CrossingSea) at z -40 and `Deck` (CrossingDeck)
+## and `Boards` (CrossingBoards) at z -20, because the node sorts at its own (0, 0) in the y-sorted
+## session while its riders are far north of it (art-pass "Draw order by foot position", "Crossing
+## look"; design.md T5, T18). They read the crossing every frame and only show; the crossing never
+## names them, and freeing them changes nothing it does.
 ## A board route (vessel-car-board) gives each rider their own board, a 1x2-tile deck in a row
 ## through the sea's centre, beside a shared vessel of no integrity: `vessel_of` and `deck_rect_of`
 ## answer per rider, so the raft and the car keep their one shared deck and lashing unchanged.
@@ -266,12 +266,12 @@ func advance(delta: float) -> void:
 		_send_state()
 
 
-## The vessel takes a hit; at 0 it breaks (`_on_broke`). Nothing happens without a vessel. A shark
-## hit (`shark`) on a route that dumps on a shark attack throws the vessel's riders who are aboard
-## and not tied into the water (crossing "Shark dumps"). Returns the centre of the deck that was
-## hit, where the shark shows.
-## On a board route the hit takes one board: the next intact one in rider order from the last hit,
-## wrapping round (crossing "Board hits"); with none left it hits nothing.
+## The vessel takes a hit; at 0 it breaks (`_on_broke`). Nothing happens without a vessel. On a
+## board route the hit takes one board: the next intact one in rider order from the last hit,
+## wrapping round (crossing "Board hits"); with none left it hits nothing. A shark hit (`shark`) on a
+## route that dumps on a shark attack throws the hit vessel's riders who are aboard and not tied into
+## the water (crossing "Shark dumps"). Returns the centre of the deck that was hit, where the shark
+## shows (the sea's centre when nothing was).
 func hit_vessel(amount: float, shark: bool = false) -> Vector2:
 	if not is_board_route():
 		integrity.hit(amount)

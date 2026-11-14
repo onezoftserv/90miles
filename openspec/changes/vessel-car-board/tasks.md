@@ -86,7 +86,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 6. Arrival (crossing "Arrival scatter", "Arrival scatter fallback", "Beaching by vessel")
 
-- [ ] 6.1 Write `test_arrival_scatter.gd` first, a pure test on the coast cay's built layout. The cases:
+- [x] 6.1 Write `test_arrival_scatter.gd` first, a pure test on the coast cay's built layout. The cases:
   - 1 board rider takes the first landing cell;
   - 3 board riders stand pairwise 10–20 tiles apart on reachable beach cells;
   - the same seed gives the same cells and another seed gives other cells;
@@ -95,7 +95,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
   - default-scatter parties match `IslandArrival.landing_positions` exactly.
 
   See it fail. Add `game/scripts/levels/arrival_scatter.gd` per design D7 and verify it passes.
-- [ ] 6.2 Wire it in:
+- [x] 6.2 Wire it in:
   - `IslandTravel.travel()` groups riders by their result's route scatter and sends `cell` with each arrival;
   - `CoopSession.checked_arrivals` keeps an optional `Vector2i` `cell` and refuses another type;
   - `_land` uses a valid sent cell and otherwise falls back;
@@ -106,7 +106,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
   - a solo shell test where a `test_board` crossing ends with the board at 30, the player stands on the coast cay's first landing cell and the raft site is empty;
   - a raft at 70 and a board at 50 in one landing beach the raft at 70;
   - `test_coast_cay_net.gd` and the existing arrival tests pass.
-- [ ] 6.3 Add a host-plus-client test, `test_arrival_scatter_net.gd`: 2 board riders over ENet land 10–20 tiles apart and on the same cells on both peers. Verify it passes.
+- [x] 6.3 Add a host-plus-client test, `test_arrival_scatter_net.gd`: 2 board riders over ENet land 10–20 tiles apart and on the same cells on both peers. Verify it passes.
 
 ## 7. Art (crossing "Vessel look on the crossing")
 

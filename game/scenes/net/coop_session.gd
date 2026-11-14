@@ -907,7 +907,8 @@ func _is_from_host() -> bool:
 
 
 ## The arrivals of a message with every key a peer id and every value {health, energy} finite
-## numbers, or null when anything is not (or there are too many).
+## numbers, with an optional landing `cell` (a Vector2i the host picked), or null when anything is
+## not (or there are too many).
 static func checked_arrivals(arrivals: Dictionary) -> Variant:
 	if arrivals.size() > MAX_ARRIVALS:
 		return null
@@ -922,7 +923,13 @@ static func checked_arrivals(arrivals: Dictionary) -> Variant:
 			return null
 		if not is_finite(float(health)) or not is_finite(float(energy)):
 			return null
-		clean[peer] = {"health": float(health), "energy": float(energy)}
+		var kept: Dictionary = {"health": float(health), "energy": float(energy)}
+		if (entry as Dictionary).has("cell"):
+			var cell: Variant = (entry as Dictionary)["cell"]
+			if not cell is Vector2i:
+				return null
+			kept["cell"] = cell
+		clean[peer] = kept
 	return clean
 
 
