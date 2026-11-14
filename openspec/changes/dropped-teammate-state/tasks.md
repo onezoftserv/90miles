@@ -31,7 +31,7 @@ Group 3 follows option A of design D3, which the owner chose on 2026-11-14.
 
 ## 3. The short hold (escape-routes, design D3 option A, D4, D6)
 
-- [ ] 3.1 Tests first in `test_coast_cay_net.gd`:
+- [x] 3.1 Tests first in `test_coast_cay_net.gd`:
   - "A removed player counts as dead" is updated: after the drop, `disconnect_time_left` is at most 30 s; the sandbar is still live just before 30 s; once 30 s pass, the coast cay loads and "Papo" is in `removed_names`.
   - New, "a dropped player back within the short hold plays on": Papo rejoins 20 s after the drop, his body stands, the sandbar stays live and the host still waits.
   - New, "a dropped rider in a crossing holds the load": the client in a crossing drops; its countdown is not cut and the sandbar stays live; when that crossing ends, the coast cay loads with both players.
