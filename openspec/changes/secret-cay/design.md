@@ -135,6 +135,17 @@ Found in tasks 0.1–0.3 on 2026-11-14, re-reading `main` at `528e2a5` (after `c
 - **The cay's lean-to art.** `ShelterArtData` draws a lean-to only over layouts it names (the sandbar). `shelter_art.tres` gains `cayo_sin_norte` so the cay's shade cells get the same lean-to.
 - **Platino (task 6.3b).** `art-pass` did not track the figurine: `game/assets/art/creatures/` holds only the crab, shark and gull. The cay places it as a decor cell (`platino`) beside the chest with a placeholder colour, like the other decor; the sprite itself waits for an art change that cuts it from DawnLike's `Reptile0.png` with the pack's credit.
 
+Decided while building (groups 1–9):
+
+- The needle's wobble speed is data too: `SecretTuning.wobble_rad_per_s` (6 rad/s), beside the band edges and wobbles.
+- The chest's prompt is "[E] Abrir el cofre" (`open_chest` in `hud_text.tres`, a labelled prompt), and it hides what the chest holds.
+- `NoteLabel` is a `HudPanel` 360 px wide at (140, 46), so the interact prompt keeps clear of it through `RunHud.panel_rects` without joining `hud_avoid`; the needle joins `hud_avoid`.
+- The dev hunt layout is marked `off_graph` (no run generates it, and so it gets no creatures that could steal a piece) but not `secret`.
+- Both dev scenes share a `SecretPlayground` base (`game/scenes/dev/secret_playground.gd`), which also reads `--autopilot`: the local player walks to each target in turn (the nearest concealed piece, or the unopened chest) and holds interact there, so task 9.3's two headless processes play with nobody at the keys.
+- Hiding spots also skip cells something already stands on beyond features and spawns (drinking spots, signs, the chest, decor and secret pick-ups), and come back in reading order so a seed always picks the same cell.
+- The leaver rule is `SecretRules.lay_down_for_leaver`, one call from `CoopSession._remove_player`, and skips a player for whom `has_left` or `left_island` holds.
+- The search of task 10.2 found no franchise wording. The owner's rejected compass line from 2026-11-06 is not written down anywhere in the repository, so the search checked that the approved line ("La única brújula que nunca te manda pa'l Norte.") is the only compass line.
+
 ## Risks / Trade-offs
 
 - [Collision with `escape-routes`] → Precondition 0: merged and archived first; re-read `island_layout_data.gd`, `island_layout.gd`, `sandbar_island.gd`, `coop_session.gd` before editing.

@@ -1040,6 +1040,8 @@ func _remove_player(peer_id: int) -> void:
 	if leaving == null:
 		return
 	var last_position: Vector2 = leaving.position
+	# secret-cay: the secret never leaves the run with a removed player.
+	SecretRules.lay_down_for_leaver(self, peer_id, leaving, last_position)
 	var removed_name := player_name(peer_id)
 	# A player whose meters died while they were away keeps that cause.
 	var cause: StringName = DeathCause.REMOVED
