@@ -145,3 +145,13 @@ func test_three_and_four_boards_fit_on_the_coast_cay_for_every_seed() -> void:
 				for b: int in cells:
 					if a < b:
 						assert_between(_distance(cells[a], cells[b]), 10.0, 20.0, "%d riders, seed %d: riders %d and %d" % [riders, seed_value, a, b])
+
+
+func test_a_dead_rider_anchors_no_board_rider() -> void:
+	var landing := built.landing_cells()
+	var cells := ArrivalScatter.pick(built, _scatter([DEFAULT, BOARD]), SEED, [1] as Array[int])
+	assert_eq(cells[1], landing[0], "the dead keep the first landing cell")
+	assert_eq(cells[2], landing[1], "the lone survivor takes the next landing cell, not a cell 10-20 tiles from a body")
+	var three := ArrivalScatter.pick(built, _scatter([DEFAULT, BOARD, BOARD]), SEED, [1] as Array[int])
+	assert_eq(three[2], landing[1])
+	assert_between(_distance(three[2], three[3]), 10.0, 20.0, "the living scatter from each other")

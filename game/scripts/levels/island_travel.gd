@@ -111,7 +111,7 @@ func travel(next_id: StringName) -> void:
 	var cells: Dictionary[int, Vector2i] = {}
 	var next_layout := GameState.content.get_entry(&"islands", next_id) as IslandLayoutData
 	if next_layout != null:
-		cells = ArrivalScatter.pick(IslandLayout.build(next_layout), _scatter_by_peer(), _landing_seed())
+		cells = ArrivalScatter.pick(IslandLayout.build(next_layout), _scatter_by_peer(), _landing_seed(), _dead_peers())
 	var arrivals: Dictionary = {}
 	for peer_id: int in session.peer_ids():
 		var meters := session.body(peer_id).meters
@@ -171,14 +171,11 @@ func _beached_integrity() -> float:
 	return best
 
 
-# Every living player's arrival scatter: their crossing's route's, the default for anyone else.
-# The dead are left out (they land on the landing cells), so a lone survivor's board is not
-# scattered away from a body.
+# Every player's arrival scatter: their crossing's route's, the default for anyone else.
 func _scatter_by_peer() -> Dictionary[int, Vector2i]:
 	var scatter: Dictionary[int, Vector2i] = {}
 	for peer_id: int in session.peer_ids():
-		if not session.body(peer_id).meters.dead:
-			scatter[peer_id] = ArrivalScatter.DEFAULT_TILES
+		scatter[peer_id] = ArrivalScatter.DEFAULT_TILES
 	for result: CrossingResult in _results:
 		var route := GameState.content.get_entry(&"routes", result.route_id) as RouteData
 		if route == null:
@@ -187,6 +184,16 @@ func _scatter_by_peer() -> Dictionary[int, Vector2i]:
 			if scatter.has(peer_id):
 				scatter[peer_id] = route.arrival_scatter_tiles
 	return scatter
+
+
+# The dead keep their landing cell but anchor nobody's scatter, so a lone survivor's board is not
+# scattered away from a body.
+func _dead_peers() -> Array[int]:
+	var dead: Array[int] = []
+	for peer_id: int in session.peer_ids():
+		if session.body(peer_id).meters.dead:
+			dead.append(peer_id)
+	return dead
 
 
 # The scatter's roll: the run's seed and how far the party has come, so a run lands the same way.

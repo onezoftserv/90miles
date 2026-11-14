@@ -17,8 +17,10 @@ const ATTEMPTS: int = 16
 
 
 ## The landing cell of every peer in `scatter` (peer -> its route's scatter, the minimum and
-## maximum in tiles) on `built`, the wider routes' cells rolled from `seed_value`.
-static func pick(built: IslandLayout, scatter: Dictionary[int, Vector2i], seed_value: int) -> Dictionary[int, Vector2i]:
+## maximum in tiles) on `built`, the wider routes' cells rolled from `seed_value`. Peers in
+## `unanchored` (the dead) keep their landing cell but no wider rider is placed by its distance to
+## them; with nobody else placed, the first wider rider takes the first landing cell nobody holds.
+static func pick(built: IslandLayout, scatter: Dictionary[int, Vector2i], seed_value: int, unanchored: Array[int] = []) -> Dictionary[int, Vector2i]:
 	var peers: Array[int] = []
 	for peer: int in scatter:
 		peers.append(peer)
@@ -44,14 +46,17 @@ static func pick(built: IslandLayout, scatter: Dictionary[int, Vector2i], seed_v
 		var rolled: Dictionary[int, Vector2i] = placed.duplicate()
 		var misses: int = 0
 		for peer: int in wide:
-			if rolled.is_empty():
-				rolled[peer] = landing[0]
-				continue
 			var taken: Array[Vector2i] = []
-			taken.assign(rolled.values())
+			for other: int in rolled:
+				if not unanchored.has(other):
+					taken.append(rolled[other])
+			var held: Array = rolled.values()
+			if taken.is_empty():
+				rolled[peer] = _first_free(landing, held)
+				continue
 			var free: Array[Vector2i] = []
 			for cell: Vector2i in beach:
-				if not taken.has(cell):
+				if not held.has(cell):
 					free.append(cell)
 			if free.is_empty():
 				rolled[peer] = landing[rolled.size() % landing.size()]
@@ -94,6 +99,14 @@ static func beach_cells(built: IslandLayout, start: Vector2i) -> Array[Vector2i]
 			cells.append(cell)
 	cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.y < b.y or (a.y == b.y and a.x < b.x))
 	return cells
+
+
+# The first of `landing` nobody in `held` stands on, else the first.
+static func _first_free(landing: Array[Vector2i], held: Array) -> Vector2i:
+	for cell: Vector2i in landing:
+		if not held.has(cell):
+			return cell
+	return landing[0]
 
 
 # The cells of `free` within `tiles` of every cell in `taken`.
