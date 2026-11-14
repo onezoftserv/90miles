@@ -65,6 +65,21 @@
   - *Borrowed, Brogue CE* `Architect.c` `buildAMachine` with `MF_GENERATE_HORDE`: machine hordes are excluded from `populateMonsters`'s random count.
   - Ours: chance-1.0 rules are placed first and never count against the rolled cap.
   - *Rejected, DCSS* `place_monster`'s hard monster ceiling: a guarantee that a cap can refuse is no guarantee.
+- **Don't Starve Together** (added by the owner on 2026-11-14). It is closed source, so these come from the dontstarve.wiki.gg pages named below, read on 2026-11-14. Only ideas are taken: no code, data, numbers, text or art. None of it is a clearly better rule than the owner's decisions, so nothing below changes them.
+  - **Birds that land and scatter** (wiki "Crow", "Puffin"). A bird flies in, pecks for a moment and flies off; a player or creature coming close scares it away.
+    - *Borrowed:* a visit with an arrival, a short stay and a departure. That is `ambient`'s `ARRIVE` → `STAY` → `LEAVE`, with the optional stay time `circle_time_s.x`.
+    - *Rejected for crossing birds:* scattering when a player comes near. On a 4×2-tile raft every rider is always near, so the songbird and the booby would leave at once. The BESTIARY has them ride along and leave for a squall or noise instead.
+    - An island ambient (the pelican at a cove) could use a proximity flee later as a data counter, with no machine change.
+  - **The parrot companion** (wiki "Polly Roger's Hat"). The parrot flies to its wearer, follows them, fetches loose items into their inventory, can be killed, and comes back the next day.
+    - *Borrowed:* a bird that belongs to one player, comes back to them on its own, and needs no orders. This is the galleguito's rider, and its solo shoo where it circles and lands on the same head.
+    - *Rejected:* fetching items, and health or death. Fetching would make the gull a survival lever, which the BESTIARY forbids, and the galleguito has no health.
+  - **Creatures that steal** (wiki "Splumonkey", "Powder Monkey", "Krampus").
+    - Splumonkeys take loose items and container contents. Powder Monkeys knock items out of a player's inventory on sight. Krampus empties everything on screen and flees into his sack. Killing any of them returns what it stole.
+    - *Rejected:* whole-pack theft, fleeing after a theft, and getting items back by killing the thief. The galleguito charges a toll, one held snack at most once a minute; it stays and cannot be killed.
+    - *Borrowed:* the wiki's advice against Powder Monkeys is to keep common stacks in the first slots, so the inventory order decides what is exposed. Our theft from the first FOOD slot only is the same idea, and a player can choose what they expose.
+    - *Borrowed:* Powder Monkeys leave alone players who carry the right pass. That is our `ITEM_CARRIED` → `NEGATE` immunity, the Pluma de galleguito.
+  - **Catcoons** (wiki "Catcoon"). Food or toys make one follow a player for up to a day, and a befriended one coughs up gifts on a timer.
+    - *Rejected:* befriending, feeding and gifts. The gull is a passenger, not a pet, and gifts would be a survival lever.
 
 **D2. `CrossingCreatures`: the roll lives beside the crossing, not in it.**
 - The new file is `game/scripts/crossing/crossing_creatures.gd`, a `Node` child of the crossing on the host. `GameShell._on_route_started` calls `CrossingCreatures.attach(crossing, island.layout.chain_family, band)` right after `Crossing.launch`; on a client it returns null.
@@ -153,12 +168,14 @@
 
 **D8. Perch sync and drawing.**
 - `Creature` gets `var perch_peer: int = 0`, replicated like `state_id` (spawn and always), and `var passing: bool` (host only). `is_passing()` = `passing or lifetime_s >= 0`.
+- `perch_peer` is the rider's peer only while the machine is in `PERCH`, and 0 in `CIRCLE`, `HOP` and `HOVER`. A flying gull is drawn at its synced position like any creature.
 - `Creature._ready` sets `interactable.priority = brain.interact_priority()`. The base brain returns 1, the scene's current value, so existing creatures are unchanged.
 - `CreatureLook.step` handles `perch_peer != 0` when the session has that body:
   - It sets its global position to the body's plus `PERCH_SORT_PX`, so it sorts over the rider.
-  - It lifts the sprite to the body's head (`BodyLook.head_y()`), plus the entry's `air_lift_px` in an airborne state (`hover`, `hop`).
-  - It faces with the rider's `PlayerLook.facing.dir`.
+  - It puts the sprite's feet on the body's head (`BodyLook.head_y()`), with no shadow.
+  - It faces with the rider's `PlayerLook.facing.dir`, and plays its idle frames however the rider moves.
 - A client therefore draws the gull on its own predicted body, with no 10 Hz trail. The host's synced `position` stays for the reach check and for peers without that body yet.
+- `CreatureLook` runs at `process_priority` 1, after the players. A client moves a remote player's drawn body (`PlayerNet`) and turns its look (`PlayerLook`) in their `_process`, and the session lists `Entities` before `Players`. Without this, a gull riding another player would trail them by one frame. The manual two-process run found this.
 - After a rejoin, the host writes the rider's new peer to `perch_peer` on the next tick.
 
 **D9. Fixtures.**
@@ -167,7 +184,7 @@
 - The feather tests duplicate `seagull.tres` in code and add the counter. A fixture `ItemData` for the feather is registered in the inventory.
 
 **D10. Manual two-process run.**
-- `game/tests/manual/perch_ride_run.gd`, run with `--mode=host` and `--mode=client`. Both default to UDP port 7786 (seven sessions share this machine and would collide on 7777), and `--port=<n>` overrides it. Each process builds a session and the sandbar, as the net tests do, with the fixture catalog.
+- `game/tests/manual/perch_ride_run.tscn` (script `perch_ride_run.gd`), run with `-- --mode=host` and `-- --mode=client`. It is a scene, not a `-s` script, so it runs after the autoloads exist. Both default to UDP port 7786 (seven sessions share this machine and would collide on 7777), and `--port=<n>` overrides it. Each process builds a session and the sandbar, as the net tests do, with the fixture catalog.
 - The host launches a crossing for its own player and attaches the crossing creatures with the FINAL family. This is the test hook that stands in for a final island.
 - The client joins mid-crossing. It checks that the galleguito is drawn on the host player's head while the host walks, and prints `PERCHRUN PASS|FAIL`.
 
