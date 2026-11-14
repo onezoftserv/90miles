@@ -106,7 +106,7 @@ func spawn_points(solo: bool) -> Array[Vector2]:
 
 ## Every peer: the workbench (when the layout has one), the routes, the raft's build site, the
 ## drinking spots and the signs go in the session at the same path on each, and the island starts
-## listening for squalls to end.
+## listening for squalls to end. The host also starts the creatures, unless the layout is off-graph.
 func furnish(session: CoopSession) -> void:
 	_session = session
 	if built.workbench.x >= 0:
@@ -121,7 +121,9 @@ func furnish(session: CoopSession) -> void:
 	routes.setup(session, layout.route_ids)
 	routes.route_started.connect(_on_route_started)
 	_place_raft_site()
-	if with_creatures:
+	# An off-graph layout (the secret cay) never gets creatures (island-generation "Any handmade
+	# layout builds the island").
+	if with_creatures and not layout.off_graph:
 		_place_creatures()
 	_weather_id = WeatherManager.weather_id()
 	WeatherManager.weather_changed.connect(_on_weather_changed)

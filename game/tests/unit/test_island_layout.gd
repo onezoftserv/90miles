@@ -254,3 +254,169 @@ func test_a_solo_player_walks_the_crescent() -> void:
 		if _land(cell) and _tiles(cell, solo) >= 30.0:
 			farthest = maxf(farthest, _walk_tiles(astar, solo, cell))
 	assert_gte(farthest / speed, 15.0, "the far horn is a 15 s walk or more")
+
+
+# --- secret-cay "Hiding spots", "Hiding-spot fallback" (task 3.3) ---------------------------
+
+const HUNT_PATH: String = "res://scenes/dev/secret_hunt_layout.tres"
+const SECRET_LAND: Array[DataEnums.Terrain] = [DataEnums.Terrain.BEACH, DataEnums.Terrain.DUNE, DataEnums.Terrain.SCRUB]
+
+
+# A layout from rows, with the glyphs every secret-cay fixture shares.
+func _inline(rows: Array[String]) -> IslandLayoutData:
+	var layout := IslandLayoutData.new()
+	layout.rows = PackedStringArray(rows)
+	layout.terrain_glyphs = {
+		"~": DataEnums.Terrain.DEEP,
+		"-": DataEnums.Terrain.SHALLOWS,
+		".": DataEnums.Terrain.BEACH,
+		":": DataEnums.Terrain.DUNE,
+		"g": DataEnums.Terrain.SCRUB,
+		"P": DataEnums.Terrain.BEACH,
+		"o": DataEnums.Terrain.SHALLOWS,
+		"k": DataEnums.Terrain.BEACH,
+		"u": DataEnums.Terrain.BEACH,
+		"S": DataEnums.Terrain.BEACH,
+		"1": DataEnums.Terrain.BEACH,
+	} as Dictionary[String, DataEnums.Terrain]
+	layout.palm_glyph = "P"
+	layout.tide_pool_glyph = "o"
+	layout.solo_spawn_glyph = "S"
+	layout.coop_spawn_glyphs = "1"
+	var knife := IslandGlyphData.new()
+	knife.glyph = "k"
+	knife.item_id = &"knife"
+	knife.group = &"hut"
+	var tube := IslandGlyphData.new()
+	tube.glyph = "u"
+	tube.item_id = &"inner_tube"
+	tube.group = &"flotsam"
+	layout.pickups = [knife, tube] as Array[IslandGlyphData]
+	return layout
+
+
+# The cells of each kind the tuning lists, read straight from the built lists.
+func _feature_cells(island: IslandLayout, kinds: Array[StringName]) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if kinds.has(&"palm"):
+		cells.append_array(island.palms)
+	if kinds.has(&"pickup"):
+		for pickup: Dictionary in island.pickups:
+			var item := GameState.content.get_entry(&"items", pickup["item_id"]) as ItemData
+			if not SecretRules.is_secret(item):
+				cells.append(pickup["cell"])
+	if kinds.has(&"tide_pool"):
+		cells.append_array(island.tide_pools)
+	if kinds.has(&"workbench") and island.workbench.x >= 0:
+		cells.append(island.workbench)
+	if kinds.has(&"raft_site") and island.raft_site.x >= 0:
+		cells.append(island.raft_site)
+	return cells
+
+
+func _spawn_cells(island: IslandLayout) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = [island.solo_spawn]
+	cells.append_array(island.coop_spawns)
+	return cells
+
+
+func _nearest_tiles(cell: Vector2i, features: Array[Vector2i]) -> float:
+	var best: float = INF
+	for feature: Vector2i in features:
+		best = minf(best, Vector2(cell).distance_to(Vector2(feature)))
+	return best
+
+
+# The distance at quantile `q` of the sorted list, nearest rank.
+func _quantile(sorted: Array[int], q: float) -> int:
+	return sorted[clampi(roundi(q * (sorted.size() - 1)), 0, sorted.size() - 1)]
+
+
+func test_walking_distances_wade_but_never_swim() -> void:
+	var island := IslandLayout.build(_inline(["S.-.~", "~~~.~", "...:~"] as Array[String]))
+	var distances: Dictionary[Vector2i, int] = island.walk_distances_from(Vector2i(0, 0))
+	var expected: Dictionary[Vector2i, int] = {
+		Vector2i(0, 0): 0, Vector2i(1, 0): 1, Vector2i(2, 0): 2, Vector2i(3, 0): 3, Vector2i(3, 1): 4,
+		Vector2i(3, 2): 5, Vector2i(2, 2): 6, Vector2i(1, 2): 7, Vector2i(0, 2): 8,
+	}
+	assert_eq(distances, expected, "hand-counted: through the shallows at (2, 0), round the deep water")
+	for cell: Vector2i in [Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(4, 0)]:
+		assert_false(distances.has(cell), "deep water %s is never entered" % cell)
+
+
+func test_the_hunt_layout_builds_with_no_problems() -> void:
+	var hunt := load(HUNT_PATH) as IslandLayoutData
+	assert_not_null(hunt, "the dev hunt layout loads")
+	if hunt == null:
+		return
+	var island := IslandLayout.build(hunt)
+	assert_eq(island.problems(), PackedStringArray())
+	assert_true(hunt.off_graph, "a dev layout no run ever generates")
+	assert_false(hunt.secret)
+	assert_eq(island.tide_pools.size(), 2, "two tide pools")
+	var groups: Dictionary[StringName, bool] = {}
+	for pickup: Dictionary in island.pickups:
+		groups[pickup["group"]] = true
+	for group: StringName in [&"flotsam", &"beach", &"dune"]:
+		assert_true(groups.has(group), "a %s pick-up" % group)
+	assert_eq(island.workbench, Vector2i(-1, -1), "no workbench")
+	assert_false(GameState.content.has_entry(&"islands", hunt.id), "the catalog never lists it")
+
+
+func test_the_hunt_layout_has_strict_hiding_spots() -> void:
+	var tuning := SecretTuning.standard()
+	var island := IslandLayout.build(load(HUNT_PATH) as IslandLayoutData)
+	var spots: Array[Vector2i] = island.hiding_spots(tuning)
+	assert_gte(spots.size(), 2, "at least two strict spots")
+	var distances: Dictionary[Vector2i, int] = island.walk_distances_from(island.solo_spawn)
+	var land: Array[int] = []
+	for cell: Vector2i in distances:
+		if SECRET_LAND.has(island.terrain.terrain_at(cell)):
+			land.append(distances[cell])
+	land.sort()
+	var low: int = _quantile(land, tuning.spot_percentile_min)
+	var high: int = _quantile(land, tuning.spot_percentile_max)
+	var features: Array[Vector2i] = _feature_cells(island, tuning.spot_feature_kinds)
+	var taken: Array[Vector2i] = features + _spawn_cells(island)
+	for cell: Vector2i in spots:
+		assert_has(SECRET_LAND, island.terrain.terrain_at(cell), "%s is land" % cell)
+		assert_true(distances.has(cell), "%s is reachable from the solo spawn" % cell)
+		assert_between(distances.get(cell, -1), low, high, "%s lies between the 50th and 85th percentile" % cell)
+		assert_between(_nearest_tiles(cell, features), tuning.spot_feature_min_tiles, tuning.spot_feature_max_tiles, "%s is 4-10 tiles from a feature" % cell)
+		assert_does_not_have(taken, cell, "%s is on no feature or spawn cell" % cell)
+
+
+func test_a_crowded_island_still_gets_its_piece() -> void:
+	var crowded := _inline(["~~~~~~~", "~..P..~", "~S...k~", "~1....~", "~~~~~~~"] as Array[String])
+	var island := IslandLayout.build(crowded)
+	var tuning := SecretTuning.standard()
+	var features: Array[Vector2i] = _feature_cells(island, tuning.spot_feature_kinds)
+	var distances: Dictionary[Vector2i, int] = island.walk_distances_from(island.solo_spawn)
+	for cell: Vector2i in distances:
+		if SECRET_LAND.has(island.terrain.terrain_at(cell)):
+			assert_lte(_nearest_tiles(cell, features), 3.0, "every land cell %s is within 3 tiles of a palm or pick-up" % cell)
+	var spots: Array[Vector2i] = island.hiding_spots(tuning)
+	assert_gt(spots.size(), 0, "the fallback still finds a spot")
+	var taken: Array[Vector2i] = features + _spawn_cells(island)
+	for cell: Vector2i in spots:
+		assert_has(SECRET_LAND, island.terrain.terrain_at(cell), "%s is land" % cell)
+		assert_true(distances.has(cell), "%s is reachable" % cell)
+		assert_does_not_have(taken, cell, "%s is on no feature or spawn cell" % cell)
+
+
+func test_only_features_and_spawns_leave_nothing() -> void:
+	var island := IslandLayout.build(_inline(["~~~~", "~SP~", "~1k~", "~~~~"] as Array[String]))
+	assert_eq(island.hiding_spots(SecretTuning.standard()), [] as Array[Vector2i], "no land beyond its features and spawns")
+
+
+func test_spot_kind_names_the_nearest_feature() -> void:
+	var island := IslandLayout.build(_inline([
+		"~~~~~~~~~~~~~~",
+		"~P....:....u.~",
+		"~....g.g.....~",
+		"~S.......o..1~",
+		"~~~~~~~~~~~~~~",
+	] as Array[String]))
+	assert_eq(island.spot_kind(Vector2i(2, 2)), &"palm", "a palm")
+	assert_eq(island.spot_kind(Vector2i(11, 2)), &"flotsam", "a pick-up's group")
+	assert_eq(island.spot_kind(Vector2i(8, 3)), &"tide_pool", "a tide pool")
