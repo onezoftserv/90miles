@@ -256,12 +256,29 @@ No existing file under `game/tests` is edited.
 
 ## 7. Verification
 
-- [ ] 7.1 Check the diff against the branch point:
+- [x] 7.1 Check the diff against the branch point:
   - only `A` lines under `game/tests`;
   - `coop_session.gd`, `player_look.gd`, `net_harness.gd`, `coop_playground.gd` and `title_screen.gd` unmodified;
   - `net_peers.gd` gains only `lan_addresses` and the comment;
   - every old `NetManager` member name is still present.
-- [ ] 7.2 Run the game through the Godot MCP (solo, host, back to the title) and read the errors: there should be none.
+  - Done 2026-11-14 at 82bbd0a, against 528e2a5:
+    - `git diff --name-status 528e2a5 -- game/tests`: 20 lines, all `A` (`fake_net_backend.gd` and the nine new suites, each with its `.uid`).
+    - `git diff --stat 528e2a5` is empty for `coop_session.gd`, `player_look.gd`, `net_harness.gd`, `coop_playground.gd` and `title_screen.gd`, and also for `title_screen.tscn`, `join_screen.tscn`, `lobby_screen.tscn` and `smoke.gd`.
+    - `net_peers.gd`: two hunks, the class doc comment and the new `lan_addresses(all)`; nothing else.
+    - `NetManager`: all 14 top-level names at 528e2a5 are still declared, with the same parameters and return types: the signals `hosted(port)`, `joined`, `join_failed` and `host_lost`, and `_ready`, `host`, `join`, `start_solo`, `leave`, `is_online`, `_use`, `_on_connected_to_server`, `_on_connection_failed` and `_on_server_disconnected`. The file declares no const, enum, preload, inner class or `@export`.
+- [x] 7.2 Run the game through the Godot MCP (solo, host, back to the title) and read the errors: there should be none.
+  - Done 2026-11-14:
+    - **Through the Godot MCP** (Godot 4.7.2.stable.official.ed1daf0bf, project `net-transport/game`, debug run): the game booted to the title with 0 errors. The MCP cannot click, so that run covers the boot only.
+    - It printed 23 GDScript warnings. Two are in files this change adds:
+      - `net_backend.gd:14`: the signal `join_requested` is declared but never emitted in the base class. Backends emit it.
+      - `net_backend_table.gd:47`: the local variable `profile` shadows the function `profile()`.
+      - The other 21 are in older files. The `game_shell.gd:129` integer division dates from 2026-11-05. Warnings were not counted at the branch point.
+    - **The walk**, in a window: solo, back to the title, host, then Salir from the lobby. A scratch `SceneTree` script outside the repo booted `game_shell.tscn` and pressed its buttons on a timer:
+      - Jugar solo gave RUN, offline, with one body and 5 creatures;
+      - `back_to_title()` gave TITLE with no session;
+      - Hospedar hosted on 7780, and the lobby showed the host alone, the LAN addresses and the note for port 7780;
+      - Salir gave TITLE, offline, with no session.
+      - stderr was empty and the exit code was 0.
 - [ ] 7.3 Do the manual host and client check with two local instances:
   1. Host from the title and join 127.0.0.1 from the join screen, in the lobby.
   2. Join once mid-run; the client's creature count matches the host's.
@@ -269,9 +286,35 @@ No existing file under `game/tests` is edited.
   4. Close the host; the client shows the host-lost screen.
   5. Start a second instance with `-- --connect=127.0.0.1`.
   6. Repeat with `coop_playground -- --host` and `-- --join=127.0.0.1`.
+  - Left open 2026-11-14: steps 1–5 as written, by hand in two windows, still need a person. What was checked, all on UDP 7780 with headless instances and logs (scratch scripts outside the repo; every process started was closed by its own PID, and 7780 was free afterwards):
+    - **Step 6, the playground** (`coop_playground.tscn -- --host=7780` and `-- --join=127.0.0.1:7780`, unchanged file):
+      - the host started as peer 1 and the client as peer 1915516173, and both logged `players [1, 1915516173]`;
+      - killing the client: the host logged "dropped; downed for 90 s" about 7 s later;
+      - a rejoin got a new peer and a new body, with the old body kept. The playground never sets `local_identity`, so it cannot reclaim. That is unchanged by this change, so step 3 cannot be shown there;
+      - killing the host: the client logged "host lost" about 9 s later (ENet timeout). A host that quits cleanly (`--quit-after`, exit code 0) gave "host lost" at once;
+      - no stderr output from any instance.
+    - **Steps 1–5, the game shell**, driven from code with no windows: a scratch `SceneTree` script boots `game_shell.tscn` at `/root/GameShell`, the main scene's path, and presses its buttons. Each instance has its own settings file, so each has its own identity.
+      - Step 1: the host pressed Hospedar and hosted on 7780. Its lobby listed its LAN addresses and the note "Los demás se unen por IP en el puerto UDP 7780…". The client pressed Unirse, typed 127.0.0.1:7780 and pressed Conectar: `joined`, then the lobby, with the same two roster rows on both sides. "Empezar viaje" put both in the run.
+      - Step 2: a client joined mid-run and got the lobby reply `in_run=true`. Host and every client counted 5 creatures under `session.entities`, the same three bodies, and no double spawn.
+      - Step 3: the mid-run client was killed and the host marked it dropped about 7 s later. The same identity rejoined 15 s after that: `player_rebound 1930944758 -> 2089892309`, with no new body and the dropped list empty again.
+      - Step 4: the host quit cleanly. Each client got `host_lost` at once, with flow HOST_LOST, the host-lost screen shown, no session, and offline.
+      - Step 5: two routes. The driven shells launched with `-- --connect=127.0.0.1:7780` had the join kept at boot and joined with no button pressed. The plain game (main scene, no script) launched with `-- --connect=127.0.0.1:7780` joined the driven host: in the lobby in one run, mid-run in another, and the host spawned its body. It writes nothing to stdout, so its join screen ("Conectando…" with the label) was not seen. That part is covered by `test_shell_platform` and `test_shell_join_rules`.
+      - stderr was empty for every instance in these runs, with one exception below.
+    - **One error, attributed:** when a second instance with the same identity joins while the first is still connected (coop-reconnect TAKEOVER), the host logs `Condition "!connected_peers.has(sender)" is true` twice, in `scene_multiplayer.cpp` `poll`. That case reproduced it on its own (2 of 2 lines). It did not appear with the drop-then-rejoin case or with the plain launch-line client alone. The path is `CoopSession._close_peer` → `SceneMultiplayer.disconnect_peer`, which this change does not touch. It was not run at the branch point.
+    - **Not done:** anything that needs real windows, mouse and keyboard: typing and clicking on the screens, seeing the host-lost screen and the join screen's connecting mode drawn, and two windowed games side by side.
 - [ ] 7.4 CI is green on Linux with no Steam.
-- [ ] 7.5 Run the import twice, smoke and GUT one final time. GUT equals the baseline plus the new tests, with 0 failures and 0 skipped scripts.
+  - Open 2026-11-14: CI runs after the push, which this session does not do.
+- [x] 7.5 Run the import twice, smoke and GUT one final time. GUT equals the baseline plus the new tests, with 0 failures and 0 skipped scripts.
   - The `test_crossing_art.gd` scroll case flakes at the branch point too (6.4). Until `fix/sea-scroll-flake` merges, a failure in that file alone is rerun on its own and recorded here, and is tracked outside this gate.
+  - Done 2026-11-14 at 82bbd0a. No game file changed in group 7.
+    - Import ×2: exit 0, no error or warning lines.
+    - Smoke: "10 frames, 0 problem(s)", exit 0.
+    - GUT: 182 scripts, 1632 tests, 1632 passing, 0 failing, 55460 asserts, 61 deprecation notices, exit 0, no "Nothing was run" and no leak at exit. `test_crossing_art.gd` passed.
+    - Against 1.1 (173 / 1543 / 54547): +9 scripts, +89 tests and +913 asserts. The nine new suites are the 9 scripts and 89 tests (13 + 12 + 18 + 12 + 3 + 13 + 6 + 11 + 1).
+    - Nothing was skipped: 182 scripts ran, 182 `test_*.gd` files are tracked and on disk under `res://tests/unit/` (173 at 528e2a5), and every suite printed "N/N passed".
+    - The one ERROR line is `test_content_validator`'s planted `broken.tres`, which the test expects.
+    - Orphans are reported only by older suites (for example `test_creature_spawner`, `test_crossing_solo` and `test_use_on_crossing`), none by this change's suites.
+    - The 7.2 and 7.3 processes were all closed before this run. Other sessions' Godot processes kept running on the laptop throughout.
 
 ## Workflow follow-up
 
