@@ -3,7 +3,8 @@ extends Node2D
 ## A handmade island (island-generation "Handmade sandbar", "Handmade coast cay" and "Any handmade
 ## layout builds the island"), built from the layout it is given: the grid, the palms, the
 ## workbench, the lagoon, the signs and the pick-ups. Its `Terrain` child (TerrainView) draws the
-## ground from the grid on every peer and only reads it. The layout is set before the island enters
+## ground from the grid on every peer and only reads it, and its `Decor` child (DecorView) the
+## layout's scenery cells over it. The layout is set before the island enters
 ## the tree (the sandbar is the default). Terrain, palms, workbench, drinking spots and signs are
 ## built on every peer from the same data; the pick-ups are placed and refreshed by the host alone,
 ## through the session's pick-up spawner. The class keeps its name from the first island. The
@@ -20,6 +21,7 @@ const RAFT_NAME: StringName = &"Raft"
 const RAFT_RECIPE_ID: StringName = &"raft"
 const SQUALL_ID: StringName = &"squall"
 const DRINK_SPOT_NAME: String = "DrinkSpot%d"
+const CHEST_SCENE: PackedScene = preload("res://scenes/structures/chest.tscn")
 const SIGN_NAME: String = "Sign%d"
 const RAFT_SCENE: PackedScene = preload("res://scenes/structures/raft.tscn")
 const PALM_SYNC_NAME: StringName = &"PalmSync"
@@ -109,8 +111,9 @@ func spawn_points(solo: bool) -> Array[Vector2]:
 
 
 ## Every peer: the workbench (when the layout has one), the routes, the raft's build site, the
-## drinking spots, the signs and the palms' sync go in the session at the same path on each, and the
-## island starts listening for squalls to end.
+## drinking spots, the signs, the palms' sync and the chest (when the layout has one, secret-cay)
+## go in the session at the same path on each, and the island starts listening for squalls to end.
+## The host also starts the creatures, unless the layout is off-graph.
 func furnish(session: CoopSession) -> void:
 	_session = session
 	if built.workbench.x >= 0:
@@ -120,13 +123,16 @@ func furnish(session: CoopSession) -> void:
 		session.add_child(bench)
 	_place_water_and_signs()
 	_place_palm_sync()
+	_place_chest()
 	var routes := IslandRoutes.new()
 	routes.name = ROUTES_NAME
 	session.add_child(routes)
 	routes.setup(session, layout.route_ids)
 	routes.route_started.connect(_on_route_started)
 	_place_raft_site()
-	if with_creatures:
+	# An off-graph layout (the secret cay) never gets creatures (island-generation "Any handmade
+	# layout builds the island").
+	if with_creatures and not layout.off_graph:
 		_place_creatures()
 	_weather_id = WeatherManager.weather_id()
 	WeatherManager.weather_changed.connect(_on_weather_changed)
@@ -158,6 +164,16 @@ func _place_palm_sync() -> void:
 	sync.name = PALM_SYNC_NAME
 	_session.add_child(sync)
 	sync.setup(_session, palms, built.palm_coconuts)
+
+
+# The layout's chest, named the same on every peer (secret-cay "Empty chest").
+func _place_chest() -> void:
+	if built.chest.x < 0:
+		return
+	var chest := CHEST_SCENE.instantiate() as Chest
+	chest.note_id = layout.chest_item_id
+	chest.position = IslandLayout.cell_center(built.chest)
+	_session.add_child(chest)
 
 
 ## Every peer: a raft that ended its crossing intact lies on the build site with the integrity it
