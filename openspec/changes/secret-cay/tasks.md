@@ -39,9 +39,9 @@ Every group is test-first: write the listed tests, watch them fail for the right
 
 ## 4. Concealment, shimmer and the pick-up hold
 
-- [ ] 4.1 Write `game/tests/unit/test_world_item_conceal.gd` with 1 offline player: with a tuning copy whose shimmer length is 0, the concealed map draws nothing distinct at 5 tiles and draws normally at 3; with the shipped tuning and `shimmer_phase_s` set so a shimmer starts at 0 s, over 12 s at 15 tiles it starts a shimmer exactly twice (at 0 s and 6 s), each lasting 0.75 s; with the shimmer period set to 4 s in a tuning copy it shimmers every 4 s; a press or a 1 s hold takes nothing and a 1.5 s hold takes it; driftwood still picks up instantly; the host emits `taken` with the picker and the item id; verify it fails
-- [ ] 4.2 Implement concealment, the shimmer with its settable phase, the hold from the tuning and the `taken` signal in `world_item.gd` (design.md decision 4); verify `test_world_item_conceal.gd` and every existing pick-up test pass
-- [ ] 4.3 Run the import, smoke run and GUT commands; verify all three pass
+- [x] 4.1 Write `game/tests/unit/test_world_item_conceal.gd` with 1 offline player: with a tuning copy whose shimmer length is 0, the concealed map draws nothing distinct at 5 tiles and draws normally at 3; with the shipped tuning and `shimmer_phase_s` set so a shimmer starts at 0 s, over 12 s at 15 tiles it starts a shimmer exactly twice (at 0 s and 6 s), each lasting 0.75 s; with the shimmer period set to 4 s in a tuning copy it shimmers every 4 s; a press or a 1 s hold takes nothing and a 1.5 s hold takes it; driftwood still picks up instantly; the host emits `taken` with the picker and the item id; verify it fails Done: seen failing (no `DRAWN_*`, `step`, `taken`); also the shimmer's own draw, per-name phases and a 1-frame press.
+- [x] 4.2 Implement concealment, the shimmer with its settable phase, the hold from the tuning and the `taken` signal in `world_item.gd` (design.md decision 4); verify `test_world_item_conceal.gd` and every existing pick-up test pass Done: `WorldItem` owns `revealed` and the shimmer timing from the session's players and drives `WorldItemLook.concealed` and its new `shimmer` glint (a placeholder star); the look stays optional so the art-stripped run passes; 8/8 and every pick-up test pass.
+- [x] 4.3 Run the import, smoke run and GUT commands; verify all three pass Done: import, smoke and GUT (177 scripts, 1587 tests) pass.
 
 ## 5. The needle on the carrier's HUD
 
