@@ -45,6 +45,10 @@ Test topology (`NetHarness`): each peer has its own branch with its own `SceneMu
   - On returning to a level, Brogue catches it up. It runs `updateEnvironment()` once per turn of `timeAway`, which is measured from `levels[n].awaySince` and capped at 100 turns.
   - A client here never simulates structures. The host's state is live and authoritative, so a joiner takes the host's values rather than catching up locally.
 - **Rejected, DCSS, `crawl-ref/source/tags.cc` (versioned marshalling).** Nothing here is saved or read back across versions. A message is between two builds of the same game.
+- **Borrowed, Don't Starve Together (closed source; ideas only, from the dontstarve.wiki.gg "Dedicated Server" guide and DST's known replica model).**
+  - The server runs the game logic and holds the world, also when a player hosts from the game's menu. Fire pits, crock pots and farm plots change only there. Clients, joiners included, see replicas of that state through network variables, and never run it themselves.
+  - Here the host is that server: palms, fires and catchers change only on the host, and clients and joiners show its values. A solo player is their own host, as a DST game hosted from the menu is its own server.
+  - Rejected: DST's shards, one server process per world (the forest and the caves) running side by side. Here one island is live at a time. The island the party leaves is freed, so a joiner gets only the current island's state.
 - No code, data or text is copied.
 
 ### D2. The raft and build sites: no change, a regression test
