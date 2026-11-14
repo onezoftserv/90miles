@@ -229,7 +229,7 @@ The list's highlight SHALL move with the up and down arrows, D-pad up and down, 
 - **THEN** "Eso ya está en obra." shows, no craft request is sent, no second site appears and the list stays open
 
 ### Requirement: Interact prompt
-While the local player can act and holds no interact press, the HUD SHALL show one prompt over the interactable that the interaction picker would choose for them now (the nearest enabled one within 1 tile that they may use), as the interact key, a verb and a target: "[E] Recoger Coco". It shows nothing with no candidate in reach, while the player is down or out of play, while the crafting list is open or while a screen is shown. This peer computes it; the host still decides. Solo the same.
+While the local player can act and holds no interact press, the HUD SHALL show one prompt over the interactable that the interaction picker would choose for them now (among the enabled ones within 1 tile that they may use, the highest interact priority, then the nearest; player-movement "Interaction"), as the interact key, a verb and a target: "[E] Recoger Coco". It shows nothing with no candidate in reach, while the player is down or out of play, while the crafting list is open or while a screen is shown. This peer computes it; the host still decides. Solo the same.
 
 #### Scenario: Nearest one wins
 - **GIVEN** a solo player 0.5 tiles from a coconut and 0.9 tiles from a palm
@@ -245,6 +245,11 @@ While the local player can act and holds no interact press, the HUD SHALL show o
 - **GIVEN** a client whose player stands within 1 tile of the raft site
 - **WHEN** the client draws its HUD
 - **THEN** it shows "[E] Construir Balsa" over the site without waiting for the host
+
+#### Scenario: The perched gull's shoo shows over its palm
+- **GIVEN** a solo player at the foot of a nest palm whose gull is perched there
+- **WHEN** the HUD is drawn
+- **THEN** one prompt shows, the gull's shoo ("[E] Espantar …"), and not "[E] Trepar Mata de coco"
 
 ### Requirement: Prompt placement
 The prompt SHALL sit centred over its target at whole pixels, its bottom edge just above the target, or above the name tag when the target is a player. It is at most 240 px wide, a longer line ending in "…", and it stays inside x 4 to 636 and y 22 to 302 without covering the meters, the day phase, the teammate list, the secret-cay needle and note, or the strip and its lines. Solo the same.
@@ -319,17 +324,22 @@ A build site's prompt SHALL add lines from the site's state as this peer has it:
 - **THEN** the client's prompt shows the bar at 50 % and no "Falta:" line
 
 ### Requirement: Crouch cue
-While a player's movement state is crouch, their body SHALL be drawn at 10 of its 16 px height with its feet where they were, and at full height otherwise. Every peer draws it from the state the host replicates, so teammates see it too. A solo player sees their own body lowered.
+While a player's movement state is crouch, their body SHALL be drawn in the crouch pose of art-pass's "Crouch pose" requirement, its full 32×32 frames with the feet line where it was and the head lower, and otherwise in the pose art-pass's "Player poses" requirement gives its state (crawling also uses the crouch pose); while they are also hidden, the hidden mark shows over the crouch pose's head anchor. Every peer draws it from the state the host replicates, so teammates see it too. A solo player sees their own body lowered.
 
 #### Scenario: Solo crouch
 - **GIVEN** a solo player walking on sand
 - **WHEN** they hold C
-- **THEN** their body is drawn 10 px tall with its bottom edge unchanged, and 16 px again when they let go
+- **THEN** their body is drawn in the crouch pose at its full 32×32 frame size with its feet line unchanged, and in the walk pose again when they let go
 
 #### Scenario: A teammate crouches
 - **GIVEN** a host and a client
 - **WHEN** the client's player crouches
-- **THEN** the host draws that player 10 px tall
+- **THEN** the host draws that player in the crouch pose
+
+#### Scenario: Solo crouch in brush
+- **GIVEN** a solo player standing on a brush tile
+- **WHEN** they hold C until hidden
+- **THEN** their body is drawn in the crouch pose and the hidden mark shows over the crouch pose's head anchor, lower than it would sit over the standing pose
 
 ### Requirement: Hidden mark
 While a player's stealth state is hidden, a small closed-eye mark SHALL show over their head on every peer, drawn by the HUD so the night tint and the Suave filter do not touch it, and it goes when they are no longer hidden. A submerged (diving) player does not get it. A solo player sees it over their own body.
@@ -362,7 +372,7 @@ The actions this capability adds SHALL share no key, mouse button or gamepad but
 - **THEN** the highlight moves one row and the highlighted recipe is chosen, and no slot or row button took focus
 
 ### Requirement: Screens take input first
-While the pause menu, the run summary or the host-lost screen is shown, the strip, the use button, the prompt and the crafting list SHALL ignore input, and they hide once the local body is gone. While the crafting list is open, interact acts on the list only, the player's intent carries no interact press, and the use button does nothing. The pause button first closes an open list; in solo it pauses only on the next press, and in co-op it does nothing else.
+While the pause menu, the run summary or the host-lost screen is shown, the strip, the use button, the prompt, the crafting list and the sign note SHALL ignore input, and they hide once the local body is gone. While the crafting list or a sign note is open, interact acts on it only, the player's intent carries no interact press, and the use button does nothing. The pause button first closes an open list or note; in solo it pauses only on the next press, and in co-op it does nothing else.
 
 #### Scenario: Paused
 - **GIVEN** a solo player with the pause menu open
@@ -399,6 +409,16 @@ While the pause menu, the run summary or the host-lost screen is shown, the stri
 - **WHEN** the client presses Esc
 - **THEN** the list closes, nothing pauses and no pause menu shows
 
+#### Scenario: Esc closes the note before it pauses
+- **GIVEN** a solo player with a sign note open
+- **WHEN** they press Esc once, then again
+- **THEN** the first press closes the note and does not pause, and the second opens the pause menu
+
+#### Scenario: Use while the note is open
+- **GIVEN** a solo player with a sign note open and a rain cup selected
+- **WHEN** they hold F for 1 s
+- **THEN** nothing is used and the note stays open
+
 ### Requirement: Key labels follow the device
 Every key the HUD shows SHALL be read from the input map for the device the local player used last: keyboard and mouse ("[E]", "[F]") or gamepad ("[A]", "[X]"). A gamepad counts as used on a button press or a stick or trigger pushed past its action's deadzone; a key press or a mouse button switches back. Keys read as the player's keyboard layout prints them. Solo the same.
 
@@ -431,3 +451,34 @@ With exactly one offline player, the default keys and nothing but this HUD, the 
 - **GIVEN** a solo run on the sandbar, creatures on, driven only by the named input actions
 - **WHEN** the player takes that path
 - **THEN** the raft launches with that player aboard and their thirst never reached 0
+
+### Requirement: Sign note
+Pressing interact at a flavour sign SHALL open a sign note on this peer's HUD only; it does not pause, and the press reaches the host as an ordinary interact that changes nothing. The note is a light card with dark text (contrast 7:1 or more), 240 px wide, centred under the day phase, fitted to its text: the sign's line in the game's language, word-wrapped to at most 8 lines, then "[E] Cerrar" with the device's key. Solo the same.
+
+#### Scenario: A solo player reads the radio and walks away
+- GIVEN one offline player within 1 tile of the coast cay's dead radio, language Spanish
+- WHEN they press E, then walk 2 tiles away
+- THEN a note opens on the press showing the radio's Spanish line wrapped to the card and "[E] Cerrar", it closes when they leave reach, and the clock kept running
+
+### Requirement: Closing the sign note
+An open sign note SHALL close when the player presses interact or pause, leaves the sign's reach (1 tile and the slack), goes down or leaves, or a screen opens. A press while it is open only closes it; it never acts on another sign or thing in reach. Solo the same.
+
+#### Scenario: E closes the note
+- GIVEN a solo player with a sign note open
+- WHEN they press E
+- THEN the note closes and nothing is picked up or climbed
+
+#### Scenario: English and the gamepad
+- GIVEN a solo player in English who last used a gamepad, beside the crossed sticks
+- WHEN they press A
+- THEN the note shows the sticks' English line and "[A] Close"
+
+#### Scenario: Every line fits
+- GIVEN every sign in every island layout, in Spanish and in English
+- WHEN each line is wrapped to the card
+- THEN it takes at most 8 lines and no line is wider than the card's inner width
+
+#### Scenario: Only the reader sees it
+- GIVEN a host and a client, the host beside a wall slogan
+- WHEN the host presses E
+- THEN the host's HUD shows the note and the client's HUD shows no note
