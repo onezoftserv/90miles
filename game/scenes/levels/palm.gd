@@ -5,11 +5,19 @@ extends Node2D
 ## (energy). Nothing happens, and nothing is paid, when the palm is bare or the coconut does not
 ## fit. The level sets coconuts, climb_effects and hold_s before the palm enters the tree.
 
+## `coconuts` changed (the host's climb, or a client applying the host's count).
+signal coconuts_changed(count: int)
+
 const COCONUT_ID: StringName = &"coco"
 
-## Host only: every climb is applied on the host, so a client's copy is not synced (it keeps
-## the layout's count). Syncing it is a follow-up for when palms get an empty visual.
-@export var coconuts: int = 0
+## Changed by the host's climbs. The island's PalmSync sends it to every client, a joiner included
+## (coop-networking "Structure state on every peer"), where it changes only to the host's count.
+@export var coconuts: int = 0:
+	set(value):
+		if value == coconuts:
+			return
+		coconuts = value
+		coconuts_changed.emit(value)
 @export var climb_effects: Array[EffectData] = []
 ## Seconds the interact button is held.
 @export var hold_s: float = Interactable.DEFAULT_HOLD_TIME_S

@@ -24,23 +24,28 @@
 
 ## 2. Palms on every peer
 
-- [ ] 2.1 Tests first, offline with 1 player, in `test_structure_sync.gd`:
+- [x] 2.1 Tests first, offline with 1 player, in `test_structure_sync.gd`:
   - The solo scenario on the real sandbar: climb a palm from 2 to 1, take a cup the catcher filled in a squall, and put the fire out. The `PalmSync` in the session has `sent_count` 0.
   - Clamping on a client-side `PalmSync`, called directly: a count of 9 shows the layout's 2 and −1 shows 0. A `receive_counts` of the wrong size and an index out of range change nothing.
   - Then see them fail.
-- [ ] 2.2 Tests first, in `test_structure_sync_net.gd`, on the real `SandbarIsland` (the `test_crossing_join.gd` rig):
+  - Done 2026-11-14: 2 tests, against a `PalmSync` stub. The clamp test failed. The solo test passed on the stub too, as its `sent_count` of 0 is what the stub has, so it stays as the guard that solo sends nothing.
+- [x] 2.2 Tests first, in `test_structure_sync_net.gd`, on the real `SandbarIsland` (the `test_crossing_join.gd` rig):
   - A connected client's palm goes from 2 to 1 and draws 1 when the host's player climbs it.
   - A late joiner gets a palm the host climbed before it came.
   - A rejoined client (the reclaim path, `PlayerIdentity`) gets a palm the host climbed while it was away.
   - A forged `receive_count` from a client changes no peer's palm, and the host's engine refuses the call (`assert_engine_error("not allowed")`).
   - Then see them fail.
-- [ ] 2.3 Implement design D5 and D6:
+  - Done 2026-11-14: 4 tests. On the stub, the live, late-joiner and rejoin tests failed. The forged one passed and stays as a guard; it also sends a forged `receive_counts`.
+- [x] 2.3 Implement design D5 and D6:
   - `Palm.coconuts_changed`, emitted from the `coconuts` setter.
   - `SandbarIsland.palms`, with `furnish` adding `PalmSync`.
   - The new `game/scripts/net/palm_sync.gd`.
   - `CoopSession.join_state_sent`, emitted at the end of `request_join` beside `send_progress`.
   - Verify: 2.1 and 2.2 pass, and so do `test_coop_session_net.gd`, `test_coop_reconnect*.gd`, `test_crossing_join.gd`, `test_draw_order.gd`, `test_creature_art.gd` and `test_coast_cay_layout.gd`.
-- [ ] 2.4 Import (twice), smoke run and GUT pass, with no engine error lines.
+  - Done 2026-11-14: the island's local `palms` node is now `grove`, and the member `palms` holds the `Palm`s. `coop_session.gd` gains the signal and two lines in `request_join`. The 13 structure-sync tests pass, and so does the full suite (2.4).
+- [x] 2.4 Import (twice), smoke run and GUT pass, with no engine error lines.
+  - Done 2026-11-14: import 0 `ERROR` lines; smoke "10 frames, 0 problem(s)"; GUT 175 scripts, 1556 of 1556.
+  - The log's `ERROR` lines are the baseline's six plus the two forged palm calls that `test_a_clients_forged_palm_count_reaches_no_one` asserts.
 
 ## 3. Joiners on later islands, and the raft
 

@@ -43,6 +43,9 @@ signal player_rebound(old_peer: int, new_peer: int, body: PlayerBody)
 ## Every peer: the host loads island `layout_id` with these arrivals (peer id -> {health, energy})
 ## and a beached raft of `raft_integrity` (0: none). IslandTravel does it.
 signal island_travel_requested(layout_id: StringName, arrivals: Dictionary, raft_integrity: float)
+## Host: a joiner or a rejoined player was sent the world state and its lobby reply; what it must
+## hear once its island has loaded goes now (structure-state-sync design D6: the palms' counts).
+signal join_state_sent(peer_id: int)
 
 ## LOBBY gathers names and spawns nobody; RUN spawns every player (and every joiner at once).
 enum Phase {
@@ -260,6 +263,8 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 	# After the reply, whose owner map puts every body under its current peer (crossing-late-join).
 	if _started and phase == Phase.RUN and body(sender) != null and has_node(^"Routes"):
 		(get_node(^"Routes") as IslandRoutes).send_progress(sender)
+	if _started and phase == Phase.RUN and body(sender) != null:
+		join_state_sent.emit(sender)
 	_share_roster(sender)
 
 
