@@ -4,10 +4,10 @@ Test-first: each task writes its GUT test before the code, and every test that i
 
 ## 1. Run record, flags and sighting effects
 
-- [ ] 1.1 Add `game/scripts/run/run_record.gd` (flags, per-run creature counts, effect claims with NONE, ONCE_PER_RUN, ONCE_PER_DAY and ONCE_PER_READER) and `CoopSession.run_record`; `test_run_record.gd` covers each limit across days and a fresh record per session
-- [ ] 1.2 `EffectApplier` applies `SET_FLAG` and `CLEAR_FLAG` to the actor's session record and does nothing without a session; a 1-player test sets and clears `galleguito_a_bordo` through a body in a session
-- [ ] 1.3 Add `game/scripts/ai/sightings.gd` and the `CreatureWorld` fields (`crossing`, `record`, `day()`, `run_seed()`, `peer_of`); `test_sightings.gd`: the solo songbird scenario (+5, +0 the same day, +5 the next day), a flag set once, an island creature seen only within its sight radius, and the same body seen twice paying once
-- [ ] 1.4 Run the import, the smoke run and GUT; all pass with no `ERROR:` lines
+- [x] 1.1 Add `game/scripts/run/run_record.gd` (flags, per-run creature counts, effect claims with NONE, ONCE_PER_RUN, ONCE_PER_DAY and ONCE_PER_READER) and `CoopSession.run_record`; `test_run_record.gd` covers each limit across days and a fresh record per session
+- [x] 1.2 `EffectApplier` applies `SET_FLAG` and `CLEAR_FLAG` to the actor's session record and does nothing without a session; a 1-player test sets and clears `galleguito_a_bordo` through a body in a session
+- [x] 1.3 Add `game/scripts/ai/sightings.gd` and the `CreatureWorld` fields (`crossing`, `record`, `day()`, `run_seed()`, `peer_of`); `test_sightings.gd`: the solo songbird scenario (+5, +0 the same day, +5 the next day), a flag set once, an island creature seen only within its sight radius, and the same body seen twice paying once
+- [x] 1.4 Run the import, the smoke run and GUT; all pass with no `ERROR:` lines
 
 ## 2. Crossing creature roll
 

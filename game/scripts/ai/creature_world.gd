@@ -2,7 +2,9 @@ class_name CreatureWorld
 extends RefCounted
 ## What a creature's brain may read or ask of the island (creatures-ai): the grids, the players,
 ## lit fires and food on the ground, and the few things it may do to them. Host only: a creature
-## without a world does nothing. Tests build one without a session.
+## without a world does nothing. Tests build one without a session. A crossing's creatures get a
+## world on its sea (`for_crossing`): its players are the living riders, and the crossing answers
+## where the deck is and who stands where (creature-perch-ride).
 
 const FOOD_TAG: DataEnums.ItemTag = DataEnums.ItemTag.FOOD
 
@@ -14,15 +16,39 @@ var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var phase: DataEnums.DayPhase = DataEnums.DayPhase.DAY
 ## A lit fire keeps land creatures this far (tiles) away: the company radius (crafting-inventory "Fire").
 var light_radius_tiles: float = (preload("res://resources/survival_tuning.tres") as SurvivalTuning).company_radius_tiles
+## The crossing these creatures ride along with, or null on an island.
+var crossing: Crossing = null
+## The run's flags, creature counts and effect limits: the session's (a fresh one in a bare rig).
+var record: RunRecord = RunRecord.new()
+
+
+## A world on `on`'s sea for the creatures that ride along with it, writing its session's record.
+## Its dice are seeded from the run seed and the crossing's number.
+static func for_crossing(on: Crossing) -> CreatureWorld:
+	var made := CreatureWorld.new()
+	made.crossing = on
+	made.terrain = on.sea
+	var session := on.session()
+	if session != null:
+		made.record = session.run_record
+		made.pickups = session.pickups
+	made.rng.seed = hash([made.run_seed(), on.serial])
+	return made
 
 
 func light_radius_px() -> float:
 	return light_radius_tiles * CreatureNav.TILE
 
 
-## Living player bodies.
+## Living player bodies; on a crossing, its riders that are not dead.
 func players() -> Array[PlayerBody]:
 	var found: Array[PlayerBody] = []
+	if crossing != null:
+		for peer: int in crossing.peers():
+			var rider := crossing.body_of(peer)
+			if rider != null and CoopSession.is_alive(rider) and crossing.rider_state(peer) != Crossing.Rider.DEAD:
+				found.append(rider)
+		return found
 	for node: Node in _tree().get_nodes_in_group(PlayerBody.GROUP):
 		var body := node as PlayerBody
 		if body != null and CoopSession.is_alive(body):
@@ -94,6 +120,41 @@ func take_held(body: PlayerBody) -> StringName:
 	if id.is_empty() or not body.inventory.remove_id(id, 1):
 		return &""
 	return id
+
+
+## The crossing's rider state of `body` (DEAD off the crossing or without one).
+func rider_state(body: PlayerBody) -> Crossing.Rider:
+	if crossing == null or body == null:
+		return Crossing.Rider.DEAD
+	return crossing.rider_state(crossing.peer_of(body))
+
+
+## The peer `body` plays under now, or 0 (coop-reconnect: never the node name).
+func peer_of(body: PlayerBody) -> int:
+	var session := CoopSession.of(body)
+	return session.peer_of(body) if session != null else 0
+
+
+func deck_center() -> Vector2:
+	return crossing.deck_center() if crossing != null else Vector2.ZERO
+
+
+func deck_rect() -> Rect2:
+	return crossing.deck_rect() if crossing != null else Rect2()
+
+
+## The run's seed (the session's world state), or 0 when there is none.
+func run_seed() -> int:
+	var session: CoopSession = crossing.session() if crossing != null else null
+	if session == null:
+		return 0
+	var value: Variant = session.world_state.get("run_seed", 0)
+	return value if value is int else 0
+
+
+## The run's day (1 on the first).
+func day() -> int:
+	return WeatherManager.sky.clock.day
 
 
 func _tree() -> SceneTree:

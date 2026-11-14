@@ -22,6 +22,8 @@ var facing: Vector2 = Vector2.DOWN
 var state_id: int = 0
 ## Seconds before it frees itself; negative means it stays (the crossing's visual shark).
 var lifetime_s: float = -1.0
+## Host: the bodies (instance ids) that have seen it, so its sighting effects reach each once.
+var seen_by: Dictionary[int, bool] = {}
 
 @onready var interactable: Interactable = $Interactable
 
