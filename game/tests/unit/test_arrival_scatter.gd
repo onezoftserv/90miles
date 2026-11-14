@@ -116,3 +116,32 @@ func test_only_a_wider_scatter_scatters() -> void:
 	assert_false(ArrivalScatter.is_wide(Vector2i(0, 3)))
 	assert_true(ArrivalScatter.is_wide(BOARD))
 	assert_true(ArrivalScatter.is_wide(Vector2i(0, 8)))
+
+
+func test_nobody_lands_on_the_islands_furniture() -> void:
+	var furnished: Array[Vector2i] = []
+	furnished.append_array(built.palms)
+	furnished.append_array(built.drink_spots)
+	furnished.append(built.raft_site)
+	for entry: Dictionary in built.signs:
+		furnished.append(entry["cell"])
+	var beach := ArrivalScatter.beach_cells(built, built.landing_cells()[0])
+	for cell: Vector2i in furnished:
+		assert_false(beach.has(cell), "%s is no landing spot" % cell)
+	for seed_value: int in 50:
+		var cells := ArrivalScatter.pick(built, _scatter([BOARD, BOARD, BOARD, BOARD]), seed_value)
+		for peer: int in cells:
+			assert_false(furnished.has(cells[peer]), "seed %d: rider %d not on a palm, the raft site, a spring or a sign" % [seed_value, peer])
+
+
+func test_three_and_four_boards_fit_on_the_coast_cay_for_every_seed() -> void:
+	for riders: int in [3, 4]:
+		var list: Array = []
+		for index: int in riders:
+			list.append(BOARD)
+		for seed_value: int in 100:
+			var cells := ArrivalScatter.pick(built, _scatter(list), seed_value)
+			for a: int in cells:
+				for b: int in cells:
+					if a < b:
+						assert_between(_distance(cells[a], cells[b]), 10.0, 20.0, "%d riders, seed %d: riders %d and %d" % [riders, seed_value, a, b])

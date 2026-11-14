@@ -101,7 +101,7 @@ The crossing SHALL draw the vessel the route names: the raft for a raft, a car f
 - **THEN** on both peers the host's board is drawn under the host and no board is drawn for the client
 
 ### Requirement: Arrival scatter
-Each route SHALL name an arrival scatter in tiles, a minimum and a maximum (default 0–5). The host SHALL pick each arriving rider's landing cell; every peer lands them there. Default-scatter riders land on the landing cells as before. Each rider of a wider route lands, in peer order, on a reachable beach cell within its range from every rider already placed, rolled from the run seed. With exactly 1 player, the player lands on the first landing cell.
+Each route SHALL name an arrival scatter in tiles, a minimum and a maximum (default 0–5). The host SHALL pick each arriving rider's landing cell; every peer lands them there. Default-scatter riders land on the landing cells as before. Each rider of a wider route lands, in peer order, on a reachable, unfurnished beach cell within its range from every rider already placed, rolled from the run seed. With exactly 1 player, the player lands on the first landing cell.
 
 #### Scenario: Three board riders land apart
 - **GIVEN** 3 riders who end a board crossing whose route scatters 10–20 tiles

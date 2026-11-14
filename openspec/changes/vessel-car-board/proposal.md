@@ -21,7 +21,7 @@
   - Only a raft result is beached at the raft site, so a board or a car never comes back as a raft. The board is lost on arrival, as its route says.
 - **Route items spent at the start.** A route requirement of kind `HAS_ITEM` marked `consume` is taken from the starter, and a rider requirement from each rider, only when the route actually starts. A refused start, such as the board in calm weather, spends nothing. This is how the board's `tabla_vela` and the car's fuel jug are spent.
 - **Art.** Both are kitbashed through `tools/art/structures.py` from hand pieces and pack cuts; packs are read-only and no Pillow is used.
-  - The car: a 64×32 sheet, whole, worn and breaking, with four drums cut from the Zelda-like objects sheet.
+  - The car: a 64×32 sheet, whole, worn and breaking, with four drums cut from the Zelda-like `Overworld.png` barrel.
   - One 16×32 board sheet in the same three states.
   - The crossing deck draws the car for `CAR` and one board under each rider for `BOARD`. Damage frames follow the share of the vessel's maximum, so a new board at 60 reads whole.
 - **Tests.** GUT tests for every rule above, with 1-player cases. The crossing is networked, so there are host-plus-client tests for boards, the scatter and the late-join snapshot.
@@ -49,7 +49,7 @@ None.
 - **Code:**
   - Data: `data_enums.gd`, `route_data.gd`.
   - Crossing: `crossing.gd`, `crossing_deck.gd`, a new `crossing_boards.gd`, `crossing_result.gd`, `crossing_snapshot.gd`, `creature_threats.gd`, `scripted_threats.gd`.
-  - Routes and arrival: `island_routes.gd` (consume at the start), `island_travel.gd` and `island_arrival.gd` (scatter, raft-only beaching), and the arrival check in `coop_session.gd` (one optional `cell` field).
+  - Routes and arrival: `island_routes.gd` (consume at the start), `island_travel.gd` and a new `arrival_scatter.gd` (scatter, raft-only beaching), and the arrival check in `coop_session.gd` (one optional `cell` field).
   - Art: `structure_art.gd` and `structure_art_data.gd`.
   - Docs: the `companion_data.gd` doc comment, since `can_swim` false rules out the board.
 - **Art:** `tools/art/structure_sheets.json` and new hand pieces in `tools/art/fixes/structures/`. New sheets `game/assets/art/structures/car.png` and `board.png` with their frames, `structure_art.tres` and the license and credits rows.

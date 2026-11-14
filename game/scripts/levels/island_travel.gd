@@ -171,11 +171,14 @@ func _beached_integrity() -> float:
 	return best
 
 
-# Every player's arrival scatter: their crossing's route's, the default for anyone else.
+# Every living player's arrival scatter: their crossing's route's, the default for anyone else.
+# The dead are left out (they land on the landing cells), so a lone survivor's board is not
+# scattered away from a body.
 func _scatter_by_peer() -> Dictionary[int, Vector2i]:
 	var scatter: Dictionary[int, Vector2i] = {}
 	for peer_id: int in session.peer_ids():
-		scatter[peer_id] = ArrivalScatter.DEFAULT_TILES
+		if not session.body(peer_id).meters.dead:
+			scatter[peer_id] = ArrivalScatter.DEFAULT_TILES
 	for result: CrossingResult in _results:
 		var route := GameState.content.get_entry(&"routes", result.route_id) as RouteData
 		if route == null:

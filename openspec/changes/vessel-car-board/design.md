@@ -133,7 +133,9 @@ Content-batch-11 must give `tabla_vela`'s use `spends_use = false`, as `binocula
   1. Among cells at least `min` from everyone, take the one with the smallest distance to the farthest placed rider.
   2. Otherwise, take the cell with the largest distance to its nearest placed rider.
   3. Ties go to the lower row, then column, so the pick is deterministic.
-- **Grouping.** `IslandTravel.travel()` reads each rider's route from `_results`; a peer in no result gets the default. It adds `"cell": Vector2i` to each arrival.
+- **Grouping.** `IslandTravel.travel()` reads each rider's route from `_results`; a living peer in no result gets the default. Dead players are left out and land on the landing cells, so a lone survivor's board is not scattered away from a body. It adds `"cell": Vector2i` to each arrival.
+- **Candidates.** A candidate holds nothing of the island's own: palms, the raft site, drinking spots, signs, the hut, the workbench and tide pools are left out, so nobody lands inside a trunk.
+- **Retries.** The greedy pick can leave a later rider no fitting cell, so the wider riders' cells are rolled up to 16 times from the same seed, keeping the first roll where everyone fits (else the one needing the fallback least). On the coast cay 3 and 4 board riders fit on every one of 300 seeds swept.
 - **Arrival check.** `CoopSession.checked_arrivals` keeps an optional `cell` when it is a `Vector2i`, and refuses the whole message if `cell` is present with another type. That is the only `coop_session.gd` edit.
 - **Landing.** `_land` uses a sent cell when the built island has walkable land there, and otherwise falls back to `landing_positions`.
 
@@ -161,7 +163,7 @@ Content-batch-11 must give `tabla_vela`'s use `spends_use = false`, as `binocula
 
 **Build.** Run with `--packs C:/Users/liann/src/90miles/game/assets` (read-only). Re-running must leave every existing sheet byte-identical; `git diff --stat` shows only the new files.
 
-**Wiring.** Add the SpriteFrames `car_frames.tres` and `board_frames.tres` (animations `whole`, `worn`, `breaking`) and the fields `StructureArtData.car` and `board`. The license and credits rows follow the art-pass pattern: hand pieces are CC0 by us, and the Zelda-like barrel keeps its existing credit.
+**Wiring.** Add the SpriteFrames `car_frames.tres` and `board_frames.tres` (animations `whole`, `worn`, `breaking`) and the fields `StructureArtData.car` and `board`. The license and credits rows follow the art-pass pattern: the hand pieces join the existing own-work block (All rights reserved, see LICENSE), and the Zelda-like barrel (CC0) keeps its existing credit with `car.png` added.
 
 **Drawing.** A new `CrossingBoards` (`game/scenes/crossing/crossing_boards.gd`, `Boards` in `crossing.tscn`, z -20 like the deck) keeps one `Sprite2D` per board. It reads `crossing.boards` every frame and shows nothing for a broken board. It reads only, as `CrossingDeck` does.
 

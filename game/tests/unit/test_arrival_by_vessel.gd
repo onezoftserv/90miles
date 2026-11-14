@@ -71,6 +71,18 @@ func test_only_a_raft_kept_on_arrival_is_beached() -> void:
 	assert_eq(travel._beached_integrity(), 0.0, "a broken raft is lost")
 
 
+func test_a_dead_teammate_is_left_out_of_the_scatter() -> void:
+	var session := CrossingRig.make_session(self, 2)
+	var travel := IslandTravel.new()
+	autofree(travel)
+	travel.session = session
+	travel._results = [_result(&"test_board", 2, 0.0)] as Array[CrossingResult]
+	session.body(1).meters.dead = true
+	var scatter := travel._scatter_by_peer()
+	assert_false(scatter.has(1), "the dead are not placed by the scatter")
+	assert_eq(scatter.get(2), Vector2i(10, 20), "the board rider scatters as the route says")
+
+
 # --- solo through the shell ---------------------------------------------------------------------
 
 func test_solo_board_rider_lands_on_the_first_landing_cell_and_leaves_nothing() -> void:
