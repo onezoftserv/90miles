@@ -87,7 +87,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 ## 6. Milestone D — Threats and stealth
 
 - [ ] `guardacostas-stealth`: patrol loop, searchlight cone, hidden states, smoke/noise bus
-- [ ] Shore squad, capture, free-a-captive, `la_captura` scene
+- [ ] Shore squad, capture, free-a-captive, `la_captura` scene; with capture at sea, the `almendron_hundido` gate test (`balsero-lore` 9b.1)
 - [ ] Eels, barracuda, man o' war, mosquitoes, crocodile grab, fire ants, manchineel
 - [ ] Bosses: cutter chase, old crocodile nest, tiger shark dives
 - [ ] Lighthouse, storm key, shipwreck reef and final approach chains
@@ -131,7 +131,7 @@ Source: `docs/CONTENT_MANIFEST.md` (~315 `.tres` files). Each batch is one OpenS
 - [ ] content-batch-8: POIs (~45)
 - [ ] content-batch-9: set pieces (15), routes (8), backgrounds (6)
 - [ ] content-batch-10: handwritten dialogue (minor NPCs, beats, endings, quick-chat, death lines)
-- [ ] content-batch-11 (balsero gear, 19 files): routes `almendron` and `tabla`, recipes 4, items 11, keepsakes `llave_almendron` and `pluma_galleguito`. Routes and the key need `Vessel.CAR` and `Vessel.BOARD` (`balsero-lore` task group 6)
+- [ ] content-batch-11 (balsero gear, 19 files): routes `almendron` and `tabla`, recipes 4, items 11, keepsakes `llave_almendron` and `pluma_galleguito`. Routes and the key need `Vessel.CAR` and `Vessel.BOARD`, which `balsero-lore` group 6 added (`vessel-car-board`); the route fields and the almendrón build test are listed in `balsero-lore` 8.2 and 8.3
 - [ ] content-batch-12 (balsero world, 16 files plus entry edits): creatures `galleguito`, `pajarito`, `pajaro_bobo`, `rabihorcado`, POIs 5, set pieces `balsa_en_la_sala` and `el_pilote`, texts 3, dialogue `beat_galleguito` and `beat_pies_secos`. The gull needs `Behavior.PERCH_RIDE`, the two ambient birds `ambient.gd`
 
 ## 11. Lore, stories and asset review (start alongside the content batches; finish before Milestone G)

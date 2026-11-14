@@ -130,14 +130,14 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 8. Integration and docs
 
-- [ ] 8.1 Run a host and a client locally on UDP port 7785, not 7777, because other sessions share the machine: two Godot processes, with a dev hook that starts `test_board` for both riders. Check that both see their boards, that a squall dumps both, that they climb back and land 10–20 tiles apart, and that no `ERROR:` line appears in either log. Record the run in the PR.
-- [ ] 8.2 Update the docs:
+- [x] 8.1 Run a host and a client locally on UDP port 7785, not 7777, because other sessions share the machine: two Godot processes, with a dev hook that starts `test_board` for both riders (`tests/manual/board_run.gd -- --mode=host` and `--mode=client`). Check that both see their boards, that a squall dumps both, that they climb back and land 10–20 tiles apart, and that no `ERROR:` line appears in either log. Record the run in the PR.
+- [x] 8.2 Update the docs:
   - `docs/GAME_DESIGN.md` §8: boards have no lashing; board hits go round; only a raft is beached.
   - `docs/ASSETS.md`: the car and board rows point to the new sheets.
   - `balsero-lore/tasks.md`:
     - tick 6.1–6.5 with notes;
     - move the almendrón build test into 8.3;
-    - add a task for the `almendron_hundido` gate to the capture-at-sea work;
+    - add a task for the `almendron_hundido` gate to the capture-at-sea work (balsero-lore 9b.1);
     - add to 8.2 that `tabla_vela`'s use sets `spends_use = false` and the routes set `arrival_scatter_tiles` and `vessel_kept_on_arrival`.
   - `TASKS.md`: content-batch-11 notes that group 6 has landed.
 
