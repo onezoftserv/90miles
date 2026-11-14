@@ -92,11 +92,11 @@ When `shark` is true and the route lists `SHARK_ATTACK`, the riders aboard the h
 
 ### D4. Damage frames by share of the route's vessel integrity
 
-`StructureArt.vessel_frame(value, nominal)` returns `raft_frame(value / nominal × 100)`, so the existing 66 and 33 thresholds become two thirds and one third. Results for each vessel:
+`StructureArt.vessel_frame(value, nominal)` returns `raft_frame(value / nominal × 100)`, so the existing 66 and 33 thresholds become shares: whole above 66 %, worn above 33 %. Results for each vessel:
 
 - A raft (nominal 100) draws exactly as before.
 - A car at 95 of 160 reads worn.
-- A new board at 60 of 60 reads whole.
+- A new board at 60 of 60 reads whole, and so does one at 40 (66.7 %).
 
 The nominal is `route.vessel_integrity`, not the starting value. A raft beached at 40 still reads worn, as art-pass "Raft site and raft" says.
 

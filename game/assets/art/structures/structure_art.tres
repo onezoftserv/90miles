@@ -13,6 +13,8 @@
 [ext_resource type="Texture2D" path="res://assets/art/structures/stake.png" id="11_stake"]
 [ext_resource type="Texture2D" path="res://assets/art/structures/sign_post.png" id="12_sign"]
 [ext_resource type="SpriteFrames" path="res://assets/art/structures/raft_site_frames.tres" id="13_site"]
+[ext_resource type="SpriteFrames" path="res://assets/art/structures/car_frames.tres" id="14_car"]
+[ext_resource type="SpriteFrames" path="res://assets/art/structures/board_frames.tres" id="15_board"]
 
 [resource]
 script = ExtResource("1_data")
@@ -23,6 +25,8 @@ nest_point = Vector2(0, -34)
 fire = ExtResource("7_fire")
 rain_catcher = ExtResource("8_catcher")
 raft = ExtResource("9_raft")
+car = ExtResource("14_car")
+board = ExtResource("15_board")
 stills = Dictionary[StringName, Texture2D]({
 &"island_sign": ExtResource("12_sign"),
 &"stake": ExtResource("11_stake"),

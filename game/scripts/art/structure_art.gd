@@ -83,6 +83,16 @@ static func raft_frame(integrity: float) -> StringName:
 	return NO_FRAME
 
 
+## The frame of a crossing vessel at `value` of its route's `nominal` integrity (vessel-car-board
+## D4): the raft's thresholds as shares, whole above two thirds and worn above one third. A raft
+## (nominal 100) draws as raft_frame does; a car at 95 of 160 is worn, a new board at 60 of 60
+## whole. Nothing without a nominal.
+static func vessel_frame(value: float, nominal: float) -> StringName:
+	if nominal <= 0.0:
+		return NO_FRAME
+	return raft_frame(value / nominal * 100.0)
+
+
 ## The offset of an uncentred sprite whose frame stands bottom-centre on its node's origin.
 static func frame_offset(frame_size: Vector2) -> Vector2:
 	return Vector2(-floorf(frame_size.x / 2.0), -frame_size.y)

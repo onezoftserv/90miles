@@ -83,7 +83,7 @@ When a board crossing ends, the result SHALL record each rider's board integrity
 - **THEN** the joiner shows the host's board at the host's integrity and no board for the client, who is in the water where the host has them
 
 ### Requirement: Vessel look on the crossing
-The crossing SHALL draw the vessel the route names: the raft for a raft, a car for the almendrón, one board under each board rider, and nothing for swimmers. Each vessel shows whole, worn or breaking by the share it has left of its route's vessel integrity (whole above two thirds, worn above one third), and nothing once it has sunk. Drawing never changes the crossing. A client and a late joiner draw from the state they receive. A solo crossing looks the same.
+The crossing SHALL draw the vessel the route names: the raft for a raft, a car for the almendrón, one board under each board rider, and nothing for swimmers. Each vessel shows whole, worn or breaking by the share it has left of its route's vessel integrity, with the raft's thresholds (whole above 66 %, worn above 33 %), and nothing once it has sunk. Drawing never changes the crossing. A client and a late joiner draw from the state they receive. A solo crossing looks the same.
 
 #### Scenario: Solo car in a squall
 - **GIVEN** a 1-player car crossing at integrity 160

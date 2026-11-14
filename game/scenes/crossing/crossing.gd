@@ -6,8 +6,8 @@ extends Node2D
 ## ends the crossing with a CrossingResult. Clients build the same node, receive the plan, the
 ## rider states and the result, and only show them. Coordinates are absolute: the node sits at
 ## (0, 0) and the sea at `origin`, far from the island, so riders keep their sync and meters.
-## The sea and the deck are drawn by two children, `Sea` (CrossingSea) at z -40 and `Deck`
-## (CrossingDeck) at z -20, because the node sorts at its own (0, 0) in the y-sorted session while
+## The sea and the deck are drawn by children, `Sea` (CrossingSea) at z -40 and `Deck`
+## (CrossingDeck) and `Boards` (CrossingBoards) at z -20, because the node sorts at its own (0, 0) in the y-sorted session while
 ## its riders are far north of it (art-pass "Draw order by foot position", "Crossing look";
 ## design.md T5, T18). They read the crossing every frame and only show; the crossing never names
 ## them, and freeing them changes nothing it does.

@@ -110,18 +110,18 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 7. Art (crossing "Vessel look on the crossing")
 
-- [ ] 7.1 Draw the hand pieces as master-palette pixel grids, written with `tools/art/png.py` (no Pillow): `car_body`, `car_worn`, `car_breaking`, `board`, `board_worn`, `board_breaking` in `tools/art/fixes/structures/`. There is no maker's badge, grille logo or board logo. Add the `car` (64×32, 3 frames, with four `barrel` cuts from the Zelda-like `objects.png` and a propeller) and `board` (16×32, 3 frames) sheets to `tools/art/structure_sheets.json`. Run `python -I tools/art/structures.py --packs C:/Users/liann/src/90miles/game/assets`. Verify:
-  - the python art tests pass (`python -I -m pytest tools/art` or the project's runner);
+- [x] 7.1 Draw the hand pieces as master-palette pixel grids, written with `tools/art/png.py` (no Pillow): `car_body`, `car_worn`, `car_breaking`, `board`, `board_worn`, `board_breaking` in `tools/art/fixes/structures/`. There is no maker's badge, grille logo or board logo. Add the `car` (64×32, 3 frames, with four `barrel` cuts from the Zelda-like `objects.png` and a propeller) and `board` (16×32, 3 frames) sheets to `tools/art/structure_sheets.json`. Run `python -I tools/art/structures.py --packs C:/Users/liann/src/90miles/game/assets`. Verify:
+  - the python art tests pass (`python -I -m unittest discover -s tools/art -p "test_*.py"`; pytest is not installed);
   - `check.py` passes on the new sheets;
   - every existing sheet is byte-identical (`git status` shows only the new files).
-- [ ] 7.2 Wire the frames:
+- [x] 7.2 Wire the frames:
   - add `car_frames.tres` and `board_frames.tres` (whole, worn, breaking) and `StructureArtData.car` and `board` in `structure_art.tres`;
   - add `StructureArt.vessel_frame(value, nominal)`;
   - `CrossingDeck` draws the car for `CAR`;
   - a new `CrossingBoards` (`Boards` in `crossing.tscn`, z -20) draws one board per intact board;
   - add the license and `CREDITS.md` rows.
 
-  Verify `test_crossing_art.gd`, which gains these cases:
+  Verify `test_crossing_art.gd` unchanged and the new `test_crossing_vessel_art.gd`, with these cases:
   - the car worn at 95 of 160;
   - a new board whole at 60 of 60;
   - a broken board not drawn;
