@@ -125,18 +125,29 @@ No existing file under `game/tests` is edited.
 
 ## 4. Contract and seam (tests first)
 
-- [ ] 4.1 Write `game/tests/unit/test_net_backend_contract.gd`, with two branches that each have their own SceneMultiplayer with the relay off. Every case runs for `EnetBackend` and for `FakeNetBackend`:
+- [x] 4.1 Write `game/tests/unit/test_net_backend_contract.gd`, with two branches that each have their own SceneMultiplayer with the relay off. Every case runs for `EnetBackend` and for `FakeNetBackend`:
   - the host is peer 1 and the client is 2 or more;
   - a reconnect is a new peer;
   - `disconnect_peer` closes the client;
   - the host closing reaches the client;
   - a bad target fails with no peer (INVALID_TARGET or NOT_FOUND);
   - a peer after leave is closed.
-- [ ] 4.2 Write `game/tests/unit/test_transport_seam.gd`:
+  - Done 2026-11-14: 12 tests (each case as an `_enet` and a `_fake` test sharing one helper), 111 asserts, 12/12 alone, no orphans and no engine errors.
+    - Each branch is a `Machine` with its own backend that stands in for `NetManager`. The fake answers 3 frames late, keeps answering after `leave()`, and is joined by its lobby token from a second fake.
+    - It also asserts `NetManager.backend is EnetBackend` in `before_all` and `after_all` and cleans up in `after_each`, though it never swaps the backend.
+    - "A peer after leave": the ENet form, and what a mutation run showed, are in design.md "Changes from the build plan".
+- [x] 4.2 Write `game/tests/unit/test_transport_seam.gd`:
   - It scans `res://scripts` and `res://scenes`, except `res://scripts/net/`, for `ENetMultiplayerPeer`, `SteamMultiplayerPeer`, `EOSGMultiplayerPeer`, `NetPeers.create_server`, `NetPeers.create_client`, `NetPeers.bound_port` and `IP.get_local_addresses`.
   - A self-check plants a name in an in-memory text, so the scan can't pass vacuously.
   - See the scan fail on `game_shell.gd`'s `IP.get_local_addresses()` until group 5.
-- [ ] 4.3 Fix what fails; only the fake and the scan list should need work. Run the import, smoke and GUT; the seam scan is expected red until 5.2.
+  - Done 2026-11-14: 3 tests, 17 asserts.
+    - `test_the_scan_catches_a_planted_name` plants each of the seven names and checks near misses give no hit. `test_the_scan_reaches_the_game_scripts` checks the walk reaches real files and skips only the seam. Both pass.
+    - `test_no_transport_outside_the_seam` fails, as expected, with exactly one hit: `res://scenes/shell/game_shell.gd:180 IP.get_local_addresses`.
+- [x] 4.3 Fix what fails; only the fake and the scan list should need work. Run the import, smoke and GUT; the seam scan is expected red until 5.2.
+  - Done 2026-11-14: nothing needed fixing. The fake, the scan list and every non-test file are unchanged.
+    - Import ×2 clean; smoke "10 frames, 0 problem(s)".
+    - GUT: 178 scripts (+2), 1601 tests (+15), 1600 passing, 1 failing, 55097 asserts (+133), 55096 passing. The one failure is the expected seam-scan hit on `game_shell.gd:180`, which stays red until 5.2. No leak at exit, and no orphans in the new suites.
+    - The new suites account for 128 of the added asserts. The other 5 come from existing suites, including the test_net_requests follow-up that the 3.4 total predates; not traced per suite.
 
 ## 5. Shell and screens (tests first)
 

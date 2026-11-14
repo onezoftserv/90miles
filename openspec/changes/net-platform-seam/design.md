@@ -477,3 +477,36 @@ Recorded while building group 3 (2026-11-14).
   - `reset()` also closes every peer any fake opened.
   - Its servers always open on port 0, because other GUT runs may share the machine.
 - **The shell is not changed until group 5.** `GameShell._join()` still builds the client's run before `NetManager.join()`, so that run sees one extra offline-to-offline peer swap from step 2. It is harmless, and every shell and harness suite stays green. Group 5 moves the build after the peer is installed (D2).
+
+Recorded while building group 4 (2026-11-14).
+
+- **The contract suite's machines.** Each branch is an inner `Machine` with its own SceneMultiplayer (relay off) and its own backend. It stands in for `NetManager`:
+  - on `answered`, it installs the peer and settles READY, or settles FAILED when there is no peer;
+  - asking again cancels the request before it;
+  - `leave()` cancels, calls `backend.leave()` and closes the installed peer.
+
+  `NetHarness` is not used, because it makes its peers with `NetPeers` directly. The class is not called `Side`, because that name clashes with Godot's global `Side` enum.
+- **The fake is made to differ from ENet.** In the contract it:
+  - answers 3 frames late;
+  - keeps answering after `leave()` (`deliver_after_leave`), which is the worst case for a platform;
+  - is joined by the host fake's lobby token from a second fake instance.
+- **"A peer after leave is closed" on ENet.** ENet answers only inside its call, so it has no window in which the player can leave first.
+  - The ENet form cancels the request and leaves, then calls `host()` or `join()`. That is the earliest an ENet answer can come after leaving.
+  - The fake form has the request in flight when the player leaves.
+  - Both forms check that:
+    - the request stays CANCELLED with no peer;
+    - nothing is installed;
+    - the late server's port is free again;
+    - the host never admits the late client.
+  - The fake form also checks that both peers it delivered are closed, and that no lobby was listed.
+  - **Caveat:** `EnetBackend` keeps no reference to its peer. If `NetRequest` failed to close a late ENet peer, reference counting would still free it and close it. So the ENet half checks the outcome, not `NetRequest`'s close. A mutation run, in which `succeed()` left a late peer open, failed only the fake half.
+- **Bad targets.** Both backends get the same three targets: a blank address, port 0 and an unknown token.
+  - ENet answers INVALID_TARGET for all three.
+  - The fake answers INVALID_TARGET, INVALID_TARGET and NOT_FOUND.
+- **The seam scan:**
+  - It reads `.tscn` files as well as `.gd`, in case a scene ever embeds a script.
+  - It matches whole words, comments included, so `NetPeers.lan_addresses` and `NetPeers.DEFAULT_PORT` are not hits.
+  - A third test checks that the walk reaches the game's scripts and skips only `res://scripts/net/`. Without it, a broken walk would make the scan pass by finding nothing. The test checks that:
+    - the walk finds over 100 files;
+    - they include `game_shell.gd`, `coop_session.gd` under `res://scenes/net/`, `net_manager.gd` and a `.tscn`;
+    - `net_peers.gd` itself does give hits.
