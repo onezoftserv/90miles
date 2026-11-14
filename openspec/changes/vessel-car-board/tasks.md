@@ -19,7 +19,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 2. Route items spent at the start (escape-routes "Route items spent at the start")
 
-- [ ] 2.1 Write `test_route_consume.gd` first, with these cases:
+- [x] 2.1 Write `test_route_consume.gd` first, with these cases:
   - solo in calm: the start is refused and the tarp is kept;
   - solo in trade wind: the route starts and the tarp is spent;
   - a party of 3 where two carry a tarp: both carriers ride and each spent their own, and the third stays with nothing spent;
@@ -27,7 +27,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
   - a negated or nested condition spends nothing.
 
   See it fail.
-- [ ] 2.2 Add `RouteLauncher.spend(route, starter, riders)` and call it from `IslandRoutes.start_for` on the host after riders are picked and before departure. Verify `test_route_consume.gd`, `test_route_launcher.gd`, `test_escape_routes_solo.gd` and `test_escape_routes_net.gd` pass.
+- [x] 2.2 Add `RouteLauncher.spend(route, starter, riders)` and call it from `IslandRoutes.start_for` on the host after riders are picked and before departure. Verify `test_route_consume.gd`, `test_route_launcher.gd`, `test_escape_routes_solo.gd` and `test_escape_routes_net.gd` pass.
 
 ## 3. Shark dumps (crossing "Shark dumps")
 

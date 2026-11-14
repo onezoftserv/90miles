@@ -32,6 +32,23 @@ static func riders(route: RouteData, sender: PlayerBody, candidates: Array[Playe
 	return riders
 
 
+## Host, once the route starts (escape-routes "Route items spent at the start"): takes each item a
+## top-level requirement of kind HAS_ITEM marked `consume` asks for, `amount` of it, from
+## `starter` for the route's requirements and from every rider for its rider requirements. A
+## negated condition or one nested in ANY_OF or ALL_OF is never spent. Call it only after every
+## check passed, so a refused start spends nothing.
+static func spend(route: RouteData, starter: PlayerBody, riders: Array[PlayerBody]) -> void:
+	_spend_from(route.requirements, starter)
+	for rider: PlayerBody in riders:
+		_spend_from(route.rider_requirements, rider)
+
+
+static func _spend_from(conditions: Array[ConditionData], player: PlayerBody) -> void:
+	for condition: ConditionData in conditions:
+		if condition.kind == ConditionData.Kind.HAS_ITEM and condition.consume and not condition.negate:
+			player.inventory.remove_id(condition.ref_id, maxi(roundi(condition.amount), 1))
+
+
 static func _can_board(player: PlayerBody, anchor: Vector2, radius_px: float) -> bool:
 	if player.meters.dead or player.meters.downed or player.meters.last_stand:
 		return false
