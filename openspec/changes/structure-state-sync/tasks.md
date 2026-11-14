@@ -61,13 +61,20 @@
 
 ## 4. Host and client run
 
-- [ ] 4.1 Run a host and a client locally (two processes, the playthrough harness `tests/manual/art_pass_run.gd` or the game through the shell):
+- [x] 4.1 Run a host and a client locally (two processes, the playthrough harness `tests/manual/art_pass_run.gd` or the game through the shell):
   - The client watches the host climb a palm, put out a fire and fill and empty the catcher.
   - Then a second client joins late and sees the same.
   - The client checks compare each value with the host's, not only error lines.
   - Record the result and any finding here.
   - Verify: every check passes, with zero error lines in each log.
-- [ ] 4.2 Update `TASKS.md`: a dated "Done" entry with the GUT count, and drop "palm, rain-catcher and fire state sent to clients" from the open follow-ups. Note in `art-pass/design.md`'s D18 risk note and in art-pass-followups' "Still open" that this change closes them. Verify: the files say so.
+  - Done 2026-11-14: `art_pass_run.gd` ran with a headless host (`--clients=2`), client A (the rider) and client B (who leaves when the crossing starts and rejoins 5 s into it). Host 33 of 33, A 70 of 70, B 27 of 27, 0 `ERROR` lines in the three logs.
+    - The harness's client notes on stale looks (art-pass D18) are now checks.
+    - A: its nest palm drew 1 coconut, then 0 after its climb. Its fire went out after its put-out (embers, not a lit fire, nothing to put out). Its catcher showed water with 1 cup after the squall and was empty once the cup was taken.
+    - B, before it left and again after its rejoin: the fire was out, the catcher empty, and the sandbar's palms held and drew 9 coconuts (the layout's 10 minus A's one climb, which the host asserts).
+    - B's rejoin is the reclaim path. A fresh joiner's admit path is covered over ENet in GUT (1.1, 2.2, 3.1).
+- [x] 4.2 Update `TASKS.md`: the Milestone B line and a dated "Done" entry with the GUT count, saying it closes the "palm, rain-catcher and fire state sent to clients" follow-up of `inventory-hud` and art-pass D18's risk note. Verify: the file says so.
+  - `art-pass/design.md` and `art-pass-followups/tasks.md` are left as they are. The coordinating session's art-pass work edits those files, and a closing note there belongs to its archive, so it is told in the report instead.
+  - Done 2026-11-14: the Milestone B line and the Done entry.
 
 ## Workflow follow-up
 
