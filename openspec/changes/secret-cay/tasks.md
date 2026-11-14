@@ -25,9 +25,9 @@ Every group is test-first: write the listed tests, watch them fail for the right
 
 ## 2. Existence roll
 
-- [ ] 2.1 Write `game/tests/unit/test_secret_plan.gd` for the "Existence roll" scenarios: 3,000 seeds give 30–36% with the secret, every success has two different indices in 2–5 (the first for `map_item_id`, the second for `compass_item_id`), the same seed gives the same plan, chance 0 never and chance 1 always (tuning copies made in the test); verify it fails
-- [ ] 2.2 Implement `SecretPlan.roll` (`game/scripts/secret/secret_plan.gd`) with its own seeded generator (design.md decision 2); verify `test_secret_plan.gd` passes and no other test changes
-- [ ] 2.3 Run the import, smoke run and GUT commands; verify all three pass
+- [x] 2.1 Write `game/tests/unit/test_secret_plan.gd` for the "Existence roll" scenarios: 3,000 seeds give 30–36% with the secret, every success has two different indices in 2–5 (the first for `map_item_id`, the second for `compass_item_id`), the same seed gives the same plan, chance 0 never and chance 1 always (tuning copies made in the test); verify it fails Done: seen failing (no `SecretPlan`), with every ordered index pair and the own-stream check added.
+- [x] 2.2 Implement `SecretPlan.roll` (`game/scripts/secret/secret_plan.gd`) with its own seeded generator (design.md decision 2); verify `test_secret_plan.gd` passes and no other test changes Done: own generator seeded from `hash([run_seed, roll_salt])`; 6/6, no other test changed.
+- [x] 2.3 Run the import, smoke run and GUT commands; verify all three pass Done: import, smoke and GUT (175 scripts, 1569 tests) pass.
 
 ## 3. The cay reuses the island scene; walking distances and hiding spots
 
