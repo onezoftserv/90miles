@@ -142,7 +142,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
   - `TASKS.md`: content-batch-11 notes that group 6 has landed.
 
   Verify `openspec validate vessel-car-board --type change --strict` and `openspec validate --all` pass.
-- [x] 8.3 Final check: the import, smoke run, full GUT and a 300-frame run are all clean, and `git diff --stat main...HEAD` shows only the files this change names. (2026-11-14, rebased on main: import, smoke and 300 frames clean; GUT 1627 of 1628, the one failure `test_crossing_art.gd`'s "the scrolled sea still covers the crossing's sea", an existing flake that waits physics frames before the sea's `_process` has run; it fails in about half the full runs on this loaded machine, failed before any code here, and passes alone.)
+- [x] 8.3 Final check: the import, smoke run, full GUT and a 300-frame run are all clean, and `git diff --stat main...HEAD` shows only the files this change names. (2026-11-14, rebased on main with dropped-teammate-state: import, smoke and 300 frames clean; GUT 1646 of 1647, the one failure `test_crossing_art.gd`'s "the scrolled sea still covers the crossing's sea", an existing flake that waits physics frames before the sea's `_process` has run; it fails in about half the full runs on this loaded machine, failed before any code here, and passes alone.)
 
 ## Workflow follow-up
 
