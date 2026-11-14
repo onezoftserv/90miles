@@ -5,8 +5,9 @@ extends Node
 ## session runs one live level, so a rider whose crossing ended waits out of play (held, hidden,
 ## meters frozen) until nobody living is left on the island and no crossing is running; then the
 ## host asks every peer, in one reliable call, to free the old island and what it put in the
-## session, build the next one from its layout, land every player on its landing cells with the
-## health and energy they had, beach an intact raft and place the pick-ups. A client never loads an
+## session, build the next one from its layout, land every player on the cell the host picked for
+## them (ArrivalScatter: the landing cells, or a scattered beach cell for a wider route such as the
+## board's) with the health and energy they had, beach an intact raft and place the pick-ups. A client never loads an
 ## island on its own: it only follows the host's call (and, joining late, the host's world state).
 ## Exactly 1 player never waits: their crossing ending is the whole condition.
 
@@ -102,14 +103,22 @@ func check() -> Outcome:
 	return Outcome.TRAVEL
 
 
-## Host: loads island `next_id` for everyone, landing every player in the session.
+## Host: loads island `next_id` for everyone, landing every player in the session on the cell
+## the host picks for them on the next island's layout (crossing "Arrival scatter").
 func travel(next_id: StringName) -> void:
 	if not session.multiplayer.is_server():
 		return
+	var cells: Dictionary[int, Vector2i] = {}
+	var next_layout := GameState.content.get_entry(&"islands", next_id) as IslandLayoutData
+	if next_layout != null:
+		cells = ArrivalScatter.pick(IslandLayout.build(next_layout), _scatter_by_peer(), _landing_seed(next_id), _dead_peers())
 	var arrivals: Dictionary = {}
 	for peer_id: int in session.peer_ids():
 		var meters := session.body(peer_id).meters
-		arrivals[peer_id] = {"health": meters.health, "energy": meters.energy}
+		var arrival: Dictionary = {"health": meters.health, "energy": meters.energy}
+		if cells.has(peer_id):
+			arrival["cell"] = cells[peer_id]
+		arrivals[peer_id] = arrival
 	session.travel_to.rpc(String(next_id), arrivals, _beached_integrity())
 
 
@@ -149,13 +158,49 @@ func _join_extras() -> Dictionary:
 
 
 # The sturdiest raft that ended a crossing intact lies on the next island's build site; any other
-# is lost.
+# vessel is lost (crossing "Beaching by vessel"): only a route whose vessel is a raft kept on
+# arrival beaches one, never a board, a car or swimmers.
 func _beached_integrity() -> float:
 	var best: float = 0.0
 	for result: CrossingResult in _results:
+		var route := GameState.content.get_entry(&"routes", result.route_id) as RouteData
+		if route == null or route.vessel != DataEnums.Vessel.RAFT or not route.vessel_kept_on_arrival:
+			continue
 		if not result.broken and result.integrity > best:
 			best = result.integrity
 	return best
+
+
+# Every player's arrival scatter: their crossing's route's, the default for anyone else.
+func _scatter_by_peer() -> Dictionary[int, Vector2i]:
+	var scatter: Dictionary[int, Vector2i] = {}
+	for peer_id: int in session.peer_ids():
+		scatter[peer_id] = ArrivalScatter.DEFAULT_TILES
+	for result: CrossingResult in _results:
+		var route := GameState.content.get_entry(&"routes", result.route_id) as RouteData
+		if route == null:
+			continue
+		for peer_id: int in result.riders:
+			if scatter.has(peer_id):
+				scatter[peer_id] = route.arrival_scatter_tiles
+	return scatter
+
+
+# The dead keep their landing cell but anchor nobody's scatter, so a lone survivor's board is not
+# scattered away from a body.
+func _dead_peers() -> Array[int]:
+	var dead: Array[int] = []
+	for peer_id: int in session.peer_ids():
+		if session.body(peer_id).meters.dead:
+			dead.append(peer_id)
+	return dead
+
+
+# The scatter's roll: the run's seed, how far the party has come and the island it lands on (an
+# off-graph island such as the secret cay does not count as reached), so a run lands the same way.
+func _landing_seed(next_id: StringName) -> int:
+	var run_seed: Variant = session.world_state.get("run_seed", 0)
+	return hash([run_seed if run_seed is int else 0, islands_reached, String(next_id)])
 
 
 func _on_changed() -> void:
@@ -250,8 +295,9 @@ func _clear_level() -> void:
 			node.queue_free()
 
 
-# Everyone's ground and camera, then the arrivals on the landing cells in peer order, with the
-# health and energy the host sent (the host's own meters already have them).
+# Everyone's ground and camera, then the arrivals on the cells the host sent (a cell that is not
+# land on this island falls back to the landing cells in peer order), with the health and energy
+# the host sent (the host's own meters already have them).
 func _land(arrivals: Dictionary) -> void:
 	for peer_id: int in session.peer_ids():
 		var player := session.body(peer_id)
@@ -266,7 +312,17 @@ func _land(arrivals: Dictionary) -> void:
 		var player := session.body(peer_id)
 		if player == null:
 			continue
-		IslandArrival.land(player, positions[peer_id], island.terrain)
+		var at: Vector2 = positions[peer_id]
+		var cell: Variant = (arrivals[peer_id] as Dictionary).get("cell")
+		if cell is Vector2i and _is_land(cell):
+			at = IslandLayout.cell_center(cell)
+		IslandArrival.land(player, at, island.terrain)
 		if is_host and not player.meters.dead:
 			player.meters.health = arrivals[peer_id]["health"]
 			player.meters.energy = arrivals[peer_id]["energy"]
+
+
+# A cell of the island a player can stand on: walkable ground, not water.
+func _is_land(cell: Vector2i) -> bool:
+	var ground: Variant = island.built.terrain.cells.get(cell)
+	return ground != null and IslandLayout.WALKABLE.has(ground) and ground != DataEnums.Terrain.SHALLOWS

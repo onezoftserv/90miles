@@ -87,7 +87,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 ## 6. Milestone D — Threats and stealth
 
 - [ ] `guardacostas-stealth`: patrol loop, searchlight cone, hidden states, smoke/noise bus
-- [ ] Shore squad, capture, free-a-captive, `la_captura` scene
+- [ ] Shore squad, capture, free-a-captive, `la_captura` scene; with capture at sea, the `almendron_hundido` gate test (`balsero-lore` 9b.1)
 - [ ] Eels, barracuda, man o' war, mosquitoes, crocodile grab, fire ants, manchineel
 - [ ] Bosses: cutter chase, old crocodile nest, tiger shark dives
 - [ ] Lighthouse, storm key, shipwreck reef and final approach chains
@@ -131,7 +131,7 @@ Source: `docs/CONTENT_MANIFEST.md` (~315 `.tres` files). Each batch is one OpenS
 - [ ] content-batch-8: POIs (~45)
 - [ ] content-batch-9: set pieces (15), routes (8), backgrounds (6)
 - [ ] content-batch-10: handwritten dialogue (minor NPCs, beats, endings, quick-chat, death lines)
-- [ ] content-batch-11 (balsero gear, 19 files): routes `almendron` and `tabla`, recipes 4, items 11, keepsakes `llave_almendron` and `pluma_galleguito`. Routes and the key need `Vessel.CAR` and `Vessel.BOARD` (`balsero-lore` task group 6)
+- [ ] content-batch-11 (balsero gear, 19 files): routes `almendron` and `tabla`, recipes 4, items 11, keepsakes `llave_almendron` and `pluma_galleguito`. Routes and the key need `Vessel.CAR` and `Vessel.BOARD`, which `balsero-lore` group 6 added (`vessel-car-board`); the route fields and the almendrón build test are listed in `balsero-lore` 8.2 and 8.3
 - [ ] content-batch-12 (balsero world, 16 files plus entry edits): creatures `galleguito`, `pajarito`, `pajaro_bobo`, `rabihorcado`, POIs 5, set pieces `balsa_en_la_sala` and `el_pilote`, texts 3, dialogue `beat_galleguito` and `beat_pies_secos`. The gull needs `Behavior.PERCH_RIDE`, the two ambient birds `ambient.gd`
 
 ## 11. Lore, stories and asset review (start alongside the content batches; finish before Milestone G)
@@ -204,3 +204,4 @@ Other (was in Milestone G):
     - `MAX_ARRIVALS` is 8.
   - Found and fixed: a refused landing re-queued itself in one deferred flush until the engine crashed, which four connected players plus a dropped waiting rider used to trigger.
 - 2026-11-14: `secret-cay` built on `feat/secret-cay` (groups 0-10; GUT 183 scripts, 1635 tests, all passing, 158 s; import, smoke, the Python art tests and the headless game runs clean): `ItemTag.SECRET` and `Capability.POINT_TO_SECRET`, `secret_tuning.tres`, the four secret items with hand-drawn icons, `SecretRules` (the shared check and filter, and a removed player's secret items laid where they were last seen), `SecretPlan.roll` (1 run in 3, two indices from 2 to 5, its own stream), walking distances and hiding spots with their fallback, concealed pick-ups with a 0.75 s shimmer every 6 s and a 1.5 s dig hold, the broken compass's needle on the carrier's HUD, El cayo sin norte (off-graph and secret: no creatures, the lean-to and hat, the camp left minutes ago, the raft's inputs, the empty chest whose note shows on a HUD label on every peer and late joiners), and the hunt and cay dev scenes (`--solo`, `--host`, `--join`, `--with-pieces`, `--autopilot`). Two local processes per dev scene agreed on the spots, the opening and the entry. A trip to an off-graph layout never counts as an island reached. Drift from the 2026-11-06 plan (no `CrossingStub`, the art views, required item icons, creatures on handmade layouts, the sign note under the day phase, no Platino sprite) is in the change's design.md.
+- 2026-11-14: `vessel-car-board` built (balsero-lore group 6; owner chose the recommended Q1-Q4): `Vessel.CAR` and `Vessel.BOARD` appended, `RouteData.arrival_scatter_tiles`; per-rider boards on the crossing (integrity 60, no lashing, a squall hits every board, a rock or shark one board in turn, climb or a teammate's pull onto one's own board, a broken board drops only its rider), `SHARK_ATTACK` dumps on routes that list it, boards in the resync, the late-join snapshot and the result; the host picks every landing cell (board riders 10-20 tiles apart on unfurnished beach, a solo rider on the first landing cell) and only a raft kept on arrival is beached; route items marked `consume` are spent once the route starts; rough car and board art through `tools/art/structures.py`. Tested with fixture routes, solo first, plus ENet host-and-client tests and a two-process run on UDP 7785 (`tests/manual/board_run.gd`). The real `almendron` and `tabla` routes stay in content-batch-11.

@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="RouteData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/route_data.gd" id="1_route"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="2_condition"]
+
+[sub_resource type="Resource" id="Resource_fuel"]
+script = ExtResource("2_condition")
+kind = 2
+ref_id = &"plastic_jug"
+scope = 0
+consume = true
+
+[resource]
+script = ExtResource("1_route")
+description_es = "Ruta de prueba: el carro flota."
+description_en = "Test route: the car floats."
+requirements = Array[ExtResource("2_condition")]([SubResource("Resource_fuel")])
+capacity_mode = 0
+starter_kind = 3
+starter_id = &"plastic_jug"
+starts_discovered = true
+vessel = 5
+vessel_integrity = 160
+duration_s = Vector2(60, 90)
+squall_damage_multiplier = 1.5
+dump_triggers = Array[int]([2])
+id = &"test_car"
+name_es = "Carro de prueba"
+name_en = "Test car"

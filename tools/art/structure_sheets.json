@@ -686,6 +686,252 @@
       ]
     },
     {
+      "out": "structures/car.png",
+      "frame": [
+        64,
+        32
+      ],
+      "frames": [
+        [
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              7,
+              -4
+            ]
+          },
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              34,
+              -4
+            ]
+          },
+          {
+            "hand": "car_body.png"
+          },
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              7,
+              22
+            ]
+          },
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              39,
+              22
+            ]
+          }
+        ],
+        [
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              7,
+              -4
+            ]
+          },
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              34,
+              -4
+            ]
+          },
+          {
+            "hand": "car_body.png"
+          },
+          {
+            "hand": "car_worn.png"
+          },
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              7,
+              22
+            ]
+          },
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              39,
+              22
+            ]
+          }
+        ],
+        [
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              7,
+              -4
+            ]
+          },
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              34,
+              -4
+            ]
+          },
+          {
+            "hand": "car_body.png"
+          },
+          {
+            "hand": "car_worn.png"
+          },
+          {
+            "hand": "car_breaking.png"
+          },
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              7,
+              22
+            ]
+          },
+          {
+            "cut": "overworld",
+            "rect": [
+              528,
+              5,
+              16,
+              23
+            ],
+            "turn": 90,
+            "map": "barrel",
+            "at": [
+              39,
+              25
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/board.png",
+      "frame": [
+        16,
+        32
+      ],
+      "frames": [
+        [
+          {
+            "hand": "board.png"
+          }
+        ],
+        [
+          {
+            "hand": "board.png"
+          },
+          {
+            "hand": "board_worn.png"
+          }
+        ],
+        [
+          {
+            "hand": "board.png"
+          },
+          {
+            "hand": "board_worn.png"
+          },
+          {
+            "hand": "board_breaking.png"
+          }
+        ]
+      ]
+    },
+    {
       "out": "structures/lean_to.png",
       "frame": [
         64,

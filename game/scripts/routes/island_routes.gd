@@ -87,6 +87,7 @@ func start_for(peer: int, route_id: StringName) -> bool:
 	var peers: Array[int] = []
 	for rider: PlayerBody in riders:
 		peers.append(peer_of(rider))
+	RouteLauncher.spend(route, sender, riders)
 	departure_integrity[route_id] = _structure_integrity(route)
 	# Clients hear first: their crossing must exist before the host's plan reaches it.
 	if not _session.multiplayer.get_peers().is_empty():
