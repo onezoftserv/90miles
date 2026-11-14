@@ -12,7 +12,8 @@ extends CanvasLayer
 ## no input (`input_open`); the shell says when a screen shows. The local player's press on a
 ## workbench opens the crafting list (`craft_list`), and on a flavour sign the sign note (`sign_note`);
 ## each holds the input while open. A closed-eye
-## mark shows over every hidden player (`marks`), placed like the prompt.
+## mark shows over every hidden player (`marks`), placed like the prompt. Under the day phase, the
+## broken compass's needle (`needle`, secret-cay) shows while the local player carries it.
 
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
@@ -53,6 +54,7 @@ var world_view: Control = null
 @onready var prompt: InteractPrompt = %Prompt
 @onready var craft_list: CraftList = %CraftList
 @onready var sign_note: SignNote = %SignNote
+@onready var needle: CompassNeedle = %Needle
 @onready var marks: BodyMarks = %Marks
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
@@ -248,6 +250,7 @@ func _bind_local(player: PlayerBody) -> void:
 	prompt.bind(player, session)
 	craft_list.bind(player, session)
 	sign_note.bind(player, session)
+	needle.bind(player, session)
 
 
 # A name can arrive after its player spawned (a join during the run): the tags follow the roster.
