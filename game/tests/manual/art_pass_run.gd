@@ -1601,6 +1601,22 @@ func _peer_named(suffix: String) -> int:
 	return 0
 
 
+func _name_of(peer_id: int) -> String:
+	return String(session.call("player_name", peer_id))
+
+
+# The state word ending the local HUD's row for the teammate named `player_name` ("" when the row has
+# none, "<no row>" when there is no such row).
+func _row_word(player_name: String) -> String:
+	if hud == null:
+		return "<no hud>"
+	for row: String in hud.call("teammate_rows"):
+		if row.begins_with(player_name + " "):
+			var parts: PackedStringArray = row.split(" ")
+			return parts[parts.size() - 1] if parts.size() > 2 else ""
+	return "<no row>"
+
+
 func _on_coast_cay() -> bool:
 	var now: Node = shell.get("island")
 	return now != null and (now.get("layout") as Object).get("id") == &"coast_cay"
@@ -1840,9 +1856,28 @@ func _host_route() -> void:
 			_check("host: B joined again during the crossing", true)
 			_note("B came back %.1f s into the crossing" % float(crossing.get("elapsed_s")))
 			_check("host: the deck at %.0f shows worn" % HOST_RAFT_INTEGRITY, String(crossing.get_node(^"Deck").get("frame_name")) == "worn")
-	# 8. The arrival: the party moves on once B's dropped body is gone (nobody left on the sandbar).
-	if not await _wait_for("the party to land on the coast cay", _on_coast_cay, 420.0):
+	# 8. The arrival (dropped-teammate-state): once the crossing has ended and B has left for good, B's
+	# dropped body alone holds the landing, for at most 30 s; meanwhile the host's row for B reads
+	# "Desconectado".
+	var held: Dictionary = {"crossed": -1.0, "b_left": -1.0, "words": {}}
+	var landing_watch: Callable = func() -> bool:
+		var now: float = Time.get_ticks_msec() / 1000.0
+		if float(held["crossed"]) < 0.0 and (shell.get("crossings") as Array).is_empty():
+			held["crossed"] = now
+		var b_now: int = _peer_named("B")
+		if b_now != 0 and bool(session.call("is_dropped", b_now)):
+			if float(held["b_left"]) < 0.0:
+				held["b_left"] = now
+			(held["words"] as Dictionary)[_row_word(_name_of(b_now))] = true
+		return _on_coast_cay()
+	if not await _wait_for("the party to land on the coast cay", landing_watch, 420.0):
 		return
+	if b_peer != 0:
+		var landed_at: float = Time.get_ticks_msec() / 1000.0
+		var held_from: float = maxf(float(held["crossed"]), float(held["b_left"]))
+		var words: Array = (held["words"] as Dictionary).keys()
+		_check("host: B left for good and its dropped body held the landing at most 30 s (dropped-teammate-state)", float(held["b_left"]) >= 0.0 and landed_at - held_from <= 35.0, "%.1f s after the later of the crossing's end and B's leave" % [landed_at - held_from])
+		_check("host: while B was away, the host's row for B read 'Desconectado'", words == ["Desconectado"], "words %s" % [words])
 	await _frames(30)
 	island = shell.get("island")
 	_build_land()
@@ -2167,7 +2202,17 @@ func _client_cross(me: int) -> bool:
 	var crossing: Node2D = (shell.get("crossings") as Array)[0]
 	_check("client: A rides the host's crossing, aboard", (crossing.call("peers") as Array).has(me) and int(crossing.call("rider_state", me)) == ABOARD, "peers %s, state %s" % [crossing.call("peers"), crossing.call("rider_state", me)])
 	await _check_crossing_view(crossing, "riding it", me)
-	return await _wait_for("the party to land on the coast cay (A's island changes)", _on_coast_cay, 420.0)
+	# dropped-teammate-state: while B is away, A's row for B reads "Desconectado", never "Caído".
+	var words: Dictionary = {}
+	var landing_watch: Callable = func() -> bool:
+		var b_now: int = _peer_named("B")
+		if b_now != 0:
+			words[_row_word(_name_of(b_now))] = true
+		return _on_coast_cay()
+	var landed: bool = await _wait_for("the party to land on the coast cay (A's island changes)", landing_watch, 420.0)
+	if _peer_named("B") != 0 or words.has("Desconectado"):
+		_check("client: A's row for B read 'Desconectado' while B was away, never 'Caído'", words.has("Desconectado") and not words.has("Caído"), "words %s" % [words.keys()])
+	return landed
 
 
 func _client_cay(me: int) -> void:
