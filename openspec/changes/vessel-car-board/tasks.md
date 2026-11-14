@@ -72,12 +72,12 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 5. Board state on the wire (crossing "Board crossing state")
 
-- [ ] 5.1 Write the unit tests first:
-  - `test_crossing_snapshot.gd` gains a board crossing's snapshot round trip (boards by rider, 0 as broken) and refusals (a non-finite value, a non-rider's board, the key missing);
+- [x] 5.1 Write the unit tests first:
+  - `test_crossing_board_state.gd` holds a board crossing's snapshot round trip (boards by rider, 0 as broken), refusals (a non-finite value, a key that is not a peer, the key missing) and a non-rider's board dropped;
   - a solo result holds `board` 40 and `board_broken` false after a shark hit.
 
   See them fail. Then add `board_values` to `receive_state`, the `boards` snapshot key, `apply_snapshot`, client-side board breaks, and the result's per-rider `board` and `board_broken`. Verify those tests pass.
-- [ ] 5.2 Write `test_crossing_board_net.gd` over `NetHarness` (ENet on localhost):
+- [x] 5.2 Write `test_crossing_board_net.gd` over `NetHarness` (ENet on localhost):
   - the client shows the host's board at 20 after a rock and its own at 60;
   - the client's climb onto its own board is applied by the host;
   - a third peer joining sees the client's broken board as gone and the client in the water where the host has them.

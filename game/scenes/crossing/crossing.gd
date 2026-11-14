@@ -352,12 +352,21 @@ func receive_plan(plan_data: Array, vessel_value: float) -> void:
 		integrity.value = clampf(vessel_value, 0.0, integrity.maximum)
 
 
-## Clients: every rider's state and the vessel's integrity, on change and every second.
+## Clients: every rider's state, the vessel's integrity and every board's (peer -> value, a board
+## route only), on change and every second.
 @rpc("authority", "call_remote", "reliable")
-func receive_state(states: Dictionary, vessel_value: float, time_s: float) -> void:
+func receive_state(states: Dictionary, vessel_value: float, time_s: float, board_values: Dictionary = {}) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID or finished or not is_finite(vessel_value) or not is_finite(time_s):
 		return
-	_apply_state(states, vessel_value, time_s)
+	_apply_state(states, vessel_value, time_s, board_values)
+
+
+## Every board's integrity by rider, as plain values (empty off a board route).
+func board_values() -> Dictionary:
+	var values: Dictionary = {}
+	for peer: int in boards:
+		values[peer] = boards[peer].value
+	return values
 
 
 ## A joiner: the crossing as `snapshot` has it (a checked snapshot, so no sender check here). The
@@ -368,7 +377,7 @@ func apply_snapshot(snapshot: CrossingSnapshot) -> void:
 		return
 	if plan == null:
 		plan = snapshot.plan
-	_apply_state(snapshot.states, snapshot.value, snapshot.elapsed_s)
+	_apply_state(snapshot.states, snapshot.value, snapshot.elapsed_s, snapshot.boards)
 	if snapshot.broken:
 		_show_broken()
 	var inside: Rect2 = sea_rect().grow(-EDGE_GAP_PX)
@@ -482,6 +491,15 @@ func _board_owner(board: VesselIntegrity) -> int:
 
 func _sink_board(peer: int) -> void:
 	sea.fill_rect(_board_cells(maxi(_peers.find(peer), 0)), DataEnums.Terrain.DEEP)
+
+
+# Clients: the host says this board broke; its cells are deep water here too.
+func _show_board_broken(peer: int) -> void:
+	var board := boards.get(peer) as VesselIntegrity
+	if board == null or board.broken or not board.has_integrity():
+		return
+	board.broken = true
+	_sink_board(peer)
 
 
 # Host: the next intact board in rider order from the turn, wrapping round; 0 when none is left.
@@ -646,9 +664,9 @@ func _set_state(peer: int, state: Rider) -> void:
 	_apply_flags()
 
 
-# Clients: the host's rider states (riders only, in range), clock and vessel, from a resync or a
-# snapshot.
-func _apply_state(states: Dictionary, vessel_value: float, time_s: float) -> void:
+# Clients: the host's rider states (riders only, in range), clock, vessel and boards (riders'
+# boards only, finite values, in range), from a resync or a snapshot.
+func _apply_state(states: Dictionary, vessel_value: float, time_s: float, board_values: Dictionary = {}) -> void:
 	for peer: Variant in states:
 		var state: Variant = states[peer]
 		if peer is int and state is int and _states.has(peer) and state >= 0 and state < Rider.size():
@@ -658,6 +676,14 @@ func _apply_state(states: Dictionary, vessel_value: float, time_s: float) -> voi
 		integrity.value = clampf(vessel_value, 0.0, integrity.maximum)
 		if integrity.value <= 0.0:
 			_show_broken()
+	for peer: Variant in board_values:
+		var value: Variant = board_values[peer]
+		if not peer is int or not boards.has(peer) or not (value is float or value is int) or not is_finite(float(value)):
+			continue
+		var board: VesselIntegrity = boards[peer]
+		board.value = clampf(float(value), 0.0, board.maximum)
+		if board.value <= 0.0:
+			_show_board_broken(peer)
 	_apply_flags()
 
 
@@ -685,7 +711,7 @@ func _send_state() -> void:
 	_dirty = false
 	_resync_left_s = RESYNC_S
 	for peer: int in _connected_recipients():
-		receive_state.rpc_id(peer, _states.duplicate(), integrity.value, elapsed_s)
+		receive_state.rpc_id(peer, _states.duplicate(), integrity.value, elapsed_s, board_values())
 
 
 func _finish() -> void:
@@ -705,6 +731,9 @@ func _finish() -> void:
 			"aboard": state == Rider.ABOARD or state == Rider.TIED,
 			"dead": body.meters.dead,
 		}
+		if boards.has(peer):
+			result.riders[peer]["board"] = boards[peer].value
+			result.riders[peer]["board_broken"] = boards[peer].broken
 		body.pinned = false
 	for peer: int in _connected_recipients():
 		receive_result.rpc_id(peer, result.to_dict())
