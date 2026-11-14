@@ -182,6 +182,7 @@ No existing file under `game/tests` is edited.
   - Done 2026-11-14: 13 tests, with its `.uid`.
     - Red first: run alone (`-gconfig= -gtest=<file>`), the suite stopped at a parse error (`Cannot find member "OPENING" in base "LobbyScreen"`). GUT printed "Nothing was run" and exited 0. The solo test alone would likely have passed on the old shell; the parse error is the only red seen.
     - The outside join during a solo run also checks the summary is not interrupted, and starts on "Volver al inicio" (the net-platform scenario).
+    - The FULL case is refused 3 frames late, so a reason reaches the join screen through `join_failed`; the NOT_FOUND case fails inside the call. Follow-up, run alone: 13/13, 133 asserts (the totals below are unchanged).
     - Mutation run, after 5.2: with the outside-join guard always true and `_join_target` building the run before the request (the old order), 2 tests failed (11/13): the solo-run outside join and the pending joiner (session and island present while pending, and the session ran as host). The source was restored and the suite is 13/13 again.
 - [x] 5.2 In `game_shell.gd`:
   - `_end_run()` before every request;

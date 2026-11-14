@@ -320,11 +320,14 @@ func test_a_launch_argument_joins_after_the_title() -> void:
 
 
 func test_a_failed_outside_join_says_why() -> void:
+	# Refused a few frames late, so the reason reaches the shell through join_failed (the
+	# NOT_FOUND case below fails inside the call).
 	var fake := _fake()
+	fake.defer_frames = 3
 	fake.refuse_join = NetFailure.Reason.FULL
 	var shell := _shell()
 	fake.accept_invite(NetJoinTarget.with_token("sala-1", "Yuni"))
-	assert_true(await wait_until(func() -> bool: return fake.calls.has("join"), 2.0), "taken on the title")
+	assert_true(await wait_until(func() -> bool: return NetManager.last_failure == NetFailure.Reason.FULL, 2.0), "taken on the title, then refused")
 	assert_eq(shell.flow, GameShell.Flow.JOIN)
 	var join := shell.screen as JoinScreen
 	assert_eq(join.status.text, "La partida está llena.")
