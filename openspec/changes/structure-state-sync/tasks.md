@@ -49,11 +49,15 @@
 
 ## 3. Joiners on later islands, and the raft
 
-- [ ] 3.1 Tests in `test_structure_sync_net.gd`, written and run before any fix they need:
+- [x] 3.1 Tests in `test_structure_sync_net.gd`, written and run before any fix they need:
   - A joiner on the coast cay: the host's party travels (`IslandTravel` on every peer), the host's player climbs a coast cay palm, then a client joins. It builds the coast cay and its palm has the host's count.
   - The raft on the real island with a real route start (design D2). A joiner before the launch has the `Raft` and no `RaftSite`. A joiner during the crossing has an unbuilt `RaftSite` with nothing deposited and no `Raft`, as the host has.
   - Verify: they pass, with no error lines.
-- [ ] 3.2 Import (twice), smoke run and GUT pass. `openspec validate structure-state-sync --strict` passes.
+  - Done 2026-11-14: 3 tests, passing with no fix needed and no error lines.
+    - The coast cay joiner follows the host's travel (an `IslandTravel` "Travel" in each session, as the shell has) and gets palm 0 at 1, not 2. That confirms the counts arrive after `follow` rebuilt the island.
+    - The raft runs on a real `start_route_for` with a crossing launched, as the shell does. The joiner during the crossing has an unbuilt `RaftSite` drawn `marked`, nothing deposited and no `Raft`, as the host has. So art-pass's "unconfirmed" note was the host's truth (design D2).
+- [x] 3.2 Import (twice), smoke run and GUT pass. `openspec validate structure-state-sync --strict` passes.
+  - Done 2026-11-14: both imports 0 `ERROR` lines; smoke "10 frames, 0 problem(s)"; GUT 175 scripts, 1559 of 1559 (only the asserted error lines of 2.4); the change is valid.
 
 ## 4. Host and client run
 
