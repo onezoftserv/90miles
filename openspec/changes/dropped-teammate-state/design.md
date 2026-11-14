@@ -12,7 +12,7 @@
 
 **Goals:**
 - One source of truth for "this body is dropped" that every peer reads, late joiners included, and that survives a rebind with no extra handling.
-- Waiting riders no longer sit out of play for 90 s because a teammate quit on the island (pending D3).
+- Waiting riders no longer sit out of play for 90 s because a teammate quit on the island (D3).
 - Solo is untouched: one player never drops, and its crossing end loads the next island at once.
 
 **Non-Goals:**
@@ -59,7 +59,7 @@ None of the three is networked, so none has a "disconnected" state. Their closes
   - It adds two RPCs and more lines in `coop_session.gd`, where the sibling session works.
 - *Rejected:* letting `PlayerNet._write_shadow` derive the flag every frame. The body does not know it is dropped; the session does.
 
-**D3. What a dropped body still on the island does to the landing. This is the owner's decision; the answer is pending, asked 2026-11-14 through the coordinating session.**
+**D3. What a dropped body still on the island does to the landing. This was the owner's decision: they chose option A, the 30 s short hold, on 2026-11-14 through the coordinating session. They kept the waiting-line mark, the re-check on a drop and D5.**
 
 | Option | What happens to the dropped body on the island | Effect |
 |---|---|---|
@@ -68,7 +68,7 @@ None of the three is networked, so none has a "disconnected" state. Their closes
 | C | Travels along: it lands with the party, still downed, with its countdown running, and can be reclaimed on the next island. | Kindest, but a disconnect skips the crossing (SPD-style, rejected in D1). |
 | D | Today's rule: it holds the landing until removed, up to 90 s. Only the row word is fixed. | No gameplay change; the 90 s wait stays. |
 
-The specs and tasks are written for A. If the owner picks another option, the escape-routes and coop-networking deltas and task group 3 change before apply.
+The specs and tasks are written for A, the owner's choice.
 
 **D4. How option A is checked.**
 - `IslandTravel.check()` sorts each living body into one of three cases:

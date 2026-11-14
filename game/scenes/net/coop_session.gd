@@ -335,6 +335,7 @@ func _reclaim(old_peer: int, new_peer: int) -> bool:
 	if reclaimed == null or not _dropped.has(old_peer):
 		return false
 	_dropped.erase(old_peer)
+	reclaimed.net.net_dropped = false
 	_limits.erase(old_peer)
 	_limits[new_peer] = PeerLimits.new()
 	_rebind_body(old_peer, new_peer)
@@ -444,9 +445,14 @@ func _physics_process(delta: float) -> void:
 			_remove_player(peer_id)
 
 
-## Host: whether `peer_id` dropped and its player is waiting out the countdown.
+## Whether `peer_id` dropped and its player is waiting out the countdown. The host owns the
+## countdown; a client reads the flag the host writes into the body's synced state, so every peer
+## (a late joiner too) agrees.
 func is_dropped(peer_id: int) -> bool:
-	return _dropped.has(peer_id)
+	if multiplayer.is_server():
+		return _dropped.has(peer_id)
+	var player := body(peer_id)
+	return player != null and player.net.net_dropped
 
 
 ## Host: seconds before a dropped client's player is removed (0 if it is not dropped).
@@ -1030,6 +1036,7 @@ func _on_peer_disconnected(peer_id: int) -> void:
 	if dropped == null or _dropped.has(peer_id):
 		return
 	dropped.set_downed(true)
+	dropped.net.net_dropped = true
 	_limits.erase(peer_id)
 	_dropped[peer_id] = DISCONNECT_DOWNED_S
 	player_disconnected.emit(peer_id)

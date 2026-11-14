@@ -1,21 +1,23 @@
 # Tasks
 
-Group 3 is written for option A of design D3 (the owner's answer is pending). If the owner picks B, C or D, groups 3 and the escape-routes and coop-networking deltas change before apply.
+Group 3 follows option A of design D3, which the owner chose on 2026-11-14.
 
 ## 1. Every peer knows who dropped (coop-networking)
 
-- [ ] 1.1 Tests first:
+- [x] 1.1 Tests first:
   - In `test_player_state_sync.gd`, the shadow field list gains `PlayerNet:net_dropped`, sent at spawn and replicated always.
   - A new `test_dropped_teammate_net.gd` runs a host and two clients, Dayana and Papo, on `NetHarness`.
   - When Papo drops, the host and Dayana both answer `is_dropped(papo)` true, and on the host `_dropped` and the body's flag agree.
   - A third client that joins during Papo's 90 s answers it true too.
   - When Papo rejoins within 90 s, it is false on the host, on Dayana and on the rejoiner, under his new peer.
   - Verify: the tests are seen failing, then passing.
-- [ ] 1.2 Add `net_dropped` to `PlayerNet` and the `StateSync` property in `player.tscn`. In `coop_session.gd`, `_on_peer_disconnected` sets the flag, `_reclaim` clears it, and `is_dropped` reads the body's flag on a client. Verify: 1.1 passes, and `test_coop_reconnect.gd`, `test_coop_session_disconnect.gd`, `test_death_cause.gd`, `test_death_cause_net.gd`, `test_status_flags.gd` and `test_art_sim_invariance.gd` still pass.
+  - Done 2026-11-14: `test_dropped_teammate_net.gd` (3 cases for the flag) and the field list in `test_player_state_sync.gd`; seen failing with the bare field (no peer set it), then passing.
+- [x] 1.2 Add `net_dropped` to `PlayerNet` and the `StateSync` property in `player.tscn`. In `coop_session.gd`, `_on_peer_disconnected` sets the flag, `_reclaim` clears it, and `is_dropped` reads the body's flag on a client. Verify: 1.1 passes, and `test_coop_reconnect.gd`, `test_coop_session_disconnect.gd`, `test_death_cause.gd`, `test_death_cause_net.gd`, `test_status_flags.gd` and `test_art_sim_invariance.gd` still pass.
+  - Done 2026-11-14: all of them pass, as do `test_run_hud.gd` and `test_difficulty_scaling.gd`.
 
 ## 2. The teammate state word (ui-shell)
 
-- [ ] 2.1 Tests first in `test_dropped_teammate_net.gd`, with the run HUD bound on each branch as `test_interact_prompt_net.gd` does:
+- [x] 2.1 Tests first in `test_dropped_teammate_net.gd`, with the run HUD bound on each branch as `test_interact_prompt_net.gd` does:
   - Papo's row reads "Papo 100 Desconectado" on the host's HUD and on Dayana's, not "Caído".
   - A late joiner's HUD shows the same row.
   - After Papo rejoins within 90 s, his row on the host and on Dayana has no state word.
@@ -23,7 +25,9 @@ Group 3 is written for option A of design D3 (the owner's answer is pending). If
   - A dropped Papo whose meters die before removal reads "Muerto" on Dayana's HUD.
   - 1 player, offline: in `test_run_hud.gd`, a solo session's HUD shows no teammate row, and `is_dropped(1)` is false.
   - Verify: the tests are seen failing where group 1 is missing, then passing.
-- [ ] 2.2 No `run_hud.gd` change is expected, since `state_word` already ranks the words. If any 2.1 case still fails after group 1, fix it in `run_hud.gd`. Verify: 2.1 and all of `test_run_hud.gd` pass. Import (twice), smoke run and GUT pass.
+  - Done 2026-11-14: 5 HUD cases plus the solo case. Before group 1 they failed: Dayana and the joiner read 'Papo 100 Caído'. After it, all pass. The downed case downs Papo by the meters, with time left on the downed timer.
+- [x] 2.2 No `run_hud.gd` change is expected, since `state_word` already ranks the words. If any 2.1 case still fails after group 1, fix it in `run_hud.gd`. Verify: 2.1 and all of `test_run_hud.gd` pass. Import (twice), smoke run and GUT pass.
+  - Done 2026-11-14: no HUD change was needed. Import 0 error lines, smoke 10 frames 0 problems, GUT 1552 of 1552.
 
 ## 3. The short hold (escape-routes, design D3 option A, D4, D6)
 
