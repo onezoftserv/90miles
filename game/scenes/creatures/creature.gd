@@ -49,11 +49,12 @@ func _ready() -> void:
 	interactable.interacted.connect(_on_interacted)
 
 
-## Adds the synchronizer that sends position, facing and state to the clients; the session does
-## it for the creatures it spawns, so a creature outside the session has none.
+## Adds the synchronizer that sends position, facing, state and whose head it sits on to the
+## clients; the session does it for the creatures it spawns, so a creature outside the session has
+## none.
 func attach_sync() -> void:
 	var config := SceneReplicationConfig.new()
-	for property: String in [".:position", ".:facing", ".:state_id"]:
+	for property: String in [".:position", ".:facing", ".:state_id", ".:perch_peer"]:
 		config.add_property(NodePath(property))
 		config.property_set_spawn(NodePath(property), true)
 		config.property_set_replication_mode(NodePath(property), SceneReplicationConfig.REPLICATION_MODE_ALWAYS)
