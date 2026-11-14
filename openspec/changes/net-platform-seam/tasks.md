@@ -117,7 +117,7 @@ No existing file under `game/tests` is edited.
   - Done 2026-11-14. Every old member, signal and return code is kept, and the file names no transport peer class and no `NetPeers` factory call. Small additions are listed in design.md "Changes from the build plan".
 - [x] 3.4 3.2 passes. `test_net_manager.gd`, `test_coop_session_disconnect.gd` and `test_core_services.gd` pass unchanged. Run the import, smoke and GUT.
   - Done 2026-11-14:
-    - Run alone, unchanged: `test_net_requests` 18/18 (194 asserts), `test_net_manager` 8/8, `test_coop_session_disconnect` 8/8, `test_core_services` 10/10, `test_enet_backend` 12/12 and `test_net_backend_table` 13/13.
+    - Run alone, unchanged: `test_net_requests` 18/18 (195 asserts after the follow-up emit-count check; the full-run total below predates it), `test_net_manager` 8/8, `test_coop_session_disconnect` 8/8, `test_core_services` 10/10, `test_enet_backend` 12/12 and `test_net_backend_table` 13/13.
     - Import ×2 clean; smoke "10 frames, 0 problem(s)".
     - GUT: 176 scripts (+1), 1586 tests (+18), 1586 passing, 54964 asserts (+198), 0 failing, no leak at exit, no orphans in the new suite.
     - The new suite accounts for 194 of the added asserts. The other 4 come from existing suites; not traced per suite.

@@ -274,6 +274,8 @@ func test_a_join_still_connecting_times_out() -> void:
 	var request := NetManager.request_join(NetJoinTarget.at_address("127.0.0.1", NOBODY_PORT))
 	assert_eq(request.state, NetRequest.State.READY)
 	assert_true(await wait_for_signal(NetManager.join_failed, 3.0), "timed out while still connecting")
+	await wait_process_frames(3)
+	assert_signal_emit_count(NetManager, "join_failed", 1, "closing the connecting peer reports nothing more")
 	assert_eq(NetManager.last_failure, NetFailure.Reason.TIMED_OUT)
 	assert_true(_offline())
 	assert_has(fake.calls, "leave")
