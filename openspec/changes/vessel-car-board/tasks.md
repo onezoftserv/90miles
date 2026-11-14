@@ -130,7 +130,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 8. Integration and docs
 
-- [ ] 8.1 Run a host and a client locally: two Godot processes, with a dev hook that starts `test_board` for both riders. Check that both see their boards, that a squall dumps both, that they climb back and land 10–20 tiles apart, and that no `ERROR:` line appears in either log. Record the run in the PR.
+- [ ] 8.1 Run a host and a client locally on UDP port 7785, not 7777, because other sessions share the machine: two Godot processes, with a dev hook that starts `test_board` for both riders. Check that both see their boards, that a squall dumps both, that they climb back and land 10–20 tiles apart, and that no `ERROR:` line appears in either log. Record the run in the PR.
 - [ ] 8.2 Update the docs:
   - `docs/GAME_DESIGN.md` §8: boards have no lashing; board hits go round; only a raft is beached.
   - `docs/ASSETS.md`: the car and board rows point to the new sheets.
