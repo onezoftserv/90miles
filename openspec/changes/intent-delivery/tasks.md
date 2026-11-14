@@ -1,0 +1,63 @@
+# Tasks
+
+The groups below follow the recommended answers to Q1 to Q3 in design.md. They are pending the coordinator's decision; change them to match the answers before building.
+
+## 1. Redundant, unordered intents (Q1)
+
+- [ ] 1.1 Tests first:
+  - `test_prediction_buffer.gd`: `newest(count)` returns the newest unacknowledged intents, oldest first, at most `count`, and none once they are acknowledged.
+  - `test_player_net.gd`: a predicted body sends its newest intent plus up to 7 earlier unacknowledged ones each frame, then only the unacknowledged ones after an acknowledgement. A host-role body sends exactly one intent per frame. After a `rebind`, nothing from before it is sent again.
+  - `test_coop_session_rate_limits.gd` (the host path, with a test clock):
+    - A message carrying 38 to 42 after 40 queues 41 and 42 only, and charges the limits for those two.
+    - A message arriving after a newer one queues nothing new.
+    - A message with mismatched array lengths, more than 8 intents, or a non-finite value queues nothing.
+  - `test_coop_session_solo.gd` (1 player, offline): over 60 frames each intent is applied once, on its own frame, and the body ends exactly where a body with no session ends.
+  - Verify: the new tests are seen failing, then passing.
+- [ ] 1.2 Build it:
+  - `PredictionBuffer.newest(count)`.
+  - `PlayerNet` hands the session a list of `PendingIntent`s: one for the host role, `newest(8)` for the predicted role. It exposes the last queued number to the host.
+  - `CoopSession.send_intents` and `submit_intents`: `@rpc("any_peer", "call_local", "unreliable")`, sending the first `seq`, a `PackedVector2Array`, a `PackedByteArray` and a `PackedFloat64Array`.
+  - `_receive_intents` checks each intent in turn: repeat, validity, limits, queue.
+  - Delete `submit_intent`.
+  - Verify: 1.1 passes, and so do `test_player_net.gd`, `test_coop_session_net.gd`, `test_coop_reconnect.gd`, `test_interact_prompt_net.gd` and `test_meters_net.gd`.
+- [ ] 1.3 Host-plus-client test, new `test_intent_delivery_net.gd` on `NetHarness`:
+  - A client walks east for 60 frames while the test drops 2 of every 3 of its sends at the client's `PlayerNet` send hook.
+  - The host's body ends where the client predicted it, and no host state moves the client's body by more than 0.01 px.
+  - Verify: it fails on the code before 1.2 (a client that sends one intent per message), then passes.
+- [ ] 1.4 Run the import (twice on a fresh checkout), the smoke run and GUT. Verify: the second import prints no `ERROR` line, smoke reports 0 problems, and GUT passes.
+
+## 2. ENet's throttle kept open (Q2)
+
+- [ ] 2.1 With the coordinator's go-ahead and in the file they name (`NetPeers.create_server` on `main`, or the seam's ENet backend), the host calls `throttle_configure(5000, 2, 0)` on each client connection when it connects. Tests first, in that backend's test file:
+  - A server peer from the factory, once a client connects, reports deceleration 0 on that connection.
+  - The client's connection to the host reports the same once the setting arrives.
+  - A solo session creates no peer at all.
+  - Verify: seen failing, then passing; `test_net_harness_net.gd` still passes.
+- [ ] 2.2 Run the import, the smoke run and GUT. Verify: as in 1.4.
+
+## 3. Rate-limit headroom (Q3)
+
+- [ ] 3.1 Tests first in `test_coop_session_rate_limits.gd`:
+  - The constants: burst 90, slack 1.25 s, refill 1.05 s per s.
+  - "Client claims extra time" (at most 9.2 tiles in 1 s).
+  - "Client after a host hitch": 60 intents of 1/60 s arrive at one instant after 1 s of host time, and all are queued.
+  - "The limit refills after a hitch": from an empty bucket, 30 s of intents with ±20 ms of jitter; none is refused after 2 s, and 1.25 s of slack is back.
+  - The existing over-budget and tiny-step cases are updated to the new slack.
+  - Verify: seen failing, then passing.
+- [ ] 3.2 Change the numbers in `PeerLimits` and update the doc comment. Verify: 3.1 passes, and so does `test_coop_session_rate_limits.gd` as a whole.
+- [ ] 3.3 Run the import, the smoke run and GUT. Verify: as in 1.4.
+
+## 4. Measured again, two processes
+
+- [ ] 4.1 Re-run the probe conditions from design.md "Measurements" on UDP 7788, with the change. Note each in design.md beside the baseline.
+  - Verify: calm, client-requests and host-hitch runs lose 0 intents.
+  - Verify: a 1 s host frame refuses none and snaps the client by less than 1 px.
+  - Verify: 2% relay loss loses at most the intents of runs longer than 7 packets.
+  - Verify: no `ERROR` line in any log.
+- [ ] 4.2 Host plus client with the co-op playground on UDP 7788 (`--host=7788`, `--join=127.0.0.1:7788`), both headless, for 60 s with the client walking. Verify: both logs have no `ERROR` line, and the client spawns and moves on the host.
+- [ ] 4.3 Update `TASKS.md`: tick the "ENet throttle on `submit_intent`" follow-up and add the dated entry. Verify: `openspec validate intent-delivery --strict` passes.
+
+## Workflow follow-up
+
+- Open the PR into `main` once groups 1 to 4 are done and the coordinator has merged or rebased over `net-platform-seam` as needed for group 2.
+- Archive with `/opsx:archive` after the owner's review.
