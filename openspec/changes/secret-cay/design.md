@@ -84,7 +84,7 @@ In `CoopSession._remove_player`, on the host, before the body is erased and free
 
 ### Reference record (ideas only; nothing copied or translated)
 
-Studied in `reference/` (`shattered-pixel-dungeon`, `BrogueCE`, `crawl`).
+Studied in `reference/` (`shattered-pixel-dungeon`, `BrogueCE`, `crawl`). Don't Starve Together became a fourth reference game on 2026-11-14 (owner); it is closed-source (Klei), so it was read on its wiki (dontstarve.wiki.gg) for ideas only: no code, data, text or art.
 
 | Idea | Game | File and function | Verdict | Why |
 | --- | --- | --- | --- | --- |
@@ -116,6 +116,8 @@ Studied in `reference/` (`shattered-pixel-dungeon`, `BrogueCE`, `crawl`).
 | Portals that close on a timer | DCSS | `dat/dlua/lm_timed.lua` `TimedMarker` | Rejected | "Too slow" stays a joke, never a timer that punishes a slow solo player |
 | A thief that runs off with the item | Brogue | `Combat.c` `specialHit` (`MA_HIT_STEAL_FLEE`, the monkey); `Monsters.c` `updateMonsterState` (the thief keeps fleeing while it carries the item) | Rejected | A solo chase is unfair and could erase the secret |
 | Decoy exits and mimics | DCSS | `dungeon.cc` `_place_feature_mimics`, `abyss.des` `abyss_fake_exit` | Rejected | In real-time co-op a decoy that wastes the party's walk is griefing |
+| A written clue that leads to a hidden treasure | DST | wiki "Message in a Bottle" (DST: read on the coast, it puts a sunken chest's position on the map, or after the Crabby Hermit only 60% of the time, with a plain message otherwise) | Adapted | The map is our written clue, but it names only the kind of spot where the compass hides, never a cell or a map marker, so the search stays and the needle still matters. Rejected: the exact map marker, and bottles that keep coming every day or two (the secret is one pair per run, rolled once) |
+| Rare, hidden set pieces whose payoff is lore or a joke | DST | wiki "Set Pieces" (rare world-generation layouts, some only in a biome, some guarded, some traps; a few pay in lore or a joke rather than loot, and one chest can be a dud) | Adapted | The cay is a rare handmade place (1 run in 3, both pieces needed) whose reward is a joke note and a hat, never power, and the empty chest is the dud on purpose. Rejected: trapped set pieces (unfair to a solo player after a long hunt, as with the Mimic above) and in-joke names of real people on graves (no real people, and nothing on the cay is a memorial) |
 
 ## Changes from the build plan
 
