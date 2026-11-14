@@ -26,6 +26,6 @@ None.
 
 - `game/scenes/structures/fire.gd` (`lit` side effects in a setter, so a synced value takes effect), `game/scenes/structures/rain_catcher.gd`, `game/scripts/crafting/site_placer.gd` (a synchronizer on each spawned structure, and the host's fire lit before its spawn is sent).
 - `game/scenes/levels/palm.gd` (a `coconuts_changed` signal), `game/scenes/levels/sandbar_island.gd` (keeps its palms in order and adds the palm sync to the session in `furnish`), a new `game/scripts/net/palm_sync.gd` (a session child with host-to-client RPCs, freed with the island's other furniture on travel).
-- `game/scenes/net/coop_session.gd`: one host signal emitted at the end of `request_join`, after the world state, beside `send_progress`. No other session code changes.
+- `game/scenes/net/coop_session.gd`: one host signal emitted at the end of `request_join`, after the world state, beside `send_progress`, and `_spawn_entity` passing one argument fewer to `SitePlacer.from_payload` (its `on_host` goes). No other session code changes.
 - Tests: a 1-player offline test, and host-plus-client tests (live client, late joiner, rejoiner, joiner on the second island, forged messages, the raft regression on the real island).
 - No new autoload, no new content, no change to the backend. `net_peers.gd`, `net_manager.gd` and the join screen are untouched.

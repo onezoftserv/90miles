@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Structure state on every peer
-The host's state of each palm (coconuts left), fire (lit or out) and rain catcher (cups waiting) SHALL reach every client in the run when it changes, and a client SHALL show that state: its look, whether it can be used, and whether a fire counts as lit there. A client never changes these itself. Exactly 1 player, offline, is their own host: their structures behave as before and nothing is sent.
+The host's state of each palm (coconuts left), fire (lit or out) and rain catcher (cups waiting) SHALL reach every client in the run when it changes, and a client SHALL show that state in its look; a fire also counts as lit there, and can be put out there, only while it is lit on the host. A client never changes these itself. Exactly 1 player, offline, is their own host: their structures behave as before and nothing is sent.
 
 #### Scenario: A solo player's structures
 - **GIVEN** one offline player on the sandbar beside a palm with 2 coconuts, a lit fire they built and a rain catcher
@@ -52,7 +52,7 @@ A client that joins the run, or rejoins and takes back its player, SHALL get the
 - **THEN** the client has the raft and no site
 
 ### Requirement: Structure messages come only from the host
-A client SHALL apply a structure message only when the host sent it, and only to a structure on its own current island or in its own session, with each value held to what that structure can hold: a palm between 0 and its layout's count, cups at 0 or more. Anything else is dropped. A client cannot change another peer's structures, by a message or by changing its own copy. Exactly 1 player, offline, receives no messages.
+A client SHALL apply a structure message only when the host sent it, and only to a structure on its own current island or in its own session, with a palm's count held between 0 and its layout's count. Anything else is dropped. A client cannot change another peer's structures, by a message or by changing its own copy. Exactly 1 player, offline, receives no messages.
 
 #### Scenario: A client forges a structure message
 - **GIVEN** a host and two clients
