@@ -9,6 +9,7 @@ extends GutTest
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const HUNT_PATH: String = "res://scenes/dev/secret_hunt_layout.tres"
+const CAY_PATH: String = "res://resources/islands/cayo_sin_norte.tres"
 const ROOT: String = "user://test_handmade_layouts"
 
 
@@ -74,6 +75,26 @@ func test_the_hunt_layout_builds_the_island_scene() -> void:
 		_assert_builds_its_own(hunt, Vector2i(56, 34), 2, 4)
 
 
+func test_the_secret_cay_builds_the_island_scene() -> void:
+	var cay := load(CAY_PATH) as IslandLayoutData
+	assert_not_null(cay)
+	if cay != null:
+		_assert_builds_its_own(cay, Vector2i(48, 27), 3, 7)
+
+
+func test_the_cay_draws_its_scenery_over_the_ground() -> void:
+	var made: Array = _furnished(load(CAY_PATH) as IslandLayoutData)
+	var island: SandbarIsland = made[0]
+	var session: CoopSession = made[1]
+	var decor := island.get_node_or_null(^"Decor") as DecorView
+	assert_not_null(decor, "a DecorView child")
+	if decor != null:
+		assert_true(decor.is_in_group(&"art_view"), "drawing only")
+		assert_gt(decor.get_index(), island.get_node(^"Terrain").get_index(), "after the ground, so over it")
+	assert_not_null(session.get_node_or_null(NodePath(Chest.NAME)), "the chest")
+	assert_not_null(island.get_node_or_null(NodePath(SandbarIsland.SHELTER_NAME)), "the lean-to over its shade")
+
+
 func test_the_sandbar_keeps_its_workbench_and_creatures() -> void:
 	var made: Array = _furnished(load("res://resources/islands/sandbar.tres") as IslandLayoutData)
 	var session: CoopSession = made[1]
@@ -89,6 +110,8 @@ func test_numbered_islands_are_the_catalog_layouts_but_off_graph_ones() -> void:
 		assert_false(layout.off_graph, "%s is not off-graph" % layout.id)
 	assert_has(ids, &"sandbar")
 	assert_has(ids, &"coast_cay")
+	assert_does_not_have(ids, &"cayo_sin_norte", "the secret cay is never a numbered island")
+	assert_true(GameState.content.has_entry(&"islands", &"cayo_sin_norte"), "though the catalog holds it")
 
 
 func test_an_off_graph_layout_is_never_numbered() -> void:

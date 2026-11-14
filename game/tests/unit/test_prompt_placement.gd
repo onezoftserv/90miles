@@ -3,9 +3,9 @@ extends GutTest
 ## world draws in WorldView's SubViewport and the prompt is mapped from it into the HUD as in a
 ## real run: centred over its target at whole pixels, its bottom edge 12 px above the target (over
 ## a player 3 px above its name tag's label on its head anchor, art-pass design.md P5), at most 240 px wide with "…", and kept inside
-## x 4-636, y 22-302 off every HUD panel, the secret-cay needle and note included (the real
-## needle, shown by giving the player the broken compass; a stand-in in the HUD's avoid group for
-## the note). The prompt is ticked by hand.
+## x 4-636, y 22-302 off every HUD panel, the secret-cay needle and note included (the real ones:
+## the player carries the broken compass, and the note label shows a long note). The prompt is
+## ticked by hand.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://test_prompt_placement_settings.cfg"
@@ -13,8 +13,6 @@ const TILE: float = 16.0
 const STEP_S: float = 0.1
 const BOUNDS: Rect2 = Rect2(4.0, 22.0, 632.0, 280.0)
 const OPEN_SAND: Vector2i = Vector2i(50, 18)
-## secret-cay design §8: the note below the needle's place.
-const NOTE_RECT: Rect2 = Rect2(140.0, 46.0, 360.0, 20.0)
 const TEAMMATE: int = 7
 
 var shell: GameShell
@@ -66,27 +64,28 @@ func _panels() -> Array[Rect2]:
 		hud.notice.panel.get_global_rect(),
 		hud.strip.weight_panel.get_global_rect(),
 		hud.needle.get_global_rect(),
-		NOTE_RECT,
+		hud.note_label.get_global_rect(),
 	]
 	if hud.teammates_panel.visible:
 		rects.append(hud.teammates_panel.get_global_rect())
 	return rects
 
 
-# secret-cay's real needle (the local player carries the broken compass) and a stand-in for its
-# note, in the group the prompt keeps clear of.
+# secret-cay's real needle (the local player carries the broken compass) and note label (showing
+# the longest note entry, held up for the whole test).
 func _add_secret_cay_pieces() -> void:
 	var body := shell.session.body(1)
 	body.inventory.add(&"brujula_rota", 1)
 	shell.hud.needle.step(0.0)
 	assert_true(shell.hud.needle.visible, "the real needle is up")
-	for rect: Rect2 in [NOTE_RECT]:
-		var piece := Control.new()
-		piece.position = rect.position
-		piece.size = rect.size
-		piece.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		piece.add_to_group(RunHud.AVOID_GROUP)
-		shell.hud.add_child(piece)
+	var longest: String = ""
+	var note := GameState.content.get_entry(&"items", &"nota_llegaste_tarde") as TextData
+	for entry: TextEntryData in note.entries:
+		if entry.body_es.length() > longest.length():
+			longest = entry.body_es
+	shell.hud.note_label.set_process(false)
+	shell.hud.note_label.show_text(longest)
+	assert_true(shell.hud.note_label.visible, "the real note label is up")
 
 
 func _assert_placed(where: String) -> void:

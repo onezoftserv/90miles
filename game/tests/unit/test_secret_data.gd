@@ -271,9 +271,8 @@ func test_no_weighted_pick_can_draw_a_secret_item() -> void:
 
 
 func test_the_shared_check_and_filter() -> void:
-	var cay := IslandLayoutData.new()
-	cay.id = &"cay_stand_in"
-	cay.secret = true
+	var cay := GameState.content.get_entry(&"islands", &"cayo_sin_norte") as IslandLayoutData
+	assert_not_null(cay, "the cay layout loads")
 	var sandbar := GameState.content.get_entry(&"islands", &"sandbar") as IslandLayoutData
 	var driftwood := _item(&"driftwood")
 	var everything: Array = [driftwood, sandbar, cay]
@@ -283,7 +282,7 @@ func test_the_shared_check_and_filter() -> void:
 		if item != null:
 			assert_true(SecretRules.is_secret(item), "%s is secret" % id)
 			everything.append(item)
-	assert_true(SecretRules.is_secret(cay), "a layout marked secret is secret")
+	assert_true(SecretRules.is_secret(cay), "the cay is secret")
 	assert_false(SecretRules.is_secret(driftwood), "driftwood is not secret")
 	assert_false(SecretRules.is_secret(sandbar), "the sandbar is not secret")
 	assert_false(SecretRules.is_secret(null), "nothing is not secret")

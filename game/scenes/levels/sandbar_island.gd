@@ -3,7 +3,8 @@ extends Node2D
 ## A handmade island (island-generation "Handmade sandbar", "Handmade coast cay" and "Any handmade
 ## layout builds the island"), built from the layout it is given: the grid, the palms, the
 ## workbench, the lagoon, the signs and the pick-ups. Its `Terrain` child (TerrainView) draws the
-## ground from the grid on every peer and only reads it. The layout is set before the island enters
+## ground from the grid on every peer and only reads it, and its `Decor` child (DecorView) the
+## layout's scenery cells over it. The layout is set before the island enters
 ## the tree (the sandbar is the default). Terrain, palms, workbench, drinking spots and signs are
 ## built on every peer from the same data; the pick-ups are placed and refreshed by the host alone,
 ## through the session's pick-up spawner. The class keeps its name from the first island. The
@@ -20,6 +21,7 @@ const RAFT_NAME: StringName = &"Raft"
 const RAFT_RECIPE_ID: StringName = &"raft"
 const SQUALL_ID: StringName = &"squall"
 const DRINK_SPOT_NAME: String = "DrinkSpot%d"
+const CHEST_SCENE: PackedScene = preload("res://scenes/structures/chest.tscn")
 const SIGN_NAME: String = "Sign%d"
 const RAFT_SCENE: PackedScene = preload("res://scenes/structures/raft.tscn")
 
@@ -105,7 +107,8 @@ func spawn_points(solo: bool) -> Array[Vector2]:
 
 
 ## Every peer: the workbench (when the layout has one), the routes, the raft's build site, the
-## drinking spots and the signs go in the session at the same path on each, and the island starts
+## drinking spots, the signs and the chest (when the layout has one, secret-cay) go in the session
+## at the same path on each, and the island starts
 ## listening for squalls to end. The host also starts the creatures, unless the layout is off-graph.
 func furnish(session: CoopSession) -> void:
 	_session = session
@@ -115,6 +118,7 @@ func furnish(session: CoopSession) -> void:
 		bench.position = IslandLayout.cell_center(built.workbench)
 		session.add_child(bench)
 	_place_water_and_signs()
+	_place_chest()
 	var routes := IslandRoutes.new()
 	routes.name = ROUTES_NAME
 	session.add_child(routes)
@@ -146,6 +150,16 @@ func _place_water_and_signs() -> void:
 		marker.line_es = data.text_es
 		marker.line_en = data.text_en
 		_session.add_child(marker)
+
+
+# The layout's chest, named the same on every peer (secret-cay "Empty chest").
+func _place_chest() -> void:
+	if built.chest.x < 0:
+		return
+	var chest := CHEST_SCENE.instantiate() as Chest
+	chest.note_id = layout.chest_item_id
+	chest.position = IslandLayout.cell_center(built.chest)
+	_session.add_child(chest)
 
 
 ## Every peer: a raft that ended its crossing intact lies on the build site with the integrity it

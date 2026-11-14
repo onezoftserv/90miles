@@ -420,3 +420,149 @@ func test_spot_kind_names_the_nearest_feature() -> void:
 	assert_eq(island.spot_kind(Vector2i(2, 2)), &"palm", "a palm")
 	assert_eq(island.spot_kind(Vector2i(11, 2)), &"flotsam", "a pick-up's group")
 	assert_eq(island.spot_kind(Vector2i(8, 3)), &"tide_pool", "a tide pool")
+
+
+# --- secret-cay "The hidden cay", "He left minutes ago", "A lone player can live and leave",
+# --- "Fixed cay contents" (task 6.1) -----------------------------------------------------------
+
+const CAY_PATH: String = "res://resources/islands/cayo_sin_norte.tres"
+const DECOR_IDS: Array[StringName] = [&"embers", &"cigar_smoke", &"drag_mark", &"cut_line", &"post", &"platino"]
+
+
+func _cay() -> IslandLayoutData:
+	return load(CAY_PATH) as IslandLayoutData
+
+
+func _decor_cells(island: IslandLayout, decor_id: StringName) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for entry: Dictionary in island.decor:
+		if entry["decor_id"] == decor_id:
+			cells.append(entry["cell"])
+	return cells
+
+
+func _counts(island: IslandLayout) -> Dictionary[StringName, int]:
+	var counts: Dictionary[StringName, int] = {}
+	for pickup: Dictionary in island.pickups:
+		counts[pickup["item_id"]] = counts.get(pickup["item_id"], 0) + int(pickup["count"])
+	return counts
+
+
+func test_the_cay_loads() -> void:
+	var layout := _cay()
+	assert_not_null(layout, "the cay layout loads")
+	if layout == null:
+		return
+	var island := IslandLayout.build(layout)
+	assert_eq(island.problems(), PackedStringArray())
+	assert_eq(island.size, Vector2i(48, 27))
+	assert_true(layout.off_graph, "off-graph")
+	assert_true(layout.secret, "secret")
+	assert_eq(island.palms.size(), 3, "3 palms")
+	var coconuts: int = 0
+	for count: int in island.palm_coconuts:
+		coconuts += count
+	assert_eq(coconuts, 7, "7 coconuts")
+	assert_eq(island.workbench, Vector2i(-1, -1), "no workbench")
+	assert_eq(island.tide_pools.size(), 0, "no tide pool")
+	assert_eq(layout.route_ids, [&"raft"] as Array[StringName], "the raft is its only route")
+	assert_eq(layout.next_island, &"", "no next island is named")
+	assert_eq(layout.chest_item_id, &"nota_llegaste_tarde")
+	for entry: IslandGlyphData in layout.pickups:
+		assert_eq(entry.respawn, DataEnums.RespawnTrigger.NEVER, "%s never respawns" % entry.item_id)
+	var land: int = 0
+	for cell: Vector2i in island.terrain.cells:
+		if SECRET_LAND.has(island.terrain.cells[cell]):
+			land += 1
+	assert_between(land, 180, 240, "about 200 land cells")
+
+
+func test_the_chest_is_the_farthest_land_cell() -> void:
+	var island := IslandLayout.build(_cay())
+	assert_ne(island.chest, Vector2i(-1, -1), "the cay has a chest")
+	assert_has(SECRET_LAND, island.terrain.terrain_at(island.chest), "on land, not shallows")
+	var distances: Dictionary[Vector2i, int] = island.walk_distances_from(island.solo_spawn)
+	var farthest: int = 0
+	for cell: Vector2i in distances:
+		if SECRET_LAND.has(island.terrain.terrain_at(cell)):
+			farthest = maxi(farthest, distances[cell])
+	assert_eq(distances.get(island.chest, -1), farthest, "no land cell is farther by walking")
+	assert_lt(island.chest.y, island.size.y / 3, "at the north tip")
+
+
+func test_the_landing_is_together_at_the_south_end() -> void:
+	var island := IslandLayout.build(_cay())
+	var spawns: Array[Vector2i] = [island.solo_spawn]
+	spawns.append_array(island.coop_spawns)
+	assert_eq(island.coop_spawns.size(), 4)
+	for cell: Vector2i in spawns:
+		assert_eq(island.terrain.terrain_at(cell), DataEnums.Terrain.BEACH, "%s is sand" % cell)
+		assert_gt(cell.y, island.size.y * 2 / 3, "%s is at the south end" % cell)
+	for a: Vector2i in island.coop_spawns:
+		for b: Vector2i in island.coop_spawns:
+			assert_lte(_tiles(a, b), 5.0, "co-op spawns %s and %s within 5 tiles" % [a, b])
+	var reach: Dictionary[Vector2i, bool] = island.reachable_from(island.solo_spawn)
+	assert_true(reach.has(island.raft_site), "the raft site is reachable alone")
+	assert_true(reach.has(island.chest), "the chest is reachable alone")
+	for pickup: Dictionary in island.pickups:
+		assert_true(reach.has(pickup["cell"]), "%s is reachable" % pickup["item_id"])
+
+
+func test_the_lean_to_is_the_only_shade_and_holds_the_hat() -> void:
+	var layout := _cay()
+	var island := IslandLayout.build(layout)
+	assert_gt(island.hut_cells.size(), 0, "a lean-to")
+	assert_eq(island.terrain.shaded.keys().size(), island.hut_cells.size(), "its cells are the only shade")
+	var hats: Array[Vector2i] = []
+	for pickup: Dictionary in island.pickups:
+		if pickup["item_id"] == &"sombrero_cinta_roja":
+			hats.append(pickup["cell"])
+			assert_eq(int(pickup["count"]), 1, "one hat")
+	assert_eq(hats.size(), 1, "one hat on the cay")
+	if hats.size() == 1:
+		assert_has(island.hut_cells, hats[0], "the hat hangs on the lean-to")
+
+
+func test_he_left_minutes_ago() -> void:
+	var layout := _cay()
+	var island := IslandLayout.build(layout)
+	for decor_id: StringName in DECOR_IDS:
+		assert_gt(_decor_cells(island, decor_id).size(), 0, "the %s" % decor_id)
+		assert_true(layout.decor_colors.has(decor_id), "a colour for %s" % decor_id)
+	var reaches_water: bool = false
+	for cell: Vector2i in _decor_cells(island, &"drag_mark"):
+		if island.terrain.terrain_at(cell) == DataEnums.Terrain.SHALLOWS:
+			reaches_water = true
+	assert_true(reaches_water, "the drag mark reaches the shallows")
+	var embers: Array[Vector2i] = _decor_cells(island, &"embers")
+	var near_camp: bool = false
+	for cell: Vector2i in island.hut_cells:
+		for ember: Vector2i in embers:
+			near_camp = near_camp or _tiles(cell, ember) <= 2.0
+	assert_true(near_camp, "the embers are by the lean-to")
+
+
+func test_platino_sits_beside_the_chest() -> void:
+	var island := IslandLayout.build(_cay())
+	var figurine: Array[Vector2i] = _decor_cells(island, &"platino")
+	assert_eq(figurine.size(), 1, "one figurine")
+	if figurine.size() == 1:
+		assert_lte(_tiles(figurine[0], island.chest), 1.5, "on the chest's ledge")
+
+
+func test_a_lone_player_can_live_and_leave() -> void:
+	var island := IslandLayout.build(_cay())
+	var counts: Dictionary[StringName, int] = _counts(island)
+	var raft := load("res://resources/recipes/raft.tres") as RecipeData
+	assert_gt(raft.inputs.size(), 0)
+	for id: StringName in raft.inputs:
+		assert_gte(counts.get(id, 0), raft.inputs[id], "enough %s for the raft" % id)
+	assert_gte(counts.get(&"knife", 0), 1, "a knife")
+	assert_between(counts.get(&"rain_cup", 0), 1, 2, "1-2 rain cups")
+	assert_ne(island.raft_site, Vector2i(-1, -1), "a raft build site")
+
+
+func test_the_cay_content_passes_the_check() -> void:
+	assert_true(GameState.content.has_entry(&"islands", &"cayo_sin_norte"))
+	assert_eq(ContentValidator.validate(GameState.content), PackedStringArray())
+	assert_true(SecretRules.is_secret(_cay()), "the shared check knows the cay")
