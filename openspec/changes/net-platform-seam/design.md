@@ -2,7 +2,12 @@
 
 ## Context
 
-Every file and line cited here was checked read-only at `main` 528e2a5.
+The design workflow checked the files and lines cited here read-only at `main` 528e2a5. The author spot-checked:
+- `creature_spawner.gd` `_begin`;
+- `test_core_services.gd`'s no-constants rule;
+- `test_look_slots.gd`'s pinned lines;
+- the seam-scan hits (only `net_manager.gd` and `game_shell.gd`);
+- the "7777" test assertions. `test_lobby_screen.gd:40` asserts on a lobby built directly with the scene's own note, so it stays green.
 
 **Today's transport**
 - `NetPeers` (`game/scripts/net/net_peers.gd`) is the only place that creates the transport:
@@ -29,7 +34,7 @@ Every file and line cited here was checked read-only at `main` 528e2a5.
 - **Leaving.** `leave()` only swaps the peer, so a platform lobby would stay open.
 - **No outside joins.** There is no entry point for invites or launch-time joins.
 
-**Research** (2026-11-14 workflow; sources in the change's PR description)
+**Research** (2026-11-14 workflow; sources and caveats are listed at the end of this file)
 - **Steam:** GodotSteam's `SteamMultiplayerPeer` is a drop-in `MultiplayerPeer` for Godot 4.
   - Joining is asynchronous, through a lobby.
   - Its client never reports a failed connect, so the game needs a join timeout of its own.
@@ -404,3 +409,40 @@ Menus stay standard Spanish. Status and failure lines are system messages, so th
 **After Steam:**
 - **EOS:** sign-in in `start()`, and chunk large join RPCs, since EOSG does not fragment packets.
 - **Consoles:** privilege checks and suspend/resume through a separate narrow interface.
+
+## Sources and caveats
+
+These are research notes for the later backends. This change depends on none of them.
+
+**Steam (GodotSteam)**
+- Sources:
+  - codeberg.org/godotsteam/godotsteam (readme: MIT, version 4.24);
+  - `godotsteam_multiplayer_peer.cpp/.h` on its `godot4` branch;
+  - godotsteam.pages.dev (`/classes/multiplayer_peer/`, `/tutorials/multiplayer_peer/`, `/tutorials/lobbies/`, `/howto/gdextension/`, `/tutorials/exporting_shipping/`, and the blog post "GodotSteam 4.24 and MultiplayerPeer", 2026-11-08);
+  - partner.steamgames.com/doc/api/ISteamFriends and ISteamApps.
+- **To verify in the Steam change:**
+  - that 4.24 is current and that its peer-1 check works;
+  - the missing connect timeout and `server_disconnected` on host loss (read through a summarising fetch, not a build);
+  - whether the GDExtension is stable on 4.7.2 (the Asset Store listing says "unstable");
+  - whether lobbies, relay and invites work on app 480;
+  - whether `steam_api` binaries may be committed;
+  - the usable channel count.
+
+**Epic Online Services**
+- Sources:
+  - github.com/3ddelano/epic-online-services-godot (EOSG, MIT wrapper) and its `eosg_multiplayer_peer.cpp`;
+  - github.com/Daylily-Zeleen/GD-EOS;
+  - onlineservices.epicgames.com news on the Connect interface and console crossplay.
+- **Unverified:**
+  - the P2P max packet size (commonly quoted as 1170 bytes; check `eos_p2p_types.h`);
+  - the `EOS_ERelayControl` default;
+  - the identity providers per console;
+  - the exact EOS SDK licence terms.
+
+**Godot and consoles**
+- Sources:
+  - docs.godotengine.org (`class_multiplayerpeerextension`, `class_webrtcmultiplayerpeer`, `high_level_multiplayer`, `tutorials/platform/consoles`);
+  - godotengine.org/consoles;
+  - the W4 Games consoles FAQ, which lists Godot 4.4–4.6 and does not mention 4.7: to verify before any console plan.
+- Console certification rules are under NDA. The only public analogue is Xbox's XR list (devdocs.xbox.com XR-045, XR-064, XR-074, XR-112).
+- WebRTC would need a signalling server, and v1 has no backend.
