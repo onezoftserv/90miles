@@ -67,6 +67,10 @@ enum DumpTrigger {
 @export var vessel_integrity: int = 100
 ## The vessel is beached with its integrity; false for borrowed vessels and swimmers.
 @export var vessel_kept_on_arrival: bool = true
+## Landing spread in tiles, minimum and maximum (crossing "Arrival scatter"). The default (0, 5)
+## lands riders on the landing cells; a wider one, such as the board's (10, 20), puts each rider
+## on a beach cell within that range of every rider already placed.
+@export var arrival_scatter_tiles: Vector2i = Vector2i(0, 5)
 
 @export_group("Crossing")
 ## Min/max base crossing length, in seconds.

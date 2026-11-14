@@ -155,6 +155,10 @@ enum Vessel {
 	TURTLE,
 	SWIMMERS,
 	DOLPHIN_POD,
+	## The almendrón flotante: a car on four drums, one shared vessel like the raft.
+	CAR,
+	## La tabla: one rigged board per rider, lost on arrival.
+	BOARD,
 }
 
 enum Terrain {

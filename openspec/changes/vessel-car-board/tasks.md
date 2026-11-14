@@ -14,8 +14,8 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 1. Data
 
-- [ ] 1.1 Append `CAR` and `BOARD` to `DataEnums.Vessel` after `DOLPHIN_POD`. Add `RouteData.arrival_scatter_tiles: Vector2i = Vector2i(0, 5)` with its doc comment. Add `BOARD` to `CompanionData.can_swim`'s comment. Verify with a GUT test that `Vessel.DOLPHIN_POD`, `CAR` and `BOARD` are 4, 5 and 6, that a new `RouteData` scatters (0, 5), and that `binoculars_swim.tres` and `raft.tres` load unchanged; `test_data_classes.gd` still passes.
-- [ ] 1.2 Add the two fixture routes and a `FixtureRoutes` test helper that puts them in and takes them out of the catalog cache. Verify that a test can `get_entry(&"routes", &"test_board")` and that the content validator's run over `res://resources/` does not see them.
+- [x] 1.1 Append `CAR` and `BOARD` to `DataEnums.Vessel` after `DOLPHIN_POD`. Add `RouteData.arrival_scatter_tiles: Vector2i = Vector2i(0, 5)` with its doc comment. Add `BOARD` to `CompanionData.can_swim`'s comment. Verify with a GUT test that `Vessel.DOLPHIN_POD`, `CAR` and `BOARD` are 4, 5 and 6, that a new `RouteData` scatters (0, 5), and that `binoculars_swim.tres` and `raft.tres` load unchanged; `test_data_classes.gd` still passes.
+- [x] 1.2 Add the two fixture routes and a `FixtureRoutes` test helper that puts them in and takes them out of the catalog cache. Verify that a test can `get_entry(&"routes", &"test_board")` and that the content validator's run over `res://resources/` does not see them.
 
 ## 2. Route items spent at the start (escape-routes "Route items spent at the start")
 
