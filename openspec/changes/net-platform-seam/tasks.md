@@ -132,7 +132,8 @@ No existing file under `game/tests` is edited.
   - the host closing reaches the client;
   - a bad target fails with no peer (INVALID_TARGET or NOT_FOUND);
   - a peer after leave is closed.
-  - Done 2026-11-14: 12 tests (each case as an `_enet` and a `_fake` test sharing one helper), 111 asserts, 12/12 alone, no orphans and no engine errors.
+  - Done 2026-11-14: 12 tests (each case as an `_enet` and a `_fake` test sharing one helper), 116 asserts, 12/12 alone, no orphans and no engine errors.
+    - A mutation run, with `NetRequest.succeed()` changed to leave a late peer open, failed both "peer after leave" cases (10/12). The source was restored afterwards.
     - Each branch is a `Machine` with its own backend that stands in for `NetManager`. The fake answers 3 frames late, keeps answering after `leave()`, and is joined by its lobby token from a second fake.
     - It also asserts `NetManager.backend is EnetBackend` in `before_all` and `after_all` and cleans up in `after_each`, though it never swaps the backend.
     - "A peer after leave": the ENet form, and what a mutation run showed, are in design.md "Changes from the build plan".
@@ -146,8 +147,8 @@ No existing file under `game/tests` is edited.
 - [x] 4.3 Fix what fails; only the fake and the scan list should need work. Run the import, smoke and GUT; the seam scan is expected red until 5.2.
   - Done 2026-11-14: nothing needed fixing. The fake, the scan list and every non-test file are unchanged.
     - Import ×2 clean; smoke "10 frames, 0 problem(s)".
-    - GUT: 178 scripts (+2), 1601 tests (+15), 1600 passing, 1 failing, 55097 asserts (+133), 55096 passing. The one failure is the expected seam-scan hit on `game_shell.gd:180`, which stays red until 5.2. No leak at exit, and no orphans in the new suites.
-    - The new suites account for 128 of the added asserts. The other 5 come from existing suites, including the test_net_requests follow-up that the 3.4 total predates; not traced per suite.
+    - GUT: 178 scripts (+2), 1601 tests (+15), 1600 passing, 1 failing, 55102 asserts (+138), 55101 passing. The one failure is the expected seam-scan hit on `game_shell.gd:180`, which stays red until 5.2. No leak at exit, and no orphans in the new suites.
+    - The new suites account for 133 of the added asserts. The other 5 come from existing suites, including the test_net_requests follow-up that the 3.4 total predates; not traced per suite.
 
 ## 5. Shell and screens (tests first)
 

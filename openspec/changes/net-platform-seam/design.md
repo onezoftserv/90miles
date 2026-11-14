@@ -495,11 +495,13 @@ Recorded while building group 4 (2026-11-14).
   - The fake form has the request in flight when the player leaves.
   - Both forms check that:
     - the request stays CANCELLED with no peer;
+    - the peer the backend still delivered is closed;
     - nothing is installed;
     - the late server's port is free again;
     - the host never admits the late client.
-  - The fake form also checks that both peers it delivered are closed, and that no lobby was listed.
-  - **Caveat:** `EnetBackend` keeps no reference to its peer. If `NetRequest` failed to close a late ENet peer, reference counting would still free it and close it. So the ENet half checks the outcome, not `NetRequest`'s close. A mutation run, in which `succeed()` left a late peer open, failed only the fake half.
+  - The fake form also checks that no lobby was listed.
+  - **The late requests are a test-only `WatchedRequest`,** a `NetRequest` subclass that keeps every peer offered to it. `EnetBackend` keeps no reference to its peer. Without the subclass, reference counting would free and close a late ENet peer even if `NetRequest` did not.
+  - **Mutation check:** with `succeed()` changed to leave a late peer open, both the `_enet` and the `_fake` cases fail.
 - **Bad targets.** Both backends get the same three targets: a blank address, port 0 and an unknown token.
   - ENet answers INVALID_TARGET for all three.
   - The fake answers INVALID_TARGET, INVALID_TARGET and NOT_FOUND.

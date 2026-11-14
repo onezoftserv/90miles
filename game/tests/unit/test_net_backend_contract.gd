@@ -90,6 +90,24 @@ class Machine:
 		answered.settle(NetRequest.State.READY)
 
 
+## A request that keeps every peer the backend offered it. Holding them means only
+## NetRequest.succeed() can close a late one: EnetBackend keeps no reference, so otherwise reference
+## counting would free and close a late ENet peer whatever the request did.
+class WatchedRequest:
+	extends NetRequest
+
+	var offers: Array[MultiplayerPeer] = []
+
+	func _init(request_kind: NetRequest.Kind = NetRequest.Kind.HOST, host_port: int = 0,
+			join_target: NetJoinTarget = null) -> void:
+		super(request_kind, host_port, join_target)
+
+	func succeed(offered: MultiplayerPeer, host_info: NetHostInfo = null) -> void:
+		if offered != null:
+			offers.append(offered)
+		super(offered, host_info)
+
+
 func before_all() -> void:
 	assert_true(NetManager.backend is EnetBackend, "every suite starts on ENet")
 
@@ -354,10 +372,10 @@ func _a_peer_after_leave_is_closed(kind: StringName) -> void:
 
 	# A late host: its server is closed, so the port is free again.
 	var port: int = _free_port()
-	var hosting := NetRequest.new(NetRequest.Kind.HOST, port)
+	var hosting := WatchedRequest.new(NetRequest.Kind.HOST, port)
 	await _answer_after_leaving(_client, hosting)
 	assert_eq(hosting.state, NetRequest.State.CANCELLED, "host: cancelled by leaving")
-	assert_null(hosting.peer, "host: never kept")
+	_assert_late_peer_closed(hosting, "host")
 	assert_null(hosting.info, "host: no lobby shown")
 	var again := NetPeers.create_server(port)
 	assert_not_null(again, "host: the late server was closed, so port %d is free" % port)
@@ -365,10 +383,10 @@ func _a_peer_after_leave_is_closed(kind: StringName) -> void:
 		again.close()
 
 	# A late join: its client is closed, so the host never admits it.
-	var joining := NetRequest.new(NetRequest.Kind.JOIN, 0, target)
+	var joining := WatchedRequest.new(NetRequest.Kind.JOIN, 0, target)
 	await _answer_after_leaving(_client, joining)
 	assert_eq(joining.state, NetRequest.State.CANCELLED, "join: cancelled by leaving")
-	assert_null(joining.peer, "join: never kept")
+	_assert_late_peer_closed(joining, "join")
 	await wait_seconds(0.3)
 	assert_signal_not_emitted(_host.api, "peer_connected", "join: the host never admitted the late client")
 	assert_eq(_host.api.get_peers(), PackedInt32Array(), "join: no peer on the host")
@@ -376,8 +394,12 @@ func _a_peer_after_leave_is_closed(kind: StringName) -> void:
 	assert_true(_client.installed.is_empty(), "nothing was installed after leave")
 	assert_true(_client.is_offline(), "the machine stays offline")
 	if _client.backend is FakeNetBackend:
-		var fake := _client.backend as FakeNetBackend
-		assert_eq(fake.offered.size(), 2, "the platform still delivered a host and a join peer")
-		for peer: MultiplayerPeer in fake.offered:
-			assert_eq(peer.get_connection_status(), MultiplayerPeer.CONNECTION_DISCONNECTED, "closed, never installed")
-		assert_eq(fake.last_token, "", "no lobby was listed for the late host")
+		assert_eq((_client.backend as FakeNetBackend).last_token, "", "no lobby was listed for the late host")
+
+
+func _assert_late_peer_closed(request: WatchedRequest, what: String) -> void:
+	assert_eq(request.offers.size(), 1, "%s: the backend still answered with a peer" % what)
+	for peer: MultiplayerPeer in request.offers:
+		assert_eq(peer.get_connection_status(), MultiplayerPeer.CONNECTION_DISCONNECTED,
+				"%s: the late peer is closed" % what)
+	assert_null(request.peer, "%s: never kept" % what)
