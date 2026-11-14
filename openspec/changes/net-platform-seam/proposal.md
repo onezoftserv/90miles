@@ -26,7 +26,7 @@ The owner asked whether the multiplayer approach ports to Steam, Nintendo, Andro
 - `NetFailure`, the failure reasons;
 - `NetBackendProfile` and `NetBackendTable`, the data, held in `game/resources/net_backends.tres`. The backend is chosen once at startup by build feature tag, and ENet is the default.
 
-**Hosting and joining may finish later.** A request comes back READY (peer installed), PENDING or FAILED (nothing changed).
+**Hosting and joining may finish later.** A request comes back READY (peer installed), PENDING or FAILED. A request refused before the backend is asked changes nothing; a failure from the backend leaves the game offline.
 - The shell builds the run and starts the session only in the step that installs the peer, never under the offline peer standing in for a pending request.
 - Leaving, going solo or asking again cancels a pending request. A peer that arrives late is closed, never installed.
 - A per-backend join timeout exists; for ENet it is 0, so ENet keeps its own.

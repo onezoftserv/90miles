@@ -130,7 +130,7 @@ func lobby_note(chosen: NetBackendProfile, port: int, locale: String = "es") -> 
 ```
 
 **`NetManager`:**
-- **Kept:** `hosted(port)` (0 when the backend has no port), `joined`, `join_failed` with zero arguments, `host_lost`, `host()`, `join()`, `start_solo()`, `leave()`, `is_online()`, `_use()` and `_on_server_disconnected()`.
+- **Kept:** `hosted(port)` (0 when the backend has no port), `joined`, `join_failed` with zero arguments, `host_lost`, `host()`, `join()`, `start_solo()`, `leave()`, `is_online()`, `_use()` and `_on_server_disconnected()`. `host()` and `join()` answer at once: OK only for READY (see "Recorded after review" below).
 - **New signals:**
   - `host_failed`: a late host failure;
   - `outside_join_requested(target)`.
@@ -156,7 +156,7 @@ func lobby_note(chosen: NetBackendProfile, port: int, locale: String = "es") -> 
   2. Otherwise `_use(peer)`.
   3. For a host, store the info and emit `hosted`.
   4. `settle(READY)`.
-- **A failure inside the call:** set `last_failure` and settle FAILED, with no signal; the caller reads the return value.
+- **A failure inside the call:** set `last_failure` and settle FAILED, with no signal; the caller reads the return value. Step 2 already ran, so the game is offline: only a step-1 refusal leaves everything as it was.
 - **A failure later:**
   1. Settle FAILED.
   2. `_go_offline()`, which calls `backend.leave()`.
@@ -475,7 +475,7 @@ Recorded while building group 3 (2026-11-14).
   - It adds `offered` and `last_offered()`, so the late-peer tests can see the peer that was closed.
   - `open_lobby(port)` lists an outside ENet server under a token, and `has_lobby(token)` checks one.
   - `reset()` also closes every peer any fake opened.
-  - Its servers always open on port 0, because other GUT runs may share the machine.
+  - Its servers open on the port the request asks for. Tests pass 0 (a free one) or a port they just probed, because other GUT runs may share the machine.
 - **The shell is not changed until group 5.** `GameShell._join()` still builds the client's run before `NetManager.join()`, so that run sees one extra offline-to-offline peer swap from step 2. It is harmless, and every shell and harness suite stays green. Group 5 moves the build after the peer is installed (D2).
 
 Recorded while building group 4 (2026-11-14).
@@ -523,3 +523,12 @@ Recorded while building group 5 (2026-11-14).
 - **A failed host off the title.** `_show_host_failure()` shows the title first when it is not showing, then writes the reason's line. On the title, the title already showing is kept, as before.
 - **`show_failed()` undoes `show_connecting()`.** It makes the field editable again and re-enables "Conectar"; a blank text shows `FAILED`.
 - **The new suite frees its shells before `NetManager.leave()`.** GUT runs `after_each` before autofree, so `test_shell_platform.gd` adds its shells itself and ends their run and frees them first in `after_each`.
+
+Recorded after review (2026-11-14).
+
+- **`host()` and `join()` answer at once.** They returned OK for a PENDING request, so a legacy caller (`coop_playground.gd`, which this change does not edit) would start its `CoopSession` on the offline peer standing in for the request and run as host, with the real peer swapped in under it later. Now they return OK only for READY. For PENDING they cancel the request (offline again, the backend's session left) and return `ERR_BUSY`, so no peer is installed under a caller that took the error. Leaving the request pending was rejected: a caller that got an error listens for no late `hosted` or `host_failed`. A caller that can wait uses `request_host()` or `request_join()`. ENet always answers inside the call, so nothing changes for it. `test_net_request_edges.gd` pins this; with the old `OK` its two wrapper cases fail.
+- **What a FAILED request leaves.** "Nothing changed" holds only for step 1 (a startup failure, or a target the backend refuses). Every other request goes offline before the backend is asked (step 2), so a backend failure inside the call leaves the game offline, with an earlier request cancelled and the backend's session left. This order stays: going offline first frees the port for a host asking again on the same one. The `NetManager` doc comments and the proposal now say so, in a net-platform requirement of its own ("What a request changes", split from "Hosting and joining may finish later" to keep each under `openspec validate --strict`'s length limit), and `test_net_request_edges.gd` pins both halves.
+- **The relay is `NetManager`'s.** No backend reads or writes `server_relay`, so the contract suite's relay asserts only read back its own branches' setting and were dropped. The net-platform contract now says `NetManager` installs every peer with the relay off; `test_net_requests.gd` checks that after installing an ENet peer and a slower backend's.
+- **Asking again is a `NetManager` rule.** The shell keeps its repeat-press guard: while hosting opens, the opening lobby has replaced the title and a second `start_host()` does nothing. The net-platform "Asking again" scenario is now worded as a second request to `NetManager`, and ui-shell "Screen flow" says a repeat ask while hosting opens does nothing.
+- **Solo on the shipped backend is a GUT check.** `smoke.gd` boots the main scene but asserts nothing about the network, and it is an existing test file. The build-verification scenario now names the check that exists: `test_solo_on_the_shipped_backend.gd` boots the main scene on a counting subclass of the shipped ENet backend, picks "Jugar solo", and finds only "start".
+- **The launch line.** `test_shell_join_rules.gd` runs `--connect=` through `_startup_backend()` and `use_backend()`, which is what `_ready()` does with the command line. Reading `OS.get_cmdline_args()` itself is left to the manual check in 7.3 step 5.

@@ -32,7 +32,7 @@ The backend SHALL be chosen once at startup from `game/resources/net_backends.tr
 - **THEN** the first choice is that profile and the second is ENet
 
 ### Requirement: Hosting and joining may finish later
-A host or join request SHALL answer at once as ready (the peer is installed), pending, or failed (nothing changed). The run and its session are built only in the step that installs the host or client peer, never while the offline peer stands in for a pending request, and a run already on is ended before the peer changes. With 1 player, solo never waits on a request.
+A host or join request SHALL answer at once as ready (the peer is installed), pending, or failed. The run and its session are built only in the step that installs the host or client peer, never while the offline peer stands in for a pending request, and a run already on is ended before the peer changes. With 1 player, solo never waits on a request.
 
 #### Scenario: A pending joiner is never the host
 - **GIVEN** a backend that answers a join 5 frames after the request
@@ -44,6 +44,24 @@ A host or join request SHALL answer at once as ready (the peer is installed), pe
 - **WHEN** the player hosts, or connects to an address
 - **THEN** the request is ready before it returns, with the server or connecting client peer installed
 
+### Requirement: What a request changes
+A host or join request refused before the backend is asked (the backend failed to start, or it refuses the target) SHALL change nothing; any other request first ends the current connection and cancels a pending one, so a failure from the backend leaves the game offline. A caller that needs the answer at once is told it succeeded only when the peer is installed, and a request still pending is cancelled for it. Solo makes no request, so none of this touches it.
+
+#### Scenario: A refused target changes nothing
+- **GIVEN** a host on ENet with its server open
+- **WHEN** a join to a blank address is requested
+- **THEN** the request fails as an invalid target and the host's server stays installed
+
+#### Scenario: A backend failure leaves the game offline
+- **GIVEN** a host on ENet with its server open, and another UDP port already taken
+- **WHEN** it asks to host on the taken port
+- **THEN** the request fails with "port unavailable", the first server is closed and the game is offline
+
+#### Scenario: A caller that cannot wait
+- **GIVEN** a backend that answers a host or a join 3 frames after the request
+- **WHEN** hosting or joining is asked through a call that answers at once
+- **THEN** the call does not report success, the request is cancelled, the game is offline, and the peer the backend delivers later is closed
+
 ### Requirement: Cancelling a pending request
 Leaving, going solo or asking again SHALL cancel a pending host or join request, make the backend leave its platform session, and return to the offline peer; a peer the backend delivers for a cancelled request is closed and never installed. With 1 player, going solo always cancels any request.
 
@@ -54,7 +72,7 @@ Leaving, going solo or asking again SHALL cancel a pending host or join request,
 
 #### Scenario: Asking again
 - **GIVEN** a pending host request
-- **WHEN** the player asks to host again
+- **WHEN** host is requested again through NetManager
 - **THEN** the first request is cancelled and only the second can install a peer
 
 ### Requirement: Join timeout
@@ -102,12 +120,17 @@ An invite, a platform "join game" or a launch argument SHALL start joining at on
 - **THEN** the join screen opens already connecting, showing the request's label
 
 ### Requirement: Every backend keeps the session contract
-Every backend's peers SHALL keep the contract the session relies on: the host is peer 1; a client gets an id of 2 or more, new on every connection, so a reconnect is a new peer and reclaiming by player identity works; the host's `disconnect_peer` closes that client; the host closing reaches every client as a lost host; the server relay stays off. The session's four-player cap stays the authority. Solo is exactly the offline peer, so none of this applies to it.
+Every backend's peers SHALL keep the contract the session relies on: the host is peer 1; a client gets an id of 2 or more, new on every connection, so a reconnect is a new peer and reclaiming by player identity works; the host's `disconnect_peer` closes that client; the host closing reaches every client as a lost host. NetManager keeps the server relay off for every backend. The session's four-player cap stays the authority. Solo is exactly the offline peer, so none of this applies to it.
 
 #### Scenario: Two peers through a backend
 - **GIVEN** two multiplayer branches using the same backend
 - **WHEN** one hosts and the other joins it
-- **THEN** the host is peer 1, the client is 2 or more, and the relay is off on both
+- **THEN** the host is peer 1 and the client is 2 or more
+
+#### Scenario: The relay stays off
+- **GIVEN** the ENet backend or a slower one
+- **WHEN** NetManager installs a host or client peer it answered with
+- **THEN** the server relay is off
 
 #### Scenario: A reconnect is a new peer
 - **GIVEN** a connected client

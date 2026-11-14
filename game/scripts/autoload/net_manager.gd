@@ -6,7 +6,9 @@ extends Node
 ## installs peers and reports connection events; the backend only hands peers over.
 ##
 ## Hosting and joining go through NetRequests that come back READY (peer installed), PENDING or
-## FAILED (nothing changed). Leaving, going solo or asking again cancels a pending request, and a
+## FAILED. A request refused before the backend is asked (a startup failure, or a target the
+## backend refuses) changes nothing; any other request first goes offline, so a backend failure
+## leaves the game offline. Leaving, going solo or asking again cancels a pending request, and a
 ## peer delivered for a cancelled request is closed. Solo is the offline peer and asks the
 ## backend for nothing. Like every core service, it declares no constants, enums or exports: the
 ## enums live in NetFailure and NetRequest, the data in the table.
@@ -69,20 +71,26 @@ func _process(delta: float) -> void:
 			_on_join_timed_out()
 
 
-## Hosts on `port` (NetPeers.DEFAULT_PORT unless given; 0 picks a free one). Returns
-## ERR_CANT_CREATE if hosting failed (with ENet: the port cannot be bound), else OK.
+## Hosts on `port` (NetPeers.DEFAULT_PORT unless given; 0 picks a free one) and answers at once,
+## for callers that start their session on the return value. Returns OK only when the server peer
+## is installed; ERR_CANT_CREATE if hosting failed (with ENet: the port cannot be bound), and the
+## game is then offline; ERR_BUSY if the backend would answer later: that request is cancelled
+## and the game is offline, so no peer is installed under the caller afterwards. A caller that can
+## wait uses request_host().
 func host(port: int = NetPeers.DEFAULT_PORT) -> Error:
-	return ERR_CANT_CREATE if request_host(port).state == NetRequest.State.FAILED else OK
+	return _answer_now(request_host(port), ERR_CANT_CREATE)
 
 
-## Starts connecting to a host; `joined` or `join_failed` follows. Returns ERR_INVALID_PARAMETER,
-## with nothing changed, for an address the backend cannot join; ERR_CANT_CONNECT if the join
-## failed; else OK.
+## Starts connecting to a host and answers at once; `joined` or `join_failed` follows an OK.
+## Returns ERR_INVALID_PARAMETER, with nothing changed, for an address the backend cannot join;
+## ERR_CANT_CONNECT if the join failed, and the game is then offline; ERR_BUSY if the backend
+## would answer later: that request is cancelled and the game is offline. OK only when the client
+## peer is installed and connecting. A caller that can wait uses request_join().
 func join(address: String, port: int = NetPeers.DEFAULT_PORT) -> Error:
 	var target := NetJoinTarget.at_address(address, port)
 	if backend == null or backend.check_target(target) != OK:
 		return ERR_INVALID_PARAMETER
-	return ERR_CANT_CONNECT if request_join(target).state == NetRequest.State.FAILED else OK
+	return _answer_now(request_join(target), ERR_CANT_CONNECT)
 
 
 ## Solo: the offline peer, so the host code path runs and no port is opened. Cancels a pending
@@ -103,9 +111,11 @@ func is_online() -> bool:
 	return not multiplayer.multiplayer_peer is OfflineMultiplayerPeer
 
 
-## Asks the backend to host on `port`. The request comes back READY (the server peer installed
-## and `hosted` emitted), PENDING (`hosted` then `settled` follow, or `host_failed`), or FAILED
-## with its reason and nothing changed (no signal).
+## Asks the backend to host on `port`. Unless it is refused first (a startup failure: FAILED with
+## its reason and nothing changed), the game goes offline before the backend is asked: a pending
+## request is cancelled and the current peer closed. The request comes back READY (the server peer
+## installed and `hosted` emitted), PENDING (`hosted` then `settled` follow, or `host_failed`), or
+## FAILED with its reason and the game offline. A FAILED answer emits no signal.
 func request_host(port: int = NetPeers.DEFAULT_PORT) -> NetRequest:
 	var request := NetRequest.new(NetRequest.Kind.HOST, port)
 	if startup_failure != NetFailure.Reason.NONE:
@@ -120,7 +130,7 @@ func request_host(port: int = NetPeers.DEFAULT_PORT) -> NetRequest:
 ## Asks the backend to join `target`. Same answers as request_host(): READY (the client peer
 ## installed and connecting; `joined` or `join_failed` follows), PENDING (`settled` follows, or
 ## `join_failed`), or FAILED. A target the backend refuses, or a startup failure, gives FAILED
-## with nothing changed.
+## with nothing changed; a failure from the backend gives FAILED with the game offline.
 func request_join(target: NetJoinTarget) -> NetRequest:
 	var request := NetRequest.new(NetRequest.Kind.JOIN, 0, target)
 	if startup_failure != NetFailure.Reason.NONE:
@@ -208,6 +218,20 @@ func _use(peer: MultiplayerPeer) -> void:
 
 func _startup_backend() -> NetBackend:
 	return table.create(table.pick(Callable(OS, &"has_feature")))
+
+
+# host() and join() answer at once: OK only for READY, `failed` for FAILED. A request still pending
+# is cancelled (offline again, the backend's session left), so a caller that took the error never
+# meets a peer installed later.
+func _answer_now(request: NetRequest, failed: Error) -> Error:
+	match request.state:
+		NetRequest.State.READY:
+			return OK
+		NetRequest.State.PENDING:
+			_go_offline()
+			return ERR_BUSY
+		_:
+			return failed
 
 
 # Steps 2 to 4 of a request (design.md "Fixed ordering"): offline, no failure, then the request.

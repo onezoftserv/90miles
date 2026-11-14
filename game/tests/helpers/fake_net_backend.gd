@@ -7,7 +7,8 @@ extends NetBackend
 ##
 ## Deferral counts SceneTree.process_frame, which fires every frame, also while the tree is
 ## paused, so the fake works with or without NetManager. It never touches `multiplayer`.
-## Servers open on port 0 (a free one), because other GUT runs may share the machine.
+## Servers open on the port the request asks for, so tests pass 0 (a free one) or a port they just
+## probed, because other GUT runs may share the machine.
 ##
 ## Suites that use it call reset() from after_each, after NetManager.use_backend(null).
 

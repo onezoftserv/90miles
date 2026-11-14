@@ -125,7 +125,7 @@ No existing file under `game/tests` is edited.
 
 ## 4. Contract and seam (tests first)
 
-- [x] 4.1 Write `game/tests/unit/test_net_backend_contract.gd`, with two branches that each have their own SceneMultiplayer with the relay off. Every case runs for `EnetBackend` and for `FakeNetBackend`:
+- [x] 4.1 Write `game/tests/unit/test_net_backend_contract.gd`, with two branches that each have their own SceneMultiplayer. Every case runs for `EnetBackend` and for `FakeNetBackend`:
   - the host is peer 1 and the client is 2 or more;
   - a reconnect is a new peer;
   - `disconnect_peer` closes the client;
@@ -133,6 +133,7 @@ No existing file under `game/tests` is edited.
   - a bad target fails with no peer (INVALID_TARGET or NOT_FOUND);
   - a peer after leave is closed.
   - Done 2026-11-14: 12 tests (each case as an `_enet` and a `_fake` test sharing one helper), 116 asserts, 12/12 alone, no orphans and no engine errors.
+    - After review: 112 asserts. The two relay asserts only read back the branches' own `server_relay = false`, since no backend touches the SceneMultiplayer, so they were dropped. The relay is `NetManager`'s (D11) and is checked through it in `test_net_requests.gd`; this suite does not verify it.
     - A mutation run, with `NetRequest.succeed()` changed to leave a late peer open, failed both "peer after leave" cases (10/12). The source was restored afterwards.
     - Each branch is a `Machine` with its own backend that stands in for `NetManager`. The fake answers 3 frames late, keeps answering after `leave()`, and is joined by its lobby token from a second fake.
     - It also asserts `NetManager.backend is EnetBackend` in `before_all` and `after_all` and cleans up in `after_each`, though it never swaps the backend.
@@ -235,6 +236,23 @@ No existing file under `game/tests` is edited.
     - Cause not established. It is not the docs edits of this group. This change touches no crossing or art script, but the scroll case starts with `NetManager.start_solo()`, which group 3 rewrote, so it is not cleared either.
     - What fits so far: in the scroll case the position check passed and only the cover check failed. The crossing scrolls in `_process`, so a scroll of 0 means no process frame ran. The rig adds the crossing to the tree before `setup()` moves its origin. `CrossingSea` builds its polygon in `_ready` and rebuilds it only in `_process`, while `wait_frames(2)` counts physics frames. Two physics steps with no process frame between them would give exactly this failure. The deck case also waits physics frames for a look that follows in `_process`.
     - The deciding check, not done here: run `test_crossing_art.gd` alone several times at the branch point 528e2a5, which needs a second checkout. Until then, 7.5's "0 failures" is at risk. No existing test may be edited in this change.
+    - Settled in review: the failure is older than this change. A reviewer ran `test_crossing_art.gd` alone, interleaved under the same load: 7 of 9 runs failed here (177bcd1) and 7 of 8 at `feat/sign-note-panel` 8b987ee, whose tree equals the branch point (`git diff --stat 8b987ee 528e2a5` is empty, checked again here). Every failure was the same scroll assert at line 214. The fix, waiting process frames instead of physics frames, is its own change on branch `fix/sea-scroll-flake` (8c74df1, not yet in `main`). It edits an existing test, so it is not taken here.
+
+## Review follow-ups (2026-11-14)
+
+- [x] R.1 `host()` and `join()` answer at once: OK only for READY; a PENDING request is cancelled and they return `ERR_BUSY`, so `coop_playground.gd` never starts a session on the offline peer standing in for it. Doc comments and design.md "Recorded after review".
+  - Done 2026-11-14: `test_net_request_edges.gd` (new, 6 tests, 63 asserts, 6/6 alone). With the PENDING branch changed back to OK, its two wrapper cases fail (4/6).
+- [x] R.2 "Nothing changed" holds only for a refusal before the backend is asked; a backend failure leaves the game offline. `net_manager.gd` doc comments, `proposal.md`, and a net-platform requirement of its own ("What a request changes", three scenarios).
+  - Done 2026-11-14: pinned in `test_net_request_edges.gd` (a refused target keeps the host's server; ENet's taken port and the fake's refusal leave the game offline, with "leave" called). `openspec validate net-platform-seam --strict` is valid.
+- [x] R.3 Shell cases the review found untested: a timed-out join on the join screen; joins from outside the game taken at once on settings, credits, a fresh join screen and one after a failure, and kept in the opening lobby, the host's lobby, a client's lobby and a join still connecting or pending; `--connect=` through the startup pick.
+  - Done 2026-11-14: `test_shell_join_rules.gd` (new, 11 tests, 140 asserts, 11/11 alone). Mutations, each restored: the guard as `flow == Flow.TITLE` fails the four take cases (7/11); the guard without its "nothing under way" line fails the two join-screen keep cases (9/11). Reading `OS.get_cmdline_args()` itself stays with 7.3 step 5.
+- [x] R.4 build-verification "Solo offline on the shipped backend" replaces "Solo smoke offline", which `smoke.gd` never asserted.
+  - Done 2026-11-14: `test_solo_on_the_shipped_backend.gd` (new, 1 test, 18 asserts) boots the main scene on a counting subclass of the shipped ENet backend; the title and "Jugar solo" give only "start". `smoke.gd` is unchanged.
+- [x] R.5 Text: the contract suite's relay (4.1), the fake's port comment and design.md, "Asking again" as a `NetManager` rule plus a ui-shell clause for the repeat press, and the crossing-art flake (6.4, 7.5).
+  - Done 2026-11-14.
+- [x] R.6 Run the import, smoke and GUT.
+  - Done 2026-11-14: import ×2 clean; smoke "10 frames, 0 problem(s)"; GUT 182 scripts (+3), 1632 tests (+18), 1632 passing, 0 failing, 55460 asserts (+223), exit 0, no "Nothing was run", no leak at exit. The new suites account for 221 asserts and the contract suite lost 4; the other 6 come from existing suites, not traced per suite. Orphans are reported only by older suites. `test_crossing_art.gd` passed in this run.
+  - `git diff --name-status 528e2a5 -- game/tests` shows only `A`; `coop_session.gd`, `player_look.gd`, `net_harness.gd`, `coop_playground.gd`, `title_screen.gd/.tscn`, `join_screen.tscn`, `lobby_screen.tscn` and `smoke.gd` have no diff.
 
 ## 7. Verification
 
@@ -253,6 +271,7 @@ No existing file under `game/tests` is edited.
   6. Repeat with `coop_playground -- --host` and `-- --join=127.0.0.1`.
 - [ ] 7.4 CI is green on Linux with no Steam.
 - [ ] 7.5 Run the import twice, smoke and GUT one final time. GUT equals the baseline plus the new tests, with 0 failures and 0 skipped scripts.
+  - The `test_crossing_art.gd` scroll case flakes at the branch point too (6.4). Until `fix/sea-scroll-flake` merges, a failure in that file alone is rerun on its own and recorded here, and is tracked outside this gate.
 
 ## Workflow follow-up
 

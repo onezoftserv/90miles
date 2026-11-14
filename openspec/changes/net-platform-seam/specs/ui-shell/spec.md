@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Screen flow
-The game SHALL open on the title screen. Solo goes straight to a run, with no lobby and nothing waiting for another player. Hosting opens the lobby; while a slower backend opens the session the lobby says "Abriendo la partida…" and only "Salir" works, which cancels; if hosting fails the title says why. Joining opens the join screen, then the lobby, or the run if one is under way; a join requested from outside the game opens the join screen already connecting, and a join failure always shows on the join screen. When every player still in the run is dead the run summary shows, then the title or a new run; a disconnected player keeps the run open until they are removed. Losing the host shows the host-lost screen, then the title.
+The game SHALL open on the title screen. Solo goes straight to a run, with no lobby and nothing waiting for another player. Hosting opens the lobby; while a slower backend opens the session the lobby says "Abriendo la partida…" and only "Salir" works, which cancels, and asking to host again while it opens does nothing; if hosting fails the title says why. Joining opens the join screen, then the lobby, or the run if one is under way; a join requested from outside the game opens the join screen already connecting, and a join failure always shows on the join screen. When every player still in the run is dead the run summary shows, then the title or a new run; a disconnected player keeps the run open until they are removed. Losing the host shows the host-lost screen, then the title.
 
 #### Scenario: Solo from the title
 - **GIVEN** the title screen

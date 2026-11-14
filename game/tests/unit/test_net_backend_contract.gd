@@ -3,11 +3,14 @@ extends GutTest
 ## relies on, checked for EnetBackend and for FakeNetBackend (design.md D6). Every case runs once
 ## per backend, as two tests that share one helper, so each gets its own before and after.
 ##
-## Two branches stand for two machines. Each has its own SceneMultiplayer (relay off) and its own
-## backend, and does NetManager's part: it installs the peer a backend answers with, then settles
-## the request. The fake answers some frames later and joins by lobby token, as a platform does.
-## The same steps are the two-machine checklist for the Steam change, since a Steam peer cannot
-## connect to itself.
+## Two branches stand for two machines. Each has its own SceneMultiplayer and its own backend, and
+## does NetManager's part: it installs the peer a backend answers with, then settles the request.
+## The fake answers some frames later and joins by lobby token, as a platform does. The same steps
+## are the two-machine checklist for the Steam change, since a Steam peer cannot connect to itself.
+##
+## The relay is not part of what this suite checks: a backend never touches the SceneMultiplayer,
+## and NetManager._use() turns the relay off (design.md D11). Each branch sets it off only to match
+## the game; test_net_requests.gd checks it through NetManager on ENet and on a slower backend.
 
 const ENET: StringName = &"enet"
 const FAKE: StringName = &"fake"
@@ -140,6 +143,7 @@ func _machine(machine_name: String, kind: StringName) -> Machine:
 	machine.branch.name = machine_name
 	add_child(machine.branch)
 	machine.api = SceneMultiplayer.new()
+	# As NetManager._use() sets it; no backend reads or writes it.
 	machine.api.server_relay = false
 	get_tree().set_multiplayer(machine.api, machine.branch.get_path())
 	machine.backend = _backend(kind)
@@ -249,8 +253,8 @@ func _host_is_peer_one_and_the_client_two_or_more(kind: StringName) -> void:
 	assert_false(_client.api.is_server(), "a client is not the server")
 	assert_eq(_host.api.get_peers(), PackedInt32Array([id]), "the host sees the client")
 	assert_eq(_client.api.get_peers(), PackedInt32Array([1]), "the client sees only the host")
-	assert_false(_host.api.server_relay, "relay off on the host")
-	assert_false(_client.api.server_relay, "relay off on the client")
+	# The relay is NetManager's (design.md D11): test_net_requests.gd checks it after NetManager
+	# installs an ENet peer and a slower backend's. Here it would only read back _machine()'s value.
 
 
 # --- A reconnect is a new peer --------------------------------------------------------------------
