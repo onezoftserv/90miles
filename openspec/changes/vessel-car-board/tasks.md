@@ -39,7 +39,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 4. Per-rider boards (crossing "Per-rider boards", "Board hits", "Board rescue")
 
-- [ ] 4.1 Write `test_crossing_board.gd` first, with in-process riders through `CrossingRig` (a route-object overload). The cases:
+- [x] 4.1 Write `test_crossing_board.gd` first, with in-process riders through `CrossingRig` (a route-object overload). The cases:
   - solo: one board at 60, no lashing, no shared deck;
   - 3 riders: a squall puts every board at 30 and every rider in the water;
   - solo: a rock and then a shark break the board, and a 3 s hold does not climb;
@@ -53,7 +53,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
   - a rejoined rider keeps their board.
 
   See it fail.
-- [ ] 4.2 Build the boards in `crossing.gd` per design D1 and D2:
+- [x] 4.2 Build the boards in `crossing.gd` per design D1 and D2:
   - `boards`, `vessel_of`, `deck_rect_of`;
   - the 1×2 decks 3 tiles apart;
   - per-board break;
@@ -63,7 +63,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
   - the slot move in `_on_player_rebound`.
 
   Verify `test_crossing_board.gd`, and that `test_crossing_solo.gd`, `test_crossing_rescue.gd`, `test_crossing_squall.gd`, `test_crossing_shark.gd`, `test_crossing_creature_shark.gd`, `test_vessel_integrity.gd`, `test_use_on_crossing.gd` and `test_crossing_prompt.gd` pass unchanged.
-- [ ] 4.3 Write `test_crossing_car.gd` with `test_car`:
+- [x] 4.3 Write `test_crossing_car.gd` with `test_car`:
   - 160 − 45 (squall) − 20 (shark) = 95;
   - a plan rolled at `duration_s` (60, 90) never exceeds 90 s;
   - the car's lashing ties a solo rider through a squall.
