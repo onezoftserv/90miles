@@ -34,6 +34,9 @@ const STANDARD_PATH: String = "res://resources/crossing_tuning.tres"
 @export var rock_chance: Dictionary[int, float]
 ## Events never fall in the first or last seconds of a crossing.
 @export var event_margin_s: float
+## At most this many rolled creatures ride along with one crossing; chance-1.0 ones are not counted
+## (creature-perch-ride "Crossing creature roll").
+@export var max_rolled_creatures: int
 
 
 static func standard() -> CrossingTuning:

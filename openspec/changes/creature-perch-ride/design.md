@@ -67,14 +67,16 @@
   - *Rejected, DCSS* `place_monster`'s hard monster ceiling: a guarantee that a cap can refuse is no guarantee.
 
 **D2. `CrossingCreatures`: the roll lives beside the crossing, not in it.**
-- The new file is `game/scripts/crossing/crossing_creatures.gd`, a `Node`. `GameShell._on_route_started` calls `CrossingCreatures.attach(crossing, island.layout.chain_family, band, _crossing_rng)` right after `Crossing.launch`, on the host only.
-- A static `roll(catalog, family, band, phase, weather_id, rng, cap, record)` is pure.
-  - It walks `catalog.list_ids(&"creatures")` in text order and keeps each CROSSING rule that matches: chain families (empty = any), distance bands, phases, `weather_ids` and `excluded_weather_ids`.
-  - It skips creatures whose `max_per_run` the run record has reached.
+- The new file is `game/scripts/crossing/crossing_creatures.gd`, a `Node` child of the crossing on the host. `GameShell._on_route_started` calls `CrossingCreatures.attach(crossing, island.layout.chain_family, band)` right after `Crossing.launch`; on a client it returns null.
+- **Its dice are its own.** They are seeded from the run seed, the crossing's number and the node name, so the shell's `_crossing_rng` is never drawn from. Every plan, this crossing's and the next ones', is the same with or without creatures.
+- A static `roll(creatures, family, band, phase, weather_id, rng, cap, record)` touches only `rng` and `record`.
+  - The node passes the session's creature catalog in id-as-text order.
+  - It keeps each CROSSING or BOTH rule that matches: chain families (empty = any), distance bands, phases, `weather_ids` and `excluded_weather_ids`. Chain ids are not checked: the crossing knows the departing family, not the chain.
+  - It skips creatures whose `max_per_run` the run record has reached, and counts each one it places in the record.
   - It returns the chance-1.0 rules first and then at most `cap` of the others that pass `rng.randf() < chance`, in id order.
   - One rule places one creature per roll.
 - The node then places each creature through `session.spawn_creature`, at the sea's north edge, so clients and late joiners get them like the crossing shark.
-- It marks each one `passing` (see D7) and gives it a crossing world (D3). It records the run count.
+- It marks each one `passing` (see D8), gives it a crossing world (D3), and sets its `nest` to its station by the deck (D6).
 - On `crossing.ended`, and on `_exit_tree`, it frees its creatures on the host, so the spawner removes them everywhere.
 - *Why not inside `Crossing.launch`?* The family is the shell's, the crossing file is shared with `vessel-car-board`, and the plan's RNG order must not move ("Same seed, same plan").
 - *Alternative:* a `CREATURE` beat in the plan. Rejected: it changes `CrossingBeat` and snapshot serialisation, and a creature that is there all crossing is not an event.
@@ -116,9 +118,9 @@
 
 **D6. `ambient.gd`.**
 - **States:** `ARRIVE` → `STAY` → `LEAVE`.
-- **Station:**
-  - On a crossing, a slot by the deck. Air and vessel domains sit on the deck's rim, in slots 0–3 by the creature's place in the roll. Water domains sit 2 tiles off its side.
-  - On an island, its spawn spot (`nest`).
+- **Station:** always the creature's `nest`.
+  - On a crossing, `CrossingCreatures` sets it to a slot by the deck. Air and vessel domains sit on the deck's corners, in slots 0–3 by the creature's place in the roll. Water domains sit 2 tiles off its side.
+  - On an island, its spawn spot.
 - `ARRIVE` flies or swims to the station at its speed, then calls `Sightings.see`.
 - `STAY` keeps station (a crossing station moves with nothing, since the vessel never moves on screen) and checks:
   - a `CONDITION_HOLDS` counter with response `FLEE` or `REMOVE` whose conditions hold for any player (`ConditionCheck`, so `WEATHER_IS squall` works today);

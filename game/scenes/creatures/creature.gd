@@ -24,6 +24,8 @@ var state_id: int = 0
 var lifetime_s: float = -1.0
 ## Host: the bodies (instance ids) that have seen it, so its sighting effects reach each once.
 var seen_by: Dictionary[int, bool] = {}
+## Host: it rides along with a crossing (CrossingCreatures), so it is not one of the island's.
+var passing: bool = false
 
 @onready var interactable: Interactable = $Interactable
 
@@ -61,10 +63,11 @@ func cell() -> Vector2i:
 	return CreatureNav.cell_of(position)
 
 
-## True for a creature that leaves by itself after its lifetime (the crossing's shark): it passes
-## through and is not one of the island's creatures. Host only: a client's copy has no lifetime.
+## True for a creature that leaves by itself after its lifetime (the crossing's shark) or rides
+## along with a crossing: it passes through and is not one of the island's creatures. Host only: a
+## client's copy has no lifetime and is not marked.
 func is_passing() -> bool:
-	return lifetime_s >= 0.0
+	return passing or lifetime_s >= 0.0
 
 
 func state_name() -> StringName:

@@ -11,10 +11,10 @@ Test-first: each task writes its GUT test before the code, and every test that i
 
 ## 2. Crossing creature roll
 
-- [ ] 2.1 Add `CrossingTuning.max_rolled_creatures` with 2 in `crossing_tuning.tres`; the existing tuning test reads it
-- [ ] 2.2 Add the fixture catalog `game/tests/fixtures/content/creatures/` (`galleguito_prueba`, `pajarito_prueba`, `pajaro_bobo_prueba`, BESTIARY numbers, seagull frames) and the static `CrossingCreatures.roll`; `test_crossing_creatures.gd`: family, band, phase and weather filters; chance 1.0 placed with 3 rolled at 0.99 capped to 2; `max_per_run` 1 across two rolls; island rules ignored; and the plan rolled from the same seed holds the same beats with and without the creature roll after it
-- [ ] 2.3 Add the `CrossingCreatures` node, `Creature.passing` and `is_passing()`, and the call in `GameShell._on_route_started` (host only, after `Crossing.launch`, with the island's chain family); a 1-player crossing-rig test places a chance-1.0 booby at the sea's north edge, the island spawner's `creatures()` leaves it out, and the booby is gone when the crossing ends
-- [ ] 2.4 Run the import, the smoke run and GUT; all pass with no `ERROR:` lines
+- [x] 2.1 Add `CrossingTuning.max_rolled_creatures` with 2 in `crossing_tuning.tres`; the existing tuning test reads it
+- [x] 2.2 Add the fixture catalog `game/tests/fixtures/content/creatures/` (`galleguito_prueba`, `pajarito_prueba`, `pajaro_bobo_prueba`, BESTIARY numbers, seagull frames) and the static `CrossingCreatures.roll`; `test_crossing_creatures.gd`: family, band, phase and weather filters; chance 1.0 placed with 3 rolled at 0.99 capped to 2; `max_per_run` 1 across two rolls; island rules ignored; and the plan rolled from the same seed holds the same beats with and without the creature roll after it
+- [x] 2.3 Add the `CrossingCreatures` node, `Creature.passing` and `is_passing()`, and the call in `GameShell._on_route_started` (host only, after `Crossing.launch`, with the island's chain family); a 1-player crossing-rig test places a chance-1.0 booby at the sea's north edge, the island spawner's `creatures()` leaves it out, and the booby is gone when the crossing ends
+- [x] 2.4 Run the import, the smoke run and GUT; all pass with no `ERROR:` lines
 
 ## 3. Ambient machine (balsero-lore 7.1)
 

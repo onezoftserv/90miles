@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="CreatureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_ofid2"]
+[ext_resource type="Script" path="res://scripts/data/creature_counter_data.gd" id="2_vqlfk"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="3_b6wjm"]
+[ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="4_1le46"]
+[ext_resource type="Script" path="res://scripts/data/creature_spawn_rule_data.gd" id="5_ojefh"]
+[ext_resource type="SpriteFrames" path="res://assets/art/creatures/seagull_frames.tres" id="6_imf12"]
+
+[sub_resource type="Resource" id="Resource_f5nqk"]
+script = ExtResource("2_vqlfk")
+trigger = 6
+duration_s = 5.0
+radius_tiles = 2.0
+
+[sub_resource type="Resource" id="Resource_3qdge"]
+script = ExtResource("1_ofid2")
+meter = 5
+amount = 10.0
+limit = 3
+
+[sub_resource type="Resource" id="Resource_jm5k2"]
+script = ExtResource("1_ofid2")
+kind = 13
+ref_id = &"galleguito_a_bordo"
+limit = 3
+
+[sub_resource type="Resource" id="Resource_bjuhq"]
+script = ExtResource("5_ojefh")
+context = 1
+chain_families = Array[int]([8])
+hostile = false
+
+[resource]
+script = ExtResource("4_1le46")
+description_es = "Un galleguito de prueba: se te sienta en la cabeza y cobra peaje en galletas."
+description_en = "A test laughing gull: it sits on your head and takes its toll in crackers."
+category = 1
+sprite_frames = ExtResource("6_imf12")
+speed_tiles_s = 6.0
+domains = Array[int]([3])
+behavior = 14
+disposition = 3
+follows_vessel = true
+circle_time_s = Vector2(4, 4)
+steal_from = Array[int]([2])
+steal_item_tags = Array[int]([0])
+steal_interval_s = 60.0
+steal_chance = 0.5
+sighting_effects = Array[ExtResource("1_ofid2")]([SubResource("Resource_3qdge"), SubResource("Resource_jm5k2")])
+counters = Array[ExtResource("2_vqlfk")]([SubResource("Resource_f5nqk")])
+spawn_rules = Array[ExtResource("5_ojefh")]([SubResource("Resource_bjuhq")])
+max_per_run = 1
+id = &"galleguito_prueba"
+name_es = "Galleguito de prueba"
+name_en = "Test laughing gull"
