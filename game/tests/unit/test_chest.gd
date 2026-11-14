@@ -143,3 +143,13 @@ func test_the_needle_points_at_the_unopened_chest_then_spins() -> void:
 	hud.needle.step(0.05)
 	assert_null(hud.needle.target, "an open chest is no target")
 	assert_true(hud.needle.spinning, "it spins")
+
+
+func test_a_peer_in_english_reads_the_english_body() -> void:
+	if chest == null:
+		fail_test("no chest")
+		return
+	session.locale = "en"
+	_hold(1.0)
+	var entry: TextEntryData = chest.entry(chest.entry_id)
+	assert_eq(hud.note_label.shown_text(), entry.body_en, "the chosen English body")

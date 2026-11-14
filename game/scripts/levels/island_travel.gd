@@ -204,7 +204,9 @@ func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float) -
 	if session.multiplayer.is_server():
 		fresh.place_pickups(session)
 	_results.clear()
-	islands_reached += 1
+	# An off-graph layout (the secret cay) is never an island reached (endings-progression).
+	if not next_layout.off_graph:
+		islands_reached += 1
 	island_loaded.emit(fresh)
 
 

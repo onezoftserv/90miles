@@ -139,3 +139,30 @@ func test_enough_for_the_raft_and_leaving_alone() -> void:
 		return
 	raft.interactable.use(body)
 	assert_true(scene.session.has_left(CoopSession.HOST_ID), "and left the island by raft")
+
+
+func test_nothing_respawns_on_the_cay() -> void:
+	_empty_handed()
+	assert_gt(_take(&"driftwood"), 0)
+	_take(&"inner_tube")
+	await get_tree().process_frame
+	WeatherManager.sky.weather.start_weather(&"squall")
+	WeatherManager.sky.weather.start_weather(&"calm")
+	await get_tree().process_frame
+	assert_eq(_lying(&"driftwood").size(), 0, "no driftwood comes back after a squall")
+	assert_eq(_lying(&"inner_tube").size(), 0, "nor the inner tubes")
+
+
+func test_the_detour_is_not_an_island_reached() -> void:
+	var shell := (load("res://scenes/shell/game_shell.tscn") as PackedScene).instantiate() as GameShell
+	shell.settings_path = "user://test_secret_cay_solo_settings.cfg"
+	add_child_autofree(shell)
+	(shell.screen as TitleScreen).solo_requested.emit()
+	assert_eq(shell.travel.islands_reached, 1, "the sandbar")
+	shell.session.travel_to("cayo_sin_norte", {1: {"health": 100.0, "energy": 100.0}}, 0.0)
+	assert_eq(shell.travel.island.layout.id, &"cayo_sin_norte", "the party stands on the cay")
+	assert_eq(shell.travel.islands_reached, 1, "the cay is not counted")
+	shell.session.travel_to("coast_cay", {1: {"health": 100.0, "energy": 100.0}}, 0.0)
+	assert_eq(shell.travel.islands_reached, 2, "the island after it is island 2")
+	if FileAccess.file_exists(shell.settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(shell.settings_path))

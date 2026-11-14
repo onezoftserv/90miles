@@ -99,15 +99,18 @@ func _place_client(host: CoopSession, client: CoopSession, at: Vector2) -> void:
 	net.own_body(client).position = at
 
 
-# The client holds interact for `seconds` (its intents reach the host, which runs the hold).
-func _client_holds(host: CoopSession, client: CoopSession, seconds: float) -> bool:
+# The client holds interact (its intents reach the host, which runs the hold) until `done` holds
+# on the host, then lets go; the host's hold time decides when it happens, not the wall clock.
+# Returns whether it happened.
+func _client_holds_until(host: CoopSession, client: CoopSession, done: Callable) -> bool:
 	var mine := net.own_body(client)
 	var copy := host.body(net.peer_id(client))
 	mine.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
-	await wait_seconds(seconds)
+	var happened: bool = await wait_until(done, TIMEOUT_S)
 	mine.intent = MoveIntent.new()
 	var sent: int = mine.net.buffer.last_seq
-	return await wait_until(func() -> bool: return copy.net.net_ack_seq >= sent, TIMEOUT_S)
+	await wait_until(func() -> bool: return copy.net.net_ack_seq >= sent, TIMEOUT_S)
+	return happened
 
 
 func test_both_see_the_pieces_on_the_same_hiding_spots() -> void:
@@ -150,7 +153,10 @@ func test_a_teammate_reveals_it_and_the_client_digs_out_the_map() -> void:
 	assert_true(client_map.revealed, "and on the client")
 	var host_hud := _hud(host)
 	var client_hud := _hud(client)
-	assert_true(await _client_holds(host, client, 1.8), "the host ran the client's hold")
+	var started_s: float = Time.get_ticks_msec() / 1000.0
+	var gone := func() -> bool: return _lying(host, tuning.map_item_id).is_empty()
+	assert_true(await _client_holds_until(host, client, gone), "the host ran the client's hold")
+	assert_gte(Time.get_ticks_msec() / 1000.0 - started_s, 1.5 - 0.05, "it took the 1.5 s hold")
 	var client_id: int = net.peer_id(client)
 	var taken := func() -> bool: return net.own_body(client).inventory.count_id(tuning.map_item_id) == 1 and _lying(client, tuning.map_item_id).is_empty()
 	assert_true(await wait_until(taken, TIMEOUT_S), "the map is in the client's inventory and gone on the client")
@@ -191,7 +197,7 @@ func test_one_opening_for_everyone_and_a_late_joiner_sees_it() -> void:
 	var client_hud := _hud(client)
 	_place_client(host, client, host_chest.position + Vector2(-TILE, 0.0))
 	host.body(CoopSession.HOST_ID).position = host_chest.position + Vector2(0.0, 8.0 * TILE)
-	assert_true(await _client_holds(host, client, 1.3), "the host ran the client's hold")
+	assert_true(await _client_holds_until(host, client, func() -> bool: return host_chest.opened), "the host ran the client's hold")
 	var opened := func() -> bool: return host_chest.opened and client_chest.opened
 	assert_true(await wait_until(opened, TIMEOUT_S), "open on both peers")
 	assert_eq(client_chest.entry_id, host_chest.entry_id, "the same entry")
@@ -213,6 +219,30 @@ func test_one_opening_for_everyone_and_a_late_joiner_sees_it() -> void:
 	await wait_physics_frames(10)
 	assert_eq(_lying(late, NOTE).size(), 1, "no second note")
 	assert_eq(_lying(host, NOTE).size(), 1)
+
+
+func test_the_cay_is_not_scaled_for_two_players() -> void:
+	var pair := await _pair(CAY_PATH)
+	if pair.is_empty():
+		return
+	var host := pair[0]
+	var client := pair[1]
+	var listed: Dictionary[StringName, int] = {}
+	for pickup: Dictionary in _island(host).built.pickups:
+		listed[pickup["item_id"]] = listed.get(pickup["item_id"], 0) + int(pickup["count"])
+	for session: CoopSession in [host, client]:
+		var lying: Dictionary[StringName, int] = {}
+		var settled := func() -> bool: return session.pickups.get_child_count() == _island(host).built.pickups.size()
+		assert_true(await wait_until(settled, TIMEOUT_S), "every listed pick-up arrived")
+		for node: Node in session.pickups.get_children():
+			var item := node as WorldItem
+			lying[item.item_id] = lying.get(item.item_id, 0) + item.count
+		assert_eq(lying, listed, "exactly the layout's pick-ups, as for one player")
+	var coconuts: int = 0
+	for palm: Node in _island(host).get_node(^"Palms").get_children():
+		coconuts += (palm as Palm).coconuts
+	assert_eq(coconuts, 7, "the same 7 coconuts")
+	assert_null(host.get_node_or_null(NodePath(SandbarIsland.CREATURES_NAME)), "no creatures or patrols")
 
 
 func test_two_players_reach_for_the_hat() -> void:

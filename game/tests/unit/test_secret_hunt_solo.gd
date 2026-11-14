@@ -144,3 +144,10 @@ func test_the_needle_points_at_the_map_and_steadies() -> void:
 		assert_lte(needle.wobble_deg, widest, "steadier at %d tiles" % tiles)
 		widest = needle.wobble_deg
 	assert_eq(needle.wobble_deg, 0.0, "still within 6 tiles")
+
+
+func test_the_map_in_english() -> void:
+	var text: String = SecretHunt.map_text(tuning, &"palm", "en")
+	assert_eq(text, "An X, a palm and a crooked compass rose. You can tell it was drawn with a compass that doesn't work.")
+	assert_string_contains(SecretHunt.map_text(tuning, &"no_such_kind", "en"), "something nobody can make out", "the default phrase")
+	assert_string_contains(SecretHunt.map_text(tuning, &"no_such_kind", "es"), "algo que no se entiende")
