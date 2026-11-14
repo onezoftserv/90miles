@@ -4,11 +4,16 @@ extends Node2D
 ## its item's 16x16 icon centred on the pick-up and raised 3 px (5 px for an icon under 8 px
 ## tall), over the 8x4 shadow. Drawing only (`art_view`, set in world_item.tscn): every frame it
 ## reads the pick-up's item id and writes nothing back. While `concealed` neither icon nor shadow
-## shows. secret-cay will set it; nothing does yet, and it is separate from
+## shows, and while `shimmer` is also set it draws the glint instead (secret-cay "Shimmer"; a
+## placeholder until its art). WorldItem sets both for a concealed item; this is separate from
 ## Interactable.hides_contents, which only words the prompt.
 
 ## SPD's perspective raise, scaled to 16 px icons.
 const RAISE_PX: float = 3.0
+## The shimmer's glint: a small four-point star, white round a pale yellow heart.
+const GLINT_ARMS: Array[Vector2] = [Vector2(0, -3), Vector2(0, 3), Vector2(-3, 0), Vector2(3, 0)]
+const GLINT_EDGE: Color = Color("#ffffff")
+const GLINT_HEART: Color = Color("#fbf236")
 ## Raise of a flat icon, one under SHORT_ICON_PX tall.
 const SHORT_RAISE_PX: float = 5.0
 const SHORT_ICON_PX: int = 8
@@ -18,6 +23,13 @@ const SHORT_ICON_PX: int = 8
 	set(value):
 		concealed = value
 		_show()
+		queue_redraw()
+## While concealed, draws the shimmer's glint (secret-cay).
+var shimmer: bool = false:
+	set(value):
+		if shimmer != value:
+			shimmer = value
+			queue_redraw()
 
 var _item_id: StringName = &""
 var _item: ItemData = null
@@ -44,6 +56,15 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_show()
+
+
+func _draw() -> void:
+	if not concealed or not shimmer:
+		return
+	var heart := Vector2(0.0, -RAISE_PX)
+	for arm: Vector2 in GLINT_ARMS:
+		draw_line(heart, heart + arm, GLINT_EDGE, 1.0)
+	draw_rect(Rect2(heart - Vector2(0.5, 0.5), Vector2.ONE), GLINT_HEART)
 
 
 func _show() -> void:
