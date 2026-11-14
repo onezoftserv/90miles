@@ -42,7 +42,7 @@ No existing file under `game/tests` is edited.
   - `check_target` refuses "", "   ", port 0, port 65536 and a token target;
   - `--connect=10.0.0.5:7780` reads as written; `--connect=10.0.0.5` gives port 7777; `--connect=`, `--connect=h:0` and no flag give null;
   - the root peer stays offline when `EnetBackend.host()` is called directly.
-  - Done 2026-11-14: 12 tests, 86 asserts.
+  - Done 2026-11-14: 12 tests, 87 asserts.
     - The test stands in for `NetManager`: it settles each answer READY or FAILED (design.md "Changes from the build plan").
     - The taken port consumes ENet's own "Couldn't create an ENet host" engine error with `assert_engine_error`.
     - Beyond the list: an answer is given once; a peer for a cancelled request is closed; a reason of NONE becomes UNSUPPORTED; the base backend's safe defaults; join targets.
@@ -68,8 +68,8 @@ No existing file under `game/tests` is edited.
 - [x] 2.6 2.1 and 2.2 pass. Run the import, smoke and GUT.
   - Done 2026-11-14:
     - Import ×2 clean; smoke "10 frames, 0 problem(s)".
-    - GUT: 175 scripts (baseline +2), 1568 tests (+25), 1568 passing, 54765 asserts (+218), 0 failing, no leak at exit.
-    - The new suites account for 196 of the added asserts. The other 22 come from existing suites; not traced per suite.
+    - GUT: 175 scripts (baseline +2), 1568 tests (+25), 1568 passing, 54766 asserts (+219), 0 failing, no leak at exit.
+    - The new suites account for 197 of the added asserts. The other 22 come from existing suites; not traced per suite.
     - `test_net_manager.gd` passes 8/8 alone. `NetManager` and `GameShell` are unchanged.
 
 ## 3. NetManager through the backend (tests first)

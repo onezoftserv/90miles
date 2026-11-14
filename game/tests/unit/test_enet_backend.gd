@@ -38,6 +38,7 @@ func test_host_answers_before_returning() -> void:
 	EnetBackend.new().host(request, 0)
 	assert_eq(request.state, NetRequest.State.READY, "answered inside the call")
 	assert_true(request.peer is ENetMultiplayerPeer)
+	assert_eq(request.peer.get_unique_id(), 1, "a server peer: the host is peer 1")
 	assert_eq(request.reason, NetFailure.Reason.NONE)
 	assert_not_null(request.info)
 	assert_gt(request.info.port, 0)

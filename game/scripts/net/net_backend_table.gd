@@ -10,6 +10,7 @@ const PATH: String = "res://resources/net_backends.tres"
 const ENET_ID: StringName = &"enet"
 const ENET_SCRIPT: String = "res://scripts/net/enet_backend.gd"
 
+# load_shipped() copies these fields one by one: a new @export must be copied there too.
 @export var default_id: StringName = ENET_ID
 @export var profiles: Array[NetBackendProfile] = []
 ## The reason's line per NetFailure.Reason, [es, en]. NONE and CANCELLED have none.
