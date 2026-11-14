@@ -227,9 +227,14 @@ No existing file under `game/tests` is edited.
 - [x] 6.4 Run the import, smoke and GUT.
   - Done 2026-11-14 (group 6 changed docs only, nothing under `game/`):
     - Import ×2 clean; smoke "10 frames, 0 problem(s)".
-    - GUT, second full run: 179 scripts, 1614 tests, 1614 passing, 0 failing, 55237 asserts, exit 0, no leak at exit, no "Nothing was run". That is the 5.4 total, and against the 1.1 baseline +6 scripts, +71 tests and +690 asserts. Orphans are reported only by older suites, none by this change's suites.
-    - The first full run had 1 failure: `test_crossing_art.gd` `test_a_solo_crossing_sea_follows_the_crossing_scroll`, "solo: the scrolled sea still covers the crossing's sea" (1613/1614, 55236/55237). Run alone it passed 1 time in 3. It is an art-pass test, and this change touches no crossing or art script. Other Godot processes were running on the laptop at the time.
-    - The likely cause, not proven: the rig adds the crossing to the tree before `setup()` moves its origin. `CrossingSea` builds its polygon in `_ready` and rebuilds it only in `_process`, while `wait_frames(2)` counts physics frames. Under load, two physics steps can pass before a process frame runs. Left for the art-pass owner, since no existing test may be edited here.
+    - GUT, three full runs. The third: 179 scripts, 1614 tests, 1614 passing, 0 failing, 55237 asserts, exit 0, no leak at exit, no "Nothing was run". That is the 5.4 total, and against the 1.1 baseline +6 scripts, +71 tests and +690 asserts. Orphans are reported only by older suites, none by this change's suites.
+    - The first two full runs each had 1 failure (1613/1614, 55236/55237), both in `test_crossing_art.gd`:
+      - run 1: `test_a_solo_crossing_sea_follows_the_crossing_scroll`, "solo: the scrolled sea still covers the crossing's sea";
+      - run 2: `test_the_deck_shows_the_raft_frame_for_its_integrity_and_is_gone_once_sunk`, "at 20 the deck shows breaking".
+    - Run alone (`-gconfig= -gtest=`), the file passed once in 3; the 2 failures were the scroll case. So it reproduces without other suites and is real, though intermittent. Other Godot processes were running on the laptop throughout.
+    - Cause not established. It is not the docs edits of this group. This change touches no crossing or art script, but the scroll case starts with `NetManager.start_solo()`, which group 3 rewrote, so it is not cleared either.
+    - What fits so far: in the scroll case the position check passed and only the cover check failed. The crossing scrolls in `_process`, so a scroll of 0 means no process frame ran. The rig adds the crossing to the tree before `setup()` moves its origin. `CrossingSea` builds its polygon in `_ready` and rebuilds it only in `_process`, while `wait_frames(2)` counts physics frames. Two physics steps with no process frame between them would give exactly this failure. The deck case also waits physics frames for a look that follows in `_process`.
+    - The deciding check, not done here: run `test_crossing_art.gd` alone several times at the branch point 528e2a5, which needs a second checkout. Until then, 7.5's "0 failures" is at risk. No existing test may be edited in this change.
 
 ## 7. Verification
 
