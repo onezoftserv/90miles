@@ -27,7 +27,7 @@ See proposal.md for why. What exists on `main`, and shapes the approach:
   - `FLAG_SET` is "not built yet" in `ConditionCheck`, and no chain `.tres` exists.
   - Capture is not built.
   - The routes `almendron` and `tabla` belong to content-batch-11 (`docs/CONTENT_MANIFEST.md`, `TASKS.md` §10, balsero-lore task 8.2).
-- **Art.** `tools/art/structures.py` builds `game/assets/art/structures/*.png` from hand pieces in `tools/art/fixes/structures/` and cuts from packs. The packs are git-ignored and are present read-only in the main checkout under `game/assets/{itch,oga}`. Its recipe already maps the Zelda-like `objects.png` barrel to the master palette. `StructureArt.raft_frame` uses absolute thresholds: whole above 66, worn above 33.
+- **Art.** `tools/art/structures.py` builds `game/assets/art/structures/*.png` from hand pieces in `tools/art/fixes/structures/` and cuts from packs. The packs are git-ignored and are present read-only in the main checkout under `game/assets/{itch,oga}`. Its recipe already maps the Zelda-like barrel (cut from `Overworld.png` for the rain catcher) to the master palette. `StructureArt.raft_frame` uses absolute thresholds: whole above 66, worn above 33.
 - `CompanionData.can_swim` says "false also rules out the SWIMMERS and DOLPHIN_POD vessels". No companion `.tres` exists.
 
 ## Goals / Non-Goals
