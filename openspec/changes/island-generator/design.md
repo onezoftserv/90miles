@@ -4,8 +4,9 @@
 
 - **Handmade islands today.** `IslandLayoutData` (`game/scripts/data/island_layout_data.gd`) is text rows plus a legend: every glyph has a terrain, and the marker fields say which glyphs are palms, the workbench, spawns, tide pools, the raft site, drinking spots, signs and pick-ups. `IslandLayout.build` reads it into a `GridTerrain` (cells default to deep water) and placement lists, and `IslandLayout.reachable_from` is the 4-connected walk over `WALKABLE` (beach, dune, scrub, rock, shallows). `SandbarIsland` builds whatever layout it is given before it enters the tree ("Any handmade layout builds the island"); `CreatureSpawner.setup(session, layout)` builds the same layout again and reads `layout.chain_family`; `IslandTravel._load(layout_id, …)` fetches the next layout from the catalog's `islands` folder, and `CoopSession.travel_to` refuses any id that is not there. Joiners hear `island` (a layout id), `waiting` and `raft` in the world state.
 - **Data waiting for a generator.** `ChainData` and `PoiData` exist (project-skeleton) and the catalog registers `chains/` and `pois/`, but both folders are empty and no code reads either class. `ChainData.layout_rule` already names painters (`REEF_RING` among them), and creature rules live on `CreatureSpawnRuleData.chain_families`.
-- **Seeds.** `run-end` (PR #31, open) has the host roll `run_seed` into the world state and adds `islands` (islands stood on); joiners receive both. Its design rejects the engine's `hash()` as unstable across versions. The world state's older `island_seed` key is a dev value from coop-networking that nothing reads; this change does not use it.
-- **Art.** `art-pass` (proposed) draws terrain as tile layers from `GridTerrain` on every peer, with cosmetic variants from a hash of the layout and the cell, never a simulation RNG.
+- **Seeds.** `run-end` (PR #31, merged and archived 2026-11-08) has the host roll `run_seed` into the world state and adds `islands` (islands stood on, `IslandTravel.islands_reached`); joiners receive both. Its design rejects the engine's `hash()` as unstable across versions. The world state's older `island_seed` key is a dev value from coop-networking that nothing reads; this change does not use it.
+- **Art.** `art-pass` (merged 2026-11-13, PRs #37 and #38) draws terrain as tile layers from `GridTerrain` on every peer: `TerrainView` reads the island's `layout` and `built`, and cosmetic variants and the shore phase come from `TerrainArt.cell_hash(layout id, cell)`, never a simulation RNG.
+- **Building sites.** Since `inventory-hud` (PR #35), a fire or rain-catcher site is placed only at a workbench (crafting-inventory "Placing a build site"). The coast cay has no workbench, and neither has the reef (decision 10).
 
 ## Goals / Non-Goals
 
@@ -104,7 +105,7 @@ Attempts run 0 to `max_attempts − 1`, each with its own seeds (step 1), so eve
 - **World state.** `join_extras` adds `island_index` (int) and `island_hash` (`StringName`); `island` is the chain id for a generated island. `follow` resolves the same way. `run-end`'s `islands` counter and `island_index` agree in a plain run; `island_index` is the number the seed uses.
 - **Mismatch (decision 6).** A client whose hash differs logs a warning and asks the host once (`request_island`, any peer, rate-limited to one per island); the host answers with `receive_island(text)` (authority, reliable), the canonical text, which the client parses with a size limit (at most 128×128 cells, glyphs from the writer's alphabet, a legend that reads with no problems), checks against the host's hash and builds.
 - **Captures.** "Previous island after capture" regenerates from the run seed: the same reference gives the same island.
-- **Art.** `art-pass` keys cosmetic variants on a layout and cell hash; for a generated layout that should be `island_hash`, so variants differ between seeds and stay identical across peers.
+- **Art.** `art-pass` keys cosmetic variants on `hash(layout id, cell)` (`TerrainView`, `SeaMask.phase_bytes`). Every generated reef has the id `reef_traps_3` whatever the seed, so for a generated island the key is `island_hash` instead: variants differ between seeds and stay identical across peers. A handmade layout keeps its id as the key.
 
 ### 7. Party scaling and the dawn refill
 
@@ -147,7 +148,32 @@ Read at `C:/Users/liann/src/90miles/reference/`.
 - **Borrowed: `random.h` `rng::subgenerator` (shop and item rolls isolated from level generation in `dungeon.cc`).** Same reason as SPD's separate generators.
 - **Rejected for now: minivaults and vault stamps (`dat/des/`), `SUBST`, `ORIENT`.** A stamped block carries its own terrain, which fights a generated coastline and needs a second validation pass; the reef's POIs fit rules on top of the generated terrain. Stamps stay the likely tool for designed set pieces and the shipwreck interiors.
 
+## Re-check against main (528e2a5, 2026-11-14)
+
+Between this change being written (7368a3d) and this re-check, these merged: inventory-hud (#35), the art pass and its follow-ups (#37, #38) and the sign note (#39). Coast-cay (#27) and run-end (#31) were already merged when the change was written. `openspec/specs/island-generation/spec.md` has not changed since, so the MODIFIED copies in the delta still match it.
+
+**The nine decisions all stand.**
+- 1 and 4 are stronger. The art pass draws rock, the reef shark and the land crab, and `TerrainView` draws any island from its `layout` and `built`, so a generated `IslandLayoutData` gets terrain art with no new path.
+- 7's floor is intact: `recipes/raft.tres` is still 6 driftwood, 2 inner tubes and 3 rope.
+- 9 is already applied in `docs/ISLANDS.md` "Generation" and `docs/GAME_DESIGN.md` §17.
+- 2, 3, 5, 6 and 8 are untouched by what merged.
+
+**Task 0.2 is confirmed.**
+- `CoopSession.WORLD_STATE_TYPES` has `run_seed: TYPE_INT`.
+- `GameShell._build_run` rolls it with `randi()` (0 to 2³²−1) whenever it is not building a client, so on the host and in solo.
+- A joiner receives it through `_admit` → `receive_world_state(join_state())`, tested by `test_death_cause_net.gd` `test_the_run_seed_reaches_a_joiner`.
+- A new run rolls a new seed (`test_run_restart.gd`).
+
+**Decision 10 (owner, 2026-11-14): no workbench on the reef.** Since inventory-hud, fire and rain-catcher sites are placed only at a workbench, so the reef has no fire and no rain catcher, as on the coast cay. Its land crabs are never halved by a fire. The layout's `workbench_glyph` stays empty, as §2 already says. A fire without a bench would apply to every island, so it would be its own crafting change.
+
+**Drift the build takes in (task 0.3):**
+- **Art key.** Cosmetic variants are keyed on the layout id, which is `reef_traps_3` for every seed. `TerrainView` and `SeaMask.phase_bytes` take `island_hash` as the key when the island has one, and the layout id otherwise (§6 "Art"; tasks 6.1 and 6.2).
+- **The joiner's island id.** `IslandTravel._join_extras` sends `island.layout.id`. For a generated island that would be `reef_traps_3`, while §6 says the world state's `island` is the chain id, with `island_index` beside it. `_join_extras` and `follow` change together in task 8.3.
+- **`island_index` beside `islands`.** run-end's `islands` counter already exists (`IslandTravel.islands_reached`, sent in `_join_extras`). `island_index` stays a separate key because the secret cay (off-graph) and "previous island after capture" move the stood-on count without moving the index the seed uses.
+
 ## Risks / follow-ups
+
+- **Creature placement does not follow the run seed.** `CreatureSpawner.WORLD_SEED` is a fixed 90, so where a generated reef's sharks and crabs start varies with its terrain, never with the run seed itself. Seeding the spawner and the crossings from `run_seed` (`TASKS.md` §4, "Seed crossings and islands from `run_seed`") stays a follow-up; this change seeds only the island.
 
 - **GDScript speed.** About 6,144 cells, a few smoothing and clustering passes and several breadth-first searches per attempt: roughly 50–150 ms in GDScript with packed arrays. A run that hits rerolls costs a short pause at travel on every peer. If it is too slow, the first optimisation is fewer smoothing passes; the dev scene prints the time.
 - **Trap pick-ups in shallows.** They sit beside rock so a player standing on the rock can reach them; taking one while swimming costs swim energy. The build checks a player on the shore cell can take a trap's rope.
