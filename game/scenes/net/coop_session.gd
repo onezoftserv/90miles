@@ -133,6 +133,7 @@ var clock: Callable
 var phrases: QuickChatPhrases
 ## Language of bubble and HUD text; Spanish first until a settings screen exists.
 var locale: String = DEFAULT_LOCALE
+var run_record: RunRecord = RunRecord.new()  # Host: this run's flags, creature counts and effect limits (never sent).
 
 var _bodies: Dictionary[int, PlayerBody] = {}
 ## Host: each peer's rate limits.

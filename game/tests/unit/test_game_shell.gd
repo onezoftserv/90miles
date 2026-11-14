@@ -229,6 +229,21 @@ func test_a_restored_crossing_already_followed_is_not_followed_twice() -> void:
 	assert_eq(shell.crossings.size(), 1)
 
 
+func test_a_solo_crossing_rolls_its_creatures_from_the_departing_island() -> void:
+	# creature-perch-ride "Crossing creature roll": the host attaches the roll right after launch.
+	var shell := _shell()
+	(shell.screen as TitleScreen).solo_requested.emit()
+	var routes := shell.session.get_node(^"Routes") as IslandRoutes
+	routes.route_started.emit(&"raft", [1] as Array[int])
+	assert_eq(shell.crossings.size(), 1)
+	if shell.crossings.is_empty():
+		return
+	var riders := shell.crossings[0].get_node_or_null(NodePath(CrossingCreatures.NODE_NAME)) as CrossingCreatures
+	assert_not_null(riders, "the crossing rolled its creatures")
+	if riders != null:
+		assert_true(riders.creatures().is_empty(), "no creature in today's content has a crossing rule")
+
+
 func test_solo_progress_with_nothing_changes_nothing() -> void:
 	var shell := _shell()
 	(shell.screen as TitleScreen).solo_requested.emit()
