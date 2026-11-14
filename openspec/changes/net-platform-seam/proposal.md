@@ -28,7 +28,7 @@ The owner asked whether the multiplayer approach ports to Steam, Nintendo, Andro
 
 **Hosting and joining may finish later.** A request comes back READY (peer installed), PENDING or FAILED. A request refused before the backend is asked changes nothing; a failure from the backend leaves the game offline.
 - The shell builds the run and starts the session only in the step that installs the peer, never under the offline peer standing in for a pending request.
-- Leaving, going solo or asking again cancels a pending request. A peer that arrives late is closed, never installed.
+- Leaving, going solo or a new host or join request cancels a pending request. A peer that arrives late is closed, never installed.
 - A per-backend join timeout exists; for ENet it is 0, so ENet keeps its own.
 
 **Failure reasons.** Every failed host or join carries a reason, and the screens show that reason's line from data, with Spanish first and English beside it. ENet's wording does not change: "No se pudo abrir el puerto %d." and "No se pudo conectar.". A join failure always shows on the join screen.
@@ -76,13 +76,14 @@ The owner asked whether the multiplayer approach ports to Steam, Nintendo, Andro
 
 **Tests:**
 - A new helper, `game/tests/helpers/fake_net_backend.gd`.
-- Six new suites:
+- Nine new suites:
   - `test_net_backend_table.gd`
   - `test_enet_backend.gd`
   - `test_net_requests.gd`
   - `test_net_backend_contract.gd`
   - `test_transport_seam.gd`
   - `test_shell_platform.gd`
+  - `test_net_request_edges.gd`, `test_shell_join_rules.gd` and `test_solo_on_the_shipped_backend.gd`, added after review
 - Every existing test stays unedited and green.
 
 **Docs:** `docs/GAME_DESIGN.md` §17, the Multiplayer row (no numbers change), and `TASKS.md`.

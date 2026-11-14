@@ -63,7 +63,7 @@ A host or join request refused before the backend is asked (the backend failed t
 - **THEN** the call does not report success, the request is cancelled, the game is offline, and the peer the backend delivers later is closed
 
 ### Requirement: Cancelling a pending request
-Leaving, going solo or asking again SHALL cancel a pending host or join request, make the backend leave its platform session, and return to the offline peer; a peer the backend delivers for a cancelled request is closed and never installed. With 1 player, going solo always cancels any request.
+Leaving, going solo or a new host or join request SHALL cancel a pending host or join request, make the backend leave its platform session, and return to the offline peer; a peer the backend delivers for a cancelled request is closed and never installed. With 1 player, going solo always cancels any request.
 
 #### Scenario: Going solo during a pending join
 - **GIVEN** exactly 1 player whose join is still waiting on the backend
