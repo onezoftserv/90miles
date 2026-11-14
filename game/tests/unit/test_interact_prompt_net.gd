@@ -138,9 +138,21 @@ func test_a_rejoined_client_shows_the_prompt_over_what_its_reclaimed_body_reache
 		hud.prompt.tick(STEP_S)
 		return mine != null and hud.prompt.body == mine and hud.prompt.lines().size() > 0 \
 			and hud.prompt.lines()[0] == "[E] Construir Balsa"
-	assert_true(await wait_until(reclaimed, TIMEOUT_S), "the prompt follows the reclaimed body to the raft site")
+	var followed: bool = await wait_until(reclaimed, TIMEOUT_S)
+	assert_true(followed, "the prompt follows the reclaimed body to the raft site (%s)" % _client_view(back, hud))
 	assert_same(host.body(net.peer_id(back)), papo_body, "the same body on the host")
 	assert_same(hud.prompt.target, (back.get_node("RaftSite") as BuildSite).interactable)
+
+
+# What a rejoined client shows of its own body, for a failure message: none (never re-bound), downed
+# (no host state since the rebind), or how far it stands from its copy of the raft site.
+func _client_view(session: CoopSession, hud: RunHud) -> String:
+	var mine := net.own_body(session)
+	if mine == null:
+		return "no own body on the client"
+	var site := session.get_node("RaftSite") as BuildSite
+	var reach: float = mine.global_position.distance_to(site.interactable.global_position)
+	return "own body downed: %s, %.0f px from the site, the prompt's body: %s" % [mine.downed, reach, hud.prompt.body == mine]
 
 
 func test_a_client_joining_after_deposits_reads_the_raft_sites_live_state() -> void:
