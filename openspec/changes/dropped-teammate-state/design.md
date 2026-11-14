@@ -25,7 +25,7 @@
 
 **D1. Reference games: the state word comes from the body; a level change never waits for someone who cannot act.**
 
-None of the three is networked, so none has a "disconnected" state. Their closest ideas:
+Shattered Pixel Dungeon, Brogue CE and DCSS are not networked, so none of them has a "disconnected" state. Their closest ideas come first; Don't Starve Together, which is networked, comes last:
 
 - *Borrowed, Brogue CE, `IO.c` `printMonsterInfo`:* the sidebar shows one status word per creature, taken from a fixed priority chain over the creature's own flags ("(Captive)" before "(Sleeping)" before "(Ally)"). The cause of a state outranks the state itself. We take two things:
   - The word is read from state the body carries, the same on every view.
@@ -43,6 +43,16 @@ None of the three is networked, so none has a "disconnected" state. Their closes
   - SPD carries directable allies wherever they are, and intelligent allies within 5 tiles, to the new floor.
   - Carrying a dropped body that took no route (option C) would let a disconnect skip the crossing, the run's tension peak.
 - *Rejected, Brogue's delayed arrival* (`STATUS_ENTERS_LEVEL_IN` counting down on the new level), for the same reason.
+- *Compared, Don't Starve Together.* The owner added it as a fourth reference on 2026-11-14. It is closed source (Klei), so it was read on the wiki (dontstarve.wiki.gg) only.
+  - On disconnect, the leaving player's character leaves the world with them. The "Drop Items on Disconnect" world setting decides whether only its irreplaceable items or everything it carries is dropped on the way out.
+  - A dead player becomes a ghost that still moves and haunts. It comes back with 50 health and none of the items it dropped at death. Among the ways to revive it:
+    - A living player gives it a Telltale Heart, which costs 25 % of its max health.
+    - The ghost haunts a Touch Stone, once per player per stone.
+    - The ghost activates the Meat Effigy attuned to it.
+  - The world never waits for an absent or dead player. In Survival, when every player is a ghost, a 120 s timer (a server setting) starts and the world resets unless someone is revived first.
+  - We share the principle: nobody's absence holds the party, and a bounded timer settles the case where nobody can act.
+  - We do not take the instant vanish (option B). Our body stays 30 s so a quick rejoin keeps it, because a crossing cannot be redone.
+  - Ghosts and revive items are outside this change. Our downed and revive rules are unchanged.
 - No code, data or text copied.
 - The 30 s in option A has no reference number. It is our estimate:
   - Godot's ENet peer timeout already lets up to 30 s pass before the host notices a dead connection.
