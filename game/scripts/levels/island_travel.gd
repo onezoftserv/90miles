@@ -111,7 +111,7 @@ func travel(next_id: StringName) -> void:
 	var cells: Dictionary[int, Vector2i] = {}
 	var next_layout := GameState.content.get_entry(&"islands", next_id) as IslandLayoutData
 	if next_layout != null:
-		cells = ArrivalScatter.pick(IslandLayout.build(next_layout), _scatter_by_peer(), _landing_seed(), _dead_peers())
+		cells = ArrivalScatter.pick(IslandLayout.build(next_layout), _scatter_by_peer(), _landing_seed(next_id), _dead_peers())
 	var arrivals: Dictionary = {}
 	for peer_id: int in session.peer_ids():
 		var meters := session.body(peer_id).meters
@@ -196,10 +196,11 @@ func _dead_peers() -> Array[int]:
 	return dead
 
 
-# The scatter's roll: the run's seed and how far the party has come, so a run lands the same way.
-func _landing_seed() -> int:
+# The scatter's roll: the run's seed, how far the party has come and the island it lands on (an
+# off-graph island such as the secret cay does not count as reached), so a run lands the same way.
+func _landing_seed(next_id: StringName) -> int:
 	var run_seed: Variant = session.world_state.get("run_seed", 0)
-	return hash([run_seed if run_seed is int else 0, islands_reached])
+	return hash([run_seed if run_seed is int else 0, islands_reached, String(next_id)])
 
 
 func _on_changed() -> void:

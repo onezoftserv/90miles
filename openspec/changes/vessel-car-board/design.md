@@ -128,7 +128,7 @@ Content-batch-11 must give `tabla_vela`'s use `spends_use = false`, as `binocula
   1. Riders with the default scatter take the landing cells, in sorted peer order, as `landing_positions` does now.
   2. Every other rider is placed in sorted peer order. With nobody placed yet, the first takes the first landing cell, so solo is unchanged.
   3. After that, each candidate is a `BEACH` cell reachable on foot from the first landing cell, not already taken.
-  4. A candidate fits when its straight-line distance in tiles to every placed rider lies within `[min, max]`. One fitting cell is picked with an RNG seeded from `hash([run_seed, islands_reached])`.
+  4. A candidate fits when its straight-line distance in tiles to every placed rider lies within `[min, max]`. One fitting cell is picked with an RNG seeded from `hash([run_seed, islands_reached, next island id])`; the island id keeps two landings apart when an off-graph island (the secret cay) does not count as reached.
 - **Fallback (spec "Arrival scatter fallback").**
   1. Among cells at least `min` from everyone, take the one with the smallest distance to the farthest placed rider.
   2. Otherwise, take the cell with the largest distance to its nearest placed rider.
