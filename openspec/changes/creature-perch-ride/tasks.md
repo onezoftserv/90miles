@@ -18,13 +18,13 @@ Test-first: each task writes its GUT test before the code, and every test that i
 
 ## 3. Ambient machine (balsero-lore 7.1)
 
-- [ ] 3.1 Write `test_ambient.gd` (1 player) and then `game/scripts/ai/ambient.gd`. The test covers:
+- [x] 3.1 Write `test_ambient.gd` (1 player) and then `game/scripts/ai/ambient.gd`. The test covers:
   - a songbird and a booby on a mid crossing both run `Ambient`, reach their stations and each pay +5 morale once that day;
   - the booby leaves when the weather turns to squall and the songbird stays to the end;
   - a stay time ends a visit;
   - health, inventory and vessel integrity never change;
   - an island ambient lingers at its spot.
-- [ ] 3.2 Run the import, the smoke run and GUT; all pass with no `ERROR:` lines
+- [x] 3.2 Run the import, the smoke run and GUT; all pass with no `ERROR:` lines
 
 ## 4. Perch ride (balsero-lore 7.2, 7.3)
 
