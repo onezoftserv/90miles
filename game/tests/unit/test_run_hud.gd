@@ -60,6 +60,17 @@ func test_solo_hud() -> void:
 	assert_null(hud.wheel, "no quick-chat wheel in solo")
 
 
+func test_solo_never_drops_and_has_no_teammate_rows() -> void:
+	# ui-shell "Teammate state word", 1 player offline: nobody to drop, no rows, no word.
+	var session := _session()
+	var hud := _hud(session, true)
+	hud.refresh()
+	assert_false(session.is_dropped(CoopSession.HOST_ID))
+	assert_false(session.body(CoopSession.HOST_ID).net.net_dropped)
+	assert_false(hud.teammates_panel.visible)
+	assert_eq(hud.teammate_rows(), [] as Array[String])
+
+
 func test_the_phase_names() -> void:
 	var climate := ClimateState.new()
 	climate.phase = DataEnums.DayPhase.DAY

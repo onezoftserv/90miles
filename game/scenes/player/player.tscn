@@ -78,6 +78,9 @@ properties/19/replication_mode = 1
 properties/20/path = NodePath("SurvivalMeters:status_flags")
 properties/20/spawn = true
 properties/20/replication_mode = 1
+properties/21/path = NodePath("PlayerNet:net_dropped")
+properties/21/spawn = true
+properties/21/replication_mode = 1
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
