@@ -13,11 +13,12 @@ No existing file under `game/tests` is edited.
 
 ## 1. Baseline
 
-- [ ] 1.1 At the branch point, run the import twice, the smoke run and GUT. Record the GUT script, test and assert counts here.
+- [x] 1.1 At the branch point, run the import twice, the smoke run and GUT. Record the GUT script, test and assert counts here.
+  - Done 2026-11-14 at ca6a2a8 (branch point 528e2a5 plus docs only): import ×2 clean; smoke "10 frames, 0 problem(s)"; GUT 173 scripts, 1543 tests, 1543 passing, 54547 asserts, 0 failing, 61 deprecation notices, no leak at exit.
 
 ## 2. Value types, data and the ENet backend (tests first)
 
-- [ ] 2.1 Write `game/tests/unit/test_net_backend_table.gd`:
+- [x] 2.1 Write `game/tests/unit/test_net_backend_table.gd`:
   - the shipped table loads and defaults to ENet;
   - profile ids are unique, and every profile's script loads by path to a `NetBackend`;
   - the ENet profile has `join_timeout_s` 0 and a lobby note containing "%d";
@@ -29,14 +30,23 @@ No existing file under `game/tests` is edited.
   - English is picked when asked;
   - `pick` prefers a present feature tag, then the default (in-memory tables with an injected `has_feature`);
   - a missing default or a bad script still gives ENet.
-- [ ] 2.2 Write `game/tests/unit/test_enet_backend.gd`:
+  - Done 2026-11-14: 13 tests, 110 asserts. Beyond the list:
+    - each line sits on its own reason;
+    - a line given no arguments shows as written;
+    - an unreadable or wrong-type table gives ENet;
+    - every load is a copy (see design.md "Changes from the build plan").
+- [x] 2.2 Write `game/tests/unit/test_enet_backend.gd`:
   - host is READY before it returns, with an ENet server, `info.port` equal to `NetPeers.bound_port`, and LAN-only addresses;
   - a taken port fails with PORT_UNAVAILABLE, `reason_args == [port]` and no peer;
   - join is READY and CONNECTING at once, even with nobody at 127.0.0.1:7999;
   - `check_target` refuses "", "   ", port 0, port 65536 and a token target;
   - `--connect=10.0.0.5:7780` reads as written; `--connect=10.0.0.5` gives port 7777; `--connect=`, `--connect=h:0` and no flag give null;
   - the root peer stays offline when `EnetBackend.host()` is called directly.
-- [ ] 2.3 See 2.1 and 2.2 fail. Then add, each with its committed `.uid`:
+  - Done 2026-11-14: 12 tests, 86 asserts.
+    - The test stands in for `NetManager`: it settles each answer READY or FAILED (design.md "Changes from the build plan").
+    - The taken port consumes ENet's own "Couldn't create an ENet host" engine error with `assert_engine_error`.
+    - Beyond the list: an answer is given once; a peer for a cancelled request is closed; a reason of NONE becomes UNSUPPORTED; the base backend's safe defaults; join targets.
+- [x] 2.3 See 2.1 and 2.2 fail. Then add, each with its committed `.uid`:
   - `game/scripts/net/net_failure.gd`
   - `net_join_target.gd`
   - `net_host_info.gd`
@@ -45,12 +55,22 @@ No existing file under `game/tests` is edited.
   - `enet_backend.gd`
   - `net_backend_profile.gd`
   - `net_backend_table.gd`
-- [ ] 2.4 Add `game/resources/net_backends.tres`:
+  - Done 2026-11-14.
+    - Red first: each suite run alone (`-gconfig= -gtest=<file>`) stopped at a parse error (`NetRequest`, `NetJoinTarget` and `EnetBackend` not found). GUT printed "Nothing was run" and still exited 0, which is why the 2.6 counts are the evidence.
+    - Then the eight scripts went in, with `.uid` files from the import.
+- [x] 2.4 Add `game/resources/net_backends.tres`:
   - `default_id &"enet"`;
   - one ENet profile with `feature_tag ""`, `join_timeout_s 0` and the [es, en] lobby note;
   - the [es, en] failure lines from design.md.
-- [ ] 2.5 In `NetPeers`, add `lan_addresses(all)` and the doc-comment edit. Make `LobbyScreen.local_addresses()` forward to it.
-- [ ] 2.6 2.1 and 2.2 pass. Run the import, smoke and GUT.
+  - Done 2026-11-14: inline ENet profile with the script by path. The eleven lines are keyed by `Reason` value; `test_each_line_sits_on_its_reason` checks the keys.
+- [x] 2.5 In `NetPeers`, add `lan_addresses(all)` and the doc-comment edit. Make `LobbyScreen.local_addresses()` forward to it.
+  - Done 2026-11-14: `net_peers.gd` gains only `lan_addresses` and the doc comment. `test_lobby_screen.gd` passes unchanged: 9/9 run alone.
+- [x] 2.6 2.1 and 2.2 pass. Run the import, smoke and GUT.
+  - Done 2026-11-14:
+    - Import ×2 clean; smoke "10 frames, 0 problem(s)".
+    - GUT: 175 scripts (baseline +2), 1568 tests (+25), 1568 passing, 54765 asserts (+218), 0 failing, no leak at exit.
+    - The new suites account for 196 of the added asserts. The other 22 come from existing suites; not traced per suite.
+    - `test_net_manager.gd` passes 8/8 alone. `NetManager` and `GameShell` are unchanged.
 
 ## 3. NetManager through the backend (tests first)
 

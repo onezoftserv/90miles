@@ -446,3 +446,17 @@ These are research notes for the later backends. This change depends on none of 
   - the W4 Games consoles FAQ, which lists Godot 4.4–4.6 and does not mention 4.7: to verify before any console plan.
 - Console certification rules are under NDA. The only public analogue is Xbox's XR list (devdocs.xbox.com XR-045, XR-064, XR-074, XR-112).
 - WebRTC would need a signalling server, and v1 has no backend.
+
+## Changes from the build plan
+
+Recorded while building group 2 (2026-11-14).
+
+- **`NetRequest` state and the backend tests.** The state leaves PENDING only through `settle()` or `cancel()`, so READY always means the peer is installed, as the ordering above needs. A backend's `succeed()` or `fail()` only records the answer and emits `answered`; a separate answered flag makes "first answer only" hold, and a second `succeed()` closes the peer it was offered. Called directly, with no `NetManager`, a backend therefore leaves the request PENDING. In `test_enet_backend.gd` the test stands in for `NetManager`: it connects `answered` and settles READY (with a peer) or FAILED (without one), and never touches `multiplayer`. That is how "READY before it returns" is checked in 2.2.
+- **Small additions to the interface:**
+  - `NetRequest.is_answered()`. `cancel()` sets the reason to CANCELLED and closes a peer that was offered but not yet installed. `succeed(null)` counts as a failure, UNSUPPORTED.
+  - `NetBackendTable.load_shipped(path = PATH)` takes an optional path, so a test can check that an unreadable or wrong-type table gives `enet_only()`.
+  - `load_shipped()` returns a fresh copy of the shipped table, never the cached resource. In 4.7.2, if this script checked a value against its own type (`NetBackendTable.new()`, `as NetBackendTable`, or a loaded Resource returned as one), every script the GUT process had loaded leaked at exit. That needs the typed `Array[NetBackendProfile]` export alongside. Smoke and the game were unaffected. So `NetBackendTable`'s static functions build with a bare `new()` and copy `default_id`, `profiles` and `failure_texts` in, and the type is checked by its global name. `test_each_load_is_a_copy_of_the_shipped_table` pins the copy.
+  - `NetBackendTable.profile(id)`, `ENET_ID` and `ENET_SCRIPT`. `pick()` and `create()` never return null: a missing default or a bad script gives ENet with ENet's profile.
+  - A line is formatted only when its placeholders match the arguments given. Otherwise it shows as written, with no format error.
+- **`EnetBackend.join()`** fails INVALID_TARGET for a target `check_target` refuses, and UNREACHABLE only when ENet cannot create the client.
+- **`EnetBackend.launch_target()`** parses `--connect=` itself, with the join screen's rules, instead of calling `JoinScreen.parse_address`. That keeps `scripts/net/` free of a dependency on a scene script.

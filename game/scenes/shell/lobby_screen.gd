@@ -23,15 +23,9 @@ var is_host: bool = true:
 @onready var _rows: VBoxContainer = %Rows
 
 
-## The LAN IPv4 addresses worth showing (no loopback, no link-local), sorted.
+## The LAN IPv4 addresses worth showing (no loopback, no link-local), sorted: NetPeers.lan_addresses().
 static func local_addresses(all: PackedStringArray) -> PackedStringArray:
-	var shown: PackedStringArray = []
-	for address: String in all:
-		if address.is_valid_ip_address() and not address.contains(":") \
-				and not address.begins_with("127.") and not address.begins_with("169.254."):
-			shown.append(address)
-	shown.sort()
-	return shown
+	return NetPeers.lan_addresses(all)
 
 
 func _ready() -> void:
