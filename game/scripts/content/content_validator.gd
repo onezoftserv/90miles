@@ -44,7 +44,16 @@ static func _validate_type(catalog: ContentCatalog, type: StringName) -> PackedS
 		if data.requires_name() and data.name_es.strip_edges().is_empty():
 			errors.append("%s: name_es is empty" % where)
 		errors.append_array(_check_references(catalog, where, data))
+		errors.append_array(_check_secret(where, data))
 	return errors
+
+
+# secret-cay "Secret items": no item-tag spawn may ever draw a secret item, so its weight is 0.
+static func _check_secret(where: String, data: ContentData) -> PackedStringArray:
+	var item := data as ItemData if data is ItemData else null
+	if item != null and item.tags.has(DataEnums.ItemTag.SECRET) and item.spawn_weight > 0.0:
+		return PackedStringArray(["%s: a secret item must have spawn_weight 0, not %s" % [where, item.spawn_weight]])
+	return PackedStringArray()
 
 
 ## Checks the references `obj` declares (a ContentData entry or an embedded DataPart), then

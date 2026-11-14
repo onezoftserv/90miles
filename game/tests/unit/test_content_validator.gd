@@ -168,3 +168,25 @@ func test_reference_check_is_case_sensitive() -> void:
 	raft.tool = &"Rope"
 	_save("recipes", "raft", raft)
 	_assert_one_error_containing(["recipes/raft", "tool", "things/Rope"])
+
+
+# secret-cay "Secret items": an item tagged SECRET must have spawn weight 0, so no item-tag spawn
+# can ever draw it; the shipped secret items pass, one with weight 1 is reported.
+func test_a_secret_item_with_a_spawn_weight_is_reported() -> void:
+	var drawn := ItemData.new()
+	drawn.id = &"secret_thing"
+	drawn.name_es = "Cosa secreta"
+	drawn.tags = [DataEnums.ItemTag.SECRET] as Array[DataEnums.ItemTag]
+	drawn.spawn_weight = 1.0
+	var hidden := ItemData.new()
+	hidden.id = &"hidden_thing"
+	hidden.name_es = "Cosa escondida"
+	hidden.tags = [DataEnums.ItemTag.SECRET] as Array[DataEnums.ItemTag]
+	hidden.spawn_weight = 0.0
+	_save("items", "secret_thing", drawn)
+	_save("items", "hidden_thing", hidden)
+	var errors := ContentValidator.validate(ContentCatalog.new(ROOT))
+	assert_eq(errors.size(), 1, "exactly one error: %s" % [errors])
+	if errors.size() == 1:
+		assert_string_contains(errors[0], "items/secret_thing")
+		assert_string_contains(errors[0], "spawn_weight")
