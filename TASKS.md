@@ -48,6 +48,11 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] `crossing-late-join`: a client that joins or rejoins mid-crossing sees the crossing and the route departures
 - [x] `crossing-shark-sync`: every peer, and a late joiner, sees the crossing's reef shark
 - [x] `status-sync`: a player's statuses (bleeding) reach every peer, late joiners included, and a "Sangrando" tag shows on the HUD
+- [x] `dropped-teammate-state`:
+  - Every peer knows a dropped teammate (a host-written flag in the body's synced state), so their row reads "Desconectado" on the host, the clients and late joiners.
+  - Owner, 2026-11-14: once dropped bodies on the island are all that keep waiting riders from landing, each is removed within 30 s, not 90 s.
+  - The waiting line marks "(desconectado)".
+  - Arrivals may name up to 8 bodies.
 - [x] Arrival on a second handmade island (coast cay): `coast-cay` change, archived 2026-11-08
 - [x] `creatures-ai`: reef shark (patrol/circle/strike), crabs, gulls
 - [x] Death, run summary with the Cuban one-liner, restart: `run-end` change, archived 2026-11-08
@@ -184,3 +189,13 @@ Other (was in Milestone G):
 - 2026-11-13: `art-pass` built on `feat/art-pass` (groups 1-10; GUT 171 scripts, 1522 tests, all passing; import, smoke and the four headless runs clean; Python `tools/art` 163 tests): tracked art with licences and credits, terrain tile layers with the Eldiran foam and a scrolling sea, MetroCity players in four slot colours with every pose, the shark fin, crab and gull, fourteen item icons, palm, lean-to, fire, rain catcher, sign, raft site and raft, the crossing's sea and deck, Y-sort and shadows. `tests/manual/art_pass_run.gd` plays the solo route by input (title to the coast cay) and a host with two clients; captures in `docs/art-pass/`. Still open in its tasks.md: 4.6's foam-touch check on a few shore cells, 6.5's shoo (a perched gull's shoo prompt loses to the palm's climb), 8.5 and 10.3 on a client (the whole route), then the owner's review and the archive.
 - 2026-11-13: `art-pass-followups` built on `fix/art-pass-followups` (GUT 171 scripts, 1530 tests, all passing; import and smoke clean): an interactable has a priority, highest in reach then nearest, and a creature that can be shooed outranks things, so a perched gull's "[E] Espantar Gaviota" beats the palm's climb; a sign's prompt reads "[E] Mirar" ("Look"); the playthrough harness tells night foam by brightness and blue/red ratio, shows the shoo, and plays the structures and the route on a client (solo 139 of 139; host, client A and client B 32, 62 and 23 of the same; 0 error lines). `art-pass` 6.5, 8.5 and 10.3 ticked and its 4.6 foam finding closed. Findings: a client's palm, fire and catcher looks stay stale (known); a dropped client's body holds the sandbar about 90 s before the party lands; on a client a disconnected teammate reads "Caído", not "Desconectado".
 - 2026-11-13: `sign-note-panel` built on `feat/sign-note-panel` (GUT 173 scripts, 1543 tests, all passing; import and smoke clean): reading a flavour sign opens a cream note with dark text on the reader's own HUD under the day phase, 240 px wide, the line word-wrapped (at most 8 lines, held by a data test) and "[E] Cerrar"; it never pauses, closes on E, Esc, walking away, going down or a screen, and teammates see nothing; the world bubble and `CoopSession.show_sign` are gone. Owner decisions 2026-11-13: a note panel as Shattered Pixel Dungeon's `WndStory`, reader only. Capture in `docs/art-pass/coast_cay_sign_note.png`.
+- 2026-11-14: `dropped-teammate-state` built test-first on `claude/dropped-teammate-state-c41a51`.
+  - Results:
+    - Second import 0 error lines; smoke clean.
+    - Host plus two clients with `art_pass_run.gd`: host 35 of 35, A 67 of 67, B 23 of 23, 0 error lines. The party landed 30.2 s after the crossing ended and B left (about 90 s before).
+  - What changed:
+    - The host writes a dropped flag into the body's synced state (`PlayerNet.net_dropped`, sent at spawn). A dropped teammate's row reads "Desconectado" on the host, the clients and late joiners.
+    - Owner, 2026-11-14: once dropped bodies still on the island are all that keep waiting riders from landing, each is removed within 30 s (`IslandTravel.DROPPED_HOLD_S`). With nobody waiting, the 90 s hold, so a drop never ends the run early.
+    - The waiting line marks "(desconectado)".
+    - `MAX_ARRIVALS` is 8.
+  - Found and fixed: a refused landing re-queued itself in one deferred flush until the engine crashed, which four connected players plus a dropped waiting rider used to trigger.

@@ -76,14 +76,26 @@ Group 3 follows option A of design D3, which the owner chose on 2026-11-14.
 
 ## 5. Integration
 
-- [ ] 5.1 Run the import twice, the smoke run, the whole of GUT and `openspec validate dropped-teammate-state --strict`. Verify: 0 error lines from the second import, the smoke run passes, GUT passes in full, and validation is clean.
-- [ ] 5.2 Run a host and two clients locally with `tests/manual/art_pass_run.gd` (headless). Verify:
+- [x] 5.1 Run the import twice, the smoke run, the whole of GUT and `openspec validate dropped-teammate-state --strict`. Verify: 0 error lines from the second import, the smoke run passes, GUT passes in full, and validation is clean.
+  - Done 2026-11-14:
+    - Second import 0 error lines.
+    - Smoke: 10 frames, 0 problems.
+    - GUT: 175 scripts, 1561 of 1561.
+    - Validation is clean.
+- [x] 5.2 Run a host and two clients locally with `tests/manual/art_pass_run.gd` (headless). Verify:
   - While B is away, A's row for B reads "Desconectado".
   - After B's last leave, the coast cay loads within about 30 s, not 90 s.
   - Zero error lines in the three logs.
-- [ ] 5.3 Update the records. Verify: the edits are in place.
+  - Done 2026-11-14. The harness now checks both points itself: the host times the landing, and the host and A latch the word for B.
+    - Host 35 of 35, A 67 of 67, B 23 of 23, 0 error lines.
+    - The coast cay loaded 30.2 s after the later of the crossing's end and B's leave.
+    - The host's row for B read only "Desconectado". A's read "", "Desconectado", then no row once B was removed, never "Caído".
+- [x] 5.3 Update the records. Verify: the edits are in place.
   - Tick the two items in `TASKS.md`.
   - In `openspec/changes/art-pass-followups/tasks.md` "Still open", note that this change addresses the "Caído" row and the 90 s landing.
+  - Done 2026-11-14:
+    - `TASKS.md` has a Milestone B line and a Done log entry.
+    - `art-pass-followups/tasks.md` has a dated bullet under "Still open". I added a bullet rather than editing the shared line, which the structure-sync work also touches.
 
 ## Workflow follow-up
 
