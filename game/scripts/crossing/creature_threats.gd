@@ -3,7 +3,9 @@ extends CrossingThreats
 ## The crossing's threats with a creature behind them (creatures-ai "Crossing reef shark"): a rock
 ## hits the vessel; a shark pass is a reef shark that takes a swimmer who meets its strike
 ## conditions, else an intact vessel, else nobody, then circles for its circle time and leaves.
-## The crossing's own numbers (`bite_swimmer`, `hit_vessel`) are unchanged.
+## The crossing's own numbers (`bite_swimmer`, `hit_vessel`) are unchanged. The vessel hit is a
+## shark's, so a route that dumps on a shark attack throws that vessel's riders in, and the shark
+## shows beside the deck that was hit (vessel-car-board).
 
 const SHARK_ID: StringName = &"reef_shark"
 const SHARK_OFFSET_PX: Vector2 = Vector2(16.0, 0.0)
@@ -31,7 +33,7 @@ func _shark_pass(crossing: Crossing) -> void:
 			bitten = true
 			break
 	if not bitten:
-		crossing.hit_vessel(crossing.tuning.shark_hit)
+		arrives_at = crossing.hit_vessel(crossing.tuning.shark_hit, true)
 	_show_shark(crossing, data, arrives_at + SHARK_OFFSET_PX)
 
 

@@ -231,10 +231,16 @@ func advance(delta: float) -> void:
 		_send_state()
 
 
-## The vessel takes a hit; at 0 it breaks (`_on_broke`). Nothing happens without a vessel.
-func hit_vessel(amount: float) -> void:
+## The vessel takes a hit; at 0 it breaks (`_on_broke`). Nothing happens without a vessel. A shark
+## hit (`shark`) on a route that dumps on a shark attack throws the vessel's riders who are aboard
+## and not tied into the water (crossing "Shark dumps"). Returns the centre of the deck that was
+## hit, where the shark shows.
+func hit_vessel(amount: float, shark: bool = false) -> Vector2:
 	integrity.hit(amount)
 	_dirty = true
+	if shark:
+		_shark_dump(_peers)
+	return deck_center()
 
 
 ## A shark's bite on a swimmer: health and bleeding. `by` is the biting creature's id, the cause
@@ -358,6 +364,15 @@ func _squall() -> void:
 	if not route.dump_triggers.has(RouteData.DumpTrigger.SQUALL):
 		return
 	for peer: int in _peers:
+		if rider_state(peer) == Rider.ABOARD:
+			throw_in(peer)
+
+
+# On a route a shark attack dumps from, `riders` aboard and not tied go into the water.
+func _shark_dump(riders: Array[int]) -> void:
+	if not route.dump_triggers.has(RouteData.DumpTrigger.SHARK_ATTACK):
+		return
+	for peer: int in riders:
 		if rider_state(peer) == Rider.ABOARD:
 			throw_in(peer)
 

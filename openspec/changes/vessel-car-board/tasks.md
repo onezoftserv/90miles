@@ -31,7 +31,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
 
 ## 3. Shark dumps (crossing "Shark dumps")
 
-- [ ] 3.1 Add these tests:
+- [x] 3.1 Add these tests:
   - a raft route listing only `SQUALL`: a shark hit leaves the rider aboard at 80;
   - a route listing `SHARK_ATTACK`: a shark hit throws untied riders in at −10 energy and leaves a tied rider aboard.
 

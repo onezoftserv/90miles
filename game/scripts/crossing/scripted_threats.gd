@@ -1,7 +1,8 @@
 class_name ScriptedThreats
 extends CrossingThreats
 ## The crossing's own scripted threats (crossing "Shark pass event"): a rock hits the vessel; a
-## shark pass takes a bleeding or tired swimmer first, then an intact vessel, else nobody.
+## shark pass takes a bleeding or tired swimmer first, then an intact vessel (a shark's hit, which
+## may dump its riders), else nobody.
 
 
 func resolve(event: CrossingBeat, crossing: Crossing) -> void:
@@ -20,4 +21,4 @@ func _shark_pass(crossing: Crossing) -> void:
 		if meters.has_status(DataEnums.Status.BLEEDING) or meters.energy < crossing.tuning.shark_energy_threshold:
 			crossing.bite_swimmer(peer)
 			return
-	crossing.hit_vessel(crossing.tuning.shark_hit)
+	crossing.hit_vessel(crossing.tuning.shark_hit, true)
