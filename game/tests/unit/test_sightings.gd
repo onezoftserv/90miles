@@ -4,6 +4,7 @@ extends GutTest
 ## living rider sees it; on an island, a player within its sight radius. One offline player.
 
 const FLAG: StringName = &"galleguito_a_bordo"
+const SANDBAR: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
 
 
 func before_each() -> void:
@@ -98,6 +99,25 @@ func test_the_same_player_seeing_the_same_creature_twice_pays_once() -> void:
 	assert_eq(body.meters.morale, 55.0, "one creature pays a player once")
 	Sightings.see(_creature(data), world)
 	assert_eq(body.meters.morale, 60.0, "another one with no limit pays again")
+
+
+func test_the_island_spawner_writes_the_sessions_record_so_a_run_limit_holds_across_scenes() -> void:
+	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0)
+	var session := crossing.session()
+	var body := crossing.body_of(1)
+	body.meters.morale = 50.0
+	var spawner := CreatureSpawner.new()
+	session.add_child(spawner)
+	spawner.setup(session, SANDBAR)
+	assert_eq(spawner.world.record, session.run_record, "the island's creatures write the run's record")
+	var data := _bird(&"pajaro_bobo_prueba", [_morale_effect(5.0, EffectData.Limit.ONCE_PER_RUN)] as Array[EffectData], 4.0)
+	Sightings.see(_creature(data), CreatureWorld.for_crossing(crossing))
+	assert_eq(body.meters.morale, 55.0, "seen at sea")
+	var on_island := Creature.make(data)
+	add_child_autofree(on_island)
+	on_island.global_position = body.global_position
+	Sightings.see(on_island, spawner.world)
+	assert_eq(body.meters.morale, 55.0, "a once-per-run sighting already paid at sea is not paid again on the island")
 
 
 func test_a_dead_rider_sees_nothing() -> void:

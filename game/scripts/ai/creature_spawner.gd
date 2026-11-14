@@ -36,6 +36,7 @@ func setup(for_session: CoopSession, layout_data: IslandLayoutData, catalog: Con
 	world.terrain = built.terrain
 	world.nav = nav
 	world.pickups = session.pickups
+	world.record = session.run_record
 	world.rng.seed = WORLD_SEED
 
 

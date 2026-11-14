@@ -51,6 +51,8 @@ None.
   - `creature.gd`: the rider sync, a passing flag and the shoo priority from the brain.
   - `creature_look.gd`: draw on the rider's head.
   - `creature_world.gd`: the crossing, the run record and the carried-item check.
+  - `creature_brain.gd`: `interact_priority()` (1 for every creature but the perched gull).
+  - `creature_spawner.gd`: the island's creatures write the session's run record.
   - `swoop_steal.gd`: the carried-item check.
   - `effect_applier.gd`: `SET_FLAG` and `CLEAR_FLAG`.
   - `crossing_tuning.gd` and `.tres`: `max_rolled_creatures`.

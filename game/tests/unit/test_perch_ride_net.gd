@@ -115,10 +115,12 @@ func test_a_client_rider_sees_the_gull_on_its_own_head_while_walking() -> void:
 	mine.intent = MoveIntent.create(Vector2.RIGHT)
 	await wait_physics_frames(6)
 	mine.intent = MoveIntent.new()
-	await wait_process_frames(1)
-	assert_true(_drawn_on(client, client_id), "still on the head of the walking player, not trailing it")
-	await wait_process_frames(1)
-	assert_true(_drawn_on(host, client_id), "the host draws it on the client's player too")
+	# The frame-by-frame no-trail check is the manual two-process run and the look's process-order
+	# test; here each peer only has to settle on the walked player's head.
+	var still_on_mine := func() -> bool: return _drawn_on(client, client_id)
+	assert_true(await wait_until(still_on_mine, TIMEOUT_S), "still on the head of the player who walked")
+	var on_host := func() -> bool: return _drawn_on(host, client_id)
+	assert_true(await wait_until(on_host, TIMEOUT_S), "the host draws it on the client's player too")
 
 
 func test_a_clients_shoo_from_beside_hops_it_and_one_from_6_tiles_is_refused() -> void:

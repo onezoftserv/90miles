@@ -27,7 +27,7 @@
 
 **Goals:**
 - `ambient.gd` and `perch_ride.gd` work from data alone: content-batch-12 adds `galleguito`, `pajarito` and `pajaro_bobo` as `.tres` files with no script edit.
-- The crossing places creatures from their CROSSING rules, deterministically from the shell's RNG after the plan, with no new beat kind and no change to plan or snapshot serialisation.
+- The crossing places creatures from their CROSSING rules, deterministically from dice of their own (run seed and crossing number), so the shell's crossing dice and every plan are untouched. No new beat kind, and no change to plan or snapshot serialisation.
 - A perched gull looks attached on every screen, the late joiner's included, and never costs a rider a tie-down or a climb.
 
 **Non-Goals:**
@@ -77,7 +77,7 @@
     - Splumonkeys take loose items and container contents. Powder Monkeys knock items out of a player's inventory on sight. Krampus empties everything on screen and flees into his sack. Killing any of them returns what it stole.
     - *Rejected:* whole-pack theft, fleeing after a theft, and getting items back by killing the thief. The galleguito charges a toll, one held snack at most once a minute; it stays and cannot be killed.
     - *Borrowed:* the wiki's advice against Powder Monkeys is to keep common stacks in the first slots, so the inventory order decides what is exposed. Our theft from the first FOOD slot only is the same idea, and a player can choose what they expose.
-    - *Borrowed:* Powder Monkeys leave alone players who carry the right pass. That is our `ITEM_CARRIED` → `NEGATE` immunity, the Pluma de galleguito.
+    - *Borrowed:* the Powder Monkey page says they leave alone players with "Right of Passage". A mark on the player wards the thief off, which is our `ITEM_CARRIED` → `NEGATE` immunity, the Pluma de galleguito.
   - **Catcoons** (wiki "Catcoon"). Food or toys make one follow a player for up to a day, and a befriended one coughs up gifts on a timer.
     - *Rejected:* befriending, feeding and gifts. The gull is a passenger, not a pet, and gifts would be a survival lever.
 
@@ -98,7 +98,7 @@
 - The cap is `CrossingTuning.max_rolled_creatures`, set to 2 in `crossing_tuning.tres`. The tuning script has no defaults.
 
 **D3. `CreatureWorld` learns the crossing and the run.**
-- The new fields are `crossing: Crossing` (null on an island) and `record: RunRecord`, which defaults to a fresh one so rigs without a session still work. The spawner and `CrossingCreatures` set the session's.
+- The new fields are `crossing: Crossing` (null on an island) and `record: RunRecord`, which defaults to a fresh one so rigs without a session still work. `CreatureSpawner.setup` and `CreatureWorld.for_crossing` set the session's, so a run limit holds across islands and crossings.
 - With a crossing, `players()` is its living riders' bodies, and `terrain` is its sea.
 - New reads:
   - `rider_state(body)`, `deck_center()` and `deck_rect()`.
