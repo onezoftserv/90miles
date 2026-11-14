@@ -114,6 +114,22 @@ func take_from_pickup(item: WorldItem, count: int) -> int:
 	return taken
 
 
+## True when `body` carries an item that one of `data`'s ITEM_CARRIED → NEGATE counters names (the
+## Pluma de galleguito): that creature takes nothing from them.
+static func carries_negator(data: CreatureData, body: PlayerBody) -> bool:
+	for counter: CreatureCounterData in data.counters:
+		if counter.trigger != CreatureCounterData.Trigger.ITEM_CARRIED or counter.response != CreatureCounterData.Response.NEGATE:
+			continue
+		var needed: int = maxi(counter.count, 1)
+		for id: StringName in counter.item_ids:
+			if body.inventory.count_id(id) >= needed:
+				return true
+		for tag: DataEnums.ItemTag in counter.item_tags:
+			if body.inventory.count_tag(tag) >= needed:
+				return true
+	return false
+
+
 ## Takes one item of the player's held food (their inventory's first FOOD slot); &"" if none.
 func take_held(body: PlayerBody) -> StringName:
 	var id: StringName = body.inventory.held_food()

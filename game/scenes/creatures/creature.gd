@@ -26,6 +26,9 @@ var lifetime_s: float = -1.0
 var seen_by: Dictionary[int, bool] = {}
 ## Host: it rides along with a crossing (CrossingCreatures), so it is not one of the island's.
 var passing: bool = false
+## Synced: the peer whose player's head it sits on, 0 when it sits on nobody (perch_ride). Every
+## peer draws it on that player's head.
+var perch_peer: int = 0
 
 @onready var interactable: Interactable = $Interactable
 
@@ -41,6 +44,8 @@ func _ready() -> void:
 	var shoo_counter := CreatureBrain.counter_for(data, CreatureCounterData.Trigger.INTERACT)
 	interactable.hold_time_s = 0.0
 	interactable.enabled = shoo_counter != null
+	if brain != null:
+		interactable.priority = brain.interact_priority()
 	interactable.interacted.connect(_on_interacted)
 
 

@@ -10,7 +10,7 @@ extends Node
 ## crossing number), so the shell's crossing dice and every plan are untouched. Nothing here
 ## names a creature: a creature file with a crossing rule rides along with no edit.
 
-const NODE_NAME: StringName = &"Creatures"
+const NODE_NAME: StringName = &"CrossingCreatures"
 ## They come in from the sea's north edge, this far inside it.
 const EDGE_INSET_PX: float = 8.0
 ## Spawn spots along the edge are this far apart.

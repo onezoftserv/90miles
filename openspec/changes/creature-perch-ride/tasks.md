@@ -28,8 +28,8 @@ Test-first: each task writes its GUT test before the code, and every test that i
 
 ## 4. Perch ride (balsero-lore 7.2, 7.3)
 
-- [ ] 4.1 Append `CreatureData.Behavior.PERCH_RIDE` after `TRADE_OR_ROB`; `test_data_classes.gd` (or the creature content test) checks its index follows `TRADE_OR_ROB` and `CreatureBrain.for_behavior` finds `perch_ride.gd`
-- [ ] 4.2 Write `test_perch_ride.gd` (1 player unless noted) and then `game/scripts/ai/perch_ride.gd`. The test covers:
+- [x] 4.1 Append `CreatureData.Behavior.PERCH_RIDE` after `TRADE_OR_ROB`; `test_data_classes.gd` (or the creature content test) checks its index follows `TRADE_OR_ROB` and `CreatureBrain.for_behavior` finds `perch_ride.gd`
+- [x] 4.2 Write `test_perch_ride.gd` (1 player unless noted) and then `game/scripts/ai/perch_ride.gd`. The test covers:
   - circling then landing;
   - +10 morale once and `galleguito_a_bordo` set once;
   - theft held-only and at most twice in 120 s, with the first roll at 60 s;
@@ -39,10 +39,10 @@ Test-first: each task writes its GUT test before the code, and every test that i
   - the co-op pick, in a 3-rider session (3, 1 and 1 food) and on a tie decided by the run seed;
   - a shoo with another rider aboard hops to that head;
   - a dead rider makes it pick again.
-- [ ] 4.3 Add `CreatureBrain.interact_priority()` (base 1; perch ride −1) and use it in `Creature._ready`; a 1-player test ties down and climbs aboard with the galleguito perched, and an island gull still outranks the palm
-- [ ] 4.4 Add `CreatureWorld.carries_negator` and use it in `swoop_steal.gd` and `perch_ride.gd`; a 1-player test with a registered fixture feather: an island gull with the counter takes nothing, and the galleguito's roll takes nothing
-- [ ] 4.5 Add the final-crossing tests: a crossing out of a FINAL-family island places the galleguito with 1 player and with 4, even when 2 rolled creatures already filled the cap, and the 4-player run gives each player +10 once
-- [ ] 4.6 Run the import, the smoke run and GUT; all pass with no `ERROR:` lines
+- [x] 4.3 Add `CreatureBrain.interact_priority()` (base 1; perch ride −1) and use it in `Creature._ready`; a 1-player test ties down and climbs aboard with the galleguito perched, and an island gull still outranks the palm
+- [x] 4.4 Add `CreatureWorld.carries_negator` and use it in `swoop_steal.gd` and `perch_ride.gd`; a 1-player test with a registered fixture feather: an island gull with the counter takes nothing, and the galleguito's roll takes nothing
+- [x] 4.5 Add the final-crossing tests: a crossing out of a FINAL-family island places the galleguito with 1 player and with 4, even when 2 rolled creatures already filled the cap, and the 4-player run gives each player +10 once
+- [x] 4.6 Run the import, the smoke run and GUT; all pass with no `ERROR:` lines
 
 ## 5. Perched on every peer
 
