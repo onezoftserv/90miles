@@ -4,7 +4,7 @@ context: |
   90 Millas: a Godot 4.7 GDScript co-op survival roguelite (1-4 players, host-authoritative). The Godot project lives in game/, so every engine command passes --path game. docs/ holds the gameplay design (source of truth for numbers); openspec/project.md holds the domain glossary (island, chain, POI, crossing, meters, backgrounds) - read it before writing specs.
   Development is on Windows with Git Bash; CI is Linux. A change is done only when these pass: godot --headless --path game --import; godot --headless --path game -s res://tests/smoke.gd; godot --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit.
   Content is data: creatures, items, recipes, NPCs, dialogue, chains, POIs, set pieces, routes, backgrounds and weather are .tres files in game/resources/<folder>/ using the classes in game/scripts/data/. Adding one must never need a script edit. Unresolved design contradictions found while modelling the data are listed in the archived project-skeleton change's data-model-questions.md; do not silently pick an answer in a spec - surface it.
-  reference/ holds Shattered Pixel Dungeon and DCSS (GPL) and Brogue CE (AGPL-3.0): study mechanisms there, never copy code.
+  reference/ holds Shattered Pixel Dungeon and DCSS (GPL) and Brogue CE (AGPL-3.0): study mechanisms there, never copy code. Don't Starve Together (proprietary, Klei) is the fourth reference, the closest co-op survival match: study it through dontstarve.wiki.gg and docs/REFERENCE_DST.md, ideas only.
   Spanish first in all player-facing text.
 
 rules:
@@ -13,6 +13,7 @@ rules:
     - Every change that touches player-facing behaviour includes at least one test with exactly 1 player, offline.
   design:
     - Study how the three reference games in reference/ (Shattered Pixel Dungeon, Brogue CE, DCSS) handle the mechanic and say which ideas are borrowed or rejected and why, with file and function names. Ideas only, never code.
+    - Also study how Don't Starve Together handles it (dontstarve.wiki.gg, docs/REFERENCE_DST.md) and say which ideas are borrowed or rejected and why, citing wiki page names. Ideas only: never its code, data, numbers tables, text or art.
   specs:
     - When a requirement changes a number from docs/GAME_DESIGN.md or another design doc, name the doc section it changes.
     - Every requirement that involves players states what happens with exactly 1 player (solo, offline); a rule that needs a teammate gives the solo alternative.

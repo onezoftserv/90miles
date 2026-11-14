@@ -13,7 +13,8 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 - Keep `TASKS.md` current: tick tasks as they ship, add new ones below the current milestone.
 - Small PRs, one capability each. Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`).
 - Solo is a first-class mode: every feature must work, be winnable and be tested with exactly 1 player, offline (no hosting, no port, no second peer). A rule that needs a teammate (revive, drag, pooled materials, shared seats) must state its solo alternative in the spec, and each change adds at least one 1-player test.
-- Reference games first: before designing any mechanic (for example how fast time passes, hunger and thirst rates, stealth, level generation, AI, items), check how Shattered Pixel Dungeon, Brogue CE and DCSS handle it in `reference/`, and record in the change's `design.md` which ideas are borrowed or rejected and why (file and function names). Ideas and structure only; never copy code, data tables or text.
+- Reference games first: before designing any mechanic (for example how fast time passes, hunger and thirst rates, stealth, level generation, AI, items), check how Shattered Pixel Dungeon, Brogue CE and DCSS handle it in `reference/`, and how Don't Starve Together does (owner, 2026-11-14). Record in the change's `design.md` which ideas are borrowed or rejected and why: file and function names for the three roguelikes, and wiki page names for DST. Ideas and structure only; never copy code, data tables or text.
+  - DST is the closest match: co-op survival with meters, seasons, boats, ghosts and revival, creatures, crafting, and servers you join. It is closed source (Klei), so read it through the community wiki (dontstarve.wiki.gg) and our own notes in `docs/REFERENCE_DST.md`. Never use its code, data, numbers tables, text or art.
 
 ## Godot conventions
 
@@ -58,6 +59,7 @@ Godot 4 (GDScript) co-op survival roguelite, 1–4 players, real-time, 2D top-do
 ## Don'ts
 
 - No copied code from Shattered Pixel Dungeon or DCSS (GPL) or Brogue CE (AGPL-3.0). Ideas and structure only. They live in `reference/` (git-ignored, `./tools/clone_references.sh`); read there, write here.
+- Nothing taken from Don't Starve Together (proprietary, Klei): no code, data, numbers tables, text, names of its characters or art. Ideas only, described in our own words.
 - No AWS keys, tokens or `.env` files committed.
 - No new autoloads without a spec change.
 - No copyrighted characters, logos or real people in assets or dialogue.
