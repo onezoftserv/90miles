@@ -28,8 +28,13 @@ On a hit to the body whose meters the HUD shows (the player's own, or the teamma
 - **WHEN** a shark bites them
 - **THEN** the screen edges do not flash
 
-### Requirement: Lost health shows on the bar
-When health falls, the Salud bar SHALL show the lost part in pale red beside the remaining fill, hold it for 0.4 s, then shrink it to the new value over 0.5 s. A hit also shakes the bar sideways by 1 px for 0.2 s, unless "Reducir destellos" is on. A drain shows its loss the same way without the shake. Solo shows it the same way with exactly 1 player, offline.
+### Requirement: Changes show on the bars
+When the shown body's health falls, the Salud bar SHALL show the lost part in pale red, hold it 0.4 s, then shrink it over 0.5 s; a hit also shakes the bar by 1 px for 0.2 s. When any meter jumps up at once, its bar shows the gained part in a light tint of its colour, flashes once, and blends it into the fill within 1 s. With "Reducir destellos" on, no shake or flash; the parts still show. Solo the same with exactly 1 player, offline.
+
+#### Scenario: A coconut lights two bars
+- **GIVEN** a solo player at thirst 50 and hunger 50 with a knife and a coconut
+- **WHEN** they drink the coconut
+- **THEN** the Sed bar shows 50 to 65 in a light blue and the Hambre bar 50 to 55 in a light tint, both flash once, and both read as plain fill 1 s later
 
 #### Scenario: A shark's bite leaves a chunk
 - **GIVEN** a solo player at 100 health
@@ -77,4 +82,4 @@ The settings screen SHALL hold the player name, fullscreen, the scale (automatic
 #### Scenario: Reduce flashes kept
 - **GIVEN** a player who ticks "Reducir destellos" and closes the game
 - **WHEN** the game starts again
-- **THEN** the box is still ticked and hits show without flashes
+- **THEN** the box is still ticked and hits and uses show without flashes

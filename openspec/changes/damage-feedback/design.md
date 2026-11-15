@@ -31,6 +31,21 @@ Both `harm` (one call for a hit, or one per frame for drowning) and direct write
 - `player_look.gdshader` multiplies by `COLOR` (modulate), so a white flash needs its own uniform.
 - `test_art_sim_invariance` strips every `art_view` node and compares 600 frames.
 
+**Item uses (added 2026-11-14 when the owner widened the change)**
+- The strip picks the use (`UsePlan.choose`) and checks it as the host will (`UsePlan.actor_reason`, then `ItemUser.check`). On a refusal it shows a line from `HudText.refusals` on its `HudNotice` row (y 306–316, 400 px, under the band's top) for 2 s. Otherwise it sends `CoopSession.use_item`.
+- The host's `use_for` returns a bool that `request_use` drops, so nothing confirms a use beyond the bars moving.
+- `ItemUser.use` applies effects through `EffectApplier`. It interprets these kinds:
+  - METER_ADD (a hunger gain at once is a meal: `eat()` adds energy);
+  - CURE_STATUS;
+  - REVIVE;
+  - GIVE_ITEM and TAKE_ITEM;
+  - START_ROUTE;
+  - SET_FLAG and CLEAR_FLAG.
+
+  It skips every other kind, APPLY_STATUS among them.
+- Sábila cures SUNBURN, then BLEEDING, and can go on a teammate. Item descriptions (`description_es`) are never shown in play.
+- `status_flags` replicates to every peer (status-sync), so a cure is visible everywhere.
+
 **HUD and settings**
 - `MeterBar` pulses at 25 or less (`MeterBar.is_critical`).
 - `MetersHud` already holds a full-screen `Blur` overlay (mouse ignored, not a `HudPanel`), so `RunHud.panel_rects()` does not count it.
@@ -47,6 +62,8 @@ Both `harm` (one call for a hit, or one per frame for drowning) and direct write
 **Non-Goals:**
 - Knockback or invulnerability frames: both change the simulation.
 - Hit messages in a log (we have none), cues per cause (they need the cause, which only the host has), and real sounds (none exist yet; this change adds only the hook).
+- Sábila's own gameplay (a bleeding drain, treating teammates, a sunburn source) and any item effect: a separate session owns them.
+- Showing item descriptions (`description_es`) in play.
 - Cues on the teammate list or name tags. The HUD restyle in review owns those panels; a later change can add them.
 - Restyling the bars. This change only adds nodes inside `MeterBar` and one overlay in `MetersHud`.
 
@@ -62,7 +79,9 @@ Both `harm` (one call for a hit, or one per frame for drowning) and direct write
   - **Rejected:** skipping small hits. A crab's 5 being unseen is the owner's complaint, so we keep a floor instead.
   - **Rejected:** tinting the whole screen. We flash only the edges, so the centre stays readable (ui-shell "HUD layout": the centre holds no panel).
   - We write our own curve; neither the formula nor its constants are ported.
-- `FloatingText` (`effects/FloatingText.java`) floats numbers up about one tile over a second, stacked per character. **Rejected by default (Q3):** four players at 640×360 would clutter, the GBA look has none, and the bar's chunk shows the size.
+- `FloatingText` (`effects/FloatingText.java`) floats numbers up about one tile over a second, stacked per character so they never overlap. Damage and healing each have their own colour and icon. `Healing` (`actors/buffs/Healing.java`) shows each heal tick as a positive float.
+  - **Borrowed (Q7, Q3):** a rising, stacked float for jumps, cures and hits, coloured per meter.
+  - Our drains do not float, unlike SPD's heal ticks, so slow changes stay quiet.
 - `StatusPane` (`ui/StatusPane.java`) pulses the hero's portrait red below a third of health, faster as it falls. **Already ours:** `MeterBar`'s pulse at 25 or less; unchanged.
 - `SPDSettings.screenShake` with `PixelScene.shake` shakes on heavy events, set from 0 to 4. **Borrowed:** every shake and flash obeys one player setting.
 
@@ -86,6 +105,24 @@ Both `harm` (one call for a hit, or one per frame for drowning) and direct write
 - "Knockback" and "Stunning": heavy hits knock a character down and interrupt them, and light ones stagger briefly. **Rejected:** both move or stop a body the host simulates.
 - "Sanity" (Trivia): the distortion overlay can be turned off in the options. Shake options come from forum reports only [unverified]. **Borrowed:** one switch that turns off every flash and shake, with no source left out.
 
+**Use feedback (the coordinator's research, checked in `reference/` where it is code)**
+- **SPD:**
+  - `Food.java` satisfies hunger and logs a line on eating.
+  - `StatusPane.java` and `Healing.java` are covered above.
+  - **Borrowed:** the use answers right away, on the body and on the bar.
+- **Brogue CE:**
+  - `eat()` (`Items.c`) asks before eating when the player is not hungry enough to use the whole food. **Borrowed, stronger:** we refuse only when the use would do nothing at all (Q6 A). A partial waste goes ahead, since we have no confirm dialog.
+  - `creatureHealthChangePercent` (`IO.c`) drives the sidebar's change display from the previous and current health. **Borrowed:** the change is computed from two values the peer already has, not from an event.
+- **DCSS:**
+  - `colour_bar::draw` (`output.cc`) draws a gained part in `m_change_pos` and a lost part in `m_change_neg`. **Borrowed:** both slices.
+  - `PotionEffect::check_known_quaff` and the `can_quaff(reason)` overrides (`potion.cc`) refuse a known potion that would do nothing, with a reason. **Borrowed:** the refusal.
+  - `_uselessness_desc` (`describe.cc`) adds a line explaining why an item is useless now. **Borrowed:** the reason names the meter or status.
+- **DST:**
+  - "Sanity": the badge's arrow shows the direction and speed of a change.
+  - "Quotes": characters speak a line when using or examining things.
+  - **Borrowed:** the direction, through slices on the bar and floats.
+  - **Not borrowed:** spoken lines on every use. They would be a dialogue change, and our floats already say what happened.
+
 **GBA conventions, matching our art direction C** (general knowledge, no assets)
 - In *A Link to the Past*, a hurt Link flashes and blinks while briefly untouchable, is knocked back, and his hearts empty.
 - In GBA-era Pokémon battles, the hurt monster blinks and the HP bar slides down rather than jumping.
@@ -94,7 +131,7 @@ Both `harm` (one call for a hit, or one per frame for drowning) and direct write
 
 ### D2. Derive the cues from replicated health on every peer
 
-Each cue holds a `HurtWatch` (a pure `RefCounted`), which reads `meters.health` and `meters.dead` once per drawn frame in its owner's `step(delta)`.
+Each cue holds a `MeterWatch` (a pure `RefCounted`), one per watched meter, which reads that meter's value, `meters.dead` and `status_flags` once per drawn frame in its owner's `step(delta)`.
 - On the host that is the simulated value. On a client it is the value `StateSync` last set.
 - There is no signal handler, so nothing runs inside the simulation step. That keeps the global RNG order and the invariance run exact.
 
@@ -105,7 +142,11 @@ Each cue holds a `HurtWatch` (a pure `RefCounted`), which reads `meters.health` 
 
 ### D3. The classifier
 
-`HurtWatch.observe(health, dead, delta) -> int` returns NONE, HIT or DRAIN, and keeps `last_hit` (the size of the hit).
+`MeterWatch.observe(value, dead, delta) -> int` returns NONE, HIT (a loss at once), DRAIN (a slow loss) or JUMP (a gain at once). It keeps `last_change`, the signed size of the HIT or JUMP. The same test runs in both directions:
+- a rise at least `hit_margin` above the steady trend is a JUMP;
+- a slower rise only moves the baseline (slow regain).
+
+For health, HIT and DRAIN feed the hurt cues. For the other meters a sudden loss is also reported, as HIT, and floats its signed change like a JUMP. Heat counts the same way, signed. Cures come from a separate `StatusWatch`: a bit cleared in `status_flags` since the last frame, with the same baseline rules.
 - **Baseline:** the first observation, the first one after `reset()` (rebind, spectate switch) and any observation while dead set the baseline and return NONE. A rise also only moves the baseline.
 - **Steady rate:** `rate` is the body's recent drain, learned from losses classed as drains: loss ÷ time since the previous loss. It drops to 0 once `drain_forget_s` (1 s) passes with no loss.
 - **Hit test:** on a loss `L`, with `t` the time since the previous loss (capped at `drain_forget_s`):
@@ -125,7 +166,7 @@ Each cue holds a `HurtWatch` (a pure `RefCounted`), which reads `meters.health` 
 
 ### D4. The body cue lives in `PlayerLook`, through shader uniforms
 
-`PlayerLook.step` feeds its `HurtWatch`. On a HIT, a `HurtBlink` (a pure state) starts. It holds the time since the hit and turns it into three uniforms, set after the water-line cut:
+`PlayerLook.step` feeds its `MeterWatch`. On a HIT, a `HurtBlink` (a pure state) starts. It holds the time since the hit and turns it into three uniforms, set after the water-line cut:
 - `hurt_white` is 1 for the first frame;
 - `hurt_hidden` toggles at `blink_hz` (10 Hz, every 3 frames at 60) until `blink_s` (0.6 s);
 - `hurt_tint` is the steady red used in its place while reduce flashes is on.
@@ -136,7 +177,7 @@ Time comes only from `delta`: no Tween, Timer, await, `_enter_tree` or RNG. `_dr
 
 ### D5. The screen cue lives in `MetersHud`
 
-`MetersHud` gets a `HurtOverlay` (a `ColorRect`, full rect, mouse ignored, not a `HudPanel`, beside `Blur`) and a `HurtWatch` that follows `bind()`: a rebind calls `reset()`.
+`MetersHud` gets a `HurtOverlay` (a `ColorRect`, full rect, mouse ignored, not a `HudPanel`, beside `Blur`) and a `MeterWatch` that follows `bind()`: a rebind calls `reset()`.
 - The overlay's shader draws red only near the edges, in a band about 24 px deep, and leaves the centre clear.
 - **Strength:** `lerp(flash_floor, 1, clamp(hit / big_hit, 0, 1)) × flash_alpha`, with `flash_floor` 0.5, `big_hit` 25 and `flash_alpha` 0.45. It fades linearly to 0 over `flash_s` (0.4 s).
 - **Rate limit:** a hit within `flash_min_gap_s` (0.33 s) of the last flash does not restart it; it only raises the current strength to the higher of the two. So the edges never flash more than three times a second.
@@ -167,12 +208,81 @@ Time comes only from `delta`: no Tween, Timer, await, `_enter_tree` or RNG. `_dr
 - `MetersHud` calls it for the shown body only:
   - `&"hurt_hit"` below `big_hit`;
   - `&"hurt_big"` at `big_hit` or more;
-  - `&"hurt_drain"` when a drain starts, at most once per drain.
+  - `&"hurt_drain"` when a drain starts, at most once per drain;
+  - `&"use_done"` when a JUMP or cure lands on the shown body, at most once per frame.
 - It also emits `hurt_cued(kind)`, so tests assert on the node. In-process host and client share the autoload, so assertions must not go through it.
 
 ### D8. Data
 
 `HurtCueTuning` (a `Resource`) holds every number above. It loads from `game/resources/hurt_cue_tuning.tres`, so tuning needs no script edit.
+
+### D9. Change floats are HUD marks anchored to the head
+
+`RunHud` gets one `ChangeFloats` control beside `Marks`. It keeps a `MeterWatch` per meter and a `StatusWatch` for every body in the session, the way `_follow` gives each body a name tag.
+- **When a float is made:** on a JUMP, a non-health HIT, a health HIT or a cure, it adds a `Label` in the pixel font.
+- **What it says:**
+  - `"%+d %s"` with the meter's word from `hud_text.tres`;
+  - `"−%d"` for a health hit;
+  - `"Sin %s"` with the status word.
+- **Colour:** each meter's colour comes from `HurtCueTuning.meter_colors`, and a test keeps it equal to the `fill_color` set in `meters_hud.tscn`, so a restyle that changes one fails until both agree. A health hit is red.
+- **Placement:** each float starts at the body's head anchor (`BodyLook.head_anchor_y`), above the name tag when that shows, and rises 12 px over `float_s` (1 s) while fading. Floats made in the same frame stack 9 px apart, as SPD stacks per character.
+- They are world-anchored marks, so ui-shell "Inventory band and world marks" already allows them in the centre.
+- They are drawn on the HUD layer, not in the world, so the pixel filter does not blur them, matching name tags.
+- A body leaving the session frees its floats.
+
+**Alternative:** a `Label` under `PlayerLook` (`art_view`). Rejected: world-space text goes through the pixel filter and the camera, and name tags already set the HUD-side precedent.
+
+### D10. Bar slices for gains as well as losses
+
+`MeterBar` gets `Lost` (pale red) and `Gain` (its fill colour lightened) `ColorRect`s, and every bar shows both.
+- **A JUMP** spans the gain from the old value to the new one. It holds `gain_hold_s` (0.6 s), then blends into the fill over `gain_fade_s` (0.4 s), and the bar is brightened for 2 frames.
+- **A loss** keeps D5's hold and drain. Only the health bar shakes, and only on a HIT.
+- With reduce flashes on, there is no brightening and no shake.
+- The drain glow stays on health only.
+
+### D11. The effect line is built from the use's data
+
+`EffectLine.text(action, actor, target, words, tuning, locale)` walks `action.effects` in order and keeps only the kinds `EffectApplier.apply_now` interprets:
+- METER_ADD becomes "Sed +15", or "Salud −50 en 60 s" when `duration_s > 0`;
+- a hunger gain at once also adds "Energía +N" from `SurvivalTuning`'s meal energy, as `eat()` does;
+- CURE_STATUS gathers into "Cura a y b";
+- REVIVE becomes "Levanta";
+- GIVE_ITEM becomes "Da %s" and TAKE_ITEM "Gasta %s";
+- START_ROUTE uses its route's verb;
+- flags say nothing;
+- a delay adds "a los %d s".
+
+The parts join with " · " and are cut with "…" at the row's 50 characters.
+
+**Guarding against drift:**
+- A test lists `EffectApplier`'s interpreted kinds and asserts that `EffectLine` handles exactly those.
+- A content test builds every item's line.
+
+So a session that teaches the applier a new kind (sábila's fix may add APPLY_STATUS) gets a failing test until the line has words for it.
+
+**Where the line sits:** it lives on the strip's notice row (`HudNotice`), shown while no notice is up. A refusal still takes the row for 2 s and then the line returns, so the band's layout does not change (Q5 A).
+
+### D12. `NOTHING_TO_DO` is decided by a dry run
+
+`ItemUser.check` gets a last reason, `NOTHING_TO_DO`, after CONDITION, so both the HUD and the host use it.
+- **The "something" kinds:** if the use has any kind other than METER_ADD with a positive amount at once, or CURE_STATUS, it is never wasted. That covers a revive, items, routes, flags, a delay, a change over time and any loss.
+- **The dry run:** otherwise the check copies the subject's meter values and statuses into a scratch `SurvivalMeters` outside the tree, with the same tuning, and applies the METER_ADD and CURE_STATUS effects there through the same setters (`eat`, `add`, `set_status`). The use is wasted if every meter and the flags come out unchanged. Energy's starving cap and a meal's energy come along for free.
+- **The reason line:**
+  - `refusal_wasted_meter_<meter>` for the first meter it raises ("No tienes sed.", "No tienes hambre.", "No 'tás cansao.", "'Tás entero.", "'Tás de lo más bien.", "No tienes calor.");
+  - `refusal_wasted_status_<status>` when it cures one status ("No 'tás sangrando.", "No 'tás quemao.");
+  - `refusal_wasted_cures` for several ("No hay na' que curar.");
+  - `refusal_wasted_other` with the teammate's name ("A %s no le hace falta.").
+
+  All of them live in `hud_text.tres`.
+- This is the change's one simulation edit. It is a rule the host enforces, not drawing, and the invariance run never uses an item.
+
+**Alternative:** decide waste by reading the effect amounts against the meter values directly. Rejected: it would have to re-implement the meal rule and the energy cap, and drift.
+
+### D13. Floats and slices for uses come from the same watches
+
+No result message is sent for a use. `request_use`'s dropped bool stays dropped, and the HUD learns what happened from the meters and statuses the inventory sync already brings, like a teammate does. So a use, a lagoon drink and a revive all answer the same way on every peer.
+
+**Alternative:** an RPC carrying the use's result. Rejected: a second channel for the same facts, with its own late-joiner and ordering rules.
 
 ## Risks / Trade-offs
 
@@ -183,13 +293,17 @@ Time comes only from `delta`: no Tween, Timer, await, `_enter_tree` or RNG. `_dr
 - **[Static setting]** `HurtCues.reduce_flashes` leaks between tests. → Reset in `after_each` in every test that sets it.
 - **[Shake versus container]** `HBoxContainer` can re-sort mid-shake. → The shake rewrites the offset every frame and re-sorts at the end.
 
+- **[Tests that use items at full meters]** Meters start full, so a test that drinks or eats at defaults would now be refused. → Before writing D12, grep the tests for uses (`ItemUser.use`, `use_for`, `use_item`) and set a meter below full where the test means the use to happen. That is a test fix, not a behaviour change.
+- **[Energy reconciliation on a client's own body]** `PlayerNet` writes predicted energy back to the host's value, which could look like a jump. → Corrections are far below 3 in the prediction tests. A net test walks a client and asserts no energy float, and the threshold moves to tuning if it fails.
+- **[Float clutter in co-op]** Four bodies with drains and uses could crowd the screen. → Drains never float, and floats last 1 s and stack per body. The two-process run checks it by eye once.
+
 ## Migration Plan
 
 None. The setting defaults to off, and an old `settings.cfg` without the key reads as off.
 
 ## Owner decisions (asked 2026-11-14; the spec is written with the recommended answer)
 
-- **Q1, body cue (every peer):**
+- **Q1, body cue on a hit (every peer):**
   - **A, recommended:** a white frame, then a 0.6 s blink.
   - **B:** a red tint fading over 0.3 s.
   - **C:** a white flash only.
@@ -197,12 +311,24 @@ None. The setting defaults to off, and an old `settings.cfg` without the key rea
   - **A, recommended:** the edge flash, the bar chunk and a 1 px bar shake.
   - **B:** A plus a 2 px camera shake on hits of 20 or more.
   - **C:** the bar chunk and shake only.
-- **Q3, floating number:**
-  - **A, recommended:** none.
-  - **B:** over your own body only.
-  - **C:** over every hurt body.
+- **Q3, a number on hits** (floats now exist for uses):
+  - **A, recommended:** "−25" in red over the hurt body, on every peer.
+  - **B:** no number on hits; floats for uses only.
+  - **C:** only over your own body.
 - **Q4, slow drains:**
   - **A, recommended:** the chunk and a dim glow on the Salud bar.
   - **B:** A plus a faint, slow red edge.
   - **C:** the chunk only.
-- **Included unless the owner objects:** the reduce-flashes checkbox, no knockback, and the AudioManager hook.
+- **Q5, where the effect line sits:**
+  - **A, recommended:** the refusal row above the item's line, which a refusal takes for 2 s. The layout is unchanged.
+  - **B:** a new row above that, growing the bottom band to y 294.
+  - **C:** appended to the item's line, dropped when it does not fit 41 characters.
+- **Q6, a wasted use:**
+  - **A, recommended:** refuse only when no effect would change anything (a coconut at full thirst but hungry is still drunk).
+  - **B:** refuse when the item's first effect would change nothing.
+  - **C:** never refuse; show a warning and use it anyway.
+- **Q7, what floats after a change:**
+  - **A, recommended:** any meter jumping at once on any body (uses, the lagoon, revives, morale events) and cures, seen by every peer.
+  - **B:** only on your own body.
+  - **C:** only the bar slices, no floats.
+- **Included unless the owner objects:** the reduce-flashes checkbox (it also removes the bar flash), no knockback, and the AudioManager hook (`use_done` added).
