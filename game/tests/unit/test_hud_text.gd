@@ -208,3 +208,23 @@ func test_the_watching_lines() -> void:
 	assert_eq(text.line(&"watching_dropped", "en") % "Papo", "Watching: Papo (disconnected)")
 	assert_eq(text.line(&"watch_keys") % ["A", "D"], "[A] [D] Cambiar")
 	assert_eq(text.line(&"watch_keys", "en") % ["A", "D"], "[A] [D] Switch")
+
+
+# damage-feedback: the words of the floats, the effect line and the wasted-use refusals.
+func test_every_meter_and_status_has_its_words_in_both_languages() -> void:
+	var text := _text()
+	for meter: int in DataEnums.Meter.values():
+		if meter == DataEnums.Meter.NONE:
+			continue
+		assert_true(_both(text.meter_words.get(meter, PackedStringArray())), "meter word %d" % meter)
+		assert_true(_both(text.wasted_meters.get(meter, PackedStringArray())), "wasted line for meter %d" % meter)
+	for status: int in DataEnums.Status.values():
+		if status == DataEnums.Status.NONE:
+			continue
+		assert_true(_both(text.status_words.get(status, PackedStringArray())), "status word %d" % status)
+		assert_true(_both(text.wasted_statuses.get(status, PackedStringArray())), "wasted line for status %d" % status)
+	assert_eq(text.meter_word(DataEnums.Meter.THIRST), "Sed")
+	assert_eq(text.line(&"cured") % text.status_word(DataEnums.Status.BLEEDING), "Sin sangrado")
+	assert_eq(text.wasted_status(DataEnums.Status.BLEEDING), "No 'tás sangrando.")
+	assert_eq(text.refusal(&"wasted_cures"), "No hay na' que curar.")
+	assert_eq(text.refusal(&"wasted_other") % "Papo", "A Papo no le hace falta.")

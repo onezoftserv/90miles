@@ -11,7 +11,10 @@ const PATH: String = "res://resources/hud_text.tres"
 ## Every refusal line the HUD can show: an empty slot, an item with no use, a player who is down,
 ## a player on a crossing, a missing tool ("%s" is its phrase), the generic "not now", missing
 ## materials and a build site already under way.
-const REFUSALS: Array[StringName] = [&"empty", &"no_use", &"down", &"at_sea", &"condition", &"not_now", &"missing_materials", &"in_progress"]
+## damage-feedback adds a use that would do nothing (inventory-hud "Uses that would do nothing"):
+## several statuses to cure and none present, and a teammate who does not need it ("%s" is the
+## name). One meter or one status has its own line (wasted_meters, wasted_statuses).
+const REFUSALS: Array[StringName] = [&"empty", &"no_use", &"down", &"at_sea", &"condition", &"not_now", &"missing_materials", &"in_progress", &"wasted_cures", &"wasted_other"]
 ## The fixed lines: a required tool ("%s" is its phrase), the speed-up tool (the same), the
 ## head of a build site's missing inputs, the weight readout's label, a missing input with its
 ## count ("%s x%d"), a build's progress ("%d %%"), what the list says is carried of an input
@@ -19,7 +22,12 @@ const REFUSALS: Array[StringName] = [&"empty", &"no_use", &"down", &"at_sea", &"
 ## the decimal separator its numbers use, and the spectator's line (ui-shell "The HUD while
 ## watching"): whom they watch ("%s" is the name), the same for a disconnected teammate, and the
 ## two switch keys ("%s" previous, "%s" next).
-const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point", &"close_note", &"watching", &"watching_dropped", &"watch_keys"]
+## damage-feedback adds a cure's float ("Sin %s": the status word) and the effect line's parts
+## (inventory-hud "Effect line"): statuses cured ("Cura %s"), the word joining them, a revive,
+## a change over time ("%s en %d s": the change, the seconds), a delay ("%s a los %d s"), what is
+## useful of a gain ("%s (+%d útil)"), an item given or spent ("%s" its name) and a route
+## started ("%s" its name).
+const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point", &"close_note", &"watching", &"watching_dropped", &"watch_keys", &"cured", &"effect_cure", &"effect_and", &"effect_revive", &"effect_over", &"effect_delay", &"effect_useful", &"effect_give", &"effect_take", &"effect_route"]
 
 ## Verb per ItemUseData.UseAction ("Beber").
 @export var use_verbs: Dictionary[ItemUseData.UseAction, PackedStringArray] = {}
@@ -41,6 +49,14 @@ const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight
 @export var joy_axes: Dictionary[int, PackedStringArray] = {}
 ## Mouse button names by MouseButton index.
 @export var mouse_buttons: Dictionary[int, PackedStringArray] = {}
+## The word for each meter in a float and the effect line, as its HUD bar names it: "Sed".
+@export var meter_words: Dictionary[DataEnums.Meter, PackedStringArray] = {}
+## The word for each status in a cure's float and the effect line: "sangrado".
+@export var status_words: Dictionary[DataEnums.Status, PackedStringArray] = {}
+## The refusal when a use would raise only full meters, by the first meter it raises: "No tienes sed."
+@export var wasted_meters: Dictionary[DataEnums.Meter, PackedStringArray] = {}
+## The refusal when a use would cure one status the player does not have: "No 'tás sangrando."
+@export var wasted_statuses: Dictionary[DataEnums.Status, PackedStringArray] = {}
 
 
 ## The project's HUD text file.
@@ -101,3 +117,19 @@ func joy_axis(axis: int, locale: String = "es") -> String:
 
 func mouse_button(index: int, locale: String = "es") -> String:
 	return pick(mouse_buttons.get(index, PackedStringArray()), locale)
+
+
+func meter_word(meter: DataEnums.Meter, locale: String = "es") -> String:
+	return pick(meter_words.get(meter, PackedStringArray()), locale)
+
+
+func status_word(status: DataEnums.Status, locale: String = "es") -> String:
+	return pick(status_words.get(status, PackedStringArray()), locale)
+
+
+func wasted_meter(meter: DataEnums.Meter, locale: String = "es") -> String:
+	return pick(wasted_meters.get(meter, PackedStringArray()), locale)
+
+
+func wasted_status(status: DataEnums.Status, locale: String = "es") -> String:
+	return pick(wasted_statuses.get(status, PackedStringArray()), locale)

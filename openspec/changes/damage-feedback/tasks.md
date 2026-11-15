@@ -72,7 +72,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   Verify: it fails first, then passes.
 - [x] 3.2 Add `hurt_white`, `hurt_hidden` and `hurt_tint` to `player_look.gdshader`, applied after the water-line cut. Add the health `MeterWatch` and `HurtBlink` to `PlayerLook.step`, with time from `delta` only (no Tween, Timer, await, RNG or `_enter_tree`). Verify: 3.1 passes, and the existing art and look tests still pass.
 - [x] 3.3 Extend `test_art_sim_invariance.gd`. In both runs, at a fixed frame, the nearest land crab pinches the player through the host's own `CreatureWorld.pinch`, or `meters.harm` if no crab is in reach. The built run asserts that the look's blink ran. Verify: the invariance test passes, and its bad-look guard tests still fail as they should.
-- [ ] 3.4 Import ×2, Smoke and GUT pass.
+- [x] 3.4 Import ×2, Smoke and GUT pass.
 
 ## 4. Screen cue and bar slices (ui-shell "Hit flash at the screen edges", "Changes show on the bars", "Drain glow on the health bar")
 
@@ -104,11 +104,11 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
     - `show_change(old, new, kind)` and `step`.
 
   Keep the edits to these nodes only, since a HUD restyle is in review. Verify: 4.1 passes, and `test_meters_hud.gd`, `test_run_hud*.gd` and the HUD layout tests pass.
-- [ ] 4.3 Import ×2, Smoke and GUT pass.
+- [x] 4.3 Import ×2, Smoke and GUT pass.
 
 ## 5. Change floats (survival-meters "Change floats over the body")
 
-- [ ] 5.1 Tests first: write `game/tests/unit/test_change_floats.gd` (solo, offline, a `RunHud` on a sandbar session, stepped by hand). It covers:
+- [x] 5.1 Tests first: write `game/tests/unit/test_change_floats.gd` (solo, offline, a `RunHud` on a sandbar session, stepped by hand). It covers:
   - a coconut at thirst 50 and hunger 50 floats "+15 Sed" in Sed's colour and "+5 Hambre", stacked 9 px apart, above the head anchor and clear of the name tag;
   - the floats rise 12 px and are gone after 1 s;
   - a second float on a body pushes the first one up by 9 px;
@@ -119,7 +119,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - a body freed from the session frees its floats.
 
   Verify: it fails first, then passes.
-- [ ] 5.2 Write `game/scenes/ui/change_floats.gd`, add `ChangeFloats` to `run_hud.tscn` beside `Marks`, and follow every body as `_follow` does. Add the meter and status words for floats to `hud_text.gd` and `hud_text.tres` (Spanish first, English beside). Verify: 5.1, `test_hud_text.gd` and `test_run_hud*.gd` pass.
+- [x] 5.2 Write `game/scenes/ui/change_floats.gd`, add `ChangeFloats` to `run_hud.tscn` beside `Marks`, and follow every body as `_follow` does. Add the meter and status words for floats to `hud_text.gd` and `hud_text.tres` (Spanish first, English beside). Verify: 5.1, `test_hud_text.gd` and `test_run_hud*.gd` pass.
 - [ ] 5.3 Import ×2, Smoke and GUT pass.
 
 ## 6. Effect line and wasted uses (inventory-hud "Effect line", "Uses that would do nothing"; crafting-inventory "A use that changes nothing is refused")
