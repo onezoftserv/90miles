@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_3fk50"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_f0dvy"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_dg7eh"]
+[ext_resource type="Texture2D" uid="uid://btub6054qdyoj" path="res://assets/art/items/iguana_cooked.png" id="4_0b38q"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_mtint"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_1dbsd"]
+
+[sub_resource type="Resource" id="Resource_67y7p"]
+script = ExtResource("1_3fk50")
+meter = 2
+amount = 35.0
+
+[sub_resource type="Resource" id="Resource_r6jdv"]
+script = ExtResource("5_mtint")
+time_s = 2.0
+effects = Array[ExtResource("1_3fk50")]([SubResource("Resource_67y7p")])
+
+[resource]
+script = ExtResource("3_dg7eh")
+description_es = "Iguana asada. Sabe a pollo, dicen. To' lo que uno no quiere comer sabe a pollo."
+description_en = "Roast iguana. Tastes like chicken, they say. Everything you don't want to eat tastes like chicken."
+sprite = ExtResource("4_0b38q")
+category = 1
+tags = Array[int]([0, 14])
+stack_size = 2
+uses = Array[ExtResource("5_mtint")]([SubResource("Resource_r6jdv")])
+id = &"iguana_cooked"
+name_es = "Iguana asada"
+name_en = "Cooked iguana"

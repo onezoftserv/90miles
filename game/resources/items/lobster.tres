@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_7wj2o"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_d8j1k"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_d13jc"]
+[ext_resource type="Texture2D" uid="uid://civxqmvl27dk0" path="res://assets/art/items/lobster.png" id="4_sfi7b"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_3or8v"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_48df8"]
+
+[sub_resource type="Resource" id="Resource_jua3a"]
+script = ExtResource("1_7wj2o")
+meter = 2
+amount = 35.0
+
+[sub_resource type="Resource" id="Resource_nk2o6"]
+script = ExtResource("5_3or8v")
+time_s = 2.0
+effects = Array[ExtResource("1_7wj2o")]([SubResource("Resource_jua3a")])
+
+[resource]
+script = ExtResource("3_d13jc")
+description_es = "Langosta. Allá era pa' los turistas y pa' la exportación; aquí no hay inspector, así que cómetela tú."
+description_en = "Lobster. Back home it was for the tourists and for export; out here there's no inspector, so eat it yourself."
+sprite = ExtResource("4_sfi7b")
+category = 1
+tags = Array[int]([0, 14])
+stack_size = 2
+uses = Array[ExtResource("5_3or8v")]([SubResource("Resource_nk2o6")])
+id = &"lobster"
+name_es = "Langosta"
+name_en = "Lobster"

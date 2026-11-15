@@ -25,6 +25,19 @@
     {"id": "still_cup", "hand": "still_cup.png"},
     {"id": "well_cup", "hand": "well_cup.png"},
     {"id": "seawater_cup", "hand": "seawater_cup.png"},
-    {"id": "rum", "hand": "rum.png"}
+    {"id": "rum", "hand": "rum.png"},
+    {"id": "crab_raw", "hand": "crab_raw.png"},
+    {"id": "crab_cooked", "hand": "crab_cooked.png"},
+    {"id": "fish_raw", "hand": "fish_raw.png"},
+    {"id": "fish_cooked", "hand": "fish_cooked.png"},
+    {"id": "lobster", "hand": "lobster.png"},
+    {"id": "oysters", "hand": "oysters.png"},
+    {"id": "conch", "hand": "conch.png"},
+    {"id": "bird_eggs", "hand": "bird_eggs.png"},
+    {"id": "sea_grapes", "hand": "sea_grapes.png"},
+    {"id": "mango", "hand": "mango.png"},
+    {"id": "hutia_cooked", "hand": "hutia_cooked.png"},
+    {"id": "iguana_cooked", "hand": "iguana_cooked.png"},
+    {"id": "canned_food", "hand": "canned_food.png"}
   ]
 }

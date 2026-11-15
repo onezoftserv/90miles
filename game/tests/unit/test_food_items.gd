@@ -105,8 +105,11 @@ func test_the_batch_loads_with_its_categories() -> void:
 
 
 func test_the_validator_reports_nothing_for_the_items() -> void:
+	var problems: PackedStringArray = []
 	for line: String in ContentValidator.validate(GameState.content):
-		assert_false(line.begins_with("items/"), line)
+		if line.begins_with("items/"):
+			problems.append(line)
+	assert_eq(problems, PackedStringArray(), "no item problems")
 
 
 func test_no_second_file_for_shipped_or_batch_11_items() -> void:
