@@ -172,18 +172,19 @@ How the tests are written:
 
 ## 8. Network
 
-- [ ] 8.1 Write `game/tests/unit/test_patrol_net.gd` with host plus client. Verify it fails. It checks the spec's "Patrols on every peer" and "Spot meter" scenarios:
+- [x] 8.1 Write `game/tests/unit/test_patrol_net.gd` with host plus client. Verify it fails. It checks the spec's "Patrols on every peer" and "Spot meter" scenarios:
   - **The cone matches:** at night, at every sync over 5 s, the client's boat position and beam centre match the host's to within one sync interval's movement (0.1 s × speed, and 3° of beam).
   - **A mid-lap join:** a client that joins 40 s into a lap draws the host's pose and aim on its first frame.
   - **The client cannot claim hidden:** the client's player standing on sand inside the beam while sending crouch is still spotted at 2 s.
   - **The meter follows its player:** the client's player's meter reads 1 s and the host's player's 0, on both peers through `net_spot`.
   - **Two players:** a host plus one client on the sandbar gets two boats, 90 s apart.
   - **Nothing on the client:** the client runs no trigger and no spot, and `patrol_alerted` is never emitted on the client.
-- [ ] 8.2 Implement the network side. Verify `test_patrol_net.gd` passes and `test_creature_net.gd`, `test_coop_reconnect.gd` and `test_weather_sync_net.gd` still pass. It is:
+  - Done: `test_patrol_net.gd`, 6 tests, 45 asserts (about 19 s); the cone matched with 0.00 px and 0.00 deg worst error over 150 frames (limits 2.88 px, 3 deg), 150 distinct client positions in 150 frames. Also: `test_patrol_route.gd` gained the second-player-during-a-lock test (23 tests).
+- [x] 8.2 Implement the network side. Verify `test_patrol_net.gd` passes and `test_creature_net.gd`, `test_coop_reconnect.gd` and `test_weather_sync_net.gd` still pass. It is:
   - in `Creature.attach_sync`, `route_t`, `beam` and `alert_serial` for patrol creatures, as spawn properties;
   - the client derives the pose and beam between syncs (design.md §10);
   - `PlayerNet.net_spot` is added.
-- [ ] 8.3 Run the import, smoke run and GUT commands, and verify all three pass.
+- [x] 8.3 Run the import, smoke run and GUT commands, and verify all three pass. Done: import clean, smoke 10 frames with 0 problems, GUT 229 scripts, 2047/2047 passing (7 new tests; `test_player_state_sync.gd`'s list of synced fields gained `PlayerNet:net_spot`).
 
 ## 9. Drawing and cues
 

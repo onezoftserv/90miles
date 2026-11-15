@@ -31,6 +31,9 @@ var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
 ## Host (guardacostas-stealth): the spot meter, stepped once per physics tick by the island's
 ## PatrolWatch across every boat. The network group sends `spot_fraction()` as net_spot.
 var spot_meter: SpotMeter = SpotMeter.new()
+## Every peer: the spot meter's fraction as this peer shows it (0 to 1), the open eye's fill. The host
+## writes it from `spot_fraction()` each tick, a client takes it from the host's net_spot.
+var spot_shown: float = 0.0
 ## True when this body belongs to the local peer: it gets the camera and local input.
 ## Set before the body enters the tree.
 @export var local_player: bool = true

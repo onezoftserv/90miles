@@ -92,11 +92,17 @@ func lights(point_px: Vector2) -> bool:
 	return _light.is_lit(point_px / TILE, _creature.position / TILE, _creature.beam)
 
 
-## The spot meter or the water rule spotted `body`: a new alert locked on them. Ignored while the boat
-## is already locked on someone (it is busy, and the same player must not be reported twice) or out
-## of sight.
+## The spot meter or the water rule spotted `body`: a new alert locked on them. While the boat is locked
+## on someone, a spot of ANOTHER player is still reported (one `patrol_alerted` at their position and the
+## next loudhailer line) but the lock, the clock and the timers stay as they are; the locked player is
+## not reported again (the same player must not be reported every tick). Ignored out of sight.
 func spot(body: PlayerBody, cause: StringName) -> void:
-	if _creature == null or state == State.ALERT_LOCK or not in_sight():
+	if _creature == null or not in_sight():
+		return
+	if state == State.ALERT_LOCK:
+		if body != locked:
+			_creature.alert_serial += 1
+			_creature.patrol_alerted.emit(cause, body.global_position)
 		return
 	_raise(cause, body.global_position, body)
 

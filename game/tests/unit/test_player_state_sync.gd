@@ -13,6 +13,8 @@ const SHADOW_FIELDS: Array[String] = [
 	"PlayerNet:net_model_state",
 	"PlayerNet:net_movement",
 	"PlayerNet:net_position",
+	# guardacostas-stealth: the spot meter as a fraction, every peer shows the open eye.
+	"PlayerNet:net_spot",
 	"PlayerNet:net_stealth",
 	# survival-meters values the client only shows (energy travels as net_energy, because the
 	# client's prediction spends it).

@@ -220,6 +220,33 @@ func test_a_locked_player_is_not_reported_again_by_the_same_boat() -> void:
 	assert_eq(boat.alert_serial, 1)
 
 
+func test_a_spot_of_another_player_during_a_lock_is_reported_and_the_lock_stays() -> void:
+	var first := _player(Vector2(21, 19))
+	var second := _player(Vector2(20, 19))
+	_lap_at(5.0)
+	brain.spot(first, &"sight")
+	_run(2.0)
+	var clock: float = boat.route_t
+	var at: Vector2 = boat.position
+	watch_signals(boat)
+	brain.spot(second, &"sight")
+	assert_signal_emit_count(boat, "patrol_alerted", 1, "the second player's spot is reported once")
+	var params: Array = get_signal_parameters(boat, "patrol_alerted", 0)
+	assert_eq(params[0], &"sight")
+	assert_eq(params[1], second.global_position)
+	assert_eq(boat.alert_serial, 2, "and calls the next line")
+	assert_eq(boat.state_name(), &"ALERT_LOCK")
+	assert_eq(brain.locked, first, "the lock stays on the first player")
+	assert_eq(boat.route_t, clock, "the clock still waits")
+	assert_eq(boat.position, at)
+	brain.spot(first, &"sight")
+	assert_signal_emit_count(boat, "patrol_alerted", 1, "the locked player is not reported again")
+	assert_eq(boat.alert_serial, 2)
+	_run(3.0)
+	assert_eq(boat.state_name(), &"ALERT_LOCK")
+	assert_eq(brain.locked, first)
+
+
 func test_the_lap_waits_for_the_alert() -> void:
 	var body := _player(Vector2(21, 19))
 	brain.set_clock(0.0)

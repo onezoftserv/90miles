@@ -42,6 +42,8 @@ var route_t: float = 0.0
 var beam: float = 0.0
 var alert_serial: int = 0
 var light_on: bool = false
+## Every peer, patrol boats: the loop and light the boat is drawn from (built on first use).
+var patrol_view: PatrolView = null
 
 @onready var interactable: Interactable = $Interactable
 
@@ -60,6 +62,10 @@ func _ready() -> void:
 	if brain != null:
 		interactable.priority = brain.interact_priority()
 	interactable.interacted.connect(_on_interacted)
+	# A client's first drawn frame: the synced clock and state (a mid-lap joiner's spawn state) put the
+	# boat on its loop before anything is drawn.
+	if is_patrol() and not multiplayer.is_server():
+		view().step_client(self, 0.0)
 
 
 ## Adds the synchronizer that sends position, facing, state and whose head it sits on to the
@@ -67,7 +73,11 @@ func _ready() -> void:
 ## none.
 func attach_sync() -> void:
 	var config := SceneReplicationConfig.new()
-	for property: String in [".:position", ".:facing", ".:state_id", ".:perch_peer"]:
+	var properties: Array[String] = [".:position", ".:facing", ".:state_id", ".:perch_peer"]
+	if is_patrol():
+		# guardacostas-stealth decision 10: the clock and the aim, from which a client derives the rest.
+		properties.append_array([".:route_t", ".:beam", ".:alert_serial", ".:light_on"])
+	for property: String in properties:
 		config.add_property(NodePath(property))
 		config.property_set_spawn(NodePath(property), true)
 		config.property_set_replication_mode(NodePath(property), SceneReplicationConfig.REPLICATION_MODE_ALWAYS)
@@ -76,6 +86,18 @@ func attach_sync() -> void:
 	sync.replication_interval = SYNC_INTERVAL_S
 	sync.replication_config = config
 	add_child(sync)
+
+
+## True for a patrol boat (its data has a loop to run).
+func is_patrol() -> bool:
+	return data != null and data.patrol != null and data.behavior == CreatureData.Behavior.PATROL_ROUTE
+
+
+## The boat's loop and light, built on first use (patrol boats only).
+func view() -> PatrolView:
+	if patrol_view == null:
+		patrol_view = PatrolView.of(self)
+	return patrol_view
 
 
 func cell() -> Vector2i:
@@ -128,6 +150,8 @@ func _physics_process(delta: float) -> void:
 		advance(delta)
 	elif brain != null:
 		brain.state = state_id
+		if is_patrol():
+			view().step_client(self, delta)
 
 
 func _on_interacted(by: Node) -> void:
