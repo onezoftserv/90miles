@@ -25,15 +25,15 @@ static func places(recipe: RecipeData) -> bool:
 
 ## The site (KIND_SITE) or finished structure (KIND_STRUCTURE) a spawn payload asks for, named
 ## `node_name` at `at`, both already checked by the session; null unless the payload's recipe is
-## one the bench places. A client's copy of a built structure shows itself lit when the payload
-## says so; the host lights its own through on_built.
-static func from_payload(kind: String, info: Dictionary, node_name: String, at: Vector2, climate: ClimateState, on_host: bool) -> Node2D:
+## one the bench places. A built structure is lit on every peer when the payload says so, the host's
+## too, so the spawn its synchronizer sends says lit (the host's on_built then gives the morale).
+static func from_payload(kind: String, info: Dictionary, node_name: String, at: Vector2, climate: ClimateState) -> Node2D:
 	var recipe := payload_recipe(info.get("recipe_id"))
 	if recipe == null:
 		return null
 	if kind == KIND_SITE:
 		return make_site(recipe, node_name, at, climate)
-	return make_structure(recipe, node_name, at, climate, info.get("lit") == true and not on_host)
+	return make_structure(recipe, node_name, at, climate, info.get("lit") == true)
 
 
 ## The content's recipe named `id` when the bench places it, else null.
@@ -98,8 +98,9 @@ static func make_site(recipe: RecipeData, site_name: String, at: Vector2, climat
 
 
 ## The finished structure of `recipe` named `structure_name` at `at`, a member of the finished
-## structures by its recipe id. `lit` draws it as built (a client's fire shows itself lit; the
-## host lights its own through `on_built`). Null when the recipe has no structure scene.
+## structures by its recipe id, with its synchronizer when it has one (`attach_sync`: a fire's
+## `lit`, a rain catcher's `cups`). `lit` makes a fire lit before it enters the tree. Null when the
+## recipe has no structure scene.
 static func make_structure(recipe: RecipeData, structure_name: String, at: Vector2, climate: ClimateState, lit: bool) -> Node2D:
 	var path: String = BuildSite.STRUCTURE_PATH % recipe.id
 	var scene: PackedScene = load(path) as PackedScene if ResourceLoader.exists(path) else null
@@ -113,4 +114,22 @@ static func make_structure(recipe: RecipeData, structure_name: String, at: Vecto
 	made.add_to_group(PlayerBody.STRUCTURE_GROUP)
 	if lit:
 		made.set(&"lit", true)
+	if made.has_method(&"attach_sync"):
+		made.call(&"attach_sync")
 	return made
+
+
+## A synchronizer named `sync_name` that sends `properties` (paths from its parent, ".:cups") from
+## the host to every client, with the spawn and reliably on each change (structure-state-sync design
+## D3). The host is its authority, so a client's own change to its copy is never sent.
+static func state_sync(sync_name: StringName, properties: PackedStringArray) -> MultiplayerSynchronizer:
+	var config := SceneReplicationConfig.new()
+	for property: String in properties:
+		var path := NodePath(property)
+		config.add_property(path)
+		config.property_set_spawn(path, true)
+		config.property_set_replication_mode(path, SceneReplicationConfig.REPLICATION_MODE_ON_CHANGE)
+	var sync := MultiplayerSynchronizer.new()
+	sync.name = sync_name
+	sync.replication_config = config
+	return sync

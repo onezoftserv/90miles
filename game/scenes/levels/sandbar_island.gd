@@ -24,6 +24,7 @@ const DRINK_SPOT_NAME: String = "DrinkSpot%d"
 const CHEST_SCENE: PackedScene = preload("res://scenes/structures/chest.tscn")
 const SIGN_NAME: String = "Sign%d"
 const RAFT_SCENE: PackedScene = preload("res://scenes/structures/raft.tscn")
+const PALM_SYNC_NAME: StringName = &"PalmSync"
 
 ## The island to build. Setting it rebuilds the terrain, bounds and lists below, so set it before
 ## the island enters the tree.
@@ -40,6 +41,8 @@ var terrain: GridTerrain = built.terrain
 var climate: ClimateState = WeatherManager.sky.climate
 ## The island in pixels: the run camera stays inside it.
 var bounds: Rect2i = Rect2i(Vector2i.ZERO, built.size * IslandLayout.TILE)
+## The palms in layout order, the same on every peer.
+var palms: Array[Palm] = []
 
 var _session: CoopSession
 var _weather_id: StringName = &""
@@ -57,17 +60,18 @@ func _rebuild() -> void:
 func _ready() -> void:
 	# Y-sorted like the island root and the World above it, so each palm sorts by its trunk base
 	# with the players, creatures and pick-ups (art-pass "Draw order by foot position").
-	var palms := Node2D.new()
-	palms.name = "Palms"
-	palms.y_sort_enabled = true
-	add_child(palms)
+	var grove := Node2D.new()
+	grove.name = "Palms"
+	grove.y_sort_enabled = true
+	add_child(grove)
 	for i: int in built.palms.size():
 		var palm := PALM_SCENE.instantiate() as Palm
 		palm.position = IslandLayout.cell_center(built.palms[i])
 		palm.coconuts = built.palm_coconuts[i]
 		palm.climb_effects = layout.climb_effects
 		palm.hold_s = layout.climb_hold_s
-		palms.add_child(palm)
+		grove.add_child(palm)
+		palms.append(palm)
 	_place_shelter()
 
 
@@ -107,9 +111,9 @@ func spawn_points(solo: bool) -> Array[Vector2]:
 
 
 ## Every peer: the workbench (when the layout has one), the routes, the raft's build site, the
-## drinking spots, the signs and the chest (when the layout has one, secret-cay) go in the session
-## at the same path on each, and the island starts
-## listening for squalls to end. The host also starts the creatures, unless the layout is off-graph.
+## drinking spots, the signs, the palms' sync and the chest (when the layout has one, secret-cay)
+## go in the session at the same path on each, and the island starts listening for squalls to end.
+## The host also starts the creatures, unless the layout is off-graph.
 func furnish(session: CoopSession) -> void:
 	_session = session
 	if built.workbench.x >= 0:
@@ -118,6 +122,7 @@ func furnish(session: CoopSession) -> void:
 		bench.position = IslandLayout.cell_center(built.workbench)
 		session.add_child(bench)
 	_place_water_and_signs()
+	_place_palm_sync()
 	_place_chest()
 	var routes := IslandRoutes.new()
 	routes.name = ROUTES_NAME
@@ -150,6 +155,15 @@ func _place_water_and_signs() -> void:
 		marker.line_es = data.text_es
 		marker.line_en = data.text_en
 		_session.add_child(marker)
+
+
+# The palms' counts on every peer: the host sends them and a client applies them (structure-state-sync
+# design D5). It goes with the rest of the island's furniture when the party travels.
+func _place_palm_sync() -> void:
+	var sync := PalmSync.new()
+	sync.name = PALM_SYNC_NAME
+	_session.add_child(sync)
+	sync.setup(_session, palms, built.palm_coconuts)
 
 
 # The layout's chest, named the same on every peer (secret-cay "Empty chest").
