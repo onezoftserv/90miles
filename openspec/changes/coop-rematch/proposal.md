@@ -14,7 +14,7 @@ Today "Otra vez" on the run summary works only in solo. A co-op summary, host or
 - **The rematch goes through the lobby** (owner Q1): the host presses "Empezar viaje" again, so the host can wait for everyone and anyone may leave. The lobby is open as any lobby is (owner Q3).
 - **Message order is part of the rule.** The host frees its old run first, so the old run's despawns reach every client. It then sends the call, and opens the new lobby last. Each client rebuilds while it handles the call. So nothing from the host's new run lands in a client's old session, which would lose the new island's pick-ups. A spike showed exactly that: with the host's lobby opened first, the client had 0 of the sandbar's 20 pick-ups. Messages from a client's old session that reach the host's new one are refused by the checks that already exist.
 - **Solo is unchanged.** "Otra vez" still starts a clean solo run at once, offline, with no lobby. A host alone (1 player, hosting) gets the co-op "Otra vez" and a new lobby with only themselves in it.
-- Provisional answers for owner questions Q1 to Q4 (design.md) are the recommended options until the owner answers.
+- **Owner decisions, 2026-11-14:** the owner accepted the recommended option, A, for each of Q1 to Q4 (design.md).
 
 ## Capabilities
 

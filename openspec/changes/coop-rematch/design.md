@@ -42,7 +42,7 @@ See proposal.md, "Why". The files below were read at `main` 9b90289 on 2026-11-1
 - Solo stays exactly as it is.
 
 **Non-Goals:**
-- A ready check or vote (owner Q2 option C, rejected for now).
+- A ready check or vote (owner Q2 option C, not chosen).
 - Rematch for a client whose host is gone.
 - Keeping anything across runs: Experiencia and keepsakes are not built yet.
 - Seeding islands from `run_seed` (island-generation; `TASKS.md` §4).
@@ -55,7 +55,7 @@ See proposal.md, "Why". The files below were read at `main` 9b90289 on 2026-11-1
 - Rejected: resetting the session in place (clear the bodies, entities, run record, travel, island and serials). Every per-run field would need its own reset, and one missed would leak the old run into the new one ("A fresh run starts clean").
 - The `TASKS.md` line also asked for "every client rebuilding its session".
 
-**D2. The call lives on a small node outside the session.**
+**D2. The call lives on a small node outside the session (owner Q4, option A).**
 - `RunRematch` (`game/scripts/net/run_rematch.gd`) is the shell's child, named `Rematch`. It has:
   - the host's `call_party()`;
   - one RPC, `begin`: `@rpc("authority", "call_remote", "reliable")`, which returns unless the receiver is a client and the sender is peer 1;
@@ -107,17 +107,17 @@ ENet delivers one reliable channel in order. The new run's unreliable synchroniz
 - The new session's empty `IdentityRegistry` claims it as NEW, so for the new run the host knows each player by the same id.
 - No claim crosses runs. A dropped body of the old run is gone with it, so there is nothing to reclaim.
 
-**D8. Through the lobby (owner Q1, provisional A).**
+**D8. Through the lobby (owner Q1, option A).**
 - The new session starts in `LOBBY`. The host sees the lobby fill as join requests arrive and presses "Empezar viaje".
-- Rejected for now: starting at once when every kept peer has asked, or after 10 s. A slow client would hold everyone up or be left behind, and the lobby already shows who is aboard.
+- Rejected: starting at once when every kept peer has asked, or after 10 s. A slow client would hold everyone up or be left behind, and the lobby already shows who is aboard.
 
-**D9. What a client sees (owner Q2, provisional A).**
+**D9. What a client sees (owner Q2, option A).**
 - A client's summary keeps only "Volver al inicio" and adds the note "Esperando al anfitrión…", the same words as the client's lobby. It uses the existing `Note` label through a new `SummaryScreen.show_waiting_for_host()`. When the host leaves, `show_host_left()` replaces the note's text.
 - The host's "Otra vez" has the focus, as in solo. A mistaken press only takes everyone to a lobby they can leave.
 
-**D10. Who may enter the rematch lobby (owner Q3, provisional A).**
+**D10. Who may enter the rematch lobby (owner Q3, option A).**
 - It is an ordinary lobby: a new friend may join, and so may a player who left, from their join screen.
-- Rejected for now: a lobby closed to anyone outside the old party. It needs a new refusal reason and a join-screen line.
+- Rejected: a lobby closed to anyone outside the old party. It needs a new refusal reason and a join-screen line.
 
 **D11. Solo and a host alone.**
 - Solo still goes through `_restart_solo()`. `RunRematch.call_party()` returns false offline, so nothing is sent.
@@ -142,7 +142,7 @@ ENet delivers one reliable channel in order. The new run's unreliable synchroniz
   - *Borrowed:* only the host can start again.
   - *Rejected:* votes, as REFERENCE_DST already rejects them.
 
-### Owner questions (provisional answers in use until answered)
+### Owner decisions (2026-11-14: the owner accepted every recommended option, A for Q1 to Q4)
 
 - **Q1. Lobby or at once?**
   - A: through the lobby; the host presses "Empezar viaje" again (recommended, D8).

@@ -1,6 +1,6 @@
 # Tasks
 
-Groups 2 to 4 follow the provisional answers to owner questions Q1 to Q4 (design.md). If the owner picks another option, the affected group changes before it is built.
+Groups 1 to 4 follow the owner's answers of 2026-11-14: option A for each of Q1 to Q4 (design.md).
 
 ## 1. The host's call (coop-networking "Rematch is the host's call")
 
