@@ -26,7 +26,7 @@ func _plain() -> PlayerBody:
 
 func _host_copy(owner_peer: int) -> PlayerBody:
 	var body := PLAYER_SCENE.instantiate() as PlayerBody
-	(body.get_node(^"PlayerNet") as PlayerNet).attach(owner_peer, PlayerNet.Role.HOST, func(_s: int, _i: MoveIntent, _d: float) -> void: pass)
+	(body.get_node(^"PlayerNet") as PlayerNet).attach(owner_peer, PlayerNet.Role.HOST, func(_intents: Array[PendingIntent]) -> void: pass)
 	add_child_autofree(body)
 	body.player_input.enabled = false
 	return body
