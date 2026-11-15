@@ -13,11 +13,11 @@ Tick when the file exists and loads in Godot.
 - [ ] birds (4, content-batch-12): galleguito · pajarito · pajaro_bobo · rabihorcado
 - [ ] boss_cutter · boss_old_crocodile · boss_tiger_shark · boss_hurricane (weather) · boss_straits (crossing script)
 
-## game/resources/items/ (117) — `docs/ITEMS.md`
+## game/resources/items/ (116) — `docs/ITEMS.md`
 
-- [ ] water (7): coco · rain_cup · still_cup · well_cup · seawater_cup · rum · milordo
-- [ ] food (16): crab_raw · crab_cooked · fish_raw · fish_cooked · lobster · oysters · conch · bird_eggs · sea_grapes · coco_plum · mango · hutia_cooked · iguana_cooked · canned_food · toronja · bistec_toronja
-- [ ] plants (10): manzanillo · guao · jaguey · uva_caleta_unripe · hicaco · guanabana · noni · sabila · hongo_playa · tabaco_silvestre
+- [ ] water (7; all but `milordo` exist, `milordo` waits for content-batch-11): coco · rain_cup · still_cup · well_cup · seawater_cup · rum · milordo
+- [ ] food (15; all but `toronja` and `bistec_toronja` exist, which wait for content-batch-11; the coco plum is the plant `hicaco`): crab_raw · crab_cooked · fish_raw · fish_cooked · lobster · oysters · conch · bird_eggs · sea_grapes · mango · hutia_cooked · iguana_cooked · canned_food · toronja · bistec_toronja
+- [x] plants (10; sábila ships as `aloe` and is always known): manzanillo · guao · jaguey · uva_caleta_unripe · hicaco · guanabana · noni · aloe · hongo_playa · tabaco_silvestre
 - [ ] tools (18): knife · machete · broken_bottle · spear · fishing_line · lure · net · snare · pliers · binoculars · compass · charts · mirror · lighter · flint_steel · shovel_oar · tabla_surf · tabla_vela
 - [ ] materials (17; `inner_tube`, `plastic_jug`, `rope` exist): driftwood · hardwood · inner_tube · plastic_jug · rope · line_spool · tarp · nails · resin · dry_grass · cloth · tire · tanque_55 · propela · bidon_combustible · azucar · camara_bici
 - [ ] wearables (9; `sombrero_cinta_roja` exists): straw_hat · life_vest · wetsuit_top · fins · sandals · gloves · sunglasses · military_belt · sombrero_cinta_roja (secret)
@@ -101,4 +101,4 @@ Ids are proposals. POI ids such as `fishermen_houses`, `village_dock`, `resort_g
 
 ## Totals
 
-44 creatures, 117 items, 22 recipes, 24 NPCs, 18 chains, ~50 POIs, 17 set pieces, 10 routes, 6 backgrounds, 11 weather, 2 handmade islands = **~321 resource files** (the handwritten dialogue files are listed separately). At the reference games' scale for a 7-island run. The creature and NPC counts still carry the mismatches in review item 47.
+44 creatures, 116 items, 22 recipes, 24 NPCs, 18 chains, ~50 POIs, 17 set pieces, 10 routes, 6 backgrounds, 11 weather, 2 handmade islands = **~320 resource files** (the handwritten dialogue files are listed separately). At the reference games' scale for a 7-island run. The creature and NPC counts still carry the mismatches in review item 47.
