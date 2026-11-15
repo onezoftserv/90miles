@@ -65,7 +65,7 @@ A failed check sends a solo player to the previous island with their kit minus t
 
 ## Owner decisions (recommended option first)
 
-Not yet answered. Every artifact follows the recommended option (a). The coordinating session relays the questions as option dialogs, and any other answer is folded into every artifact before building (tasks.md 0.1). The numbers are provisional data.
+Answered on 2026-11-14: the owner accepted the recommended option (a) on all eleven, in one option dialog ("Accept all recommended") relayed by the coordinating session. The options stay listed for the record. The What Changes list, the spec delta, design.md and tasks.md already follow these answers. The numbers are provisional data, and the build waits for the `guardacostas-stealth` build to merge.
 
 1. **The slice: what waits.**
    a. *Recommended: islands now, the final crossing later.* Build the chase, the squad, capture, freeing, `la_captura`, the persuasion check, the release and the restart. Fade with distance becomes data: 30% on mid chains and none on far chains, tested on fixture islands, because no mid-chain island exists yet. Capture on the final crossing (`devuelto`) waits for the final crossing and the endings, behind one tested router branch.

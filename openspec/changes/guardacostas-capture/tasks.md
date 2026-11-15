@@ -1,6 +1,6 @@
 # Tasks
 
-Do not build until the coordinating session relays that the owner approved building.
+Do not build until the `guardacostas-stealth` build has merged and the coordinating session relays that the owner approved building.
 
 Every group is test-first:
 1. Write the listed tests.
@@ -22,9 +22,10 @@ How the tests are written:
 
 ## 0. Preconditions
 
-- [ ] 0.1 Get the owner's answers to the eleven decisions in proposal.md.
+- [x] 0.1 Get the owner's answers to the eleven decisions in proposal.md.
   - Where an answer differs from the recommended option, first update proposal.md, design.md, the spec delta and these tasks.
   - Verify: `openspec validate guardacostas-capture --type change --strict` passes.
+  - Done on 2026-11-14: the owner accepted (a) on all eleven. No artifact changed beyond recording the answers, and the strict validation passes.
 - [ ] 0.2 Wait for the `guardacostas-stealth` build to merge.
   - Branch from the updated `main`.
   - Re-read these files as merged: `patrol_route.gd`, `spot_meter.gd`, `hidden_rules.gd`, `patrol_triggers.gd`, `world_events.gd`, `patrol_data.gd`, `creature.gd`, `creature_spawner.gd`, `creature_world.gd`, `player.gd`, `player_net.gd`, `coop_session.gd`, `body_marks.gd` and `patrol_boat.tres`.
