@@ -402,7 +402,7 @@ A squall's blow (the 15 s after its hit) SHALL hold no rolled beat, and it overr
 - **THEN** the raft is 3 tiles east of the line at 70 s, both reef rocks pass it at 71 s, and the raft is at 70
 
 ### Requirement: Crossing HUD and telegraphs
-Each peer in a crossing SHALL draw, top-centre under the day phase (no sign note opens at sea), a progress strip from the departure island to the next (the vessel at the elapsed share) and the vessel's integrity out of its maximum. Short lines show: 30 s and 10 s before a squall hit, when a fin appears (naming its side), and when a leak opens. Hazards, flotsam, leaks and fins are drawn where the host's state puts them. Drawing never changes the crossing. A solo player sees the same.
+Each peer in a crossing SHALL draw, top-centre below the day phase and clear of the sign note's place, a progress strip from the departure island to the next (the vessel at the elapsed share) and the vessel's integrity out of its maximum. Short lines show: 30 s and 10 s before a squall hit, when a fin appears (naming its side), and when a leak opens. Hazards, flotsam, leaks and fins are drawn where the host's state puts them. Drawing never changes the crossing. A solo player sees the same.
 
 #### Scenario: Solo reads the strip
 - **GIVEN** a 1-player 60 s raft crossing whose raft took a squall while the player was tied

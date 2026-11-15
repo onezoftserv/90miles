@@ -1,6 +1,6 @@
 # Tasks
 
-These tasks follow the recommended answer to every question in design.md "Owner decisions". If the owner picks otherwise, update them before the build starts.
+These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-15: the recommended option on all twelve).
 
 **Three PRs:**
 - groups 1–4: plan, paddling, hazards, director;

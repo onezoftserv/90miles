@@ -51,7 +51,7 @@ Every job (paddle, plug, grab, shoo, tie down, climb back) is one rider's verb, 
 
 ## Owner decisions
 
-These are open and listed in design.md "Open questions", with the recommended option first. The specs below follow the recommended options and change if the owner picks otherwise.
+Answered on 2026-11-15: the owner accepted the recommended option on all twelve (design.md "Owner decisions"), which approves building the core slice in three PRs.
 
 ## Capabilities
 

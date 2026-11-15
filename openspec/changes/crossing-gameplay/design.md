@@ -162,7 +162,7 @@ For 15 s after the hit (the blow; the squall weather itself rains for its whole 
 - **Result.** Unchanged.
 
 ### D11. HUD and lines
-A `CrossingHud` CanvasLayer child of the crossing, created on every peer, draws the progress strip, the integrity (for example "Balsa 70/100") and the lines. A `CrossingHazards` Node2D at z −30, between the sea at −40 and the deck at −20, draws rocks, debris, flotsam and leak spurts. Both only read the crossing, like `CrossingDeck`.
+A `CrossingHud` CanvasLayer child of the crossing, created on every peer, draws the progress strip, the integrity (for example "Balsa 70/100") and the lines. It sits top-centre at y 68–90, under the day phase and clear of the sign note's rect (200, 22)–(440, 60), the cay note label (to y 66) and the compass needle (to y 44), as the coordinator asked on 2026-11-15. It is built from the existing `HudStyle` colours and the theme's `HudPanel` variation, with no new colours, so the hud-window-kit restyle can restyle it later. A `CrossingHazards` Node2D at z −30, between the sea at −40 and the deck at −20, draws rocks, debris, flotsam and leak spurts. Both only read the crossing, like `CrossingDeck`.
 
 Prompt verbs (Remar, Tapar, Agarrar, Espantar) go in `hud_text.tres` by prompt id, as every Interactable's do. The warning lines are drafts in a new `game/resources/crossing_text.tres`, at the resources root so the validator does not take it for a content folder, and they wait for the owner's voice pass:
 - "La raya negra viene pa'cá."
@@ -195,7 +195,7 @@ The most urgent and shortest-lived job wins: a fin strikes in 5 s, a swimmer may
 
 - **inventory-hud "Prompt text".** Prompts are data by prompt id, so new ids (`paddle`, `plug`, `grab`, `shoo`) are appended to `hud_text.tres` with no rule change.
 - **art-pass "Crossing look".** It says the sea lies under everything and the deck above the sea and under the riders. Hazards and flotsam drawn between them (z −30) keep both rules.
-- **ui-shell "HUD layout".** It puts the day phase top-centre with the sign note under it. The crossing strip takes the sign note's place, since no sign opens at sea, and crossing "Crossing HUD and telegraphs" states that placement. If the owner wants ui-shell to own it, a one-line delta is added at archive. The damage-feedback session may edit "HUD layout" too, so the coordinator is asked to relay.
+- **ui-shell "HUD layout".** It puts the day phase top-centre with the sign note under it. The crossing strip sits below the sign note's place (D11), and crossing "Crossing HUD and telegraphs" states that placement. damage-feedback's HUD nodes (meter bars, the edge flash, floats over bodies, the notice row) do not collide with it (coordinator, 2026-11-15).
 - **creatures-ai "Perched creature never hides the rescue points".** It still holds (D13).
 
 ## Reference games
@@ -236,7 +236,9 @@ The most urgent and shortest-lived job wins: a fin strikes in 5 s, a swimmer may
 - LORE: bailing, paddling, sun and thirst.
 - ISLANDS: "The bale", 5 % of crossings, and "The floating cooler" are candidates for `crossing-encounters`.
 
-## Owner decisions (open; the specs follow the recommended option)
+## Owner decisions (answered 2026-11-15: the recommended option (a) on all twelve)
+
+The owner chose "Accept all recommended" in one option dialog relayed by the coordinating session, after seeing the summary and the difficulty target (idle about 30 left, 27 % broken; attentive 70 or more). That approves building the core slice in three PRs, test-first. The options stay listed for the record.
 
 1. **Scope of this change.**
    a. *Recommended:* the core slice. Paddling, rocks, debris and leaks, the shark's telegraph and shoo, flotsam, the squall's blow, the pacing director and the crossing HUD, built in three PRs: (1) director, paddling and rocks; (2) leaks and flotsam; (3) shark, HUD and lines. Encounters, fishing and items at sea are follow-ups.
