@@ -90,7 +90,7 @@ Known flake: `test_crossing_art.gd` "the scrolled sea still covers the crossing'
   - log the two found in passing (owner, 2026-11-14): a remainder that does not fit the inventory is lost silently, and a fast tool with no counter is left at −1 uses after a craft.
 
   Verify that each logged line names the item and the rule Done: batch 4 ticked with a backfill sub-task (knife, mirror, binoculars); batches 1, 2, 5 and 9 carry their rules; `equipment`, `player-weapons`, `fishing-traps`, the unread gear capabilities and the two found-in-passing lines sit under Milestone B after `item-effects-runtime`; the horn's noise is on the `guardacostas-stealth` line.
-- [ ] 4.3 Run the import twice, the smoke run, full GUT and the Python art tests, and run the main scene headless; verify all pass (rerun the known flake alone if it fails)
+- [x] 4.3 Run the import twice, the smoke run, full GUT and the Python art tests, and run the main scene headless; verify all pass (rerun the known flake alone if it fails) Done: on origin/main 9b90289; import 0 error lines, smoke 0 problems, GUT 221 scripts, 1960/1960 in 158 s (no flake, no rerun), 170 Python art tests OK, the main scene headless for 300 frames 0 error lines.
 
 ## Workflow follow-up
 
