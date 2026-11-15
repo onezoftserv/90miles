@@ -70,6 +70,12 @@ static func _check_patrol(where: String, data: ContentData) -> PackedStringArray
 		return errors
 	if patrol.route_lap_s >= patrol.route_period_s - patrol.horizon_warning_s:
 		errors.append("%s: route_lap_s %s must be shorter than route_period_s %s minus horizon_warning_s %s" % [where, patrol.route_lap_s, patrol.route_period_s, patrol.horizon_warning_s])
+	if patrol.route_lap_s <= 0.0:
+		errors.append("%s: route_lap_s must be above 0" % where)
+	if patrol.spot_time_s <= 0.0:
+		errors.append("%s: spot_time_s must be above 0" % where)
+	if patrol.alert_s <= 0.0:
+		errors.append("%s: alert_s must be above 0" % where)
 	if patrol.searchlight_cone_deg <= 0.0 or patrol.searchlight_cone_deg > 180.0:
 		errors.append("%s: searchlight_cone_deg %s must be above 0 and at most 180" % [where, patrol.searchlight_cone_deg])
 	if patrol.searchlight_range_tiles <= 0.0:

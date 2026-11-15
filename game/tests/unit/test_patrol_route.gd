@@ -411,6 +411,42 @@ func test_a_squall_ends_an_alert_and_the_next_horizon_comes_after_it() -> void:
 	assert_eq(boat.state_name(), &"LAP")
 
 
+func test_after_a_squall_no_boat_is_in_sight_before_its_own_horizon_warning() -> void:
+	var second := _boat(&"patrol_boat")
+	brain.set_member(boat, 0, 2)
+	var second_brain := second.brain as PatrolRoute
+	second_brain.set_member(second, 1, 2)
+	for each: Creature in [boat, second]:
+		(each.brain as PatrolRoute).set_clock(patrol.horizon_warning_s + 5.0)
+		each.advance(0.0)
+	var squall := GameState.content.get_entry(&"weather", &"squall") as WeatherData
+	world.weather_override = squall
+	for i: int in 50:
+		boat.advance(STEP_S)
+		second.advance(STEP_S)
+	world.weather_override = GameState.content.get_entry(&"weather", &"calm") as WeatherData
+	var horizon_at: Array[float] = [-1.0, -1.0]
+	var lap_at: Array[float] = [-1.0, -1.0]
+	for i: int in 2000:
+		boat.advance(STEP_S)
+		second.advance(STEP_S)
+		var now_s: float = (i + 1) * STEP_S
+		var boats: Array[Creature] = [boat, second]
+		for k: int in 2:
+			var name_now: StringName = boats[k].state_name()
+			if name_now == &"HORIZON" and horizon_at[k] < 0.0:
+				horizon_at[k] = now_s
+			if name_now == &"LAP" and lap_at[k] < 0.0:
+				lap_at[k] = now_s
+			if (boats[k].brain as PatrolRoute).in_sight() and horizon_at[k] < 0.0:
+				fail_test("boat %d in sight before its horizon warning at %.1f s" % [k, now_s])
+				return
+	assert_almost_eq(horizon_at[0], STEP_S, 0.001, "boat 0 restarts at once")
+	assert_almost_eq(horizon_at[1], 90.0, 0.2, "boat 1 waits half the period")
+	assert_almost_eq(lap_at[0], patrol.horizon_warning_s, 0.2)
+	assert_almost_eq(lap_at[1], 90.0 + patrol.horizon_warning_s, 0.2, "in its lap only after its own warning")
+
+
 # --- the spot meter ---------------------------------------------------------------------------
 
 func test_the_meter_is_stepped_once_however_many_boats_light_the_player() -> void:
@@ -468,3 +504,74 @@ func test_a_hidden_player_never_fills_and_a_dead_one_is_cleared() -> void:
 	body.meters.dead = true
 	watch.step(STEP_S)
 	assert_eq(body.spot_meter.value, 0.0, "a dead player has no meter")
+
+
+# --- dropped players ----------------------------------------------------------------------------
+
+func test_a_dropped_player_has_no_meter_and_is_never_spotted_by_light() -> void:
+	var body := _player(Vector2(21, 19))
+	_lap_at(5.0)
+	brain.spot(body, &"sight")
+	brain.forget_lock()
+	body.net.net_dropped = true
+	body.spot_meter.value = 1.5
+	watch.step(STEP_S)
+	assert_eq(body.spot_meter.value, 0.0, "cleared")
+	for i: int in 60:
+		boat.advance(STEP_S)
+		watch.step(STEP_S)
+	assert_eq(body.spot_meter.value, 0.0, "never steps")
+	assert_ne(boat.state_name(), &"ALERT_LOCK")
+
+
+func test_a_dropped_swimmer_is_not_spotted_by_the_water_rule() -> void:
+	var swimmer := _player(Vector2.ZERO)
+	_lap_at(5.0)
+	swimmer.global_position = boat.position + Vector2(3.0 * TILE, 0.0)
+	swimmer.movement_state = MovementStep.Move.SWIM
+	swimmer.net.net_dropped = true
+	watch_signals(boat)
+	_run(2.0)
+	assert_signal_not_emitted(boat, "patrol_alerted")
+
+
+func test_a_lock_on_a_body_that_drops_breaks_into_a_search() -> void:
+	var body := _player(Vector2(21, 19))
+	_lap_at(5.0)
+	brain.spot(body, &"sight")
+	assert_eq(boat.state_name(), &"ALERT_LOCK")
+	body.net.net_dropped = true
+	boat.advance(STEP_S)
+	assert_eq(boat.state_name(), &"ALERT_SEARCH")
+	assert_null(brain.locked)
+
+
+# --- the watch's parameters -------------------------------------------------------------------
+
+func test_an_unlit_player_is_not_spotted_by_a_smaller_boats_threshold() -> void:
+	boat.data = boat.data.duplicate() as CreatureData
+	boat.data.patrol = patrol.duplicate() as PatrolData
+	boat.data.patrol.spot_time_s = 1.0
+	var body := _player(Vector2(2, 2))
+	_lap_at(5.0)
+	assert_false(brain.lights(body.global_position))
+	body.spot_meter.value = 1.2
+	watch_signals(boat)
+	watch.step(STEP_S)
+	assert_signal_not_emitted(boat, "patrol_alerted")
+	assert_almost_eq(body.spot_meter.value, 1.2 - body.spot_meter.drain_per_s * STEP_S, 0.001)
+
+
+# --- per-kind rules ---------------------------------------------------------------------------
+
+func test_two_patrol_kinds_on_one_world_get_their_own_water_radius() -> void:
+	var wide := patrol.duplicate() as PatrolData
+	wide.water_spot_radius_tiles = 8.0
+	var narrow := patrol.duplicate() as PatrolData
+	narrow.water_spot_radius_tiles = 3.0
+	var none: Array[DataEnums.Sense] = []
+	var at := Vector2(10.0, 10.0)
+	var swim: MovementStep.Move = MovementStep.Move.SWIM
+	assert_true(world.patrol_triggers(wide).water_spots(swim, at + Vector2(5.0, 0.0), at, none, true))
+	assert_false(world.patrol_triggers(narrow).water_spots(swim, at + Vector2(5.0, 0.0), at, none, true), "its own radius")
+	assert_true(world.patrol_triggers(wide).water_spots(swim, at + Vector2(5.0, 0.0), at, none, true))

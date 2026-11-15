@@ -44,6 +44,8 @@ var _built: bool = false
 var _period_s: float = 0.0
 var _phase: PatrolLoop.Phase = PatrolLoop.Phase.AWAY
 var _in_port: bool = false
+## After a squall: seconds this boat stays out of sight before its clock restarts at 0 (its horizon).
+var _restart_wait_s: float = 0.0
 var _search_s: float = 0.0
 var _smoke_s: float = 0.0
 var _aim_px: Vector2 = Vector2.ZERO
@@ -127,14 +129,26 @@ func tick(creature: Creature, world: CreatureWorld, delta: float) -> void:
 		if not _in_port:
 			_in_port = true
 			locked = null
+			_restart_wait_s = 0.0
 		enter(State.AWAY)
 		_park()
 		_publish(weather)
 		return
 	if _in_port:
 		_in_port = false
-		clock_s = PatrolLoop.boat_clock(0.0, member_index, member_count, _period_s)
+		# Boat k stays out of sight for k * period / count, then starts at clock 0 with its own horizon
+		# warning: the boats stay evenly spaced and none comes into sight unannounced.
+		_restart_wait_s = _period_s * float(member_index) / float(member_count)
+		clock_s = 0.0
 		_phase = PatrolLoop.Phase.AWAY
+	if _restart_wait_s > 0.0:
+		_restart_wait_s -= delta
+		if _restart_wait_s > 0.0:
+			enter(State.AWAY)
+			_park()
+			_publish(weather)
+			return
+		_restart_wait_s = 0.0
 	if alerting():
 		_tick_alert(delta, weather)
 	else:
@@ -193,7 +207,7 @@ func _tick_alert(delta: float, weather: WeatherData) -> void:
 
 # Visible (not hidden or submerged), alive, on the island, within the light's range, sight working.
 func _lock_holds(weather: WeatherData) -> bool:
-	if not is_instance_valid(locked) or not CoopSession.is_alive(locked) or locked.left_island:
+	if not is_instance_valid(locked) or not CoopSession.is_alive(locked) or locked.left_island or CreatureWorld.is_dropped(locked):
 		return false
 	if weather.disabled_senses.has(DataEnums.Sense.SIGHT) or locked.stealth_state != MovementStep.Stealth.VISIBLE:
 		return false
@@ -218,7 +232,7 @@ func _watch_water(weather: WeatherData) -> void:
 	for body: PlayerBody in _world.players():
 		if state == State.ALERT_LOCK:
 			return
-		if body.left_island:
+		if body.left_island or CreatureWorld.is_dropped(body):
 			continue
 		if _triggers.water_spots(body.movement_state, body.global_position / TILE, _creature.position / TILE, weather.disabled_senses, true):
 			_raise(&"water", body.global_position, body)

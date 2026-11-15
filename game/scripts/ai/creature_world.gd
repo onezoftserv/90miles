@@ -62,11 +62,14 @@ func patrol_loop(patrol: PatrolData) -> PatrolLoop:
 	return _patrol_loops[key]
 
 
-## One boat's trigger rules: the island's sea distances (measured once) with a memory of its own.
+## One boat's trigger rules: the island's sea distances (measured once, shared by every kind) with
+## `patrol`'s own radii and a memory of its own.
 func patrol_triggers(patrol: PatrolData) -> PatrolTriggers:
 	if _patrol_rules == null:
 		_patrol_rules = PatrolTriggers.build(terrain, nav.size, patrol)
-	return _patrol_rules.fresh()
+	var rules: PatrolTriggers = _patrol_rules.fresh()
+	rules.use_numbers_of(patrol)
+	return rules
 
 
 ## How much a noise made in `cell` is amplified: a place's PoiData.noise_multiplier (a cave echoes
@@ -136,6 +139,12 @@ func food_pickups() -> Array[WorldItem]:
 func is_food(item_id: StringName) -> bool:
 	var item := GameState.content.get_entry(&"items", item_id) as ItemData
 	return item != null and item.tags.has(FOOD_TAG)
+
+
+## True while the player's client is gone and the body waits for it (PlayerNet.net_dropped, set on
+## the host by CoopSession): such a body is not a patrol's target.
+static func is_dropped(body: PlayerBody) -> bool:
+	return body.net != null and body.net.net_dropped
 
 
 static func is_swimming(body: PlayerBody) -> bool:

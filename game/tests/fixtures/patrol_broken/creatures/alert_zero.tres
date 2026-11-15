@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="CreatureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="1_creature"]
+[ext_resource type="Script" path="res://scripts/data/creature_spawn_rule_data.gd" id="2_rule"]
+[ext_resource type="Script" path="res://scripts/data/patrol_data.gd" id="3_patrol"]
+
+[sub_resource type="Resource" id="Resource_sandbar"]
+script = ExtResource("2_rule")
+chain_families = Array[int]([0])
+terrain = Array[int]([0])
+
+[sub_resource type="Resource" id="Resource_coast"]
+script = ExtResource("2_rule")
+chain_families = Array[int]([1])
+terrain = Array[int]([0])
+count = Vector2i(1, 2)
+
+[sub_resource type="Resource" id="Resource_patrol"]
+script = ExtResource("3_patrol")
+route_period_s = 180.0
+horizon_warning_s = 20.0
+spot_time_s = 2.0
+searchlight_cone_deg = 60.0
+searchlight_range_tiles = 10.0
+searchlight_sweep_deg_s = 30.0
+searchlight_phases = Array[int]([3])
+water_spot_radius_tiles = 6.0
+smoke_shore_tiles_night = 2.0
+smoke_shore_tiles_day = 6.0
+noise_alert_min_radius_tiles = 8.0
+route_lap_s = 100.0
+route_offshore_tiles = 4.0
+searchlight_arc_deg = 120.0
+spot_fill_per_s = 1.0
+spot_drain_per_s = 0.5
+alert_s = 0.0
+alert_sweep_deg = 30.0
+alert_lines_es = PackedStringArray("¡Atención! Tropas Guardafronteras. Permanezcan donde están.", "Ciudadano, se encuentra en zona de vigilancia. No se mueva.")
+alert_lines_en = PackedStringArray("Attention! Border Guard troops. Stay where you are.", "Citizen, you are inside a surveillance zone. Do not move.")
+give_up_lines_es = PackedStringArray("Sector sin novedad. Continuamos el recorrido.")
+give_up_lines_en = PackedStringArray("Sector all clear. We continue the patrol.")
+
+[resource]
+script = ExtResource("1_creature")
+id = &"alert_zero"
+name_es = "La lancha"
+name_en = "The patrol boat"
+description_es = "Una lancha de los guardafronteras que da la vuelta a la isla sin prisa. De noche barre la costa con un reflector, y una lucecita en el horizonte avisa de que viene. Si te ve, se queda quieta y te habla por el altavoz."
+description_en = "A border guard launch that circles the island without hurry. At night it sweeps the coast with a searchlight, and a small light on the horizon warns you it is coming. If it spots you, it stops and calls out over the loudhailer."
+hint_es = "Escóndete bajo techo o en el monte, apaga el fuego en la orilla y no hagas ruido cuando la luz pase."
+hint_en = "Hide under a roof or in the brush, put out any fire at the shore and keep quiet while the light passes."
+category = 2
+creature_tags = Array[int]([1])
+domains = Array[int]([2])
+behavior = 10
+senses = Array[int]([0, 1, 4])
+patrol = SubResource("Resource_patrol")
+spawn_rules = Array[ExtResource("2_rule")]([SubResource("Resource_sandbar"), SubResource("Resource_coast")])
+party_rate_mult_per_extra_player = 1.0
+party_extra_count_every_n_players = 2

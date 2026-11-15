@@ -123,6 +123,9 @@ func test_each_broken_patrol_is_reported_once_with_its_reason() -> void:
 		&"drain_zero": "spot_drain_per_s",
 		&"no_alert_en": "alert_lines_en",
 		&"no_give_up_es": "give_up_lines_es",
+		&"lap_zero": "route_lap_s",
+		&"spot_time_zero": "spot_time_s",
+		&"alert_zero": "alert_s",
 	}
 	var errors := ContentValidator.validate(ContentCatalog.new(BROKEN))
 	for id: StringName in expected:

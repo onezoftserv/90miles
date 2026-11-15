@@ -59,6 +59,14 @@ func fresh() -> PatrolTriggers:
 	return copy
 
 
+## Takes `patrol`'s smoke, noise and water numbers (the sea stays as measured).
+func use_numbers_of(patrol: PatrolData) -> void:
+	smoke_night_tiles = patrol.smoke_shore_tiles_night
+	smoke_day_tiles = patrol.smoke_shore_tiles_day
+	noise_min_radius_tiles = patrol.noise_alert_min_radius_tiles
+	water_radius_tiles = patrol.water_spot_radius_tiles
+
+
 # --- the sea ---------------------------------------------------------------------------------
 
 ## True for sea: deep or shallow water joined to the map edge. Brackish water (the coast cay's
