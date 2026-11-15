@@ -225,7 +225,7 @@ How the tests are written:
   - tick `guardacostas-stealth` under Milestone D;
   - rename the next line to the `guardacostas-capture` change;
   - add a Done entry with the GUT count and the two-process run's numbers.
-- [x] 10.3 Run the import, smoke run and GUT commands, and verify all three pass. Done after merging main at 8f1eaae; the counts are in TASKS.md's Done entry. `docs/CONTENT_MANIFEST.md` is left as is, because its creatures line ticks only when all four creatures on it exist (`reef_shark` and the other built creatures are not ticked either).
+- [x] 10.3 Run the import, smoke run and GUT commands, and verify all three pass. Done after merging main at cb7834f: GUT 243 scripts, 2212/2212; the two-process run on UDP 7789 passed 22 + 18 checks with 0 error lines. `docs/CONTENT_MANIFEST.md` is left as is, because its creatures line ticks only when all four creatures on it exist (`reef_shark` and the other built creatures are not ticked either).
 
 ## Workflow follow-up
 

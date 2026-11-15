@@ -269,6 +269,7 @@ Other (was in Milestone G):
   - **The world event bus** is `WorldEvents`, a session child. NOISE and SMOKE effects and lit fires feed it.
   - **The alert:** the light locks on the spotted player, sweeps their last known position for 20 s, then the boat gives up. `patrol_alerted` is reported for `guardacostas-capture`.
   - **Every peer** draws the boat and its cone from the synced loop clock and aim, and `net_spot` drives the open-eye mark. There is a horizon light on the HUD band and the formal-Spanish loudhailer lines.
-  - **Checks:** GUT 232 scripts, 2104 tests, all passing; import and smoke clean. A host and a client as two processes on UDP 7789 (`tests/manual/patrol_run.gd`) passed 22 and 18 checks with 0 error lines. Captures are in `docs/guardacostas-stealth/`.
+  - **Checks:** after merging main at cb7834f, GUT 243 scripts, 2212 tests, all passing; import and smoke clean. A host and a client as two processes on UDP 7789 (`tests/manual/patrol_run.gd`) passed 22 and 18 checks with 0 error lines. Captures are in `docs/guardacostas-stealth/`.
+  - **Found by the two-process run:** a client that joins and then travels to the host's island now draws the boat on that island's loop.
   - **Review fixes:** the squall restart, dropped players, per-kind trigger rules, the watch's empty case and a stricter content check.
   - Deviations are in the change's design.md "Changes from the build plan". Not archived.
