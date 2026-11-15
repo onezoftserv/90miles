@@ -92,7 +92,7 @@ func _ready() -> void:
 	# Quits even if the link never comes up (a failed join reloads the scene, but not this timer).
 	get_tree().create_timer(idle_s + seconds + DEADLINE_SLACK_S).timeout.connect(get_tree().quit.bind(3))
 	_reset_window()
-	_total = {"sent": 0, "arr": 0, "bucket_min": 250, "recv": 0, "gaps": 0, "snaps": 0, "snap_sum": 0.0, "snap_max": 0.0,
+	_total = {"sent": 0, "arr": 0, "bucket_min": 1000000, "recv": 0, "gaps": 0, "snaps": 0, "snap_sum": 0.0, "snap_max": 0.0,
 		"stale_max": 0, "thr_min": 32, "thr_low_s": 0, "lag_max": 0, "sim": 0.0}
 	await get_tree().create_timer(idle_s).timeout
 	playground = PLAYGROUND_SCENE.instantiate() as CoopPlayground
@@ -294,7 +294,7 @@ func _summary() -> void:
 func _reset_window() -> void:
 	_w = {"sent": 0, "recv": 0, "gaps": 0, "snaps": 0, "snap_sum": 0.0, "snap_max": 0.0,
 		"stale_max": 0, "thr_min": 32, "rtt": 0, "rtt_var": 0, "loss": 0.0, "lag_max": 0,
-		"pend_max": 0, "sim": 0.0, "frames": 0, "arr": 0, "bucket": 250}
+		"pend_max": 0, "sim": 0.0, "frames": 0, "arr": 0, "bucket": 1000000}
 
 
 func _elapsed_s() -> float:

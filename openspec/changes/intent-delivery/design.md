@@ -96,6 +96,23 @@ The probe's `--transfer` option set the mode with `Node.rpc_config` at run time.
   - That is worse than unreliable (51 intents lost, about 1 px each), and teammates would see that player freeze and jump.
 - **ENet's source** (`protocol.c`, `enet_protocol_check_outgoing_commands`) applies the throttle to every packet that is not reliable, unsequenced ones included. A move to `unreliable` does not escape it.
 
+### After the change
+
+The same probe and relay on UDP 7788 with Q1 to Q3 built: `main` at e15369b merged in, and the game's own ENet settings (the throttle now opened by `EnetBackend` at connect). 40 s runs.
+
+| condition | runs | intents lost | refused by the limits | snaps | client throttle: lowest |
+|---|---|---|---|---|---|
+| calm localhost, intents only | 2 | 0, 0 | 0 | 0 | 32 |
+| calm localhost, 1 request a second | 1 | 0 | 0 | 0 | 32 |
+| host frames of 100 ms for 3 s, requests | 2 | 0, 0 | 0 | 0 | 32 |
+| one host frame of 1 s, requests | 2 | 0, 0 | 0 | 0 | 32 |
+| in-order relay, requests | 1 | 0 | 0 | 0 | 32 |
+| in-order relay with 2% loss (46 client packets dropped) | 1 | 0 | 0 | 0 | 32 |
+| in-order relay with 1% reordering (24 client packets reordered) | 1 | 0 | 0 | 0 | 32 |
+| in-order relay, one host frame of 1 s | 1 | 0 | 0 | 0 | 32 |
+
+After each 1 s host frame the simulated-time bucket fell from about 1230 ms to 208 to 235 ms, and it refused nothing. No log had an `ERROR` line.
+
 ## Goals / Non-Goals
 
 **Goals:**

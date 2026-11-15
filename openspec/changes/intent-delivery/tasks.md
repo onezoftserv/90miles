@@ -61,13 +61,18 @@ Groups 1 and 3 were built from `main`. Group 2 went into `game/scripts/net/enet_
 
 ## 4. Measured again, two processes
 
-- [ ] 4.1 Re-run the probe conditions from design.md "Measurements" on UDP 7788, with the change. Note each in design.md beside the baseline.
+- [x] 4.1 Re-run the probe conditions from design.md "Measurements" on UDP 7788, with the change. Note each in design.md beside the baseline.
   - Verify: calm, client-requests and host-hitch runs lose 0 intents.
   - Verify: a 1 s host frame refuses none and snaps the client by less than 1 px.
   - Verify: 2% relay loss loses at most the intents of runs longer than 7 packets.
   - Verify: no `ERROR` line in any log.
-- [ ] 4.2 Host plus client with the co-op playground on UDP 7788 (`--host=7788`, `--join=127.0.0.1:7788`), both headless, for 60 s with the client walking. Verify: both logs have no `ERROR` line, and the client spawns and moves on the host.
-- [ ] 4.3 Update `TASKS.md`: tick the "ENet throttle on `submit_intent`" follow-up and add the dated entry. Verify: `openspec validate intent-delivery --strict` passes.
+  - Done 2026-11-14 (design.md, "After the change"): 11 runs, all with 0 intents lost, 0 refused and 0 snaps, including 2% loss, 1% reordering and three 1 s host frames.
+  - The client's throttle stayed at 32/32 throughout, and no log had an `ERROR` line.
+- [x] 4.2 Host plus client with the co-op playground on UDP 7788 (`--host=7788`, `--join=127.0.0.1:7788`), both headless, for 60 s with the client walking. Verify: both logs have no `ERROR` line, and the client spawns and moves on the host.
+  - Done 2026-11-14: `coop_playground.tscn` as host on 7788 and client from 127.0.0.1:7788, both headless and quitting themselves (`--quit-after`).
+  - The client's player spawned on both, and the host logged its drop when the client quit. No `ERROR` line in either log.
+  - The playground has no autopilot, so the walking check is 4.1's probe, which runs the same playground scene with the client walking a square.
+- [x] 4.3 Update `TASKS.md`: tick the "ENet throttle on `submit_intent`" follow-up and add the dated entry. Verify: `openspec validate intent-delivery --strict` passes.
 
 ## Workflow follow-up
 
