@@ -25,3 +25,4 @@ rock_chance = Dictionary[int, float]({
 0: 0.25
 })
 event_margin_s = 10.0
+max_rolled_creatures = 2

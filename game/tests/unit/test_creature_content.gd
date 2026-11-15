@@ -38,6 +38,14 @@ func test_the_three_creatures_load_with_their_numbers() -> void:
 	assert_eq(gull.spawn_rules[0].count, Vector2i(2, 2))
 
 
+func test_perch_ride_is_appended_after_trade_or_rob_and_both_new_machines_load() -> void:
+	# creature-perch-ride: appended, so no saved behavior number moves.
+	assert_eq(CreatureData.Behavior.PERCH_RIDE, CreatureData.Behavior.TRADE_OR_ROB + 1)
+	assert_eq(CreatureData.Behavior.size(), CreatureData.Behavior.PERCH_RIDE + 1, "the last one")
+	assert_true(CreatureBrain.for_behavior(CreatureData.Behavior.PERCH_RIDE) is PerchRide)
+	assert_true(CreatureBrain.for_behavior(CreatureData.Behavior.AMBIENT) is Ambient)
+
+
 func test_the_content_check_reports_no_problem() -> void:
 	assert_eq(ContentValidator.validate(GameState.content), PackedStringArray())
 

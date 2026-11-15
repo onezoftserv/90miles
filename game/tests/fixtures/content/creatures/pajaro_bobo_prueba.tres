@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="CreatureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_1e41b"]
+[ext_resource type="Script" path="res://scripts/data/creature_counter_data.gd" id="2_ivx50"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="3_4o86a"]
+[ext_resource type="Script" path="res://scripts/data/data_part.gd" id="4_2bk6k"]
+[ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="5_qqda0"]
+[ext_resource type="Script" path="res://scripts/data/creature_spawn_rule_data.gd" id="6_ew26c"]
+[ext_resource type="SpriteFrames" path="res://assets/art/creatures/seagull_frames.tres" id="7_hb5m2"]
+
+[sub_resource type="Resource" id="Resource_h403e"]
+script = ExtResource("3_4o86a")
+kind = 23
+ref_id = &"squall"
+
+[sub_resource type="Resource" id="Resource_a4o5e"]
+script = ExtResource("2_ivx50")
+trigger = 12
+conditions = Array[ExtResource("3_4o86a")]([SubResource("Resource_h403e")])
+
+[sub_resource type="Resource" id="Resource_4c0q4"]
+script = ExtResource("1_1e41b")
+meter = 5
+amount = 5.0
+limit = 2
+
+[sub_resource type="Resource" id="Resource_3g10p"]
+script = ExtResource("6_ew26c")
+context = 1
+chance = 0.15
+hostile = false
+
+[resource]
+script = ExtResource("5_qqda0")
+description_es = "Un pájaro bobo de prueba: se sube a la balsa y se va cuando entra la turbonada."
+description_en = "A test booby: it climbs aboard and leaves when the squall comes in."
+category = 1
+sprite_frames = ExtResource("7_hb5m2")
+speed_tiles_s = 4.0
+domains = Array[int]([3])
+behavior = 12
+disposition = 2
+follows_vessel = true
+sighting_effects = Array[ExtResource("1_1e41b")]([SubResource("Resource_4c0q4")])
+counters = Array[ExtResource("2_ivx50")]([SubResource("Resource_a4o5e")])
+spawn_rules = Array[ExtResource("6_ew26c")]([SubResource("Resource_3g10p")])
+id = &"pajaro_bobo_prueba"
+name_es = "Pájaro bobo de prueba"
+name_en = "Test booby"
