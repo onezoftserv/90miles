@@ -102,6 +102,7 @@ func _ready() -> void:
 	death_lines = DeathLines.from_catalog(GameState.content)
 	apply_display()
 	apply_pixel_filter()
+	apply_flashes()
 	show_title()
 
 
@@ -155,6 +156,7 @@ func show_settings() -> void:
 	settings_screen.bind(settings)
 	settings_screen.back_requested.connect(show_title)
 	settings_screen.display_changed.connect(_on_display_changed)
+	settings_screen.flashes_changed.connect(apply_flashes)
 
 
 ## art-pass "Credits screen": who made the art and fonts, offline; Volver and Esc go back to the
@@ -163,6 +165,11 @@ func show_credits() -> void:
 	var credits_screen := _show(CREDITS_SCENE, Flow.CREDITS) as CreditsScreen
 	credits_screen.show_credits(load(ArtCredits.STANDARD_PATH) as ArtCredits)
 	credits_screen.back_requested.connect(show_title)
+
+
+## damage-feedback "Reducir destellos": every hit and change cue reads it from HurtCues.
+func apply_flashes() -> void:
+	HurtCues.reduce_flashes = settings.reduce_flashes
 
 
 func _on_display_changed() -> void:

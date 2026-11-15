@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="HurtCueTuning" format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/hurt_cue_tuning.gd" id="1_tuning"]
+
+[resource]
+script = ExtResource("1_tuning")
+change_margin = 3.0
+steady_forget_s = 1.0
+blink_s = 0.6
+blink_hz = 10.0
+tint_color = Color(1, 0.35, 0.3, 1)
+flash_s = 0.4
+flash_floor = 0.5
+big_hit = 25.0
+flash_alpha = 0.45
+flash_min_gap_s = 0.33
+edge_px = 24.0
+flash_color = Color(0.85, 0.08, 0.08, 1)
+loss_hold_s = 0.4
+loss_drain_s = 0.5
+loss_color = Color(1, 0.62, 0.58, 1)
+shake_px = 1.0
+shake_s = 0.2
+glow_linger_s = 1.0
+glow_color = Color(0.75, 0.12, 0.1, 0.85)
+gain_hold_s = 0.6
+gain_fade_s = 0.4
+gain_lighten = 0.55
+float_s = 1.0
+float_rise_px = 12.0
+float_stack_px = 9.0
+meter_colors = Dictionary[int, Color]({
+1: Color(0.29, 0.64, 0.87, 1),
+2: Color(0.79, 0.54, 0.29, 1),
+3: Color(1, 0.42, 0.24, 1),
+4: Color(0.91, 0.77, 0.28, 1),
+5: Color(0.65, 0.49, 0.88, 1),
+6: Color(0.36, 0.75, 0.36, 1)
+})
+cure_color = Color(0.95686275, 0.9372549, 0.8784314, 1)

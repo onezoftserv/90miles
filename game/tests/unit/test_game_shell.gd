@@ -273,3 +273,39 @@ func test_the_run_carries_this_installs_identity() -> void:
 	(shell.screen as TitleScreen).solo_requested.emit()
 	assert_not_null(shell.session.local_identity)
 	assert_eq(shell.session.local_identity.id, shell.settings.identity.id)
+
+
+# --- damage-feedback: "Reducir destellos" (ui-shell "Settings") ----------------------------------
+
+func test_the_reduce_flashes_box_saves_and_applies() -> void:
+	HurtCues.reduce_flashes = false
+	var shell := _shell()
+	(shell.screen as TitleScreen).settings_requested.emit()
+	var screen := shell.screen as SettingsScreen
+	assert_eq(screen.reduce_flashes_box.text, "Reducir destellos")
+	assert_false(screen.reduce_flashes_box.button_pressed, "off by default")
+	screen.reduce_flashes_box.button_pressed = true
+	assert_true(GameSettings.load_from(SETTINGS_PATH).reduce_flashes, "saved at once")
+	assert_true(HurtCues.reduce_flashes, "every cue reads it from now on")
+	screen.reduce_flashes_box.button_pressed = false
+	assert_false(HurtCues.reduce_flashes)
+	HurtCues.reduce_flashes = false
+
+
+func test_the_shell_applies_reduce_flashes_from_the_saved_settings() -> void:
+	HurtCues.reduce_flashes = false
+	var saved := GameSettings.new(SETTINGS_PATH)
+	saved.reduce_flashes = true
+	saved.save()
+	var shell := _shell()
+	assert_true(shell.settings.reduce_flashes)
+	assert_true(HurtCues.reduce_flashes, "applied as the game starts")
+	HurtCues.reduce_flashes = false
+
+
+func test_the_settings_panel_still_fits_640x360() -> void:
+	var shell := _shell()
+	(shell.screen as TitleScreen).settings_requested.emit()
+	await wait_process_frames(2)
+	var panel := shell.screen.get_node("Panel") as Control
+	assert_true(Rect2(0.0, 0.0, 640.0, 360.0).encloses(panel.get_global_rect()), "settings panel %s" % panel.get_global_rect())

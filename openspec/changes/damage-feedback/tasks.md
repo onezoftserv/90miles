@@ -9,7 +9,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 1. Tuning data and the watches (survival-meters "Hits and drains are told apart", "Jumps and cures are told apart")
 
-- [ ] 1.1 Tests first: write `game/tests/unit/test_meter_watch.gd` (pure; 1 player, offline). It drives `observe(value, dead, delta)` by hand and covers:
+- [x] 1.1 Tests first: write `game/tests/unit/test_meter_watch.gd` (pure; 1 player, offline). It drives `observe(value, dead, delta)` by hand and covers:
   - the first observation and every observation while dead return NONE;
   - an isolated loss of 5 is a HIT of −5, and a loss of 2.9 is a DRAIN;
   - 2/s thirst at 60 Hz and at 20 Hz steps is a DRAIN for 3 s;
@@ -24,22 +24,22 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - a set bit, the first observation and a dead body are not.
 
   Verify: both fail to parse at first, then pass.
-- [ ] 1.2 Write `game/scripts/ui/hurt_cue_tuning.gd` (`HurtCueTuning`, a `Resource` with every number in design D3 to D10, plus `meter_colors`) and `game/resources/hurt_cue_tuning.tres`. Add `test_hurt_cue_tuning.gd`. It checks:
+- [x] 1.2 Write `game/scripts/ui/hurt_cue_tuning.gd` (`HurtCueTuning`, a `Resource` with every number in design D3 to D10, plus `meter_colors`) and `game/resources/hurt_cue_tuning.tres`. Add `test_hurt_cue_tuning.gd`. It checks:
   - the values;
   - that `meter_colors` equals each `fill_color` in `meters_hud.tscn`.
 
   Verify: GUT.
-- [ ] 1.3 Write these in `game/scripts/ui/`, as design D3:
+- [x] 1.3 Write these in `game/scripts/ui/`, as design D3:
   - `meter_watch.gd` (`MeterWatch`);
   - `status_watch.gd` (`StatusWatch`);
   - `hurt_cues.gd` (`HurtCues`: the static `reduce_flashes` and the shared tuning).
 
   Verify: 1.1 passes.
-- [ ] 1.4 Import ×2, Smoke and GUT pass.
+- [x] 1.4 Import ×2, Smoke and GUT pass.
 
 ## 2. Reduce flashes and the sound hook (ui-shell "Settings")
 
-- [ ] 2.1 Tests first: extend the settings tests (`test_game_settings.gd`, or the one that covers `GameSettings` save and load). They cover:
+- [x] 2.1 Tests first: extend the settings tests (`test_game_settings.gd`, or the one that covers `GameSettings` save and load). They cover:
   - `reduce_flashes` defaults to false;
   - it survives save and load;
   - an old file without the key reads false;
@@ -47,14 +47,14 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - `GameShell` sets the static from the loaded settings.
 
   Verify: they fail first, then pass.
-- [ ] 2.2 Add:
+- [x] 2.2 Add:
   - `GameSettings.reduce_flashes` (`display/reduce_flashes`);
   - the `ReduceFlashes` `CheckBox` in `settings_screen.tscn` and `.gd`;
   - the shell's write to `HurtCues.reduce_flashes` on load and on change.
 
   Check that the settings panel still fits 640×360 in the existing layout test. Verify: 2.1 and the settings layout tests pass.
-- [ ] 2.3 Add `AudioManager.play_sfx(id: StringName) -> void`, a documented no-op. Verify: GUT, with a call from a test that does not error.
-- [ ] 2.4 Import ×2, Smoke and GUT pass.
+- [x] 2.3 Add `AudioManager.play_sfx(id: StringName) -> void`, a documented no-op. Verify: GUT, with a call from a test that does not error.
+- [x] 2.4 Import ×2, Smoke and GUT pass.
 
 ## 3. Body cue (survival-meters "Hurt cue on the body")
 
