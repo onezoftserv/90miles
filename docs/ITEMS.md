@@ -26,7 +26,7 @@ Tags: `food`, `water`, `tool`, `weapon`, `material`, `wearable`, `shiny` (attrac
 | Fish (cooked) | +35 | Fire | — |
 | Lobster | +35 | Traps | Moray in some traps |
 | Oysters (6) | +12, thirst +2 | Mangrove roots | Cuts hands without cloth; red tide 60% poison |
-| Conch | +25 | Reef flats | Shell becomes a horn (noise radius 15) |
+| Conch | +25 | Reef flats | Its shell is left as the guamo, the conch horn (`conch_horn`; noise radius 15) |
 | Bird eggs (5) | +10 | Nests | Gulls |
 | Sea grapes | +5 | Dunes | — |
 | Mango | +20, thirst +10 | Lighthouse garden only | — |
@@ -63,7 +63,7 @@ Nine are unknown; sábila is always known (it ships as `aloe`, and the Médico s
 | Hongo de playa | 40% hallucinations for 2 min, 60% +10 hunger | A coin flip |
 | Hierba de tabaco silvestre | Morale +10 when smoked (needs fire) | Ex-militar identifies on sight |
 
-## Tools (18)
+## Tools (19)
 
 | Item | Use | Durability | Source |
 | --- | --- | --- | --- |
@@ -85,6 +85,7 @@ Nine are unknown; sábila is always known (it ships as `aloe`, and the Médico s
 | Shovel (oar) | Dig shade pits, bury stashes, dig in for the hurricane | 30 | Papo makes from hardwood |
 | Tabla (surfboard) | Base for the sail; no use alone | — | The rental shack (1–2), tourist wreck (30%), a yacht vault. "Era de alquiler. El recibo dice 'devolver antes de las 5'. No dice de qué día." |
 | Tabla con vela | Activate with trade wind to cross on the board route; one per rider; used up | — | Craft at a workbench: board + tarp + hardwood + 2 rope, 60 s (Mecánico ×2) |
+| Guamo (conch horn) | Blow it ("Tocar"): noise radius 15; never used up | — | The conch's shell, left in the eater's inventory with the last bite (`content-batch-4`) |
 
 ## Materials (17)
 
@@ -121,6 +122,15 @@ Nine are unknown; sábila is always known (it ships as `aloe`, and the Médico s
 | Sunglasses (shiny) | Binoculars work in scorching calm glare | Barracuda |
 | Military belt | +2 inventory slots | Ex-militar start |
 | Sombrero de yarey con cinta roja (`sombrero_cinta_roja`, secret) | Heat −30%, like the yarey hat | Never blows off (it has a chin cord). Only one, hanging on the lean-to of the secret cay. Wearing it waits for the equipment change |
+
+Built by `content-batch-4` (owner, 2026-11-14): every tool, material and wearable above that had not shipped, except the seven of `content-batch-11` (both boards, the drum, the propeller, the fuel jug, sugar and the bicycle tube). Numbers the tables do not give are first-pass (weights, stacks, the broken bottle's 10 s of bleeding):
+
+- Tools whose durability is "—" (lure, compass, charts, flint and steel, the horn) and every wearable never wear out.
+- Every capability is the "Use" column's, no more: the machete opens coconuts and cuts paths, the shovel-oar digs and buries, the net fishes and traps, the charts navigate the stream and reveal layouts, the compass steers. Only the broken bottle, the lure and the sunglasses are shiny.
+- Worn slots: hat on the head, sunglasses on the face, wetsuit on the body, life vest as a vest, gloves on the hands, belt at the waist. Fins and sandals share the feet: a player picks swim speed or safe feet.
+- The lure's ×2 is the line-fishing rate and the pliers' ×1.5 the build speed, both while carried; the wetsuit's "×2 instead of ×3" sets the swim thirst factor to 2. Life-vest "+buoyancy" is its float at 0 energy.
+- The sandals' immunity lives on the urchin, stingray and fire-ant files (their worn-item counters), not on the sandals. The net and the snare catch only the land crab until the hutía exists.
+- What runs today: the pliers open cans, the machete opens coconuts, flint and steel are the fire's fast tool, and the conch leaves its horn. Wearing, modifiers, weapons, fishing, traps, navigation, a hat blown off in a squall and the horn's noise are data until their code changes (`TASKS.md`).
 
 ## Wreck loot and oddities (15)
 
@@ -215,4 +225,4 @@ The hat is a plain Cuban yarey hat with a red band. No name, emblem or line from
 
 ## Counts
 
-7 water, 15 food, 10 plants, 18 tools, 17 materials, 9 wearables, 15 oddities, 9 keepsakes, 16 texts = **116 item definitions** (the 16 added by `balsero-lore`: 11 items, 2 keepsakes, 3 texts; the 4 added by `secret-cay`: 1 wearable, 2 oddities, 1 text; `content-batch-3` folded the coco plum into hicaco).
+7 water, 15 food, 10 plants, 19 tools, 17 materials, 9 wearables, 15 oddities, 9 keepsakes, 16 texts = **117 item definitions** (the 16 added by `balsero-lore`: 11 items, 2 keepsakes, 3 texts; the 4 added by `secret-cay`: 1 wearable, 2 oddities, 1 text; `content-batch-3` folded the coco plum into hicaco; `content-batch-4` added the conch horn).

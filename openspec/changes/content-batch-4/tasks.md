@@ -75,13 +75,13 @@ Known flake: `test_crossing_art.gd` "the scrolled sea still covers the crossing'
 
 ## 4. Docs and the full run
 
-- [ ] 4.1 Update `docs/ITEMS.md`:
+- [x] 4.1 Update `docs/ITEMS.md`:
   - the conch horn as a tools row and in the food table's conch note;
   - Tools 19, Counts 117;
   - a "Built by content-batch-4" note: first-pass numbers, what is data until its runtime, and the sandals immunity on creatures.
 
-  Update `docs/CONTENT_MANIFEST.md`: tick the tools, materials and wearables lines with what shipped and what batch 11 builds, add `conch_horn`, and set the totals to 117. Verify that every id in those three lines exists in `game/resources/items/` or is marked as batch 11
-- [ ] 4.2 Update `TASKS.md`:
+  Update `docs/CONTENT_MANIFEST.md`: tick the tools, materials and wearables lines with what shipped and what batch 11 builds, add `conch_horn`, and set the totals to 117. Verify that every id in those three lines exists in `game/resources/items/` or is marked as batch 11 Done: the horn is a tools row (Tools 19, Counts 117) and the conch's note names it; a "Built by content-batch-4" note follows the wearables table. The manifest's three lines check out: every id exists or is batch 11's; wearables ticked; totals 117.
+- [x] 4.2 Update `TASKS.md`:
   - tick content-batch-4;
   - add to batches 1–2 the sandals counters (urchins, stingray, fire ants), the spear's nose hit on sharks and hutía in the snare;
   - add to batch 5 `rock` and `stick` for the flint, spear and snare recipes;
@@ -89,7 +89,7 @@ Known flake: `test_crossing_art.gd` "the scrolled sea still covers the crossing'
   - add the runtime changes below the current milestone, beside `item-effects-runtime`: equipment and modifiers, player weapons, fishing and traps, navigation at sea and the horn's noise;
   - log the two found in passing (owner, 2026-11-14): a remainder that does not fit the inventory is lost silently, and a fast tool with no counter is left at −1 uses after a craft.
 
-  Verify that each logged line names the item and the rule
+  Verify that each logged line names the item and the rule Done: batch 4 ticked with a backfill sub-task (knife, mirror, binoculars); batches 1, 2, 5 and 9 carry their rules; `equipment`, `player-weapons`, `fishing-traps`, the unread gear capabilities and the two found-in-passing lines sit under Milestone B after `item-effects-runtime`; the horn's noise is on the `guardacostas-stealth` line.
 - [ ] 4.3 Run the import twice, the smoke run, full GUT and the Python art tests, and run the main scene headless; verify all pass (rerun the known flake alone if it fails)
 
 ## Workflow follow-up

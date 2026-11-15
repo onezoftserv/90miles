@@ -13,14 +13,14 @@ Tick when the file exists and loads in Godot.
 - [ ] birds (4, content-batch-12): galleguito · pajarito · pajaro_bobo · rabihorcado
 - [ ] boss_cutter · boss_old_crocodile · boss_tiger_shark · boss_hurricane (weather) · boss_straits (crossing script)
 
-## game/resources/items/ (116) — `docs/ITEMS.md`
+## game/resources/items/ (117) — `docs/ITEMS.md`
 
 - [ ] water (7; all but `milordo` exist, `milordo` waits for content-batch-11): coco · rain_cup · still_cup · well_cup · seawater_cup · rum · milordo
 - [ ] food (15; all but `toronja` and `bistec_toronja` exist, which wait for content-batch-11; the coco plum is the plant `hicaco`): crab_raw · crab_cooked · fish_raw · fish_cooked · lobster · oysters · conch · bird_eggs · sea_grapes · mango · hutia_cooked · iguana_cooked · canned_food · toronja · bistec_toronja
 - [x] plants (10; sábila ships as `aloe` and is always known): manzanillo · guao · jaguey · uva_caleta_unripe · hicaco · guanabana · noni · aloe · hongo_playa · tabaco_silvestre
-- [ ] tools (18): knife · machete · broken_bottle · spear · fishing_line · lure · net · snare · pliers · binoculars · compass · charts · mirror · lighter · flint_steel · shovel_oar · tabla_surf · tabla_vela
-- [ ] materials (17; `inner_tube`, `plastic_jug`, `rope` exist): driftwood · hardwood · inner_tube · plastic_jug · rope · line_spool · tarp · nails · resin · dry_grass · cloth · tire · tanque_55 · propela · bidon_combustible · azucar · camara_bici
-- [ ] wearables (9; `sombrero_cinta_roja` exists): straw_hat · life_vest · wetsuit_top · fins · sandals · gloves · sunglasses · military_belt · sombrero_cinta_roja (secret)
+- [ ] tools (19; all but `tabla_surf` and `tabla_vela` exist, which wait for content-batch-11; `conch_horn` is the conch's shell, content-batch-4): knife · machete · broken_bottle · spear · fishing_line · lure · net · snare · pliers · binoculars · compass · charts · mirror · lighter · flint_steel · shovel_oar · conch_horn · tabla_surf · tabla_vela
+- [ ] materials (17; all but `tanque_55`, `propela`, `bidon_combustible`, `azucar` and `camara_bici` exist, which wait for content-batch-11): driftwood · hardwood · inner_tube · plastic_jug · rope · line_spool · tarp · nails · resin · dry_grass · cloth · tire · tanque_55 · propela · bidon_combustible · azucar · camara_bici
+- [x] wearables (9): straw_hat · life_vest · wetsuit_top · fins · sandals · gloves · sunglasses · military_belt · sombrero_cinta_roja (secret)
 - [ ] oddities (15; `brujula_rota`, `mapa_sin_norte` exist): flare · radio · car_battery · solar_charger · vhf · gps · expired_medicine · cigars · fire_pages · baseball · dominoes · bilge_pump · botija · brujula_rota (secret) · mapa_sin_norte (secret)
 - [ ] keepsakes (9): foto_familia · cuchillo_abuelo · medalla_caridad · nudo_pescador · pedazo_mapa · cassette_van_van · pelota_firmada · llave_almendron · pluma_galleguito
 - [ ] texts (16; `nota_llegaste_tarde` exists): libreta_ramon · diario_periodo_especial · cartas_yuma · la_lista · bottle_note · reply_bottle · wall_slogan · radio_fragment · menu_board · patrol_logbook · yunior_notebook · captain_log · nota_se_vende · fallo_del_pilote · sobre_tres_generaciones · nota_llegaste_tarde (secret)
@@ -101,4 +101,4 @@ Ids are proposals. POI ids such as `fishermen_houses`, `village_dock`, `resort_g
 
 ## Totals
 
-44 creatures, 116 items, 22 recipes, 24 NPCs, 18 chains, ~50 POIs, 17 set pieces, 10 routes, 6 backgrounds, 11 weather, 2 handmade islands = **~320 resource files** (the handwritten dialogue files are listed separately). At the reference games' scale for a 7-island run. The creature and NPC counts still carry the mismatches in review item 47.
+44 creatures, 117 items, 22 recipes, 24 NPCs, 18 chains, ~50 POIs, 17 set pieces, 10 routes, 6 backgrounds, 11 weather, 2 handmade islands = **~320 resource files** (the handwritten dialogue files are listed separately). At the reference games' scale for a 7-island run. The creature and NPC counts still carry the mismatches in review item 47.
