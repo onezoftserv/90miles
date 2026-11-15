@@ -162,7 +162,7 @@ None of the four games has a built-in "follow a living teammate" camera. The pie
 
 ## Risks / Trade-offs
 
-- [Two HUD sessions in one test viewport fight over `make_current()`.] → Tests never assert viewport currency. `make_current()` is called only when the watched body changes or its camera was found off, never every frame.
+- [Two HUD sessions in one test viewport fight over `make_current()`.] → Tests never assert viewport currency. `make_current()` runs when the watched body changes, or when its camera is found off or not current. In the game, with one session per world view, that happens once per change. In NetHarness tests the branches share a viewport and take it back and forth, which is harmless because no test reads it.
 - [A dead player switching with A/D also sends movement intents.] → The host already ignores a dead body's movement (downed step). A test checks the dead body's position does not change.
 - [A rider waiting during a crossing could watch that crossing's sea from a body framed by the old island bounds.] → Each body's limits are set where that body is (Context), so the view always frames the watched body's own ground.
 - [The cut between cameras can jar.] → It is deliberate (D1). One `Camera2D.reset_smoothing()` keeps a cut clean if smoothing is ever turned on.

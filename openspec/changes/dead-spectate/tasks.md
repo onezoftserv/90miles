@@ -87,6 +87,13 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   It prints `SPECTATE PASS|FAIL` lines. Run host and client as two headless processes on UDP 7787. Verify: every line is PASS and there are 0 error lines in both logs.
   - Done 2026-11-14: two headless processes on UDP 7787. Host 6 of 6 PASS, client 10 of 10 PASS, 0 error lines in either log. On the client, `world_viewport.get_camera_2d()` was the host body's camera.
 
+- [x] 3.3 A real crossing and a real landing (added after review, 2026-11-14): write a new `game/tests/unit/test_dead_spectate_crossing_net.gd`. Each branch builds the sandbar and its IslandTravel, launches a crossing on each route start and hands its end to the travel keeper, as the shell does. Cases:
+  - Papo swims off and Yuni dies, so Yuni watches Papo at sea: he is not `left_island`, and his camera's limits are the crossing's sea rect. When the crossing ends, the coast cay loads and Yuni still watches Papo inside the coast cay's bounds.
+  - Papo's crossing ends while Yuni lives, so the waiting Papo watches Yuni on the sandbar with his strip hidden. When Yuni dies, the coast cay loads, Papo lands and stops watching, and his own camera, meters and strip are back.
+
+  Verify: both pass with 0 error lines.
+  - Done 2026-11-14: 2 of 2 pass, 0 error lines. Before writing them, a read of `crossing.gd`, `crossing_deck.gd` and `crossing_boards.gd` found nothing shown or hidden by which peer is local: every peer draws every crossing it has.
+
 ## 4. Wrap-up
 
 - [x] 4.1 Update the docs:
