@@ -114,6 +114,7 @@ func forget_lock() -> void:
 	locked = null
 	_search_s = 0.0
 	enter(State.ALERT_SEARCH)
+	_creature.state_id = state
 
 
 func tick(creature: Creature, world: CreatureWorld, delta: float) -> void:
@@ -207,6 +208,9 @@ func _raise(cause: StringName, at_px: Vector2, target: PlayerBody) -> void:
 	_search_s = 0.0
 	_aim_px = at_px
 	enter(State.ALERT_LOCK if target != null else State.ALERT_SEARCH)
+	# The synced state follows at once (not at the end of the next tick), so a look that sees the new
+	# alert_serial in the same frame also sees the alert state it picks its loudhailer line by.
+	_creature.state_id = state
 	_creature.patrol_alerted.emit(cause, at_px)
 
 

@@ -12,7 +12,9 @@ extends CanvasLayer
 ## no input (`input_open`); the shell says when a screen shows. The local player's press on a
 ## workbench opens the crafting list (`craft_list`), and on a flavour sign the sign note (`sign_note`);
 ## each holds the input while open. A closed-eye
-## mark shows over every hidden player (`marks`), placed like the prompt. Under the day phase, the
+## mark shows over every hidden player (`marks`), placed like the prompt, and an open one over every lit
+## player whose spot meter is above 0. While a patrol boat is on the horizon, a light or hull shows on
+## the horizon band (`patrol_horizon`). Under the day phase, the
 ## broken compass's needle (`needle`, secret-cay) shows while the local player carries it, and
 ## under it the note label (`note_label`) shows the chest's note and the map's text for a while.
 
@@ -58,6 +60,7 @@ var world_view: Control = null
 @onready var needle: CompassNeedle = %Needle
 @onready var note_label: NoteLabel = %NoteLabel
 @onready var marks: BodyMarks = %Marks
+@onready var patrol_horizon: PatrolHorizon = %PatrolHorizon
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
 @onready var _teammates: VBoxContainer = %Teammates
@@ -99,6 +102,7 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	session.roster_updated.connect(_rename_tags)
 	session.player_rebound.connect(_on_player_rebound)
 	marks.bind(session)
+	patrol_horizon.bind(session, local_peer_id)
 	for peer_id: int in session.peer_ids():
 		_follow(peer_id)
 	refresh()
@@ -173,6 +177,7 @@ func set_screen_shown(value: bool) -> void:
 	craft_list.set_screen_shown(value)
 	sign_note.set_screen_shown(value)
 	marks.screen_shown = value
+	patrol_horizon.screen_shown = value
 
 
 ## A point of the world's canvas (the world view's pixels, camera applied) in HUD pixels.

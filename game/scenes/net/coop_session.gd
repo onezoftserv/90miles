@@ -945,7 +945,7 @@ static func checked_arrivals(arrivals: Dictionary) -> Variant:
 
 
 ## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.
-func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> SpeechBubble:
+func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null, show_s: float = SpeechBubble.SHOW_S) -> SpeechBubble:
 	var old := speaker.get_node_or_null(NodePath(BUBBLE_NAME))
 	if old != null:
 		speaker.remove_child(old)
@@ -954,6 +954,7 @@ func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> Sp
 	bubble.name = BUBBLE_NAME
 	bubble.text = text
 	bubble.voice = voice
+	bubble.show_s = show_s
 	speaker.add_child(bubble)
 	return bubble
 

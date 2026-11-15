@@ -188,12 +188,13 @@ How the tests are written:
 
 ## 9. Drawing and cues
 
-- [ ] 9.1 Write `game/tests/unit/test_patrol_cues.gd` with solo, and host plus client. Verify it fails. It checks the spec's "Patrol cues" scenarios:
+- [x] 9.1 Write `game/tests/unit/test_patrol_cues.gd` with solo, and host plus client. Verify it fails. It checks the spec's "Patrol cues" scenarios:
   - **The horizon light:** it shows for exactly the 20 s of HORIZON at night (a grey hull by day), clamped to the band, and goes when the lap starts.
   - **The open eye:** it shows over a player whose `net_spot` is above 0, half filled at 1 s, on both peers. It does not show while the closed eye does, and it goes at 0.
   - **The loudhailer:** a Spanish alert line shows over the boat for 3 s at an alert's start, and a give-up line at its end. Both peers show the same line.
   - **The text:** all HUD text is read from `hud_text.tres`.
-- [ ] 9.2 Implement the cues. Verify:
+  - Done: `test_patrol_cues.gd`, 14 tests (solo on the real sandbar through the shell, host plus client on `NetHarness`). The cues have no text of their own, so the test checks that the horizon mark and the eyes hold no label and that the loudhailer's words are `PatrolData`'s; `hud_text.tres` gained no keys.
+- [x] 9.2 Implement the cues. Verify:
   - `test_patrol_cues.gd` passes, along with `test_art_sim_invariance.gd` (extended to the patrol look), `test_draw_order.gd` and `test_hud_screens.gd`;
   - a `capture_looks` frame of the sandbar at night with the beam on the sand is saved to `docs/guardacostas-stealth/` for the owner.
 
@@ -203,13 +204,15 @@ How the tests are written:
   - the open-eye mark in `BodyMarks`;
   - the loudhailer speech bubble;
   - new `hud_text.tres` keys.
-- [ ] 9.3 Run a host and a client as two processes on the coast cay at night. Write it as `game/tests/manual/patrol_run.gd`, after `art_pass_run.gd`, using a free UDP port. It checks:
+  - Done: the patrol look (`patrol_look.gd`, `patrol_cone.gd`), `patrol_horizon.gd`, the open eye in `body_marks.gd`, the bubble's 3 s; no new `hud_text.tres` keys were needed. `test_art_sim_invariance.gd` gained a night-lap pair of runs (7 tests). The capture is `game/tests/manual/capture_patrol.gd` (+ .tscn), run windowed: `docs/guardacostas-stealth/sandbar_night_beam.png` (the beam on the sand, the open eye over the player, the hull) and `horizon_light_night.png` (the HUD band's light).
+- [x] 9.3 Run a host and a client as two processes on the coast cay at night. Write it as `game/tests/manual/patrol_run.gd`, after `art_pass_run.gd`, using a free UDP port. It checks:
   - the client's player is lit, spotted and locked, then hides in scrub and the boat gives up;
   - the client sees the same beam, horizon light, eye and line as the host;
   - the client quits and rejoins mid-lap, and draws the boat in place.
 
   Record the check counts and confirm there are 0 error lines.
-- [ ] 9.4 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done on 2026-11-14: host 22 passed, 0 failed; client 18 passed, 0 failed; 0 engine or script error lines on either (each process's last check is that none were logged). Both headless, UDP 7789, the coast cay at night (`game/tests/manual/patrol_run.gd`).
+- [x] 9.4 Run the import, smoke run and GUT commands, and verify all three pass. Done: import clean (twice), smoke 10 frames with 0 problems, GUT 230 scripts, 2062/2062 passing (15 new tests: 14 in `test_patrol_cues.gd`, 1 in `test_art_sim_invariance.gd`).
 
 ## 10. Docs
 

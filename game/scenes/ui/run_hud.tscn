@@ -10,12 +10,16 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/sign_note.tscn" id="8_note"]
 [ext_resource type="PackedScene" path="res://scenes/ui/compass_needle.tscn" id="9_needle"]
 [ext_resource type="PackedScene" path="res://scenes/ui/note_label.tscn" id="10_note_label"]
+[ext_resource type="PackedScene" path="res://scenes/ui/patrol_horizon.tscn" id="11_patrol_horizon"]
 
 [node name="RunHud" type="CanvasLayer"]
 layer = 3
 script = ExtResource("1_hud")
 
 [node name="HorizonLine" parent="." instance=ExtResource("3_line")]
+
+[node name="PatrolHorizon" parent="." instance=ExtResource("11_patrol_horizon")]
+unique_name_in_owner = true
 
 [node name="Meters" parent="." instance=ExtResource("2_meters")]
 unique_name_in_owner = true
