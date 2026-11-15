@@ -28,6 +28,12 @@ var climate: ClimateState = ClimateState.new()
 var model: MovementModel = MovementModel.new()
 var movement_state: MovementStep.Move = MovementStep.Move.WALK
 var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
+## Host (guardacostas-stealth): the spot meter, stepped once per physics tick by the island's
+## PatrolWatch across every boat. The network group sends `spot_fraction()` as net_spot.
+var spot_meter: SpotMeter = SpotMeter.new()
+## Every peer: the spot meter's fraction as this peer shows it (0 to 1), the open eye's fill. The host
+## writes it from `spot_fraction()` each tick, a client takes it from the host's net_spot.
+var spot_shown: float = 0.0
 ## True when this body belongs to the local peer: it gets the camera and local input.
 ## Set before the body enters the tree.
 @export var local_player: bool = true
@@ -108,13 +114,18 @@ func advance(delta: float, with_interaction: bool = true) -> void:
 			_update_interaction(delta)
 		var cell := cell()
 		var step_intent: MoveIntent = MoveIntent.create(Vector2.ZERO, false, false, intent.interact_held) if pinned else intent
-		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, step_intent, delta, meters.speed_factor())
+		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, step_intent, delta, meters.speed_factor(), terrain.is_shaded(cell))
 		var swimming: bool = result.movement == MovementStep.Move.SWIM or result.movement == MovementStep.Move.DIVE
 		meters.spend_energy(result.energy_spent * (swim_energy_factor if swimming else 1.0))
 	movement_state = result.movement
 	stealth_state = result.stealth
 	velocity = result.velocity * TILE_SIZE
 	_move(velocity * delta)
+
+
+## The spot meter as a fraction of this player's spot time, 0 to 1 (the HUD's open eye).
+func spot_fraction() -> float:
+	return spot_meter.fraction(SpotMeter.stealth_bonus_s(SpotMeter.stealth_level_of(self)))
 
 
 ## The camera and keyboard follow this body only on its own player's peer.

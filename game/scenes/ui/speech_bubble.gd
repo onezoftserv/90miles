@@ -19,6 +19,8 @@ const TAG_NAME: StringName = &"NameTag"
 var text: String = ""
 ## The phrase's voice clip, or null while none has been recorded.
 var voice: AudioStream = null
+## Seconds it shows; a loudhailer line stays longer than a quick-chat phrase.
+var show_s: float = SHOW_S
 var _left_s: float = SHOW_S
 
 @onready var label: Label = $Label
@@ -27,6 +29,7 @@ var _left_s: float = SHOW_S
 
 func _ready() -> void:
 	position = OFFSET
+	_left_s = show_s
 	label.text = text
 	if voice != null:
 		voice_player.stream = voice
@@ -55,8 +58,8 @@ func refresh() -> void:
 	# The HUD's pieces over the same player, below the bubble (design.md P11).
 	for node: Node in get_tree().get_nodes_in_group(BodyMarks.GROUP):
 		var marks := node as BodyMarks
-		if marks != null and marks.has_mark(player):
-			bottom = minf(bottom, _from_hud(player, marks.to_hud, marks.mark_rect(player).position.y - STACK_GAP_PX))
+		if marks != null and marks.has_marker(player):
+			bottom = minf(bottom, _from_hud(player, marks.to_hud, marks.marker_rect(player).position.y - STACK_GAP_PX))
 	for node: Node in get_tree().get_nodes_in_group(InteractPrompt.GROUP):
 		var prompt := node as InteractPrompt
 		if prompt != null and prompt.visible and prompt.over_player() == player:

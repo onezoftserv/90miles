@@ -42,6 +42,9 @@ var net_model_state: PackedFloat64Array = PackedFloat64Array([0.0, 0.0, 0.0])
 var net_movement: int = MovementStep.Move.WALK
 var net_stealth: int = MovementStep.Stealth.VISIBLE
 var net_downed: bool = false
+## guardacostas-stealth: this player's spot meter as a fraction of the spot time, 0 to 1. The host writes it
+## (`spot_fraction()`); every peer shows it as the open eye (`PlayerBody.spot_shown`).
+var net_spot: float = 0.0
 ## coop-networking "Disconnect handling": this player's client dropped and the body waits for it.
 ## The session writes it on the host (at the drop and at a reclaim), never `_write_shadow`: the body
 ## does not know it was dropped. Every peer reads it, late joiners with the spawn state.
@@ -134,6 +137,7 @@ func apply_host_state() -> void:
 	if not net_position.is_finite() or not is_finite(net_energy):
 		return
 	_body().inventory.from_net(net_inventory)
+	_body().spot_shown = clampf(net_spot, 0.0, 1.0) if is_finite(net_spot) else 0.0
 	match role:
 		Role.PREDICTED:
 			if net_downed:
@@ -200,6 +204,8 @@ func _write_shadow() -> void:
 	net_movement = body.movement_state
 	net_stealth = body.stealth_state
 	net_downed = body.downed
+	net_spot = body.spot_fraction()
+	body.spot_shown = net_spot
 	var inventory_state: Array = body.inventory.to_net()
 	if inventory_state != net_inventory:
 		net_inventory = inventory_state
