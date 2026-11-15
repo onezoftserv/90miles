@@ -87,8 +87,8 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 
 ## 6. Milestone D — Threats and stealth
 
-- [ ] `guardacostas-stealth`: patrol loop, searchlight cone, hidden states, smoke/noise bus
-- [ ] Shore squad, capture, free-a-captive, `la_captura` scene; with capture at sea, the `almendron_hundido` gate test (`balsero-lore` 9b.1)
+- [x] `guardacostas-stealth`: patrol loop, searchlight cone, hidden states, smoke/noise bus. The OpenSpec change was written on 2026-11-14 (docs PR #50). The owner chose the recommended option on all ten decisions and approved the build, which was done test-first on 2026-11-14 (see Done). Not archived.
+- [ ] `guardacostas-capture`, hooked to `patrol_alerted`: chase, shore squad, capture, free-a-captive, the `la_captura` scene, the previous-island restart and capture on the final crossing. With capture at sea, it also covers the `almendron_hundido` gate test (`balsero-lore` 9b.1).
 - [ ] Eels, barracuda, man o' war, mosquitoes, crocodile grab, fire ants, manchineel
 - [ ] Bosses: cutter chase, old crocodile nest, tiger shark dives
 - [ ] Lighthouse, storm key, shipwreck reef and final approach chains
