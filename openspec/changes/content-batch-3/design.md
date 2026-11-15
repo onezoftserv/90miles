@@ -28,7 +28,7 @@
 
 ## Decisions
 
-### 1. The batch: 27 files
+### 1. The batch: 26 files
 
 Each cell gives the effects of the first use. "Poison" means `APPLY_STATUS POISON`, meter health −20 over 30 s; that is the only documented poison profile (data-model-questions 22).
 
@@ -47,7 +47,6 @@ Each cell gives the effects of the first use. "Poison" means `APPLY_STATUS POISO
 | `conch` | food | food, meat | 2 / 1.0 | eat 2 s | hunger +25 | no remainder until the horn exists (Q5) |
 | `bird_eggs` | food | food | 5 / 0.1 | eat 1 s | hunger +10 | |
 | `sea_grapes` | food | food | 10 / 0.1 | eat 1 s | hunger +5 | |
-| `coco_plum` | food | food | 10 / 0.1 | eat 1 s | hunger +8, thirst +3 | dropped if Q4 (a) |
 | `mango` | food | food | 4 / 0.3 | eat 1 s | hunger +20, thirst +10 | |
 | `hutia_cooked` | food | food, meat | 2 / 1.0 | eat 2 s | hunger +40 | |
 | `iguana_cooked` | food | food, meat | 2 / 1.0 | eat 2 s | hunger +35 | |
@@ -88,7 +87,7 @@ Each item gets `tools/art/fixes/items/<id>.png`, drawn as a 16×16 palette-near 
   - eat a cooked fish: hunger +35 and energy +10;
   - a well cup stands up a solo last stand at 30;
   - rum and seawater do not;
-  - canned food needs an opener and spends one knife use (if Q6 (a));
+  - canned food needs an opener and spends one knife use;
   - a rum swig takes 10 thirst once, 60 s later.
 
   Each test uses only effects the runtime interprets, so the numbers are exact.
@@ -102,10 +101,12 @@ Each item gets `tools/art/fixes/items/<id>.png`, drawn as a 16×16 palette-near 
   - add the follow-ups to batches 1, 2, 4, 7 and 9: Pescador exemption, red tide, ex-militar on sight, conch horn, raw hutía and iguana;
   - add the "item effects runtime" code change below the current milestone.
 
-## Decisions waiting for the coordinator (recommended option first)
+## Decisions (owner, 2026-11-14: the recommended option (a) on all ten, through the coordinating session)
+
+The options are kept as they were put; every answer is (a). Q1 adds that icons are hand-drawn through the `tools/art/` recipe or as overlays on the read-only packs, with no Pillow and the master palette only.
 
 - **Q1 Icons.** Every item file needs an icon or GUT fails, and this session was scoped to item data, tests and docs.
-  - (a) Hand-drawn own-work icons for all 27 through `tools/art/items.py`: first-pass art, no new licence.
+  - (a) Hand-drawn own-work icons for all 26 through `tools/art/items.py`: first-pass art, no new licence.
   - (b) Cut from Kyrise (CC BY, already credited; it has fish, fruit, leaf, cup and potion cells) where one fits, hand-drawn for the rest, and the Kyrise credits updated.
   - (c) Another session draws them, and this one waits.
 - **Q2 Runtime gaps** (list under Gaps).
@@ -188,10 +189,10 @@ Found in passing, not changed here: `docs/ITEMS.md` gives coco "2 uses", while t
 
 - [Data written now, behaviour later: a reader may think raw crab already poisons] → The tests name it ("poison is data until the effects runtime"), the Gaps list it and TASKS.md logs the runtime change.
 - [The always-feeding mushroom makes the identify gamble safe for now] → Benign. It is fixed by the same runtime change, and noted.
-- [27 hand icons are rough] → They pass the art checks. The asset audit (§11) may replace them.
+- [26 hand icons are rough] → They pass the art checks. The asset audit (§11) may replace them.
 - [Another session edits `knife.tres`] → Only batch 4 would; this batch adds one capability value, and a rebase keeps it.
-- [The file cap] → The batch is 27 data files and 27 icon sources, under the 30-file content cap that `balsero-lore` uses per batch. Icons are art, not content files.
+- [The file cap] → The batch is 26 data files and 26 icon sources, under the 30-file content cap that `balsero-lore` uses per batch. Icons are art, not content files.
 
 ## Migration Plan
 
-Data only: adding files changes nothing that exists, except `knife.tres` if Q6 (a). To roll back, delete the files and revert the docs.
+Data only: adding files changes nothing that exists, except `knife.tres`, which gains `OPEN_CAN`. To roll back, delete the files and revert the docs.

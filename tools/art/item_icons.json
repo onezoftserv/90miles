@@ -21,6 +21,10 @@
     {"id": "brujula_rota", "hand": "brujula_rota.png"},
     {"id": "mapa_sin_norte", "hand": "mapa_sin_norte.png"},
     {"id": "sombrero_cinta_roja", "hand": "sombrero_cinta_roja.png"},
-    {"id": "nota_llegaste_tarde", "hand": "nota_llegaste_tarde.png"}
+    {"id": "nota_llegaste_tarde", "hand": "nota_llegaste_tarde.png"},
+    {"id": "still_cup", "hand": "still_cup.png"},
+    {"id": "well_cup", "hand": "well_cup.png"},
+    {"id": "seawater_cup", "hand": "seawater_cup.png"},
+    {"id": "rum", "hand": "rum.png"}
   ]
 }
