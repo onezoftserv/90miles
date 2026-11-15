@@ -5,6 +5,9 @@ extends GutTest
 ## thrown in is cut at the water line beside it. With a host and a client both draw it from the
 ## state they hold, the shark of the pass included, and a late joiner draws the host's deck. Solo
 ## cases run on the crossing rig, offline; the others over ENet on localhost (NetHarness).
+## Every look here follows its state in `_process`, so the waits count process frames: after a slow
+## frame the engine runs several physics steps before one process frame, and a physics-frame wait
+## could end before the look had moved (the sea still at its spawn origin, seen once in CI).
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const SEA_SHADER: String = "res://scenes/art/sea/world_sea.gdshader"
