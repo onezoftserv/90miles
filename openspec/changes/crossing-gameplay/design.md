@@ -125,7 +125,7 @@ Grab points are `RescuePoint` kind GRAB and follow the piece on every peer. The 
 2. The shark pass by the band's chance, as today.
 3. `t1 = 6 + U(0, 3)` s, and the reef line at `L − 4` s.
 4. `n = ceil((L − 4 − t1) / (7.5·d))` gaps, where `d = 0.9^(riders − 1)`. Times are spread evenly, then jittered by up to ±1.5·d s, with at least 3 s and at most 9·d s between neighbours.
-5. Slots inside the squall's rain (hit to hit + 15 s) are dropped. A rock or debris is placed at `hit − U(4, 8)` s when the hit is at 16 s or later.
+5. Slots inside a squall's blow (hit to hit + 15 s) are dropped, and the next slot is pulled back to at most 9·d s after the blow ends. A rock or debris is placed at `hit − U(4, 8)` s when the hit is at 16 s or later. The blow beats the calm start and the first-beat window: a squall carried from the island to hit at 4 s pushes the first rolled beat past 19 s. The blow never moves the reef line. A rolled squall hits between 60 s and L − 10 s, so on a 70–79 s crossing the reef line always arrives in the blow, and half-speed paddling still covers 3.75 tiles in its 5 s lead, more than the 3 tiles to the farthest gap.
 6. The shark takes one random slot. Every other slot draws from the band's weights, coast for now: rock 0.12, debris 0.20, flotsam 0.68, each threat weight times the route's threat factor.
 7. Lanes: rocks and debris U{−4..4}, flotsam U{±2..±5}, often the slot next to a hazard's lane so that going for it risks the hazard. The reef gap g is U{−3..3}.
 
@@ -142,10 +142,17 @@ Grab points are `RescuePoint` kind GRAB and follow the piece on every peer. The 
 - Idle: rocks 1.0 × 5/9 × 40 ≈ 23; debris 1.7 × 5/9 × (5 + 0.5 × ~35 s) ≈ 21; shark 0.5 × 20 = 10; squall 0.16 × 30 ≈ 5; reef line 2/7 × 40 ≈ 11. That totals about 70, so about 30 left.
 - Attentive: squall plus a few seconds of leaks, about 10. That leaves about 90.
 
-The tasks check both against rolled plans and tune the `.tres` weights.
+A Monte Carlo of this director (20,000 plans, script in the shared notes folder's `crossing-gameplay-baseline/mc_director.py.txt`) gives these idle results:
 
-### D9. The squall's rain and the cost of tying down
-After the hit, 15 s of rain halve paddling (`squall_rain_s`, `rain_paddle_factor`). Jobs aboard need an untied rider (crossing "Jobs aboard"). The director's pre-hit hazard makes tying down early cost a dodge. Today's "tie early, wait" stays possible, but it now costs integrity.
+| Riders | 60 s: mean left / broken | 75 s: mean left / broken | 90 s: mean left / broken |
+| --- | --- | --- | --- |
+| 1 | 48.5 / 12.6 % | 33.5 / 26.7 % | 25.8 / 38.9 % |
+| 4 | 40.2 / 20.5 % | 25.0 / 39.5 % | 16.5 / 55.8 % |
+
+An idle co-op party does worse, because it gets more beats; it also has more hands. The attentive figure is still an estimate. The tasks check both against rolled plans in the game and tune the `.tres` weights.
+
+### D9. The squall's blow and the cost of tying down
+For 15 s after the hit (the blow; the squall weather itself rains for its whole 120 s) paddling is halved (`squall_blow_s`, `blow_paddle_factor`). Jobs aboard need an untied rider (crossing "Jobs aboard"). The director's pre-hit hazard makes tying down early cost a dodge. Today's "tie early, wait" stays possible, but it now costs integrity.
 
 ### D10. The wire and the snapshot
 - **Plan.** `CrossingBeat` serialises as `[time, kind]` or `[time, kind, lane, extra]`. `from_array` accepts both, checks that `lane` is in −10..10 and that `extra` is a side (0 or 1) or a valid flotsam index, and refuses anything else. New kinds DEBRIS and FLOTSAM are appended to the enum, so existing ints keep their meaning.
@@ -166,6 +173,31 @@ Prompt verbs (Remar, Tapar, Agarrar, Espantar) go in `hud_text.tres` by prompt i
 ### D12. Swimmers' route
 Same plan rules, position fixed at 0. Rocks and debris cut swimmers (−15 and bleeding, −5), which makes a cut swimmer a shark's preferred prey. Flotsam is taken by touch. The reef line is a gap to swim through. Shooing needs a rider aboard, so a lone swimmer's counters are swimming clear and keeping energy above 20.
 
+### D13. One button, several jobs
+A rider at a deck edge can be within 1 tile of a paddle point, a fin, a passing piece, a leak and the lashing. `InteractionPicker.pick` takes the highest `priority`, then the nearest. The crossing sets these priorities:
+
+| Point | Priority |
+| --- | --- |
+| SHOO | 4 |
+| PULL | 3, raised from 0 |
+| GRAB | 2 |
+| PLUG | 1 |
+| PADDLE, LASH, CLIMB | 0 |
+| A perched creature's shoo | −1, unchanged |
+
+The most urgent and shortest-lived job wins: a fin strikes in 5 s, a swimmer may drown, flotsam passes in about 1 s, and a leak waits. Paddling is the default. The order keeps creatures-ai "Perched creature never hides the rescue points". The crossing reef shark's own creature interactable (brain priority 1) is disabled while the SHOO point exists.
+
+*Alternatives:*
+- Separate buttons. Rejected: there is no free gamepad face button, and the HUD prompt names what E will do.
+- Nearest only. Rejected: a paddle at the edge would always steal the shoo.
+
+## Specs touched without a delta
+
+- **inventory-hud "Prompt text".** Prompts are data by prompt id, so new ids (`paddle`, `plug`, `grab`, `shoo`) are appended to `hud_text.tres` with no rule change.
+- **art-pass "Crossing look".** It says the sea lies under everything and the deck above the sea and under the riders. Hazards and flotsam drawn between them (z −30) keep both rules.
+- **ui-shell "HUD layout".** It puts the day phase top-centre with the sign note under it. The crossing strip takes the sign note's place, since no sign opens at sea, and crossing "Crossing HUD and telegraphs" states that placement. If the owner wants ui-shell to own it, a one-line delta is added at archive. The damage-feedback session may edit "HUD layout" too, so the coordinator is asked to relay.
+- **creatures-ai "Perched creature never hides the rescue points".** It still holds (D13).
+
 ## Reference games
 
 **Shattered Pixel Dungeon**
@@ -179,7 +211,7 @@ Same plan rules, position fixed at 0. Rocks and debris cut swimmers (−15 and b
 
 **DCSS**
 - *Borrowed:* `dat/dlua/lm_tmsg.lua` `TimedMessaging` and `time_messages()` give a timed portal warnings at shrinking intervals, worded by how near the player is. Our squall line at 60 s, plus lines at 30 s and 10 s, follows that.
-- *Borrowed:* `dat/dlua/lm_timed.lua`'s timed marker, a fixed clock you cannot extend, matches our fixed crossing length. Pressure comes from what happens inside the clock, not from the clock itself.
+- *Borrowed:* `dat/dlua/lm_timed.lua` `TimedMarker:new()` and `start_short()` give a timed portal a random duration that drops to a much shorter one once the player has seen it. A seen opportunity must be taken now, which is how flotsam works: it shows 5 s out and is gone once it passes. The crossing's own clock stays fixed, as our spec already has it.
 
 **Don't Starve Together** (`docs/REFERENCE_DST.md` "crossing and escape-routes"; wiki pages named):
 - **Leak, Boat Patch.** *Borrowed:* a hit that keeps draining until a rider plugs it, as the solo rider's job, with the hold well under any warning. *Rejected for now:* patch items, because of D11.
@@ -207,7 +239,7 @@ Same plan rules, position fixed at 0. Rocks and debris cut swimmers (−15 and b
 ## Owner decisions (open; the specs follow the recommended option)
 
 1. **Scope of this change.**
-   a. *Recommended:* the core slice. Paddling, rocks, debris and leaks, the shark's telegraph and shoo, flotsam, the squall's rain, the pacing director and the crossing HUD, built in three PRs: (1) director, paddling and rocks; (2) leaks and flotsam; (3) shark, HUD and lines. Encounters, fishing and items at sea are follow-ups.
+   a. *Recommended:* the core slice. Paddling, rocks, debris and leaks, the shark's telegraph and shoo, flotsam, the squall's blow, the pacing director and the crossing HUD, built in three PRs: (1) director, paddling and rocks; (2) leaks and flotsam; (3) shark, HUD and lines. Encounters, fishing and items at sea are follow-ups.
    b. A smaller first change: paddling, rocks, the director and the HUD only. Leaks, flotsam and the shark go in a second change.
    c. Everything at once, including an encounter deck of three (dolphins, a turtle in a net, another raft).
 2. **How paddling feels.**
@@ -244,7 +276,12 @@ Same plan rules, position fixed at 0. Rocks and debris cut swimmers (−15 and b
 - [A client's flotsam grab misses because of latency] → The host uses reach plus the usual slack. Pieces stay grabbable about 1 s, and the hold is 0.3 s.
 - [Hazards stutter on clients] → Clients advance elapsed time locally and extrapolate the position (D10). The 1 s resync corrects any drift.
 - [Too punishing for a first run] → The idle target keeps a raft that does nothing alive 20–40 integrity on average. The weights live in `crossing_tuning.tres`, and a stats test watches them.
-- [~20 crossing test files] → The old-form rule, the pull-back and idle riders keep their outcomes. Only `test_crossing_plan.gd`, which reads rolled plans, changes with "Threat plan".
+- [Existing crossing tests] → The old-form rule, the pull-back and idle riders keep every outcome check. Some tests still change:
+  - `test_crossing_plan.gd`, because rolled plans change;
+  - the four tests that build snapshot dicts by hand, for the new required keys;
+  - shark tests that check when the shark appears, because the fin comes 5 s early.
+
+  Raising PULL's priority (D13) could change a pick in a test whose rider stands near both a swimmer and the lashing, so `test_crossing_rescue.gd` is rerun in group 2.
 - [damage-feedback edits the HUD at the same time] → This change adds its own `CrossingHud` node and edits only `hud_text.tres` among shared HUD data, by appending prompt ids. The seam is noted in the shared notes.
 - [Deck crowding with 4 riders on 4×2 tiles] → The picker takes the nearest enabled point. Paddles, leaks and the lashing sit on different tiles.
 

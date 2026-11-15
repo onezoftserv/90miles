@@ -95,7 +95,7 @@ A shark pass SHALL be warned 5 s before its strike by a fin circling beside the 
 - **THEN** the shark's fin circles 1 tile off the raft's east edge, and the raft is still at 100
 
 ### Requirement: Squall line on the crossing
-A squall reaching the crossing SHALL be warned 60 s ahead by weather-daynight's warning and horizon line, shown in the crossing too. When it starts (or 10 s into a crossing launched during a running squall) it hits the raft once, and on a route that a squall dumps from, it throws every rider aboard who is not tied down into the water, with no chance roll. A tied-down rider stays aboard. For 15 s after the hit the rain falls on the crossing and paddling runs at half speed. With exactly 1 player, the player ties down alone.
+A squall reaching the crossing SHALL be warned 60 s ahead by weather-daynight's warning and horizon line, shown in the crossing too. When it starts (or 10 s into a crossing launched during a running squall) it hits the raft once, and on a route that a squall dumps from, it throws every rider aboard who is not tied down into the water, with no chance roll. A tied-down rider stays aboard. For 15 s after the hit the squall blows hardest on the crossing (its blow) and paddling runs at half speed. With exactly 1 player, the player ties down alone.
 
 #### Scenario: Squall warned 60 s ahead
 - GIVEN a 90 s raft crossing whose plan rolls a squall warning at 10 s and its hit at 70 s
@@ -107,7 +107,7 @@ A squall reaching the crossing SHALL be warned 60 s ahead by weather-daynight's 
 - WHEN the squall hits
 - THEN the raft is at 70, the tied player is aboard and the other is in the water
 
-#### Scenario: Solo paddles slowly in the rain
+#### Scenario: Solo paddles slowly in the blow
 - **GIVEN** a 1-player raft crossing on the line whose player was tied down when the squall hit at 40 s
 - **WHEN** the player unties at 42 s and holds the east paddle from 43 s to 45 s
 - **THEN** the raft is 1.5 tiles east of the line at 45 s, half what the same hold moves it in calm water
@@ -352,31 +352,57 @@ Paddling, plugging a leak, taking flotsam from the deck and shooing the shark SH
 - **WHEN** the player holds the east paddle from 32 s to 35 s and ties down from 37 s to 38 s
 - **THEN** the rock misses and the player is tied when the squall hits at 40 s, and the raft is at 70
 
+### Requirement: Which job a press takes
+When a rider's press could reach more than one crossing point, it SHALL go, in this order, to a fin to shoo, a swimmer to pull, flotsam to take, a leak to plug, then a paddle, the lashing or a climb point, and on a tie to the nearest; a perched creature's shoo stays below all of them. The same holds with exactly 1 player.
+
+#### Scenario: Solo at the edge with the fin coming
+- **GIVEN** a 1-player raft crossing whose player stands at the west edge, within reach of the west paddle and of a fin circling the west side
+- **WHEN** the player holds interact for 1 s
+- **THEN** the shark is shooed and the raft has not moved
+
+#### Scenario: Solo plugs before paddling
+- **GIVEN** a 1-player raft crossing whose player stands at the east edge, within reach of the east paddle and of an open leak
+- **WHEN** the player holds interact for 2 s
+- **THEN** the leak is plugged and the raft has not moved
+
 ### Requirement: Crossing pacing
-The host's rolled plan SHALL leave the first 6 s calm, put its first beat between 6 and 9 s, and end with the reef line: two rocks 10 tiles apart (lanes g−5 and g+5, g from −3 to 3) at the crossing's length minus 4 s. Between them, consecutive beat times are at least 3 s and at most 9 s apart, the 9 s times 0.9 for each rider past the first. The squall's 15 s of rain hold no beat, and a hazard falls in the 10 s before a hit at 16 s or later. Solo is the base. (Changes docs/GAME_DESIGN.md §8.)
+The host's rolled plan SHALL roll no beat in the first 6 s, put its first rolled beat between 6 and 9 s, and end with the reef line: two rocks 10 tiles apart (lanes g−5 and g+5, g from −3 to 3) at the length minus 4 s. Consecutive beats are 3 to 9 s apart, the 9 s times 0.9 per rider past the first. Solo is the base. (Changes docs/GAME_DESIGN.md §8.)
 
 #### Scenario: A solo plan never goes quiet
 - **GIVEN** any plan rolled for a 1-player raft crossing of 60 to 90 s from the sandbar
 - **WHEN** its beat times are read in order
-- **THEN** the first is between 6 and 9 s, the last is the reef line at the length minus 4 s, and no two consecutive times (the squall's hit counted, its warning not) are more than 9 s or less than 3 s apart, except across the squall's rain
+- **THEN** the first rolled beat is between 6 and 9 s unless a squall's blow covers that time, the last is the reef line at the length minus 4 s, and no two consecutive times (the squall's hit counted, its warning not) are more than 9 s or less than 3 s apart, except across a squall's blow
 
 #### Scenario: Four riders get a denser plan
 - **GIVEN** any plan rolled for a 4-player raft crossing of 60 to 90 s
 - **WHEN** its beat times are read in order
-- **THEN** no two consecutive times between the first beat and the reef line are more than 9 × 0.9³ s (about 6.56 s) apart, except across the squall's rain
-
-#### Scenario: The squall's rain is left clear
-- **GIVEN** a rolled plan whose squall hits at 50 s
-- **WHEN** its beats are read
-- **THEN** no beat falls after 50 s and before 65 s, and a rock or debris falls between 40 and 50 s
+- **THEN** no two consecutive times between the first beat and the reef line are more than 9 × 0.9³ s (about 6.56 s) apart, except across a squall's blow
 
 #### Scenario: Solo steers through the reef line
 - **GIVEN** a 1-player raft crossing at integrity 100 whose reef line has its gap at lane 3, the raft on the line
 - **WHEN** the player paddles the raft to 3 tiles east of the line before the reef line arrives
 - **THEN** both rocks pass the raft and it is still at 100, while a raft left on the line takes the west rock and is at 60
 
+### Requirement: The squall's blow in the plan
+A squall's blow (the 15 s after its hit) SHALL hold no rolled beat, and it overrides Crossing pacing's calm start, first-beat window and spacing, but it never moves the reef line. A rock or debris falls in the 10 s before a squall hit at 16 s or later. The same holds with exactly 1 player.
+
+#### Scenario: The squall's blow is left clear
+- **GIVEN** a rolled plan whose squall hits at 50 s
+- **WHEN** its beats are read
+- **THEN** no rolled beat falls after 50 s and before 65 s, and a rock or debris falls between 40 and 50 s
+
+#### Scenario: A squall carried from the island hits early
+- **GIVEN** a 1-player raft crossing launched with a squall warned on the island to hit 4 s in
+- **WHEN** its plan is rolled
+- **THEN** the squall hits at 4 s, no rolled beat falls before 19 s, and the first rolled beat falls between 19 and 28 s
+
+#### Scenario: Solo meets the reef line in the blow
+- **GIVEN** a 1-player 75 s raft crossing whose squall hits at 62 s, the player tied down, and whose reef line has its gap at lane 3 at 71 s
+- **WHEN** the player unties at once after the hit and holds the east paddle from 66 s to 70 s
+- **THEN** the raft is 3 tiles east of the line at 70 s, both reef rocks pass it at 71 s, and the raft is at 70
+
 ### Requirement: Crossing HUD and telegraphs
-Each peer in a crossing SHALL draw a progress strip from the departure island to the next (the vessel at the share of the length elapsed) and the vessel's integrity out of its maximum. Short lines show: 30 s and 10 s before a squall hit, when a fin appears (naming its side), and when a leak opens. Hazards, flotsam, leaks and fins are drawn where the host's state puts them. Drawing never changes the crossing. A solo player sees the same.
+Each peer in a crossing SHALL draw, top-centre under the day phase (no sign note opens at sea), a progress strip from the departure island to the next (the vessel at the elapsed share) and the vessel's integrity out of its maximum. Short lines show: 30 s and 10 s before a squall hit, when a fin appears (naming its side), and when a leak opens. Hazards, flotsam, leaks and fins are drawn where the host's state puts them. Drawing never changes the crossing. A solo player sees the same.
 
 #### Scenario: Solo reads the strip
 - **GIVEN** a 1-player 60 s raft crossing whose raft took a squall while the player was tied

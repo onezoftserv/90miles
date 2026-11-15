@@ -24,12 +24,13 @@ Every beat of the crossing gets three parts: a **telegraph** with a lead time, a
 - **Flotsam.** Coconuts, driftwood, rope and planks drift by in lanes, often beside a hazard. A rider grabs one at the deck edge as it passes, or a swimmer grabs it by touching it. A plank is lashed on at once (+10 integrity); everything else goes into the grabber's inventory.
 - **A squall that costs something.**
   - The 60 s warning and the tie-down stay.
-  - After the hit, 15 s of rain halve paddling, and no new beat arrives during them.
+  - For 15 s after the hit (the squall's blow) paddling is halved and no new beat is rolled, though the reef line still comes.
   - The plan puts a hazard in the 10 s before the hit, so tying down early costs a dodge.
 - **A pacing budget.**
   - The plan places a beat every 6–9 s solo, a little denser for each extra rider, between a 6 s calm start and the arrival.
   - Arrival is a reef line with one gap to steer through.
-  - No more than 9 s pass without something to decide, except during the squall's rain.
+  - No more than 9 s pass without something to decide, except during the squall's blow.
+  - When riders reach several jobs at once, the press goes to the most urgent: fin, swimmer, flotsam, leak, then paddle.
 - **A crossing HUD**, drawn client-side: a progress strip from island to island, the vessel's integrity, and short Cuban-Spanish warning lines (squall countdown, fin, leak).
 - **Every route.**
   - The car plays like the raft.
@@ -61,8 +62,8 @@ None. Everything here belongs to the existing crossing and creatures-ai capabili
 ### Modified Capabilities
 
 - `crossing`:
-  - Requirements rewritten: Threat plan (a paced plan with lanes), Raft integrity on the crossing (hits only on overlap; debris and leaks), Shark pass event (telegraph and shoo), Squall line on the crossing (the rain window), Steering and current and Coast drift (paddling is not drift), Board hits (overlap with the row of boards, round-robin kept) and Joining during a crossing (the new state).
-  - Requirements added: Paddling, Scrolling hazards, Leaks, Flotsam, Crossing pacing, Crossing HUD and telegraphs, and Crossing play state on every peer.
+  - Requirements rewritten: Threat plan (a paced plan with lanes), Raft integrity on the crossing (hits only on overlap; debris and leaks), Shark pass event (telegraph and shoo), Squall line on the crossing (the blow), Steering and current and Coast drift (paddling is not drift), Board hits (overlap with the row of boards, round-robin kept) and Joining during a crossing (the new state).
+  - Requirements added: Beat lanes and sides, Paddling, Scrolling hazards, Hazards and swimmers, Leaks, Flotsam, Shooing the shark, Jobs aboard, Which job a press takes, Crossing pacing, The squall's blow in the plan, Crossing HUD and telegraphs, and Crossing play state on every peer.
 - `creatures-ai`: Crossing reef shark (it appears at the warning, circles the side it will strike, and is shooed off before the strike) and Every peer sees the crossing shark (a shooed shark leaves every screen).
 
 ## Impact
@@ -72,7 +73,11 @@ None. Everything here belongs to the existing crossing and creatures-ai capabili
   - New in the same folder: `crossing_steer.gd` (paddling) and `crossing_leaks.gd`.
   - `game/scenes/crossing/`: `crossing.gd` changes, plus new drawing and HUD nodes; `rescue_point.gd` gains the PADDLE, PLUG, GRAB and SHOO kinds.
 - **Data:** new tuning fields only, at the root of `game/resources/`. The flotsam table is part of the crossing tuning. No new content folder, no new autoload.
-- **Tests:** about 20 crossing test files keep passing unchanged because of the old-form rule. New 1-player, host-plus-client and late-join tests, plus a plan-statistics test for the pacing budget.
+- **Tests:** outcome checks in the existing crossing tests stay valid because of the old-form rule.
+  - `test_crossing_plan.gd` changes, because rolled plans change.
+  - The snapshot builders in `test_crossing_snapshot.gd`, `test_crossing_join.gd`, `test_crossing_board_state.gd` and `test_game_shell.gd` gain four new required keys.
+  - Shark tests that check when or where the shark shows (`test_crossing_creature_shark.gd`, `test_crossing_shark_net.gd`) follow the 5 s early fin.
+  - New: 1-player, host-plus-client and late-join tests, and plan-statistics tests for the pacing budget and the difficulty target.
 - **Docs:** GAME_DESIGN.md §8 (the crossing) and BESTIARY.md (the reef shark's crossing tell).
 - **Sibling seams:**
   - damage-feedback owns the HUD hurt cues. This change adds its own crossing HUD node and touches no file damage-feedback edits.

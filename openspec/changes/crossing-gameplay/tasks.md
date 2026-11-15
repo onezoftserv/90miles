@@ -34,7 +34,8 @@ These tasks follow the recommended answer to every question in design.md "Owner 
   - hits and repairs: debris hit 5, leak drain 0.5, plug hold 2, max leaks 3, plank 10;
   - holds and reach: grab hold 0.3, shoo hold 1, reach 1;
   - cuts: rock 15 with bleeding, debris 5;
-  - squall rain: 15 s, paddle factor 0.5;
+  - squall blow: 15 s, paddle factor 0.5;
+  - interaction priorities: shoo 4, pull 3, grab 2, plug 1, paddle, lash and climb 0 (perched creature stays −1);
   - pacing: start 6–9, target gap 7.5, max 9, min 3, rider factor 0.9, reef offset 4, reef half-gap 5;
   - weights by band (coast: rock 0.12, debris 0.20, flotsam 0.68) and the flotsam table (design.md D7).
 
@@ -48,12 +49,12 @@ These tasks follow the recommended answer to every question in design.md "Owner 
   - paddles on both sides (0);
   - the limit (6);
   - a tied rider and a swimmer cannot paddle;
-  - in the squall's rain (1.5 for 2 s);
+  - in the squall's blow (1.5 for 2 s);
   - the result's drift stays 0.
 
   See it fail.
-- [ ] 2.2 Add `crossing_steer.gd` (host position and velocity from active paddlers, pull-back, limit, rain factor) and `RescuePoint` kind PADDLE (hold 0; `use` starts paddling for that rider and `release` stops it), one on each deck edge and on each side of each board, enabled for riders aboard and untied. Prompt id `paddle` ("Remar") is appended to `hud_text.tres`. Verify that `test_crossing_paddle.gd`, `test_crossing_prompt.gd` and the board tests pass.
-- [ ] 2.3 Sync the position: add it to `receive_state`, add an unreliable `receive_steer` at up to 10 Hz while the velocity is non-zero, have clients extrapolate the position and advance `elapsed_s` locally between resyncs, and add a required snapshot key "steer". Verify these in `test_crossing_paddle_net.gd`:
+- [ ] 2.2 Add `crossing_steer.gd` (host position and velocity from active paddlers, pull-back, limit, blow factor) and `RescuePoint` kind PADDLE (hold 0; `use` starts paddling for that rider and `release` stops it), one on each deck edge and on each side of each board, enabled for riders aboard and untied. Prompt id `paddle` ("Remar") is appended to `hud_text.tres`. Set the PULL point's priority to 3 (crossing "Which job a press takes"). Verify that `test_crossing_paddle.gd`, `test_crossing_prompt.gd`, `test_crossing_rescue.gd`, the perched-gull tests and the board tests pass, plus a new solo test where a press at the west edge with the paddle and the lashing both in reach ties down at the centre and paddles at the edge.
+- [ ] 2.3 Sync the position: add it to `receive_state`, add an unreliable `receive_steer` at up to 10 Hz while the velocity is non-zero, have clients extrapolate the position and advance `elapsed_s` locally between resyncs, and add a required snapshot key "steer". Update the hand-built snapshot dicts in `test_crossing_snapshot.gd`, `test_crossing_join.gd`, `test_crossing_board_state.gd` and `test_game_shell.gd` for the new key. Verify these in `test_crossing_paddle_net.gd`:
   - a client paddles and the host moves the raft;
   - both peers show 3 tiles east;
   - a joiner mid-paddle shows the host's position;
@@ -81,13 +82,15 @@ These tasks follow the recommended answer to every question in design.md "Owner 
 - [ ] 4.1 Write `test_crossing_pacing.gd` first. Over 2,000 seeds each for 1 and 4 riders:
   - the first beat falls between 6 and 9 s;
   - the reef line is at L − 4;
-  - gaps are between 3 and 9·0.9^(n−1) s, except across the rain;
-  - the rain window is empty, with a hazard in the 10 s before a hit at 16 s or later;
+  - gaps are between 3 and 9·0.9^(n−1) s, except across a squall's blow;
+  - the blow is empty of rolled beats, with a hazard in the 10 s before a hit at 16 s or later;
+  - a carried squall at 4 s pushes the first rolled beat past 19 s;
+  - the reef line stays at L − 4 inside a blow, and a solo rider tied for the squall still makes the gap at half speed;
   - the same seed gives the same plan.
 
   See it fail.
 - [ ] 4.2 Rewrite `CrossingPlan.roll(route, band, sky, rng, tuning, riders)` as design.md D8. `GameShell._on_route_started` passes the rider count. Verify that `test_crossing_pacing.gd` passes and that `test_crossing_plan.gd`'s rolled-plan cases are updated to the new rule, and nothing else.
-- [ ] 4.3 Add a statistics test, `test_crossing_balance.gd`, with an idle solo rider and a scripted attentive solo rider (it paddles out of each hazard's lane, plugs, shoos and ties down 2 s before the hit) over 500 rolled 75 s coast raft plans. Verify that the idle average left is 20–40 and the attentive average is 70 or more. Tune only the `.tres` weights to get there, and record the measured numbers in design.md.
+- [ ] 4.3 Add a statistics test, `test_crossing_balance.gd`, with an idle solo rider and a scripted attentive solo rider (it paddles out of each hazard's lane, plugs, shoos and ties down 2 s before the hit) over 500 rolled 75 s coast raft plans. Verify that the idle average left is 20–40 (the design's Monte Carlo predicts 33.5, with 27 % broken) and the attentive average is 70 or more. Tune only the `.tres` weights to get there, and record the measured numbers in design.md.
 - [ ] 4.4 Update GAME_DESIGN.md §8 with the pacing budget and the reef line. Open the first PR (groups 1–4) after a solo windowed crossing from the sandbar runs clean through the Godot MCP.
 
 ## 5. Leaks (crossing "Leaks", "Raft integrity on the crossing")
@@ -134,7 +137,7 @@ These tasks follow the recommended answer to every question in design.md "Owner 
   - a shark pass at 3 s spawns with a 3 s lead.
 
   See it fail.
-- [ ] 7.2 Add `CrossingThreats.warn(beat, crossing)` (no-op base), called by the crossing at the beat's time − lead. `CreatureThreats.warn` spawns the reef shark 1 tile off the named side (beside the board next in turn on a board route) and keeps it there until the strike. Add `RescuePoint` kind SHOO, which follows the fin, with prompt id `shoo` ("Espantar"). Verify that `test_crossing_shoo.gd`, `test_crossing_creature_shark.gd`, `test_crossing_shark.gd`, `test_crossing_shark_dump.gd` and `test_crossing_shark_net.gd` pass.
+- [ ] 7.2 Add `CrossingThreats.warn(beat, crossing)` (no-op base), called by the crossing at the beat's time − lead. `CreatureThreats.warn` spawns the reef shark 1 tile off the named side (beside the board next in turn on a board route) and keeps it there until the strike. Add `RescuePoint` kind SHOO, which follows the fin, with prompt id `shoo` ("Espantar"). At the strike the shark moves beside its victim or the hit deck, so `test_crossing_creature_shark.gd`'s "beside the bitten swimmer" check still holds; update any check on the shark's spawn time to the warning. Verify that `test_crossing_shoo.gd`, `test_crossing_creature_shark.gd`, `test_crossing_shark.gd`, `test_crossing_shark_dump.gd` and `test_crossing_shark_net.gd` pass, plus a solo test where a press with the fin and a leak both in reach shoos first.
 - [ ] 7.3 Sync the shooed passes, with a required snapshot key "shooed". A joiner past a warning spawns nothing new: the host's shark is already in the entity spawner. Verify these in `test_crossing_shoo_net.gd`:
   - a client shoos and the shark leaves both screens;
   - a joiner during the circle sees the fin;
@@ -156,7 +159,7 @@ These tasks follow the recommended answer to every question in design.md "Owner 
 ## 9. Integration
 
 - [ ] 9.1 Add the manual run `game/tests/manual/crossing_gameplay_run.gd`: a host and a client as two processes on UDP 7794, riding a raft through a hand-written plan with every beat kind. The client paddles, plugs, grabs and shoos, and a third process joins at 40 s. Run it twice. Verify that it exits 0 both times with no `ERROR:` line, and that the joiner's position, leaks, taken pieces and shark match the host's.
-- [ ] 9.2 Play one solo sandbar-to-coast-cay raft crossing windowed through the Godot MCP and log the second-by-second timeline as the baseline did. Verify that no gap without a decision exceeds 9 s outside the rain and that the run reads clean. Add the timeline to design.md beside the baseline.
+- [ ] 9.2 Play one solo sandbar-to-coast-cay raft crossing windowed through the Godot MCP and log the second-by-second timeline as the baseline did. Verify that no gap without a decision exceeds 9 s outside the squall's blow and that the run reads clean. Add the timeline to design.md beside the baseline.
 - [ ] 9.3 Tick this change in `TASKS.md` and add the follow-ups below it: `crossing-encounters`, `crossing-fishing` and items at sea, if the owner chose to keep them. Verify that `openspec validate crossing-gameplay --strict` passes.
 
 ## Workflow follow-up
