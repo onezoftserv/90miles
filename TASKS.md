@@ -47,6 +47,7 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] `crossing`: scrolling sea, raft integrity, squall event, fall-in and rescue
 - [x] `crossing-late-join`: a client that joins or rejoins mid-crossing sees the crossing and the route departures
 - [x] `crossing-shark-sync`: every peer, and a late joiner, sees the crossing's reef shark
+- [ ] `crossing-gameplay` (OpenSpec change proposed 2026-11-14 after the owner found the raft part boring; waits for the owner's answers to design.md Q1–Q8 and a go-ahead to build): telegraphed beats with counters (paddle round rocks and the reef line, plug leaks, grab flotsam, shoo the shark), a pacing budget of a decision every 6–9 s solo, the squall's rain, a crossing HUD. Baseline on cb7834f: 31.9% of coast raft crossings hold no event and 84% hold no decision
 - [x] `status-sync`: a player's statuses (bleeding) reach every peer, late joiners included, and a "Sangrando" tag shows on the HUD
 - [x] `dropped-teammate-state` (merged (#44), archived 2026-11-14):
   - Every peer knows a dropped teammate (a host-written flag in the body's synced state), so their row reads "Desconectado" on the host, the clients and late joiners.
