@@ -98,7 +98,14 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - Done 2026-11-14:
     - `TASKS.md`: the Milestone G item is ticked, the coast-cay follow-up is marked shipped, and a Done entry is added.
     - `docs/GAME_DESIGN.md` §"Downed, not dead": one line on what a dead co-op player sees.
-- [ ] 4.2 Final checks: `openspec validate dead-spectate --strict`, Import (twice), Smoke, GUT (full) and the group 3.2 run, all clean. Rerun a `test_crossing_art.gd` "scrolled sea" failure alone before treating it as ours. Verify: the counts are recorded in the PR body.
+- [x] 4.2 Final checks: `openspec validate dead-spectate --strict`, Import (twice), Smoke, GUT (full) and the group 3.2 run, all clean. Rerun a `test_crossing_art.gd` "scrolled sea" failure alone before treating it as ours. Verify: the counts are recorded in the PR body.
+  - Done 2026-11-14, on main at e15369b (#46, #48 and #51 merged in):
+    - `--strict` valid.
+    - Import, run twice: 0 error lines.
+    - Smoke: 10 frames, 0 problems.
+    - GUT: 1929 of 1929 in 231 s.
+    - CI's four headless game runs: 0 error lines.
+    - Two processes on UDP 7787: host 6 of 6, client 10 of 10, 0 error lines.
 
 ## Workflow follow-up
 
