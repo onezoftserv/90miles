@@ -25,7 +25,7 @@ Flint and steel SHALL be a fast tool for the fire: a player carrying them builds
 - **THEN** the fire takes 10 s of work, and the flint and steel are still in their inventory afterwards
 
 ### Requirement: The conch leaves its horn
-Eating the last bite of a conch SHALL leave its shell as a conch horn (*guamo*) in the eater's inventory, if it fits. Blowing the horn makes a noise of radius 15 tiles and never uses it up. A solo player gets and keeps the horn alone. (Adds the horn to `docs/ITEMS.md` Tools, 18 to 19, and Counts, 116 to 117 items.)
+Eating the last bite of a conch SHALL leave its shell as a conch horn (*guamo*) in the eater's inventory, if it fits. The horn's one use, "Tocar", is repeatable and carries a noise of radius 15 tiles as data; the noise is heard once the noise bus exists (guardacostas-stealth). A solo player gets and keeps the horn alone. (Adds the horn to `docs/ITEMS.md` Tools, 18 to 19, and Counts, 116 to 117 items.)
 
 #### Scenario: A solo player keeps the shell
 - **GIVEN** one offline player holding 1 conch

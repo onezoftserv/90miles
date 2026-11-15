@@ -42,7 +42,7 @@ Built by `content-batch-3` (owner, 2026-11-14), with first-pass numbers where th
 - Raw crab and raw fish cook into their cooked forms in 20 s at a fire (`cooks_into`, no recipe). Cooked forms carry no risk.
 - Every poison in these tables is the raw-food profile: 20 health over 30 s.
 - "Oysters (6)" and "Bird eggs (5)" are stack sizes.
-- Canned food opens with anything that opens cans (the knife now, the pliers later), one use per can.
+- Canned food opens with anything that opens cans (the knife or the pliers), one use per can.
 - Oysters cut (bleeding) whoever picks them up without hand protection. Red tide, the Pescador's exemption and the ex-militar spotting wild tobacco wait for the batches that build them.
 - The game rolls none of these risks yet: chances, statuses, pick-up effects and cooking are data until the `item-effects-runtime` change.
 
