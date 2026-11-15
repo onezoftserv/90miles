@@ -717,6 +717,43 @@ func test_variants_come_from_the_layout_and_the_cell_and_repeat_across_builds() 
 	assert_ne(TerrainArt.cell_hash(&"sandbar", Vector2i(3, 4)), TerrainArt.cell_hash(&"sandbar", Vector2i(4, 3)), "so is the cell")
 
 
+## art-pass "Neighbouring cells are not striped" (art-coast-pass D2, review TR8): the string hash
+## alone gave a pick among four equal to its north-east neighbour's 92% of the time and (x, y) always
+## equal to (y, x). Through the avalanche the picks of a 16x16 block look random.
+func test_neighbouring_picks_are_not_striped() -> void:
+	for layout_id: StringName in [&"sandbar", &"coast_cay", &"test"]:
+		var same_as_north_east: int = 0
+		var mirrored_same: int = 0
+		var mirrored_pairs: int = 0
+		for y: int in range(1, 17):
+			for x: int in 16:
+				var seed_value: int = TerrainArt.cell_hash(layout_id, Vector2i(x, y))
+				assert_true(seed_value >= 0 and seed_value < 1 << 32, "%s %d,%d: a 32-bit seed" % [layout_id, x, y])
+				var pick: int = (seed_value >> 1) % 4
+				if pick == (TerrainArt.cell_hash(layout_id, Vector2i(x + 1, y - 1)) >> 1) % 4:
+					same_as_north_east += 1
+				if x != y:
+					mirrored_pairs += 1
+					if pick == (TerrainArt.cell_hash(layout_id, Vector2i(y, x)) >> 1) % 4:
+						mirrored_same += 1
+		assert_lt(same_as_north_east, 256 * 40 / 100, "%s: picks equal to the north-east neighbour's" % layout_id)
+		assert_lt(mirrored_same, mirrored_pairs, "%s: (x, y) and (y, x) are not always the same pick" % layout_id)
+
+
+## One player, offline: the solo sandbar's arrival cells get the same picks on every build, and the
+## seed is the documented mix of the string hash, so every peer computes it the same way.
+func test_a_solo_sandbar_build_picks_the_same_tiles_twice() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	for cell: Vector2i in [built.solo_spawn, built.landing_cells()[0]]:
+		for layer: StringName in TerrainArt.layers_for(built.terrain.terrain_at(cell)):
+			var first: Dictionary = TerrainArt.tile(layer, cell, SANDBAR.id, built.terrain, built.tide_pools)
+			var again: IslandLayout = IslandLayout.build(SANDBAR)
+			assert_eq(TerrainArt.tile(layer, cell, SANDBAR.id, again.terrain, again.tide_pools), first, "%s on %s" % [cell, layer])
+	# murmur3's fmix32 of 0x12345678, worked by hand: pins the mix, not just its determinism.
+	assert_eq(TerrainArt.mix32(0x12345678), 0xe37cd1bc)
+	assert_eq(TerrainArt.mix32(0), 0)
+
+
 func test_building_the_art_leaves_the_spawners_next_roll_alone() -> void:
 	# art-pass "Same layout, same variants"; design.md D14
 	var world: CreatureWorld = CreatureWorld.new()
