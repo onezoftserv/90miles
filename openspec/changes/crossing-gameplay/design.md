@@ -269,6 +269,20 @@ The most urgent and shortest-lived job wins: a fin strikes in 5 s, a swimmer may
    a. *Recommended:* idle arrives with about 20–40 integrity and attentive with 70 or more.
    b. Gentler: idle about today's 75, and attention earns loot only.
    c. Harsher: idle usually breaks the raft.
+9. **Rocks cut swimmers, the binoculars route included** (a default baked into the specs).
+   a. *Recommended:* yes, −15 and bleeding, dodged by swimming.
+   b. No: hazards ignore swimmers.
+10. **The reef line ends every crossing.**
+   a. *Recommended:* yes. Idle passes it 5 times in 7.
+   b. Only on half of crossings.
+   c. No reef line.
+11. **How much flotsam.** At 75 s solo there are about 6 pieces, about 1 of them a plank, against islands whose counts the owner fixed.
+   a. *Recommended:* about 6, most of them off the line.
+   b. About 3, with the flotsam weight halved.
+   c. Planks only, so nothing goes into the inventory.
+12. **A pulled swimmer outranks other jobs** (D13).
+   a. *Recommended:* yes, only shooing the fin ranks above pulling.
+   b. Keep PULL at the paddles' rank, so the nearest wins.
 
 ## Risks / Trade-offs
 
