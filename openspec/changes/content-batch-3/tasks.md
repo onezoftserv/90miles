@@ -32,11 +32,11 @@ Known flake: `test_crossing_art.gd` "the scrolled sea still covers the crossing'
 
 ## 3. Unknown plants
 
-- [ ] 3.1 Extend `test_food_items.gd` for the plants: category plant; each has an identify group (manzanillo, jagüey, uva caleta verde, hicaco, guanábana and noni fruit; hongo de playa mushroom; guao and tabaco silvestre herb) and the unknown tag; plants of one group share tags, stack size and weight; manzanillo's look is fixed to `fruta_verde`, its eat use takes health −50 over 60 s and sets a thirst ×2 drain multiplier for the agreed time; guao has no use and its pick-up effect is burning for 20 s; noni cures poison and heals 10; guanábana's spawn weight is below 1; the mushroom's two outcomes share one roll group with weights 0.4 (hallucinating 120 s) and 0.6 (hunger +10); wild tobacco smokes only with a lit fire within 2 tiles, for morale +10; no plant names a background. Verify it fails
-- [ ] 3.2 Extend `test_food_items_solo.gd`: a solo player eats a guanábana (hunger 50 → 75, thirst 50 → 65, morale 50 → 60, energy +10); one tries to smoke wild tobacco with no fire and nothing happens. Verify it fails
-- [ ] 3.3 Draw the plant icons, add them to `item_icons.json`, build them and update `test_items.py` and `License.txt`; verify the Python art tests, `test_item_icons.gd` and `test_art_tracked.gd` pass
-- [ ] 3.4 Add the plant files per design.md decision 1; verify `test_food_items.gd` and `test_food_items_solo.gd` pass
-- [ ] 3.5 Run the import, smoke run and the scripts listed above; verify all pass
+- [x] 3.1 Extend `test_food_items.gd` for the plants: category plant; each has an identify group (manzanillo, jagüey, uva caleta verde, hicaco, guanábana and noni fruit; hongo de playa mushroom; guao and tabaco silvestre herb) and the unknown tag; plants of one group share tags, stack size and weight; manzanillo's look is fixed to `fruta_verde`, its eat use takes health −50 over 60 s and sets a thirst ×2 drain multiplier for the agreed time; guao has no use and its pick-up effect is burning for 20 s; noni cures poison and heals 10; guanábana's spawn weight is below 1; the mushroom's two outcomes share one roll group with weights 0.4 (hallucinating 120 s) and 0.6 (hunger +10); wild tobacco smokes only with a lit fire within 2 tiles, for morale +10; no plant names a background. Verify it fails Done: written with group 1; failed until 3.4.
+- [x] 3.2 Extend `test_food_items_solo.gd`: a solo player eats a guanábana (hunger 50 → 75, thirst 50 → 65, morale 50 → 60, energy +10); one tries to smoke wild tobacco with no fire and nothing happens. Verify it fails Done: written with group 1; failed until 3.4.
+- [x] 3.3 Draw the plant icons, add them to `item_icons.json`, build them and update `test_items.py` and `License.txt`; verify the Python art tests, `test_item_icons.gd` and `test_art_tracked.gd` pass Done: 9 icons; after a look at all 26 at 8x, the oysters, cooked fish and cooked iguana from group 2 and the jagüey fig were redrawn so they read as what they are.
+- [x] 3.4 Add the plant files per design.md decision 1; verify `test_food_items.gd` and `test_food_items_solo.gd` pass Done: 37/37.
+- [x] 3.5 Run the import, smoke run and the scripts listed above; verify all pass Done: import 0 errors, smoke 0 problems, the listed scripts and 170 Python art tests pass.
 
 ## 4. Docs and the full run
 

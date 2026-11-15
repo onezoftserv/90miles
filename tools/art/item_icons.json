@@ -38,6 +38,15 @@
     {"id": "mango", "hand": "mango.png"},
     {"id": "hutia_cooked", "hand": "hutia_cooked.png"},
     {"id": "iguana_cooked", "hand": "iguana_cooked.png"},
-    {"id": "canned_food", "hand": "canned_food.png"}
+    {"id": "canned_food", "hand": "canned_food.png"},
+    {"id": "manzanillo", "hand": "manzanillo.png"},
+    {"id": "guao", "hand": "guao.png"},
+    {"id": "jaguey", "hand": "jaguey.png"},
+    {"id": "uva_caleta_unripe", "hand": "uva_caleta_unripe.png"},
+    {"id": "hicaco", "hand": "hicaco.png"},
+    {"id": "guanabana", "hand": "guanabana.png"},
+    {"id": "noni", "hand": "noni.png"},
+    {"id": "hongo_playa", "hand": "hongo_playa.png"},
+    {"id": "tabaco_silvestre", "hand": "tabaco_silvestre.png"}
   ]
 }

@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_2b6dk"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_utqeh"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_m1ba8"]
+[ext_resource type="Texture2D" uid="uid://bdeqwiugt52qd" path="res://assets/art/items/manzanillo.png" id="4_38syh"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_py63b"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_7b4pr"]
+
+[sub_resource type="Resource" id="Resource_i7ngi"]
+script = ExtResource("1_2b6dk")
+meter = 6
+amount = -50.0
+duration_s = 60.0
+
+[sub_resource type="Resource" id="Resource_6i4kl"]
+script = ExtResource("1_2b6dk")
+kind = 3
+meter = 1
+multiplier = 2.0
+duration_s = 60.0
+
+[sub_resource type="Resource" id="Resource_ld5ai"]
+script = ExtResource("5_py63b")
+time_s = 1.0
+effects = Array[ExtResource("1_2b6dk")]([SubResource("Resource_i7ngi"), SubResource("Resource_6i4kl")])
+
+[resource]
+script = ExtResource("3_m1ba8")
+description_es = "La manzanita de la muerte. Parece una manzana verde y quema por dentro. Ni pa' sombra sirve el árbol."
+description_en = "The little apple of death. Looks like a green apple and burns you from the inside. The tree is no good even for shade."
+sprite = ExtResource("4_38syh")
+category = 2
+tags = Array[int]([0, 12])
+stack_size = 5
+weight = 0.3
+uses = Array[ExtResource("5_py63b")]([SubResource("Resource_ld5ai")])
+identify_group = 1
+fixed_unknown_look = &"fruta_verde"
+id = &"manzanillo"
+name_es = "Manzanillo"
+name_en = "Manchineel"

@@ -4,7 +4,7 @@ Work: 90 Millas item icons, hand-drawn sources
 Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
-Files: coco.png, dry_grass.png, inner_tube.png, plastic_jug.png, rope.png, tarp.png, binoculars.png, nails.png, mirror.png, aloe.png, lighter.png, brujula_rota.png, mapa_sin_norte.png, sombrero_cinta_roja.png, nota_llegaste_tarde.png, still_cup.png, well_cup.png, seawater_cup.png, rum.png, crab_raw.png, crab_cooked.png, fish_raw.png, fish_cooked.png, lobster.png, oysters.png, conch.png, bird_eggs.png, sea_grapes.png, mango.png, hutia_cooked.png, iguana_cooked.png, canned_food.png (16x16 icons drawn by hand in master palette colours; no pack pixels)
+Files: coco.png, dry_grass.png, inner_tube.png, plastic_jug.png, rope.png, tarp.png, binoculars.png, nails.png, mirror.png, aloe.png, lighter.png, brujula_rota.png, mapa_sin_norte.png, sombrero_cinta_roja.png, nota_llegaste_tarde.png, still_cup.png, well_cup.png, seawater_cup.png, rum.png, crab_raw.png, crab_cooked.png, fish_raw.png, fish_cooked.png, lobster.png, oysters.png, conch.png, bird_eggs.png, sea_grapes.png, mango.png, hutia_cooked.png, iguana_cooked.png, canned_food.png, manzanillo.png, guao.png, jaguey.png, uva_caleta_unripe.png, hicaco.png, guanabana.png, noni.png, hongo_playa.png, tabaco_silvestre.png (16x16 icons drawn by hand in master palette colours; no pack pixels)
 
 Pack: Kyrise's Free 16x16 RPG Icon Pack (v1.3)
 Author: Kyrise
