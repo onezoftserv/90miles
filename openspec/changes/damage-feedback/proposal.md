@@ -31,14 +31,14 @@ Nothing shows on the body either, so a teammate's hits are invisible too.
   - a rebind to another body.
 - No synced property, RPC or simulation code is added for this. The art/sim invariance run is extended with a crab pinch to prove it.
 
-**On the body, seen by every peer (Q1, recommended A):** on a hit the sprite is drawn white for one frame, then blinks for 0.6 s. This is the hurt blink of *A Link to the Past* and GBA-era games. Drains show nothing on the body; the name tag and health strip already show while health is not full.
+**On the body, seen by every peer (owner, Q1 A):** on a hit the sprite is drawn white for one frame, then blinks for 0.6 s. This is the hurt blink of *A Link to the Past* and GBA-era games. Drains show nothing on the body; the name tag and health strip already show while health is not full.
 
-**On the local screen (Q2, recommended A)**
+**On the local screen (owner, Q2 A)**
 - A red flash at the screen edges, scaled by the size of the hit. A floor keeps the smallest hit (a crab's 5 of 100) plain to see. It fires at most three times a second.
 - The Salud bar shows the lost chunk in pale red, holds it, then drains it down. This borrows DCSS's changed-bar colour and the GBA HP bar draining. The bar shakes by 1 px on a hit.
 - The cue follows the meters panel: your own body, or the teammate you watch while dead.
 
-**Drains (Q4, recommended A):** the chunk ticks down and the Salud bar's frame glows dim red while the drain lasts. There is no blink, edge flash or shake.
+**Drains (owner, Q4 A):** the chunk ticks down and the Salud bar's frame glows dim red while the drain lasts. There is no blink, edge flash or shake.
 
 ### Part 2: item uses
 
@@ -51,7 +51,7 @@ Nothing shows on the body either, so a teammate's hits are invisible too.
 - This is the hit cue's watch run the other way, from the same replicated state, so a teammate sees your coconut too.
 - Slow regains do not float.
 
-**Hits float too (Q3, recommended A):** "−25" in red over the hurt body, from the same system. Without floats for uses we had recommended none; with them, a hit's number is consistent and plain.
+**No damage numbers (owner, Q3 A, 2026-11-14):** hits float nothing. The blink, the edge flash and the bar chunk show them.
 
 **The changed bar:** a bar whose meter jumped shows its gained slice in a light tint of its colour and flashes once, for about 1 s. This is DCSS's `colour_bar` gain slice; a loss shows the pale red slice from Part 1.
 
@@ -71,12 +71,12 @@ Nothing shows on the body either, so a teammate's hits are invisible too.
   - "A Papo no le hace falta."
 - The HUD checks first, and the host refuses too. This follows DCSS's `can_quaff` and Brogue's "not hungry enough" check in `eat()`.
 
-### Included unless the owner objects
+### Approved by the owner with Q1–Q4
 - **Reduce flashes:** a "Reducir destellos" checkbox in Ajustes, off by default and kept per install. With it on:
   - the blink becomes a steady red tint;
   - the edge flash, the bar flash and the shake are gone;
   - floats, slices and the glow stay.
-- **No knockback:** it would move a body the host simulates. If a shake is wanted (Q2 B), it is a camera-only 2 px shake on big hits.
+- **No knockback:** it would move a body the host simulates. No camera shake either (Q2 A).
 - **Sound hook:** `AudioManager.play_sfx` is called with `hurt_hit`, `hurt_big`, `hurt_drain` or `use_done`. It does nothing until sounds exist.
 - **Out of scope:** sábila's own gameplay (a bleeding drain, treating teammates, a sunburn source). A separate session fixes it, and this change edits no effect.
 

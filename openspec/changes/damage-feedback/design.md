@@ -80,7 +80,7 @@ Both `harm` (one call for a hit, or one per frame for drowning) and direct write
   - **Rejected:** tinting the whole screen. We flash only the edges, so the centre stays readable (ui-shell "HUD layout": the centre holds no panel).
   - We write our own curve; neither the formula nor its constants are ported.
 - `FloatingText` (`effects/FloatingText.java`) floats numbers up about one tile over a second, stacked per character so they never overlap. Damage and healing each have their own colour and icon. `Healing` (`actors/buffs/Healing.java`) shows each heal tick as a positive float.
-  - **Borrowed (Q7, Q3):** a rising, stacked float for jumps, cures and hits, coloured per meter.
+  - **Borrowed (Q7):** a rising, stacked float for jumps and cures, coloured per meter. Hits get no number (owner, Q3 A).
   - Our drains do not float, unlike SPD's heal ticks, so slow changes stay quiet.
 - `StatusPane` (`ui/StatusPane.java`) pulses the hero's portrait red below a third of health, faster as it falls. **Already ours:** `MeterBar`'s pulse at 25 or less; unchanged.
 - `SPDSettings.screenShake` with `PixelScene.shake` shakes on heavy events, set from 0 to 4. **Borrowed:** every shake and flash obeys one player setting.
@@ -219,12 +219,11 @@ Time comes only from `delta`: no Tween, Timer, await, `_enter_tree` or RNG. `_dr
 ### D9. Change floats are HUD marks anchored to the head
 
 `RunHud` gets one `ChangeFloats` control beside `Marks`. It keeps a `MeterWatch` per meter and a `StatusWatch` for every body in the session, the way `_follow` gives each body a name tag.
-- **When a float is made:** on a JUMP, a non-health HIT, a health HIT or a cure, it adds a `Label` in the pixel font.
+- **When a float is made:** on a JUMP, a non-health HIT (a sudden loss of thirst, say) or a cure, it adds a `Label` in the pixel font. A health HIT never floats (owner, Q3 A).
 - **What it says:**
   - `"%+d %s"` with the meter's word from `hud_text.tres`;
-  - `"−%d"` for a health hit;
   - `"Sin %s"` with the status word.
-- **Colour:** each meter's colour comes from `HurtCueTuning.meter_colors`, and a test keeps it equal to the `fill_color` set in `meters_hud.tscn`, so a restyle that changes one fails until both agree. A health hit is red.
+- **Colour:** each meter's colour comes from `HurtCueTuning.meter_colors`, and a test keeps it equal to the `fill_color` set in `meters_hud.tscn`, so a restyle that changes one fails until both agree.
 - **Placement:** each float starts at the body's head anchor (`BodyLook.head_anchor_y`), above the name tag when that shows, and rises 12 px over `float_s` (1 s) while fading. Floats made in the same frame stack 9 px apart, as SPD stacks per character.
 - They are world-anchored marks, so ui-shell "Inventory band and world marks" already allows them in the centre.
 - They are drawn on the HUD layer, not in the world, so the pixel filter does not blur them, matching name tags.
@@ -301,34 +300,25 @@ No result message is sent for a use. `request_use`'s dropped bool stays dropped,
 
 None. The setting defaults to off, and an old `settings.cfg` without the key reads as off.
 
-## Owner decisions (asked 2026-11-14; the spec is written with the recommended answer)
+## Owner decisions
 
-- **Q1, body cue on a hit (every peer):**
-  - **A, recommended:** a white frame, then a 0.6 s blink.
-  - **B:** a red tint fading over 0.3 s.
-  - **C:** a white flash only.
-- **Q2, own screen on a hit:**
-  - **A, recommended:** the edge flash, the bar chunk and a 1 px bar shake.
-  - **B:** A plus a 2 px camera shake on hits of 20 or more.
-  - **C:** the bar chunk and shake only.
-- **Q3, a number on hits** (floats now exist for uses):
-  - **A, recommended:** "−25" in red over the hurt body, on every peer.
-  - **B:** no number on hits; floats for uses only.
-  - **C:** only over your own body.
-- **Q4, slow drains:**
-  - **A, recommended:** the chunk and a dim glow on the Salud bar.
-  - **B:** A plus a faint, slow red edge.
-  - **C:** the chunk only.
+**Answered 2026-11-14:**
+- **Q1 A:** a white frame, then a 0.6 s blink.
+- **Q2 A:** the edge flash, the bar chunk and a 1 px bar shake.
+- **Q3 A:** no damage numbers. This was asked before floats for uses existed, so hits stay without a number and only jumps and cures float.
+- **Q4 A:** the chunk and a dim glow on the Salud bar.
+- **Also approved:** the reduce-flashes checkbox, no knockback, and the AudioManager hook. The hook is a method on the existing autoload; no new autoload.
+
+**Still open:**
 - **Q5, where the effect line sits:**
   - **A, recommended:** the refusal row above the item's line, which a refusal takes for 2 s. The layout is unchanged.
   - **B:** a new row above that, growing the bottom band to y 294.
   - **C:** appended to the item's line, dropped when it does not fit 41 characters.
 - **Q6, a wasted use:**
-  - **A, recommended:** refuse only when no effect would change anything (a coconut at full thirst but hungry is still drunk).
+  - **A, recommended:** refuse only when no effect would change anything.
   - **B:** refuse when the item's first effect would change nothing.
-  - **C:** never refuse; show a warning and use it anyway.
+  - **C:** never refuse; warn and use it anyway.
 - **Q7, what floats after a change:**
-  - **A, recommended:** any meter jumping at once on any body (uses, the lagoon, revives, morale events) and cures, seen by every peer.
+  - **A, recommended:** any meter jumping at once on any body, and cures, seen by every peer.
   - **B:** only on your own body.
   - **C:** only the bar slices, no floats.
-- **Included unless the owner objects:** the reduce-flashes checkbox (it also removes the bar flash), no knockback, and the AudioManager hook (`use_done` added).

@@ -62,12 +62,11 @@ Every peer SHALL count a meter that moves at once by at least 3 more than its re
 - **THEN** Papo's peer counts the same jumps on Yuni's body
 
 ### Requirement: Change floats over the body
-On a jump, a cure or a hit, every peer SHALL float a line from just above that body's head, clear of its name tag, rising for 1 s, stacked when several come at once. The lines are:
+On a jump or a cure, every peer SHALL float a line from just above that body's head, clear of its name tag, rising for 1 s, stacked when several come at once. The lines are:
 - a jump: its signed change and meter word in the meter's colour ("+15 Sed");
-- a cure: "Sin " and the status ("Sin sangrado");
-- a hit: its loss in red ("−25").
+- a cure: "Sin " and the status ("Sin sangrado").
 
-Drains float nothing. Solo shows it the same way with exactly 1 player, offline.
+Hits and drains float nothing (owner, Q3 A, 2026-11-14). Solo shows it the same way with exactly 1 player, offline.
 
 #### Scenario: Solo coconut floats two lines
 - **GIVEN** a solo player at thirst 50 and hunger 50 with a knife and a coconut
@@ -79,10 +78,10 @@ Drains float nothing. Solo shows it the same way with exactly 1 player, offline.
 - **WHEN** Papo applies sábila while bleeding
 - **THEN** "Sin sangrado" floats over Papo's body on Yuni's screen and on Papo's
 
-#### Scenario: A hit floats its loss
+#### Scenario: A hit floats no number
 - **GIVEN** a solo player at 100 health
 - **WHEN** a shark bites them for 25
-- **THEN** "−25" floats above their head in red
+- **THEN** no number floats over them; the blink, the edge flash and the bar chunk show the hit
 
 #### Scenario: A drain floats nothing
 - **GIVEN** a solo player whose thirst is 0

@@ -1,6 +1,6 @@
 # Tasks
 
-The groups follow option A of each owner question in design.md (Q1 to Q7), the recommended answers, pending the owner's choice. A different answer changes only the groups named in each question's section.
+The owner chose A for Q1 to Q4 on 2026-11-14. Groups 5 and 6 follow the recommended A of Q5 to Q7, which are still open.
 
 The commands below run from the repo root, using the Godot 4.7.2 console binary:
 - "Import" is `godot --headless --path game --import`, run twice on a fresh checkout.
@@ -111,7 +111,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 - [ ] 5.1 Tests first: write `game/tests/unit/test_change_floats.gd` (solo, offline, a `RunHud` on a sandbar session, stepped by hand). It covers:
   - a coconut at thirst 50 and hunger 50 floats "+15 Sed" in Sed's colour and "+5 Hambre", stacked 9 px apart, above the head anchor and clear of the name tag;
   - the floats rise 12 px and are gone after 1 s;
-  - a bite of 25 floats "−25" in red;
+  - a bite of 25 floats nothing (Q3 A);
   - clearing BLEEDING floats "Sin sangrado";
   - thirst draining floats nothing;
   - a body freed from the session frees its floats.
@@ -148,7 +148,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 ## 7. Solo and co-op end to end
 
 - [ ] 7.1 Write the solo test `game/tests/unit/test_damage_feedback_solo.gd`, with exactly 1 player, offline, `NetManager.start_solo()`, a sandbar session and its `RunHud`. It covers:
-  - a land crab's `CreatureWorld.pinch` blinks the look, flashes the edges, leaves a 5-point chunk and floats "−5";
+  - a land crab's `CreatureWorld.pinch` blinks the look, flashes the edges and leaves a 5-point chunk, with no number floating;
   - thirst at 0 for 3 s of host ticks glows the bar with no blink, flash or float;
   - drinking a coconut through the strip floats "+15 Sed" and lights the Sed bar;
   - sábila with nothing to cure is refused with "No hay na' que curar." and stays.
@@ -156,7 +156,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   Verify: it passes.
 - [ ] 7.2 Tests first, in-process host plus client with `NetHarness` (as `test_status_net.gd`), written as `game/tests/unit/test_damage_feedback_net.gd`. Await only the sync, then step the cues by hand. It covers:
   - a host-side crab pinch on the client's player flashes the client's edges and blinks its own look, and the host's HUD does not flash;
-  - a pinch on the host's player blinks that body and floats "−5" over it on the client;
+  - a pinch on the host's player blinks that body on the client, with no number floating;
   - the host drinking a coconut floats "+15 Sed" over the host's body on the client;
   - a late joiner who first sees a host at 60 health cues nothing;
   - a walking client's own energy floats nothing;
