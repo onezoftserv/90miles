@@ -17,8 +17,8 @@ extends CanvasLayer
 ## under it the note label (`note_label`) shows the chest's note and the map's text for a while.
 ## In co-op, a local player who is dead or waits on the shore watches a living teammate
 ## (`spectate`, ui-shell "Spectating a teammate"): the bottom band's `watching_panel` names them
-## with the switch keys, the meters panel shows their meters and the strip hides; the two spectate
-## actions step between teammates. Solo never watches.
+## with the switch keys, the meters panel shows their meters and the strip hides; the step keys
+## (`SPECTATE_PREV`, `SPECTATE_NEXT`) move between teammates. Solo never watches.
 
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
