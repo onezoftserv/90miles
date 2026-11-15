@@ -508,6 +508,8 @@ func _samples(elem_hint: String, depth: int, problems: PackedStringArray, where:
 			return [3, 5]
 		TYPE_FLOAT:
 			return [0.5, 2.5]
+		TYPE_COLOR:
+			return [Color(0.25, 0.5, 0.75), Color(0.5, 0.25, 1.0)]
 		TYPE_OBJECT:
 			var first := _sample_resource(detail, depth + 1, problems, where)
 			return [first] if first != null else []

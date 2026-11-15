@@ -1,0 +1,61 @@
+[gd_resource type="Resource" script_class="TextData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/text_data.gd" id="1_text"]
+[ext_resource type="Script" path="res://scripts/data/text_entry_data.gd" id="2_entry"]
+[ext_resource type="Texture2D" uid="uid://d0ynhw3d5l3q6" path="res://assets/art/items/nota_llegaste_tarde.png" id="icon_nota_llegaste_tarde"]
+
+[sub_resource type="Resource" id="Resource_llegaste_tarde"]
+script = ExtResource("2_entry")
+id = &"llegaste_tarde"
+heading_es = "Llegaste tarde"
+heading_en = "Too slow"
+body_es = "Llegaste tarde, mi hermano. Aquí el que no madruga no coge ni la nota, y esta te la dejé por lástima. Vuelvo el jueves."
+body_en = "Too slow, mi hermano. Around here, whoever doesn't get up early doesn't even get the note, and I left you this one out of pity. Back on Thursday."
+
+[sub_resource type="Resource" id="Resource_decomisado"]
+script = ExtResource("2_entry")
+id = &"decomisado"
+heading_es = "Acta de decomiso"
+heading_en = "Seizure notice"
+body_es = "Contenido: DECOMISADO. Motivo: tesoro sin factura. Para reclamar, traiga el carné, tres fotos y el tesoro. Oficina cerrada; vuelvo el jueves."
+body_en = "Contents: DECOMISADO. Reason: treasure without a receipt. To file a claim, bring your carné, three photos and the treasure. Office closed; back on Thursday."
+
+[sub_resource type="Resource" id="Resource_la_cola"]
+script = ExtResource("2_entry")
+id = &"la_cola"
+heading_es = "¿Quién es el último?"
+heading_en = "Who's last in the cola?"
+body_es = "Pa'l tesoro hubo cola. Yo marqué, me fui a resolver una cosa y cuando volví ya no había ni cola. Ahora voy a marcar en otra. Vuelvo el jueves."
+body_en = "There was a cola for the treasure. I marked my place, went off to resolver something, and when I got back there wasn't even a cola. Now I'm off to mark my place in another one. Back on Thursday."
+
+[sub_resource type="Resource" id="Resource_ni_el_norte"]
+script = ExtResource("2_entry")
+id = &"ni_el_norte"
+heading_es = "Sobre la brújula"
+heading_en = "About the compass"
+body_es = "Si llegaste con esa brújula, felicidades: te perdiste igualito que yo. Con ella dibujé el mapa. Por eso aquí no hay na'. Ni el Norte. Vuelvo el jueves, si la brújula me deja."
+body_en = "If you got here with that compass, congratulations: you got lost just like I did. I drew the map with it. That's why there's nothing here. Not even el Norte. Back on Thursday, if the compass lets me."
+
+[sub_resource type="Resource" id="Resource_el_sombrero"]
+script = ExtResource("2_entry")
+id = &"el_sombrero"
+heading_es = "Sobre el sombrero"
+heading_en = "About the hat"
+body_es = "Ese sombrero tiene dueño, y no eres tú. Dijo que volvía por él. Yo vuelvo el jueves, a ver quién llega primero. Mientras, póntelo, que este sol no perdona. Pero no le cojas cariño."
+body_en = "That hat has an owner, and it isn't you. He said he's coming back for it. I'm back on Thursday; we'll see who gets here first. Meanwhile, put it on, this sun doesn't forgive. But don't get attached."
+
+[resource]
+script = ExtResource("1_text")
+sprite = ExtResource("icon_nota_llegaste_tarde")
+presentation = 4
+pick_mode = 0
+entries = Array[ExtResource("2_entry")]([SubResource("Resource_llegaste_tarde"), SubResource("Resource_decomisado"), SubResource("Resource_la_cola"), SubResource("Resource_ni_el_norte"), SubResource("Resource_el_sombrero")])
+generation = 0
+important = false
+category = 8
+tags = Array[int]([8, 15])
+weight = 0.1
+spawn_weight = 0.0
+id = &"nota_llegaste_tarde"
+name_es = "Llegaste tarde"
+name_en = "Too slow"

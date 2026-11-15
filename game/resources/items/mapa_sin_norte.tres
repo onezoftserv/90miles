@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://cikgs2n1aw8ff" path="res://assets/art/items/mapa_sin_norte.png" id="icon_mapa_sin_norte"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_mapa_sin_norte")
+description_es = "Una X, {pista} y una rosa de los vientos torcida. Se nota que lo dibujaron con una brújula que no sirve."
+description_en = "An X, {pista} and a crooked compass rose. You can tell it was drawn with a compass that doesn't work."
+category = 6
+tags = Array[int]([15])
+weight = 0.1
+spawn_weight = 0.0
+conceal_radius_tiles = 3.0
+id = &"mapa_sin_norte"
+name_es = "Mapa sin norte"
+name_en = "Map without north"

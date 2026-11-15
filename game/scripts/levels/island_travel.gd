@@ -29,6 +29,9 @@ const SESSION_NODES: Array[StringName] = [
 	&"Players", &"PlayerSpawner", &"Entities", &"EntitySpawner", &"Pickups", &"PickupSpawner",
 ]
 const RAFT_NAME: StringName = &"Raft"
+## escape-routes "Split parties" (dropped-teammate-state): once dropped players still on the island
+## are all that keep waiting riders from landing, each one's time left is cut to at most this.
+const DROPPED_HOLD_S: float = 30.0
 
 ## The island the session is on (it sits beside the session, in the same parent).
 var island: SandbarIsland
@@ -51,6 +54,7 @@ func setup(for_session: CoopSession, current: SandbarIsland) -> void:
 	session.player_spawned.connect(_on_player_spawned)
 	session.player_rebound.connect(_on_player_rebound)
 	session.removal_recorded.connect(_on_removal_recorded)
+	session.player_disconnected.connect(_on_player_disconnected)
 	session.world_state_received.connect(follow)
 	session.join_extras = _join_extras
 	for peer_id: int in session.peer_ids():
@@ -69,16 +73,27 @@ func crossing_ended(result: CrossingResult) -> void:
 
 
 ## What the party's state asks for now. On the host a TRAVEL answer also starts the travel (after
-## this frame, never from inside the signal that asked).
+## this frame, never from inside the signal that asked). A dropped player still on the island (not
+## waiting, not in a crossing) keeps it open until removed; once such players are all that keep
+## riders waiting, the host cuts each one's time to DROPPED_HOLD_S. A drop never ends the run early.
 func check() -> Outcome:
 	var waiting: int = 0
+	var dropped_here: Array[int] = []
 	for peer_id: int in session.peer_ids():
 		var player := session.body(peer_id)
 		if player.meters.dead:
 			continue
-		if not player.left_island:
+		if player.left_island:
+			waiting += 1
+		elif session.is_dropped(peer_id) and not session.has_left(peer_id):
+			dropped_here.append(peer_id)
+		else:
 			return Outcome.PLAYING
-		waiting += 1
+	if not dropped_here.is_empty():
+		if waiting > 0:
+			for peer_id: int in dropped_here:
+				session.shorten_drop(peer_id, DROPPED_HOLD_S)
+		return Outcome.PLAYING
 	if waiting == 0 or island.layout.next_island.is_empty():
 		return Outcome.OVER
 	if session.multiplayer.is_server() and not _travel_queued:
@@ -151,6 +166,11 @@ func _on_removal_recorded(_peer_id: int, _player_name: String) -> void:
 	_on_changed()
 
 
+# Host: a drop may leave a dropped body as all that keeps riders waiting (its hold is cut now).
+func _on_player_disconnected(_peer_id: int) -> void:
+	_on_changed()
+
+
 func _on_player_spawned(peer_id: int, spawned: PlayerBody) -> void:
 	_watch(spawned)
 	if _waiting_peers.has(peer_id):
@@ -176,11 +196,13 @@ func _hold_waiting() -> void:
 			IslandArrival.hold(player)
 
 
-# Deferred from check(): the state may have moved on since.
+# Deferred from check(): the state may have moved on since. The flag stays up while it runs, so a
+# check() here never queues it again: a refused landing waits for the next change instead of
+# re-queuing itself within the same deferred flush, forever (dropped-teammate-state D5).
 func _travel_when_idle() -> void:
-	_travel_queued = false
 	if is_inside_tree() and check() == Outcome.TRAVEL:
 		travel(island.layout.next_island)
+	_travel_queued = false
 
 
 # Every peer, from the host's travel_to: the old level goes, the next one is built and the players
@@ -204,7 +226,9 @@ func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float) -
 	if session.multiplayer.is_server():
 		fresh.place_pickups(session)
 	_results.clear()
-	islands_reached += 1
+	# An off-graph layout (the secret cay) is never an island reached (endings-progression).
+	if not next_layout.off_graph:
+		islands_reached += 1
 	island_loaded.emit(fresh)
 
 

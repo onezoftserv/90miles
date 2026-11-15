@@ -1,0 +1,74 @@
+[gd_resource type="Resource" script_class="IslandLayoutData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/island_layout_data.gd" id="1_layout"]
+[ext_resource type="Script" path="res://scripts/data/island_glyph_data.gd" id="2_glyph"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="3_effect"]
+
+[sub_resource type="Resource" id="Resource_climb"]
+script = ExtResource("3_effect")
+meter = 4
+amount = -5.0
+
+[sub_resource type="Resource" id="Resource_a_camp"]
+script = ExtResource("2_glyph")
+glyph = "a"
+item_id = &"sombrero_cinta_roja"
+group = &"camp"
+
+[sub_resource type="Resource" id="Resource_k_camp"]
+script = ExtResource("2_glyph")
+glyph = "k"
+item_id = &"knife"
+group = &"camp"
+
+[sub_resource type="Resource" id="Resource_c_camp"]
+script = ExtResource("2_glyph")
+glyph = "c"
+item_id = &"rain_cup"
+group = &"camp"
+
+[sub_resource type="Resource" id="Resource_w_beach"]
+script = ExtResource("2_glyph")
+glyph = "w"
+item_id = &"driftwood"
+count = 2
+group = &"beach"
+
+[sub_resource type="Resource" id="Resource_u_flotsam"]
+script = ExtResource("2_glyph")
+glyph = "u"
+item_id = &"inner_tube"
+group = &"flotsam"
+
+[sub_resource type="Resource" id="Resource_q_flotsam"]
+script = ExtResource("2_glyph")
+glyph = "q"
+item_id = &"rope"
+count = 3
+group = &"flotsam"
+
+[resource]
+script = ExtResource("1_layout")
+description_es = "Un cayito que no sale en ningún mapa. Alguien acampó aquí hace na': las brasas todavía calientan."
+description_en = "A tiny cay that's on no map. Someone camped here a minute ago: the embers are still warm."
+rows = PackedStringArray("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~~~-----~~~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~~-------~~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~~---X---~~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~---..Z---~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~---...---~~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~---.....---~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~---.....---~~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~---.......---~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~----..ggg..----~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~----..ggggg..----~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~----.Pggggggg..----~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~---..ggHHHHggP..---~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~---..gggHHaHgggg..---~~~~~~~~~~~~~~", "~~~~~~~~~~~~~---..gggkECgcggg..---~~~~~~~~~~~~~~", "~~~~~~~~~~~~~--..ggmmggggggggw..--~~~~~~~~~~~~~~", "~~~~~~~~~~~~~--..mmgcgggggggggu.--~~~~~~~~~~~~~~", "~~~~~~~~~~~~~-TnmgggggPgggggqg.B--~~~~~~~~~~~~~~", "~~~~~~~~~~~~~-L..gggggggggggggw.--~~~~~~~~~~~~~~", "~~~~~~~~~~~~~---..ggggggggggw..---~~~~~~~~~~~~~~", "~~~~~~~~~~~~~---..gggggggggggu.---~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~---....3.S.4....---~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~----....1.2....----~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~----.........----~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~---------------~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~-------------~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+terrain_glyphs = Dictionary[String, int]({"~": 0, "-": 1, ".": 3, "g": 7, "X": 3, "Z": 3, "H": 7, "a": 7, "E": 3, "C": 3, "k": 3, "c": 3, "P": 3, "m": 3, "n": 1, "T": 1, "L": 1, "B": 3, "w": 3, "u": 3, "q": 3, "S": 3, "1": 3, "2": 3, "3": 3, "4": 3})
+shade_glyphs = "Ha"
+palm_glyph = "P"
+coconut_total = 7
+climb_hold_s = 2.0
+climb_effects = Array[ExtResource("3_effect")]([SubResource("Resource_climb")])
+solo_spawn_glyph = "S"
+coop_spawn_glyphs = "1234"
+raft_site_glyph = "B"
+route_ids = Array[StringName]([&"raft"])
+pickups = Array[ExtResource("2_glyph")]([SubResource("Resource_a_camp"), SubResource("Resource_k_camp"), SubResource("Resource_c_camp"), SubResource("Resource_w_beach"), SubResource("Resource_u_flotsam"), SubResource("Resource_q_flotsam")])
+off_graph = true
+secret = true
+chest_glyph = "X"
+chest_item_id = &"nota_llegaste_tarde"
+decor_glyphs = Dictionary[String, StringName]({"E": &"embers", "C": &"cigar_smoke", "m": &"drag_mark", "n": &"drag_mark", "T": &"post", "L": &"cut_line", "Z": &"platino"})
+decor_colors = Dictionary[StringName, Color]({&"embers": Color(0.87451, 0.443137, 0.14902, 1), &"cigar_smoke": Color(0.607843, 0.678431, 0.717647, 1), &"drag_mark": Color(0.752941, 0.541176, 0.352941, 1), &"post": Color(0.4, 0.223529, 0.192157, 1), &"cut_line": Color(0.560784, 0.337255, 0.231373, 1), &"platino": Color(0.462745, 0.258824, 0.541176, 1)})
+id = &"cayo_sin_norte"
+name_es = "El cayo sin norte"
+name_en = "The cay with no north"

@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/compass_needle.gd" id="1_needle"]
+
+[node name="CompassNeedle" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 308.0
+offset_top = 20.0
+offset_right = 332.0
+offset_bottom = 44.0
+mouse_filter = 2
+script = ExtResource("1_needle")

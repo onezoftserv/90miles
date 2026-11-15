@@ -1601,6 +1601,22 @@ func _peer_named(suffix: String) -> int:
 	return 0
 
 
+func _name_of(peer_id: int) -> String:
+	return String(session.call("player_name", peer_id))
+
+
+# The state word ending the local HUD's row for the teammate named `player_name` ("" when the row has
+# none, "<no row>" when there is no such row).
+func _row_word(player_name: String) -> String:
+	if hud == null:
+		return "<no hud>"
+	for row: String in hud.call("teammate_rows"):
+		if row.begins_with(player_name + " "):
+			var parts: PackedStringArray = row.split(" ")
+			return parts[parts.size() - 1] if parts.size() > 2 else ""
+	return "<no row>"
+
+
 func _on_coast_cay() -> bool:
 	var now: Node = shell.get("island")
 	return now != null and (now.get("layout") as Object).get("id") == &"coast_cay"
@@ -1840,9 +1856,28 @@ func _host_route() -> void:
 			_check("host: B joined again during the crossing", true)
 			_note("B came back %.1f s into the crossing" % float(crossing.get("elapsed_s")))
 			_check("host: the deck at %.0f shows worn" % HOST_RAFT_INTEGRITY, String(crossing.get_node(^"Deck").get("frame_name")) == "worn")
-	# 8. The arrival: the party moves on once B's dropped body is gone (nobody left on the sandbar).
-	if not await _wait_for("the party to land on the coast cay", _on_coast_cay, 420.0):
+	# 8. The arrival (dropped-teammate-state): once the crossing has ended and B has left for good, B's
+	# dropped body alone holds the landing, for at most 30 s; meanwhile the host's row for B reads
+	# "Desconectado".
+	var held: Dictionary = {"crossed": -1.0, "b_left": -1.0, "words": {}}
+	var landing_watch: Callable = func() -> bool:
+		var now: float = Time.get_ticks_msec() / 1000.0
+		if float(held["crossed"]) < 0.0 and (shell.get("crossings") as Array).is_empty():
+			held["crossed"] = now
+		var b_now: int = _peer_named("B")
+		if b_now != 0 and bool(session.call("is_dropped", b_now)):
+			if float(held["b_left"]) < 0.0:
+				held["b_left"] = now
+			(held["words"] as Dictionary)[_row_word(_name_of(b_now))] = true
+		return _on_coast_cay()
+	if not await _wait_for("the party to land on the coast cay", landing_watch, 420.0):
 		return
+	if b_peer != 0:
+		var landed_at: float = Time.get_ticks_msec() / 1000.0
+		var held_from: float = maxf(float(held["crossed"]), float(held["b_left"]))
+		var words: Array = (held["words"] as Dictionary).keys()
+		_check("host: B left for good and its dropped body held the landing at most 30 s (dropped-teammate-state)", float(held["b_left"]) >= 0.0 and landed_at - held_from <= 35.0, "%.1f s after the later of the crossing's end and B's leave" % [landed_at - held_from])
+		_check("host: while B was away, the host's row for B read 'Desconectado'", words == ["Desconectado"], "words %s" % [words])
 	await _frames(30)
 	island = shell.get("island")
 	_build_land()
@@ -2048,6 +2083,7 @@ func _client_palm() -> bool:
 		return false
 	var look: Node = _look_of(palm)
 	var drawn_before: int = int(look.call("coconuts_drawn"))
+	var coconuts_before: int = int(palm.get("coconuts"))
 	if not await _shoo_pair(palm):
 		return false
 	var coco: int = _count(&"coco")
@@ -2059,7 +2095,11 @@ func _client_palm() -> bool:
 			break
 		await physics_frame
 	_check("client: held E climbed the nest palm and the host's coconut reached the strip", got and _strip_icon_ok(&"coco"), "coco %d -> %d" % [coco, _count(&"coco")])
-	_note("the palm this client draws: %d coconut(s) before, %d after (a client's palm follows its own state, art-pass D18; the host's count is asserted on the host)" % [drawn_before, look.call("coconuts_drawn")])
+	# structure-state-sync: the host's count reaches this client's palm, and its look draws it.
+	var dropped: Callable = func() -> bool:
+		return int(palm.get("coconuts")) == coconuts_before - 1 and int(look.call("coconuts_drawn")) == clampi(coconuts_before - 1, 0, 3)
+	var synced: bool = await _wait_for("the host's count on this client's palm", dropped, 5.0)
+	_check("client: the palm this client draws lost the host's coconut", synced, "%d coconut(s), %d drawn before; %d, %d drawn after" % [coconuts_before, drawn_before, palm.get("coconuts"), look.call("coconuts_drawn")])
 	await _save_window("client_palm_climb")
 	return got
 
@@ -2082,8 +2122,9 @@ func _client_fire() -> bool:
 	var aimed: bool = await _aim_at(fire)
 	_check("client: the prompt beside the lit fire is the fire's own", aimed, "prompt %s" % [_prompt_lines()])
 	await _hold(&"interact", float((fire.get("tuning") as Object).get("fire_put_out_hold_s")) + 0.4)
-	await _frames(10)
-	_note("after the put-out the fire this client draws: frame %s, lit %s (a client's fire follows its own state, art-pass D18; the host's put-out is asserted on the host)" % [_frame(fire), fire.get("lit")])
+	# structure-state-sync: the host's put-out reaches this client's fire.
+	var went_out: bool = await _wait_for("the host's put-out on this client's fire", _fire_out.bind(fire), 5.0)
+	_check("client: after the put-out this client's fire is out as the host's: embers, not a lit fire, nothing to put out", went_out, "frame %s, lit %s" % [_frame(fire), fire.get("lit")])
 	await _save_window("client_fire_out")
 	return true
 
@@ -2104,6 +2145,10 @@ func _client_catcher() -> bool:
 	if not await _wait_for("the squall the host starts once the catcher stands (this client's sky says squall)", _squall_on_sky, 120.0):
 		return false
 	await _save_window("client_rain_catcher_squall")
+	# structure-state-sync: the host's cup reaches this client's catcher before anyone takes it.
+	var full: Callable = func() -> bool: return int(catcher.get("cups")) == 1 and _frame(catcher) == "water"
+	var filled: bool = await _wait_for("the host's cup in this client's catcher", full, 60.0)
+	_check("client: the squall filled this client's catcher with the host's cup: water", filled, "frame %s, %d cup(s)" % [_frame(catcher), catcher.get("cups")])
 	var wanted: Object = catcher.get("interactable")
 	var taken: bool = false
 	for turn: int in 40:
@@ -2116,7 +2161,9 @@ func _client_catcher() -> bool:
 			await _aim_at(catcher)
 		await _seconds(4.0)
 	_check("client: after the squall a press at the catcher put a rain cup in the strip (the host's cup)", taken and _strip_icon_ok(&"rain_cup"), "rain cups %d" % _count(&"rain_cup"))
-	_note("the rain catcher this client draws after the squall: frame %s, %d cup(s) (a client's catcher follows its own state, art-pass D18; the host's fill is asserted on the host)" % [_frame(catcher), catcher.get("cups")])
+	var emptied: Callable = func() -> bool: return int(catcher.get("cups")) == 0 and _frame(catcher) == "empty"
+	var empty_here: bool = await _wait_for("the host's empty catcher on this client", emptied, 5.0)
+	_check("client: once the cup was taken this client's catcher is empty, as the host's", empty_here, "frame %s, %d cup(s)" % [_frame(catcher), catcher.get("cups")])
 	await _save_window("client_rain_catcher_taken")
 	return taken
 
@@ -2155,7 +2202,17 @@ func _client_cross(me: int) -> bool:
 	var crossing: Node2D = (shell.get("crossings") as Array)[0]
 	_check("client: A rides the host's crossing, aboard", (crossing.call("peers") as Array).has(me) and int(crossing.call("rider_state", me)) == ABOARD, "peers %s, state %s" % [crossing.call("peers"), crossing.call("rider_state", me)])
 	await _check_crossing_view(crossing, "riding it", me)
-	return await _wait_for("the party to land on the coast cay (A's island changes)", _on_coast_cay, 420.0)
+	# dropped-teammate-state: while B is away, A's row for B reads "Desconectado", never "Caído".
+	var words: Dictionary = {}
+	var landing_watch: Callable = func() -> bool:
+		var b_now: int = _peer_named("B")
+		if b_now != 0:
+			words[_row_word(_name_of(b_now))] = true
+		return _on_coast_cay()
+	var landed: bool = await _wait_for("the party to land on the coast cay (A's island changes)", landing_watch, 420.0)
+	if _peer_named("B") != 0 or words.has("Desconectado"):
+		_check("client: A's row for B read 'Desconectado' while B was away, never 'Caído'", words.has("Desconectado") and not words.has("Caído"), "words %s" % [words.keys()])
+	return landed
 
 
 func _client_cay(me: int) -> void:
@@ -2216,7 +2273,7 @@ func _client_rejoiner() -> void:
 	if not await _wait_for("the host's crossing to start (B reads the raft site's synced frames meanwhile)", launched, 900.0):
 		return
 	_check("client: B saw the raft site go marked, materials, half built and the raft stand whole (the host's synced frames)", seen.has("marked") and seen.has("materials") and seen.has("half_built") and seen.has("raft whole"), "%s" % [seen])
-	_note("B's view of A's structures before it leaves: %s (they follow B's own state, art-pass D18)" % [_structure_frames()])
+	_check_used_structures("B, before it leaves")
 	in_run = false
 	shell.call("back_to_title")
 	_note("the crossing started; B left, and joins again in %.0f s" % REJOIN_AFTER_S)
@@ -2235,10 +2292,30 @@ func _client_rejoiner() -> void:
 	_check("client: joining mid-crossing, the sandbar shows no stale raft and a fresh marked site", session.get_node_or_null(^"Raft") == null and site_now != null and _frame(site_now) == "marked", "raft %s, site %s" % [session.get_node_or_null(^"Raft"), _frame(site_now) if site_now != null else "none"])
 	var kinds: PackedStringArray = _structure_frames()
 	_check("client: joining mid-crossing, B sees the fire and the rain catcher A built", kinds.size() == 2, "%s" % [kinds])
-	_note("the structures the rejoined client draws: %s (a joiner's copies follow their own state, art-pass D18)" % [kinds])
+	_check_used_structures("B, joining mid-crossing")
 	await _world_image("client_crossing")
 	shell.call("back_to_title")
 	await _seconds(1.0)
+
+
+# A fire that is out on this peer: not lit, not one of the lit fires, nothing to put out, drawn as embers.
+func _fire_out(fire: Node2D) -> bool:
+	return not bool(fire.get("lit")) and _frame(fire) == "out" and not fire.is_in_group(&"lit_fires") 		and not bool((fire.get("interactable") as Object).get("enabled"))
+
+
+# structure-state-sync: once A has climbed a nest palm, put out its fire and taken the catcher's cup,
+# this peer holds the host's state of each: the fire out, the catcher empty, and the sandbar's palms
+# one coconut short of the layout's total (A's one climb, which the host asserts on its side).
+func _check_used_structures(who: String) -> void:
+	var kinds: PackedStringArray = _structure_frames()
+	_check("client: %s, the fire A put out is out and the catcher A emptied is empty, as the host's" % who, kinds.has("Fire out") and kinds.has("RainCatcher empty"), "%s" % [kinds])
+	var total: int = 0
+	var drawn: int = 0
+	for palm: Node in island.get_node(^"Palms").get_children():
+		total += int(palm.get("coconuts"))
+		drawn += int(_look_of(palm).call("coconuts_drawn"))
+	var expected: int = int((island.get("layout") as Object).get("coconut_total")) - 1
+	_check("client: %s, the sandbar's palms hold the host's %d coconuts, and draw them" % [who, expected], total == expected and drawn == expected, "%d held, %d drawn" % [total, drawn])
 
 
 # The fire and the rain catcher in the session, with the frame this peer draws for each.

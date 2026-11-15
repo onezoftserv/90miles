@@ -99,6 +99,20 @@ func test_solo_arrives_on_the_coast_cay() -> void:
 	assert_null(shell.session.get_node_or_null("RaftSite"), "no empty site beside it")
 
 
+func test_solo_lands_at_once_with_no_drop_hold() -> void:
+	# escape-routes "Split parties", 1 player offline (dropped-teammate-state): nobody can drop, so
+	# the crossing's end is the whole condition; no countdown runs and nobody is waited for.
+	var launched := _launch()
+	var shell := launched[0] as GameShell
+	var crossing := launched[1] as Crossing
+	CrossingRig.run(crossing, 60.0)
+	await wait_frames(2)
+	assert_eq(shell.island.layout.id, COAST, "the coast cay loads at once")
+	assert_false(shell.session.is_dropped(1))
+	assert_eq(shell.session.disconnect_time_left(1), 0.0, "no countdown")
+	assert_eq(GameShell.waiting_text(shell.session), "", "no waiting line")
+
+
 func test_a_broken_raft_is_lost() -> void:
 	var launched := _launch()
 	var shell := launched[0] as GameShell

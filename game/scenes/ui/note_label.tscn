@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/note_label.gd" id="1_note"]
+
+[node name="NoteLabel" type="PanelContainer"]
+visible = false
+offset_left = 140.0
+offset_top = 46.0
+offset_right = 500.0
+offset_bottom = 66.0
+mouse_filter = 2
+theme_type_variation = &"HudPanel"
+script = ExtResource("1_note")
+
+[node name="Text" type="Label" parent="."]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3

@@ -24,3 +24,6 @@
 
 - Archive after the owner's review, together with or after `art-pass`.
 - Still open, outside this change: structure-state sync to late joiners, ENet throttle on `submit_intent`, the shoo prompt's height (art-pass K9), the sign bubble's readability at 1× over sand; a dropped client's body holds the sandbar until it is removed, so the party lands about 90 s after the last leave; on a client a disconnected teammate's row reads "Caído", not "Desconectado" (`CoopSession._dropped` is host-only); the reconnect wait in `test_interact_prompt_net.gd` failed once in three full GUT runs.
+- 2026-11-14: the "Caído" row on clients and the 90 s landing are addressed by `dropped-teammate-state`:
+  - The flag is synced to every peer.
+  - A dropped body alone holding waiting riders is removed within 30 s (owner's choice).

@@ -38,6 +38,10 @@ var net_model_state: PackedFloat64Array = PackedFloat64Array([0.0, 0.0, 0.0])
 var net_movement: int = MovementStep.Move.WALK
 var net_stealth: int = MovementStep.Stealth.VISIBLE
 var net_downed: bool = false
+## coop-networking "Disconnect handling": this player's client dropped and the body waits for it.
+## The session writes it on the host (at the drop and at a reclaim), never `_write_shadow`: the body
+## does not know it was dropped. Every peer reads it, late joiners with the spawn state.
+var net_dropped: bool = false
 ## The player's inventory as Inventory.to_net() writes it: the host's, shown on every peer.
 var net_inventory: Array = []
 

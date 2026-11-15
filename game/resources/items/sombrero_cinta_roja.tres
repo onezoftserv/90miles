@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_modifier"]
+[ext_resource type="Texture2D" uid="uid://cfsv6q2nmyk0e" path="res://assets/art/items/sombrero_cinta_roja.png" id="icon_sombrero_cinta_roja"]
+
+[sub_resource type="Resource" id="Resource_heat"]
+script = ExtResource("2_modifier")
+stat = 0
+op = 0
+value = 0.7
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_sombrero_cinta_roja")
+description_es = "Yarey de verdad, cinta roja sencilla y barbiquejo: a este no se lo lleva el viento."
+description_en = "Real yarey, a plain red band and a chin cord: the wind won't take this one."
+category = 5
+tags = Array[int]([5, 15])
+weight = 0.3
+spawn_weight = 0.0
+equip_slot = 1
+modifiers = Array[ExtResource("2_modifier")]([SubResource("Resource_heat")])
+id = &"sombrero_cinta_roja"
+name_es = "Sombrero de yarey con cinta roja"
+name_en = "Yarey hat with a red band"

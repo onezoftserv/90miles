@@ -17,6 +17,10 @@
     {"id": "nails", "hand": "nails.png"},
     {"id": "mirror", "hand": "mirror.png"},
     {"id": "aloe", "hand": "aloe.png"},
-    {"id": "lighter", "hand": "lighter.png"}
+    {"id": "lighter", "hand": "lighter.png"},
+    {"id": "brujula_rota", "hand": "brujula_rota.png"},
+    {"id": "mapa_sin_norte", "hand": "mapa_sin_norte.png"},
+    {"id": "sombrero_cinta_roja", "hand": "sombrero_cinta_roja.png"},
+    {"id": "nota_llegaste_tarde", "hand": "nota_llegaste_tarde.png"}
   ]
 }

@@ -8,6 +8,9 @@ const WALKABLE: Array[DataEnums.Terrain] = [
 	DataEnums.Terrain.BEACH, DataEnums.Terrain.DUNE, DataEnums.Terrain.SCRUB, DataEnums.Terrain.ROCK,
 	DataEnums.Terrain.SHALLOWS,
 ]
+## Land a secret piece may hide on: walkable ground that is not shallows or rock (secret-cay
+## "Hiding spots").
+const LAND: Array[DataEnums.Terrain] = [DataEnums.Terrain.BEACH, DataEnums.Terrain.DUNE, DataEnums.Terrain.SCRUB]
 const STEPS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
 
 var terrain: GridTerrain = GridTerrain.new()
@@ -30,6 +33,10 @@ var drink_spots: Array[Vector2i] = []
 var signs: Array[Dictionary] = []
 ## Each pick-up: {cell: Vector2i, item_id: StringName, count: int, respawn: int, group: StringName}.
 var pickups: Array[Dictionary] = []
+## The chest's cell (secret-cay); (-1, -1) when the layout has none.
+var chest: Vector2i = Vector2i(-1, -1)
+## Each scenery cell: {cell: Vector2i, decor_id: StringName}, in reading order.
+var decor: Array[Dictionary] = []
 
 var _layout: IslandLayoutData
 var _problems: PackedStringArray = PackedStringArray()
@@ -71,6 +78,139 @@ func reachable_from(start: Vector2i) -> Dictionary[Vector2i, bool]:
 			seen[next] = true
 			queue.append(next)
 	return seen
+
+
+## How many steps a player on foot needs from `start` to each cell it can reach, over land and
+## shallows (the same WALKABLE set as reachable_from: never deep water). Breadth-first.
+func walk_distances_from(start: Vector2i) -> Dictionary[Vector2i, int]:
+	var distances: Dictionary[Vector2i, int] = {start: 0}
+	var queue: Array[Vector2i] = [start]
+	var head: int = 0
+	while head < queue.size():
+		var cell: Vector2i = queue[head]
+		head += 1
+		for step: Vector2i in STEPS:
+			var next: Vector2i = cell + step
+			if distances.has(next) or not terrain.cells.has(next) or not WALKABLE.has(terrain.cells[next]):
+				continue
+			distances[next] = distances[cell] + 1
+			queue.append(next)
+	return distances
+
+
+## secret-cay "Hiding spots" and "Hiding-spot fallback": the land cells a piece may hide on,
+## measured from the landing (the solo spawn), in reading order. Strict: between the tuning's
+## percentiles of land walking distance and 4-10 tiles (straight line) from the nearest feature of
+## a kind it lists, on no feature, spawn or other marked cell. When that list is empty the rule
+## relaxes in order: the fallback band, then no feature-distance limit, then any reachable land
+## cell that is not taken. Empty only when the island has no such cell.
+func hiding_spots(tuning: SecretTuning, catalog: ContentCatalog = null) -> Array[Vector2i]:
+	var distances: Dictionary[Vector2i, int] = walk_distances_from(solo_spawn)
+	var taken: Dictionary[Vector2i, bool] = _taken_cells()
+	var features: Array[Dictionary] = _features(tuning, catalog)
+	var land_steps: Array[int] = []
+	var candidates: Array[Vector2i] = []
+	for cell: Vector2i in distances:
+		if not LAND.has(terrain.cells[cell]):
+			continue
+		land_steps.append(distances[cell])
+		if not taken.has(cell):
+			candidates.append(cell)
+	if candidates.is_empty():
+		return candidates
+	land_steps.sort()
+	candidates.sort_custom(_reading_order)
+	var near: Dictionary[Vector2i, float] = {}
+	for cell: Vector2i in candidates:
+		near[cell] = _nearest_feature(cell, features)["tiles"]
+	var passes: Array[Array] = [
+		[tuning.spot_percentile_min, tuning.spot_percentile_max, true],
+		[tuning.spot_fallback_percentile_min, tuning.spot_fallback_percentile_max, true],
+		[tuning.spot_fallback_percentile_min, tuning.spot_fallback_percentile_max, false],
+	]
+	for rule: Array in passes:
+		var low: int = _quantile(land_steps, rule[0])
+		var high: int = _quantile(land_steps, rule[1])
+		var spots: Array[Vector2i] = []
+		for cell: Vector2i in candidates:
+			if distances[cell] < low or distances[cell] > high:
+				continue
+			if rule[2] and (near[cell] < tuning.spot_feature_min_tiles or near[cell] > tuning.spot_feature_max_tiles):
+				continue
+			spots.append(cell)
+		if not spots.is_empty():
+			return spots
+	return candidates
+
+
+## The kind of spot `cell` is, for the map's hint: the kind of its nearest feature of a kind the
+## tuning lists (`palm`, a pick-up's group such as `flotsam`, `tide_pool`, `workbench`,
+## `raft_site`); the first in reading order on a tie; `default` when the island has none.
+func spot_kind(cell: Vector2i, tuning: SecretTuning = null, catalog: ContentCatalog = null) -> StringName:
+	var nearest: Dictionary = _nearest_feature(cell, _features(tuning if tuning != null else SecretTuning.standard(), catalog))
+	return nearest["kind"]
+
+
+
+# The features a spot is measured from, in reading order: {cell, kind}.
+func _features(tuning: SecretTuning, catalog: ContentCatalog) -> Array[Dictionary]:
+	var content: ContentCatalog = catalog if catalog != null else GameState.content
+	var kinds: Array[StringName] = tuning.spot_feature_kinds
+	var found: Array[Dictionary] = []
+	if kinds.has(&"palm"):
+		for cell: Vector2i in palms:
+			found.append({"cell": cell, "kind": &"palm"})
+	if kinds.has(&"pickup"):
+		for pickup: Dictionary in pickups:
+			if SecretRules.is_secret(content.get_entry(&"items", pickup["item_id"])):
+				continue
+			var group: StringName = pickup["group"]
+			found.append({"cell": pickup["cell"], "kind": group if not group.is_empty() else &"pickup"})
+	if kinds.has(&"tide_pool"):
+		for cell: Vector2i in tide_pools:
+			found.append({"cell": cell, "kind": &"tide_pool"})
+	if kinds.has(&"workbench") and workbench.x >= 0:
+		found.append({"cell": workbench, "kind": &"workbench"})
+	if kinds.has(&"raft_site") and raft_site.x >= 0:
+		found.append({"cell": raft_site, "kind": &"raft_site"})
+	found.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return _reading_order(a["cell"], b["cell"]))
+	return found
+
+
+# {tiles, kind} of the feature nearest `cell` in a straight line; INF and `default` with none.
+func _nearest_feature(cell: Vector2i, features: Array[Dictionary]) -> Dictionary:
+	var best: Dictionary = {"tiles": INF, "kind": &"default"}
+	for feature: Dictionary in features:
+		var tiles: float = Vector2(cell).distance_to(Vector2(feature["cell"]))
+		if tiles < best["tiles"]:
+			best = {"tiles": tiles, "kind": feature["kind"]}
+	return best
+
+
+# Every cell something already stands on: spawns, palms, pick-ups, tide pools, the workbench, the
+# raft site, drinking spots, signs, the chest and the decor.
+func _taken_cells() -> Dictionary[Vector2i, bool]:
+	var taken: Dictionary[Vector2i, bool] = {solo_spawn: true}
+	var lists: Array[Array] = [coop_spawns, palms, tide_pools, drink_spots, [workbench, raft_site, chest]]
+	for list: Array in lists:
+		for cell: Vector2i in list:
+			taken[cell] = true
+	for pickup: Dictionary in pickups:
+		taken[pickup["cell"]] = true
+	for sign_entry: Dictionary in signs:
+		taken[sign_entry["cell"]] = true
+	for decor_entry: Dictionary in decor:
+		taken[decor_entry["cell"]] = true
+	return taken
+
+
+# The step count at quantile `q` of `sorted`, nearest rank.
+static func _quantile(sorted: Array[int], q: float) -> int:
+	return sorted[clampi(roundi(q * (sorted.size() - 1)), 0, sorted.size() - 1)]
+
+
+static func _reading_order(a: Vector2i, b: Vector2i) -> bool:
+	return a.y < b.y or a.y == b.y and a.x < b.x
 
 
 func _read(layout: IslandLayoutData) -> void:
@@ -120,6 +260,10 @@ func _read_cell(cell: Vector2i, glyph: String, spawns: Dictionary[String, Vector
 		drink_spots.append(cell)
 	elif glyph == _layout.solo_spawn_glyph or _layout.coop_spawn_glyphs.contains(glyph):
 		spawns[glyph] = cell
+	elif not _layout.chest_glyph.is_empty() and glyph == _layout.chest_glyph:
+		chest = cell
+	if _layout.decor_glyphs.has(glyph):
+		decor.append({"cell": cell, "decor_id": _layout.decor_glyphs[glyph]})
 	for sign_data: IslandSignData in _layout.signs:
 		if sign_data.glyph == glyph:
 			signs.append({"cell": cell, "sign": sign_data})

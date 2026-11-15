@@ -69,8 +69,12 @@ enum IdentifyGroup {
 @export var stack_size: int = 1
 ## Weight against the carry limit of 30; above 15 while swimming, energy drains x2.
 @export var weight: float = 1.0
-## Weight when an ITEM_TAG spawn picks among tagged items.
+## Weight when an ITEM_TAG spawn picks among tagged items. A SECRET item keeps 0 (the content
+## validator rejects more), so no spawn can draw it (secret-cay).
 @export var spawn_weight: float = 1.0
+## Above 0, the item lies concealed on the ground until a player comes within this many tiles,
+## and picking it up takes the secret tuning's hold (secret-cay "Concealment"). 0: an ordinary item.
+@export var conceal_radius_tiles: float = 0.0
 ## false: used or read where it stands, or opened only by an effect (wall_slogan, la_lista).
 @export var can_pick_up: bool = true
 ## Uses or servings; the item is removed at 0. 0 means no counter (unbreakable or a material).

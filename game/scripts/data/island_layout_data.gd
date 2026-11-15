@@ -58,3 +58,26 @@ extends ContentData
 
 @export_group("Pick-ups")
 @export var pickups: Array[IslandGlyphData] = []
+
+@export_group("Secret")
+## Never generated, listed as a numbered island, counted or scaled; only the feature that owns it
+## opens it, and it gets no creature spawner (secret-cay, island-generation "Off-graph handmade
+## layouts").
+@export var off_graph: bool = false
+## Never shown, listed or hinted by any discovery, map, marker or AI system (secret-cay "Secrecy").
+@export var secret: bool = false
+## The cell of the island's chest; empty when it has none.
+@export var chest_glyph: String = ""
+## The item the chest lays beside itself when it opens (an id in game/resources/items/).
+@export var chest_item_id: StringName = &""
+## Scenery cells: glyph to a decor id (embers, cigar_smoke, drag_mark, cut_line, post...).
+@export var decor_glyphs: Dictionary[String, StringName] = {}
+## Each decor id's placeholder colour, drawn on its cells until its art comes.
+@export var decor_colors: Dictionary[StringName, Color] = {}
+
+
+func get_reference_fields() -> Dictionary[StringName, StringName]:
+	var fields: Dictionary[StringName, StringName] = {}
+	if not chest_item_id.is_empty():
+		fields[&"chest_item_id"] = &"items"
+	return fields

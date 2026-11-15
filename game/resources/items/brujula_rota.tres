@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://del1l5cu73wmd" path="res://assets/art/items/brujula_rota.png" id="icon_brujula_rota"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_brujula_rota")
+description_es = "La única brújula que nunca te manda pa'l Norte."
+description_en = "The only compass that never sends you to el Norte."
+category = 6
+tags = Array[int]([15])
+weight = 0.3
+spawn_weight = 0.0
+conceal_radius_tiles = 3.0
+capabilities = Array[int]([28])
+id = &"brujula_rota"
+name_es = "Brújula rota"
+name_en = "Broken compass"

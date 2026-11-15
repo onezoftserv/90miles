@@ -5,9 +5,19 @@ extends RefCounted
 ## RPC, spawner and synchronizer paths match across branches. ENet runs on a free localhost
 ## port. Call teardown() from after_each: sessions are freed before their peers are closed,
 ## because closing a peer under live synchronizers logs engine errors.
+## ENet's packet throttle is kept open on every connection: with every peer in this one process, a
+## round trip lasts until the other side's next frame, so a loaded machine reads as a congested
+## link. A few slow frames after a calm connect then cut the host's unreliable synchronizer
+## packets to 1 in 32 for up to ENet's 5 s throttle interval, and a test waiting on synced state
+## times out (test_net_harness_net.gd). The game keeps ENet's defaults.
 
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const TIMEOUT_S: float = 5.0
+## ENet's default throttle interval and acceleration, and no deceleration, so the throttle never
+## falls below its limit (ENet's default deceleration is 2 per slow acknowledgement).
+const THROTTLE_INTERVAL_MS: int = 5000
+const THROTTLE_ACCELERATION: int = 2
+const THROTTLE_DECELERATION: int = 0
 
 var port: int = 0
 var branches: Array[Node] = []
@@ -27,6 +37,7 @@ func add_host(setup: Callable = Callable(), started: bool = true, lobby: bool = 
 	var peer := NetPeers.create_server(0)
 	port = NetPeers.bound_port(peer)
 	apis[0].multiplayer_peer = peer
+	apis[0].peer_connected.connect(_unthrottle)
 	if started:
 		session.start(lobby)
 	return session
@@ -159,6 +170,19 @@ func _add_branch(branch_name: String, setup: Callable) -> CoopSession:
 	apis.append(api)
 	sessions.append(session)
 	return session
+
+
+# Keeps ENet's packet throttle open on the host's connection to `peer_id`. ENet sends the setting
+# to the client as well, so its intents to the host stay open too.
+func _unthrottle(peer_id: int) -> void:
+	if apis.is_empty():
+		return
+	var enet := apis[0].multiplayer_peer as ENetMultiplayerPeer
+	if enet == null:
+		return
+	var connection: ENetPacketPeer = enet.get_peer(peer_id)
+	if connection != null:
+		connection.throttle_configure(THROTTLE_INTERVAL_MS, THROTTLE_ACCELERATION, THROTTLE_DECELERATION)
 
 
 func _connected(session: CoopSession) -> bool:

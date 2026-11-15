@@ -2,9 +2,13 @@
 
 [ext_resource type="Script" path="res://scenes/levels/sandbar_island.gd" id="1_island"]
 [ext_resource type="PackedScene" path="res://scenes/art/terrain_view.tscn" id="2_terrain"]
+[ext_resource type="Script" path="res://scenes/art/decor_view.gd" id="3_decor"]
 
 [node name="SandbarIsland" type="Node2D"]
 y_sort_enabled = true
 script = ExtResource("1_island")
 
 [node name="Terrain" parent="." instance=ExtResource("2_terrain")]
+
+[node name="Decor" type="Node2D" parent="."]
+script = ExtResource("3_decor")

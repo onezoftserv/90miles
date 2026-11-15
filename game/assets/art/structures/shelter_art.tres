@@ -6,5 +6,6 @@
 [resource]
 script = ExtResource("1_data")
 shelters = Dictionary[StringName, PackedScene]({
+&"cayo_sin_norte": ExtResource("2_lean_to"),
 &"sandbar": ExtResource("2_lean_to")
 })

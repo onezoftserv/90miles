@@ -101,6 +101,7 @@ enum ItemTag {
 	UNKNOWN,
 	TINDER,
 	MEAT,
+	SECRET,
 }
 
 enum Capability {
@@ -132,6 +133,7 @@ enum Capability {
 	GLARE_PROTECTION,
 	FLOAT_AT_ZERO_ENERGY,
 	POWER_SOURCE,
+	POINT_TO_SECRET,
 }
 
 enum CreatureTag {

@@ -14,4 +14,4 @@ Work: 90 Millas item icons
 Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
-Files: coco.png, dry_grass.png, inner_tube.png, plastic_jug.png, rope.png, tarp.png, binoculars.png, nails.png, mirror.png, aloe.png, lighter.png (drawn by hand as tools/art/fixes/items/<id>.png and outlined by tools/art/items.py)
+Files: coco.png, dry_grass.png, inner_tube.png, plastic_jug.png, rope.png, tarp.png, binoculars.png, nails.png, mirror.png, aloe.png, lighter.png, brujula_rota.png, mapa_sin_norte.png, sombrero_cinta_roja.png, nota_llegaste_tarde.png (drawn by hand as tools/art/fixes/items/<id>.png and outlined by tools/art/items.py)

@@ -20,10 +20,10 @@ Tick when the file exists and loads in Godot.
 - [ ] plants (10): manzanillo · guao · jaguey · uva_caleta_unripe · hicaco · guanabana · noni · sabila · hongo_playa · tabaco_silvestre
 - [ ] tools (18): knife · machete · broken_bottle · spear · fishing_line · lure · net · snare · pliers · binoculars · compass · charts · mirror · lighter · flint_steel · shovel_oar · tabla_surf · tabla_vela
 - [ ] materials (17; `inner_tube`, `plastic_jug`, `rope` exist): driftwood · hardwood · inner_tube · plastic_jug · rope · line_spool · tarp · nails · resin · dry_grass · cloth · tire · tanque_55 · propela · bidon_combustible · azucar · camara_bici
-- [ ] wearables (9): straw_hat · life_vest · wetsuit_top · fins · sandals · gloves · sunglasses · military_belt · sombrero_cinta_roja (secret)
-- [ ] oddities (15): flare · radio · car_battery · solar_charger · vhf · gps · expired_medicine · cigars · fire_pages · baseball · dominoes · bilge_pump · botija · brujula_rota (secret) · mapa_sin_norte (secret)
+- [ ] wearables (9; `sombrero_cinta_roja` exists): straw_hat · life_vest · wetsuit_top · fins · sandals · gloves · sunglasses · military_belt · sombrero_cinta_roja (secret)
+- [ ] oddities (15; `brujula_rota`, `mapa_sin_norte` exist): flare · radio · car_battery · solar_charger · vhf · gps · expired_medicine · cigars · fire_pages · baseball · dominoes · bilge_pump · botija · brujula_rota (secret) · mapa_sin_norte (secret)
 - [ ] keepsakes (9): foto_familia · cuchillo_abuelo · medalla_caridad · nudo_pescador · pedazo_mapa · cassette_van_van · pelota_firmada · llave_almendron · pluma_galleguito
-- [ ] texts (16): libreta_ramon · diario_periodo_especial · cartas_yuma · la_lista · bottle_note · reply_bottle · wall_slogan · radio_fragment · menu_board · patrol_logbook · yunior_notebook · captain_log · nota_se_vende · fallo_del_pilote · sobre_tres_generaciones · nota_llegaste_tarde (secret)
+- [ ] texts (16; `nota_llegaste_tarde` exists): libreta_ramon · diario_periodo_especial · cartas_yuma · la_lista · bottle_note · reply_bottle · wall_slogan · radio_fragment · menu_board · patrol_logbook · yunior_notebook · captain_log · nota_se_vende · fallo_del_pilote · sobre_tres_generaciones · nota_llegaste_tarde (secret)
 
 ## game/resources/recipes/ (22)
 
@@ -69,10 +69,11 @@ The grapefruit steak is `toronja.cooks_into`, not a recipe.
 
 - [ ] calm · trade_wind · squall · fog · hurricane · waterspout · red_tide · king_tide · heat_dome · sargassum · lightning
 
-## game/resources/islands/ (2)
+## game/resources/islands/ (3)
 
 - [x] sandbar (handmade first island, change `sandbar-island`; `IslandLayoutData`: text rows plus glyph legend)
-- [ ] cayo_sin_norte (handmade secret cay, change `secret-cay`; marked `secret` and `off_graph`, so island generation never lists or numbers it; `docs/ISLANDS.md` "El cayo sin norte")
+- [x] coast_cay (handmade second island, change `coast-cay`)
+- [x] cayo_sin_norte (handmade secret cay, change `secret-cay`; marked `secret` and `off_graph`, so island generation never lists or numbers it; `docs/ISLANDS.md` "El cayo sin norte")
 
 ## Secret cay (change `secret-cay`)
 

@@ -43,6 +43,9 @@ signal player_rebound(old_peer: int, new_peer: int, body: PlayerBody)
 ## Every peer: the host loads island `layout_id` with these arrivals (peer id -> {health, energy})
 ## and a beached raft of `raft_integrity` (0: none). IslandTravel does it.
 signal island_travel_requested(layout_id: StringName, arrivals: Dictionary, raft_integrity: float)
+## Host: a joiner or a rejoined player was sent the world state and its lobby reply; what it must
+## hear once its island has loaded goes now (structure-state-sync design D6: the palms' counts).
+signal join_state_sent(peer_id: int)
 
 ## LOBBY gathers names and spawns nobody; RUN spawns every player (and every joiner at once).
 enum Phase {
@@ -96,8 +99,10 @@ const WORLD_STATE_TYPES: Dictionary[String, int] = {
 	"waiting": TYPE_ARRAY,
 	"raft": TYPE_FLOAT,
 }
-## The most players in a `waiting` list or an arrivals message.
-const MAX_ARRIVALS: int = MAX_PLAYERS
+## The most players in a `waiting` list or an arrivals message: a sanity bound on a host message,
+## not the player cap. Dropped bodies hold no place in the cap, so four connected players and dropped
+## ones waiting can arrive together (dropped-teammate-state D5).
+const MAX_ARRIVALS: int = 2 * MAX_PLAYERS
 
 ## Where players appear, in join order (the host first). Set by the level.
 @export var spawn_points: Array[Vector2] = [Vector2.ZERO]
@@ -260,6 +265,8 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 	# After the reply, whose owner map puts every body under its current peer (crossing-late-join).
 	if _started and phase == Phase.RUN and body(sender) != null and has_node(^"Routes"):
 		(get_node(^"Routes") as IslandRoutes).send_progress(sender)
+	if _started and phase == Phase.RUN and body(sender) != null:
+		join_state_sent.emit(sender)
 	_share_roster(sender)
 
 
@@ -335,6 +342,7 @@ func _reclaim(old_peer: int, new_peer: int) -> bool:
 	if reclaimed == null or not _dropped.has(old_peer):
 		return false
 	_dropped.erase(old_peer)
+	reclaimed.net.net_dropped = false
 	_limits.erase(old_peer)
 	_limits[new_peer] = PeerLimits.new()
 	_rebind_body(old_peer, new_peer)
@@ -444,14 +452,26 @@ func _physics_process(delta: float) -> void:
 			_remove_player(peer_id)
 
 
-## Host: whether `peer_id` dropped and its player is waiting out the countdown.
+## Whether `peer_id` dropped and its player is waiting out the countdown. The host owns the
+## countdown; a client reads the flag the host writes into the body's synced state, so every peer
+## (a late joiner too) agrees.
 func is_dropped(peer_id: int) -> bool:
-	return _dropped.has(peer_id)
+	if multiplayer.is_server():
+		return _dropped.has(peer_id)
+	var player := body(peer_id)
+	return player != null and player.net.net_dropped
 
 
 ## Host: seconds before a dropped client's player is removed (0 if it is not dropped).
 func disconnect_time_left(peer_id: int) -> float:
 	return _dropped.get(peer_id, 0.0)
+
+
+## Host: cuts a dropped player's time left to at most `at_most_s` (escape-routes "Split parties":
+## IslandTravel does it when dropped players are all that keep riders waiting). Nothing elsewhere.
+func shorten_drop(peer_id: int, at_most_s: float) -> void:
+	if multiplayer.is_server() and _dropped.has(peer_id):
+		_dropped[peer_id] = minf(_dropped[peer_id], at_most_s)
 
 
 ## Host: the difficulty for an island set up now, from the living, connected players (dropped
@@ -1030,6 +1050,7 @@ func _on_peer_disconnected(peer_id: int) -> void:
 	if dropped == null or _dropped.has(peer_id):
 		return
 	dropped.set_downed(true)
+	dropped.net.net_dropped = true
 	_limits.erase(peer_id)
 	_dropped[peer_id] = DISCONNECT_DOWNED_S
 	player_disconnected.emit(peer_id)
@@ -1040,6 +1061,8 @@ func _remove_player(peer_id: int) -> void:
 	if leaving == null:
 		return
 	var last_position: Vector2 = leaving.position
+	# secret-cay: the secret never leaves the run with a removed player.
+	SecretRules.lay_down_for_leaver(self, peer_id, leaving, last_position)
 	var removed_name := player_name(peer_id)
 	# A player whose meters died while they were away keeps that cause.
 	var cause: StringName = DeathCause.REMOVED
@@ -1156,7 +1179,7 @@ func _spawn_entity(data: Variant) -> Node:
 		KIND_CREATURE:
 			return _make_creature(info.get("id"), entity_name, spot)
 		KIND_SITE, KIND_STRUCTURE:
-			return SitePlacer.from_payload(kind, info, entity_name, spot, climate, multiplayer.is_server())
+			return SitePlacer.from_payload(kind, info, entity_name, spot, climate)
 	return null
 
 

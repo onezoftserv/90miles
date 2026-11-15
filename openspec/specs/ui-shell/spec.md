@@ -80,12 +80,17 @@ The game SHALL open on the title screen. Solo goes straight to a run, with no lo
 - **THEN** the host-lost screen shows, and "Volver" returns to the title
 
 ### Requirement: Title screen
-The title screen SHALL show the logo over an animated sea, the buttons "Jugar solo", "Hospedar partida", "Unirse", "Ajustes" and "Salir", a panel describing the focused button, and the game version. The first button has focus on arrival.
+The title screen SHALL show the logo over an animated sea, the buttons "Jugar solo", "Hospedar partida", "Unirse", "Ajustes", "Créditos" and "Salir", a panel describing the focused button, and the game version. The first button has focus on arrival.
 
 #### Scenario: Focus describes the option
 - **GIVEN** the title screen
 - **WHEN** the focus moves to "Hospedar partida"
 - **THEN** the description panel explains hosting and that others join by IP on UDP port 7777
+
+#### Scenario: Credits offered offline
+- **GIVEN** a solo player on the title screen, offline, with no session
+- **WHEN** the focus moves to "Créditos"
+- **THEN** it sits between "Ajustes" and "Salir", the description panel says it lists who made the game's art and fonts and under which licences, and no network port is opened
 
 ### Requirement: Join screen
 The join screen SHALL take a host address with an optional `:port` (default 7777). A blank address or a port outside 1 to 65535 is refused with a message and nothing connects. While connecting it shows "Conectando…"; on failure it shows "No se pudo conectar." and stays open; "Volver" returns to the title.
@@ -108,7 +113,7 @@ The lobby SHALL list up to four players by name, the host first and marked. Only
 - **THEN** both lobbies list Yuni (anfitrión) and Papo, and only Yuni's has "Empezar viaje"
 
 ### Requirement: HUD layout
-During a run the HUD SHALL keep to a 640×360 budget. The six meters sit top-left, each label inside its bar, a bar pulsing when critical (thirst, hunger, energy, morale or health at 25 or less, heat at 75 or more). The day phase sits top-centre. In co-op, teammates are listed top-right with name, health and a state word, and a teammate's name and health strip show over their head while health is not full. The bottom band is the inventory's and the centre holds no panel.
+During a run the HUD SHALL keep to a 640×360 budget. The six meters sit top-left, each label inside its bar, a bar pulsing when critical (thirst, hunger, energy, morale or health at 25 or less, heat at 75 or more). The day phase sits top-centre. In co-op, teammates are listed top-right with name, health and a state word, and a teammate's name and health strip show over their head while health is not full. The bottom band is the inventory's and the centre holds no panel. An open sign note sits top-centre under the day phase, clear of the meters, the teammate list and the centre.
 
 #### Scenario: Solo HUD
 - **GIVEN** a solo run
@@ -124,6 +129,11 @@ During a run the HUD SHALL keep to a 640×360 budget. The six meters sit top-lef
 - **GIVEN** a co-op run with Papo downed
 - **WHEN** a teammate looks at the HUD
 - **THEN** Papo's row reads "Caído" with his health, and his name and health strip show over his head
+
+#### Scenario: The sign note keeps clear
+- **GIVEN** a co-op run with three teammates listed and a sign note open showing the longest coast cay line
+- **WHEN** the HUD is drawn
+- **THEN** the note's rectangle overlaps none of the meters, the day phase, the teammate list, the inventory band or the centre
 
 ### Requirement: Settings
 The settings screen SHALL hold the player name, fullscreen, the scale (automatic or 1× to 4×) and the pixel filter, and keep them per install across launches. Esc and the gamepad back button return to the previous screen from every menu screen, except the host's lobby: closing it ends the lobby for everyone, so only "Salir" does that.
