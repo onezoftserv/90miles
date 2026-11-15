@@ -1,9 +1,10 @@
 class_name NetPeers
 extends RefCounted
-## Creates the multiplayer transport (coop-networking "Host and join", review item 40). ENet
-## now, joined by IP; the host forwards UDP DEFAULT_PORT by hand (no UPnP). Steam relay or
-## WebRTC would replace only create_server() and create_client(). Used by NetManager and by
-## the tests; autoloads hold no constants (core-services), so the numbers live here.
+## The ENet peer factory behind EnetBackend and the tests (coop-networking "Host and join",
+## net-platform "Platform backend", review item 40): joined by IP; the host forwards UDP
+## DEFAULT_PORT by hand (no UPnP). A platform backend (Steam, EOS, a console) is a NetBackend of
+## its own and leaves this file alone. Autoloads hold no constants (core-services), so the
+## numbers live here.
 
 const DEFAULT_PORT: int = 7777
 const MAX_PLAYERS: int = 4
@@ -41,3 +42,15 @@ static func bound_port(peer: MultiplayerPeer) -> int:
 	if enet == null or enet.host == null:
 		return 0
 	return enet.host.get_local_port()
+
+
+## The LAN IPv4 addresses worth showing in the host's lobby (no loopback, no link-local), sorted.
+## `all` is IP.get_local_addresses(). Moved here from LobbyScreen.
+static func lan_addresses(all: PackedStringArray) -> PackedStringArray:
+	var shown: PackedStringArray = []
+	for address: String in all:
+		if address.is_valid_ip_address() and not address.contains(":") \
+				and not address.begins_with("127.") and not address.begins_with("169.254."):
+			shown.append(address)
+	shown.sort()
+	return shown

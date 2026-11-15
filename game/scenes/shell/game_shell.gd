@@ -4,6 +4,12 @@ extends Node
 ## screen at a time and builds the run (island + CoopSession) in its World. Screens only ask
 ## (signals); the shell alone talks to NetManager. Solo goes straight to a run on the offline
 ## peer, with nothing waiting for another player.
+##
+## Hosting and joining are NetManager requests (net-platform): READY, PENDING or FAILED. The run
+## is built only once the request's peer is installed (_continue, on READY at once or on `settled`
+## later), never under the offline peer standing in for a pending one, so a pending joiner never
+## acts as host. A join from outside the game (an invite, --connect=) starts at once from a menu
+## screen and otherwise waits for the title; a lobby or a run is never interrupted.
 
 enum Flow {
 	TITLE,
@@ -29,6 +35,9 @@ const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const TINT_SCENE: PackedScene = preload("res://scenes/world/day_night_tint.tscn")
 ## A run's first morning: the clock reads 06:00, the start of dawn (docs/GAME_DESIGN.md §5).
 const RUN_START_TIME_S: float = 0.0
+## The title's line when hosting failed and the backend table has no line for the reason (an
+## unreadable table): ENet's own wording.
+const HOST_FAILED: String = "No se pudo abrir el puerto %d."
 
 ## Where the settings live; tests point it elsewhere.
 @export var settings_path: String = GameSettings.DEFAULT_PATH
@@ -63,6 +72,11 @@ var _run_started_s: float = 0.0
 ## While the local rider waits on the shore: who is still playing (null outside a run).
 var _wait_label: Label
 var _crossing_rng := RandomNumberGenerator.new()
+# This shell's last host or join request (pending, or ready with its peer installed), or null.
+var _request: NetRequest
+# A join of this shell is under way: from the request until it fails, is cancelled, or its lobby
+# or run shows.
+var _joining: bool = false
 
 ## The world's own 640×360 view (ui-shell "Pixel filter"); the HUD and screens are outside it.
 @onready var world_view: SubViewportContainer = $WorldView
@@ -83,6 +97,8 @@ func _ready() -> void:
 	if not settings.identity_stored:
 		settings.save()
 	NetManager.join_failed.connect(_on_join_failed)
+	NetManager.host_failed.connect(_on_host_failed)
+	NetManager.outside_join_requested.connect(_on_outside_join)
 	death_lines = DeathLines.from_catalog(GameState.content)
 	apply_display()
 	apply_pixel_filter()
@@ -129,6 +145,9 @@ func show_title() -> void:
 	title.settings_requested.connect(show_settings)
 	title.credits_requested.connect(show_credits)
 	title.quit_requested.connect(func() -> void: get_tree().quit())
+	# A join from outside the game kept during a lobby or a run (or one from the launch line)
+	# starts now. Deferred: the title may show inside a NetManager signal.
+	_take_outside_join.call_deferred()
 
 
 func show_settings() -> void:
@@ -157,13 +176,86 @@ func show_join() -> void:
 	join.connect_requested.connect(_join)
 
 
-## Hosting: open the port, gather players in the lobby, start when the host says so.
+## Hosting: ask the backend for a session on `port`, gather players in the lobby, start when the
+## host says so. A slower backend shows the lobby opening first; pressing again while it opens
+## does nothing.
 func start_host() -> void:
-	if NetManager.host(port) != OK:
-		var title := screen as TitleScreen
-		if title != null:
-			title.description.text = "No se pudo abrir el puerto %d." % port
+	if NetManager.pending_request() != null:
 		return
+	# The old run goes before the peer is swapped.
+	_end_run()
+	_joining = false
+	_request = NetManager.request_host(port)
+	match _request.state:
+		NetRequest.State.READY:
+			_continue(_request)
+		NetRequest.State.PENDING:
+			_show_opening()
+			_request.settled.connect(_continue)
+		_:
+			_show_host_failure()
+
+
+func show_lobby(is_host: bool) -> void:
+	_joining = false
+	var lobby := _show(LOBBY_SCENE, Flow.LOBBY) as LobbyScreen
+	lobby.is_host = is_host
+	lobby.show_roster(session.roster)
+	if is_host:
+		# How others join comes from the backend: the port opened and, on ENet, the LAN addresses.
+		var info := NetManager.host_info()
+		lobby.set_addresses(info.addresses if info != null else PackedStringArray())
+		var note: String = NetManager.lobby_note()
+		if not note.is_empty():
+			lobby.note.text = note
+		lobby.start_requested.connect(func() -> void: session.begin_run())
+	lobby.back_requested.connect(back_to_title)
+
+
+# The host's lobby while the backend opens the session: only Salir, which cancels. No run exists
+# yet; _on_hosting() builds it and shows the full lobby.
+func _show_opening() -> void:
+	var lobby := _show(LOBBY_SCENE, Flow.LOBBY) as LobbyScreen
+	lobby.show_opening()
+	lobby.back_requested.connect(back_to_title)
+
+
+# Kept for the join screen and tests: an address and port.
+func _join(address: String, join_port: int) -> void:
+	_join_target(NetJoinTarget.at_address(address, join_port))
+
+
+## Joins `target` (an address, or a platform token). The run is built only once the client peer
+## is installed: at once on ENet, a few frames later on a slower backend. A failure shows on the
+## join screen, which opens if it is not showing.
+func _join_target(target: NetJoinTarget) -> void:
+	# The old run goes before the peer is swapped.
+	_end_run()
+	_joining = true
+	_request = NetManager.request_join(target)
+	match _request.state:
+		NetRequest.State.READY:
+			_continue(_request)
+		NetRequest.State.PENDING:
+			_request.settled.connect(_continue)
+		_:
+			_on_join_failed()
+
+
+# The one continuation of a host or join request (design.md D3): called at once when the request
+# comes back READY, or by its `settled` signal later. A cancelled, failed or replaced request is
+# ignored; a late failure arrives through host_failed or join_failed instead.
+func _continue(request: NetRequest) -> void:
+	if request != _request or request.state != NetRequest.State.READY:
+		return
+	if request.kind == NetRequest.Kind.HOST:
+		_on_hosting()
+	else:
+		_on_joining()
+
+
+# The server peer is installed: the host's run, and the lobby with the host alone.
+func _on_hosting() -> void:
 	_build_run()
 	session.local_name = settings.player_name
 	session.roster_updated.connect(_refresh_lobby)
@@ -172,24 +264,11 @@ func start_host() -> void:
 	show_lobby(true)
 
 
-func show_lobby(is_host: bool) -> void:
-	var lobby := _show(LOBBY_SCENE, Flow.LOBBY) as LobbyScreen
-	lobby.is_host = is_host
-	lobby.show_roster(session.roster)
-	if is_host:
-		lobby.set_addresses(LobbyScreen.local_addresses(IP.get_local_addresses()))
-		lobby.start_requested.connect(func() -> void: session.begin_run())
-	lobby.back_requested.connect(back_to_title)
-
-
-# The session exists before the connection completes, so the host's spawns and messages
-# always find it.
-func _join(address: String, join_port: int) -> void:
+# The client peer is installed (and connecting): the run is built as a client in the same step, so
+# the session exists before the first packet from the host is read.
+func _on_joining() -> void:
 	_build_run(true)
 	session.local_name = settings.player_name
-	if NetManager.join(address, join_port) != OK:
-		_on_join_failed()
-		return
 	session.roster_updated.connect(_refresh_lobby)
 	session.lobby_received.connect(func(in_run: bool) -> void:
 		if in_run:
@@ -200,11 +279,67 @@ func _join(address: String, join_port: int) -> void:
 	session.start()
 
 
-func _on_join_failed() -> void:
+# The title's line for a failed host: the reason's line, or ENet's own wording.
+func _show_host_failure() -> void:
+	if flow != Flow.TITLE:
+		show_title()
+	var title := screen as TitleScreen
+	if title == null:
+		return
+	var text: String = NetManager.failure_text(NetManager.last_failure, NetManager.last_failure_args)
+	title.description.text = text if not text.is_empty() else HOST_FAILED % port
+
+
+# Hosting failed after the request returned: back to the title, which says why.
+func _on_host_failed() -> void:
+	if _request == null or _request.kind != NetRequest.Kind.HOST:
+		return
+	_request = null
 	_end_run()
-	var join := screen as JoinScreen
-	if join != null:
-		join.show_failed()
+	show_title()
+	_show_host_failure()
+
+
+# A join of this shell failed, in the call or later: the join screen (opened if it is not showing)
+# shows the reason's line, or "No se pudo conectar." when there is none.
+func _on_join_failed() -> void:
+	if not _joining and not screen is JoinScreen:
+		return
+	_joining = false
+	_request = null
+	_end_run()
+	if not screen is JoinScreen:
+		show_join()
+	var text: String = NetManager.failure_text(NetManager.last_failure, NetManager.last_failure_args)
+	(screen as JoinScreen).show_failed(text if not text.is_empty() else JoinScreen.FAILED)
+
+
+# An invite or a platform "join game". Taken on the next idle step if a menu screen shows,
+# otherwise kept by NetManager until the title shows.
+func _on_outside_join(_target: NetJoinTarget) -> void:
+	_take_outside_join.call_deferred()
+
+
+# Whether a join from outside the game may start now: on the title, settings, credits or an idle
+# join screen, with no run and nothing under way.
+func _can_take_outside_join() -> bool:
+	if _joining or session != null or NetManager.pending_request() != null:
+		return false
+	return flow in [Flow.TITLE, Flow.SETTINGS, Flow.CREDITS, Flow.JOIN]
+
+
+# Starts the kept join from outside the game, if any and if nothing would be interrupted: the join
+# screen in its connecting mode with the target's label.
+func _take_outside_join() -> void:
+	if not is_inside_tree() or not _can_take_outside_join():
+		return
+	var target: NetJoinTarget = NetManager.take_outside_join()
+	if target == null:
+		return
+	if not screen is JoinScreen:
+		show_join()
+	(screen as JoinScreen).show_connecting(target.label)
+	_join_target(target)
 
 
 func _refresh_lobby() -> void:
@@ -239,8 +374,13 @@ func _leave_host_lost() -> void:
 	back_to_title()
 
 
-## Solo: the offline peer, a session that spawns the one player at once, straight to the run.
+## Solo: the offline peer, a session that spawns the one player at once, straight to the run. Any
+## host or join under way is cancelled; the backend is asked for nothing.
 func start_solo() -> void:
+	_request = null
+	_joining = false
+	# The old run goes before the peer is swapped.
+	_end_run()
 	NetManager.start_solo()
 	_build_run()
 	session.local_name = settings.player_name
@@ -254,8 +394,10 @@ func _restart_solo() -> void:
 	start_solo()
 
 
-## Ends the run (if any), goes offline and shows the title.
+## Ends the run (if any), cancels a host or join under way, goes offline and shows the title.
 func back_to_title() -> void:
+	_request = null
+	_joining = false
 	_end_run()
 	NetManager.leave()
 	show_title()
@@ -297,6 +439,7 @@ func _build_run(as_client: bool = false) -> void:
 
 
 func _enter_run() -> void:
+	_joining = false
 	if flow == Flow.RUN:
 		return
 	_close_screen()

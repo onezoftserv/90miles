@@ -29,11 +29,11 @@ Groups 1–5 are docs and specs, done in this change (no file under `game/` chan
 
 ## 6. Code: vessels (change `vessel-car-board`; Tier B)
 
-- [ ] 6.1 Append `DataEnums.Vessel.CAR` and `Vessel.BOARD` (after `DOLPHIN_POD`); add the car sprite and one board sprite per rider to the crossing scene; review `CompanionData.allowed_vessels` (Marisol and Alfredo may ride the car, nobody who cannot swim the board)
-- [ ] 6.2 Add `RouteData.arrival_scatter_tiles: Vector2i` (default (0, 5)) and apply it on arrival; `tabla` sets (10, 20) and stays on the beach
-- [ ] 6.3 Per-rider boards in the crossing scene: integrity 60, squall and shark dump the rider, who self-climbs in 3 s; the board breaks at 0 and is lost on arrival
-- [ ] 6.4 GUT tests: the integrity numbers (almendrón squall −45, board 60), a solo board rider dumped and climbing back, a solo arrival and a 3-rider scatter of 10–20 tiles, the almendrón's solo build (60 s with the pliers, 60 energy) and its fuel spend, `almendron_hundido` gating the chain rows after a solo capture
-- [ ] 6.5 Verify the import, smoke run, GUT and a 300-frame run pass with no `ERROR:` lines
+- [x] 6.1 Append `DataEnums.Vessel.CAR` and `Vessel.BOARD` (after `DOLPHIN_POD`); add the car sprite and one board sprite per rider to the crossing scene; review `CompanionData.allowed_vessels` (Marisol and Alfredo may ride the car, nobody who cannot swim the board). Done in `vessel-car-board`: the enums, `CrossingDeck` draws the car and `CrossingBoards` one board per rider; `can_swim`'s comment names `BOARD` (no code reads `allowed_vessels` yet and no companion exists)
+- [x] 6.2 Add `RouteData.arrival_scatter_tiles: Vector2i` (default (0, 5)) and apply it on arrival; `tabla` sets (10, 20) and stays on the beach. Done in `vessel-car-board`: the host picks every landing cell (`ArrivalScatter`) and sends it with the arrival; only a raft kept on arrival is beached, so a board (lost on arrival) and the car leave nothing at the raft site
+- [x] 6.3 Per-rider boards in the crossing scene: integrity 60, squall and shark dump the rider, who self-climbs in 3 s; the board breaks at 0 and is lost on arrival. Done in `vessel-car-board` (owner, 2026-11-14): no lashing on a board, a teammate may also pull a rider onto their own board in 2 s, a rock or shark hits the boards in turn; `SHARK_ATTACK` now dumps on any route that lists it
+- [x] 6.4 GUT tests: the integrity numbers (almendrón squall −45, board 60), a solo board rider dumped and climbing back, a solo arrival and a 3-rider scatter of 10–20 tiles, the almendrón's solo build (60 s with the pliers, 60 energy) and its fuel spend, `almendron_hundido` gating the chain rows after a solo capture. Done in `vessel-car-board` with fixture routes (`test_car`, `test_board`), the fuel spend included (route items marked `consume` are spent at the start); the solo build test moved to 8.3 and the `almendron_hundido` gate to 9b.1 (owner, 2026-11-14)
+- [x] 6.5 Verify the import, smoke run, GUT and a 300-frame run pass with no `ERROR:` lines (`vessel-car-board`, with a host and a client on port 7785)
 
 ## 7. Code: creatures (change `creature-perch-ride`; Tier B)
 
@@ -45,8 +45,8 @@ Groups 1–5 are docs and specs, done in this change (no file under `game/` chan
 ## 8. Content batch 11, balsero gear (19 files)
 
 - [ ] 8.1 Create the 10 items (`tanque_55`, `propela`, `bidon_combustible`, `tabla_surf`, `tabla_vela`, `toronja`, `bistec_toronja`, `azucar`, `milordo`, `camara_bici`) plus `botija`, the 4 recipes and `pluma_galleguito`; these do not need the new enums
-- [ ] 8.2 Create the routes `almendron` and `tabla` and `llave_almendron` once group 6 lands (they use `Vessel.CAR` and `Vessel.BOARD`)
-- [ ] 8.3 Verify the content catalog loads all 19, the import, smoke run and GUT pass
+- [ ] 8.2 Create the routes `almendron` and `tabla` and `llave_almendron` once group 6 lands (they use `Vessel.CAR` and `Vessel.BOARD`). `tabla` sets `arrival_scatter_tiles` (10, 20), `vessel_kept_on_arrival = false` and the rider requirement `HAS_ITEM tabla_vela` with `consume`, and `tabla_vela`'s use sets `spends_use = false` (as `binoculars` does), so a refused start spends nothing; `almendron` sets `vessel_integrity` 160, `squall_damage_multiplier` 1.5 and the requirement `HAS_ITEM bidon_combustible` with `consume`
+- [ ] 8.3 Verify the content catalog loads all 19, the import, smoke run and GUT pass; add the almendrón's solo build test (60 s with the pliers, 60 energy, moved here from 6.4) and a solo crossing on the real `tabla` and `almendron` routes
 
 ## 9. Content batch 12, balsero world (16 files plus edits)
 
@@ -55,6 +55,10 @@ Groups 1–5 are docs and specs, done in this change (no file under `game/` chan
 - [ ] 9.3 Edit existing entries: `bottle_note`, `wall_slogan`, `radio_fragment`, `diario_periodo_especial`, `seagull`, `la_captura`, the five ending dialogues, the chain route rows and `poi_chances`, and the loot of the fishermen's houses, the village dock, the resort generator and the galley, each with the lines in `docs/ITEMS.md`, `docs/BESTIARY.md` and `docs/GAME_DESIGN.md` §13 (Spanish first, English beside it, soft profanity variants where the line swears)
 - [ ] 9.4 Verify the content catalog loads, the import, smoke run and GUT pass
 - [ ] 9.5 When `backend/prompts/` is written, add the rule that the AI prompt bans the 1994 tugboat sinking (`docs/LORE.md`)
+
+## 9b. Capture at sea (with the shore squad and capture work, `TASKS.md` §6)
+
+- [ ] 9b.1 When capture at sea, chain route rows and `FLAG_SET` exist: a GUT test that a solo capture on the almendrón sets `almendron_hundido` and that it gates the chain rows (moved here from 6.4, owner 2026-11-14)
 
 ## 10. Review
 

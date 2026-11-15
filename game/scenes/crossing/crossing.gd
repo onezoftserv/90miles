@@ -6,11 +6,14 @@ extends Node2D
 ## ends the crossing with a CrossingResult. Clients build the same node, receive the plan, the
 ## rider states and the result, and only show them. Coordinates are absolute: the node sits at
 ## (0, 0) and the sea at `origin`, far from the island, so riders keep their sync and meters.
-## The sea and the deck are drawn by two children, `Sea` (CrossingSea) at z -40 and `Deck`
-## (CrossingDeck) at z -20, because the node sorts at its own (0, 0) in the y-sorted session while
-## its riders are far north of it (art-pass "Draw order by foot position", "Crossing look";
-## design.md T5, T18). They read the crossing every frame and only show; the crossing never names
-## them, and freeing them changes nothing it does.
+## The sea and the deck are drawn by children, `Sea` (CrossingSea) at z -40 and `Deck` (CrossingDeck)
+## and `Boards` (CrossingBoards) at z -20, because the node sorts at its own (0, 0) in the y-sorted
+## session while its riders are far north of it (art-pass "Draw order by foot position", "Crossing
+## look"; design.md T5, T18). They read the crossing every frame and only show; the crossing never
+## names them, and freeing them changes nothing it does.
+## A board route (vessel-car-board) gives each rider their own board, a 1x2-tile deck in a row
+## through the sea's centre, beside a shared vessel of no integrity: `vessel_of` and `deck_rect_of`
+## answer per rider, so the raft and the car keep their one shared deck and lashing unchanged.
 
 ## Host and clients: the crossing ended with this result.
 signal ended(result: CrossingResult)
@@ -26,6 +29,10 @@ const HOST_ID: int = 1
 const TILE_PX: float = 16.0
 const SEA_TILES: Vector2i = Vector2i(24, 22)
 const DECK_TILES: Vector2i = Vector2i(4, 2)
+## A board is one tile wide and two long, nose north (crossing "Per-rider boards").
+const BOARD_TILES: Vector2i = Vector2i(1, 2)
+## Boards stand in rider order this many tiles apart, centre to centre: a 2-tile gap between them.
+const BOARD_STEP_TILES: int = 3
 ## Where the first crossing's sea starts; each later one sits one sea width to the right.
 const ORIGIN_Y_PX: float = -4096.0
 const ORIGIN_STEP_PX: float = 1024.0
@@ -44,6 +51,8 @@ var route: RouteData
 var plan: CrossingPlan
 var tuning: CrossingTuning = CrossingTuning.standard()
 var integrity: VesselIntegrity = VesselIntegrity.new()
+## Board routes: each rider's own board by peer (crossing "Per-rider boards"); empty otherwise.
+var boards: Dictionary[int, VesselIntegrity] = {}
 ## Replaceable: the reef shark (creatures-ai) resolves the shark pass; ScriptedThreats stays as the fallback.
 var threats: CrossingThreats = CreatureThreats.new()
 var elapsed_s: float = 0.0
@@ -66,6 +75,8 @@ var _resync_left_s: float = 0.0
 var _scroll_px: float = 0.0
 # Events up to this time have fired (a hair past the clock, so 0.1 s steps meet exact times).
 var _fired_to_s: float = -1.0
+# Host: the rider slot the next single-board hit starts looking from (crossing "Board hits").
+var _board_turn: int = 0
 
 
 ## Builds the crossing for `peer_ids` under `session`. The host rolls and sends the plan; a client
@@ -143,7 +154,9 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 	_peers = peer_ids.duplicate()
 	serial = number
 	origin = Vector2(number * ORIGIN_STEP_PX, ORIGIN_Y_PX)
-	var starting: float = 0.0 if route.riders_swim else (starting_integrity if starting_integrity > 0.0 else float(route.vessel_integrity))
+	# Swimmers and board riders share no vessel: the shared one has no integrity, so no deck or lashing.
+	var shared: bool = not route.riders_swim and not is_board_route()
+	var starting: float = 0.0 if not shared else (starting_integrity if starting_integrity > 0.0 else float(route.vessel_integrity))
 	integrity = VesselIntegrity.create(starting)
 	integrity.broke.connect(_on_broke)
 	session.player_rebound.connect(_on_player_rebound)
@@ -152,6 +165,9 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 	if integrity.intact():
 		sea.fill_rect(_deck_cells(), DataEnums.Terrain.BEACH)
 		_lash = _make_point(RescuePoint.Kind.LASH, 0, tuning.tie_hold_s)
+	if is_board_route():
+		for index: int in _peers.size():
+			_add_board(_peers[index], index)
 	for index: int in _peers.size():
 		_enter_rider(_peers[index], index)
 
@@ -189,6 +205,25 @@ func peer_of(player: PlayerBody) -> int:
 
 func rider_state(peer: int) -> Rider:
 	return _states.get(peer, Rider.DEAD) as Rider
+
+
+## True on a route whose riders each ride their own board (vessel-car-board).
+func is_board_route() -> bool:
+	return route != null and route.vessel == DataEnums.Vessel.BOARD and not route.riders_swim
+
+
+## The vessel `peer` rides: their own board on a board route, the shared vessel otherwise.
+func vessel_of(peer: int) -> VesselIntegrity:
+	if is_board_route():
+		return boards.get(peer, integrity) as VesselIntegrity
+	return integrity
+
+
+## The deck `peer` stands on: their own board on a board route, the shared deck otherwise.
+func deck_rect_of(peer: int) -> Rect2:
+	if is_board_route():
+		return _board_rect(maxi(_peers.find(peer), 0))
+	return deck_rect()
 
 
 ## The centre of the deck, or of the sea when swimmers have no vessel.
@@ -231,9 +266,36 @@ func advance(delta: float) -> void:
 		_send_state()
 
 
-## The vessel takes a hit; at 0 it breaks (`_on_broke`). Nothing happens without a vessel.
-func hit_vessel(amount: float) -> void:
+## The vessel takes a hit; at 0 it breaks (`_on_broke`). Nothing happens without a vessel. On a
+## board route the hit takes one board: the next intact one in rider order from the last hit,
+## wrapping round (crossing "Board hits"); with none left it hits nothing. A shark hit (`shark`) on a
+## route that dumps on a shark attack throws the hit vessel's riders who are aboard and not tied into
+## the water (crossing "Shark dumps"). Returns the centre of the deck that was hit, where the shark
+## shows (the sea's centre when nothing was).
+func hit_vessel(amount: float, shark: bool = false) -> Vector2:
+	if not is_board_route():
+		integrity.hit(amount)
+		_dirty = true
+		if shark:
+			_shark_dump(_peers)
+		return deck_center()
+	var peer: int = _next_board()
+	if peer == 0:
+		return deck_center()
+	var hit_at: Vector2 = deck_rect_of(peer).get_center()
+	boards[peer].hit(amount)
+	_dirty = true
+	if shark:
+		var riders: Array[int] = [peer]
+		_shark_dump(riders)
+	return hit_at
+
+
+## Every vessel takes the hit at once (a squall): the shared one, or every intact board.
+func hit_every_vessel(amount: float) -> void:
 	integrity.hit(amount)
+	for peer: int in boards:
+		boards[peer].hit(amount)
 	_dirty = true
 
 
@@ -267,12 +329,13 @@ func untie(peer: int) -> void:
 		_set_state(peer, Rider.ABOARD)
 
 
-## A swimmer climbs or is pulled onto the deck. Nothing happens without an intact vessel.
+## A swimmer climbs or is pulled onto their own deck: the shared one, or their own board. Nothing
+## happens without that vessel intact.
 func bring_aboard(peer: int) -> void:
 	var body := body_of(peer)
-	if body == null or rider_state(peer) != Rider.IN_WATER or not integrity.intact():
+	if body == null or rider_state(peer) != Rider.IN_WATER or not vessel_of(peer).intact():
 		return
-	body.global_position = _deck_spot(_peers.find(peer))
+	body.global_position = _spot(_peers.find(peer))
 	_set_state(peer, Rider.ABOARD)
 
 
@@ -289,12 +352,21 @@ func receive_plan(plan_data: Array, vessel_value: float) -> void:
 		integrity.value = clampf(vessel_value, 0.0, integrity.maximum)
 
 
-## Clients: every rider's state and the vessel's integrity, on change and every second.
+## Clients: every rider's state, the vessel's integrity and every board's (peer -> value, a board
+## route only), on change and every second.
 @rpc("authority", "call_remote", "reliable")
-func receive_state(states: Dictionary, vessel_value: float, time_s: float) -> void:
+func receive_state(states: Dictionary, vessel_value: float, time_s: float, board_values: Dictionary = {}) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID or finished or not is_finite(vessel_value) or not is_finite(time_s):
 		return
-	_apply_state(states, vessel_value, time_s)
+	_apply_state(states, vessel_value, time_s, board_values)
+
+
+## Every board's integrity by rider, as plain values (empty off a board route).
+func board_values() -> Dictionary:
+	var values: Dictionary = {}
+	for peer: int in boards:
+		values[peer] = boards[peer].value
+	return values
 
 
 ## A joiner: the crossing as `snapshot` has it (a checked snapshot, so no sender check here). The
@@ -305,7 +377,7 @@ func apply_snapshot(snapshot: CrossingSnapshot) -> void:
 		return
 	if plan == null:
 		plan = snapshot.plan
-	_apply_state(snapshot.states, snapshot.value, snapshot.elapsed_s)
+	_apply_state(snapshot.states, snapshot.value, snapshot.elapsed_s, snapshot.boards)
 	if snapshot.broken:
 		_show_broken()
 	var inside: Rect2 = sea_rect().grow(-EDGE_GAP_PX)
@@ -351,13 +423,22 @@ func _fire(event: CrossingBeat) -> void:
 			threats.resolve(event, self)
 
 
-# The squall hits the vessel once and, on a route a squall dumps from, throws in every rider who
-# is not tied down.
+# The squall hits the vessel, or every board, once and, on a route a squall dumps from, throws in
+# every rider who is not tied down.
 func _squall() -> void:
-	hit_vessel(tuning.squall_hit * route.squall_damage_multiplier)
+	hit_every_vessel(tuning.squall_hit * route.squall_damage_multiplier)
 	if not route.dump_triggers.has(RouteData.DumpTrigger.SQUALL):
 		return
 	for peer: int in _peers:
+		if rider_state(peer) == Rider.ABOARD:
+			throw_in(peer)
+
+
+# On a route a shark attack dumps from, `riders` aboard and not tied go into the water.
+func _shark_dump(riders: Array[int]) -> void:
+	if not route.dump_triggers.has(RouteData.DumpTrigger.SHARK_ATTACK):
+		return
+	for peer: int in riders:
 		if rider_state(peer) == Rider.ABOARD:
 			throw_in(peer)
 
@@ -380,6 +461,56 @@ func _show_broken() -> void:
 
 func _sink_deck() -> void:
 	sea.fill_rect(_deck_cells(), DataEnums.Terrain.DEEP)
+
+
+func _add_board(peer: int, index: int) -> void:
+	var board := VesselIntegrity.create(float(route.vessel_integrity))
+	board.broke.connect(_on_board_broke.bind(board))
+	boards[peer] = board
+	if board.intact():
+		sea.fill_rect(_board_cells(index), DataEnums.Terrain.BEACH)
+
+
+# A broken board sinks and throws only its own rider in; nobody climbs back onto it.
+func _on_board_broke(board: VesselIntegrity) -> void:
+	var peer: int = _board_owner(board)
+	if peer == 0:
+		return
+	_sink_board(peer)
+	throw_in(peer)
+	_dirty = true
+
+
+# The rider whose board `board` is (it follows a rejoined rider to their new peer), or 0.
+func _board_owner(board: VesselIntegrity) -> int:
+	for peer: int in boards:
+		if boards[peer] == board:
+			return peer
+	return 0
+
+
+func _sink_board(peer: int) -> void:
+	sea.fill_rect(_board_cells(maxi(_peers.find(peer), 0)), DataEnums.Terrain.DEEP)
+
+
+# Clients: the host says this board broke; its cells are deep water here too.
+func _show_board_broken(peer: int) -> void:
+	var board := boards.get(peer) as VesselIntegrity
+	if board == null or board.broken or not board.has_integrity():
+		return
+	board.broken = true
+	_sink_board(peer)
+
+
+# Host: the next intact board in rider order from the turn, wrapping round; 0 when none is left.
+func _next_board() -> int:
+	for step: int in _peers.size():
+		var slot: int = (_board_turn + step) % _peers.size()
+		var board := boards.get(_peers[slot]) as VesselIntegrity
+		if board != null and board.intact():
+			_board_turn = slot + 1
+			return _peers[slot]
+	return 0
 
 
 func _tick_rider(peer: int, delta: float) -> void:
@@ -406,12 +537,15 @@ func _swim(body: PlayerBody, delta: float) -> void:
 	if body.meters.energy <= EPSILON_S:
 		body.meters.harm(tuning.drown_health_per_s * delta, DeathCause.DROWNING)
 	if integrity.intact() and deck_rect().has_point(body.global_position):
-		body.global_position = _edge_outside(body.global_position)
+		body.global_position = _edge_outside(body.global_position, deck_rect())
+	for peer: int in boards:
+		var board := deck_rect_of(peer)
+		if boards[peer].intact() and board.has_point(body.global_position):
+			body.global_position = _edge_outside(body.global_position, board)
 
 
-# The deck is not walkable from the water: a swimmer on it is moved to the nearest edge.
-func _edge_outside(point: Vector2) -> Vector2:
-	var deck := deck_rect()
+# A deck or board is not walkable from the water: a swimmer on it is moved to its nearest edge.
+func _edge_outside(point: Vector2, deck: Rect2) -> Vector2:
 	var gaps: Array[float] = [point.x - deck.position.x, deck.end.x - point.x, point.y - deck.position.y, deck.end.y - point.y]
 	var nearest: int = gaps.find(gaps.min())
 	match nearest:
@@ -425,14 +559,15 @@ func _edge_outside(point: Vector2) -> Vector2:
 
 
 func _enter_rider(peer: int, index: int) -> void:
-	_states[peer] = Rider.IN_WATER if not integrity.has_integrity() else Rider.ABOARD
+	var aboard: bool = vessel_of(peer).has_integrity()
+	_states[peer] = Rider.ABOARD if aboard else Rider.IN_WATER
 	_points[peer * 2] = _make_point(RescuePoint.Kind.CLIMB, peer, tuning.climb_hold_s)
 	_points[peer * 2 + 1] = _make_point(RescuePoint.Kind.PULL, peer, tuning.pull_hold_s)
 	var body := body_of(peer)
 	if body == null:
 		return
 	_bind_body(body)
-	body.global_position = _deck_spot(index) if integrity.has_integrity() else deck_center() + Vector2(0.0, (index - 1.5) * SPACING_PX)
+	body.global_position = _spot(index) if aboard else deck_center() + Vector2(0.0, (index - 1.5) * SPACING_PX)
 	_apply_flags()
 
 
@@ -474,18 +609,19 @@ func _on_point_used(by: Node, point: RescuePoint) -> void:
 			bring_aboard(point.swimmer)
 
 
-# Climb points sit at the deck edge nearest their swimmer, pull handles on the swimmer; both are on
-# only while the swimmer is in the water within 1 tile and the vessel is intact.
+# Climb points sit at the edge of the swimmer's own deck (the shared one, or their board) nearest
+# them, pull handles on the swimmer; both are on only while the swimmer is in the water within 1
+# tile and that vessel is intact.
 func _refresh_points() -> void:
 	if is_instance_valid(_lash):
 		_lash.enabled = integrity.intact()
 	var reach_px: float = tuning.reach_tiles * TILE_PX
-	var deck := deck_rect()
 	for peer: int in _peers:
 		var body := body_of(peer)
 		var climb := _points[peer * 2] as RescuePoint
 		var pull := _points[peer * 2 + 1] as RescuePoint
-		var swimming: bool = body != null and rider_state(peer) == Rider.IN_WATER and integrity.intact()
+		var deck := deck_rect_of(peer)
+		var swimming: bool = body != null and rider_state(peer) == Rider.IN_WATER and vessel_of(peer).intact()
 		climb.enabled = false
 		pull.enabled = swimming
 		if body == null:
@@ -507,6 +643,9 @@ func _on_player_rebound(old_peer: int, new_peer: int, _body: PlayerBody) -> void
 	if _states.has(old_peer):
 		_states[new_peer] = _states[old_peer]
 		_states.erase(old_peer)
+	if boards.has(old_peer):
+		boards[new_peer] = boards[old_peer]
+		boards.erase(old_peer)
 	for offset: int in 2:
 		var point := _points.get(old_peer * 2 + offset) as RescuePoint
 		_points.erase(old_peer * 2 + offset)
@@ -525,9 +664,9 @@ func _set_state(peer: int, state: Rider) -> void:
 	_apply_flags()
 
 
-# Clients: the host's rider states (riders only, in range), clock and vessel, from a resync or a
-# snapshot.
-func _apply_state(states: Dictionary, vessel_value: float, time_s: float) -> void:
+# Clients: the host's rider states (riders only, in range), clock, vessel and boards (riders'
+# boards only, finite values, in range), from a resync or a snapshot.
+func _apply_state(states: Dictionary, vessel_value: float, time_s: float, board_values: Dictionary = {}) -> void:
 	for peer: Variant in states:
 		var state: Variant = states[peer]
 		if peer is int and state is int and _states.has(peer) and state >= 0 and state < Rider.size():
@@ -537,6 +676,14 @@ func _apply_state(states: Dictionary, vessel_value: float, time_s: float) -> voi
 		integrity.value = clampf(vessel_value, 0.0, integrity.maximum)
 		if integrity.value <= 0.0:
 			_show_broken()
+	for peer: Variant in board_values:
+		var value: Variant = board_values[peer]
+		if not peer is int or not boards.has(peer) or not (value is float or value is int) or not is_finite(float(value)):
+			continue
+		var board: VesselIntegrity = boards[peer]
+		board.value = clampf(float(value), 0.0, board.maximum)
+		if board.value <= 0.0:
+			_show_board_broken(peer)
 	_apply_flags()
 
 
@@ -564,7 +711,7 @@ func _send_state() -> void:
 	_dirty = false
 	_resync_left_s = RESYNC_S
 	for peer: int in _connected_recipients():
-		receive_state.rpc_id(peer, _states.duplicate(), integrity.value, elapsed_s)
+		receive_state.rpc_id(peer, _states.duplicate(), integrity.value, elapsed_s, board_values())
 
 
 func _finish() -> void:
@@ -584,6 +731,9 @@ func _finish() -> void:
 			"aboard": state == Rider.ABOARD or state == Rider.TIED,
 			"dead": body.meters.dead,
 		}
+		if boards.has(peer):
+			result.riders[peer]["board"] = boards[peer].value
+			result.riders[peer]["board_broken"] = boards[peer].broken
 		body.pinned = false
 	for peer: int in _connected_recipients():
 		receive_result.rpc_id(peer, result.to_dict())
@@ -597,3 +747,22 @@ func _deck_cells() -> Rect2i:
 
 func _deck_spot(index: int) -> Vector2:
 	return deck_center() + Vector2((index - 1.5) * SPACING_PX, 0.0)
+
+
+# Where rider slot `index` stands aboard: the middle of their board, or their spot on the deck.
+func _spot(index: int) -> Vector2:
+	return _board_rect(index).get_center() if is_board_route() else _deck_spot(index)
+
+
+# Board slot `index`: 1x2 tiles on the deck's rows, the row of boards centred on the sea.
+func _board_cells(index: int) -> Rect2i:
+	var span: int = BOARD_STEP_TILES * (_peers.size() - 1) + BOARD_TILES.x
+	var first: int = floori((SEA_TILES.x - span) / 2.0)
+	var top_left := Vector2i((origin / TILE_PX).floor()) + Vector2i(first + BOARD_STEP_TILES * index, 0)
+	top_left.y = _deck_cells().position.y
+	return Rect2i(top_left, BOARD_TILES)
+
+
+func _board_rect(index: int) -> Rect2:
+	var cells := _board_cells(index)
+	return Rect2(Vector2(cells.position) * TILE_PX, Vector2(cells.size) * TILE_PX)
