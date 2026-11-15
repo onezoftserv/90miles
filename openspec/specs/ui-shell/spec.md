@@ -52,7 +52,7 @@ Every screen SHALL use one theme: Pixelify Sans at 16 or 32 px for titles and bu
 - **THEN** its pixels are whole (no smoothing between font pixels)
 
 ### Requirement: Screen flow
-The game SHALL open on the title screen. Solo goes straight to a run, with no lobby and nothing waiting for another player. Hosting opens the lobby; joining opens the join screen, then the lobby, or the run if one is under way. When every player still in the run is dead the run summary shows, then the title or a new run; a disconnected player keeps the run open until they are removed. Losing the host shows the host-lost screen, then the title.
+The game SHALL open on the title screen. Solo goes straight to a run, with no lobby and nothing waiting for another player. Hosting opens the lobby; while a slower backend opens the session the lobby says "Abriendo la partida…" and only "Salir" works, which cancels, and asking to host again while it opens does nothing; if hosting fails the title says why. Joining opens the join screen, then the lobby, or the run if one is under way; a join requested from outside the game opens the join screen already connecting, and a join failure always shows on the join screen. When every player still in the run is dead the run summary shows, then the title or a new run; a disconnected player keeps the run open until they are removed. Losing the host shows the host-lost screen, then the title.
 
 #### Scenario: Solo from the title
 - **GIVEN** the title screen
@@ -79,6 +79,16 @@ The game SHALL open on the title screen. Solo goes straight to a run, with no lo
 - **WHEN** the host disconnects
 - **THEN** the host-lost screen shows, and "Volver" returns to the title
 
+#### Scenario: Hosting on a slower backend
+- **GIVEN** exactly 1 player and a backend that opens hosting a few frames after the request
+- **WHEN** the player picks "Hospedar partida"
+- **THEN** the lobby shows "Abriendo la partida…" with only "Salir" until hosting is ready, then lists the host alone with "Empezar viaje", which starts a run with one player
+
+#### Scenario: Salir while the session opens
+- **GIVEN** a lobby still showing "Abriendo la partida…"
+- **WHEN** the player picks "Salir"
+- **THEN** the title shows, the game is offline, and the backend has left its session
+
 ### Requirement: Title screen
 The title screen SHALL show the logo over an animated sea, the buttons "Jugar solo", "Hospedar partida", "Unirse", "Ajustes", "Créditos" and "Salir", a panel describing the focused button, and the game version. The first button has focus on arrival.
 
@@ -93,7 +103,7 @@ The title screen SHALL show the logo over an animated sea, the buttons "Jugar so
 - **THEN** it sits between "Ajustes" and "Salir", the description panel says it lists who made the game's art and fonts and under which licences, and no network port is opened
 
 ### Requirement: Join screen
-The join screen SHALL take a host address with an optional `:port` (default 7777). A blank address or a port outside 1 to 65535 is refused with a message and nothing connects. While connecting it shows "Conectando…"; on failure it shows "No se pudo conectar." and stays open; "Volver" returns to the title.
+The join screen SHALL take a host address with an optional `:port` (default 7777). A blank address or a port outside 1 to 65535 is refused with a message and nothing connects. While connecting it shows "Conectando…"; a join requested from outside the game shows its target in the address field, which cannot be edited, while it connects. On failure it shows the reason's line ("No se pudo conectar." when nobody answers) and stays open; "Volver" cancels a join under way and returns to the title. Solo never shows this screen.
 
 #### Scenario: Bad port
 - **WHEN** the player enters "192.168.1.20:99999" and picks "Conectar"
@@ -104,13 +114,23 @@ The join screen SHALL take a host address with an optional `:port` (default 7777
 - **WHEN** the connection attempt fails
 - **THEN** the screen shows "No se pudo conectar." and the player can try again
 
+#### Scenario: Volver cancels a join under way
+- **GIVEN** a join still waiting on the backend
+- **WHEN** the player picks "Volver"
+- **THEN** the title shows, the game is offline, and no session starts later
+
 ### Requirement: Lobby
-The lobby SHALL list up to four players by name, the host first and marked. Only the host can start the run ("Empezar viaje"), alone or with others; clients see that they wait for the host. The host's lobby shows that others join on UDP port 7777 and lists the host's local addresses. Solo never shows the lobby.
+The lobby SHALL list up to four players by name, the host first and marked. Only the host can start the run ("Empezar viaje"), alone or with others; clients see that they wait for the host. The host's lobby shows how others join, from the active backend: with ENet, that they join on the UDP port the host opened (7777 by default), and the host's local addresses. Solo never shows the lobby.
 
 #### Scenario: Two players meet
 - **GIVEN** a host named Yuni in the lobby
 - **WHEN** a client named Papo joins
 - **THEN** both lobbies list Yuni (anfitrión) and Papo, and only Yuni's has "Empezar viaje"
+
+#### Scenario: Host on another port
+- **GIVEN** a host that opened UDP port 7780
+- **WHEN** its lobby shows
+- **THEN** the note names port 7780 and the host's LAN addresses are listed
 
 ### Requirement: HUD layout
 During a run the HUD SHALL keep to a 640×360 budget. The six meters sit top-left, each label inside its bar, a bar pulsing when critical (thirst, hunger, energy, morale or health at 25 or less, heat at 75 or more). The day phase sits top-centre. In co-op, teammates are listed top-right with name, health and a state word, and a teammate's name and health strip show over their head while health is not full. The bottom band is the inventory's and the centre holds no panel. An open sign note sits top-centre under the day phase, clear of the meters, the teammate list and the centre.
@@ -180,3 +200,31 @@ During a run the HUD's bottom band (y 306 to 360) SHALL hold the local player's 
 - **GIVEN** a host with one client
 - **WHEN** each peer draws its HUD
 - **THEN** the strip and its lines lie inside y 306 to 360 and overlap neither the meters, the day phase nor the teammate list
+
+### Requirement: Teammate state word
+In co-op, a teammate's row SHALL end with one state word, the first that applies: "Muerto" when their meters say dead, "Desconectado" while their client is disconnected and their body waits, "Caído" when they are downed, else none. The word for a given teammate is the same on the host, on every client and on a client that joined later. Solo has no teammate rows.
+
+#### Scenario: A dropped teammate on a client
+- **GIVEN** a host and two clients, Dayana and Papo, in a run
+- **WHEN** Papo's client disconnects
+- **THEN** Papo's row reads "Desconectado" on the host's HUD and on Dayana's, not "Caído"
+
+#### Scenario: A late joiner sees the same word
+- **GIVEN** Papo's client disconnected and his body waits on the sandbar
+- **WHEN** another client joins the run during his 90 s
+- **THEN** Papo's row on the joiner's HUD reads "Desconectado"
+
+#### Scenario: Back from a drop
+- **GIVEN** Papo's client disconnected and Dayana's HUD shows his row as "Desconectado"
+- **WHEN** Papo joins again within 90 s from the same install
+- **THEN** Papo's row on Dayana's HUD and on the host's shows no state word, and if his meters had him downed it reads "Caído"
+
+#### Scenario: Dead comes first
+- **GIVEN** Papo's client disconnected and his body waits
+- **WHEN** his meters kill him before he is removed
+- **THEN** his row reads "Muerto" on every peer
+
+#### Scenario: Solo has no rows
+- **GIVEN** a solo run, offline
+- **WHEN** the HUD is shown
+- **THEN** there is no teammate row and no state word anywhere
