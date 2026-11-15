@@ -124,6 +124,8 @@ func test_everything_is_in_reach_of_a_lone_arrival() -> void:
 	var goals: Array[Vector2i] = [built.raft_site]
 	goals.append_array(built.palms)
 	goals.append_array(built.drink_spots)
+	assert_ne(built.workbench, Vector2i(-1, -1), "the coast cay has a workbench (coast-cay-bench)")
+	goals.append(built.workbench)
 	for entry: Dictionary in built.signs:
 		goals.append(entry["cell"])
 	for pickup: Dictionary in built.pickups:
