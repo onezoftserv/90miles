@@ -67,9 +67,19 @@ The search was measured with a throwaway script over the two handmade layouts. T
 | A still, hidden player found, if a soldier passing within 1 tile finds them (decision 5b) | 72% of cells on average; 5 cells at 25% or less | 73%; no cell at 25% or less |
 | Same, passing over the very cell | 36% | 26% |
 | A still player in the open, spotted by day sight within 150 s | 66% of trials (median 40 s) | 54% (median 35 s) |
-| A still, hidden player more than 2 tiles from every searched point (decision 5a) | never found | never found |
+| A still, hidden player more than 2 tiles from every searched point (decision 5a) | never found, by rule | never found, by rule |
 
-With a stumble rule, hiding is a coin flip at best, which takes away the solo player's main way through. With point searches only, hiding works, but moving away from the last known position and from the fire first is the skill. A player who stays in the open is caught about as often as the searchlight catches one in a lap.
+The 5a row holds by rule; the simulation did not measure it. Whether a spotted player can reach such a place depends on where the last known position falls. Under decision 5a it is where the player was last seen: where they hid, or where they left sight. A second throwaway script measured, for every land cell taken as that position, how far it is to cover more than 2 tiles away. It also counted the hiding cells from which a crouching player can slip more than 2 tiles away while still hidden, inside a connected patch.
+
+| | Sandbar | Coast cay |
+| --- | --- | --- |
+| Hiding patches (largest) | 26 (12, 11, 8 cells) | 30 (the post's 15; the rest are single cells) |
+| Steps from a last-known position to cover more than 2 tiles away | median 3, 90th percentile 6, max 8 | median 3, 90th percentile 7, max 13 |
+| Hiding cells you can crouch away from while still hidden | 62 of 96 | 15 of 44 (only the post) |
+
+So on the sandbar a spotted player can dive into a scrub patch and crouch through it. On the coast cay that works only in the post. Elsewhere they must first leave sight (the light's 10 tiles, or a soldier's 6) and then take cover a few steps on. The searchlight's lock breaking where they hide is what makes "hide on the spot" fail.
+
+With a stumble rule, hiding is a coin flip at best, which takes away the solo player's main way through. With point searches only, hiding works, but moving off the last-seen spot and away from the fire is the skill. A player who stays in the open is caught about as often as the searchlight catches one in a lap.
 
 ## Goals / Non-Goals
 
@@ -162,7 +172,7 @@ The soldier's brain is `game/scripts/ai/search_capture.gd`, for `SEARCH_CAPTURE`
 - The rules are the same as the searchlight's: no occlusion, and `HiddenRules` hides.
 - In weather that disables `SIGHT`, no soldier sees anyone.
 - A spot credited to a soldier makes it `CHASE` that player at `soldier_chase_tiles_s` (5) while they stay unhidden within its sight length.
-- When the chase breaks, the soldier's last known position becomes a point the soldier searches itself.
+- When the chase breaks, the soldier's last known position becomes a point the soldier searches itself. That position is where it last saw the player: the cell where they hid, or where they left its sight length.
 
 The capture touch mirrors `NightThief._pinch`. Time accumulates while the chased or found player is within `capture_touch_tiles` (1), it resets when contact breaks, and at `capture_touch_s` (2) the player is captured. Downed and dropped bodies are never targets.
 
@@ -184,7 +194,7 @@ The capture touch mirrors `NightThief._pinch`. Time accumulates while the chased
 
 **Searching a point.** On arrival a soldier stands for `point_search_s` (3) and finds any hidden player within `point_search_tiles` (2): that player is spotted at once and chased.
 
-**New sightings.** A new spot by a boat or a soldier replaces the last known position. The new point goes to the nearest soldier that is not escorting or chasing.
+**The last known position.** While a spotted player stays visible to the boat's lock or a soldier's chase, their position is tracked. When they hide, or leave the lock's 10 tiles or the soldier's sight length, the position at that moment becomes the last known position. A new one replaces the old, and the new point goes to the nearest soldier that is not escorting or chasing.
 
 **Leaving.** The squad leaves:
 - when `search_duration_s` (180) has passed since beaching and at least `capture_grace_s` (60) since its latest capture;
@@ -202,8 +212,10 @@ Soldiers walk back to the dinghy, the give-up line plays, the dinghy rows out wi
 - A hauled swimmer is pinned at the boat's position, aboard, and is not interactable.
 
 **Freeing.** Each captive's body carries an `Interactable` ("Soltar", hold 1 s).
+- It runs through the existing interact intent (the intent RPC's interact flag and the host's interaction hold), so no new client message is added. That keeps it clear of `intent-delivery` (PR #55), which reshapes the intent RPC.
 - The host checks reach, and checks that no soldier is within `free_guard_radius_tiles` (3) at the start and on every tick of the hold. The hold follows the `RescuePoint` and `InteractionHold` precedent.
 - A freed captive stands on the landing cell, or where they are if freed on the walk.
+- On the walk the escorting soldier is always within 1 tile, so in this slice a rescue happens in the dinghy. The rule is written for any guard distance, so that a later decoy that pulls the escort away (`DECOY`) makes a walk rescue possible with no rule change.
 
 **Taken.** When the squad leaves while someone is free, each captive is taken (owner decision 8):
 - `IslandArrival.hold(body)` hides them;
@@ -340,7 +352,7 @@ The host decides everything:
 - **Soldiers:** ordinary creatures (position, facing, `state_id`), so a joiner gets them in the spawn packet.
 - **The scene:** `scene_line` RPCs, plus the current line in the join extras.
 
-**The one new intent** is `request_free(target_peer)`, any_peer, which the host validates.
+**No new client intent.** Freeing is an ordinary interact hold on the captive's `Interactable`, which the host checks (§7).
 
 **A late joiner:**
 - While the squad is ashore, the joiner gets the soldiers, the dinghy and the captive flags.

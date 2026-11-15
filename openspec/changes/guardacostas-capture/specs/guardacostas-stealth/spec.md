@@ -4,9 +4,9 @@
 When a boat spots a player or raises a smoke or noise alert, it SHALL stop and run an alert: its loudhailer calls out, and at night its light aims at the cause. A spotted swimmer is chased (Boat chase at sea). An alert whose cause is on land lands the squad when none is ashore, and lasts until the squad is back aboard. Otherwise a spotted player stays locked while visible within 10 tiles, then the light sweeps 30° round the last known position and the alert ends 20 s later unless a new spot restarts it. The boat then resumes its lap where it stopped. One player meets the same alert.
 
 #### Scenario: Solo player spotted, hides and gets away
-- **GIVEN** a solo player spotted on open sand at night, 3 tiles from scrub
-- **WHEN** they crouch on the scrub
-- **THEN** the lock breaks, the light sweeps round where they were last seen, the squad lands and searches, and once the squad is back aboard the boat resumes its lap
+- **GIVEN** a solo player spotted on the sandbar at night, 3 tiles from a scrub patch
+- **WHEN** they crouch on the scrub and crouch-walk through it until they are more than 2 tiles from where they hid
+- **THEN** the lock breaks where they hid, the light sweeps round that place, the squad lands and searches it without finding them, and once the squad is back aboard the boat resumes its lap
 
 #### Scenario: Out of range
 - **GIVEN** a locked player at night
@@ -108,7 +108,7 @@ On a whole-party capture on an island (solo: the only player), `la_captura` SHAL
 - **THEN** `la_captura` does not play and no persuasion check is rolled
 
 ### Requirement: Fade with distance
-A mid-chain island (the mangrove, reef, rocky key and lighthouse families) SHALL get its patrol boats with a 30% chance, rolled once per island from the run seed, and then as many as a coast-chain island gets. A far-chain island (storm key, shipwreck reef) SHALL get none. The final crossing has exactly one patrol, which comes with the final crossing. One player gets the base count. (Changes docs/ISLANDS.md "Chains and distance": "fewer patrols" is a 30% chance.)
+A mid-chain island (the mangrove, reef, rocky key and lighthouse families) SHALL get its patrol boats with a 30% chance, rolled once per island from the run seed, and then as many as a coast-chain island gets. A far-chain island (storm key, shipwreck reef) SHALL get none. The final crossing has exactly one patrol, which comes with the final crossing. Chain-specific limits (the mangrove's spit, the lighthouse's dawn pass) come with those chains. One player gets the base count. (Changes docs/ISLANDS.md "Chains and distance": "fewer patrols" is a 30% chance.)
 
 #### Scenario: Far chain
 - **GIVEN** a far-chain island
@@ -174,7 +174,7 @@ Each soldier SHALL see in a cone ahead of it: 6 tiles and 120° by day, and a 5-
 - **THEN** the player's spot meter stays at 0
 
 ### Requirement: Squad search
-The squad SHALL search points in order: every lit fire on the island, nearest the landing first, then the last known position, then a random walk between land cells drawn from the run seed. Each soldier takes the next point nobody has taken. On arrival it searches the point for 3 s, which finds any hidden player within 2 tiles of it. A new spot by a soldier or a boat updates the last known position. With 1 player the search is the same.
+The squad SHALL search points in order: every lit fire on the island, nearest the landing first, then the last known position, then a random walk between land cells drawn from the run seed. Each soldier takes the next point nobody has taken. On arrival it searches the point for 3 s, which finds any hidden player within 2 tiles of it. The last known position is where a spotted player was last seen by a soldier or a boat: where they hid, or where they left sight. With 1 player the search is the same.
 
 #### Scenario: Hiding by your own fire
 - **GIVEN** a solo player crouching on scrub 1 tile from their lit fire when a squad lands
@@ -182,9 +182,14 @@ The squad SHALL search points in order: every lit fire on the island, nearest th
 - **THEN** the player is found within the 3 s and the soldier runs at them
 
 #### Scenario: Hiding away from the search
-- **GIVEN** a solo player spotted on open sand at night, who then runs 10 tiles and crouches on scrub at least 3 tiles from any lit fire
+- **GIVEN** a solo player spotted on open sand at night, who runs inland until the light loses them and then crouches on scrub more than 2 tiles from that place and from any lit fire
 - **WHEN** the squad searches its points and walks the island for its 180 s
 - **THEN** no soldier finds them
+
+#### Scenario: Hiding where you were seen
+- **GIVEN** a solo player spotted by a soldier by day, who crouches on a lone scrub cell while still inside its cone
+- **WHEN** the soldier reaches that cell and searches it
+- **THEN** the player is found within the 3 s
 
 #### Scenario: The same search from the same seed
 - **GIVEN** two solo runs with the same run seed, each with a squad landing at the same moment and place
@@ -228,7 +233,7 @@ A captured player SHALL be a captive: they cannot move, use, craft or pick up, b
 - **THEN** the player is captured only after a fresh 2 s of touch
 
 ### Requirement: Whole-party capture
-A player SHALL count as free while living, connected, standing (not downed and not in a last stand) and not a captive, wherever they are, a rider in a crossing or waiting on the next shore included. When no free player is left and at least one player is a captive, the capture is a whole-party capture: Capture outcome follows at once, and the downed and dropped bodies on the island go with the party. With 1 player, the first capture is a whole-party capture.
+A player SHALL count as free while living, connected, standing (not downed and not in a last stand) and not a captive, wherever they are, a rider in a crossing or waiting on the next shore included. When no free player is left and at least one player is a captive or taken, it is a whole-party capture, checked before Split parties loads an island: Capture outcome follows at once, and the downed and dropped bodies on the island go along. With 1 player, the first capture is one.
 
 #### Scenario: A downed teammate goes along
 - **GIVEN** a host and a client, the client's player downed with 40 s left
@@ -244,6 +249,11 @@ A player SHALL count as free while living, connected, standing (not downed and n
 - **GIVEN** a 2-player run with one player sitting captive in the dinghy
 - **WHEN** the only free player dies
 - **THEN** it is a whole-party capture and `la_captura` plays with the captive
+
+#### Scenario: The last free player dies after the squad has left
+- **GIVEN** a 2-player run whose second player was taken, and whose first player is alone on the sandbar
+- **WHEN** the first player dies
+- **THEN** no island loads; it is a whole-party capture and `la_captura` plays with the taken player
 
 ### Requirement: Taken captives
 When the squad leaves with captives while a free player is left, each captive SHALL be taken: out of play like a rider waiting on the next shore (hidden, unhurt, meters frozen), with every item gone except keepsakes, and with their secret items laid on the landing beach. A taken captive has left the island for Split parties. They land with the party on the next island loaded and join a later whole-party capture. Solo never gets here. (Changes docs/BESTIARY.md "Shore squad".)
@@ -340,8 +350,8 @@ The host SHALL decide every chase, touch, capture, rescue, check and outcome, an
 
 #### Scenario: A client cannot free from afar
 - **GIVEN** a host and a client, the host's player captive and the client's player 6 tiles away
-- **WHEN** the client sends a free request
-- **THEN** the host refuses it and the captive stays a captive
+- **WHEN** the client holds interact toward the captive
+- **THEN** the host frees nobody and the captive stays a captive
 
 #### Scenario: Joining while the squad is ashore
 - **GIVEN** a host whose island has a squad ashore with one captive in the dinghy

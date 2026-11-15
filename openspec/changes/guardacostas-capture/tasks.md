@@ -83,7 +83,7 @@ How the tests are written:
   - the haul at 2 s within 1 tile, reset on leaving;
   - breaks on a dive, shallows, land and 10 tiles;
   - land turning into a landing cause.
-- [ ] 4.2 Implement `game/scripts/stealth/boat_chase.gd` and the boat's `CHASE` state in `patrol_route.gd` (design.md §1, §3). Verify the test passes and the stealth tests still pass.
+- [ ] 4.2 Implement `game/scripts/stealth/boat_chase.gd` and the boat's `CHASE` state in `patrol_route.gd` (design.md §1, §3). Verify the test passes and the stealth tests still pass, except the water-spot cases in `test_patrol_route.gd` and `test_patrol_solo.gd` that expect the 20 s give-up. Update those to expect the chase, as the modified Alert says, and list each one in design.md "Changes from the build plan".
 - [ ] 4.3 Run the import, smoke run and GUT commands, and verify all three pass.
 
 ## 5. Soldier sight (pure)
@@ -107,9 +107,14 @@ How the tests are written:
   - the random walk being equal for equal seeds;
   - leaving at 180 s, the 60 s grace, no free player left, and a squall.
 - [ ] 6.2 Implement `game/scripts/stealth/squad_plan.gd` (design.md §6). Verify the test passes.
-- [ ] 6.3 Write `game/tests/unit/test_squad_search_coverage.gd`, which pins the simulated outcomes of design.md "The search, simulated". Verify it passes, and record its run time in design.md "Changes from the build plan" if it takes over 2 s. On both islands with the real plan and the shipped numbers, it checks:
+- [ ] 6.3 Write `game/tests/unit/test_squad_search_coverage.gd`, which pins the built plan's outcomes on both islands with the shipped numbers. Verify it passes, and record its run time in design.md "Changes from the build plan" if it takes over 2 s. The design.md figures come from a throwaway model, not the real plan, so measure first:
+  1. Run the real `SquadPlan` and soldier sight over 100 seeded runs per island.
+  2. Record the share of runs in which a still player in the open is spotted, beside design.md's 66% and 54%.
+  3. Pin that share to within ±10 points.
+
+  The test also checks, by rule:
   - a hidden player more than 2 tiles from every searched point is never found;
-  - a still player in the open is spotted in 45–75% of 100 seeded runs.
+  - from each island's solo landing, cover more than 2 tiles from any cell is at most 13 steps away (design.md's measured maximum).
 - [ ] 6.4 Run the import, smoke run and GUT commands, and verify all three pass.
 
 ## 7. The soldier, captives and freeing
@@ -127,7 +132,7 @@ How the tests are written:
   - outrunning a soldier;
   - being hauled aboard while swimming in deep water, and escaping into the shallows;
   - a day fire bringing the squad.
-- [ ] 7.3 Implement `game/scripts/ai/search_capture.gd`, the boat's `DOCKED` state, and the captive state on `PlayerBody` (design.md §5–§7). Verify the tests pass and `test_creature_spawner.gd` and the stealth tests still pass. The work is:
+- [ ] 7.3 Implement `game/scripts/ai/search_capture.gd`, the boat's `DOCKED` state, and the captive state on `PlayerBody` (design.md §5–§7). Verify the tests pass and that `test_creature_spawner.gd` and the stealth tests still pass. The exceptions are the land-alert cases in `test_patrol_route.gd` and `test_patrol_solo.gd` that expect the 20 s give-up, such as "Solo player spotted, hides and gets away" and "A smoke alert by day". Update those to expect the squad, as the modified Alert says, and list each one in design.md "Changes from the build plan". The work is:
   - `_acting_body` refuses intents from a captive except quick chat;
   - the dragger is set to the soldier;
   - the captive is pinned in the dinghy;
@@ -168,7 +173,7 @@ How the tests are written:
 
 - [ ] 10.1 Write `game/tests/unit/test_capture_net.gd` with host plus client and verify it fails. It covers the spec's "Capture on every peer", "Captives", "Whole-party capture" and "The capture scene" scenarios:
   - a client frees a captive;
-  - a far free request is refused;
+  - a client's interact hold from out of reach frees nobody;
   - a captive's intents are ignored while its quick chat goes through;
   - joining while the squad is ashore;
   - joining during the scene;
@@ -176,7 +181,7 @@ How the tests are written:
   - a downed teammate going along;
   - a captive client dropping and rejoining;
   - both peers' summaries counting the same islands reached.
-- [ ] 10.2 Implement the sync and the `request_free` intent (design.md §13). Verify the test passes, and that `test_patrol_net.gd`, `test_creature_net.gd`, `test_coop_reconnect.gd` and `test_dead_spectate_net.gd` (if merged) still pass.
+- [ ] 10.2 Implement the sync (design.md §13). Freeing uses the existing interact intent, so no new client message is added. Verify the test passes, and that `test_patrol_net.gd`, `test_creature_net.gd`, `test_coop_reconnect.gd` and `test_dead_spectate_net.gd` (if merged) still pass.
 - [ ] 10.3 Run the import, smoke run and GUT commands, and verify all three pass.
 
 ## 11. Fade with distance

@@ -58,7 +58,7 @@ A solo player's first capture is a whole-party capture, so `la_captura` plays at
 A solo player has a way through every rule:
 - outswim the boat to the shallows, or dive under it;
 - run (6 tiles/s beats a soldier's 5);
-- move away from where they were last seen and from their fire before hiding, because soldiers search those points;
+- move off the spot where they were last seen (where they hid, or where they left sight) and away from their fire before settling, because soldiers search those points. Crouch-walking through a scrub patch, or out of the light's 10 tiles, does it;
 - hide in the scrub, the mangrove or the hut until the squad's 180 s run out.
 
 A failed check sends a solo player to the previous island with their kit minus the lighter, which is a setback and not a death. The tests run one offline player through a landing, an escape, a capture, both outcomes, and the restart on islands 1 and 2. Each co-op rule also has a host-plus-client test.
@@ -87,8 +87,12 @@ Not yet answered. Every artifact follows the recommended option (a). The coordin
    a. *Recommended: sight cones and point searches.*
       - Sight: by day 6 tiles and 120°; at night a 5-tile, 60° flashlight. It fills the same spot meter as the searchlight.
       - Hidden players are never seen. A soldier who searches a point (a fire or a last-known position) for 3 s finds any hidden player within 2 tiles of it.
+      - The last known position is where a player was last seen: where they hid, or where they left sight. So hiding on the spot fails, and moving off it first works.
       - Speed: walk 3, chase 5 tiles/s (players walk 4 and run 6).
-      - Simulated: a still player in the open is caught in 66% of runs on the sandbar and 54% on the coast cay. A hidden player away from the searched points is never found.
+      - Measured:
+        - From any last-known position, cover more than 2 tiles away is a median of 3 steps (90th percentile 6–7).
+        - Crouching away while still hidden works from 62 of the sandbar's 96 hiding cells, but only from the coast cay's observation post (15 of 44 cells), because the coast cay's scrub is single cells.
+        - A still player in the open is caught in 66% of simulated runs on the sandbar and 54% on the coast cay.
    b. *Plus stumbling.* As (a), and any soldier who passes within 1 tile of a hidden player finds them. Simulated: 72% of the sandbar's 96 hiding cells and 73% of the coast cay's 44 are found within 150 s, so hiding rarely saves you.
    c. *The Bush Hat rule.* As (a), but hiding never shakes a soldier who is already chasing you. Only getting out of its sight range does.
 6. **Where captives are held.**
@@ -151,6 +155,7 @@ All lines are drafts for the owner's voice pass: Rodríguez's scene (design.md �
 - **The backgrounds** themselves and a way to pick one (`TASKS.md` §7).
 - **Patrol set pieces:** the patrol dinghy as an escape route, the logbook, and "the patrol that stops".
 - **`balsero-lore` 9b.1**, the `almendron_hundido` gate on chain route rows: with the chain rows. This change sets the flag.
+- **Two hand-offs from the stealth slice:** `EffectData` `ALERT_PATROL` and `RouteData.patrol_alert_chance` (the almendrón's 50% "somebody reports you" alert at its start, and the wall's 40%). Both come with the set pieces and routes that use them, and both will call this change's land-alert entry. The noise those starts make already reaches the boats through the stealth bus.
 - **Chain-specific patrols:** the mangrove's spit, the lighthouse's dawn pass and Caridad's house.
 - **A struggle to escape a soldier's touch.** Running breaks contact.
 - **The soldiers' and the dinghy's sprites:** placeholders until the art pass.
@@ -197,7 +202,7 @@ None.
   - Changed:
     - `patrol_route.gd` (the stealth change's brain): it hands a chase or a landing off;
     - `player.gd` and `player_net.gd`: the captive state;
-    - `coop_session.gd`: capture RPCs, the scene, the out-of-play captives, the dinghy;
+    - `coop_session.gd`: the scene's line RPC, the out-of-play captives and the dinghy. Freeing uses the existing interact intent, so no new client intent is added;
     - `island_travel.gd`: the history, previous and next, and the index counting;
     - `condition_check.gd`, `effect_applier.gd` and `inventory.gd`: removing items by capability;
     - `content_validator.gd`;
