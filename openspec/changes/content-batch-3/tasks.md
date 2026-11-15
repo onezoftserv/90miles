@@ -42,7 +42,7 @@ Known flake: `test_crossing_art.gd` "the scrolled sea still covers the crossing'
 
 - [x] 4.1 Update `docs/ITEMS.md` (duplicates as settled in 0.1, counts, aloe as the sábila entry, the raw-food poison profile reused for canned food) and `docs/CONTENT_MANIFEST.md` (tick what shipped; name `aloe`; leave `milordo`, `toronja` and `bistec_toronja` to batch 11); verify every id in the manifest's water, food and plants lines either exists in `game/resources/items/` or is marked as batch 11 Done: water 7, food 15, plants 10, none missing; `game/assets/CREDITS.md` no longer counts the own-work icons.
 - [x] 4.2 Update `TASKS.md`: tick content-batch-3; add to batches 1–2 (raw hutía and iguana loot), 4 (conch horn, pliers `OPEN_CAN`), 7 (red-tide oysters) and 9 (Pescador exemption on raw crab and fish, ex-militar spots wild tobacco) the rule each must add to this batch's items; add an "item effects runtime" change below the current milestone with the Gaps list of design.md; verify each logged line names the item and the rule Done: batches 2, 4, 7 and 9 carry their rule; `item-effects-runtime` is listed under Milestone B.
-- [ ] 4.3 Run the import twice, the smoke run, full GUT and the Python art tests; verify all pass (rerun the known flake alone if it fails)
+- [x] 4.3 Run the import twice, the smoke run, full GUT and the Python art tests; verify all pass (rerun the known flake alone if it fails) Done: rebased on bd9df3f; second import 0 error lines, smoke 0 problems, GUT 219 scripts, 1935/1935 in 172 s, Python art tests OK, the game headless (main scene, movement playground, solo co-op playground) 0 error lines
 
 ## Workflow follow-up
 
