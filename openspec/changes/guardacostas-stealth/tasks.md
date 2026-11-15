@@ -21,10 +21,11 @@ How the tests are written:
 
 ## 0. Preconditions
 
-- [ ] 0.1 Get the owner's answers to the ten decisions in proposal.md.
+- [x] 0.1 Get the owner's answers to the ten decisions in proposal.md.
   - Where an answer differs from the recommended option, first update proposal.md, design.md, the three spec deltas and these tasks.
   - Verify: `openspec validate guardacostas-stealth --type change --strict` passes.
-- [ ] 0.2 Wait for `structure-state-sync` (PR #42) and `creature-perch-ride` (PR #46) to merge.
+  - Done on 2026-11-14: the owner accepted (a) on all ten, so no artifact changed, and the strict validation passes.
+- [ ] 0.2 Wait for `structure-state-sync` (PR #42) and `creature-perch-ride` (PR #46) to merge. #42 merged on 2026-11-14 (main 4f8a92b).
   - Branch from the updated `main`.
   - Re-read these files as merged: `fire.gd`, `coop_session.gd`, `creature.gd`, `creature_spawner.gd`, `creature_world.gd`, `player.gd`, `player_net.gd`, `movement_model.gd`, `body_marks.gd`, `effect_applier.gd`, `sandbar_island.gd`, `horizon_line.gd`, `difficulty_scaling.gd` and `patrol_data.gd`.
   - If they drift from design.md, note the drift in a new design.md section, "Changes from the build plan".
@@ -213,7 +214,7 @@ How the tests are written:
 
 - [ ] 10.1 Update the docs with the confirmed numbers. Verify each edit by reading it back against the spec delta:
   - `docs/BESTIARY.md` "Guardacostas patrol boat": the loop, lap, arc, meter and alert;
-  - `docs/GAME_DESIGN.md` §17 "Stealth": light cones as host geometry, noise and smoke on a session bus;
+  - `docs/GAME_DESIGN.md` §17 "Stealth": already updated with the docs PR on 2026-11-14; re-check it against the build;
   - `docs/ISLANDS.md`: the mangrove line, if decision 7a stands;
   - `docs/CONTENT_MANIFEST.md`: tick `patrol_boat`.
 - [ ] 10.2 Update `TASKS.md`:

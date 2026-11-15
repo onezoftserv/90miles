@@ -43,7 +43,7 @@ The tests run one offline player through a whole sandbar night: hiding through e
 
 ## Owner decisions (recommended option first)
 
-Not yet answered. The numbers in the What Changes list and in the specs follow the recommended options.
+Answered on 2026-11-14: the owner accepted the recommended option (a) on all ten, in one option dialog relayed by the coordinating session. The options stay listed for the record. The numbers in the What Changes list, the specs, design.md and tasks.md follow these answers. The build waits for the owner's separate go-ahead.
 
 1. **The slice boundary.**
    a. *Recommended:* detection only. This change builds the patrol loop, searchlight, hidden states, spot meter, smoke, noise and water triggers, the noise and smoke bus, and an alert that ends with the boat giving up. A second change, `guardacostas-capture`, takes chase, the shore squad, capture, freeing a captive, `la_captura`, the restart on the previous island, and capture on the final crossing.
@@ -144,9 +144,10 @@ The following come later, each in its own change:
   - `net-platform-seam` touches `net_manager.gd` and `game_shell.gd`, which this change does not.
   - None of the open changes' deltas modifies a requirement this change modifies.
   - `vessel-car-board` (PR #48) adds no noise. Its almendrón's alert chance stays `RouteData.patrol_alert_chance`, which the capture change reads.
-- **Docs, after the owner confirms:**
-  - `docs/BESTIARY.md` patrol entry: the loop, arc, meter and alert;
-  - `docs/GAME_DESIGN.md` §17: "Light cones with Area2D" becomes host geometry;
-  - `docs/ISLANDS.md` mangrove line, if decision 7a stands;
-  - `docs/CONTENT_MANIFEST.md`: tick `patrol_boat`;
-  - `TASKS.md`.
+- **Docs:**
+  - `docs/GAME_DESIGN.md` §17: "Light cones with Area2D" became host geometry in this change's docs PR (2026-11-14).
+  - The rest come with the build (task 10.1):
+    - `docs/BESTIARY.md` patrol entry: the loop, arc, meter and alert;
+    - `docs/ISLANDS.md` mangrove line (decision 7a);
+    - `docs/CONTENT_MANIFEST.md`: tick `patrol_boat`;
+    - `TASKS.md`.

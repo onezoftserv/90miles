@@ -32,7 +32,7 @@ See proposal.md "Why" for the motivation and the owner decisions. This section c
 **Fire and the bus.**
 - `Fire` joins the `lit_fires` group while lit.
 - `CreatureWorld.lit_fires()` reads that group.
-- `structure-state-sync` (PR #42, not merged) gives `fire.gd` a `lit` setter and `attach_sync`.
+- `structure-state-sync` (PR #42, merged into main at 4f8a92b on 2026-11-14) gives `fire.gd` a `lit` setter and `attach_sync`.
 - No world event bus exists, although creatures-ai "Noise and smell" calls for one.
 
 ### The geometry, measured
@@ -139,12 +139,12 @@ A player at `p` is lit when both hold:
 
 It is tested on the host each physics tick, and only at night (`searchlight_phases` = [NIGHT]), when the weather does not disable `SIGHT`.
 
-`docs/GAME_DESIGN.md` §17 says "light cones with Area2D". Pure geometry is used instead because:
+`docs/GAME_DESIGN.md` §17 used to say "light cones with Area2D". Pure geometry is used instead because:
 - it needs no physics frame, collision layers or shapes;
 - it gives the same answer in a headless test as in play;
 - it is a few lines.
 
-The doc line is updated after the owner confirms. Terrain does not block the light: the island is flat, and seen from a boat, cover is modelled by the hidden states, which the player can read and the HUD already shows.
+The doc line was updated with this change's docs PR, after the owner confirmed on 2026-11-14. Terrain does not block the light: the island is flat, and seen from a boat, cover is modelled by the hidden states, which the player can read and the HUD already shows.
 
 *Alternative:* Brogue's and SPD's field-of-view requirement for noticing, rejected for the same reason.
 
