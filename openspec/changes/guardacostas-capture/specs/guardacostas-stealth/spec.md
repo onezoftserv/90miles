@@ -174,7 +174,7 @@ Each soldier SHALL see in a cone ahead of it: 6 tiles and 120° by day, and a 5-
 - **THEN** the player's spot meter stays at 0
 
 ### Requirement: Squad search
-The squad SHALL search points in order: every lit fire on the island, nearest the landing first, then the last known position, then a random walk between land cells drawn from the run seed. Each soldier takes the next point nobody has taken. On arrival it searches the point for 3 s, which finds any hidden player within 2 tiles of it. The last known position is where a spotted player was last seen by a soldier or a boat: where they hid, or where they left sight. With 1 player the search is the same.
+The squad SHALL search points in order: every lit fire on the island, nearest the landing first, then the last known position, then a random walk between land cells drawn from the run seed. Each soldier takes the next point nobody has taken. On arrival it searches the point for 3 s, which finds any hidden player within 2 tiles of it. With 1 player the search is the same.
 
 #### Scenario: Hiding by your own fire
 - **GIVEN** a solo player crouching on scrub 1 tile from their lit fire when a squad lands
@@ -190,6 +190,19 @@ The squad SHALL search points in order: every lit fire on the island, nearest th
 - **GIVEN** a solo player spotted by a soldier by day, who crouches on a lone scrub cell while still inside its cone
 - **WHEN** the soldier reaches that cell and searches it
 - **THEN** the player is found within the 3 s
+
+### Requirement: Last known position
+The last known position SHALL be where a spotted player was last seen by a boat's lock or a soldier's chase: the cell where they hid, or where they left the lock's 10 tiles or the soldier's sight length. A newer one replaces it, and the nearest soldier that is not escorting or chasing goes to search it. With 1 player it works the same.
+
+#### Scenario: Lost where they hid
+- **GIVEN** a solo player locked by a boat's light at night, standing on sand beside scrub
+- **WHEN** they crouch on the scrub
+- **THEN** the last known position is that scrub cell
+
+#### Scenario: Lost at the edge of the light
+- **GIVEN** a solo player locked by a docked boat's light at night
+- **WHEN** they walk inland until they are more than 10 tiles from the boat
+- **THEN** the last known position is where they crossed the 10 tiles, and a soldier goes to search it
 
 #### Scenario: The same search from the same seed
 - **GIVEN** two solo runs with the same run seed, each with a squad landing at the same moment and place

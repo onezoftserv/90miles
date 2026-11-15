@@ -170,7 +170,7 @@ None.
 
 - `guardacostas-stealth`:
   - MODIFIED: Chase and shore squad, Free a captive, Capture outcome and Fade with distance from the main spec, and Alert from the `guardacostas-stealth` change, which must be archived first.
-  - ADDED: Boat chase at sea, Soldier sight, Squad search, The squad leaves, Captives, Whole-party capture, Taken captives, The capture scene, Persuasion check, Release at the next island, Island history, Capture on every peer, Capture cues and Shore squad data.
+  - ADDED: Boat chase at sea, Soldier sight, Squad search, Last known position, The squad leaves, Captives, Whole-party capture, Taken captives, The capture scene, Persuasion check, Release at the next island, Island history, Capture on every peer, Capture cues and Shore squad data.
   - Unchanged and built as written: "Previous island after capture". "Capture on the final crossing" is also unchanged: this change only routes to it.
 
 ## Impact
