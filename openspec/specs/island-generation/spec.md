@@ -38,7 +38,7 @@ The generator SHALL place 3–6 POIs from the chain's table (`docs/ISLANDS.md`) 
 - THEN it has 3–6 POIs from the rock table, at least 12 tiles apart, no two of the same kind, at most one set piece, and the binoculars cairn among them
 
 ### Requirement: Escape routes
-Each island SHALL expose 2–3 escape-route POIs chosen from the chain's allowed list, with at least one always-buildable route (raft) unless the chain says otherwise. An island set up for exactly one living, connected player SHALL also expose at least one reachable route that needs no background skill and no starting item (docs/GAME_DESIGN.md §10), even where the chain overrides the raft rule. Solo otherwise uses the same base numbers as co-op.
+Each island SHALL expose 2–3 escape-route POIs chosen from the chain's allowed list, with at least one always-buildable route (raft) unless the chain says otherwise. An island set up for exactly one living, connected player SHALL also expose at least one reachable route that needs no background skill and no starting item (docs/GAME_DESIGN.md §10), even where the chain overrides the raft rule. Solo otherwise uses the same base numbers as co-op. An off-graph handmade layout (the secret cay, secret-cay) exposes only the routes its layout lists instead of 2–3; the cay lists only the raft, which one player with an empty inventory can gather, build and launch, so it meets the solo guarantee. (Changes docs/ISLANDS.md "Each island rolls 2–3 escape routes" for off-graph layouts.)
 
 #### Scenario: Raft always offered
 - GIVEN a chain that does not override the raft rule
@@ -55,8 +55,13 @@ Each island SHALL expose 2–3 escape-route POIs chosen from the chain's allowed
 - WHEN the next island is set up
 - THEN it counts 1 living player and exposes at least one escape route that needs no background skill and no starting item
 
+#### Scenario: The cay's one route
+- **GIVEN** one offline player with an empty inventory on the secret cay
+- **WHEN** its escape routes are listed
+- **THEN** the raft is the only route, it needs no background skill and no starting item, and its build site is reachable from the solo spawn
+
 ### Requirement: Resource spawns
-Resources SHALL spawn per `docs/ISLANDS.md` resource rules, scaled by party size, with respawn hooks for squalls and nights. Party size SHALL be the number of living, connected players when the island is set up (the count coop-networking's difficulty scaling uses), and respawns on that island use the same count.
+Resources SHALL spawn per `docs/ISLANDS.md` resource rules, scaled by party size, with respawn hooks for squalls and nights. Party size SHALL be the number of living, connected players when the island is set up (the count coop-networking's difficulty scaling uses), and respawns on that island use the same count. An off-graph handmade layout (the secret cay, secret-cay) instead places exactly the pick-ups its layout lists, never scaled by party size, and none of them respawns after a squall or a night. (Changes docs/ISLANDS.md "Resource rules" for off-graph layouts.)
 
 #### Scenario: Squall respawn
 - GIVEN an island whose resources spawned per `docs/ISLANDS.md`
@@ -72,6 +77,11 @@ Resources SHALL spawn per `docs/ISLANDS.md` resource rules, scaled by party size
 - GIVEN a run that started with 4 players, 3 of whom died on island 3
 - WHEN island 4 is set up
 - THEN party size is 1, the same as a 1-player run
+
+#### Scenario: Nothing respawns on the cay
+- **GIVEN** one offline player on the secret cay who has taken every driftwood
+- **WHEN** a squall passes and a night ends
+- **THEN** no pick-up has respawned
 
 ### Requirement: Navigation data
 The generator SHALL output an `AStarGrid2D` with costs: beach 1, dune 1.5, mangrove 3, shallows 2 (wade), deep water impassable for land AI; and a separate water grid for sea creatures.
@@ -241,9 +251,22 @@ A layout MAY list signs: a glyph with a Spanish and an English line. A player wh
 - **THEN** the prompt over the sign reads "[E] Mirar"
 
 ### Requirement: Any handmade layout builds the island
-The island scene SHALL build whatever handmade layout it is given before it enters the tree (terrain, palms, pick-ups, markers, bounds, drinking spots, signs), so the sandbar and the coast cay share one scene and one code path, and the creature spawner reads the layout's chain family. With exactly 1 player nothing differs.
+The island scene SHALL build whatever handmade layout it is given before it enters the tree (terrain, palms, pick-ups, markers, bounds, drinking spots, signs), so the sandbar and the coast cay share one scene and one code path, and the creature spawner reads the layout's chain family. A layout with no workbench gets none, and a layout marked off-graph (the secret cay, secret-cay) gets no creature spawner. With exactly 1 player nothing differs.
 
 #### Scenario: The island scene builds the coast cay
 - GIVEN the island scene with the coast cay layout set before it enters the tree
 - WHEN it is built
 - THEN its terrain, bounds and palms are the coast cay's, not the sandbar's
+
+#### Scenario: No workbench and no creatures on the secret cay
+- **GIVEN** one offline player and the island scene with the secret cay layout set before it enters the tree
+- **WHEN** it is built and furnished
+- **THEN** its size, palms, coconuts and spawn points are the cay's, and the session holds no workbench and no creature spawner
+
+### Requirement: Off-graph handmade layouts
+A handmade layout marked off-graph (the secret cay) SHALL never be generated, enumerated as an island of a chain or the run graph, given an island index, counted as an island, or scaled by party size or Experiencia. Only the feature that owns it opens it. The one listing of the layouts a run may use as numbered islands leaves it out. With 1 player it is set aside the same way.
+
+#### Scenario: Listing the islands skips the cay
+- **GIVEN** the island layouts in the content folder, one of them the cay marked off-graph
+- **WHEN** the layouts a run may use as numbered islands are listed for a 1-player run
+- **THEN** the sandbar is listed and the cay is not

@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_vwh7e"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_betjy"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_5mcsp"]
+[ext_resource type="Texture2D" uid="uid://4xq1oeme8dj2" path="res://assets/art/items/tabaco_silvestre.png" id="4_uqqjc"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_sloi3"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_mast5"]
+[ext_resource type="Script" path="res://scripts/data/data_part.gd" id="7_oaq20"]
+
+[sub_resource type="Resource" id="Resource_aafsu"]
+script = ExtResource("6_mast5")
+kind = 34
+scope = 0
+radius_tiles = 2.0
+
+[sub_resource type="Resource" id="Resource_c1k8n"]
+script = ExtResource("1_vwh7e")
+meter = 5
+amount = 10.0
+
+[sub_resource type="Resource" id="Resource_kkxsu"]
+script = ExtResource("5_sloi3")
+action = 3
+time_s = 5.0
+conditions = Array[ExtResource("6_mast5")]([SubResource("Resource_aafsu")])
+effects = Array[ExtResource("1_vwh7e")]([SubResource("Resource_c1k8n")])
+
+[resource]
+script = ExtResource("3_5mcsp")
+description_es = "Tabaco cimarrón. Enrollado en una hoja y prendido en la candela, te sube el ánimo. No es un puro de Vuelta Abajo, pero pa' una isla sin nombre 'tá bien."
+description_en = "Wild tobacco. Rolled in a leaf and lit at the candela, it lifts your spirits. It's no Vuelta Abajo puro, but for an island with no name it'll do."
+sprite = ExtResource("4_uqqjc")
+category = 2
+tags = Array[int]([12])
+stack_size = 5
+weight = 0.1
+uses = Array[ExtResource("5_sloi3")]([SubResource("Resource_kkxsu")])
+identify_group = 3
+id = &"tabaco_silvestre"
+name_es = "Tabaco silvestre"
+name_en = "Wild tobacco"

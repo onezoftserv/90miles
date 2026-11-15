@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_kd68g"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_0x22h"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_vvgu2"]
+[ext_resource type="Texture2D" uid="uid://cwle5jmvxcu8m" path="res://assets/art/items/guanabana.png" id="4_akjay"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_hnyi4"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_fmv0g"]
+
+[sub_resource type="Resource" id="Resource_d8b7p"]
+script = ExtResource("1_kd68g")
+meter = 2
+amount = 25.0
+
+[sub_resource type="Resource" id="Resource_rbx8c"]
+script = ExtResource("1_kd68g")
+meter = 1
+amount = 15.0
+
+[sub_resource type="Resource" id="Resource_k1w7w"]
+script = ExtResource("1_kd68g")
+meter = 5
+amount = 10.0
+
+[sub_resource type="Resource" id="Resource_sy1ah"]
+script = ExtResource("5_hnyi4")
+time_s = 1.0
+effects = Array[ExtResource("1_kd68g")]([SubResource("Resource_d8b7p"), SubResource("Resource_rbx8c"), SubResource("Resource_k1w7w")])
+
+[resource]
+script = ExtResource("3_vvgu2")
+description_es = "Guanábana. La fruta de la abuela: un batido de esto y se te olvida to', hasta dónde 'tás."
+description_en = "Soursop. Grandma's fruit: one batido of this and you forget everything, even where you are."
+sprite = ExtResource("4_akjay")
+category = 2
+tags = Array[int]([0, 12])
+stack_size = 5
+weight = 0.3
+spawn_weight = 0.25
+uses = Array[ExtResource("5_hnyi4")]([SubResource("Resource_sy1ah")])
+identify_group = 1
+id = &"guanabana"
+name_es = "Guanábana"
+name_en = "Soursop"
