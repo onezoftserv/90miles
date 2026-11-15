@@ -25,7 +25,7 @@ How the tests are written:
   - Where an answer differs from the recommended option, first update proposal.md, design.md, the three spec deltas and these tasks.
   - Verify: `openspec validate guardacostas-stealth --type change --strict` passes.
   - Done on 2026-11-14: the owner accepted (a) on all ten, so no artifact changed, and the strict validation passes.
-- [ ] 0.2 Wait for `structure-state-sync` (PR #42) and `creature-perch-ride` (PR #46) to merge. #42 merged on 2026-11-14 (main 4f8a92b).
+- [x] 0.2 Wait for `structure-state-sync` (PR #42) and `creature-perch-ride` (PR #46) to merge. #42 merged on 2026-11-14 (main 4f8a92b) and #46 on the same day (main c20ad97). The build branch `claude/guardacostas-stealth-build` is main c20ad97 plus the docs commits. On the untouched branch: imports clean, smoke 10 frames with 0 problems, and GUT 197 scripts, 1728/1728 passing in 150 s.
   - Branch from the updated `main`.
   - Re-read these files as merged: `fire.gd`, `coop_session.gd`, `creature.gd`, `creature_spawner.gd`, `creature_world.gd`, `player.gd`, `player_net.gd`, `movement_model.gd`, `body_marks.gd`, `effect_applier.gd`, `sandbar_island.gd`, `horizon_line.gd`, `difficulty_scaling.gd` and `patrol_data.gd`.
   - If they drift from design.md, note the drift in a new design.md section, "Changes from the build plan".
@@ -33,21 +33,21 @@ How the tests are written:
 
 ## 1. Patrol data
 
-- [ ] 1.1 Write `game/tests/unit/test_patrol_data.gd`. Verify it fails. It checks:
+- [x] 1.1 Write `game/tests/unit/test_patrol_data.gd`. Verify it fails. It checks:
   - `PatrolData` has the new fields of design.md §12, with their defaults.
   - `creatures/patrol_boat.tres` loads with every value in design.md §12: category, tag, domain, behavior, senses, party fields, the two spawn rules, and every patrol number.
   - The patrol boat has at least one alert line and one give-up line in Spanish and in English, and the Spanish lines are formal (no `pa'` or `'tá` contractions).
   - The content check reports no problems for the shipped content, and reports each broken patrol fixture: a lap not shorter than its period minus its warning, a cone of 0° or more than 180°, a range of 0, a drain of 0, and missing lines.
-- [ ] 1.2 Append the new fields to `patrol_data.gd`, which keeps today's defaults for the old ones. Add the PATROL check to `content_validator.gd`, then add `game/resources/creatures/patrol_boat.tres` with the draft lines of design.md §9. Verify:
+- [x] 1.2 Append the new fields to `patrol_data.gd`, which keeps today's defaults for the old ones. Add the PATROL check to `content_validator.gd`, then add `game/resources/creatures/patrol_boat.tres` with the draft lines of design.md §9. Verify:
   - `test_patrol_data.gd` passes;
   - `test_data_classes.gd` still counts the same classes and folders;
   - `test_creature_content.gd` still passes.
-- [ ] 1.3 Add fixtures under `game/tests/fixtures/`. Verify each loads in `test_patrol_data.gd`:
+- [x] 1.3 Add fixtures under `game/tests/fixtures/`. Verify each loads in `test_patrol_data.gd`:
   - `weather/fog_test.tres`: a `WeatherData` with `disabled_senses` [SIGHT];
   - `items/noise_test.tres`: an item whose use carries a NOISE effect of radius 15;
   - a small inline island layout helper for the loop tests;
   - `content/creatures/patrol_test.tres`: a copy of the patrol boat with a 45° cone and a 90 s lap, for "Retuned by data". It must live in the catalog, after `creature-perch-ride`'s fixtures, because `CoopSession.spawn_creature` re-reads a creature's data by id.
-- [ ] 1.4 Run the import, smoke run and GUT commands, and verify all three pass.
+- [x] 1.4 Run the import, smoke run and GUT commands, and verify all three pass. Done: import clean, smoke 10 frames with 0 problems, GUT 198 scripts, 1743/1743 passing in 187 s (`test_patrol_data.gd` has 15 tests).
 
 ## 2. The loop (pure)
 

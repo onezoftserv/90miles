@@ -371,3 +371,11 @@ Nothing to migrate. All new data has defaults, and islands without a patrol rule
 
 - The loudhailer lines and the English translations wait for the owner's voice pass, which cannot change the specs.
 - The boat's sprite waits for the art pass (docs/ASSETS.md "Patrol boat, cutter, dinghy, skiff": hand-pixel).
+
+## Changes from the build plan
+
+Recorded while building. Each entry says what moved and why.
+
+- **Group 1, spawn rules stay on `patrol_boat.tres`.** The two rules (sandbar 1, coast 1 to 2) ship now, although `game/scripts/ai/patrol_route.gd` does not exist until group 7. `CreatureBrain.for_behavior` returns null for it, so a boat spawned on those islands only sits in the sea. The whole suite stays green (1743 of 1743), so nothing was held back. Group 7 adds the brain and the second-boat roll's own seed.
+- **Group 1, the art check exempts a frameless patrol boat.** `test_creature_art.gd` asks every creature for frames, and the boat has none until the art pass. `CreatureArt.frames_problems` now skips a `PATROL_ROUTE` creature with no `sprite_frames`, as it already skips weather and crossing proxies. A boat that has frames is checked like any other creature. No test changed.
+- **Group 1, fixtures.** `weather/fog_test.tres`, `items/noise_test.tres` and `creatures/patrol_test.tres` are in `tests/fixtures/content/`. The older fixtures there point at shipped weather (`squall`), so that catalog is not valid on its own; `test_patrol_data.gd` therefore checks only the three new files with the content check. `patrol_test` has no spawn rules (a test spawns it with `spawn_creature`). The broken patrol files live in `tests/fixtures/patrol_broken/creatures/` with their own catalog. `tests/helpers/small_island.gd` is the inline island for the loop tests.

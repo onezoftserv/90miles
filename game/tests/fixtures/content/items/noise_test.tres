@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="2_use"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_item"]
+
+[sub_resource type="Resource" id="Resource_noise"]
+script = ExtResource("1_effect")
+kind = 39
+radius_tiles = 15.0
+
+[sub_resource type="Resource" id="Resource_use"]
+script = ExtResource("2_use")
+action = 5
+time_s = 1.0
+effects = Array[ExtResource("1_effect")]([SubResource("Resource_noise")])
+
+[resource]
+script = ExtResource("3_item")
+description_es = "Una cacerola de prueba: hace un ruido que se oye hasta en el mar."
+description_en = "A test pot: it makes a noise you can hear out at sea."
+category = 4
+stack_size = 1
+weight = 0.5
+uses = Array[ExtResource("2_use")]([SubResource("Resource_use")])
+id = &"noise_test"
+name_es = "Cacerola ruidosa"
+name_en = "Noisy pot"
