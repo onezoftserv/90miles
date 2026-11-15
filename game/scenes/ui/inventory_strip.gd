@@ -68,6 +68,9 @@ var selected: int = 0
 var input_open: Callable = func() -> bool: return true
 ## Hidden, and deaf to input, while a screen is shown over the run.
 var screen_shown: bool = false
+## Hidden, and deaf to input, while its player watches a teammate (ui-shell "The HUD while
+## watching"); RunHud sets it.
+var watching: bool = false
 ## Whether the crafting list holds the input, so the use button does nothing; RunHud answers.
 var list_open: Callable = func() -> bool: return false
 # Typed with the base class: a typed array of one of our own classes can leak at exit.
@@ -192,6 +195,13 @@ func set_screen_shown(value: bool) -> void:
 	refresh()
 
 
+func set_watching(value: bool) -> void:
+	if value == watching:
+		return
+	watching = value
+	refresh()
+
+
 ## Shows `player`'s inventory from now on and stops following the body bound before.
 func bind(player: PlayerBody, run_session: CoopSession = null) -> void:
 	_unbind()
@@ -246,7 +256,7 @@ func refresh() -> void:
 		return
 	if body.inventory.slots.size() != _views.size():
 		_rebuild(body.inventory.slots.size())
-	visible = not body.left_island and not screen_shown
+	visible = not body.left_island and not screen_shown and not watching
 	_use_key = InputLabels.label_for(USE_ACTION, device, text, _locale())
 	_show_slots()
 	_show_selection()
@@ -255,7 +265,7 @@ func refresh() -> void:
 
 
 func _process(delta: float) -> void:
-	if not _has_body() or body.left_island or screen_shown:
+	if not _has_body() or body.left_island or screen_shown or watching:
 		visible = false
 		_cancel_use()
 		# A press made now is taken: it does nothing once the strip shows again.

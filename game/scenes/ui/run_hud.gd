@@ -15,6 +15,10 @@ extends CanvasLayer
 ## mark shows over every hidden player (`marks`), placed like the prompt. Under the day phase, the
 ## broken compass's needle (`needle`, secret-cay) shows while the local player carries it, and
 ## under it the note label (`note_label`) shows the chest's note and the map's text for a while.
+## In co-op, a local player who is dead or waits on the shore watches a living teammate
+## (`spectate`, ui-shell "Spectating a teammate"): the bottom band's `watching_panel` names them
+## with the switch keys, the meters panel shows their meters and the strip hides; the step keys
+## (`SPECTATE_PREV`, `SPECTATE_NEXT`) move between teammates. Solo never watches.
 
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
@@ -30,6 +34,12 @@ const HUD_PANEL: StringName = &"HudPanel"
 ## HUD pieces that are not HUD panels but that the interact prompt keeps clear of too (secret-cay's
 ## needle and note join it).
 const AVOID_GROUP: StringName = &"hud_avoid"
+## The keys that step a spectator's view (ui-shell "Switching the watched teammate"): the walk keys
+## A and D, the arrows (the engine's ui_left and ui_right), the D-pad and the mouse wheel. Each is
+## an action that does nothing else for a dead or waiting player, so no input is bound twice
+## (inventory-hud "Inputs do not collide"). A stick is not a step: it repeats while held.
+const SPECTATE_PREV: Array[StringName] = [&"move_left", &"ui_left", &"slot_prev"]
+const SPECTATE_NEXT: Array[StringName] = [&"move_right", &"ui_right", &"slot_next"]
 
 var session: CoopSession
 var local_peer: int = CoopSession.HOST_ID
@@ -49,6 +59,11 @@ var list_open: bool = false
 ## The world's view (GameShell's WorldView), which world-anchored marks are mapped through; null
 ## draws them at the world canvas's own pixels.
 var world_view: Control = null
+## Whom the local player watches while dead or waiting (ui-shell "Spectating a teammate").
+var spectate: SpectateView = SpectateView.new()
+## The local player's body, or null before it spawns.
+var _local_body: PlayerBody = null
+var _text: HudText = HudText.load_default()
 
 @onready var meters: MetersHud = %Meters
 @onready var strip: InventoryStrip = %Strip
@@ -60,6 +75,8 @@ var world_view: Control = null
 @onready var marks: BodyMarks = %Marks
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
+@onready var watching_panel: PanelContainer = %WatchingPanel
+@onready var watching_label: Label = %Watching
 @onready var _teammates: VBoxContainer = %Teammates
 
 
@@ -85,6 +102,7 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	session = run_session
 	local_peer = local_peer_id
 	solo = is_solo
+	spectate.bind(session, local_peer, solo)
 	teammates_panel.visible = not solo
 	if not solo:
 		wheel = WHEEL_SCENE.instantiate() as QuickChatWheel
@@ -138,6 +156,9 @@ func _input(event: InputEvent) -> void:
 		strip.set_device(device)
 		prompt.set_device(device)
 		sign_note.set_device(device)
+	if _step_spectate(event):
+		get_viewport().set_input_as_handled()
+		return
 	if not event is InputEventMouseButton:
 		return
 	var direction: int = 0
@@ -173,6 +194,7 @@ func set_screen_shown(value: bool) -> void:
 	craft_list.set_screen_shown(value)
 	sign_note.set_screen_shown(value)
 	marks.screen_shown = value
+	refresh_watching()
 
 
 ## A point of the world's canvas (the world view's pixels, camera applied) in HUD pixels.
@@ -206,6 +228,7 @@ func _collect_panels(node: Node, into: Array[Rect2]) -> void:
 
 func refresh() -> void:
 	phase_label.text = phase_name(session.climate)
+	refresh_watching()
 	if solo:
 		return
 	var others: Array[int] = []
@@ -233,20 +256,83 @@ func teammate_rows() -> Array[String]:
 	return texts
 
 
+## Whom the local player watches, worked out again, and the HUD that goes with it: the line in the
+## bottom band, the watched teammate's meters, the strip hidden. Back to the own meters and strip
+## when watching ends.
+func refresh_watching() -> void:
+	if session == null:
+		return
+	spectate.update()
+	var target: PlayerBody = spectate.watched()
+	var shown: SurvivalMeters = target.meters if target != null else (_local_body.meters if is_instance_valid(_local_body) else null)
+	if shown != null and meters.shown() != shown:
+		meters.bind(shown)
+	strip.set_watching(target != null)
+	watching_panel.visible = target != null and not screen_shown
+	if target != null:
+		var locale: String = CoopSession.locale_of(session)
+		watching_label.text = watching_text(_text, session.player_name(session.peer_of(target)), spectate.watched_dropped(), device, locale)
+
+
+## The spectator's line: "Mirando a: Papo  [A] [D] Cambiar", the keys for `input_device`, and
+## "(desconectado)" after a disconnected teammate's name.
+static func watching_text(text: HudText, watched_name: String, dropped: bool, input_device: InputLabels.Device, locale: String = "es") -> String:
+	var who: String = text.line(&"watching_dropped" if dropped else &"watching", locale) % watched_name
+	# The walk keys on a keyboard, the D-pad on a gamepad (the walk actions name the stick there).
+	var keyboard: bool = input_device == InputLabels.Device.KEYBOARD
+	var keys: String = text.line(&"watch_keys", locale) % [
+		InputLabels.label_for(SPECTATE_PREV[0] if keyboard else SPECTATE_PREV[2], input_device, text, locale),
+		InputLabels.label_for(SPECTATE_NEXT[0] if keyboard else SPECTATE_NEXT[2], input_device, text, locale),
+	]
+	return "%s  %s" % [who, keys]
+
+
+## +1 when `event` presses a "step to the next teammate" key, -1 for "previous", else 0. Stick
+## motion never counts.
+static func spectate_step(event: InputEvent) -> int:
+	if event is InputEventJoypadMotion:
+		return 0
+	for action: StringName in SPECTATE_NEXT:
+		if event.is_action_pressed(action):
+			return 1
+	for action: StringName in SPECTATE_PREV:
+		if event.is_action_pressed(action):
+			return -1
+	return 0
+
+
+# A spectate key steps the view while the local player watches; true when it did.
+func _step_spectate(event: InputEvent) -> bool:
+	if not spectate.active() or not input_open():
+		return false
+	var direction: int = spectate_step(event)
+	if direction == 0:
+		return false
+	spectate.cycle(direction)
+	refresh_watching()
+	return true
+
+
 # A rejoined player took back its body (coop-reconnect): if that is this peer, it is now the
-# local player, with no tag and its meters in the panel.
+# local player, with no tag and its meters in the panel. A watched teammate's rebind turned its
+# camera off: the view turns it on again at once.
 func _on_player_rebound(_old_peer: int, new_peer: int, player: PlayerBody) -> void:
 	if new_peer != local_peer:
+		refresh_watching()
 		return
 	var tag := player.get_node_or_null(NodePath(TAG_NAME))
 	if tag != null:
 		player.remove_child(tag)
 		tag.queue_free()
 	_bind_local(player)
+	# A body that died while its player was away: they watch at once.
+	refresh_watching()
 
 
 # Everything that shows or acts for the local player follows `player` from now on.
 func _bind_local(player: PlayerBody) -> void:
+	_local_body = player
+	spectate.set_own(player)
 	meters.bind(player.meters)
 	strip.bind(player, session)
 	prompt.bind(player, session)
