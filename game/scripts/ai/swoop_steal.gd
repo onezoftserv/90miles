@@ -3,6 +3,8 @@ extends CreatureBrain
 ## The seagull's machine (creatures-ai "Seagull swoop and steal"): PERCH at the nest palm, SWOOP on
 ## food within sight of the nest (on the ground, or a player's held food), take one item, FLEE for
 ## 30 s and RETURN so it is perched again when they are up. A shoo is a flee. Night: PERCH only.
+## A player carrying an item its ITEM_CARRIED → NEGATE counter names (the Pluma de galleguito) is
+## never its target (creature-perch-ride "Carried-item immunity").
 ## Air creatures ignore terrain.
 
 enum State {
@@ -104,6 +106,8 @@ func _find_target(creature: Creature, world: CreatureWorld) -> Node2D:
 	for item: WorldItem in world.food_pickups():
 		candidates.append(item)
 	for body: PlayerBody in world.players():
+		if CreatureWorld.carries_negator(creature.data, body):
+			continue
 		if not CreatureWorld.is_swimming(body) and not body.inventory.held_food().is_empty():
 			candidates.append(body)
 	for candidate: Node2D in candidates:

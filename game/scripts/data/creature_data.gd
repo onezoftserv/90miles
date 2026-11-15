@@ -38,6 +38,7 @@ enum Behavior {
 	SEARCH_CAPTURE,
 	AMBIENT,
 	TRADE_OR_ROB,
+	PERCH_RIDE,
 }
 
 ## How it treats players.

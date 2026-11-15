@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="CreatureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_nup1n"]
+[ext_resource type="Script" path="res://scripts/data/creature_counter_data.gd" id="2_xkoqr"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="3_be6ir"]
+[ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="4_uqgtq"]
+[ext_resource type="Script" path="res://scripts/data/creature_spawn_rule_data.gd" id="5_khhbj"]
+[ext_resource type="SpriteFrames" path="res://assets/art/creatures/seagull_frames.tres" id="6_4lb0h"]
+
+[sub_resource type="Resource" id="Resource_x76jr"]
+script = ExtResource("2_xkoqr")
+trigger = 8
+
+[sub_resource type="Resource" id="Resource_24nbk"]
+script = ExtResource("1_nup1n")
+meter = 5
+amount = 5.0
+limit = 2
+
+[sub_resource type="Resource" id="Resource_im407"]
+script = ExtResource("5_khhbj")
+context = 1
+distance_bands = Array[int]([1, 2])
+phases = Array[int]([0])
+chance = 0.1
+hostile = false
+
+[resource]
+script = ExtResource("4_uqgtq")
+description_es = "Un pajarito de prueba: acompaña la balsa y no hace na' más."
+description_en = "A test songbird: it keeps the raft company and does nothing else."
+category = 1
+sprite_frames = ExtResource("6_4lb0h")
+speed_tiles_s = 4.0
+domains = Array[int]([3])
+behavior = 12
+disposition = 2
+follows_vessel = true
+sighting_effects = Array[ExtResource("1_nup1n")]([SubResource("Resource_24nbk")])
+counters = Array[ExtResource("2_xkoqr")]([SubResource("Resource_x76jr")])
+spawn_rules = Array[ExtResource("5_khhbj")]([SubResource("Resource_im407")])
+id = &"pajarito_prueba"
+name_es = "Pajarito de prueba"
+name_en = "Test songbird"
