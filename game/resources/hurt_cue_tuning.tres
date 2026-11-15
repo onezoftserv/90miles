@@ -25,6 +25,7 @@ glow_linger_s = 1.0
 glow_color = Color(0.75, 0.12, 0.1, 0.85)
 gain_hold_s = 0.6
 gain_fade_s = 0.4
+gain_flash_s = 0.1
 gain_lighten = 0.55
 float_s = 1.0
 float_rise_px = 12.0

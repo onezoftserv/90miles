@@ -47,6 +47,8 @@ extends Resource
 ## A gained slice holds this long, then blends into the fill over gain_fade_s.
 @export var gain_hold_s: float = 0.6
 @export var gain_fade_s: float = 0.4
+## How long a bar flashes when its meter jumps up.
+@export var gain_flash_s: float = 0.1
 ## How much a gained slice lightens its bar's colour, 0 to 1.
 @export var gain_lighten: float = 0.55
 

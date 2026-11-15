@@ -76,7 +76,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 4. Screen cue and bar slices (ui-shell "Hit flash at the screen edges", "Changes show on the bars", "Drain glow on the health bar")
 
-- [ ] 4.1 Tests first: write `game/tests/unit/test_hurt_screen.gd` (solo, offline, a `MetersHud` bound to one body's meters, stepped by hand). It covers:
+- [x] 4.1 Tests first: write `game/tests/unit/test_hurt_screen.gd` (solo, offline, a `MetersHud` bound to one body's meters, stepped by hand). It covers:
   - **Edge flash:**
     - a pinch of 5 shows the overlay, and it is clear 0.4 s later;
     - a bite of 25 shows it stronger;
@@ -92,7 +92,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - **Overlay rules:** the overlay is not counted by `RunHud.panel_rects()` and ignores the mouse.
 
   Verify: it fails first, then passes.
-- [ ] 4.2 Write `game/scenes/ui/hurt_overlay.gd` and `.gdshader` (an edge-only red band) and add `HurtOverlay` to `meters_hud.tscn` beside `Blur`. Then make these edits:
+- [x] 4.2 Write `game/scenes/ui/hurt_overlay.gd` and `.gdshader` (an edge-only red band) and add `HurtOverlay` to `meters_hud.tscn` beside `Blur`. Then make these edits:
   - **`MetersHud`:**
     - one `MeterWatch` per bar;
     - the overlay strength and the gap between flashes;

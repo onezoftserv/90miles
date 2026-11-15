@@ -43,6 +43,7 @@ func test_the_bar_slices_shake_and_glow() -> void:
 	assert_eq(tuning.glow_linger_s, 1.0)
 	assert_eq(tuning.gain_hold_s, 0.6)
 	assert_eq(tuning.gain_fade_s, 0.4)
+	assert_eq(tuning.gain_flash_s, 0.1)
 
 
 func test_the_floats() -> void:
