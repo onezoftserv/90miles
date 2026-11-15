@@ -156,6 +156,7 @@ For a later code change, "item effects runtime". None needs a new data field.
 6. `cooks_into` and `cook_time_s` have no fire interaction.
 7. Identification: looks, per-run shuffling, "first bite identifies the kind", hiding an unidentified item's name, verbs and description. The look pool has no home (data-model-questions 2).
 8. `limit` is not claimed for items. creature-perch-ride's `RunRecord` (PR #46) claims `ONCE_PER_*` for creature effects and could serve items too.
+9. A use refused by a condition that is not a tool reads the generic "Ahora no se puede." (`InventoryStrip.refusal_line`). Wild tobacco with no fire says that and does not name the missing candela. Naming it is HUD work.
 
 Status magnitudes are also undefined (data-model-questions 22): what burning, bleeding and hallucinating do per second. That is a design question for the same change.
 

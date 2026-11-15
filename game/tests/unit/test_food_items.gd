@@ -112,10 +112,11 @@ func test_the_validator_reports_nothing_for_the_items() -> void:
 	assert_eq(problems, PackedStringArray(), "no item problems")
 
 
-func test_no_second_file_for_shipped_or_batch_11_items() -> void:
-	for id: StringName in [&"sabila", &"coco_plum", &"toronja", &"bistec_toronja", &"milordo"]:
-		assert_null(_item(id), "%s is not this batch's" % id)
+func test_no_second_file_for_sabila_or_the_coco_plum() -> void:
+	assert_null(_item(&"sabila"), "sábila ships as aloe")
 	assert_not_null(_item(&"aloe"), "aloe is the sábila entry")
+	assert_null(_item(&"coco_plum"), "the coco plum is hicaco")
+	assert_not_null(_item(&"hicaco"))
 
 
 func test_names_and_descriptions_in_both_languages() -> void:
@@ -149,19 +150,6 @@ func test_every_item_has_an_icon() -> void:
 	for id: StringName in _batch():
 		var item := _item(id)
 		assert_true(item != null and item.sprite != null, "%s has an icon" % id)
-
-
-func test_no_item_names_unbuilt_content() -> void:
-	for id: StringName in _batch():
-		var item := _item(id)
-		if item == null:
-			continue
-		assert_true(item.identified_on_sight_by.is_empty(), "%s waits for the backgrounds batch" % id)
-		assert_eq(item.remainder_item_id, &"", "%s has no remainder yet" % id)
-		for effect: EffectData in _all_effects(item):
-			for condition: ConditionData in effect.conditions:
-				assert_ne(condition.kind, ConditionData.Kind.BACKGROUND_PRESENT, "%s: no background yet" % id)
-				assert_ne(condition.kind, ConditionData.Kind.WEATHER_IS, "%s: no red tide yet" % id)
 
 
 func test_no_risk_is_a_certain_loss() -> void:

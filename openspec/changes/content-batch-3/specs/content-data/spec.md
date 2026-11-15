@@ -9,9 +9,9 @@ The water, food and unknown-plant items `docs/ITEMS.md` lists SHALL each be one 
 - **THEN** every water, food and plant item of the batch is listed by the content catalog, and the check reports no problem for any of them
 
 #### Scenario: One file per item
-- **GIVEN** the aloe already shipped as `aloe` and the grapefruit, its steak and milordo assigned to the balsero gear batch
+- **GIVEN** the aloe already shipped as `aloe`, and the coco plum, which is the plant `hicaco`
 - **WHEN** the items folder is listed
-- **THEN** no second sábila, toronja, bistec de toronja or milordo file exists
+- **THEN** there is no `sabila` file beside `aloe` and no `coco_plum` file beside `hicaco`, and this batch adds no grapefruit, grapefruit steak or milordo, which the balsero gear batch builds
 
 ### Requirement: Spanish first, in Cuban speech
 Every item of the batch SHALL have a Spanish name and a Spanish description, with English beside both. Spanish descriptions use spoken Cuban contractions (pa', na', to', 'tá) where the speech allows, never textbook "para" or "nada"; English keeps the key slang untranslated.
