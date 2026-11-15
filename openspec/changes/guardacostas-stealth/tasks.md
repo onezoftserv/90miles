@@ -66,14 +66,14 @@ How the tests are written:
 
 ## 3. The searchlight and the spot meter (pure)
 
-- [ ] 3.1 Write `game/tests/unit/test_searchlight.gd`. Verify it fails. It checks:
+- [x] 3.1 Write `game/tests/unit/test_searchlight.gd`. Verify it fails. It checks:
   - The beam's centre stays within 60° of the boat-to-centroid line, reverses at the ends and is back after 8 s.
   - A point 9.9 tiles away on the beam's centre is lit, and one at 10.1 tiles is not.
   - A point 29° off the centre is lit, and one 31° off is not.
   - Wrapping across ±180° is handled.
   - The light is on only in NIGHT, and off when the weather disables SIGHT (the fog fixture).
   - A copy of the data with a 45° cone sweeps a 45° cone.
-- [ ] 3.2 Write `game/tests/unit/test_spot_meter.gd`. Verify it fails. It checks the spec's "Spot meter" and "Stealth adds time" scenarios:
+- [x] 3.2 Write `game/tests/unit/test_spot_meter.gd`. Verify it fails. It checks the spec's "Spot meter" and "Stealth adds time" scenarios:
   - 1.5 s lit gives no spot, then the meter drains to 0 in 3 s;
   - 1.5 s lit, then 1 s out, then lit again: spotted 1 s later;
   - Stealth level 2 is spotted at 4 s and not at 3.5 s;
@@ -81,13 +81,13 @@ How the tests are written:
   - a hidden player never fills;
   - the meter resets after a spot;
   - a dead or dropped player is cleared.
-- [ ] 3.3 Implement `game/scripts/stealth/searchlight.gd` and `spot_meter.gd`, plus the Stealth seam, which sums `PATROL_SPOT_TIME` modifiers and gives 0 today. Verify both tests pass.
-- [ ] 3.4 Write `game/tests/unit/test_patrol_coverage.gd`, which pins the tuning. Verify it passes, and record its run time in design.md "Changes from the build plan" if it takes over 2 s.
+- [x] 3.3 Implement `game/scripts/stealth/searchlight.gd` and `spot_meter.gd`, plus the Stealth seam, which sums `PATROL_SPOT_TIME` modifiers and gives 0 today. Verify both tests pass.
+- [x] 3.4 Write `game/tests/unit/test_patrol_coverage.gd`, which pins the tuning. Verify it passes, and record its run time in design.md "Changes from the build plan" if it takes over 2 s.
 
   It steps one lap at 0.1 s on each island with the real loop, beam and meter. A still, unhidden player on every land cell must be spotted on 45% ± 3% of the sandbar's land and 34% ± 3% of the coast cay's (design.md's table). It also checks that the sandbar's raft site is never lit and the coast cay's is.
 
   If the owner picked other numbers in decision 4, use the matching row of the table.
-- [ ] 3.5 Run the import, smoke run and GUT commands, and verify all three pass.
+- [x] 3.5 Run the import, smoke run and GUT commands, and verify all three pass. Done: import clean, smoke 10 frames with 0 problems, GUT 202 scripts, 1794/1794 passing in 211 s (31 new tests; `test_patrol_coverage.gd` takes about 3.5 s).
 
 ## 4. Hidden states
 
