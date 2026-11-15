@@ -6,13 +6,15 @@ See proposal.md, Why. This section covers how the error comes about.
 
 The engine (read at the `4.7.2-stable` tag, the version CI pins):
 
-- `modules/enet/enet_multiplayer_peer.cpp`, `ENetMultiplayerPeer::poll` (server): drains every ENet event of the poll into `incoming_packets` before it returns, in a `do … while (check_events)` loop. ENet hands out received packets one per peer in turn, so the packets of two senders interleave.
+- `modules/enet/enet_multiplayer_peer.cpp`, `ENetMultiplayerPeer::poll` (server): drains every ENet event of the poll into `incoming_packets` before it returns, in a `do … while (check_events)` loop.
+- `thirdparty/enet/protocol.c`, `enet_protocol_dispatch_incoming_commands`: after one packet, a peer with more goes back to the end of the dispatch queue. Received packets are handed out one per peer in turn, so the packets of two senders interleave. The `enet_protocol_handle_send_*` handlers refuse data from a peer that is neither connected nor `DISCONNECT_LATER`, so nothing more arrives from a disconnecting peer.
 - `ENetMultiplayerPeer::disconnect_peer` (not forced) sends ENet's disconnect and keeps the peer until a later poll. It never filters `incoming_packets`, so packets from that peer already read in this poll stay queued.
 - `modules/multiplayer/scene_multiplayer.cpp`, `SceneMultiplayer::poll`, reads that queue in a loop and runs each RPC as it comes. Each packet whose sender is no longer connected fails `ERR_CONTINUE(!connected_peers.has(sender))`: the packet is skipped and an engine error logged.
 - `SceneMultiplayer::disconnect_peer` calls `_del_peer` first, which takes the peer out of `connected_peers` at once with no `peer_disconnected` signal. Only then does it close the transport connection.
 
 The game:
 
+- `scene/main/scene_tree.cpp`, `SceneTree::process`: polls every multiplayer, emits `process_frame`, then flushes the deferred calls, then runs the nodes' `_process`.
 - `CoopSession.request_join` is an RPC, so it runs inside that loop.
 - On a TAKEOVER it calls `_close_peer(old)` → `SceneMultiplayer.disconnect_peer(old)` there, then `_on_peer_disconnected(old)`, `_reclaim(old, new)` and the reply.
 - Every packet from the old copy queued behind the join request in the same poll then logs the error.
@@ -22,7 +24,7 @@ Measured before the fix, with the new test `test_a_takeover_while_the_old_copy_s
 - the error appears 9 times, in 3 of 3 runs;
 - with frame markers printed to stderr, every error came after "takeover closed" and before the same frame's `process_frame`, so all of them came in the poll that ran the takeover and none in a later frame.
 
-ENet refuses data from a peer once it is disconnecting, so nothing arrives later. That explains why each case fails or passes:
+ENet refuses data from a peer once it is disconnecting (`protocol.c` above), so nothing arrives later. That explains why each case fails or passes:
 
 | Case | Error? | Why |
 |---|---|---|
