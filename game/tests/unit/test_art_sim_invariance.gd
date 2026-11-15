@@ -12,6 +12,9 @@ extends GutTest
 ##   run names any art script that has one.
 ## - The player's synchronizer lists the same property paths both times, compared as lists, never as
 ##   a count (coop-networking and survival-meters own how many there are).
+## - damage-feedback (survival-meters "Hurt cue on the body"): at PINCH_FRAME, in both runs, a land
+##   crab pinches the player through the host's own CreatureWorld.pinch, so the look's hurt blink
+##   runs in the built run and the comparison covers a hit.
 ## The guard is itself tested: a bad look planted under the player in both runs, writing the
 ## player's thirst as it becomes ready, each physics frame or each process frame, makes the runs
 ## differ on the first frame.
@@ -36,6 +39,8 @@ const PICKUPS_ON_ROUTE: int = 3
 const AT_TARGET_PX: float = 3.0
 ## Axis dead band when steering, so the body does not jitter about a line.
 const STEER_PX: float = 1.0
+## The frame on which a land crab pinches the player (damage-feedback), in both runs.
+const PINCH_FRAME: int = 120
 
 var island: SandbarIsland
 var session: CoopSession
@@ -60,6 +65,10 @@ var planted_alone: Array[StringName] = []
 var _route: Array[Vector2] = []
 var _leg: int = 0
 var _pressing: int = 0
+# The frame _frame is stepping, from 0 in each run.
+var _frame_no: int = 0
+# Whether the built run's look was blinking on the frame after the pinch.
+var _blinked: bool = false
 
 
 func before_each() -> void:
@@ -70,6 +79,7 @@ func before_each() -> void:
 	stripped = 0
 	disarmed = 0
 	ticked = 0
+	_blinked = false
 	NetManager.start_solo()
 	WeatherManager.stop()
 
@@ -114,6 +124,7 @@ func _build() -> void:
 	# The spawner's start is deferred to the next frame, which never comes while the run lives: it
 	# begins now, as it would then. Its queued call is dropped with the freed run.
 	spawner._begin()
+	_frame_no = 0
 
 
 func _free_run() -> void:
@@ -133,6 +144,8 @@ func _free_run() -> void:
 # spawner, lit fires, then the art's own callbacks), then the clock.
 func _frame(intent: MoveIntent) -> void:
 	body.intent = intent
+	if _frame_no == PINCH_FRAME:
+		spawner.world.pinch(body, GameState.content.get_entry(&"creatures", &"land_crab") as CreatureData)
 	session._physics_process(dt)
 	for creature: Creature in spawner.creatures():
 		creature._physics_process(dt)
@@ -144,6 +157,10 @@ func _frame(intent: MoveIntent) -> void:
 		if fire != null and session.is_ancestor_of(fire):
 			fire._physics_process(dt)
 	_tick_art()
+	if _frame_no == PINCH_FRAME:
+		var look := body.get_node_or_null(^"Look") as PlayerLook
+		_blinked = look != null and look.hurt_blink().active()
+	_frame_no += 1
 	WeatherManager.sky.advance(dt)
 
 
@@ -321,7 +338,7 @@ func _built_run(frames: int) -> Dictionary:
 		intents.append(intent)
 		_frame(intent)
 		snapshots.append(_snapshot())
-	var result := {"frames": snapshots, "paths": _sync_paths(), "creatures": spawner.creatures().size(), "art": _art_in_run().size(), "enter_tree": enter_tree}
+	var result := {"frames": snapshots, "paths": _sync_paths(), "creatures": spawner.creatures().size(), "art": _art_in_run().size(), "enter_tree": enter_tree, "blinked": _blinked}
 	_free_run()
 	return result
 
@@ -388,6 +405,8 @@ func test_a_solo_sandbar_runs_the_same_with_and_without_art() -> void:
 	assert_gt(disarmed, 0, "the stripped run disarmed the art as it entered")
 	assert_gt(stripped, 0, "and freed it")
 	assert_gt(built["creatures"], 0, "the sandbar's creatures are on, as in a real run")
+	assert_true(built["blinked"], "the crab's pinch blinked the player's look in the built run")
+	assert_lt(float(built_frames[PINCH_FRAME]["synced"]["SurvivalMeters:health"]), 100.0, "and took health in both runs")
 	var last_inventory: Array = built_frames[FRAMES - 1]["inventory"]
 	assert_false(last_inventory.is_empty(), "the scripted run picked something up")
 	assert_ne(built_frames[0]["position"], built_frames[FRAMES - 1]["position"], "the scripted run moved")

@@ -15,6 +15,11 @@ Kinds the host does not apply are left out. A refusal replaces the row for 2 s. 
 - **WHEN** the strip is drawn
 - **THEN** the row reads "Sed +15 · Hambre +5 · Energía +10"
 
+#### Scenario: Waste shows before use
+- **GIVEN** a solo player at thirst 94, hunger 50 and energy 50, holding a knife and a coconut, the coconut selected
+- **WHEN** the strip is drawn
+- **THEN** the row reads "Sed +15 (+6 útil) · Hambre +5 · Energía +10"
+
 #### Scenario: Sábila's line
 - **GIVEN** a solo player with sábila selected
 - **WHEN** the strip is drawn

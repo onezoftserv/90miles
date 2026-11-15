@@ -1,6 +1,6 @@
 # Tasks
 
-The owner chose A for Q1 to Q4 on 2026-11-14. Groups 5 and 6 follow the recommended A of Q5 to Q7, which are still open.
+The owner chose A for Q1, Q2 and Q4 to Q7, and no hit numbers for Q3 (2026-11-14 and 2026-11-15). Design D1 folds in the coordinator's research pass and lists its optional follow-ups.
 
 The commands below run from the repo root, using the Godot 4.7.2 console binary:
 - "Import" is `godot --headless --path game --import`, run twice on a fresh checkout.
@@ -58,7 +58,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 3. Body cue (survival-meters "Hurt cue on the body")
 
-- [ ] 3.1 Tests first: write `game/tests/unit/test_hurt_blink.gd`. It covers the pure `HurtBlink` state:
+- [x] 3.1 Tests first: write `game/tests/unit/test_hurt_blink.gd`. It covers the pure `HurtBlink` state:
   - white on the first frame;
   - hidden at 10 Hz until 0.6 s;
   - then clear;
@@ -70,8 +70,8 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - a dead body never sets them.
 
   Verify: it fails first, then passes.
-- [ ] 3.2 Add `hurt_white`, `hurt_hidden` and `hurt_tint` to `player_look.gdshader`, applied after the water-line cut. Add the health `MeterWatch` and `HurtBlink` to `PlayerLook.step`, with time from `delta` only (no Tween, Timer, await, RNG or `_enter_tree`). Verify: 3.1 passes, and the existing art and look tests still pass.
-- [ ] 3.3 Extend `test_art_sim_invariance.gd`. In both runs, at a fixed frame, the nearest land crab pinches the player through the host's own `CreatureWorld.pinch`, or `meters.harm` if no crab is in reach. The built run asserts that the look's blink ran. Verify: the invariance test passes, and its bad-look guard tests still fail as they should.
+- [x] 3.2 Add `hurt_white`, `hurt_hidden` and `hurt_tint` to `player_look.gdshader`, applied after the water-line cut. Add the health `MeterWatch` and `HurtBlink` to `PlayerLook.step`, with time from `delta` only (no Tween, Timer, await, RNG or `_enter_tree`). Verify: 3.1 passes, and the existing art and look tests still pass.
+- [x] 3.3 Extend `test_art_sim_invariance.gd`. In both runs, at a fixed frame, the nearest land crab pinches the player through the host's own `CreatureWorld.pinch`, or `meters.harm` if no crab is in reach. The built run asserts that the look's blink ran. Verify: the invariance test passes, and its bad-look guard tests still fail as they should.
 - [ ] 3.4 Import ×2, Smoke and GUT pass.
 
 ## 4. Screen cue and bar slices (ui-shell "Hit flash at the screen edges", "Changes show on the bars", "Drain glow on the health bar")
@@ -111,6 +111,8 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 - [ ] 5.1 Tests first: write `game/tests/unit/test_change_floats.gd` (solo, offline, a `RunHud` on a sandbar session, stepped by hand). It covers:
   - a coconut at thirst 50 and hunger 50 floats "+15 Sed" in Sed's colour and "+5 Hambre", stacked 9 px apart, above the head anchor and clear of the name tag;
   - the floats rise 12 px and are gone after 1 s;
+  - a second float on a body pushes the first one up by 9 px;
+  - a coconut at thirst 94 floats "+6 Sed", the gain that fit;
   - a bite of 25 floats nothing (Q3 A);
   - clearing BLEEDING floats "Sin sangrado";
   - thirst draining floats nothing;
@@ -125,6 +127,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 - [ ] 6.1 Before touching `ItemUser`, grep the tests for item uses (`ItemUser.use`, `use_for`, `use_item`, `_send_use`). Wherever a test means a use to happen at default (full) meters, lower the meter first. Verify: GUT is still green with no behaviour change.
 - [ ] 6.2 Tests first: write `game/tests/unit/test_effect_line.gd` (pure). It covers:
   - coco reads "Sed +15 · Hambre +5 · Energía +10";
+  - at thirst 94 and energy 50 it reads "Sed +15 (+6 útil) · Hambre +5 · Energía +10", and at full energy the energy part reads "Energía +10 (+0 útil)";
   - aloe reads "Cura quemadura y sangrado";
   - manzanillo reads "Salud −50 en 60 s";
   - the revive use reads "Levanta · …";

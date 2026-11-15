@@ -123,6 +123,37 @@ Both `harm` (one call for a hit, or one per frame for drowning) and direct write
   - **Borrowed:** the direction, through slices on the bar and floats.
   - **Not borrowed:** spoken lines on every use. They would be a dialogue change, and our floats already say what happened.
 
+**The coordinator's research pass (2026-11-15, `reference-feedback-hud.md` in the shared notes; ideas only)**
+
+*Folded in, inside the owner's answers:*
+- **Flash strength:** it is measured against the share of max Salud lost. A floor makes every real hit read, a cap keeps big hits from blinding, and a cluster of hits keeps only the strongest. This follows SPD `Hero.damage()` → `GameScene.flash()` and Brogue `flashMonster` with `MIN_FLASH_STRENGTH`.
+  - Max Salud is the base, rather than current Salud, so a hit reads the same at any health.
+  - Low health already pulses the bar.
+  - This is D5's curve; max Salud is 100, so `hit / big_hit` is the share over a quarter of the bar.
+- **A huge hit:** it gets the heavier sound (`hurt_big`) and the full-strength flash, following DCSS `ouch()` and SPD's two warning sounds.
+- **The lost chunk:** it is measured from the value the peer saw on the frame before the hit (the watch's last value), not from the bar's display. It is drawn in the newly empty part of the bar, held, then drained. This follows DCSS `colour_bar::draw` and Brogue `creatureHealthChangePercent`. Health has no passive regen today, so there is nothing to leave out.
+- **"Not now" and "never":** the wording tells them apart, following DCSS `can_quaff` and `_uselessness_desc`.
+  - "No tienes sed." and the other wasted-use lines mean not now.
+  - "Eso no se usa así." means never.
+  - One check (`ItemUser.check`) drives the HUD's refusal and the host's.
+- **Waste before use:** the effect line shows it from the meter's headroom, for example "Sed +15 (+6 útil)", following Brogue `itemDetails`' food check (D11).
+- **After use:** the float shows the effective, clamped gain ("+6 Sed" when only 6 fit), following SPD `Dewdrop.consumeDew()`. The watch measures the real change, so this needs no extra work.
+- **Stacking:** floats stack per body. A new float pushes the older ones up, as in SPD `FloatingText.push()` (D9).
+- **No modal confirm and no text log** as the main channel: we refuse instead, as the brief advises.
+
+*Adapted:*
+- **"Drains told apart by source, not size"** (DCSS `ouch()` poison exemption, SPD `Hunger`). The source (`SurvivalMeters._last_harm`) lives only on the host, and syncing it would add a replicated property (D2). Our test is not size either: it is the loss against the body's recent steady trend (D3). That gives the same answer for every source we have, and on every peer.
+
+*Optional follow-ups, not built here; each would add scope or reopen an owner answer:*
+- a forecast segment for losses still to come (SPD `Char.incomingDOT()`); the remaining timed loss is host-only state;
+- one-time low-Salud threshold cues and label colour steps (DCSS `hp_colour`, Brogue `handleHealthAlerts`);
+- an orange heat-warning haze at the edges, kept apart from the red (DST "Overheating");
+- dimming slots that can't be used right now (SPD `itemSelectable()`, DCSS `TILEI_FLAG_INVALID`), which belongs with the HUD restyle that owns the slots;
+- meter icons on floats;
+- folding repeated floats into one with a count (Brogue message folding);
+- a float naming a status a hit applies ("Sangrando");
+- sips that spend only what the meter needs (SPD `Waterskin`), a gameplay change.
+
 **GBA conventions, matching our art direction C** (general knowledge, no assets)
 - In *A Link to the Past*, a hurt Link flashes and blinks while briefly untouchable, is knocked back, and his hearts empty.
 - In GBA-era Pokémon battles, the hurt monster blinks and the HP bar slides down rather than jumping.
@@ -224,7 +255,8 @@ Time comes only from `delta`: no Tween, Timer, await, `_enter_tree` or RNG. `_dr
   - `"%+d %s"` with the meter's word from `hud_text.tres`;
   - `"Sin %s"` with the status word.
 - **Colour:** each meter's colour comes from `HurtCueTuning.meter_colors`, and a test keeps it equal to the `fill_color` set in `meters_hud.tscn`, so a restyle that changes one fails until both agree.
-- **Placement:** each float starts at the body's head anchor (`BodyLook.head_anchor_y`), above the name tag when that shows, and rises 12 px over `float_s` (1 s) while fading. Floats made in the same frame stack 9 px apart, as SPD stacks per character.
+- **Placement:** each float starts at the body's head anchor (`BodyLook.head_anchor_y`), above the name tag when that shows, and rises 12 px over `float_s` (1 s) while fading.
+- **Stacking:** a new float on a body pushes the ones still showing up by `float_stack_px` (9 px), so floats made together, or close together, never overlap. This follows SPD `FloatingText.push()`.
 - They are world-anchored marks, so ui-shell "Inventory band and world marks" already allows them in the centre.
 - They are drawn on the HUD layer, not in the world, so the pixel filter does not blur them, matching name tags.
 - A body leaving the session frees its floats.
@@ -251,7 +283,7 @@ Time comes only from `delta`: no Tween, Timer, await, `_enter_tree` or RNG. `_dr
 - flags say nothing;
 - a delay adds "a los %d s".
 
-The parts join with " · " and are cut with "…" at the row's 50 characters.
+When a meter gain at once would not fit under the subject's cap, the part shows what is useful too, "Sed +15 (+6 útil)" (Brogue's food check). The part is worked out from the same dry run as D12, so the meal energy and the starving cap count. The parts join with " · " and are cut with "…" at the row's 50 characters.
 
 **Guarding against drift:**
 - A test lists `EffectApplier`'s interpreted kinds and asserts that `EffectLine` handles exactly those.
@@ -309,16 +341,7 @@ None. The setting defaults to off, and an old `settings.cfg` without the key rea
 - **Q4 A:** the chunk and a dim glow on the Salud bar.
 - **Also approved:** the reduce-flashes checkbox, no knockback, and the AudioManager hook. The hook is a method on the existing autoload; no new autoload.
 
-**Still open:**
-- **Q5, where the effect line sits:**
-  - **A, recommended:** the refusal row above the item's line, which a refusal takes for 2 s. The layout is unchanged.
-  - **B:** a new row above that, growing the bottom band to y 294.
-  - **C:** appended to the item's line, dropped when it does not fit 41 characters.
-- **Q6, a wasted use:**
-  - **A, recommended:** refuse only when no effect would change anything.
-  - **B:** refuse when the item's first effect would change nothing.
-  - **C:** never refuse; warn and use it anyway.
-- **Q7, what floats after a change:**
-  - **A, recommended:** any meter jumping at once on any body, and cures, seen by every peer.
-  - **B:** only on your own body.
-  - **C:** only the bar slices, no floats.
+**Answered 2026-11-15:**
+- **Q5 A:** the effect line goes in the refusal row above the item's line, and a refusal takes it for 2 s.
+- **Q6 A:** a use is refused only when no effect would change anything.
+- **Q7 A:** any meter jumping at once on any body, and cures, float on every peer; slow regains don't.
