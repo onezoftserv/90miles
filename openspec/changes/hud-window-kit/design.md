@@ -52,7 +52,7 @@ Read on main `cb7834f`, 2026-11-14. The motivation is in proposal.md.
 
 - **The secret cay's note label starts at x 140.** The design pass's 142 px meters window would end at x 146 and overlap it. This change therefore narrows the window (D4).
 - **The sign note spans x 200 to 440 from y 22, and the note label x 140 to 500 from y 46.** A teammate list taller than one row must start right of x 500 (D7).
-- **`damage-feedback` (branch `claude/damage-feedback-1cc261` at `dfa2a31`, owner answers Q1–Q4 A, Q5–Q7 open, being built) adds:**
+- **`damage-feedback` (branch `claude/damage-feedback-1cc261`, read at `dfa2a31`; every owner question answered; being built) adds:**
   - `Lost` and `Gain` ColorRects and a `Glow` Panel inside `MeterBar/Bar`;
   - a 1 px shake of the health bar;
   - a full-screen `HurtOverlay` in `MetersHud`;
@@ -82,7 +82,7 @@ Each PNG is at 2× unless its name says `_x3`.
   - The owner declined it; it is kept only to record the choice.
   - Its well colour `#3f3f74` is not used (2.17:1 against black rims).
 
-The build adds `kit_*.png` captures of the result beside these (tasks 2.7, 3.4, 4.6, 4.7, 5.3).
+The build adds `kit_*.png` captures of the result beside these (tasks 2.7, 3.4, 4.6, 4.7, 5.4).
 
 ## Goals / Non-Goals
 
@@ -156,6 +156,37 @@ The build adds `kit_*.png` captures of the result beside these (tasks 2.7, 3.4, 
 - **Hunger page:** the meter flashes while starving. **Already ours:** the critical pulse, now on the outline.
 - **Day-Night Cycle page:** a segmented clock face. **Not in this change:** a later day strip must stay inside the phase tag's 14 px band (design pass 4.4).
 
+**The owner's reference pass** (2026-11-14; the coordinator's brief `reference-feedback-hud.md`, "HUD and inventory restyle" and its raw reports; names spot-checked in `reference/`)
+
+*Meter rows*
+- **Borrowed: a strict grid with label colour steps.** The rows are a strict grid: the label column, the bar at a fixed x, then the value. The label's colour steps at a warning and a danger threshold. Sources: DCSS `output.cc` `_print_stats_hp` (the caption colour `Options.status_caption_colour`, the bar from a fixed column, `hp_colour` yellow then red); Brogue `IO.c` `printMonsterInfo` (the nutrition label's states).
+  - Ours: orange (`#df7126`, 4.93:1) at 50 or less (heat 50 or more), and the alert red (`#d95763`) at the critical 25 (heat 75), both steady. The outline and value pulse only at the critical step (D4).
+  - Today's design doc has no warning number (`docs/GAME_DESIGN.md` §4 names only 0, 20, 60 and 100 as rule thresholds). The 50 is a HUD constant beside `CRITICAL_LOW`, not a rule.
+- **Borrowed, in palette steps: a shaded edge pixel.** The pixel at the fill's edge shows the fraction it holds (Brogue `IO.c` `printProgressBar`). A 38 px bar is 0.38 px per point, so the edge column is drawn in the ramp's shade colour while it holds less than half a pixel, and as a full column from half up. That doubles the bar's resolution with no blended colour (D4).
+- **Rejected: alternate rows a shade darker** (`printProgressBar`). Our bars already stand 3 px apart on the window fill. A darker row tone than `#222034` would be `#000000` (1.32:1, invisible), and a lighter one would cut the labels' contrast.
+- **Deferred, own change: rate arrows.** DST's "Sanity" page shows a small arrow beside a meter, sized by how fast it moves. Our 132 px row has no free cell. A 5 px arrow cell takes the bar from 40 to 34 px, and the arrow reads its rate from damage-feedback's per-meter watches once they are on main. It is owner question E.
+- **Borrowed: rows that show only while they apply.** DST's "Wetness/DST" page shows its wetness meter under the others only while the player is wet. "Sangrando" already works this way. Any later status row goes under the six meters the same way. The 90 px budget holds two such rows (4 + 6 + 60 + 20 = 90); a third needs its own layout (D4).
+
+*Slots*
+- **Borrowed: the count corner.**
+  - The count shows only above 1: DCSS `tilereg-inv.cc` `_fill_item_info`.
+  - The uses left turn orange on the last use: SPD `ui/ItemSlot.java`, whose status corner takes `WARNING` (orange) on a last throw.
+  - Durability as a number on the slot: DST "Durability" page.
+  - Ours: tools never stack (crafting-inventory), so a slot never needs a count and a uses number together. Both share the bottom-right place, and the uses digits turn `#df7126` at 1 use left.
+  - **Rejected: a second corner for uses.** Every other corner crosses the icon's square or the key.
+- **Borrowed: dimmed slots and recipes, never hidden.** Sources:
+  - SPD `windows/WndBag.java` `ItemSelector.itemSelectable()`;
+  - DCSS `TILEI_FLAG_INVALID` in `tilereg-inv.cc`, and `quiver.h` `is_valid`, which is kept apart from `is_enabled`;
+  - Brogue `Items.c` `displayInventory`, which greys rows.
+
+  Ours: a slot whose item has a use that the use button would refuse right now is dimmed (D6). The craft list already dims recipes that are short of something. An item with no use at all (driftwood) is never dimmed, or most of the strip would be grey.
+- **Rejected: a dimmed placeholder when a stack runs out.** SPD `QuickSlot.java` `isNonePlaceholder` and `replacePlaceholder`, and DCSS `quiver.h` `find_replacement` and `on_item_pickup`, keep one. Our slots are the host's inventory slots, not quickslots, and a pickup goes to the first free slot (crafting-inventory). A placeholder would promise a refill the host never makes. It needs slot memory in crafting-inventory first.
+- **Borrowed: a delayed tooltip with the item's name and its verb.** Sources: DCSS `tilereg-inv.cc` `InventoryRegion::update_tip_text`, and the webtiles action panel's delayed hover tip (`action_panel.js`). Ours is for the mouse only; the selected item's line already does this job for the keyboard and the gamepad (D6, inventory-hud "Slot tooltip").
+- **Deferred: a picked-up item's sprite flying into the strip** (SPD `ui/Toolbar.java` `PickedUpItem`). It is a client-side flourish for a later change.
+- **Rejected: re-sorting on pickup** (SPD `items/Item.java` `itemComparator` in `collect()`; Brogue `Items.c` `addItemToPack`). It would move items under the player's number keys.
+- **Rejected: a key label on every slot.** The owner chose Q11 (a).
+- **Rejected: DST's cursor "hand" slot and mouse-only item actions** ("Inventory" page). They break gamepad parity and the host-owned slot model.
+
 **GBA-era windows** (general knowledge, described in words; no asset used)
 - **Pokémon FireRed and LeafGreen:**
   - The text box is a cream fill with a dark outer line, a lighter inner line, and corners rounded by a one-pixel step. It is the model for `window_paper`.
@@ -195,7 +226,7 @@ Contrasts are relative-luminance ratios (`palette.luminance`). Every colour is i
 | `arrow_down` | 7×4 | A chevron in `#ffedde`, rows 7, 5, 3 and 1 px wide | OptionButton `arrow` |
 | `scroll_track`, `scroll_grabber` | 6×6 margin 2; 6×8 margin 3 | Track: outline `#222034`, fill `#3f3f74`. Grabber: outline `#222034`, bevel `#eec39a` and `#8f563b`, fill `#d9a066` | VScrollBar |
 | `radio_off`, `radio_on` | 7×7 | A stepped circle in `#ffedde`; "on" adds a 3×3 `#fbf236` dot | PopupMenu radio items |
-| `digits_3x5` | 12 cells of 5×7 | The glyphs 0–9, "-" and "=" in `#ffedde`, 3×5 each, with a baked 1 px `#222034` outline | `HudDigits` (D6) |
+| `digits_3x5` | 12 cells of 5×7, two rows | The glyphs 0–9, "-" and "=", 3×5 each, with a baked 1 px `#222034` outline. Row 0 is `#ffedde`; row 1 is `#df7126`, for the last use. | `HudDigits` (D6) |
 
 **Changes from the design pass's §4.1**
 - **Button hover:** the pass used a `#5b6ee1` fill, which puts cream at 3.87:1. Hover keeps the normal fill, lightens the top bevel and draws its text white (6.73:1).
@@ -238,6 +269,10 @@ Contrasts are relative-luminance ratios (`palette.luminance`). Every colour is i
   - The pass's `#ac3232` text on paper gives 3.97:1, under the 4.5:1 rule.
 - `HudNoteText`: `#222034` (13.91:1 on `#ffedde`).
 - `AlertLabel` (new, base `Label`): `#d95763`, for "Sangrando" and the state words.
+- `TooltipPanel` and `TooltipLabel` (the engine's tooltip types):
+  - the panel is `window_thin`, with content margins 4/1/4/1;
+  - the label is Press Start 2P 8 in `#ffedde`;
+  - so any tooltip, the slot tooltip first (D6), is in the kit.
 
 **Fonts**
 - `game/assets/fonts/menu_font.tres`: a `FontVariation` of Pixelify Sans with `spacing_space = 2`, so a space is 5 px at 16. It is used for Button, OptionButton, CheckBox, LineEdit, TitleLabel, HeadingLabel, PanelHeading and CreditsLabel.
@@ -294,7 +329,18 @@ The pass's mock row (56 + 4 + 46 + 4 + 24 + margins) is 142 px wide and would ov
 | Ánimo | `#ffedde` | `#d77bba` | `#76428a` | `#45283c` | |
 
 - **Order:** Salud, Sed, Hambre, Calor, Energía, Ánimo, by moving the `Health` node first in `meters_hud.tscn`. Nothing else keys on row order: `bars()` and `bar_for()` read the nodes.
-- **The critical pulse** lerps only the bar box's outline and the value's font colour between their steady colours and `HudStyle.ALERT`, at the existing 1 Hz. The label is never touched.
+- **The label's colour** is steady and stepped (DCSS `hp_colour`):
+  - cream above the warning step;
+  - `HudStyle.ORANGE` at the warning step, `WARN_LOW` 50 or less (heat `WARN_HEAT` 50 or more);
+  - `HudStyle.ALERT` at the critical step (`CRITICAL_LOW` 25, `CRITICAL_HEAT` 75).
+
+  The constants sit beside today's critical ones in `MeterBar`. The label never pulses.
+- **The critical pulse** lerps only the bar box's outline and the value's font colour between their steady colours and `HudStyle.ALERT`, at the existing 1 Hz.
+- **The edge column** (Brogue `printProgressBar`, in palette steps):
+  - the fill is `v / 100 × 38` px: its whole columns, plus one more full column when the remainder is at least half a pixel;
+  - a remainder under half a pixel draws a 1×5 `Edge` ColorRect in the ramp's shade colour;
+  - any value above 0 therefore shows at least a shade column.
+- **Status rows** ("Sangrando", and any later one) go under the six meters only while they apply, one 10 px row each. The 90 px budget holds two; a third status needs its own layout in its own change.
 - **The window** is the `HudPanel` it already is, so `panel_rect()` and `RunHud.panel_rects()` are unchanged.
 
 ### D5. Damage-feedback inside the kit
@@ -321,9 +367,7 @@ Its cues keep their behaviour and timing; only their geometry and colours change
 - Each float gets the `HudCount` 1 px `#222034` outline, so its meter colour reads over sand, sea and foam alike.
 - Damage-feedback's test keeps `HurtCueTuning.meter_colors` equal to each `MeterBar.fill_color`. `MeterBar` therefore keeps a `fill_color` export, set to the ramp's base colour (D4), and the build updates `meter_colors` to the same six bases in the same commit.
 
-**Effect line and refusals** (Q5 A there)
-- They share the notice row (120,306, 400×10), which becomes `HudPanelThin`.
-- If the owner picks Q5 B (a new row up to y 294), that row is a `HudPanelThin` 10 px row too. The meters, the strip and the prompt bound (y 302) are unaffected, and that change moves the prompt bound itself.
+**Effect line and refusals** (Q5 A there): they share the notice row (120,306, 400×10), which becomes `HudPanelThin`. Damage-feedback owns their text and timing; this change only draws the row.
 
 **No floating damage numbers:** none, per Q3 A there.
 
@@ -337,6 +381,20 @@ Inside the 26×26 slot (x and y from the slot's top-left):
 - **Letters** for an item with no icon stay Press Start 2P 8 at (1,9). No icon is drawn under them.
 - **The use ring** stays radius 10 and 2 px wide, in `HudStyle.SUN`.
 - **Draw order**, from DCSS `pack_buffers`: well, selection ring, icon, letters, digits, use ring.
+
+**The last use:** a tool's uses left draw from the atlas's orange row when exactly 1 use is left (SPD `ItemSlot` `WARNING`). A stack's count is always cream, since tools never stack.
+
+**Dimmed slots**
+- A slot is dimmed when its item has a use (`UsePlan.choose` finds one) and that use would be refused now. The test is the one the use button already runs on a press: `UsePlan.actor_reason`, then `ItemUser.check`, including damage-feedback's wasted-use reason.
+- An empty slot, and an item with no use (`NO_USE`), are never dimmed.
+- The strip works this out again only when something it reads changes: the inventory, the bound body's meters or statuses, the downed or crossing state, or the selection. It never runs every frame.
+- A dimmed slot draws its icon, letters and digits at the craft list's `DIM` (alpha 0.4) over the well. The well itself stays opaque, so it is still a slot, and the icon stays visible.
+- The host still decides every use.
+
+**The slot tooltip** (inventory-hud "Slot tooltip")
+- `StripSlot` sets `tooltip_text` to "<item name> · <verb>": the name from the item's content, the verb from `hud_text.tres` for the use `UsePlan.choose` picks. The name alone when it has no use, and "" for an empty slot.
+- The engine shows it after `gui/timers/tooltip_delay_sec` (0.5 s), on the kit's `TooltipPanel`, near the pointer and inside the viewport.
+- Tooltips come from the mouse only, so a gamepad never shows one. It takes no focus.
 
 `HudDigits` (a `Control`, `scripts/ui/hud_digits.gd`) draws a string of the atlas's glyphs right- or left-aligned at a 4 px pitch, the outlines overlapping. It replaces `count_label` and `key_label` as the drawn text. Those Labels stay as hidden text holders for the tests and the `count_text` API, so the existing strip tests keep reading `.text`.
 
@@ -493,6 +551,10 @@ There are no saves or settings to migrate. Each stage is a revertible PR, and st
 - **D. Kenney Pixel UI Pack credit, stage 1.**
   1. *(Recommended)* Drop it, since no file of it stays tracked.
   2. Keep it as a CC0 courtesy line.
+- **E. Rate arrows beside each meter** (DST "Sanity" page; D1).
+  1. *(Recommended)* Later, as their own change, using damage-feedback's per-meter watches. The bar then goes from 40 to 34 px.
+  2. In this change, in stage 4, with the bar at 34 px now.
+  3. Never.
 
 ## Open Questions
 

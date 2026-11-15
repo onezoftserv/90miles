@@ -43,9 +43,12 @@ The owner chose the recommended answers on 2026-11-14:
 **HUD panels in the kit** (ui-shell "HUD layout")
 - Meters (Q10, route B):
   - one dark window at (4,4), at most 132 px wide, so it stays clear of the secret cay's note label at x 140;
-  - each row a label column, a thin pre-shaded bar on the meter's own ramp, and the value;
+  - each row a strict grid: a label column, a thin pre-shaded bar on the meter's own ramp at a fixed x, and the value;
+  - the bar's edge pixel shows a half-filled column in the ramp's shade colour;
   - the order is Salud, Sed, Hambre, Calor, Energía, Ánimo;
-  - the critical pulse moves off the label onto the bar's outline and the value.
+  - a label turns a steady orange at the warning step and alert red at the critical one;
+  - the critical pulse moves off the label onto the bar's outline and the value;
+  - status rows such as Sangrando show only while they apply.
 - The day phase, the watching line and the quick-chat wheel move onto dark windows.
 - The interact prompt, the item line, the refusal notice and the weight move onto thin windows, which keep their rects.
 - Teammate list:
@@ -69,6 +72,10 @@ The owner chose the recommended answers on 2026-11-14:
 - The selected slot has a yellow and orange ring.
 - The icon sits at (5,4). The count is drawn in small 3×5 digits bottom-right, and never over the icon.
 - The slot key shows only on the selected slot, and only while the keyboard is the last device used.
+- A tool's uses left turn orange on its last use.
+- A slot whose use the use button would refuse right now is dimmed, never hidden. An item with no use is never dimmed.
+- Resting the mouse on a slot shows a delayed tooltip with the item's name and verb.
+- These ideas come from the owner's reference pass (SPD, Brogue, DCSS, DST). Its rejected ideas are recorded in design D1: auto-sorting, keys on every slot, empty-stack placeholders and a cursor "hand" slot.
 
 **Menus** (ui-shell "Shared theme", new "Menu windows")
 - Paper panels with even edges replace the tan panel with its stretched ticks.
@@ -105,7 +112,8 @@ None.
   - ADDED "Menu windows".
 - `inventory-hud`:
   - MODIFIED "Inventory strip": the strip window and the slot wells;
-  - MODIFIED "Slot contents": the icon place, the small digits, the key on the selected slot only, the two-colour selection ring.
+  - MODIFIED "Slot contents": the icon place, the small digits, the last use in orange, the dimmed slots, the key on the selected slot only, the two-colour selection ring;
+  - ADDED "Slot tooltip".
 - `survival-meters`: MODIFIED "HUD bars": Salud first, and each label left of its bar rather than inside it.
 - `art-pass`: MODIFIED "Master palette": the `art/ui/` exemption ends.
 

@@ -24,7 +24,7 @@ During a run the HUD SHALL show the local player's inventory as one row of 26×2
 - **THEN** the strip's window lies inside y 329 to 358, below the selected item's line and left of the weight, and every slot keeps its 26×26 rect as a recessed well
 
 ### Requirement: Slot contents
-Each slot SHALL show its item's 16×16 icon with its top-left at (5,4) or, while it has none, the first three letters of its Spanish name. Bottom-right, in small 3×5 digits outlined in dark, it shows a stack's count above 1 or the uses left of an item with more than 1 use. Top-left, on the selected slot only and while the last device used is the keyboard, it shows the slot's key in the same digits. No digit pixel lies inside the icon's square. An empty slot keeps its well. The selected slot has a sun-yellow ring with an orange inner ring. The weight reads "Peso <carried>/<limit>" with a decimal comma. Solo the same.
+Each slot SHALL show its item's 16×16 icon with its top-left at (5,4) or, while it has none, the first three letters of its Spanish name. Bottom-right, in small 3×5 digits outlined in dark, it shows a stack's count above 1 or the uses left of an item with more than 1 use, in orange on the last use. A slot whose item has a use that the use button would refuse right now is dimmed, never hidden. Top-left, on the selected slot only and while the last device used is the keyboard, it shows the slot's key in the same digits. No digit pixel lies inside the icon's square. An empty slot keeps its well. The selected slot has a sun-yellow ring with an orange inner ring. The weight reads "Peso <carried>/<limit>" with a decimal comma. Solo the same.
 
 #### Scenario: A stack, a tool and an empty slot
 - **GIVEN** a solo player on the keyboard holding 3 coco in screen slot 1, which is selected, and a knife with 39 uses left in screen slot 2, with screen slot 3 empty
@@ -45,3 +45,33 @@ Each slot SHALL show its item's 16×16 icon with its top-left at (5,4) or, while
 - **GIVEN** a solo player, offline, on the keyboard holding a full stack of 40 in the selected slot
 - **WHEN** the strip is drawn
 - **THEN** neither the count's nor the key's digit pixels lie inside the icon's 16×16 square, and the icon's black outline stands at 5:1 or more against the well
+
+#### Scenario: The last use
+- **GIVEN** a solo player, offline, holding a knife with 1 use left and a lighter with 20
+- **WHEN** the strip is drawn
+- **THEN** the knife's slot shows "1" in orange bottom-right and the lighter's shows "20" in cream
+
+#### Scenario: Refused now, dimmed
+- **GIVEN** a solo player, offline, on the raft crossing, holding a rain cup and driftwood
+- **WHEN** the strip is drawn
+- **THEN** the rain cup's slot is dimmed with its icon still shown, and the driftwood's slot, which has no use, is not dimmed
+
+#### Scenario: A blade makes the coconut usable
+- **GIVEN** a solo player, offline, with thirst 50, holding a coconut and nothing that opens coconuts, its slot dimmed
+- **WHEN** they pick up a knife
+- **THEN** the coconut's slot is no longer dimmed
+
+## ADDED Requirements
+
+### Requirement: Slot tooltip
+Resting the mouse pointer on a slot that holds an item for half a second SHALL show a tooltip with the item's name and its use verb, from the content and HUD text files in the session's language, on a thin dark window inside the view. It takes no focus, selects nothing, and goes when the pointer leaves. A gamepad never shows it; the selected item's line names the item there. Solo the same.
+
+#### Scenario: Pointing at a coconut
+- **GIVEN** a solo player, offline, holding a coconut in screen slot 3 with slot 1 selected
+- **WHEN** they rest the pointer on slot 3 for half a second
+- **THEN** a tooltip reads "Coco · Beber" on a thin dark window inside the 640×360 view, and slot 1 stays selected
+
+#### Scenario: No tooltip on an empty slot
+- **GIVEN** the same player
+- **WHEN** they rest the pointer on an empty slot
+- **THEN** no tooltip shows

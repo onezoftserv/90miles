@@ -31,7 +31,7 @@ Every screen SHALL use one theme: Pixelify Sans at 16 or 32 px for titles and bu
 - **THEN** its sun-yellow focus ring follows the button's stepped corner and no backdrop pixel shows between the ring and the button
 
 ### Requirement: HUD layout
-During a run the HUD SHALL keep to a 640×360 budget. The six meters sit in one window inside (4,4) to (136,90), Salud first, each row a label, a thin bar and the value; a bar's outline and value pulse when critical (thirst, hunger, energy, morale or health at 25 or less, heat at 75 or more) and the label never does. The day phase sits top-centre. In co-op, teammates are listed top-right inside x 502 to 636, each with their name, a health bar and a state word, and a teammate's name and health strip show over their head while health is not full. The bottom band is the inventory's and the centre holds no panel. An open sign note sits top-centre under the day phase, clear of the meters, the teammate list and the centre.
+During a run the HUD SHALL keep to a 640×360 budget. The six meters sit in one window inside (4,4) to (136,90), Salud first, each row a label, a thin bar at a fixed x and the value. A label turns a steady orange at the warning step (50 or less, heat 50 or more) and a steady alert red at the critical one (25 or less, heat 75 or more), where the bar's outline and value also pulse; the label never pulses. The day phase sits top-centre. In co-op, teammates are listed top-right inside x 502 to 636, each with their name, a health bar and a state word, and a teammate's name and health strip show over their head while health is not full. The bottom band is the inventory's and the centre holds no panel. An open sign note sits top-centre under the day phase, clear of the meters, the teammate list and the centre.
 
 #### Scenario: Solo HUD
 - **GIVEN** a solo run
@@ -41,7 +41,12 @@ During a run the HUD SHALL keep to a 640×360 budget. The six meters sit in one 
 #### Scenario: Critical thirst
 - **GIVEN** a player whose thirst is 20
 - **WHEN** the HUD draws the thirst row
-- **THEN** the Sed bar's outline and its value pulse while the label "Sed" stays cream, and the pulse stops once thirst is above 25
+- **THEN** the Sed bar's outline and its value pulse while the label "Sed" is a steady alert red, and the pulse stops once thirst is above 25
+
+#### Scenario: Warning step
+- **GIVEN** a solo player, offline, with exactly 1 player, whose thirst is 40 and heat 60
+- **WHEN** the HUD draws the meters
+- **THEN** the labels "Sed" and "Calor" are a steady orange, nothing pulses, and every other label is cream
 
 #### Scenario: Teammate down
 - **GIVEN** a co-op run with Papo downed
@@ -66,7 +71,7 @@ During a run the HUD SHALL keep to a 640×360 budget. The six meters sit in one 
 ## ADDED Requirements
 
 ### Requirement: Readable HUD and menu text
-HUD and menu text SHALL have a contrast of at least 4.5:1 against the fill it is drawn on. The one exception is the alert red, which may go down to 4:1 on the dark window, and only for a short alert word (Sangrando, Caído, Muerto) or a pulsing value. HUD text is Press Start 2P at 8 px; menu text is Pixelify Sans at 16 or 32 px. A meter label is drawn on the window, never on a bar's fill. Solo and co-op show the same.
+HUD and menu text SHALL have a contrast of at least 4.5:1 against the fill it is drawn on. The one exception is the alert red, which may go down to 4:1 on the dark window, and only for a short alert word (Sangrando, Caído, Muerto), a critical meter's label or a pulsing value. HUD text is Press Start 2P at 8 px; menu text is Pixelify Sans at 16 or 32 px. A meter label is drawn on the window, never on a bar's fill. Solo and co-op show the same.
 
 #### Scenario: Meter labels on the window
 - **GIVEN** a solo run, offline, with exactly 1 player and every meter at 50

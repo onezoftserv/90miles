@@ -21,7 +21,7 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - the bevel colours on each side;
   - every pixel in the palette with whole alpha;
   - `focus_ring` leaves its centre transparent;
-  - `digits_3x5` holds 12 cells of 5×7, each glyph 3×5 inside a 1 px outline;
+  - `digits_3x5` holds two rows (cream and `#df7126`) of 12 cells of 5×7, each glyph 3×5 inside a 1 px outline;
   - `ramp_<meter>.png` has 1×5 rows in D4's order;
   - two runs give byte-identical files.
 
@@ -39,7 +39,8 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
     - HudPanel's `modulate_color.a` is 0.94;
     - Button and title fonts are `menu_font.tres`, whose `base_font` is Pixelify Sans and whose space is at least 5 px at 16 px;
     - the theme depends on no Kenney file;
-    - every font colour in the theme is a master palette colour.
+    - every font colour in the theme is a master palette colour;
+    - `TooltipPanel` is `window_thin` and `TooltipLabel` is Press Start 2P 8 in `#ffedde`.
   - A new `test_menu_windows.gd`, solo and offline:
     - title, settings, join, lobby (offline host view), credits and summary instanced at 640×360;
     - every Label meets design D12's contrast pairs and font sizes;
@@ -108,15 +109,17 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - the window lies inside (4,4)–(136,90), with and without Sangrando;
   - the bar box is 40×7 with a 38×5 fill;
   - a value of 1 still fills 1 px;
-  - critical thirst lerps the bar outline and the value colour, while the label's colour stays `#ffedde`;
+  - each label's colour is cream above 50, `#df7126` at 50 or less and `#d95763` at 25 or less (heat: 50 and 75 or more), and never pulses;
+  - critical thirst lerps the bar outline and the value colour only;
+  - the edge column at values 1, 50 and 99 (0.38, 19 and 37.62 px): one shade column, 19 full columns, then 37 full columns plus one more, since the remainder is at least half a pixel;
   - the Calor tick sits at 75;
   - each fill uses its `ramp_<meter>.png`;
   - `fill_color` equals the ramp's base.
 
-  Add the solo case: with exactly 1 player, offline, `NetManager.start_solo()`, the rows read Salud first.
+  Add the solo case: with exactly 1 player, offline, `NetManager.start_solo()`, the rows read Salud first, and thirst 40 with heat 60 turns only "Sed" and "Calor" orange.
 
   Verify: they fail first, then pass.
-- [ ] 4.2 Rebuild `meter_bar.tscn` and `meter_bar.gd` to D4: a label column, the `Bar` ProgressBar with ramp StyleBoxTextures, the value, the outline pulse, and `fill_color` kept as the ramp base. Move `Health` first in `meters_hud.tscn`, and set rows to 10 px with no separation. Re-fit damage-feedback's `Lost`, `Gain` and `Glow` and the shake to D5, and set `HurtCueTuning.meter_colors` to the six ramp bases. Verify: 4.1 and damage-feedback's `test_hurt_screen.gd`, its float and solo tests, and `test_run_hud.gd` pass.
+- [ ] 4.2 Rebuild `meter_bar.tscn` and `meter_bar.gd` to D4: a label column with its colour steps (`WARN_LOW` and `WARN_HEAT` beside the critical constants), the `Bar` ProgressBar with ramp StyleBoxTextures and the `Edge` column, the value, the outline pulse, and `fill_color` kept as the ramp base. Move `Health` first in `meters_hud.tscn`, and set rows to 10 px with no separation. Re-fit damage-feedback's `Lost`, `Gain` and `Glow` and the shake to D5, and set `HurtCueTuning.meter_colors` to the six ramp bases. Verify: 4.1 and damage-feedback's `test_hurt_screen.gd`, its float and solo tests, and `test_run_hud.gd` pass.
 - [ ] 4.3 Tests first, for the teammate blocks:
   - In `test_run_hud.gd`:
     - the panel is right-anchored, with its right edge at 636;
@@ -158,14 +161,37 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   Replace the old three-row test at lines 133-150. A new `test_hud_digits.gd` covers `HudDigits` alignment and pitch. Keep the solo case (exactly 1 player, offline): a strip holding seven items.
 
   Verify: they fail first, then pass.
-- [ ] 5.2 Write `scripts/ui/hud_digits.gd`, then change `StripSlot`:
+- [ ] 5.2 Tests first, in a new `test_strip_dimming.gd`, solo and offline with exactly 1 player:
+  - a knife with 1 use left draws its "1" from the orange row, and a lighter with 20 draws from the cream row;
+  - on the raft crossing a rain cup's slot is dimmed with its icon visible, and driftwood (no use) is not;
+  - a coconut with no blade is dimmed, and stops being dimmed after a knife pickup, with thirst at 50;
+  - an empty slot is never dimmed;
+  - dimming is worked out again on inventory, meter, status and state changes, and not every frame (a counter on the recompute stays at 0 over 60 idle frames);
+  - `tooltip_text` reads "Coco · Beber" for a coconut, the name alone for driftwood, and "" for an empty slot, while selecting nothing and taking no focus.
+
+  Verify: they fail first, then pass.
+- [ ] 5.3 Write `scripts/ui/hud_digits.gd`, then change `StripSlot`:
   - the icon at (5,4);
   - `HudDigits` for the count and the key, with the Labels kept as hidden text holders;
-  - the key only while selected, with `InventoryStrip` re-showing keys on a selection change.
+  - the orange row for the last use;
+  - `dimmed` drawn at the craft list's `DIM`;
+  - `tooltip_text`.
 
-  Verify: 5.1, `test_inventory_strip_net.gd` and `test_inventory_hud_solo_run.gd` pass.
-- [ ] 5.3 Capture the solo strip at 3×: seven items, the selected slot with its key, a 40-stack and a tool with 39 uses. Save it as `docs/inventory-hud/kit_strip_x3.png`. Verify: no digit covers an icon and the black rims read on the wells.
-- [ ] 5.4 Import ×2, Smoke, GUT and Art tests pass.
+  In `InventoryStrip`:
+  - show the key only while a slot is selected, and re-show keys on a selection change;
+  - recompute dimming from `UsePlan.choose`, `UsePlan.actor_reason` and `ItemUser.check` on the change signals.
+
+  Verify: 5.1, 5.2, `test_inventory_strip_net.gd` and `test_inventory_hud_solo_run.gd` pass.
+- [ ] 5.4 Capture the solo strip at 3×:
+  - seven items;
+  - the selected slot with its key;
+  - a 40-stack;
+  - a tool on its last use;
+  - a dimmed coconut with no blade;
+  - a tooltip.
+
+  Save it as `docs/inventory-hud/kit_strip_x3.png`. Verify: no digit covers an icon, the black rims read on the wells, and the dimmed icon is still recognisable.
+- [ ] 5.5 Import ×2, Smoke, GUT and Art tests pass.
 
 ## 6. Docs and the whole run
 
