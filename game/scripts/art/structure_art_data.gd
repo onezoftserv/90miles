@@ -20,6 +20,10 @@ const STANDARD_PATH: String = "res://assets/art/structures/structure_art.tres"
 @export var rain_catcher: SpriteFrames
 ## RAFT_WHOLE, RAFT_WORN and RAFT_BREAKING, 64x32 each.
 @export var raft: SpriteFrames
+## The almendrón on its drums on the crossing (vessel-car-board): the raft's three frames, 64x32.
+@export var car: SpriteFrames
+## One rider's board on the crossing (vessel-car-board): the raft's three frames, 16x32, nose north.
+@export var board: SpriteFrames
 ## One-frame structures by kind: the workbench, the stake marker and the sign post.
 @export var stills: Dictionary[StringName, Texture2D] = {}
 ## A build site's stages (SITE_MARKED, SITE_MATERIALS, SITE_HALF_BUILT) by recipe id; any other

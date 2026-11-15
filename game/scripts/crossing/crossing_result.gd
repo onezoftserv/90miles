@@ -8,7 +8,8 @@ var integrity: float = 0.0
 var broken: bool = false
 ## Always 0 on a coast crossing (no Gulf Stream there).
 var drift_offset_tiles: float = 0.0
-## Peer id -> {health, energy, aboard, dead}.
+## Peer id -> {health, energy, aboard, dead}; on a board route also board (its integrity) and
+## board_broken (vessel-car-board).
 var riders: Dictionary[int, Dictionary] = {}
 
 
