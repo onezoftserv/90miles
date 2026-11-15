@@ -9,9 +9,12 @@ const TILE: float = 16.0
 const SPAWNS: Array[Vector2] = [Vector2(32.0, 48.0), Vector2(48.0, 48.0), Vector2(64.0, 48.0), Vector2(80.0, 48.0)]
 const TIMEOUT_S: float = 5.0
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
+## Intents a frame from an old copy that keeps sending (the takeover case).
+const STALE_BURST: int = 4
 
 var net: NetHarness
 var papo: PlayerIdentity
+var _burst: Callable = Callable()
 
 
 func before_each() -> void:
@@ -20,6 +23,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	_stop_sending()
 	net.teardown()
 
 
@@ -34,6 +38,11 @@ func _as(identity: PlayerIdentity, player_name: String = "Papo") -> Callable:
 		session.local_name = player_name
 
 
+func _connected(session: CoopSession) -> bool:
+	var peer := session.multiplayer.multiplayer_peer
+	return peer != null and peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+
+
 # Papo plays, then drops; returns his body on the host, downed and waiting.
 func _papo_drops(host: CoopSession) -> PlayerBody:
 	var client := await net.join(_as(papo))
@@ -46,6 +55,40 @@ func _papo_drops(host: CoopSession) -> PlayerBody:
 	var downed := func() -> bool: return host.is_dropped(papo_id)
 	assert_true(await wait_until(downed, TIMEOUT_S), "Papo's body waits, downed")
 	return papo_body
+
+
+# An old copy of a game that is still connected keeps sending: STALE_BURST standing-still intents
+# every process frame until it loses its connection, so some always share the host's poll with a
+# later join request. Sequence 0, so the host's queue refuses them and nothing moves.
+func _keep_sending(stale: CoopSession) -> void:
+	_burst = func() -> void:
+		if not is_instance_valid(stale) or not _connected(stale):
+			return
+		for i: int in STALE_BURST:
+			stale.send_intent(0, MoveIntent.new(), 1.0 / Engine.physics_ticks_per_second)
+	get_tree().process_frame.connect(_burst)
+
+
+func _stop_sending() -> void:
+	if _burst.is_valid() and get_tree().process_frame.is_connected(_burst):
+		get_tree().process_frame.disconnect(_burst)
+	_burst = Callable()
+
+
+# Waits until the host has closed the old copy's connection and the old copy has lost it.
+func _old_copy_closed(host: CoopSession, stale: CoopSession, stale_id: int) -> void:
+	var closed := func() -> bool: return not host.multiplayer.get_peers().has(stale_id)
+	assert_true(await wait_until(closed, TIMEOUT_S), "the host closed the old connection")
+	var told := func() -> bool: return not _connected(stale)
+	assert_true(await wait_until(told, TIMEOUT_S), "the old copy loses its connection")
+	_stop_sending()
+
+
+# Waits until `session` is connected and listed in the host's roster.
+func _listed(host: CoopSession, session: CoopSession) -> bool:
+	var listed := func() -> bool:
+		return _connected(session) and host.roster.has(session.multiplayer.get_unique_id())
+	return await wait_until(listed, TIMEOUT_S)
 
 
 # --- join request ----------------------------------------------------------------------------
@@ -90,6 +133,24 @@ func test_solo_spawns_at_once_and_stays_closed() -> void:
 	assert_true(session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "no port: nobody can join")
 	session._physics_process(CoopSession.JOIN_TIMEOUT_S + 1.0)
 	assert_eq(session.peer_ids(), [CoopSession.HOST_ID] as Array[int], "and nothing times out")
+	NetManager.leave()
+
+
+func test_solo_has_nobody_to_take_over() -> void:
+	NetManager.start_solo()
+	var session := SESSION_SCENE.instantiate() as CoopSession
+	session.local_identity = papo
+	add_child_autofree(session)
+	session.start()
+	var mine := session.body(CoopSession.HOST_ID)
+	watch_signals(session)
+	session.request_join("Papo", papo.id, papo.secret)
+	await wait_process_frames(2)
+	assert_signal_not_emitted(session, "player_rebound", "nothing is taken over")
+	assert_signal_not_emitted(session, "player_disconnected", "nobody is dropped")
+	assert_same(session.body(CoopSession.HOST_ID), mine, "the one player keeps their body")
+	assert_eq(session.peer_ids(), [CoopSession.HOST_ID] as Array[int])
+	assert_true(session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "still offline")
 	NetManager.leave()
 
 
@@ -190,6 +251,69 @@ func test_back_before_the_host_noticed_takes_over() -> void:
 	var closed := func() -> bool: return not host.multiplayer.get_peers().has(stale_id)
 	assert_true(await wait_until(closed, TIMEOUT_S), "the host closed the old connection")
 	assert_eq(host.peer_ids().size(), 2, "still two players: the host and Papo")
+
+
+func test_a_takeover_while_the_old_copy_still_sends_is_clean() -> void:
+	# A second copy of Papo's game joins while the first is still connected and sending. The host
+	# can read the old copy's packets behind the join request in one poll; none may log an engine
+	# error (GUT fails the test on one).
+	var host := net.add_host(_island)
+	var stale := await net.join(_as(papo))
+	assert_not_null(stale)
+	if stale == null:
+		return
+	var stale_id: int = net.peer_id(stale)
+	var papo_body := host.body(stale_id)
+	_keep_sending(stale)
+	var back := await net.join(_as(papo))
+	assert_not_null(back, "the second copy joins while the first still sends")
+	if back == null:
+		return
+	assert_same(host.body(net.peer_id(back)), papo_body, "it takes back the same body")
+	assert_null(host.body(stale_id))
+	await _old_copy_closed(host, stale, stale_id)
+	assert_eq(host.peer_ids().size(), 2, "still two players: the host and Papo")
+	assert_eq(host.player_name(net.peer_id(back)), "Papo")
+
+
+func test_a_takeover_in_the_lobby_while_the_old_copy_still_sends_is_clean() -> void:
+	var host := net.add_host(_island, true, true)
+	var stale := net.add_client(_as(papo))
+	assert_true(await _listed(host, stale), "Papo is in the lobby")
+	var stale_id: int = net.peer_id(stale)
+	_keep_sending(stale)
+	var back := net.add_client(_as(papo))
+	assert_true(await _listed(host, back), "the second copy joins the lobby")
+	await _old_copy_closed(host, stale, stale_id)
+	assert_false(host.roster.has(stale_id), "the old copy leaves the roster")
+	assert_eq(host.roster.size(), 2, "the host and Papo, once")
+	assert_eq(host.player_name(net.peer_id(back)), "Papo")
+
+
+func test_a_repeated_join_request_during_a_takeover_is_ignored() -> void:
+	var host := net.add_host(_island)
+	var stale := await net.join(_as(papo))
+	assert_not_null(stale)
+	if stale == null:
+		return
+	var stale_id: int = net.peer_id(stale)
+	var papo_body := host.body(stale_id)
+	_keep_sending(stale)
+	var back := net.add_silent_client(_as(papo))
+	assert_true(await net.wait_connected(back))
+	var back_id: int = net.peer_id(back)
+	# Both requests leave in one frame, so the host reads them in one poll.
+	back.start()
+	back._request_join()
+	var taken := func() -> bool: return host.body(back_id) == papo_body
+	assert_true(await wait_until(taken, TIMEOUT_S), "the second copy takes back the body")
+	await _old_copy_closed(host, stale, stale_id)
+	await wait_process_frames(10)
+	assert_true(_connected(back), "and stays connected")
+	assert_true(host.multiplayer.get_peers().has(back_id))
+	assert_same(host.body(back_id), papo_body, "it still holds the body")
+	assert_false(host.is_dropped(back_id))
+	assert_eq(host.peer_ids().size(), 2, "the host and Papo")
 
 
 func test_a_client_with_the_hosts_id_joins_as_a_new_player() -> void:
