@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://cmngn4thpr1tm" path="res://assets/art/items/resin.png" id="icon_resin"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_resin")
+description_es = "Savia de pino de Australia cocinada al fuego hasta que se pone negra. Pega y tapa huecos: pa' sellar un casco no hay otra."
+description_en = "Sap of pino de Australia (casuarina) cooked on the fire till it goes black. It sticks and plugs holes: for sealing a hull there's nothing else."
+category = 4
+tags = Array[int]([4])
+stack_size = 5
+weight = 0.2
+id = &"resin"
+name_es = "Resina"
+name_en = "Resin"

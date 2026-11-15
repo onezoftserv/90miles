@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://d1pjevkt02rno" path="res://assets/art/items/tire.png" id="icon_tire"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_tire")
+description_es = "Una goma de carro que trajo el mar. Pa' chancletas, o de defensa pa' la balsa."
+description_en = "A car tire the sea brought in. For chancletas, or as a fender for the raft."
+category = 4
+tags = Array[int]([4])
+weight = 4.0
+id = &"tire"
+name_es = "Goma"
+name_en = "Tire"

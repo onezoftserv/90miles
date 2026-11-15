@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_modifier"]
+[ext_resource type="Texture2D" uid="uid://cm6m5gaccopga" path="res://assets/art/items/pliers.png" id="icon_pliers"]
+
+[sub_resource type="Resource" id="Resource_mod0"]
+script = ExtResource("2_modifier")
+stat = 7
+value = 1.5
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_pliers")
+description_es = "Alicate de mecánico. Saca clavos, abre latas y arregla lo que se deje. Con él en la mano se construye más rápido, pa' qué te cuento."
+description_en = "A mechanic's pliers. It pulls nails, opens cans and fixes whatever lets itself be fixed. With it in hand you build faster, no need to tell you."
+category = 3
+tags = Array[int]([2])
+weight = 0.5
+durability = 50
+capabilities = Array[int]([2, 10, 11])
+modifiers = Array[ExtResource("2_modifier")]([SubResource("Resource_mod0")])
+id = &"pliers"
+name_es = "Alicate"
+name_en = "Pliers"

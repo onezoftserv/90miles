@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://cbh1d73fy6o46" path="res://assets/art/items/machete.png" id="icon_machete"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_machete")
+description_es = "Machete de cortar caña. Abre cocos y abre camino en el mangle. Pa' to' sirve."
+description_en = "A cane machete. It opens coconuts and cuts a path through the mangle. Good for everything."
+category = 3
+tags = Array[int]([2, 3])
+weight = 1.5
+durability = 60
+capabilities = Array[int]([1, 4])
+weapon_class = 1
+weapon_damage = 20.0
+id = &"machete"
+name_es = "Machete"
+name_en = "Machete"

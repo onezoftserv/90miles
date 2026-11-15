@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://bco18kihxeiwl" path="res://assets/art/items/cloth.png" id="icon_cloth"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_cloth")
+description_es = "Un trapo: un pulóver viejo, una toalla, lo que haya. Pa' guantes, vendas o un parche en la vela."
+description_en = "A rag: an old pulóver, a towel, whatever there is. For gloves, bandages or a patch on the sail."
+category = 4
+tags = Array[int]([4])
+stack_size = 5
+weight = 0.2
+id = &"cloth"
+name_es = "Trapo"
+name_en = "Cloth"

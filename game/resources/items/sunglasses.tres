@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://dqksbf11sy7vx" path="res://assets/art/items/sunglasses.png" id="icon_sunglasses"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_sunglasses")
+description_es = "Espejuelos oscuros de turista. Con la resolana se puede mirar por los prismáticos, pero brillan, y la picúa lo ve to'."
+description_en = "Tourist sunglasses (espejuelos). In the glare you can still look through the binoculars, but they shine, and the picúa sees everything."
+category = 5
+tags = Array[int]([5, 6])
+weight = 0.1
+equip_slot = 2
+capabilities = Array[int]([25])
+id = &"sunglasses"
+name_es = "Espejuelos oscuros"
+name_en = "Sunglasses"

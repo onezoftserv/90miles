@@ -136,9 +136,9 @@ As content-batch-3 did: each item gets `tools/art/fixes/items/<id>.png`, a 16×1
   - log the follow-ups in batches 1–2 (sandals counters on urchins, stingray and fire ants; the spear's nose hit on sharks; hutía in the snare), batch 5 (`rock` and `stick` for the spear, snare and flint recipes) and batch 9 (starting kits);
   - list the runtime changes (equipment and modifiers, weapons, fishing and traps, navigation at sea) below the current milestone, beside `item-effects-runtime`.
 
-## Decisions waiting for the coordinator
+## Decisions (owner, 2026-11-14: the recommended option (a) on all nine, through the coordinating session)
 
-Each question puts the recommended option first. The table in decision 1 is written as if every answer is (a).
+The options are kept as they were put; every answer is (a), so the table in decision 1 stands as written. The owner also asked that the two things found in passing (a remainder that does not fit is lost; a fast tool with no counter goes to −1 uses) be logged in `TASKS.md`.
 
 - **Q1 Icons.** Every item file needs an icon or GUT fails.
   - (a) Hand-drawn own-work icons for all 26 through `tools/art/items.py`, as batch 3: first-pass art, no new licence.
