@@ -108,7 +108,7 @@ func advance(delta: float, with_interaction: bool = true) -> void:
 			_update_interaction(delta)
 		var cell := cell()
 		var step_intent: MoveIntent = MoveIntent.create(Vector2.ZERO, false, false, intent.interact_held) if pinned else intent
-		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, step_intent, delta, meters.speed_factor())
+		result = model.step(terrain.terrain_at(cell), terrain.current_at(cell), meters.energy, step_intent, delta, meters.speed_factor(), terrain.is_shaded(cell))
 		var swimming: bool = result.movement == MovementStep.Move.SWIM or result.movement == MovementStep.Move.DIVE
 		meters.spend_energy(result.energy_spent * (swim_energy_factor if swimming else 1.0))
 	movement_state = result.movement

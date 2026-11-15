@@ -91,7 +91,7 @@ How the tests are written:
 
 ## 4. Hidden states
 
-- [ ] 4.1 Extend `test_movement_model.gd` with the new player-movement scenarios. Verify they fail:
+- [x] 4.1 Extend `test_movement_model.gd` with the new player-movement scenarios. Verify they fail:
   - standing on a roofed cell is HIDDEN, and stepping onto sand makes the player VISIBLE;
   - walking upright on mangrove is HIDDEN;
   - standing upright on scrub is VISIBLE;
@@ -99,14 +99,14 @@ How the tests are written:
   - diving is still SUBMERGED for at most 5 s.
 
   The existing "Crouching in brush" and "Crawling at zero energy" tests still pass.
-- [ ] 4.2 Write `game/tests/unit/test_hidden_solo.gd`. Verify it fails. It runs one offline player on the real sandbar, driven by the named input actions:
+- [x] 4.2 Write `game/tests/unit/test_hidden_solo.gd`. Verify it fails. It runs one offline player on the real sandbar, driven by the named input actions:
   - walking into the hut makes their stealth state HIDDEN;
   - `BodyMarks.has_mark` is true for them inside the hut;
   - outside the hut both are false.
-- [ ] 4.3 Implement `game/scripts/stealth/hidden_rules.gd`, `MovementModel.step(..., roofed)` and `player.gd`, which passes `terrain.is_shaded(cell)`. The client's prediction calls the same `step`. Verify:
+- [x] 4.3 Implement `game/scripts/stealth/hidden_rules.gd`, `MovementModel.step(..., roofed)` and `player.gd`, which passes `terrain.is_shaded(cell)`. The client's prediction calls the same `step`. Verify:
   - both tests pass;
   - `test_movement_model_state.gd`, `test_body_look.gd`, `test_body_look_net.gd` and `test_hud_screens.gd` still pass.
-- [ ] 4.4 Run the import, smoke run and GUT commands, and verify all three pass.
+- [x] 4.4 Run the import, smoke run and GUT commands, and verify all three pass. Done: import clean, smoke 10 frames with 0 problems, GUT 203 scripts, 1805/1805 passing in 210 s (10 new movement tests, 1 solo test).
 
 ## 5. The world event bus
 
