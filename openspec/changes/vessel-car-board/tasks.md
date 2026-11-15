@@ -142,7 +142,7 @@ Fixture routes live in `game/tests/fixtures/routes/`, outside the catalog folder
   - `TASKS.md`: content-batch-11 notes that group 6 has landed.
 
   Verify `openspec validate vessel-car-board --type change --strict` and `openspec validate --all` pass.
-- [x] 8.3 Final check: the import, smoke run, full GUT and a 300-frame run are all clean, and `git diff --stat main...HEAD` shows only the files this change names. (2026-11-14, rebased on main with secret-cay #45: import, smoke and 300 frames clean; GUT 1739 of 1739; the host and client board run on UDP 7785 clean. Earlier runs here sometimes hit `test_crossing_art.gd`'s scrolled-sea flake, fixed separately in #49.)
+- [x] 8.3 Final check: the import, smoke run, full GUT and a 300-frame run are all clean, and `git diff --stat main...HEAD` shows only the files this change names. (2026-11-14, with main merged after #42, #47 and #49: import, smoke and 300 frames clean; GUT 1755 of 1755; the host and client board run on UDP 7785 clean. Earlier runs here sometimes hit `test_crossing_art.gd`'s scrolled-sea flake, fixed separately in #49.)
 
 ## Workflow follow-up
 
