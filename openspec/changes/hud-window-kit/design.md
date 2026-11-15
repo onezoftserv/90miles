@@ -82,7 +82,7 @@ Each PNG is at 2× unless its name says `_x3`.
   - The owner declined it; it is kept only to record the choice.
   - Its well colour `#3f3f74` is not used (2.17:1 against black rims).
 
-The build adds `kit_*.png` captures of the result beside these (tasks 2.7, 3.4, 4.6, 4.7, 5.4).
+The build adds `kit_*.png` captures of the result beside these (tasks 2.7, 3.5, 4.6, 4.7, 5.4).
 
 ## Goals / Non-Goals
 
@@ -430,7 +430,7 @@ Inside the 26×26 slot (x and y from the slot's top-left):
 **Alternatives:**
 - **One line per teammate:** at least 238 px wide. It crosses the sign note (x ≤ 440) or the phase, so it is rejected.
 - **Cutting names at 14 glyphs to keep a wider bar:** rejected while 16 glyphs fit.
-- **Dropping the chip for a 28 px bar:** kept as owner question B.
+- **Dropping the chip for a 28 px bar:** declined by the owner (B1, 2026-11-15).
 
 ### D8. Thin windows and the 10 px rows
 
@@ -474,7 +474,7 @@ Inside the 26×26 slot (x and y from the slot's top-left):
 - `test_art_tracked.gd` drops its `UI_DIR` exemption, so palette and alpha now apply to `art/ui/` (art-pass "Master palette").
 - `test_theme.gd` keeps "only tracked art" and lists the new files.
 - **The Pixel UI Pack's credit:** art-pass "Credits list every pack used" lists packs whose files are tracked. With none left, its line in `CREDITS.md`, the credits data and `test_art_credits.gd:27` goes.
-  - Owner question D offers keeping it as a courtesy line instead.
+  - The owner chose to drop it (D1, 2026-11-15).
   - Before deleting, the build greps for any other tracked use (for example a cursor).
 
 ### D12. How contrast is tested
@@ -514,15 +514,35 @@ The whole change builds after `damage-feedback` is on main, because stages 2–5
 
 Stage 1 touches none of them and could go first if the owner wants the kit early.
 
+### D14. The crossing HUD strip joins the kit later
+
+`crossing-gameplay` (on its branch; crossing "Crossing HUD and telegraphs") adds a `CrossingHud` CanvasLayer under the crossing, on every peer. It draws:
+- a progress strip from the departure island to the next;
+- the vessel's integrity ("Balsa 70/100");
+- short telegraph lines.
+
+It sits top-centre under the day phase, in the sign note's place, since no sign opens at sea. It is built from today's `HudStyle`, in its own node, and edits nothing of ours.
+
+**What carries over by itself:** when stage 2 moves `HudStyle` to the palette, every colour it reads from `HudStyle` follows: `SUN`, `CREAM`, `OUTLINE`, and `TRACK`, which becomes opaque `#3f3f74`.
+
+**Stage 3 then restyles it in the kit,** if it is on main by then; otherwise in the first HUD change after it lands:
+- Its panel takes `HudPanel`, and each telegraph line a `HudPanelThin` 10 px row.
+- The strip is a bar box like the meters' (D4): a 1 px outline round a track in the deep-sea steps (`#2a5578`, `#3a6f92`), and the vessel marker in `#fbf236`.
+- The integrity reads cream, steps to `HudStyle.ORANGE` at half and to `ALERT` at a quarter, the same steps as the meter labels.
+- Its rect, its texts and its timing stay crossing-gameplay's.
+- The kit's tests add it to the HUD-window and contrast checks, and to the rule that it stays clear of the meters (x ≤ 136) and the teammate list (x ≥ 502).
+
+**If it does not land first,** nothing here waits for it. Task 3.4 is then skipped, and noted for that later change.
+
 ## Risks / Trade-offs
 
 - **[The empty track is 1.2–1.8:1 against the window]** A bar's length reads from its fill, not from its outline. → This is accepted for the GBA look: the pass's mock reads, and Pokémon's empty track is the same idea. If a capture shows otherwise, the bar box's bottom row can take `#45283c` at no layout cost.
 - **[94% modulate also fades the outline]** The outline stays `#222034` at 94%. On `#ffffff` foam that is still about 11:1. → The test measures against the opaque piece; the over-world check is a capture.
 - **[Damage-feedback lands with a different node shape]** → D5 names only its public nodes (`Lost`, `Glow`, `Bar`). Stage 4 starts by reading the merged code and updates D5 if they differ.
 - **[The menu FontVariation widens lines]** → `test_credits_screen.gd` "fits across" and the settings layout test run on the new font. Any line that no longer fits is wrapped or shortened in its scene, never by shrinking the font.
-- **[A 22 px teammate bar is coarse]** One pixel is 5 health. → The number is gone from the block, but the name tag over the head shows the strip too. Owner question B offers a 28 px bar without the chip.
+- **[A 22 px teammate bar is coarse]** One pixel is 5 health. → The number is gone from the block, but the name tag over the head shows the strip too. The owner chose the chip with the 22 px bar (B1).
 - **[GUT time]** CI's GUT step is close to its 300 s timeout. → The new tests are pure layout and colour reads with no real-time waits. The one net test reuses `NetHarness` and awaits only the sync.
-- **[Merge with in-flight work]** `art-wave-1` and `crossing-gameplay` touch terrain and crossing, not `scenes/ui/`, `scenes/shell/` or the theme. → Rebase before each stage.
+- **[Merge with in-flight work]** `art-wave-1` and `crossing-gameplay` touch terrain and crossing, not `scenes/ui/`, `scenes/shell/` or the theme. `crossing-gameplay`'s `CrossingHud` reads `HudStyle`, so stage 2's colour move reaches it (D14). → Rebase before each stage. Stage 2 runs the crossing HUD tests if that change is on main.
 
 ## Migration Plan
 
@@ -537,20 +557,14 @@ There are no saves or settings to migrate. Each stage is a revertible PR, and st
 - Q11 (a): today's slots, small digits, the key on the selected slot only.
 - Q16 (a): the word spacing now, one pixel font later.
 
-**Still open.** The specs and tasks are written with the first, recommended option; another answer changes only the stage named.
-- **A. Scope.**
-  1. *(Recommended)* This change as written. Prompt placement (C29), the craft window (C31) and the last-stand band (C32) follow as their own small changes.
-  2. Also fold C29 and C31 into this change: one more spec delta each, and stage 3 grows.
-- **B. Teammate block, stage 4.**
-  1. *(Recommended)* A clothing chip, a 22 px health bar and the state word under the full name.
-  2. No chip, a 28 px bar.
-  3. The chip beside the name, with names over 14 glyphs cut with "…".
-- **C. Name tag strip over a teammate's head, stage 2.**
-  1. *(Recommended)* The Salud green, like every other health bar.
-  2. The alert red, as the design pass sketched.
-- **D. Kenney Pixel UI Pack credit, stage 1.**
-  1. *(Recommended)* Drop it, since no file of it stays tracked.
-  2. Keep it as a CC0 courtesy line.
+**Taken on 2026-11-15 (recommended answers, through the coordinator's option dialog):**
+- A1: scope as written. Prompt placement (C29), the craft window (C31) and the last-stand band (C32) follow as their own small changes.
+- B1: each teammate block has the full name, then a clothing chip, a 22 px health bar and the state word (D7).
+- C1: the name tag's strip over a teammate's head is the Salud green (D3).
+- D1: the Kenney Pixel UI Pack's credit is dropped once its files go (D11).
+- The two departures from the design pass are accepted: the 132 px meters window (D4) and the teammate blocks at x 502–636 (D7).
+
+**Still open.** The specs and tasks are written with the first, recommended option; another answer changes only stage 4.
 - **E. Rate arrows beside each meter** (DST "Sanity" page; D1).
   1. *(Recommended)* Later, as their own change, using damage-feedback's per-meter watches. The bar then goes from 40 to 34 px.
   2. In this change, in stage 4, with the bar at 34 px now.
