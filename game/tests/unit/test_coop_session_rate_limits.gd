@@ -106,3 +106,70 @@ func test_the_session_clock_defaults_to_real_time() -> void:
 	var first: float = session.clock.call()
 	assert_gt(first, 0.0)
 	assert_true(session.clock.call() >= first)
+
+
+# --- intent-delivery "Intent delivery": each intent counts once ---------------------------
+
+# Hands the host one message from CLIENT carrying `count` intents numbered from `first_seq`.
+func _message(session: CoopSession, first_seq: int, count: int, direction: Vector2 = Vector2.RIGHT, delta: float = DT) -> void:
+	var directions := PackedVector2Array()
+	var flags := PackedByteArray()
+	var deltas := PackedFloat64Array()
+	for i: int in count:
+		directions.append(direction)
+		flags.append(0)
+		deltas.append(delta)
+	session._receive_intents(CLIENT, first_seq, directions, flags, deltas)
+
+
+func _queued(body: PlayerBody) -> Array[int]:
+	var seqs: Array[int] = []
+	for pending: PendingIntent in body.net._queue:
+		seqs.append(pending.seq)
+	return seqs
+
+
+func test_a_repeated_intent_is_applied_once_and_charged_once() -> void:
+	var session := _session_with_client()
+	var body := session.body(CLIENT)
+	for first: int in [1, 9, 17, 25, 33]:
+		now_s += 8.0 * DT
+		_message(session, first, 8)
+	assert_eq(_queued(body).size(), 40)
+	var limits: PeerLimits = session._limits[CLIENT]
+	var count_before: float = limits.intents.available(now_s)
+	var time_before: float = limits.sim_time.available(now_s)
+	_message(session, 38, 5)
+	assert_eq(_queued(body).slice(-3), [40, 41, 42] as Array[int], "41 and 42 once each, after 40")
+	assert_eq(_queued(body).size(), 42)
+	assert_almost_eq(count_before - limits.intents.available(now_s), 2.0, 0.000001, "two intents charged")
+	assert_almost_eq(time_before - limits.sim_time.available(now_s), 2.0 * DT, 0.000001, "two frames charged")
+
+
+func test_messages_arriving_out_of_order() -> void:
+	var session := _session_with_client()
+	var body := session.body(CLIENT)
+	now_s = 0.2
+	_message(session, 2, 8)
+	assert_eq(_queued(body).back(), 9)
+	_message(session, 10, 4)
+	_message(session, 10, 3)
+	assert_eq(_queued(body).slice(-4), [10, 11, 12, 13] as Array[int], "10 to 13 once each")
+	assert_eq(_queued(body).size(), 12, "the late message added nothing")
+
+
+func test_a_malformed_message_queues_nothing() -> void:
+	var session := _session_with_client()
+	var body := session.body(CLIENT)
+	var one := PackedVector2Array([Vector2.RIGHT])
+	session._receive_intents(CLIENT, 1, PackedVector2Array([Vector2.RIGHT, Vector2.RIGHT]), PackedByteArray([0]), PackedFloat64Array([DT, DT]))
+	session._receive_intents(CLIENT, 1, one, PackedByteArray([0]), PackedFloat64Array([DT, DT]))
+	session._receive_intents(CLIENT, 1, PackedVector2Array(), PackedByteArray(), PackedFloat64Array())
+	_message(session, 1, PlayerNet.MAX_INTENTS_PER_SEND + 1)
+	session._receive_intents(CLIENT, 1, PackedVector2Array([Vector2.RIGHT, Vector2(NAN, 0.0)]), PackedByteArray([0, 0]), PackedFloat64Array([DT, DT]))
+	session._receive_intents(CLIENT, 1, PackedVector2Array([Vector2.RIGHT, Vector2.RIGHT]), PackedByteArray([0, 0]), PackedFloat64Array([DT, 0.5]))
+	session._receive_intents(CLIENT, 0, one, PackedByteArray([0]), PackedFloat64Array([DT]))
+	assert_eq(_queued(body).size(), 0, "not even the good intents of a bad message")
+	_message(session, 1, 2)
+	assert_eq(_queued(body), [1, 2] as Array[int], "a good message still lands")
+

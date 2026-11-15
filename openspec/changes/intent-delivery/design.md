@@ -112,6 +112,11 @@ The probe's `--transfer` option set the mode with `Node.rpc_config` at run time.
 
 ## Decisions
 
+**Owner decisions (2026-11-14, "Accept all recommended", relayed by the coordinator):**
+- Q1(a): redundant, unordered intents.
+- Q2(a): ENet's throttle kept open from connect. It goes in the seam's `enet_backend.gd` after `net-platform-seam` merges.
+- Q3(a): intent burst 90, slack 1.25 s, queue 90, refill unchanged.
+
 **D1. References (ideas only).**
 
 - **Shattered Pixel Dungeon and Brogue CE** are single-player and turn-based, with no network input path. Nothing to borrow.

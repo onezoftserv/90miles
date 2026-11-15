@@ -206,7 +206,7 @@ func test_client_acts_as_a_teammate_and_only_its_own_player_moves() -> void:
 	await wait_physics_frames(30)
 	net.own_body(a).intent = MoveIntent.new()
 	# The intent message names no player; even a broadcast from A lands as A's own.
-	a.submit_intent.rpc(1000000, Vector2.LEFT, false, false, false, 0.05)
+	a.submit_intents.rpc(1000000, PackedVector2Array([Vector2.LEFT]), PackedByteArray([0]), PackedFloat64Array([0.05]))
 	await wait_seconds(0.3)
 	assert_gt(a_copy.position.x, SPAWNS[1].x, "A's own player moved")
 	assert_eq(b_copy.position, SPAWNS[2], "B's player stayed on the host")

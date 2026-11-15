@@ -1,7 +1,8 @@
 extends GutTest
 ## coop-networking "Host authority": the three roles of a player's net component, driven by
 ## hand (no network): the host steps queued intents, the owning client predicts and reconciles,
-## other clients interpolate.
+## other clients interpolate. `sent` holds the newest intent of each message the body hands the
+## session, and `messages` the numbers each message carried (intent-delivery "Intent delivery").
 
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const TILE: float = 16.0
@@ -10,16 +11,23 @@ const EAST := Vector2.RIGHT
 const Role := PlayerNet.Role
 
 var sent: Array[Dictionary] = []
+var messages: Array[Array] = []
 var now_s: float = 0.0
 
 
 func before_each() -> void:
 	sent = []
+	messages = []
 	now_s = 0.0
 
 
-func _record(seq: int, intent: MoveIntent, delta: float) -> void:
-	sent.append({"seq": seq, "intent": intent.copy(), "delta": delta})
+func _record(intents: Array[PendingIntent]) -> void:
+	var seqs: Array[int] = []
+	for pending: PendingIntent in intents:
+		seqs.append(pending.seq)
+	messages.append(seqs)
+	var newest: PendingIntent = intents.back()
+	sent.append({"seq": newest.seq, "intent": newest.intent.copy(), "delta": newest.delta})
 
 
 func _spawn(owner_peer: int, role: PlayerNet.Role, at: Vector2 = Vector2.ZERO) -> PlayerBody:
@@ -170,6 +178,15 @@ func test_hosts_own_body_sends_its_input_through_the_session() -> void:
 	assert_eq(sent[0].delta, DT)
 
 
+func test_a_host_role_body_sends_one_intent_a_frame() -> void:
+	var body := _spawn(1, Role.HOST)
+	body.intent = MoveIntent.create(EAST)
+	_frames(body, 12)
+	assert_eq(messages.size(), 12)
+	for i: int in 12:
+		assert_eq(messages[i], [i + 1] as Array[int], "frame %d: its own intent and nothing else" % (i + 1))
+
+
 func test_host_sends_nothing_for_bodies_it_does_not_own() -> void:
 	var body := _spawn(7, Role.HOST)
 	body.intent = MoveIntent.create(EAST)
@@ -187,6 +204,35 @@ func test_own_player_responds_at_once() -> void:
 	assert_eq(sent.size(), 1)
 	assert_eq(sent[0].seq, 1)
 	assert_eq((sent[0].intent as MoveIntent).direction, EAST)
+
+
+func test_a_predicted_body_sends_its_newest_unacknowledged_intents() -> void:
+	var body := _spawn(7, Role.PREDICTED)
+	body.intent = MoveIntent.create(EAST)
+	_frames(body, 10)
+	assert_eq(messages.size(), 10)
+	assert_eq(messages[0], [1] as Array[int])
+	assert_eq(messages[2], [1, 2, 3] as Array[int])
+	assert_eq(messages[7], [1, 2, 3, 4, 5, 6, 7, 8] as Array[int])
+	assert_eq(messages[9], [3, 4, 5, 6, 7, 8, 9, 10] as Array[int], "at most %d a message" % PlayerNet.MAX_INTENTS_PER_SEND)
+
+
+func test_an_acknowledgement_shrinks_the_next_message() -> void:
+	var body := _spawn(7, Role.PREDICTED)
+	body.intent = MoveIntent.create(EAST)
+	_frames(body, 5)
+	_host_state(body, Vector2.ZERO, 4)
+	_frames(body, 1)
+	assert_eq(messages.back(), [5, 6] as Array[int], "only what the host has not acknowledged")
+
+
+func test_nothing_from_before_a_rebind_is_sent_again() -> void:
+	var body := _spawn(7, Role.PREDICTED)
+	body.intent = MoveIntent.create(EAST)
+	_frames(body, 5)
+	body.rebind(8, Role.PREDICTED, _record)
+	_frames(body, 1)
+	assert_eq(messages.back().size(), 1, "only the intent made after the rebind")
 
 
 func test_prediction_never_runs_interactions() -> void:

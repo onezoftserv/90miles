@@ -1,10 +1,11 @@
 # Tasks
 
-The groups below follow the recommended answers to Q1 to Q3 in design.md. They are pending the coordinator's decision; change them to match the answers before building.
+The owner accepted the recommended answers to Q1 to Q3 on 2026-11-14 (design.md, "Owner decisions").
+Groups 1, 3 and 4 are built from `main`. Group 2 goes into the seam's `game/scripts/net/enet_backend.gd` as a follow-up commit, once `net-platform-seam` merges and this branch is rebased onto it.
 
 ## 1. Redundant, unordered intents (Q1)
 
-- [ ] 1.1 Tests first:
+- [x] 1.1 Tests first:
   - `test_prediction_buffer.gd`: `newest(count)` returns the newest unacknowledged intents, oldest first, at most `count`, and none once they are acknowledged.
   - `test_player_net.gd`: a predicted body sends its newest intent plus up to 7 earlier unacknowledged ones each frame, then only the unacknowledged ones after an acknowledgement. A host-role body sends exactly one intent per frame. After a `rebind`, nothing from before it is sent again.
   - `test_coop_session_rate_limits.gd` (the host path, with a test clock):
@@ -13,22 +14,26 @@ The groups below follow the recommended answers to Q1 to Q3 in design.md. They a
     - A message with mismatched array lengths, more than 8 intents, or a non-finite value queues nothing.
   - `test_coop_session_solo.gd` (1 player, offline): over 60 frames each intent is applied once, on its own frame, and the body ends exactly where a body with no session ends.
   - Verify: the new tests are seen failing, then passing.
-- [ ] 1.2 Build it:
+  - Done 2026-11-14: seen failing (`newest` and `MAX_INTENTS_PER_SEND` missing; the old three-argument send call), then passing.
+- [x] 1.2 Build it:
   - `PredictionBuffer.newest(count)`.
   - `PlayerNet` hands the session a list of `PendingIntent`s: one for the host role, `newest(8)` for the predicted role. It exposes the last queued number to the host.
   - `CoopSession.send_intents` and `submit_intents`: `@rpc("any_peer", "call_local", "unreliable")`, sending the first `seq`, a `PackedVector2Array`, a `PackedByteArray` and a `PackedFloat64Array`.
   - `_receive_intents` checks each intent in turn: repeat, validity, limits, queue.
   - Delete `submit_intent`.
   - Verify: 1.1 passes, and so do `test_player_net.gd`, `test_coop_session_net.gd`, `test_coop_reconnect.gd`, `test_interact_prompt_net.gd` and `test_meters_net.gd`.
-- [ ] 1.3 Host-plus-client test, new `test_intent_delivery_net.gd` on `NetHarness`:
+  - Done 2026-11-14: all of them pass, as do `test_player_state_sync.gd`, `test_net_harness_net.gd`, `test_dropped_teammate_net.gd` and `test_coop_session_disconnect.gd`.
+- [x] 1.3 Host-plus-client test, new `test_intent_delivery_net.gd` on `NetHarness`:
   - A client walks east for 60 frames while the test drops 2 of every 3 of its sends at the client's `PlayerNet` send hook.
   - The host's body ends where the client predicted it, and no host state moves the client's body by more than 0.01 px.
   - Verify: it fails on the code before 1.2 (a client that sends one intent per message), then passes.
-- [ ] 1.4 Run the import (twice on a fresh checkout), the smoke run and GUT. Verify: the second import prints no `ERROR` line, smoke reports 0 problems, and GUT passes.
+  - Done 2026-11-14: with `MAX_INTENTS_PER_SEND` set to 1 for the check, it fails (the host stepped 21.3 px of the client's 23.5, with corrections up to 4.3 px). With 8 it passes 3 of 3.
+- [x] 1.4 Run the import (twice on a fresh checkout), the smoke run and GUT. Verify: the second import prints no `ERROR` line, smoke reports 0 problems, and GUT passes.
+  - Done 2026-11-14: the import prints no `ERROR` line, and smoke reports "10 frames, 0 problem(s)". GUT runs 189 scripts and 1684 tests, all passing; its only `Parse Error` line is the content validator's deliberately broken fixture.
 
 ## 2. ENet's throttle kept open (Q2)
 
-- [ ] 2.1 With the coordinator's go-ahead and in the file they name (`NetPeers.create_server` on `main`, or the seam's ENet backend), the host calls `throttle_configure(5000, 2, 0)` on each client connection when it connects. Tests first, in that backend's test file:
+- [ ] 2.1 After `net-platform-seam` merges, in `game/scripts/net/enet_backend.gd`, the host calls `throttle_configure(5000, 2, 0)` on each client connection when it connects. Tests first, in that backend's test file:
   - A server peer from the factory, once a client connects, reports deceleration 0 on that connection.
   - The client's connection to the host reports the same once the setting arrives.
   - A solo session creates no peer at all.
@@ -59,5 +64,5 @@ The groups below follow the recommended answers to Q1 to Q3 in design.md. They a
 
 ## Workflow follow-up
 
-- Open the PR into `main` once groups 1 to 4 are done and the coordinator has merged or rebased over `net-platform-seam` as needed for group 2.
+- Open the PR into `main` once groups 1, 3 and 4 are done. Group 2 follows on the same branch after `net-platform-seam` merges.
 - Archive with `/opsx:archive` after the owner's review.

@@ -69,7 +69,7 @@ func test_every_replicated_field_exists() -> void:
 
 func test_attach_gives_the_body_to_its_peer_and_the_state_to_the_host() -> void:
 	var body := PLAYER_SCENE.instantiate() as PlayerBody
-	(body.get_node(^"PlayerNet") as PlayerNet).attach(5, PlayerNet.Role.REMOTE, func(_s: int, _i: MoveIntent, _d: float) -> void: pass)
+	(body.get_node(^"PlayerNet") as PlayerNet).attach(5, PlayerNet.Role.REMOTE, func(_intents: Array[PendingIntent]) -> void: pass)
 	add_child_autofree(body)
 	assert_eq(body.get_multiplayer_authority(), 5)
 	assert_eq(body.net.get_multiplayer_authority(), 5)
@@ -78,7 +78,7 @@ func test_attach_gives_the_body_to_its_peer_and_the_state_to_the_host() -> void:
 
 func test_a_body_owned_by_another_peer_has_no_camera_or_input() -> void:
 	var body := PLAYER_SCENE.instantiate() as PlayerBody
-	(body.get_node(^"PlayerNet") as PlayerNet).attach(5, PlayerNet.Role.REMOTE, func(_s: int, _i: MoveIntent, _d: float) -> void: pass)
+	(body.get_node(^"PlayerNet") as PlayerNet).attach(5, PlayerNet.Role.REMOTE, func(_intents: Array[PendingIntent]) -> void: pass)
 	add_child_autofree(body)
 	assert_false(body.camera.enabled)
 	assert_false(body.player_input.enabled)
