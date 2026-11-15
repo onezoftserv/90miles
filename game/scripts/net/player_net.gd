@@ -21,9 +21,9 @@ enum Role {
 
 ## Intents the host steps for one body in one physics frame; the rest wait for the next frame.
 const MAX_STEPS_PER_FRAME: int = 8
-## Intents the host holds for one body; older ones are dropped (the rate limits keep the
-## queue far below this).
-const MAX_QUEUED: int = 60
+## Intents the host holds for one body; older ones are dropped. The rate limits admit at most
+## 75 at once (1.25 s of slack), so a backlog after a host hitch is never cut.
+const MAX_QUEUED: int = 90
 ## Intents in one message: the newest and up to 7 unacknowledged ones before it, so 7 lost
 ## messages in a row lose no movement (intent-delivery design D2).
 const MAX_INTENTS_PER_SEND: int = 8

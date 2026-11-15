@@ -123,6 +123,16 @@ func test_host_steps_at_most_8_intents_per_frame() -> void:
 	assert_eq(body.net.net_ack_seq, 10)
 
 
+func test_host_holds_up_to_90_queued_intents() -> void:
+	assert_eq(PlayerNet.MAX_QUEUED, 90)
+	var body := _spawn(7, Role.HOST)
+	for seq: int in range(1, 76):
+		body.net.enqueue(seq, MoveIntent.create(EAST), DT)
+	_frames(body, 10)
+	assert_eq(body.net.net_ack_seq, 75)
+	assert_almost_eq(body.position.x / TILE, 75.0 * 4.0 * DT, 0.00001, "a 1.25 s backlog is stepped whole")
+
+
 func test_host_refuses_stale_or_repeated_seq() -> void:
 	var body := _spawn(7, Role.HOST)
 	assert_true(body.net.enqueue(5, MoveIntent.create(EAST), DT))
