@@ -1,6 +1,6 @@
 # Tasks
 
-The groups follow the recommended option of each owner question in design.md (Q1–Q4). An answer that picks another option changes the named tasks before they are built.
+The groups follow option A of each owner question in design.md (Q1–Q4), all four chosen by the owner on 2026-11-14.
 
 The commands below run from the repo root, using the Godot 4.7.2 console binary:
 - "Import" is `godot --headless --path game --import`, run twice on a fresh checkout.
@@ -9,7 +9,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 1. Whom to watch (SpectateView, ui-shell "Whom a spectator watches", "Switching", "Losing")
 
-- [ ] 1.1 Tests first: write a new `game/tests/unit/test_spectate_view.gd`, offline, with an offline session plus extra bodies (`_add_player`, as in `test_run_hud.gd`). It covers:
+- [x] 1.1 Tests first: write a new `game/tests/unit/test_spectate_view.gd`, offline, with an offline session plus extra bodies (`_add_player`, as in `test_run_hud.gd`). It covers:
   - 1 player, offline: a dead solo body never watches (`active()` false), and its camera stays its own.
   - The nearest living teammate is picked first.
   - "Next" and "previous" follow peer order and wrap round.
@@ -20,18 +20,21 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - A waiting rider (`left_island`) watches (Q4).
 
   Verify: the file fails to load first (no `SpectateView`), then passes.
-- [ ] 1.2 Write `game/scripts/ui/spectate_view.gd` (`class_name SpectateView`, RefCounted, static typing) as design D4 and D5 describe:
+  - Done 2026-11-14: 14 cases in `test_spectate_view.gd`, seen failing to parse with no `SpectateView`, then passing.
+- [x] 1.2 Write `game/scripts/ui/spectate_view.gd` (`class_name SpectateView`, RefCounted, static typing) as design D4 and D5 describe:
   - `bind(session, local_peer, solo)`, `set_own(body)`, `update()`, `cycle(direction)`, `active()`, `watched()`, `watched_dropped()`.
   - Static helpers for the candidates, the nearest pick and the step.
 
   Verify: 1.1 passes.
-- [ ] 1.3 Cameras (D3), tests first in `test_spectate_view.gd`:
+  - Done 2026-11-14: `game/scripts/ui/spectate_view.gd`, with `watched_dropped()` in place of the planned flag.
+- [x] 1.3 Cameras (D3), tests first in `test_spectate_view.gd`:
   - While watching, the own camera is disabled and the watched one enabled.
   - On stop, the watched camera is disabled and the own camera is enabled again.
   - After the watched body's `rebind()` (which calls `refresh_local()`), `update()` enables its camera again.
   - `make_current()` runs only when the watched body changes or its camera was off.
 
   Then build it. Verify: the camera tests pass. Finish the group with Import, Smoke and GUT clean.
+  - Done 2026-11-14: the camera cases are in the same file. `make_current()` runs when the watched body changes, or when its camera is off or not current. Import 0 error lines, Smoke 10 frames 0 problems, GUT 1687 of 1687.
 
 ## 2. The HUD while watching (ui-shell "The HUD while watching")
 

@@ -165,11 +165,11 @@ None of the four games has a built-in "follow a living teammate" camera. The pie
 - [A rider waiting during a crossing could watch that crossing's sea from a body framed by the old island bounds.] → Each body's limits are set where that body is (Context), so the view always frames the watched body's own ground.
 - [The cut between cameras can jar.] → It is deliberate (D1). One `Camera2D.reset_smoothing()` keeps a cut clean if smoothing is ever turned on.
 
-## Owner decisions (pending, 2026-11-14)
+## Owner decisions (answered 2026-11-14)
 
-The specs above state the recommended option for each. They will be updated if the owner picks another.
+The owner accepted the recommended option, A, for all four questions in one option dialog ("Accept all recommended"). The specs above already state those options. The owner also let D5's rule stand: a disconnected teammate is watched only when no connected one is alive.
 
-- **Q1. Switch keys.** (A, recommended) A/D, ←/→, D-pad ←/→ and the mouse wheel, like walking left and right. (B) Tab and gamepad Y step forward only. (C) The interact key (E or gamepad A) steps forward only.
-- **Q2. Meters while watching.** (A, recommended) The watched teammate's meters. (B) The meters panel is hidden. (C) The dead player's own meters, at 0, stay.
-- **Q3. The line.** (A, recommended) "Mirando a: Papo" plus "[A] [D] Cambiar". (B) "Viendo a Papo". (C) The narrator's Cuban voice: "'Tás muerto. Mirando a: Papo".
-- **Q4. Waiting riders.** (A, recommended) Riders waiting on the shore watch too, which closes the coast-cay follow-up. (B) Only the dead watch for now, and waiting riders stay a follow-up.
+- **Q1. Switch keys.** (A, recommended, chosen) A/D, ←/→, D-pad ←/→ and the mouse wheel, like walking left and right. (B) Tab and gamepad Y step forward only. (C) The interact key (E or gamepad A) steps forward only.
+- **Q2. Meters while watching.** (A, recommended, chosen) The watched teammate's meters. (B) The meters panel is hidden. (C) The dead player's own meters, at 0, stay.
+- **Q3. The line.** (A, recommended, chosen) "Mirando a: Papo" plus "[A] [D] Cambiar". (B) "Viendo a Papo". (C) The narrator's Cuban voice: "'Tás muerto. Mirando a: Papo".
+- **Q4. Waiting riders.** (A, recommended, chosen) Riders waiting on the shore watch too, which closes the coast-cay follow-up. (B) Only the dead watch for now, and waiting riders stay a follow-up.

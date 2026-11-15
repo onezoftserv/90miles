@@ -9,11 +9,11 @@ When a co-op player dies today, their camera stays on their own body, which lies
 **What a dead co-op player sees**
 - The view follows a living teammate's body, inside that body's own camera limits: the island, or the crossing's sea while they ride.
 - On death the view goes to the nearest living teammate.
-- Two new input actions, "spectate previous" and "spectate next", step through the living teammates in the teammate list's order and wrap round. The default bindings are A/D, ←/→, the D-pad's ←/→ and the mouse wheel; this is an owner decision, Q1.
+- Two new input actions, "spectate previous" and "spectate next", step through the living teammates in the teammate list's order and wrap round. The default bindings are A/D, ←/→, the D-pad's ←/→ and the mouse wheel; the owner chose them (Q1, 2026-11-14).
 
 **The HUD while watching**
-- The bottom band, where the inventory strip sits, reads "Mirando a: Papo" with the keys that switch. The wording is an owner decision, Q3.
-- The meters panel shows the watched teammate's meters (owner decision Q2).
+- The bottom band, where the inventory strip sits, reads "Mirando a: Papo" with the keys that switch. The owner chose the wording (Q3).
+- The meters panel shows the watched teammate's meters (owner decision Q2, chosen).
 - The inventory strip and the interact prompt are hidden.
 - Quick chat still works.
 
@@ -29,7 +29,7 @@ When a co-op player dies today, their camera stays on their own body, which lies
 
 **Solo:** unchanged. A solo death goes straight to the run summary, with no watching. A 1-player test checks this.
 
-**Owner decision Q4:** a rider waiting on the next island's shore, who today stares at the empty sea, could watch a teammate who is still playing in the same way. This closes the coast-cay follow-up "a spectate camera for waiting riders".
+**Owner decision Q4 (chosen 2026-11-14):** a rider waiting on the next island's shore, who today stares at the empty sea, watches a teammate who is still playing in the same way. This closes the coast-cay follow-up "a spectate camera for waiting riders".
 
 ## Capabilities
 
