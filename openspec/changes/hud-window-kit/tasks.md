@@ -1,6 +1,6 @@
 # Tasks
 
-Build only after `damage-feedback` is merged into main (design D13). Each numbered group is one PR, green before the next starts. The groups follow the owner's answers of 2026-11-14 (Q8 a, Q9 a, Q10 a, Q11 a, Q16 a), the owner's answers of 2026-11-15 (A1, B1, C1, D1), and the recommended option of question E, still open in design.md "Owner decisions". A different answer changes only the group that question names.
+Build only after `damage-feedback` is merged into main (design D13). Each numbered group is one PR, green before the next starts. The groups follow the owner's answers of 2026-11-14 (Q8 a, Q9 a, Q10 a, Q11 a, Q16 a), and the owner's answers of 2026-11-15 (A1, B1, C1, D1, E1), recorded in design.md "Owner decisions".
 
 The commands below run from the repo root, with the Godot 4.7.2 console binary:
 - "Import" is `godot --headless --path game --import`, run twice on a fresh checkout.
@@ -205,7 +205,7 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
 - [ ] 6.1 Update the docs:
   - `docs/GAME_DESIGN.md`, where it describes the HUD (meters order and look, the hotbar keys);
   - `docs/ASSETS.md` (the UI kit as own work, built by `tools/art/ui.py`);
-  - `TASKS.md`: tick this change and list the follow-ups (C29 prompt over the head, C31 craft window, C32 last stand, HU10 vessel phrases).
+  - `TASKS.md`: tick this change and list the follow-ups (C29 prompt over the head, C31 craft window, C32 last stand, HU10 vessel phrases, the meter rate arrows of owner answer E1).
 
   Verify: the docs name only behaviour in the specs.
 - [ ] 6.2 Run `openspec validate hud-window-kit --strict`, Import ×2, Smoke, GUT, Art tests and CI's headless game runs with 0 error lines. Verify: all pass.
@@ -213,4 +213,4 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
 ## Workflow follow-up
 
 - Archive with `/opsx:archive hud-window-kit` once the owner has seen the captures in play.
-- Propose the follow-ups as their own changes: `ui-prompt-placement` (C29), `ui-craft-window` (C31), `ui-last-stand` (C32), and the lash phrases (HU10, crossing).
+- Propose the follow-ups as their own changes: `ui-prompt-placement` (C29), `ui-craft-window` (C31), `ui-last-stand` (C32), the lash phrases (HU10, crossing), and `ui-meter-trends` (owner answer E1: rate arrows beside each meter, from damage-feedback's watches, with the bars at 34 px).

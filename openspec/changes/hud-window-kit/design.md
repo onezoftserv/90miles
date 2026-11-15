@@ -164,7 +164,7 @@ The build adds `kit_*.png` captures of the result beside these (tasks 2.7, 3.5, 
   - Today's design doc has no warning number (`docs/GAME_DESIGN.md` §4 names only 0, 20, 60 and 100 as rule thresholds). The 50 is a HUD constant beside `CRITICAL_LOW`, not a rule.
 - **Borrowed, in palette steps: a shaded edge pixel.** The pixel at the fill's edge shows the fraction it holds (Brogue `IO.c` `printProgressBar`). A 38 px bar is 0.38 px per point, so the edge column is drawn in the ramp's shade colour while it holds less than half a pixel, and as a full column from half up. That doubles the bar's resolution with no blended colour (D4).
 - **Rejected: alternate rows a shade darker** (`printProgressBar`). Our bars already stand 3 px apart on the window fill. A darker row tone than `#222034` would be `#000000` (1.32:1, invisible), and a lighter one would cut the labels' contrast.
-- **Deferred, own change: rate arrows.** DST's "Sanity" page shows a small arrow beside a meter, sized by how fast it moves. Our 132 px row has no free cell. A 5 px arrow cell takes the bar from 40 to 34 px, and the arrow reads its rate from damage-feedback's per-meter watches once they are on main. It is owner question E.
+- **Deferred, own change: rate arrows.** DST's "Sanity" page shows a small arrow beside a meter, sized by how fast it moves. Our 132 px row has no free cell. A 5 px arrow cell takes the bar from 40 to 34 px, and the arrow reads its rate from damage-feedback's per-meter watches once they are on main. The owner chose E1: its own change, after this kit, with the bars staying 40 px here.
 - **Borrowed: rows that show only while they apply.** DST's "Wetness/DST" page shows its wetness meter under the others only while the player is wet. "Sangrando" already works this way. Any later status row goes under the six meters the same way. The 90 px budget holds two such rows (4 + 6 + 60 + 20 = 90); a third needs its own layout (D4).
 
 *Slots*
@@ -562,13 +562,8 @@ There are no saves or settings to migrate. Each stage is a revertible PR, and st
 - B1: each teammate block has the full name, then a clothing chip, a 22 px health bar and the state word (D7).
 - C1: the name tag's strip over a teammate's head is the Salud green (D3).
 - D1: the Kenney Pixel UI Pack's credit is dropped once its files go (D11).
+- E1: rate arrows beside each meter come later, as their own change after this kit, using damage-feedback's per-meter watches. The bars stay 40 px here; that change takes them to 34 px (D1).
 - The two departures from the design pass are accepted: the 132 px meters window (D4) and the teammate blocks at x 502–636 (D7).
-
-**Still open.** The specs and tasks are written with the first, recommended option; another answer changes only stage 4.
-- **E. Rate arrows beside each meter** (DST "Sanity" page; D1).
-  1. *(Recommended)* Later, as their own change, using damage-feedback's per-meter watches. The bar then goes from 40 to 34 px.
-  2. In this change, in stage 4, with the bar at 34 px now.
-  3. Never.
 
 ## Open Questions
 
