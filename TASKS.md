@@ -237,3 +237,15 @@ Other (was in Milestone G):
     - GUT 220 scripts, 1952 of 1952 on `main` at 9b90289 merged in. Second import 0 error lines; smoke clean.
     - On 7788: a 1 s host freeze lost, refused and snapped nothing, and the playground host plus client had 0 error lines.
   - Not archived: waiting for the owner's review.
+- 2026-11-14: `guardacostas-stealth` built test-first on `claude/guardacostas-stealth-build`. It covers the detection slice only, and the owner chose the recommended option on all ten decisions.
+  - **The patrol boat** (`patrol_boat.tres`, `PatrolRoute`) circles the island 4 tiles outside its convex hull: 20 s on the horizon, then a 100 s lap from the east end, then out of sight. There is one boat on the sandbar, one or two on the coast cay (the roll is seeded from the run seed and the island id), plus one per 2 players, spread evenly in time. There is none on the secret cay. A squall keeps the boats in port, and each boat runs its own horizon warning before coming back.
+  - **The searchlight**, at night only, is a 60° cone, 10 tiles long, sweeping 30°/s over a 120° arc, tested as host geometry. Fog turns it off.
+  - **The spot meter** fills 1 s per second and drains 0.5 s per second; a player is spotted at 2 s. `PatrolWatch` steps it once per tick across every boat, and dropped players have none.
+  - **Hidden states:** brush when crouching; mangrove and roofed cells in any posture; dives.
+  - **Triggers:** smoke (night 2 tiles, day 6, once per fire per lap), noise (radius 8 within that radius) and water (6 tiles).
+  - **The world event bus** is `WorldEvents`, a session child. NOISE and SMOKE effects and lit fires feed it.
+  - **The alert:** the light locks on the spotted player, sweeps their last known position for 20 s, then the boat gives up. `patrol_alerted` is reported for `guardacostas-capture`.
+  - **Every peer** draws the boat and its cone from the synced loop clock and aim, and `net_spot` drives the open-eye mark. There is a horizon light on the HUD band and the formal-Spanish loudhailer lines.
+  - **Checks:** GUT 232 scripts, 2104 tests, all passing; import and smoke clean. A host and a client as two processes on UDP 7789 (`tests/manual/patrol_run.gd`) passed 22 and 18 checks with 0 error lines. Captures are in `docs/guardacostas-stealth/`.
+  - **Review fixes:** the squall restart, dropped players, per-kind trigger rules, the watch's empty case and a stricter content check.
+  - Deviations are in the change's design.md "Changes from the build plan". Not archived.

@@ -429,6 +429,11 @@ func test_both_peers_show_the_open_eye_half_filled_at_1_s_and_not_once_the_meter
 	var shown := func() -> bool:
 		return host_hud.marks.has_open_eye(host.body(id)) and client_hud.marks.has_open_eye(client.body(id))
 	assert_true(await wait_until(shown, TIMEOUT_S), "the open eye shows over the lit player on both peers")
+	# The client may still hold the sync before last (the spec allows one sync interval of lag), so wait
+	# for it to catch up with the host's held value rather than reading the first frame it shows an eye.
+	var caught_up := func() -> bool:
+		return absf(client_hud.marks.eye_fill(client.body(id)) - host_hud.marks.eye_fill(host.body(id))) <= 0.02
+	assert_true(await wait_until(caught_up, TIMEOUT_S), "the client's eye catches up with the host's")
 	assert_almost_eq(host_hud.marks.eye_fill(host.body(id)), 0.5, 0.02, "half filled on the host")
 	assert_almost_eq(client_hud.marks.eye_fill(client.body(id)), 0.5, 0.02, "and on the client")
 	assert_false(host_hud.marks.has_open_eye(host.body(CoopSession.HOST_ID)), "none over the player who is not lit")

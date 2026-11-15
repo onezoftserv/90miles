@@ -302,3 +302,44 @@ func test_the_client_runs_no_trigger_and_no_spot_and_never_reports() -> void:
 	assert_signal_not_emitted(theirs, "patrol_alerted")
 	for peer: int in client.peer_ids():
 		assert_eq(client.body(peer).spot_meter.value, 0.0, "a client's meters never step")
+
+
+# A joiner builds its run on the first island and then follows the host to a later one, which swaps
+# its session's terrain (IslandTravel). The boat it received meanwhile must redraw on the new island's
+# loop, not the first island's (found in the two-process run: a rejoin on the coast cay drew the boat
+# 392 px off the loop).
+func test_a_joiner_that_travels_after_the_boat_arrives_draws_it_on_the_new_islands_loop() -> void:
+	const COAST: IslandLayoutData = preload("res://resources/islands/coast_cay.tres")
+	var host := net.add_host(func(session: CoopSession) -> void: session.terrain = IslandLayout.build(COAST).terrain)
+	var client := await net.join(_setup)
+	assert_not_null(client)
+	if client == null:
+		return
+	_client_bodies_are_not_players(client)
+	spawner = CreatureSpawner.new()
+	spawner.name = SandbarIsland.CREATURES_NAME
+	host.add_child(spawner)
+	spawner.setup(host, COAST)
+	spawner.party_size = 1
+	spawner.world.phase = NIGHT
+	spawner.world.weather_override = GameState.content.get_entry(&"weather", &"calm") as WeatherData
+	spawner.spawn_permanent()
+	var boats: Array[Creature] = spawner.creatures(&"patrol_boat")
+	assert_false(boats.is_empty(), "the coast cay has a boat")
+	if boats.is_empty():
+		return
+	var made: Creature = boats[0]
+	_lap_at(made, 40.0)
+	assert_true(await _client_has(client, made), "the client receives the boat while still on the sandbar")
+	var theirs := _theirs(client, made)
+	await wait_physics_frames(2)
+	# The client follows the host to the coast cay: its session's terrain is swapped.
+	client.terrain = IslandLayout.build(COAST).terrain
+	await wait_physics_frames(3)
+	var mine: PatrolView = theirs.view()
+	var host_view: PatrolView = made.view()
+	assert_true(mine.valid and host_view.valid, "both peers have a loop")
+	if not mine.valid or not host_view.valid:
+		return
+	assert_almost_eq(mine.start_px().distance_to(host_view.start_px()), 0.0, 0.5, "the client's loop is the coast cay's, not the sandbar's")
+	assert_almost_eq(mine.loop.perimeter, host_view.loop.perimeter, 0.01, "the same loop length as the host's")

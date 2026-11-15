@@ -216,16 +216,16 @@ How the tests are written:
 
 ## 10. Docs
 
-- [ ] 10.1 Update the docs with the confirmed numbers. Verify each edit by reading it back against the spec delta:
+- [x] 10.1 Update the docs with the confirmed numbers. Verify each edit by reading it back against the spec delta:
   - `docs/BESTIARY.md` "Guardacostas patrol boat": the loop, lap, arc, meter and alert;
   - `docs/GAME_DESIGN.md` §17 "Stealth": already updated with the docs PR on 2026-11-14; re-check it against the build;
   - `docs/ISLANDS.md`: the mangrove line (decision 7a);
   - `docs/CONTENT_MANIFEST.md`: tick `patrol_boat`.
-- [ ] 10.2 Update `TASKS.md`:
+- [x] 10.2 Update `TASKS.md`:
   - tick `guardacostas-stealth` under Milestone D;
   - rename the next line to the `guardacostas-capture` change;
   - add a Done entry with the GUT count and the two-process run's numbers.
-- [ ] 10.3 Run the import, smoke run and GUT commands, and verify all three pass.
+- [x] 10.3 Run the import, smoke run and GUT commands, and verify all three pass. Done after merging main at 8f1eaae; the counts are in TASKS.md's Done entry. `docs/CONTENT_MANIFEST.md` is left as is, because its creatures line ticks only when all four creatures on it exist (`reef_shark` and the other built creatures are not ticked either).
 
 ## Workflow follow-up
 

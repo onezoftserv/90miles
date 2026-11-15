@@ -16,6 +16,9 @@ var period_s: float = 0.0
 var valid: bool = false
 
 var _tried: bool = false
+## Client: the terrain the loop was built from. A joiner builds its run on the first island and
+## then travels to the host's, which swaps the session's terrain: the loop is built again then.
+var _built_from: TerrainQuery = null
 
 
 ## The view of `creature` (a patrol boat), built now. `valid` is false while its island has no loop
@@ -29,16 +32,24 @@ static func of(creature: Creature) -> PatrolView:
 
 ## Builds the loop if it is not built yet and a terrain is known. Cheap once tried with a terrain.
 func refresh(creature: Creature) -> void:
-	if valid or _tried or patrol == null or patrol.route_period_s <= 0.0:
+	if patrol == null or patrol.route_period_s <= 0.0:
 		return
 	var built: PatrolLoop = null
 	if creature.world != null:
+		if valid or _tried:
+			return
 		_tried = true
 		built = creature.world.patrol_loop(patrol)
 	else:
 		var session: CoopSession = CoopSession.of(creature)
 		if session == null or not session.terrain is GridTerrain:
 			return
+		if session.terrain == _built_from:
+			return
+		# A new island (or the first one): forget the old loop and build this island's.
+		_built_from = session.terrain
+		valid = false
+		loop = null
 		_tried = true
 		var terrain := session.terrain as GridTerrain
 		built = PatrolLoop.build(terrain, extent_of(terrain), patrol.route_lap_s, patrol.route_offshore_tiles)

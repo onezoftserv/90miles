@@ -458,14 +458,19 @@ func _rejoin(boat: Node2D, brain: Object, patrol: Object) -> void:
 		return
 	_clock(boat, float(patrol.get("horizon_warning_s")) + 40.0)
 	_hooked("the boat's clock at 40 s of its lap while the client is away")
+	# The rejoined client is a new peer: remember its id, so the last wait below waits for that peer to
+	# leave (with the old id it would pass at once and the host would quit under the joining client).
+	var rejoined: Array[int] = [0]
 	var back: Callable = func() -> bool:
 		for peer: int in session.call("peer_ids"):
 			var body: Node2D = _body_of(peer)
 			if peer != 1 and body != null and not bool(((body as Object).get("net") as Object).get("net_dropped")):
+				rejoined[0] = peer
 				return true
 		return false
 	if not await _wait_for("the client back", back, 120.0):
 		return
+	client_peer = rejoined[0]
 	_check("host: the client rejoined", true)
 	_note("host: boat at %s, clock %.1f s, beam %.1f deg, state %d" % [boat.position, float(boat.get("route_t")), float(boat.get("beam")), _boat_state(boat)])
 	# The client checks itself, then leaves for good.
