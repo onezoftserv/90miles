@@ -124,8 +124,8 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 6. Effect line and wasted uses (inventory-hud "Effect line", "Uses that would do nothing"; crafting-inventory "A use that changes nothing is refused")
 
-- [ ] 6.1 Before touching `ItemUser`, grep the tests for item uses (`ItemUser.use`, `use_for`, `use_item`, `_send_use`). Wherever a test means a use to happen at default (full) meters, lower the meter first. Verify: GUT is still green with no behaviour change.
-- [ ] 6.2 Tests first: write `game/tests/unit/test_effect_line.gd` (pure). It covers:
+- [x] 6.1 Before touching `ItemUser`, grep the tests for item uses (`ItemUser.use`, `use_for`, `use_item`, `_send_use`). Wherever a test means a use to happen at default (full) meters, lower the meter first. Verify: GUT is still green with no behaviour change.
+- [x] 6.2 Tests first: write `game/tests/unit/test_effect_line.gd` (pure). It covers:
   - coco reads "Sed +15 · Hambre +5 · Energía +10";
   - at thirst 94 and energy 50 it reads "Sed +15 (+6 útil) · Hambre +5 · Energía +10", and at full energy the energy part reads "Energía +10 (+0 útil)";
   - aloe reads "Cura quemadura y sangrado";
@@ -137,7 +137,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - every item in the catalog builds its line without a missing word.
 
   Verify: it fails first, then passes.
-- [ ] 6.3 Tests first: extend the `ItemUser` tests (`test_item_user*.gd`). They cover:
+- [x] 6.3 Tests first: extend the `ItemUser` tests (`test_item_user*.gd`). They cover:
   - `NOTHING_TO_DO` for aloe with no status;
   - a coconut at full thirst, hunger and energy;
   - not for a coconut at hunger 80 (it still drinks);
@@ -145,7 +145,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - a forged wasted use through `use_for` changes and spends nothing.
 
   Extend `test_inventory_strip.gd` with the refusal lines ("No hay na' que curar.", "No tienes sed.", "A Papo no le hace falta.") and the effect line on the notice row, which returns after a refusal. Verify: they fail first, then pass.
-- [ ] 6.4 Write `game/scripts/ui/effect_line.gd` (`EffectLine`) as design D11. Add `ItemUser.Reason.NOTHING_TO_DO` and its dry run as design D12. Add the strip's refusal keys and effect line in `inventory_strip.gd`, and the refusal and effect words in `hud_text.tres`, Cuban for the refusals. Verify: 6.2 and 6.3 pass, and `test_hud_text.gd` passes.
+- [x] 6.4 Write `game/scripts/ui/effect_line.gd` (`EffectLine`) as design D11. Add `ItemUser.Reason.NOTHING_TO_DO` and its dry run as design D12. Add the strip's refusal keys and effect line in `inventory_strip.gd`, and the refusal and effect words in `hud_text.tres`, Cuban for the refusals. Verify: 6.2 and 6.3 pass, and `test_hud_text.gd` passes.
 - [ ] 6.5 Import ×2, Smoke and GUT pass.
 
 ## 7. Solo and co-op end to end

@@ -296,7 +296,7 @@ So a session that teaches the applier a new kind (sábila's fix may add APPLY_ST
 ### D12. `NOTHING_TO_DO` is decided by a dry run
 
 `ItemUser.check` gets a last reason, `NOTHING_TO_DO`, after CONDITION, so both the HUD and the host use it.
-- **The "something" kinds:** if the use has any kind other than METER_ADD with a positive amount at once, or CURE_STATUS, it is never wasted. That covers a revive, items, routes, flags, a delay, a change over time and any loss.
+- **The "something" kinds:** if the use has any kind other than METER_ADD with a positive amount at once, or CURE_STATUS, it is never wasted. That covers a revive, items, routes, flags, a delay, a change over time, any loss, and kinds the host does not apply yet (so a horn or a raw crab is never refused with an odd reason). An item that leaves a remainder (a conch's horn) is never wasted either: it always gives something.
 - **The dry run:** otherwise the check copies the subject's meter values and statuses into a scratch `SurvivalMeters` outside the tree, with the same tuning, and applies the METER_ADD and CURE_STATUS effects there through the same setters (`eat`, `add`, `set_status`). The use is wasted if every meter and the flags come out unchanged. Energy's starving cap and a meal's energy come along for free.
 - **The reason line:**
   - `refusal_wasted_meter_<meter>` for the first meter it raises ("No tienes sed.", "No tienes hambre.", "No 'tás cansao.", "'Tás entero.", "'Tás de lo más bien.", "No tienes calor.");
