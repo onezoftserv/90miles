@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://olbu8xexyod7" path="res://assets/art/items/shovel_oar.png" id="icon_shovel_oar"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_shovel_oar")
+description_es = "Un remo de madera dura con la pala bien ancha. Más que remar, cava: un hueco pa' la sombra, otro pa' esconder lo tuyo, otro pa' meterte cuando venga el ciclón."
+description_en = "A hardwood oar with a really wide blade. It digs more than it rows: a pit for shade, another to hide your things, another to get into when the ciclón comes."
+category = 3
+tags = Array[int]([2])
+weight = 2.0
+durability = 30
+capabilities = Array[int]([20, 21])
+id = &"shovel_oar"
+name_es = "Remo pala"
+name_en = "Shovel oar"

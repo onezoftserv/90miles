@@ -199,3 +199,47 @@ func test_join_targets() -> void:
 	assert_eq(token.token, "109775241234567")
 	assert_eq(token.label, "Yuni")
 	assert_eq(token.port, 0)
+
+
+# intent-delivery "Unreliable traffic is not thinned on a lossless link" (owner decision Q2): the
+# host keeps ENet's packet throttle open on each client connection from the moment it connects,
+# before the join's reliable traffic, and ENet passes the setting to the client.
+func test_a_hosted_peer_keeps_the_throttle_open_on_every_client_connection() -> void:
+	var request := _request(NetRequest.Kind.HOST)
+	EnetBackend.new().host(request, 0)
+	var server := request.peer as ENetMultiplayerPeer
+	assert_not_null(server)
+	if server == null:
+		return
+	var client := NetPeers.create_client("127.0.0.1", request.info.port) as ENetMultiplayerPeer
+	_peers.append(client)
+	var ids: Array[int] = []
+	server.peer_connected.connect(func(id: int) -> void: ids.append(id))
+	var connected := func() -> bool:
+		server.poll()
+		client.poll()
+		return not ids.is_empty() and client.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+	assert_true(await wait_until(connected, 5.0), "the client connected")
+	if ids.is_empty():
+		return
+	var to_client: ENetPacketPeer = server.get_peer(ids[0])
+	assert_eq(to_client.get_statistic(ENetPacketPeer.PEER_PACKET_THROTTLE_DECELERATION), EnetBackend.THROTTLE_DECELERATION)
+	assert_eq(to_client.get_statistic(ENetPacketPeer.PEER_PACKET_THROTTLE_ACCELERATION), EnetBackend.THROTTLE_ACCELERATION)
+	assert_eq(to_client.get_statistic(ENetPacketPeer.PEER_PACKET_THROTTLE_INTERVAL), EnetBackend.THROTTLE_INTERVAL_MS)
+	var to_host: ENetPacketPeer = client.get_peer(1)
+	var told := func() -> bool:
+		server.poll()
+		client.poll()
+		return to_host.get_statistic(ENetPacketPeer.PEER_PACKET_THROTTLE_DECELERATION) == 0
+	assert_true(await wait_until(told, 5.0), "ENet passed the setting to the client")
+
+
+func test_the_throttle_numbers() -> void:
+	assert_eq(EnetBackend.THROTTLE_INTERVAL_MS, 5000, "ENet's default interval")
+	assert_eq(EnetBackend.THROTTLE_ACCELERATION, 2, "ENet's default acceleration")
+	assert_eq(EnetBackend.THROTTLE_DECELERATION, 0, "never thinned")
+
+
+func test_solo_has_no_connection_to_throttle() -> void:
+	NetManager.start_solo()
+	assert_true(NetManager.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "solo is offline: no ENet peer at all")

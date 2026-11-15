@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://di5x42lq1gh1g" path="res://assets/art/items/gloves.png" id="icon_gloves"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_gloves")
+description_es = "Guantes cosidos de un trapo viejo. Pa' coger ostiones y revisar trampas sin dejar la sangre."
+description_en = "Gloves sewn from an old rag. For picking ostiones and checking traps without leaving your blood behind."
+category = 5
+tags = Array[int]([5])
+weight = 0.2
+equip_slot = 5
+capabilities = Array[int]([24])
+id = &"gloves"
+name_es = "Guantes de trapo"
+name_en = "Cloth gloves"

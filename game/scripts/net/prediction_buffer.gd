@@ -38,6 +38,12 @@ func pending() -> Array[PendingIntent]:
 	return _pending.duplicate()
 
 
+## The newest `count` unacknowledged intents (fewer if fewer are pending), oldest first: what
+## the client's next intent message carries (intent-delivery "Intent delivery").
+func newest(count: int) -> Array[PendingIntent]:
+	return _pending.slice(maxi(_pending.size() - count, 0))
+
+
 func size() -> int:
 	return _pending.size()
 

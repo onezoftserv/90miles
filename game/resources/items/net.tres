@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://bm6bleccd3qk0" path="res://assets/art/items/net.png" id="icon_net"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_net")
+description_es = "Atarraya de pescador, remendá mil veces. Se tira en el bajo y salen tres peces; de noche se deja pa' los cangrejos."
+description_en = "A fisherman's atarraya, mended a thousand times. Cast it in the shallows and three fish come up; at night you leave it out for the crabs."
+category = 3
+tags = Array[int]([2])
+weight = 1.5
+durability = 15
+capabilities = Array[int]([8, 9])
+catch_per_use = 3
+trap_catches = Array[StringName]([&"land_crab"])
+id = &"net"
+name_es = "Atarraya"
+name_en = "Atarraya (cast net)"

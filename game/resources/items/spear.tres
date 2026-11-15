@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://c2nbeyyyutuea" path="res://assets/art/items/spear.png" id="icon_spear"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_spear")
+description_es = "Un palo de la costa con la punta bien afilá. Pa' pescar en el bajo, o pa' darle al tiburón en la nariz."
+description_en = "A stick of driftwood with a well-sharpened point. For fishing the flats, or for hitting the shark on the nose."
+category = 3
+tags = Array[int]([2, 3])
+weight = 1.5
+durability = 30
+capabilities = Array[int]([6])
+weapon_class = 2
+weapon_damage = 12.0
+weapon_reach_tiles = 2.0
+id = &"spear"
+name_es = "Lanza"
+name_en = "Spear"
