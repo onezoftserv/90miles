@@ -151,6 +151,8 @@ var _dropped: Dictionary[int, float] = {}
 var _awaiting: Dictionary[int, float] = {}
 ## Host: which player id belongs to which peer this run.
 var _identities: IdentityRegistry = IdentityRegistry.new()
+## Host: new peers whose takeover waits for the end of the network poll (takeover-after-poll).
+var _taking_over: Dictionary[int, bool] = {}
 ## The peer each body first spawned under, by its current peer (they differ after a rebind).
 var _spawn_peer: Dictionary[int, int] = {}
 ## Names of the players removed after their 90 s, in removal order (on every peer).
@@ -252,14 +254,32 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 	if not multiplayer.is_server():
 		return
 	var sender := multiplayer.get_remote_sender_id()
-	if sender == HOST_ID or roster.has(sender) or not multiplayer.get_peers().has(sender):
+	if sender == HOST_ID or roster.has(sender) or _taking_over.has(sender) or not multiplayer.get_peers().has(sender):
 		return
 	_awaiting.erase(sender)
 	var outcome := _identities.claim(player_id, player_secret, sender, _is_dropped_peer)
 	if outcome.kind == IdentityRegistry.Claim.TAKEOVER:
-		# The old connection is dead but not timed out yet: close it and treat it as a drop.
-		_close_peer(outcome.old_peer)
-		_on_peer_disconnected(outcome.old_peer)
+		# This runs inside the engine's network poll, which may still hold packets from the old
+		# connection after this request. Closing it now makes the engine log each of them, so the
+		# takeover waits until the poll is done (the old copy plays its body until then).
+		_taking_over[sender] = true
+		_take_over.call_deferred(sender, player_name, outcome)
+		return
+	_answer_join(sender, player_name, outcome)
+
+
+# Host, after the poll that brought `sender`'s join request: the old connection is dead or a
+# second copy, not timed out yet. Close it first, treat it as a drop, then answer `sender`.
+func _take_over(sender: int, player_name: String, outcome: IdentityRegistry.Outcome) -> void:
+	_taking_over.erase(sender)
+	_close_peer(outcome.old_peer)
+	_on_peer_disconnected(outcome.old_peer)
+	_answer_join(sender, player_name, outcome)
+
+
+# Host: the rest of a join request, once any takeover is done: the body back or a new player,
+# then the reply.
+func _answer_join(sender: int, player_name: String, outcome: IdentityRegistry.Outcome) -> void:
 	var takes_back := outcome.kind == IdentityRegistry.Claim.RECLAIM or outcome.kind == IdentityRegistry.Claim.TAKEOVER
 	var reclaimed := takes_back and _started and phase == Phase.RUN and _reclaim(outcome.old_peer, sender)
 	if not reclaimed:
