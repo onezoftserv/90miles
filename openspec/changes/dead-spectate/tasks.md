@@ -70,7 +70,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 3. Every peer (ui-shell "Spectating on every peer"), host plus clients
 
-- [ ] 3.1 Tests first: write a new `game/tests/unit/test_dead_spectate_net.gd` on NetHarness, with a `RunHud` bound per branch as `test_dropped_teammate_net.gd` does. Cases:
+- [x] 3.1 Tests first: write a new `game/tests/unit/test_dead_spectate_net.gd` on NetHarness, with a `RunHud` bound per branch as `test_dropped_teammate_net.gd` does. Cases:
   - The client dies and watches the host ("Mirando a: Yuni"), while the host's own view is unchanged.
   - The host dies and watches the client.
   - Papo's client drops, his body dies during the 90 s, and on his rejoin his HUD watches at once.
@@ -78,21 +78,26 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - Papo is dropped and alone alive, so a dead Dayana's line reads "Mirando a: Papo (desconectado)", and the mark goes when he rejoins.
 
   The tests assert the watched body, `camera.enabled` and the line, never `is_current()`. Verify: they pass, and the cases that rely on group 1 or 2 were seen failing before those were built.
-- [ ] 3.2 Write a two-process manual run, `game/tests/manual/dead_spectate_run.gd`. It boots the real `GameShell` with `--mode=host|client --port=7787`:
+  - Done 2026-11-14: 6 cases in `test_dead_spectate_net.gd`, the 5 above plus "the dead still speak" (a dead client's quick-chat phrase reaches the host). They were written after groups 1 and 2, so they were checked the other way round: with `SpectateView.update()` stubbed to watch nobody, all 6 fail; restored, all 6 pass.
+- [x] 3.2 Write a two-process manual run, `game/tests/manual/dead_spectate_run.gd`. It boots the real `GameShell` with `--mode=host|client --port=7787`:
   - The host kills the client's player through the meters hook.
   - The client checks that its current camera belongs to the host's body and that the line reads "Mirando a: <host>".
   - The host dies, and both reach `Flow.SUMMARY`.
 
   It prints `SPECTATE PASS|FAIL` lines. Run host and client as two headless processes on UDP 7787. Verify: every line is PASS and there are 0 error lines in both logs.
+  - Done 2026-11-14: two headless processes on UDP 7787. Host 6 of 6 PASS, client 10 of 10 PASS, 0 error lines in either log. On the client, `world_viewport.get_camera_2d()` was the host body's camera.
 
 ## 4. Wrap-up
 
-- [ ] 4.1 Update the docs:
+- [x] 4.1 Update the docs:
   - `TASKS.md`: tick the Milestone G item and add a Done entry.
   - `docs/` (the HUD or co-op section that describes death): one line on spectating.
   - Note in the coast-cay follow-ups list that the waiting riders' camera has shipped (Q4).
 
   Verify: the files read correctly.
+  - Done 2026-11-14:
+    - `TASKS.md`: the Milestone G item is ticked, the coast-cay follow-up is marked shipped, and a Done entry is added.
+    - `docs/GAME_DESIGN.md` §"Downed, not dead": one line on what a dead co-op player sees.
 - [ ] 4.2 Final checks: `openspec validate dead-spectate --strict`, Import (twice), Smoke, GUT (full) and the group 3.2 run, all clean. Rerun a `test_crossing_art.gd` "scrolled sea" failure alone before treating it as ours. Verify: the counts are recorded in the PR body.
 
 ## Workflow follow-up
