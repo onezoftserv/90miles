@@ -36,7 +36,10 @@ Groups 1 to 4 follow the owner's answers of 2026-11-14: option A for each of Q1 
   - **The host starts at once:** the host calls and begins the run in the same frame. The client enters the run with a HUD.
   - **A client who left:** with two clients, one goes back to the title and the host then calls. The new roster has the host and the other client only, and the one who left stays on the title.
   - **Old messages:** the client's old session sends an intent, an action and a site-state request just before the host's call. The host's lobby stays unchanged and spawns no body.
-  - **The same looks again:** a removal and a join give Papo slot 2 and Dayana slot 1. After the rematch, with Papo answering first, they keep 2 and 1.
+  - **The same looks again:** the first of two clients is removed, so Papo holds slot 2 while slot 1 is free. After the rematch Papo keeps slot 2 on every peer, and the removed player is not in the new run's removed list. That the kept slot does not depend on the order join requests arrive in is pinned in `test_look_slots_rematch.gd`.
+  - **From the coast cay:** a run that ended on the coast cay starts again on the sandbar on both peers, with 1 island reached, the host's pick-ups and creatures, and nothing of the old run left in the world.
+  - **A client that never asks again:** its call handler is cut, and the host disconnects it once `JOIN_TIMEOUT_S` passes. Its summary then says the host closed the game.
+  - **A dropped player joins later:** a dropped player whose body died ends the run away. The rematch lobby lists only the host and Papo until she rejoins, and then she joins as a new joiner on a new connection, known by her id.
   - Verify: seen failing, then passing, with no engine error (GUT fails on them).
 - [x] 3.3 Tests first in `test_run_restart.gd`:
   - `test_a_co_op_summary_offers_only_home` becomes "a host alone gets Otra vez": 1 player hosting on port 0 sees "Otra vez" focused. It leads to a lobby with only the host and "Empezar viaje". The server peer and NetManager's request are unchanged, and the old session is freed.

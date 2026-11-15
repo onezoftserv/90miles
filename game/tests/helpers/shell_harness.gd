@@ -125,6 +125,13 @@ func drop(shell: GameShell) -> void:
 	_close(apis[shells.find(shell)])
 
 
+## A shell that left or dropped joins the host again on a new connection, from the same install
+## (the same settings, so the same name and player id). It does not wait.
+func rejoin(shell: GameShell) -> void:
+	apis[shells.find(shell)].multiplayer_peer = NetPeers.create_client("127.0.0.1", port)
+	shell._on_joining()
+
+
 func teardown() -> void:
 	for shell: GameShell in shells:
 		if is_instance_valid(shell):

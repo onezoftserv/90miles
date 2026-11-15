@@ -42,9 +42,9 @@ Only the host SHALL start a rematch. A rematch message from anyone else is ignor
 - **THEN** the new lobbies list only the host and Papo, and Dayana stays on her title screen
 
 #### Scenario: A dropped player joins later
-- **GIVEN** a client who dropped during the run and whose body still waited when the run ended
-- **WHEN** the host picks "Otra vez" and that player joins the host again from the join screen
-- **THEN** they join the new lobby as a new joiner
+- **GIVEN** a client who dropped during the run and whose body died before it was removed, so the run ended without them
+- **WHEN** the host picks "Otra vez", and afterwards that player joins the host again from the join screen
+- **THEN** the rematch lobby did not list them until they joined, and they join it as a new joiner
 
 ### Requirement: Rematch message order
 In a rematch, the host's old run SHALL be gone on every client before anything of the new run reaches that client, so each client receives the new island whole: the same pick-ups, creatures, sites and structures as the host. What a client's old run sent before it ended is ignored by the host's new run: no player spawns from it and nothing changes. No peer logs an engine error during a rematch.

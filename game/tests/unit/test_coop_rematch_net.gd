@@ -244,6 +244,8 @@ func test_the_same_looks_again() -> void:
 	assert_true(await shells.wait(func() -> bool: return host.session.is_dropped(gone_id)))
 	host.session._physics_process(CoopSession.DISCONNECT_DOWNED_S + 1.0)
 	assert_null(host.session.body(gone_id), "the first client is removed and slot 1 is free")
+	var removed: Array[String] = ["Nadie"]
+	assert_true(await shells.wait(func() -> bool: return papo.session.removed_names() == removed), "Papo heard of the removal")
 	assert_true(await shells.end_run())
 	var old_papo_session: int = papo.session.get_instance_id()
 	_pick_otra_vez(host)
@@ -252,6 +254,94 @@ func test_the_same_looks_again() -> void:
 	assert_true(await shells.begin_run())
 	assert_eq(host.session.body(papo_id).look_slot, 2, "Papo keeps slot 2, not the free slot 1")
 	assert_true(await shells.wait(func() -> bool: return papo.session.body(papo_id).look_slot == 2), "and draws it")
+	assert_true(host.session.removed_names().is_empty(), "the removed player stays in the old run")
+	assert_true(papo.session.removed_names().is_empty(), "on Papo too")
+
+
+# endings-progression "A fresh run starts clean", from a later island: nothing of the coast cay stays.
+func test_the_party_again_from_the_coast_cay() -> void:
+	var pair := await _pair_in_run()
+	if pair.is_empty():
+		return
+	var host := pair[0]
+	var papo := pair[1]
+	host.travel.travel(&"coast_cay")
+	var on_the_cay := func() -> bool:
+		return host.island.layout.id == &"coast_cay" and papo.island.layout.id == &"coast_cay" and papo.travel.islands_reached == 2
+	assert_true(await shells.wait(on_the_cay), "both reached the coast cay")
+	assert_true(await shells.end_run())
+	var old_papo_session: int = papo.session.get_instance_id()
+	_pick_otra_vez(host)
+	var rows: Array[String] = ["Yuni (anfitrión)", "Papo"]
+	assert_true(await shells.wait(_in_new_lobby(papo, old_papo_session, rows)))
+	assert_true(await shells.begin_run())
+	var whole := func() -> bool:
+		return papo.session.pickups.get_child_count() == host.session.pickups.get_child_count() \
+			and papo.session.entities.get_child_count() == host.session.entities.get_child_count()
+	assert_true(await shells.wait(whole), "Papo's sandbar has the host's pick-ups and creatures")
+	for shell: GameShell in [host, papo]:
+		assert_eq(shell.island.layout.id, &"sandbar", "back on the sandbar")
+		assert_eq(shell.travel.islands_reached, 1, "1 island reached")
+		assert_true(shell.crossings.is_empty())
+		for node: Node in shell.island.get_parent().get_children():
+			var current: bool = node == shell.island or node == shell.session or node == shell.tint
+			assert_true(current or node.is_queued_for_deletion(), "nothing of the coast cay run is left: %s" % node.name)
+
+
+# coop-networking "Rematch with the same party": a connected client that never asks to join again
+# is disconnected after 10 s, as any peer that never asks.
+func test_a_client_that_never_asks_again_is_disconnected() -> void:
+	var pair := await _pair_in_run()
+	if pair.is_empty():
+		return
+	var host := pair[0]
+	var papo := pair[1]
+	var papo_id: int = shells.peer_id(papo)
+	assert_true(await shells.end_run())
+	# Papo's client hears the call but does nothing with it (a frozen client).
+	papo.rematch.called.disconnect(papo._on_rematch_called)
+	_pick_otra_vez(host)
+	await wait_physics_frames(10)
+	assert_eq(_lobby_of(host).rows(), ["Yuni (anfitrión)"] as Array[String], "Papo has not asked again")
+	assert_true(host.session._awaiting.has(papo_id), "the host waits for his join request")
+	host.session._physics_process(CoopSession.JOIN_TIMEOUT_S + 1.0)
+	var gone := func() -> bool: return not host.session.multiplayer.get_peers().has(papo_id)
+	assert_true(await shells.wait(gone), "the host disconnects him")
+	var told := func() -> bool: return _summary_of(papo) != null and _summary_of(papo).note.text == HOST_LEFT_NOTE
+	assert_true(await shells.wait(told), "Papo's summary says the host closed the game")
+	assert_eq(host.flow, GameShell.Flow.LOBBY, "the host's lobby stays open")
+
+
+# coop-networking "Rematch is the host's call": a dropped player whose body died while away is not
+# brought back by the rematch, and joins the new lobby as a new joiner.
+func test_a_dropped_player_joins_later() -> void:
+	var host := _start_host()
+	var papo := await shells.join_lobby("Papo")
+	var dayana := await shells.join_lobby("Dayana")
+	assert_not_null(papo)
+	assert_not_null(dayana)
+	if papo == null or dayana == null:
+		return
+	var old_dayana_id: int = shells.peer_id(dayana)
+	assert_true(await shells.begin_run())
+	shells.drop(dayana)
+	assert_true(await shells.wait(func() -> bool: return host.session.is_dropped(old_dayana_id)), "Dayana dropped")
+	# Every body dies, Dayana's while she is away, so the run ends with her still dropped.
+	assert_true(await shells.end_run())
+	assert_eq(host.flow, GameShell.Flow.SUMMARY)
+	var old_papo_session: int = papo.session.get_instance_id()
+	_pick_otra_vez(host)
+	var two: Array[String] = ["Yuni (anfitrión)", "Papo"]
+	assert_true(await shells.wait(_in_new_lobby(papo, old_papo_session, two)), "the rematch lobby has the host and Papo")
+	shells.rejoin(dayana)
+	var three: Array[String] = ["Yuni (anfitrión)", "Papo", "Dayana"]
+	var listed := func() -> bool:
+		return dayana.flow == GameShell.Flow.LOBBY and _lobby_of(host).rows() == three and _lobby_of(dayana).rows() == three
+	assert_true(await shells.wait(listed), "Dayana joins the new lobby")
+	var dayana_id: int = shells.peer_id(dayana)
+	assert_ne(dayana_id, old_dayana_id, "on a new connection")
+	assert_eq(host.session._identities.peer_for(dayana.settings.identity.id), dayana_id, "a new joiner, known by her id")
+	assert_eq(host.session.peer_ids().size(), 0, "nobody spawns in the lobby")
 
 
 func test_the_waiting_note_gives_way_when_the_host_leaves() -> void:
