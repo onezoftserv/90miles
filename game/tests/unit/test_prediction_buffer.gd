@@ -41,6 +41,28 @@ func test_acknowledge_drops_everything_up_to_the_seq() -> void:
 	assert_eq(buffer.acked_seq, 3)
 
 
+# intent-delivery "Intent delivery": each message carries the newest unacknowledged intents.
+func test_newest_returns_the_newest_unacknowledged_intents_oldest_first() -> void:
+	for i: int in 10:
+		buffer.push(MoveIntent.create(Vector2.RIGHT), DT)
+	assert_eq(_seqs(buffer.newest(4)), [7, 8, 9, 10] as Array[int])
+	assert_eq(_seqs(buffer.newest(20)), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as Array[int], "never more than are pending")
+	buffer.acknowledge(9)
+	assert_eq(_seqs(buffer.newest(8)), [10] as Array[int])
+	buffer.acknowledge(10)
+	assert_eq(buffer.newest(8).size(), 0, "none once all are acknowledged")
+
+
+func test_newest_hands_out_the_stored_copies() -> void:
+	var intent := MoveIntent.create(Vector2.RIGHT, true)
+	buffer.push(intent, 0.02)
+	intent.direction = Vector2.LEFT
+	var newest := buffer.newest(1)
+	assert_eq(newest[0].intent.direction, Vector2.RIGHT)
+	assert_true(newest[0].intent.run)
+	assert_eq(newest[0].delta, 0.02)
+
+
 func test_an_older_acknowledgement_changes_nothing() -> void:
 	for i: int in 5:
 		buffer.push(MoveIntent.create(Vector2.RIGHT), DT)
@@ -82,3 +104,10 @@ func test_the_buffer_keeps_at_most_max_pending_intents() -> void:
 		buffer.push(MoveIntent.create(Vector2.RIGHT), DT)
 	assert_eq(buffer.size(), PredictionBuffer.MAX_PENDING)
 	assert_eq(buffer.pending()[0].seq, 11, "the oldest are dropped")
+
+
+func _seqs(intents: Array[PendingIntent]) -> Array[int]:
+	var seqs: Array[int] = []
+	for entry: PendingIntent in intents:
+		seqs.append(entry.seq)
+	return seqs

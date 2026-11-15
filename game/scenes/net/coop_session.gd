@@ -79,6 +79,10 @@ const JOIN_TIMEOUT_S: float = 10.0
 const MAX_INTENT_DELTA_S: float = 0.1
 ## Squared length an intent's direction may reach (1 plus float slack).
 const MAX_DIRECTION_LENGTH_SQUARED: float = 1.001
+## Bits of an intent's flags byte in an intent message.
+const INTENT_RUN: int = 1
+const INTENT_CROUCH: int = 2
+const INTENT_INTERACT: int = 4
 ## World-state keys a joiner accepts, with their types; anything else is dropped. The sky keys
 ## are WorldSky.to_state().
 const WORLD_STATE_TYPES: Dictionary[String, int] = {
@@ -374,7 +378,7 @@ func _rebind_body(old_peer: int, new_peer: int) -> void:
 		roster[new_peer] = roster[old_peer]
 		roster.erase(old_peer)
 	var role := PlayerNet.role_for(multiplayer.is_server(), multiplayer.get_unique_id(), new_peer)
-	moved.rebind(new_peer, role, send_intent)
+	moved.rebind(new_peer, role, send_intents)
 	player_rebound.emit(old_peer, new_peer, moved)
 
 
@@ -559,16 +563,28 @@ func peer_ids() -> Array[int]:
 	return ids
 
 
-## Sends an intent of this peer's own player to the host (PlayerNet calls it every frame).
-func send_intent(seq: int, intent: MoveIntent, delta: float) -> void:
-	submit_intent.rpc_id(HOST_ID, seq, intent.direction, intent.run, intent.crouch, intent.interact_held, delta)
+## Sends one message of this peer's own player's intents to the host (PlayerNet calls it every
+## frame): oldest first and numbered in a row, so a client's message repeats the intents the
+## host has not acknowledged (intent-delivery "Intent delivery"). Unreliable and unordered: the
+## host applies each number once, so neither a lost nor a late message costs movement.
+func send_intents(intents: Array[PendingIntent]) -> void:
+	if intents.is_empty():
+		return
+	var directions := PackedVector2Array()
+	var flags := PackedByteArray()
+	var deltas := PackedFloat64Array()
+	for pending: PendingIntent in intents:
+		directions.append(pending.intent.direction)
+		flags.append(_intent_flags(pending.intent))
+		deltas.append(pending.delta)
+	submit_intents.rpc_id(HOST_ID, intents[0].seq, directions, flags, deltas)
 
 
-@rpc("any_peer", "call_local", "unreliable_ordered")
-func submit_intent(seq: int, direction: Vector2, run: bool, crouch: bool, interact: bool, delta: float) -> void:
+@rpc("any_peer", "call_local", "unreliable")
+func submit_intents(first_seq: int, directions: PackedVector2Array, flags: PackedByteArray, deltas: PackedFloat64Array) -> void:
 	if not multiplayer.is_server():
 		return
-	_receive_intent(multiplayer.get_remote_sender_id(), seq, direction, run, crouch, interact, delta)
+	_receive_intents(multiplayer.get_remote_sender_id(), first_seq, directions, flags, deltas)
 
 
 ## Host: whether `peer_id` may have one more intent claiming `delta` seconds now (its intent
@@ -581,12 +597,35 @@ func accept_intent(peer_id: int, delta: float) -> bool:
 	return limits != null and limits.allow_intent(delta, clock.call())
 
 
-# Host: an intent from `sender` (resolved from the RPC, never from its payload).
+# Host: one intent message from `sender` (resolved from the RPC, never from its payload). A
+# message that is empty, longer than PlayerNet.MAX_INTENTS_PER_SEND, whose arrays disagree or
+# that holds an invalid intent is dropped whole.
+func _receive_intents(sender: int, first_seq: int, directions: PackedVector2Array, flags: PackedByteArray, deltas: PackedFloat64Array) -> void:
+	var count: int = directions.size()
+	if count == 0 or count > PlayerNet.MAX_INTENTS_PER_SEND or flags.size() != count or deltas.size() != count or first_seq < 1:
+		return
+	for i: int in count:
+		if not is_valid_intent(directions[i], deltas[i]):
+			return
+	for i: int in count:
+		var bits: int = flags[i]
+		_receive_intent(sender, first_seq + i, directions[i], (bits & INTENT_RUN) != 0,
+			(bits & INTENT_CROUCH) != 0, (bits & INTENT_INTERACT) != 0, deltas[i])
+
+
+# Host: one intent from `sender`. A number the body has already queued (a repeat from an
+# earlier message, or a late message) is skipped before the rate limits, so it costs nothing.
 func _receive_intent(sender: int, seq: int, direction: Vector2, run: bool, crouch: bool, interact: bool, delta: float) -> void:
 	var target := body(sender)
-	if target == null or not is_valid_intent(direction, delta) or not accept_intent(sender, delta):
+	if target == null or seq <= target.net.last_queued_seq() or not is_valid_intent(direction, delta) \
+			or not accept_intent(sender, delta):
 		return
 	target.net.enqueue(seq, MoveIntent.create(direction, run, crouch, interact), delta)
+
+
+static func _intent_flags(intent: MoveIntent) -> int:
+	return (INTENT_RUN if intent.run else 0) | (INTENT_CROUCH if intent.crouch else 0) \
+		| (INTENT_INTERACT if intent.interact_held else 0)
 
 
 ## This peer's player says the quick-chat phrase in `slot` (the wheel calls it).
@@ -1153,7 +1192,7 @@ func _spawn_player(data: Variant) -> Node:
 	new_body.terrain = terrain
 	new_body.climate = climate
 	var role := PlayerNet.role_for(multiplayer.is_server(), multiplayer.get_unique_id(), peer_id)
-	(new_body.get_node(^"PlayerNet") as PlayerNet).attach(peer_id, role, send_intent)
+	(new_body.get_node(^"PlayerNet") as PlayerNet).attach(peer_id, role, send_intents)
 	_bodies[peer_id] = new_body
 	_spawn_peer[peer_id] = peer_id
 	new_body.tree_exiting.connect(_on_body_exiting.bind(new_body))

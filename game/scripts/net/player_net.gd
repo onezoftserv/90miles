@@ -5,8 +5,9 @@ extends Node
 ## - HOST (every body on the host): steps the body once per queued intent, with the intent's
 ##   own time step, and writes the shadow fields the StateSync synchronizer sends at 20 Hz.
 ## - PREDICTED (a client's own body): steps the body from local input at once (no
-##   interactions), sends each intent to the host, and on each host state resets to it and
-##   replays the intents the host has not processed yet.
+##   interactions), sends each intent to the host together with the unacknowledged ones before
+##   it (intent-delivery: a lost message costs nothing while a later one arrives), and on each
+##   host state resets to it and replays the intents the host has not processed yet.
 ## - REMOTE (other bodies on a client): never simulates; draws the body DELAY_S behind the
 ##   newest host state.
 ## A downed body is never predicted: its owner draws it like a remote one and sends nothing.
@@ -20,9 +21,12 @@ enum Role {
 
 ## Intents the host steps for one body in one physics frame; the rest wait for the next frame.
 const MAX_STEPS_PER_FRAME: int = 8
-## Intents the host holds for one body; older ones are dropped (the rate limits keep the
-## queue far below this).
-const MAX_QUEUED: int = 60
+## Intents the host holds for one body; older ones are dropped. The rate limits admit at most
+## 75 at once (1.25 s of slack), so a backlog after a host hitch is never cut.
+const MAX_QUEUED: int = 90
+## Intents in one message: the newest and up to 7 unacknowledged ones before it, so 7 lost
+## messages in a row lose no movement (intent-delivery design D2).
+const MAX_INTENTS_PER_SEND: int = 8
 
 var role: Role = Role.INACTIVE
 ## The peer whose player this is.
@@ -53,7 +57,8 @@ var buffer: PredictionBuffer = PredictionBuffer.new()
 ## Host states of this body, for drawing it (REMOTE, or PREDICTED while downed).
 var interpolator: SnapshotInterpolator = SnapshotInterpolator.new()
 
-# send_intent(seq: int, intent: MoveIntent, delta: float): hands an intent to the session.
+# send_intents(intents: Array[PendingIntent]): hands one message to the session, oldest first,
+# numbered in a row.
 var _send: Callable
 var _queue: Array[PendingIntent] = []
 var _last_queued_seq: int = 0
@@ -83,7 +88,7 @@ static func role_for(is_server: bool, local_peer: int, owner: int) -> Role:
 
 ## Hands the body to the network. Call on every peer before the body enters the tree: the
 ## body belongs to `peer_id` (so is_multiplayer_authority() means "my player"), while its
-## StateSync stays with the host. `send` is the session's send_intent.
+## StateSync stays with the host. `send` is the session's send_intents.
 func attach(peer_id: int, net_role: Role, send: Callable) -> void:
 	owner_peer = peer_id
 	role = net_role
@@ -121,6 +126,11 @@ func enqueue(seq: int, intent: MoveIntent, delta: float) -> bool:
 	return true
 
 
+## Host: the newest intent number queued for this body (0 before the first and after a rebind).
+func last_queued_seq() -> int:
+	return _last_queued_seq
+
+
 ## Client: takes the host state just received (StateSync.synchronized). A state that is not
 ## finite is ignored.
 func apply_host_state() -> void:
@@ -154,7 +164,8 @@ func _physics_process(delta: float) -> void:
 		Role.HOST:
 			if owner_peer == multiplayer.get_unique_id():
 				_sent_seq += 1
-				_send_intent(_sent_seq, _body().intent, delta)
+				var own: Array[PendingIntent] = [PendingIntent.create(_sent_seq, _body().intent, delta)]
+				_send_intents(own)
 			_step_host(delta)
 			_write_shadow()
 		Role.PREDICTED:
@@ -202,8 +213,8 @@ func _write_shadow() -> void:
 
 func _predict(delta: float) -> void:
 	var body := _body()
-	var seq := buffer.push(body.intent, delta)
-	_send_intent(seq, body.intent, delta)
+	buffer.push(body.intent, delta)
+	_send_intents(buffer.newest(MAX_INTENTS_PER_SEND))
 	body.advance(delta, false)
 
 
@@ -230,9 +241,9 @@ func _take_drawn_state() -> void:
 	body.stealth_state = net_stealth as MovementStep.Stealth
 
 
-func _send_intent(seq: int, intent: MoveIntent, delta: float) -> void:
+func _send_intents(intents: Array[PendingIntent]) -> void:
 	if _send.is_valid():
-		_send.call(seq, intent, delta)
+		_send.call(intents)
 
 
 func _body() -> PlayerBody:
