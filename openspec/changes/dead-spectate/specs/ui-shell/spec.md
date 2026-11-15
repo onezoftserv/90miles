@@ -52,16 +52,16 @@ A teammate SHALL be watchable while they are not dead and not waiting out of pla
 - **THEN** it follows Dayana, and stepping through teammates never reaches Papo while Dayana can be watched
 
 ### Requirement: Switching the watched teammate
-A spectator SHALL step to the next or previous watchable teammate with the "spectate next" and "spectate previous" actions. These step in the teammate list's order and wrap round. By default the actions are A and D, ← and →, the gamepad's D-pad ← and →, and the mouse wheel. They do nothing for a living player who is not waiting. Solo has nobody to step to.
+A spectator SHALL step to the next or previous watchable teammate with D or A, → or ←, the gamepad's D-pad → or ←, and the mouse wheel. These step in the teammate list's order and wrap round. Holding a key or the stick does not repeat. A living player who is not waiting walks and picks slots with these keys, as before. Solo has nobody to step to.
 
 #### Scenario: Stepping and wrapping
 - **GIVEN** Yuni is dead and watches Dayana, and Papo is alive; the teammate list reads Dayana, then Papo
-- **WHEN** Yuni presses "spectate next" twice
+- **WHEN** Yuni presses D twice
 - **THEN** the view follows Papo after the first press and Dayana again after the second
 
 #### Scenario: Stepping back
 - **GIVEN** Yuni is dead and watches Dayana, and Papo is alive; the teammate list reads Dayana, then Papo
-- **WHEN** Yuni presses "spectate previous"
+- **WHEN** Yuni presses A
 - **THEN** the view follows Papo
 
 #### Scenario: The keys work on a gamepad
@@ -73,6 +73,11 @@ A spectator SHALL step to the next or previous watchable teammate with the "spec
 - **GIVEN** a co-op run with Yuni alive on the sandbar
 - **WHEN** Yuni presses D
 - **THEN** Yuni walks right and the view stays on Yuni's own body
+
+#### Scenario: No key is bound twice
+- **GIVEN** the project's input map
+- **WHEN** the stepping keys are read
+- **THEN** each is a key, button or wheel direction of an action a spectator has no other use for (walking, the slot strip, the engine's arrows), and no input is bound to two of the project's actions
 
 ### Requirement: Losing the watched teammate
 When the watched teammate dies, is removed, or leaves play, the spectator's view SHALL move to the watchable teammate nearest that teammate's last position. A teammate leaves play by going to wait on the shore. With nobody watchable, the view goes back to the spectator's own body and the line hides. Solo never watches, so it never loses anyone.

@@ -50,7 +50,7 @@ func watched() -> PlayerBody:
 
 ## Whether the watched teammate's client is disconnected (only watched when nobody connected is left).
 func watched_dropped() -> bool:
-	return active() and session.is_dropped(session.peer_of(_watched))
+	return active() and is_instance_valid(session) and session.is_dropped(session.peer_of(_watched))
 
 
 ## Whether `body`'s player watches a teammate rather than their own body: dead, or waiting on the
@@ -102,9 +102,10 @@ static func step(candidates: Array[PlayerBody], current: PlayerBody, direction: 
 	return candidates[posmod(index + signi(direction), candidates.size())]
 
 
-## Works out whom to watch now and points the view there; called every frame.
+## Works out whom to watch now and points the view there; called every frame. A freed session or own
+## body (the host lost, the run torn down) watches nobody.
 func update() -> void:
-	if session == null or not wants_to_watch(own, solo):
+	if not is_instance_valid(session) or not is_instance_valid(own) or not wants_to_watch(own, solo):
 		_stop()
 		return
 	var candidates: Array[PlayerBody] = watchable(session, own)

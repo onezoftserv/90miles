@@ -1,9 +1,11 @@
 extends GutTest
 ## ui-shell "Spectating a teammate", "Whom a spectator watches", "Switching the watched teammate"
 ## and "Losing the watched teammate", offline: SpectateView on an offline session with extra
-## bodies (peer 1 is the local player, peers 2-4 its teammates), and the cameras it switches.
+## bodies (peer 1 is the local player, peers 2-4 its teammates), the cameras it switches, and
+## "The HUD while watching": the run HUD's line, meters, strip and keys.
 
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
+const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const NAMES: Dictionary[int, String] = {2: "Papo", 3: "Dayana", 4: "Ramón"}
 
 
@@ -168,6 +170,19 @@ func test_nobody_left_goes_back_to_the_own_body() -> void:
 	assert_false(session.body(2).camera.enabled)
 
 
+func test_a_freed_own_body_watches_nobody() -> void:
+	# The host lost: the client's bodies go before its HUD does.
+	var session := _session({2: Vector2(40.0, 0.0)})
+	var view := _view(session)
+	_kill(session, 1)
+	view.update()
+	assert_true(view.active())
+	session.body(1).free()
+	view.update()
+	assert_false(view.active())
+	assert_false(session.body(2).camera.enabled, "the teammate's camera is off again")
+
+
 func test_a_waiting_rider_watches_until_the_party_lands() -> void:
 	var session := _session({2: Vector2(40.0, 0.0)})
 	var view := _view(session)
@@ -219,3 +234,130 @@ func test_the_dead_body_does_not_move_while_watching() -> void:
 	for i: int in 10:
 		own.advance(1.0 / 60.0)
 	assert_eq(own.position, before)
+
+
+# ui-shell "The HUD while watching": the run HUD bound to the offline session as a co-op HUD.
+func _hud(session: CoopSession, solo: bool = false) -> RunHud:
+	var hud := HUD_SCENE.instantiate() as RunHud
+	add_child_autofree(hud)
+	hud.bind(session, CoopSession.HOST_ID, solo)
+	return hud
+
+
+# A key press as the keyboard sends it: the walk keys match by position, the engine's arrows by key.
+func _key(keycode: Key) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = keycode
+	event.keycode = keycode
+	event.pressed = true
+	return event
+
+
+func test_the_hud_line_and_the_watched_meters() -> void:
+	var session := _session({2: Vector2(40.0, 0.0)})
+	var hud := _hud(session)
+	session.body(2).meters.thirst = 30.0
+	_kill(session, 1)
+	await wait_process_frames(2)
+	assert_true(hud.watching_panel.visible)
+	assert_eq(hud.watching_label.text, "Mirando a: Papo  [A] [D] Cambiar")
+	assert_eq(hud.meters.shown(), session.body(2).meters, "the meters panel shows Papo's meters")
+	assert_eq(hud.meters.bar_for(DataEnums.Meter.THIRST).value_label.text, "30")
+	assert_false(hud.strip.visible, "the dead player's strip is hidden")
+	assert_false(hud.prompt.visible)
+	assert_not_null(hud.wheel, "quick chat stays")
+
+
+func test_a_disconnected_teammate_is_marked_on_the_line() -> void:
+	var session := _session({2: Vector2(40.0, 0.0)})
+	session._dropped[2] = CoopSession.DISCONNECT_DOWNED_S
+	session.body(2).net.net_dropped = true
+	var hud := _hud(session)
+	_kill(session, 1)
+	hud.refresh()
+	assert_eq(hud.watching_label.text, "Mirando a: Papo (desconectado)  [A] [D] Cambiar")
+
+
+func test_the_keys_step_the_view() -> void:
+	var session := _session({2: Vector2(40.0, 0.0), 3: Vector2(300.0, 0.0)})
+	var hud := _hud(session)
+	_kill(session, 1)
+	hud.refresh()
+	assert_eq(session.peer_of(hud.spectate.watched()), 2)
+	hud._input(_key(KEY_D))
+	assert_eq(session.peer_of(hud.spectate.watched()), 3, "D steps to the next teammate")
+	assert_eq(hud.watching_label.text, "Mirando a: Dayana  [A] [D] Cambiar")
+	hud._input(_key(KEY_A))
+	assert_eq(session.peer_of(hud.spectate.watched()), 2, "A steps back")
+	hud._input(_key(KEY_RIGHT))
+	assert_eq(session.peer_of(hud.spectate.watched()), 3, "→ steps to the next teammate")
+	hud._input(_key(KEY_LEFT))
+	assert_eq(session.peer_of(hud.spectate.watched()), 2, "← steps back")
+	var stick := InputEventJoypadMotion.new()
+	stick.axis = JOY_AXIS_LEFT_X
+	stick.axis_value = 1.0
+	hud._input(stick)
+	assert_eq(session.peer_of(hud.spectate.watched()), 2, "a stick does not step: it repeats while held")
+	var pad := InputEventJoypadButton.new()
+	pad.button_index = JOY_BUTTON_DPAD_RIGHT
+	pad.pressed = true
+	hud._input(pad)
+	assert_eq(session.peer_of(hud.spectate.watched()), 3, "the D-pad steps too")
+	assert_eq(hud.watching_label.text, "Mirando a: Dayana  [Cruz ←] [Cruz →] Cambiar", "the keys follow the device")
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	wheel.pressed = true
+	hud._input(wheel)
+	assert_eq(session.peer_of(hud.spectate.watched()), 2, "the wheel steps and wraps")
+
+
+func test_back_to_the_own_hud_when_the_party_lands() -> void:
+	var session := _session({2: Vector2(40.0, 0.0)})
+	var own := session.body(1)
+	var hud := _hud(session)
+	IslandArrival.hold(own)
+	await wait_process_frames(2)
+	assert_true(hud.watching_panel.visible, "a waiting rider watches Papo")
+	assert_eq(hud.meters.shown(), session.body(2).meters)
+	IslandArrival.land(own, Vector2(16.0, 16.0), session.terrain)
+	await wait_process_frames(2)
+	assert_false(hud.watching_panel.visible, "the line hides")
+	assert_eq(hud.meters.shown(), own.meters, "the own meters are back")
+	assert_true(hud.strip.visible, "the strip shows again")
+	assert_true(own.camera.enabled)
+
+
+func test_a_solo_hud_never_shows_the_line() -> void:
+	# 1 player, offline.
+	var session := _session()
+	var hud := _hud(session, true)
+	_kill(session, 1)
+	await wait_process_frames(2)
+	assert_false(hud.watching_panel.visible)
+	assert_false(hud.spectate.active())
+	assert_eq(hud.meters.shown(), session.body(1).meters)
+
+
+func test_the_step_keys_bind_no_input_twice() -> void:
+	# inventory-hud "Inputs do not collide": stepping reuses actions a spectator has no other use for.
+	for action: StringName in RunHud.SPECTATE_PREV + RunHud.SPECTATE_NEXT:
+		assert_true(InputMap.has_action(action), action)
+	assert_eq(RunHud.spectate_step(_key(KEY_D)), 1)
+	assert_eq(RunHud.spectate_step(_key(KEY_A)), -1)
+	assert_eq(RunHud.spectate_step(_key(KEY_E)), 0, "interact is not a step")
+	var released := _key(KEY_D)
+	released.pressed = false
+	assert_eq(RunHud.spectate_step(released), 0, "a release is not a step")
+	var echo := _key(KEY_D)
+	echo.echo = true
+	assert_eq(RunHud.spectate_step(echo), 0, "a held key does not repeat")
+
+
+func test_a_living_players_keys_do_not_step() -> void:
+	var session := _session({2: Vector2(40.0, 0.0)})
+	var hud := _hud(session)
+	hud.refresh()
+	hud._input(_key(KEY_D))
+	assert_false(hud.spectate.active())
+	assert_false(hud.watching_panel.visible)
+	assert_true(session.body(1).camera.enabled)

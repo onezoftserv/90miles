@@ -9,7 +9,7 @@ When a co-op player dies today, their camera stays on their own body, which lies
 **What a dead co-op player sees**
 - The view follows a living teammate's body, inside that body's own camera limits: the island, or the crossing's sea while they ride.
 - On death the view goes to the nearest living teammate.
-- Two new input actions, "spectate previous" and "spectate next", step through the living teammates in the teammate list's order and wrap round. The default bindings are A/D, ←/→, the D-pad's ←/→ and the mouse wheel; the owner chose them (Q1, 2026-11-14).
+- A/D, ←/→, the D-pad's ←/→ and the mouse wheel step through the living teammates in the teammate list's order and wrap round; the owner chose these keys (Q1, 2026-11-14). They are the keys of the walk, arrow and slot actions, which do nothing for a dead or waiting player, so no new input action is added and no input is bound twice (inventory-hud "Inputs do not collide").
 
 **The HUD while watching**
 - The bottom band, where the inventory strip sits, reads "Mirando a: Papo" with the keys that switch. The owner chose the wording (Q3).
@@ -44,9 +44,8 @@ None.
 ## Impact
 
 - New `game/scripts/ui/spectate_view.gd` (`SpectateView`): picks whom the local player watches and switches cameras on the bodies. It holds the watched body rather than its peer id, because removal frees bodies and a rejoin changes the peer.
-- `game/scenes/ui/run_hud.gd` and `.tscn`: own a `SpectateView` and update it each frame, re-asserting the camera after `player_rebound`. They also gain a "Watching" label in the bottom band, swap the meters panel's source, hide the strip and the prompt while watching, and handle the two actions.
+- `game/scenes/ui/run_hud.gd` and `.tscn`: own a `SpectateView` and update it each frame, re-asserting the camera after `player_rebound`. They also gain a "Watching" label in the bottom band, swap the meters panel's source, hide the strip and the prompt while watching, and step on the walk, arrow and slot actions.
 - `game/scenes/ui/inventory_strip.gd`: hides while its owner is watching, as it already hides for a waiting rider.
-- `game/project.godot`: the `spectate_prev` and `spectate_next` actions.
 - `game/resources/hud_text.tres` and `game/scripts/ui/hud_text.gd`: the lines `watching`, `watching_dropped` and `watch_keys`.
 - No edits to `coop_session.gd`, `game_shell.gd`, `player.gd` or `net_manager.gd`. No new RPC, synced property or autoload.
 - Tests:

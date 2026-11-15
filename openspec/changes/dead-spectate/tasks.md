@@ -38,29 +38,35 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 2. The HUD while watching (ui-shell "The HUD while watching")
 
-- [ ] 2.1 HUD text, tests first in `test_hud_text.gd` (or the existing HUD text test):
+- [x] 2.1 HUD text, tests first in `test_hud_text.gd` (or the existing HUD text test):
   - `HudText.LINES` gains `watching`, `watching_dropped` and `watch_keys`.
   - `hud_text.tres` holds "Mirando a: %s" / "Watching: %s", "Mirando a: %s (desconectado)" / "Watching: %s (disconnected)" and "[%s] [%s] Cambiar" / "[%s] [%s] Switch" (Q3).
 
   Verify: the test sees each line in both languages.
-- [ ] 2.2 Input actions (Q1). Tests first:
-  - `spectate_prev` has A, ←, joy button 13 and wheel up.
-  - `spectate_next` has D, →, joy button 14 and wheel down.
-  - `InputLabels.label_for` gives "A"/"D" on the keyboard and "Cruz ←"/"Cruz →" on a gamepad.
+  - Done 2026-11-14: `test_the_watching_lines` in `test_hud_text.gd`, seen failing on the missing keys, then passing.
+- [x] 2.2 The step keys (Q1). Tests first:
+  - D, →, the D-pad's → and the wheel down step to the next teammate; A, ←, the D-pad's ← and the wheel up step back.
+  - Stick motion, a release and an echo do not step.
+  - The line names "A"/"D" on the keyboard and "Cruz ←"/"Cruz →" on a gamepad.
+  - `test_input_map_hud.gd` still finds no input bound to two project actions.
 
-  Then add them to `game/project.godot`. Verify: the tests pass and Import is clean.
-- [ ] 2.3 `RunHud`, tests first in `test_spectate_view.gd` with the HUD bound (`solo = false`):
+  Verify: the tests pass and Import is clean.
+  - Done 2026-11-14, changed while building (design D7): the two planned actions `spectate_prev` and `spectate_next` would have put A, D, the D-pad and the wheel on two actions each, which `test_input_map_hud.gd` (inventory-hud "Inputs do not collide") refuses. Stepping now reuses `move_left`/`move_right`, `ui_left`/`ui_right` and `slot_prev`/`slot_next`, with the same keys as the owner chose, and `project.godot` is unchanged. The cases are in `test_spectate_view.gd`.
+- [x] 2.3 `RunHud`, tests first in `test_spectate_view.gd` with the HUD bound (`solo = false`):
   - The `Watching` panel shows "Mirando a: Papo  [A] [D] Cambiar".
   - `hud.meters.shown()` is the watched teammate's meters.
   - The strip and the prompt are hidden.
-  - A pressed `spectate_next` event steps the view.
+  - A pressed step key steps the view.
   - The quick-chat wheel stays.
   - When watching stops, the own meters are back, the strip shows and the panel hides.
   - Solo: no panel ever shows.
   - A dead body's position does not change while A or D steps the view.
 
-  Then build it: add the `Watching` HudPanel to `run_hud.tscn` (bottom band, centred), and the `SpectateView` in `bind` / `_bind_local` / `_on_player_rebound` / `refresh()`. `_input` handles the two actions, and `InventoryStrip.watching` hides the strip. Verify: the tests pass, and `test_run_hud.gd`, `test_inventory_strip*.gd` and `test_interact_prompt*.gd` still pass.
-- [ ] 2.4 The 1-player shell test: in `test_game_shell.gd`, a solo run whose player dies reaches `Flow.SUMMARY` and the HUD never watched. Verify: it passes. Finish the group with Import, Smoke and GUT clean.
+  Then build it: add the `Watching` HudPanel to `run_hud.tscn` (bottom band, centred), and the `SpectateView` in `bind` / `_bind_local` / `_on_player_rebound` / `refresh()`. `_input` steps on the walk, arrow and slot actions, and `InventoryStrip.watching` hides the strip. Verify: the tests pass, and `test_run_hud.gd`, `test_inventory_strip*.gd` and `test_interact_prompt*.gd` still pass.
+  - Done 2026-11-14: 8 HUD cases in `test_spectate_view.gd`, written before the HUD code. They cover the line, the marked disconnected teammate, the step keys including the arrows, the D-pad and the wheel, a stick that does not step, landing, solo, a living player, and no key bound twice. They pass, as do `test_run_hud.gd`, `test_inventory_strip.gd`, `test_interact_prompt.gd`, `test_meters_hud.gd`, `test_hud_screens.gd` and `test_input_map_hud.gd`.
+  - Found while building: `update()` passed a freed own body into a typed parameter, which the host-lost teardown would hit. It now checks `is_instance_valid` first, and `test_a_freed_own_body_watches_nobody` covers it.
+- [x] 2.4 The 1-player shell test: in `test_game_shell.gd`, a solo run whose player dies reaches `Flow.SUMMARY` and the HUD never watched. Verify: it passes. Finish the group with Import, Smoke and GUT clean.
+  - Done 2026-11-14: `test_a_solo_death_goes_to_the_summary_without_watching`. Import 0 error lines, Smoke 10 frames 0 problems, GUT 1697 of 1697.
 
 ## 3. Every peer (ui-shell "Spectating on every peer"), host plus clients
 

@@ -111,6 +111,9 @@ lines = Dictionary[StringName, PackedStringArray]({
 &"missing": PackedStringArray("Falta:", "Needs:"),
 &"needs_tool": PackedStringArray("Con qué %s", "Something to %s"),
 &"percent": PackedStringArray("%d %%", "%d%%"),
+&"watch_keys": PackedStringArray("[%s] [%s] Cambiar", "[%s] [%s] Switch"),
+&"watching": PackedStringArray("Mirando a: %s", "Watching: %s"),
+&"watching_dropped": PackedStringArray("Mirando a: %s (desconectado)", "Watching: %s (disconnected)"),
 &"weight": PackedStringArray("Peso", "Weight"),
 &"weight_readout": PackedStringArray("%s %s/%s", "%s %s/%s")
 })

@@ -33,7 +33,7 @@
 **Non-Goals:**
 - A free ghost camera, haunting, an *ánima* nudge, a morale drain on the living per dead teammate, or showing the living who watches them. These are the Don't Starve Together ideas recorded in `REFERENCE_DST.md` §"Ghost form and haunting"; each would be its own change.
 - Showing the watched teammate's inventory. It is synced, but the strip is an input surface and the dead cannot act.
-- Key remapping in settings. The two actions are ordinary input-map actions, so a later remapping screen picks them up.
+- Key remapping in settings. Stepping rides on the walk, slot and arrow actions (D7), so a later remapping screen that moves those moves stepping too.
 
 ## Decisions
 
@@ -115,14 +115,16 @@ None of the four games has a built-in "follow a living teammate" camera. The pie
 
 ### D7. Input
 
-- Two new actions in `project.godot`, so a later remap screen and `InputLabels` see them:
-  - `spectate_prev`: A, ←, D-pad ← (joy button 13), mouse wheel up.
-  - `spectate_next`: D, →, D-pad → (joy button 14), mouse wheel down.
-- `RunHud._input` handles them while `SpectateView.active()` and `input_open()`, with no echo.
-- A and D are `move_left` and `move_right` too, and the D-pad and the wheel are `slot_prev` and `slot_next`. Each overlap is harmless:
-  - Movement is read by `PlayerInput` for a body that cannot move.
+- **No new action (changed while building, 2026-11-14).** The proposal first planned two new actions, `spectate_prev` and `spectate_next`, bound to the owner's keys. Every one of those keys already belongs to an action, and inventory-hud "Inputs do not collide" (guarded by `test_input_map_hud.gd`) allows no input on two project actions. The owner chose keys, not action names. So stepping reuses the actions that own those keys, all of which do nothing for a dead or waiting player:
+  - Previous: `move_left` (A), `ui_left` (←; the engine's built-in focus actions are exempt from the rule) and `slot_prev` (wheel up, D-pad ←).
+  - Next: `move_right` (D), `ui_right` (→) and `slot_next` (wheel down, D-pad →).
+- `RunHud._input` steps on them while `SpectateView.active()` and `input_open()`, with no echo, before the strip's wheel handling, and marks the event handled.
+- Why the overlap is harmless:
+  - Movement is read by `PlayerInput` for a body that cannot move: dead bodies take the downed step, and waiting riders are not simulated.
   - The strip is hidden while watching (D6), so `strip.accepts_input()` is false and the wheel reaches nothing else.
-- The left stick is not bound: an analogue axis repeats while held, and the D-pad already covers the gamepad.
+  - The quick-chat wheel aims with the mouse position or the right stick (`quick_chat_wheel.gd` `_aim_direction`), never with these keys.
+- Stick motion never steps (`RunHud.spectate_step` ignores `InputEventJoypadMotion`). `move_left` and `ui_left` carry the left stick, and an axis past its deadzone counts as pressed on every motion event, so a held stick would spin through teammates. The D-pad already covers the gamepad.
+- The line's key labels come per device: the walk actions on a keyboard ("A", "D"), the slot actions on a gamepad ("Cruz ←", "Cruz →"). The walk actions would name the stick there.
 
 ### D8. Waiting riders watch too
 
@@ -143,7 +145,7 @@ None of the four games has a built-in "follow a living teammate" camera. The pie
   - the meters swap;
   - the strip hidden;
   - the line's text;
-  - the input actions' events.
+  - the step keys, a stick that does not step, and no key bound twice.
 - **`test_game_shell.gd`: 1 player.** A solo death reaches `Flow.SUMMARY` and never engages watching.
 - **`test_dead_spectate_net.gd`: NetHarness, host plus clients:**
   - a client watches the host;

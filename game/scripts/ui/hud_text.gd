@@ -15,9 +15,11 @@ const REFUSALS: Array[StringName] = [&"empty", &"no_use", &"down", &"at_sea", &"
 ## The fixed lines: a required tool ("%s" is its phrase), the speed-up tool (the same), the
 ## head of a build site's missing inputs, the weight readout's label, a missing input with its
 ## count ("%s x%d"), a build's progress ("%d %%"), what the list says is carried of an input
-## ("%d/%d %s": carried, needed, name), the weight readout ("%s %s/%s": label, carried, limit)
-## and the decimal separator its numbers use.
-const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point", &"close_note"]
+## ("%d/%d %s": carried, needed, name), the weight readout ("%s %s/%s": label, carried, limit),
+## the decimal separator its numbers use, and the spectator's line (ui-shell "The HUD while
+## watching"): whom they watch ("%s" is the name), the same for a disconnected teammate, and the
+## two switch keys ("%s" previous, "%s" next).
+const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point", &"close_note", &"watching", &"watching_dropped", &"watch_keys"]
 
 ## Verb per ItemUseData.UseAction ("Beber").
 @export var use_verbs: Dictionary[ItemUseData.UseAction, PackedStringArray] = {}

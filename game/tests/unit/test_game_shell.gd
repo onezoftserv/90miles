@@ -120,6 +120,20 @@ func test_end_of_a_solo_run() -> void:
 	assert_null(shell.session, "the run is over")
 
 
+func test_a_solo_death_goes_to_the_summary_without_watching() -> void:
+	# ui-shell "Spectating a teammate", 1 player offline: nobody to watch, the summary at once.
+	var shell := _shell()
+	(shell.screen as TitleScreen).solo_requested.emit()
+	var hud := shell.hud
+	var own := shell.session.body(1)
+	hud.refresh()
+	own.meters.dead = true
+	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
+	assert_false(hud.spectate.active(), "a solo death watches nobody")
+	assert_false(hud.watching_panel.visible, "no Mirando a: line")
+	assert_true(own.camera.enabled, "the view stays on the player's own body")
+
+
 func test_a_run_summary_formats_its_length() -> void:
 	assert_eq(SummaryScreen.format_length(185.4), "3:05")
 	assert_eq(SummaryScreen.format_length(3725.0), "62:05")
