@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_npmbr"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_1awy2"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_pchxe"]
+[ext_resource type="Texture2D" uid="uid://ry7xr24qahys" path="res://assets/art/items/canned_food.png" id="4_obtls"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_o1aog"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_0kdrh"]
+[ext_resource type="Script" path="res://scripts/data/data_part.gd" id="7_cn53h"]
+
+[sub_resource type="Resource" id="Resource_cfk5s"]
+script = ExtResource("6_0kdrh")
+kind = 4
+scope = 0
+capability = 2
+consume = true
+
+[sub_resource type="Resource" id="Resource_lg2e4"]
+script = ExtResource("1_npmbr")
+meter = 2
+amount = 30.0
+
+[sub_resource type="Resource" id="Resource_0aptw"]
+script = ExtResource("1_npmbr")
+kind = 4
+meter = 6
+status = 3
+amount = -20.0
+duration_s = 30.0
+chance = 0.2
+
+[sub_resource type="Resource" id="Resource_dsgng"]
+script = ExtResource("5_o1aog")
+time_s = 3.0
+conditions = Array[ExtResource("6_0kdrh")]([SubResource("Resource_cfk5s")])
+effects = Array[ExtResource("1_npmbr")]([SubResource("Resource_lg2e4"), SubResource("Resource_0aptw")])
+
+[resource]
+script = ExtResource("3_pchxe")
+description_es = "Lata de carne rusa de los noventa. La fecha se borró, igualito que la Unión Soviética. Pa' abrirla hace falta un cuchillo; pa' comérsela, fe."
+description_en = "A can of carne rusa from the nineties. The date wore off, just like the Soviet Union. Opening it takes a knife; eating it takes faith."
+sprite = ExtResource("4_obtls")
+category = 1
+tags = Array[int]([0])
+stack_size = 3
+weight = 0.5
+uses = Array[ExtResource("5_o1aog")]([SubResource("Resource_dsgng")])
+id = &"canned_food"
+name_es = "Lata de carne rusa"
+name_en = "Canned meat (carne rusa)"

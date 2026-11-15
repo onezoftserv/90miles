@@ -302,8 +302,10 @@ No existing file under `game/tests` is edited.
       - stderr was empty for every instance in these runs, with one exception below.
     - **One error, attributed:** when a second instance with the same identity joins while the first is still connected (coop-reconnect TAKEOVER), the host logs `Condition "!connected_peers.has(sender)" is true` twice, in `scene_multiplayer.cpp` `poll`. That case reproduced it on its own (2 of 2 lines). It did not appear with the drop-then-rejoin case or with the plain launch-line client alone. The path is `CoopSession._close_peer` → `SceneMultiplayer.disconnect_peer`, which this change does not touch. It was not run at the branch point. No existing test covers it: NetHarness's takeover (`freeze`) leaves an old client that sends nothing more, and here the old client was still sending.
     - **Not done:** anything that needs real windows, mouse and keyboard: typing and clicking on the screens, seeing the host-lost screen and the join screen's connecting mode drawn, and two windowed games side by side.
-- [ ] 7.4 CI is green on Linux with no Steam.
+  - Deferred at the archive (2026-11-14): this hand check stays open in `TASKS.md` §9 under `net-platform-seam`, as an open hand check with only what is left (the windowed steps 1–5 and the launch-line join's connecting mode). The TAKEOVER error above is recorded there too.
+- [x] 7.4 CI is green on Linux with no Steam.
   - Open 2026-11-14: CI runs after the push, which this session does not do.
+  - Done 2026-11-14, ticked at the archive: PR #51's "Godot headless checks" (workflow CI, `ubuntu-24.04`, no Steam step or SDK in `.github/workflows/`) passed on the PR's head ed784cc at 19:37 EST (00:37 UTC on 2026-11-15), run https://github.com/onezoftserv/90miles/actions/runs/43658879115. #51 merged into `main` as 05854af.
 - [x] 7.5 Run the import twice, smoke and GUT one final time. GUT equals the baseline plus the new tests, with 0 failures and 0 skipped scripts.
   - The `test_crossing_art.gd` scroll case flakes at the branch point too (6.4). Until `fix/sea-scroll-flake` merges, a failure in that file alone is rerun on its own and recorded here, and is tracked outside this gate.
   - Done 2026-11-14 at 82bbd0a. No game file changed in group 7.

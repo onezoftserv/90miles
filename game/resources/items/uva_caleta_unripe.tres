@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_vsjwj"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_l0ilx"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_g6plc"]
+[ext_resource type="Texture2D" uid="uid://cw4sjrwov1y5" path="res://assets/art/items/uva_caleta_unripe.png" id="4_mxn36"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_8vpa5"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_fiq6u"]
+
+[sub_resource type="Resource" id="Resource_ngrkl"]
+script = ExtResource("1_vsjwj")
+meter = 2
+amount = 3.0
+
+[sub_resource type="Resource" id="Resource_h45x3"]
+script = ExtResource("1_vsjwj")
+meter = 1
+amount = -5.0
+
+[sub_resource type="Resource" id="Resource_kf4g5"]
+script = ExtResource("5_8vpa5")
+time_s = 1.0
+effects = Array[ExtResource("1_vsjwj")]([SubResource("Resource_ngrkl"), SubResource("Resource_h45x3")])
+
+[resource]
+script = ExtResource("3_g6plc")
+description_es = "Uva caleta verde. Agria, dura y te deja con más sed. Hay que esperar, pero el hambre no espera por na'."
+description_en = "Unripe sea grape. Sour, hard and it leaves you thirstier. You have to wait, but hunger waits for nothing."
+sprite = ExtResource("4_mxn36")
+category = 2
+tags = Array[int]([0, 12])
+stack_size = 5
+weight = 0.3
+uses = Array[ExtResource("5_8vpa5")]([SubResource("Resource_kf4g5")])
+identify_group = 1
+id = &"uva_caleta_unripe"
+name_es = "Uva caleta verde"
+name_en = "Unripe sea grape"

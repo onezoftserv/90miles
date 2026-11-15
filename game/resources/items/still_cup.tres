@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_n85ss"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_n0cft"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_bxu0c"]
+[ext_resource type="Texture2D" uid="uid://cijh4ad0vsxiy" path="res://assets/art/items/still_cup.png" id="4_dll5t"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_42jea"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_u5v5i"]
+
+[sub_resource type="Resource" id="Resource_2guxs"]
+script = ExtResource("1_n85ss")
+meter = 1
+amount = 40.0
+
+[sub_resource type="Resource" id="Resource_gcnjt"]
+script = ExtResource("5_42jea")
+action = 1
+time_s = 1.0
+effects = Array[ExtResource("1_n85ss")]([SubResource("Resource_2guxs")])
+
+[sub_resource type="Resource" id="Resource_svb6p"]
+script = ExtResource("1_n85ss")
+kind = 7
+target = 1
+
+[sub_resource type="Resource" id="Resource_jch6t"]
+script = ExtResource("1_n85ss")
+target = 1
+meter = 1
+amount = 40.0
+
+[sub_resource type="Resource" id="Resource_xjyin"]
+script = ExtResource("5_42jea")
+action = 1
+time_s = 1.0
+can_target_others = true
+effects = Array[ExtResource("1_n85ss")]([SubResource("Resource_svb6p"), SubResource("Resource_jch6t")])
+
+[resource]
+script = ExtResource("3_bxu0c")
+description_es = "Agua sacada del sol con un nailon y un pomo. Sabe a plástico, pero 'tá dulce y no te mata."
+description_en = "Water squeezed out of the sun with a sheet of plastic and a pomo. Tastes like plastic, but it's sweet and it won't kill you."
+sprite = ExtResource("4_dll5t")
+category = 0
+tags = Array[int]([1])
+stack_size = 4
+weight = 0.5
+durability = 1
+uses = Array[ExtResource("5_42jea")]([SubResource("Resource_gcnjt"), SubResource("Resource_xjyin")])
+id = &"still_cup"
+name_es = "Vaso del destilador"
+name_en = "Still cup"

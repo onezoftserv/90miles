@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_neuqm"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_ft46e"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_tt1ca"]
+[ext_resource type="Texture2D" uid="uid://c5dbpnrp4vy8p" path="res://assets/art/items/conch.png" id="4_43qbb"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_vigf2"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_ly401"]
+
+[sub_resource type="Resource" id="Resource_et0vj"]
+script = ExtResource("1_neuqm")
+meter = 2
+amount = 25.0
+
+[sub_resource type="Resource" id="Resource_a6l3u"]
+script = ExtResource("5_vigf2")
+time_s = 2.0
+effects = Array[ExtResource("1_neuqm")]([SubResource("Resource_et0vj")])
+
+[resource]
+script = ExtResource("3_tt1ca")
+description_es = "Cobo sacado del bajo. Cuesta trabajo sacarlo de la concha, pero después no deja na' en el plato."
+description_en = "Conch from the flats. It's hard work getting it out of the shell, but afterwards it leaves nothing on the plate."
+sprite = ExtResource("4_43qbb")
+category = 1
+tags = Array[int]([0, 14])
+stack_size = 2
+uses = Array[ExtResource("5_vigf2")]([SubResource("Resource_a6l3u")])
+id = &"conch"
+name_es = "Cobo"
+name_en = "Conch"

@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_7etve"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_x8y2o"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_cosgn"]
+[ext_resource type="Texture2D" uid="uid://dap0hlnv184jd" path="res://assets/art/items/jaguey.png" id="4_j10ry"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_esbi3"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_osuum"]
+
+[sub_resource type="Resource" id="Resource_4fv0b"]
+script = ExtResource("1_7etve")
+meter = 2
+amount = 15.0
+
+[sub_resource type="Resource" id="Resource_hujoc"]
+script = ExtResource("5_esbi3")
+time_s = 1.0
+effects = Array[ExtResource("1_7etve")]([SubResource("Resource_4fv0b")])
+
+[resource]
+script = ExtResource("3_cosgn")
+description_es = "Higo de jagüey. Pegajoso y sin gracia, pero no te hace na'. El jagüey se traga a los otros árboles; tú te tragas sus higos."
+description_en = "A jagüey fig. Sticky and dull, but it does you no harm. The jagüey swallows the other trees; you swallow its figs."
+sprite = ExtResource("4_j10ry")
+category = 2
+tags = Array[int]([0, 12])
+stack_size = 5
+weight = 0.3
+uses = Array[ExtResource("5_esbi3")]([SubResource("Resource_hujoc")])
+identify_group = 1
+id = &"jaguey"
+name_es = "Higo de jagüey"
+name_en = "Jagüey fig"

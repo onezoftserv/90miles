@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_24pw2"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_afhnl"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_m86a0"]
+[ext_resource type="Texture2D" uid="uid://lo2xujw1lime" path="res://assets/art/items/hutia_cooked.png" id="4_ak774"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_0i0vj"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_6d254"]
+
+[sub_resource type="Resource" id="Resource_t7ifa"]
+script = ExtResource("1_24pw2")
+meter = 2
+amount = 40.0
+
+[sub_resource type="Resource" id="Resource_0rixg"]
+script = ExtResource("5_0i0vj")
+time_s = 2.0
+effects = Array[ExtResource("1_24pw2")]([SubResource("Resource_t7ifa")])
+
+[resource]
+script = ExtResource("3_m86a0")
+description_es = "Jutía asada. Allá en el monte el guajiro la comía cuando no había otra cosa; aquí tampoco hay otra cosa."
+description_en = "Roast hutía. Back in the monte the guajiro ate it when there was nothing else; out here there's nothing else either."
+sprite = ExtResource("4_ak774")
+category = 1
+tags = Array[int]([0, 14])
+stack_size = 2
+uses = Array[ExtResource("5_0i0vj")]([SubResource("Resource_0rixg")])
+id = &"hutia_cooked"
+name_es = "Jutía asada"
+name_en = "Cooked hutía"
