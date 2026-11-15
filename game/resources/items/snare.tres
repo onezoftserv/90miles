@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://kyc1tb71qwlb" path="res://assets/art/items/snare.png" id="icon_snare"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_snare")
+description_es = "Un lazo de soga amarrado a una estaca. Se deja de noche y se reza pa' que amanezca algo dentro."
+description_en = "A rope noose tied to a stake. You leave it overnight and pray there's something in it by morning."
+category = 3
+tags = Array[int]([2])
+weight = 0.3
+durability = 10
+capabilities = Array[int]([9])
+trap_catches = Array[StringName]([&"land_crab"])
+id = &"snare"
+name_es = "Lazo"
+name_en = "Snare"

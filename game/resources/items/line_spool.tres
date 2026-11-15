@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://bi68es4o3wc5i" path="res://assets/art/items/line_spool.png" id="icon_line_spool"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_line_spool")
+description_es = "Un rollo de nylon de pescar. Pa' cordeles, lazos y pa' coser lo que se rompa."
+description_en = "A spool of fishing nylon. For lines, snares and stitching whatever tears."
+category = 4
+tags = Array[int]([4])
+stack_size = 5
+weight = 0.1
+id = &"line_spool"
+name_es = "Rollo de nylon"
+name_en = "Fishing line (spool)"

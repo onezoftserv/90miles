@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://dhhfi3sb1eysa" path="res://assets/art/items/hardwood.png" id="icon_hardwood"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_hardwood")
+description_es = "Júcaro del manglar, duro como un tubo. Pa'l mástil, los remos y una balsa que aguante."
+description_en = "Júcaro from the mangrove, hard as a pipe. For the mast, the oars and a raft that holds."
+category = 4
+tags = Array[int]([4])
+stack_size = 5
+weight = 3.0
+id = &"hardwood"
+name_es = "Madera dura"
+name_en = "Hardwood"

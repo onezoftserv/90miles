@@ -160,20 +160,52 @@ func test_a_new_run_never_starts_paused() -> void:
 	assert_eq(shell.flow, GameShell.Flow.RUN)
 
 
-func test_a_co_op_summary_offers_only_home() -> void:
+# endings-progression "Rematch from a co-op summary": exactly 1 player hosting, nobody joined.
+func test_a_host_alone_gets_otra_vez_and_a_lobby_of_one() -> void:
 	var shell := _shell()
 	shell.port = 0
 	shell.start_host()
+	var request: NetRequest = shell._request
+	var peer: MultiplayerPeer = shell.multiplayer.multiplayer_peer
 	shell.session.begin_run()
 	assert_eq(shell.flow, GameShell.Flow.RUN)
+	var old_session: CoopSession = shell.session
 	_kill(shell.session.body(1))
 	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
 	var summary := shell.screen as SummaryScreen
-	assert_false(summary.restart_button.visible)
-	assert_true(summary.home_button.has_focus())
+	assert_true(summary.restart_button.visible, "the host's summary offers Otra vez")
+	assert_eq(summary.restart_button.text, "Otra vez")
+	assert_true(summary.restart_button.has_focus())
+	assert_true(summary.home_button.visible)
+	assert_false(summary.note.visible, "the host waits for nobody")
+	summary.restart_button.pressed.emit()
+	assert_eq(shell.flow, GameShell.Flow.LOBBY)
+	var lobby := shell.screen as LobbyScreen
+	assert_eq(lobby.rows(), ["Balsero (anfitrión)"] as Array[String], "the host alone")
+	assert_true(lobby.start_button.visible, "with Empezar viaje")
+	assert_same(shell.multiplayer.multiplayer_peer, peer, "on the port it already opened")
+	assert_same(shell._request, request, "NetManager was asked for nothing")
+	assert_false(is_instance_valid(old_session), "the old run is gone")
+	assert_eq(shell.session.world_state["run_seed"], 12, "a new run seed")
+	lobby.start_requested.emit()
+	assert_eq(shell.flow, GameShell.Flow.RUN)
+	assert_eq(shell.session.peer_ids(), [1] as Array[int])
 	# End the run here: the session must go before the peer closes.
-	summary.home_button.pressed.emit()
+	shell.back_to_title()
 	assert_eq(shell.flow, GameShell.Flow.TITLE)
+
+
+# Exactly 1 player, offline: solo's "Otra vez" is unchanged and calls nobody.
+func test_solo_again_stays_offline_and_calls_nobody() -> void:
+	var shell := _solo()
+	_kill(shell.session.body(1))
+	var summary := shell.screen as SummaryScreen
+	assert_false(summary.note.visible, "no waiting note in solo")
+	summary.restart_button.pressed.emit()
+	assert_eq(shell.flow, GameShell.Flow.RUN, "a solo run at once")
+	assert_null(shell.screen, "with no lobby")
+	assert_true(shell.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "still offline")
+	assert_false(shell.rematch.call_party(), "offline, a rematch call sends nothing")
 
 
 func test_a_client_keeps_its_summary_when_the_host_leaves() -> void:

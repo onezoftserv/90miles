@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="3_effect"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="4_use"]
+[ext_resource type="Texture2D" uid="uid://djmc06rj1w8mn" path="res://assets/art/items/conch_horn.png" id="icon_conch_horn"]
+
+[sub_resource type="Resource" id="Resource_noise"]
+script = ExtResource("3_effect")
+kind = 39
+radius_tiles = 15.0
+
+[sub_resource type="Resource" id="Resource_blow"]
+script = ExtResource("4_use")
+action = 5
+time_s = 1.0
+spends_use = false
+effects = Array[ExtResource("3_effect")]([SubResource("Resource_noise")])
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_conch_horn")
+description_es = "La concha del cobo con la punta cortá: un guamo. Así llamaban los guajiros a la gente desde el monte. Lo oye to' el mundo, amigo o no."
+description_en = "The conch's shell with its tip cut off: a guamo. That's how the guajiros called people in from the monte. Everyone hears it, friend or not."
+category = 3
+tags = Array[int]([2])
+weight = 0.5
+uses = Array[ExtResource("4_use")]([SubResource("Resource_blow")])
+id = &"conch_horn"
+name_es = "Guamo"
+name_en = "Guamo (conch horn)"

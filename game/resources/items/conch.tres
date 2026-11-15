@@ -19,12 +19,14 @@ effects = Array[ExtResource("1_neuqm")]([SubResource("Resource_et0vj")])
 
 [resource]
 script = ExtResource("3_tt1ca")
-description_es = "Cobo sacado del bajo. Cuesta trabajo sacarlo de la concha, pero después no deja na' en el plato."
-description_en = "Conch from the flats. It's hard work getting it out of the shell, but afterwards it leaves nothing on the plate."
+description_es = "Cobo sacado del bajo. Cuesta trabajo sacarlo de la concha, pero la concha te queda pa' hacer un guamo."
+description_en = "Conch from the flats. It's hard work getting it out of the shell, but the shell is yours to make a guamo."
 sprite = ExtResource("4_43qbb")
 category = 1
 tags = Array[int]([0, 14])
 stack_size = 2
+durability = 1
+remainder_item_id = &"conch_horn"
 uses = Array[ExtResource("5_vigf2")]([SubResource("Resource_a6l3u")])
 id = &"conch"
 name_es = "Cobo"

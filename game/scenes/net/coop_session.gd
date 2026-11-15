@@ -143,6 +143,10 @@ var locale: String = DEFAULT_LOCALE
 ## The world event bus (guardacostas-stealth): a child node, added in _ready; acts on the host only.
 var events: WorldEvents = null
 var run_record: RunRecord = RunRecord.new()  # Host: this run's flags, creature counts and effect limits (never sent).
+## Host, in a rematch (art-pass "Look slots in a rematch"): the look slot each peer kept from the
+## run that ended, by peer id (nobody reconnects, so the ids stay). The shell sets it before
+## start() from the old session's look_slots(); empty for any other run.
+var carried_looks: Dictionary[int, int] = {}
 
 var _bodies: Dictionary[int, PlayerBody] = {}
 ## Host: each peer's rate limits.
@@ -153,6 +157,8 @@ var _dropped: Dictionary[int, float] = {}
 var _awaiting: Dictionary[int, float] = {}
 ## Host: which player id belongs to which peer this run.
 var _identities: IdentityRegistry = IdentityRegistry.new()
+## Host: new peers whose takeover waits for the end of the network poll (takeover-after-poll).
+var _taking_over: Dictionary[int, bool] = {}
 ## The peer each body first spawned under, by its current peer (they differ after a rebind).
 var _spawn_peer: Dictionary[int, int] = {}
 ## Names of the players removed after their 90 s, in removal order (on every peer).
@@ -257,14 +263,32 @@ func request_join(player_name: String, player_id: String, player_secret: String)
 	if not multiplayer.is_server():
 		return
 	var sender := multiplayer.get_remote_sender_id()
-	if sender == HOST_ID or roster.has(sender) or not multiplayer.get_peers().has(sender):
+	if sender == HOST_ID or roster.has(sender) or _taking_over.has(sender) or not multiplayer.get_peers().has(sender):
 		return
 	_awaiting.erase(sender)
 	var outcome := _identities.claim(player_id, player_secret, sender, _is_dropped_peer)
 	if outcome.kind == IdentityRegistry.Claim.TAKEOVER:
-		# The old connection is dead but not timed out yet: close it and treat it as a drop.
-		_close_peer(outcome.old_peer)
-		_on_peer_disconnected(outcome.old_peer)
+		# This runs inside the engine's network poll, which may still hold packets from the old
+		# connection after this request. Closing it now makes the engine log each of them, so the
+		# takeover waits until the poll is done (the old copy plays its body until then).
+		_taking_over[sender] = true
+		_take_over.call_deferred(sender, player_name, outcome)
+		return
+	_answer_join(sender, player_name, outcome)
+
+
+# Host, after the poll that brought `sender`'s join request: the old connection is dead or a
+# second copy, not timed out yet. Close it first, treat it as a drop, then answer `sender`.
+func _take_over(sender: int, player_name: String, outcome: IdentityRegistry.Outcome) -> void:
+	_taking_over.erase(sender)
+	_close_peer(outcome.old_peer)
+	_on_peer_disconnected(outcome.old_peer)
+	_answer_join(sender, player_name, outcome)
+
+
+# Host: the rest of a join request, once any takeover is done: the body back or a new player,
+# then the reply.
+func _answer_join(sender: int, player_name: String, outcome: IdentityRegistry.Outcome) -> void:
 	var takes_back := outcome.kind == IdentityRegistry.Claim.RECLAIM or outcome.kind == IdentityRegistry.Claim.TAKEOVER
 	var reclaimed := takes_back and _started and phase == Phase.RUN and _reclaim(outcome.old_peer, sender)
 	if not reclaimed:
@@ -1157,16 +1181,49 @@ func _add_player(peer_id: int) -> void:
 		spot = spawn_points[_joined % spawn_points.size()]
 	_joined += 1
 	_limits[peer_id] = PeerLimits.new()
-	player_spawner.spawn({"peer": peer_id, "position": spot, "look": _free_look_slot()})
+	player_spawner.spawn({"peer": peer_id, "position": spot, "look": _look_slot_for(peer_id)})
 
 
-# art-pass "Player look slots" (design.md D5): the lowest slot no body holds; with every slot held
-# (four players, one of them dropped and waiting), the lowest slot a dropped body holds, shared until
-# that body is removed. Removing a body frees its slot.
+## Host: the look slot of the host and of every connected player with a body, by peer id: what a
+## rematch keeps (art-pass "Look slots in a rematch"). A dropped player is not connected and keeps
+## nothing. Empty on a client.
+func look_slots() -> Dictionary[int, int]:
+	var slots: Dictionary[int, int] = {}
+	if not multiplayer.is_server():
+		return slots
+	for peer_id: int in _bodies:
+		if is_instance_valid(_bodies[peer_id]) and _is_connected_peer(peer_id) and not _dropped.has(peer_id):
+			slots[peer_id] = _bodies[peer_id].look_slot
+	return slots
+
+
+# art-pass "Look slots in a rematch": the slot `peer_id` kept from the run that ended, unless a body
+# holds it; otherwise the lowest free slot.
+func _look_slot_for(peer_id: int) -> int:
+	var kept: int = carried_looks.get(peer_id, -1)
+	if kept >= 0 and kept < LOOK_SLOTS:
+		for other: int in _bodies:
+			if _bodies[other].look_slot == kept:
+				return _free_look_slot()
+		return kept
+	return _free_look_slot()
+
+
+# art-pass "Player look slots" (design.md D5): the lowest slot no body holds, skipping slots kept in
+# a rematch for connected peers not spawned yet; with every slot held (four players, one of them
+# dropped and waiting), the lowest slot a dropped body holds, shared until that body is removed.
+# Removing a body frees its slot.
 func _free_look_slot() -> int:
 	var held: Dictionary[int, bool] = {}
 	for peer_id: int in _bodies:
 		held[_bodies[peer_id].look_slot] = true
+	var kept: Dictionary[int, bool] = {}
+	for peer_id: int in carried_looks:
+		if not _bodies.has(peer_id) and _is_connected_peer(peer_id):
+			kept[carried_looks[peer_id]] = true
+	for slot: int in LOOK_SLOTS:
+		if not held.has(slot) and not kept.has(slot):
+			return slot
 	for slot: int in LOOK_SLOTS:
 		if not held.has(slot):
 			return slot
@@ -1175,6 +1232,11 @@ func _free_look_slot() -> int:
 			if _bodies.has(peer_id) and _bodies[peer_id].look_slot == slot:
 				return slot
 	return 0
+
+
+# This peer itself, or a peer with an open connection to it.
+func _is_connected_peer(peer_id: int) -> bool:
+	return peer_id == multiplayer.get_unique_id() or multiplayer.get_peers().has(peer_id)
 
 
 # Runs on every peer: on the host through spawn(), on clients when the host's spawn arrives.

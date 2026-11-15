@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://b22j260tmh4vi" path="res://assets/art/items/sandals.png" id="icon_sandals"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_sandals")
+description_es = "Chancletas hechas de goma de carro y un poco de soga. Ni el erizo, ni la raya, ni las hormigas: con estas no pasa na'."
+description_en = "Chancletas made from a car tire and a bit of rope. Not the urchin, not the stingray, not the ants: with these, nothing gets through."
+category = 5
+tags = Array[int]([5])
+weight = 0.5
+equip_slot = 6
+id = &"sandals"
+name_es = "Chancletas de goma"
+name_en = "Tire sandals"

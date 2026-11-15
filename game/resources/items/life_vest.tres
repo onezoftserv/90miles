@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_modifier"]
+[ext_resource type="Texture2D" uid="uid://jarcdgg4atkv" path="res://assets/art/items/life_vest.png" id="icon_life_vest"]
+
+[sub_resource type="Resource" id="Resource_mod0"]
+script = ExtResource("2_modifier")
+stat = 2
+value = 0.8
+context = 2
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_life_vest")
+description_es = "Chaleco salvavidas naranja, desteñío del sol. Aunque no te quede energía te deja flotando; pa' nadar rápido no sirve."
+description_en = "An orange life vest, faded by the sun. Even with no energy left it keeps you afloat; for swimming fast it's no good."
+category = 5
+tags = Array[int]([5])
+weight = 1.5
+equip_slot = 4
+capabilities = Array[int]([26])
+modifiers = Array[ExtResource("2_modifier")]([SubResource("Resource_mod0")])
+id = &"life_vest"
+name_es = "Chaleco salvavidas"
+name_en = "Life vest"

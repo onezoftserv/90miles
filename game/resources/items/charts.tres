@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://c8v118fp3wsbe" path="res://assets/art/items/charts.png" id="icon_charts"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_charts")
+description_es = "Cartas náuticas con la corriente del Golfo marcada en azul y los cayos de la zona. Alguien escribió al margen: 'pa'l Norte, derecho'."
+description_en = "Nautical charts with the Gulf Stream marked in blue and the cays around. Someone wrote in the margin: 'pa'l Norte, straight on'."
+category = 3
+tags = Array[int]([2])
+weight = 0.1
+capabilities = Array[int]([15, 16])
+id = &"charts"
+name_es = "Cartas náuticas"
+name_en = "Charts"

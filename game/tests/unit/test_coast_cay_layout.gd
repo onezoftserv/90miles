@@ -78,7 +78,7 @@ func test_the_coast_cay_loads() -> void:
 	var items: Dictionary = _by_item()
 	var expected: Dictionary = {
 		&"nails": 4, &"mirror": 1, &"aloe": 4, &"rope": 4, &"lighter": 1,
-		&"inner_tube": 2, &"plastic_jug": 2, &"driftwood": 8,
+		&"inner_tube": 2, &"plastic_jug": 2, &"driftwood": 8, &"dry_grass": 2,
 	}
 	assert_eq(items, expected)
 	for pickup: Dictionary in built.pickups:
@@ -124,6 +124,8 @@ func test_everything_is_in_reach_of_a_lone_arrival() -> void:
 	var goals: Array[Vector2i] = [built.raft_site]
 	goals.append_array(built.palms)
 	goals.append_array(built.drink_spots)
+	assert_ne(built.workbench, Vector2i(-1, -1), "the coast cay has a workbench (coast-cay-bench)")
+	goals.append(built.workbench)
 	for entry: Dictionary in built.signs:
 		goals.append(entry["cell"])
 	for pickup: Dictionary in built.pickups:

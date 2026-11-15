@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://bpv2o41evukdk" path="res://assets/art/items/compass.png" id="icon_compass"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_compass")
+description_es = "Una brújula de verdad, de las que apuntan pa'l Norte. En el agua eso vale más que el oro."
+description_en = "A real compass, the kind that points to el Norte. Out on the water that's worth more than gold."
+category = 3
+tags = Array[int]([2])
+weight = 0.2
+capabilities = Array[int]([14])
+id = &"compass"
+name_es = "Brújula"
+name_en = "Compass"

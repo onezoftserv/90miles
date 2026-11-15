@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://doh7i0wyt3meq" path="res://assets/art/items/fishing_line.png" id="icon_fishing_line"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_fishing_line")
+description_es = "Nylon, un anzuelo y una lata vacía pa' enrollarlo. Así pescaba el abuelo desde el muro del Malecón."
+description_en = "Nylon, a hook and an empty can to wind it on. That's how grandpa fished from the Malecón wall."
+category = 3
+tags = Array[int]([2])
+weight = 0.2
+durability = 25
+capabilities = Array[int]([7])
+id = &"fishing_line"
+name_es = "Nylon y anzuelo"
+name_en = "Fishing line and hook"

@@ -68,6 +68,25 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("7_marks")
 
+[node name="WatchingPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 334.0
+offset_right = 120.0
+offset_bottom = 350.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_type_variation = &"HudPanel"
+
+[node name="Watching" type="Label" parent="WatchingPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
 [node name="Strip" parent="." instance=ExtResource("4_strip")]
 unique_name_in_owner = true
 
