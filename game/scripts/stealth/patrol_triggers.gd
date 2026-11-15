@@ -44,6 +44,21 @@ static func build(terrain: TerrainQuery, size: Vector2i, patrol: PatrolData) -> 
 	return triggers
 
 
+## A copy that shares this island's sea and distances (read-only, measured once) and has its own
+## once-per-lap fire memory: one per boat.
+func fresh() -> PatrolTriggers:
+	var copy := PatrolTriggers.new()
+	copy.smoke_night_tiles = smoke_night_tiles
+	copy.smoke_day_tiles = smoke_day_tiles
+	copy.noise_min_radius_tiles = noise_min_radius_tiles
+	copy.water_radius_tiles = water_radius_tiles
+	copy._terrain = _terrain
+	copy._size = _size
+	copy._sea = _sea
+	copy.sea_distance = sea_distance
+	return copy
+
+
 # --- the sea ---------------------------------------------------------------------------------
 
 ## True for sea: deep or shallow water joined to the map edge. Brackish water (the coast cay's

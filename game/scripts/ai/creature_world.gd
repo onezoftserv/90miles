@@ -23,6 +23,12 @@ var record: RunRecord = RunRecord.new()
 ## The session's world event bus (noise and smoke), or null in a bare rig. Group 7's patrol brain
 ## listens to it; a noise made through it is scaled by `noise_multiplier_at`.
 var events: WorldEvents = null
+## A test's weather: when set, `weather()` answers it instead of the sky's.
+var weather_override: WeatherData = null
+
+# The island's patrol loop and the rules' read-only sea distances, built once for every boat.
+var _patrol_loops: Dictionary[String, PatrolLoop] = {}
+var _patrol_rules: PatrolTriggers = null
 
 
 ## A world on `on`'s sea for the creatures that ride along with it, writing its session's record.
@@ -38,6 +44,29 @@ static func for_crossing(on: Crossing) -> CreatureWorld:
 		made.events = session.events if is_instance_valid(session.events) else null
 	made.rng.seed = hash([made.run_seed(), on.serial])
 	return made
+
+
+## The weather now (the sky's current weather; a test may override it). The patrol boat reads
+## `patrols_in_port` and `disabled_senses` from it.
+func weather() -> WeatherData:
+	if weather_override != null:
+		return weather_override
+	return WeatherManager.sky.weather.current
+
+
+## The loop `patrol`'s boats run on this world's terrain, built once and shared (pure data).
+func patrol_loop(patrol: PatrolData) -> PatrolLoop:
+	var key: String = "%f|%f" % [patrol.route_lap_s, patrol.route_offshore_tiles]
+	if not _patrol_loops.has(key):
+		_patrol_loops[key] = PatrolLoop.build(terrain, nav.size, patrol.route_lap_s, patrol.route_offshore_tiles)
+	return _patrol_loops[key]
+
+
+## One boat's trigger rules: the island's sea distances (measured once) with a memory of its own.
+func patrol_triggers(patrol: PatrolData) -> PatrolTriggers:
+	if _patrol_rules == null:
+		_patrol_rules = PatrolTriggers.build(terrain, nav.size, patrol)
+	return _patrol_rules.fresh()
 
 
 ## How much a noise made in `cell` is amplified: a place's PoiData.noise_multiplier (a cave echoes
@@ -62,6 +91,16 @@ func players() -> Array[PlayerBody]:
 	for node: Node in _tree().get_nodes_in_group(PlayerBody.GROUP):
 		var body := node as PlayerBody
 		if body != null and CoopSession.is_alive(body):
+			found.append(body)
+	return found
+
+
+## Every player body on the island, dead ones too (PatrolWatch clears a dead player's meter).
+func all_players() -> Array[PlayerBody]:
+	var found: Array[PlayerBody] = []
+	for node: Node in _tree().get_nodes_in_group(PlayerBody.GROUP):
+		var body := node as PlayerBody
+		if body != null:
 			found.append(body)
 	return found
 

@@ -19,10 +19,14 @@ var layout: IslandLayoutData
 var built: IslandLayout
 var nav: CreatureNav
 var world: CreatureWorld = CreatureWorld.new()
+## The spot meters' one stepper (guardacostas-stealth decision 5): the host steps it each physics
+## tick, after the boats have moved. Patrol boats register here when they spawn.
+var watch: PatrolWatch = PatrolWatch.new()
 
 var _catalog: ContentCatalog
 var _live: Dictionary[String, Array] = {}
 var _fire_seen: bool = false
+var _patrol_stream: RandomNumberGenerator = null
 
 
 ## Reads the island. Nothing spawns until `spawn_permanent` or `start`.
@@ -38,6 +42,7 @@ func setup(for_session: CoopSession, layout_data: IslandLayoutData, catalog: Con
 	world.pickups = session.pickups
 	world.record = session.run_record
 	world.events = session.events
+	watch.world = world
 	if session.events != null:
 		session.events.world = world
 	world.rng.seed = WORLD_SEED
@@ -46,6 +51,8 @@ func setup(for_session: CoopSession, layout_data: IslandLayoutData, catalog: Con
 ## Host: spawns the creatures that need no phase (the offshore shark).
 func spawn_permanent() -> void:
 	if session.multiplayer.is_server():
+		if auto_party:
+			party_size = session.island_difficulty().players
 		_spawn_rules(null)
 
 
@@ -68,9 +75,10 @@ func _exit_tree() -> void:
 		WeatherManager.phase_changed.disconnect(apply_phase)
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if session != null and session.multiplayer.is_server():
 		check_fires()
+		watch.step(delta)
 
 
 ## The island's living creatures of `id` (all of them when empty). A passing creature (the
@@ -127,7 +135,10 @@ func _spawn_rules(phase: Variant) -> void:
 
 func _spawn_rule(data: CreatureData, rule: CreatureSpawnRuleData) -> Array:
 	var spawned: Array = []
-	var each: int = _count(data, rule)
+	# A patrol's counts and spots come from its own stream (run seed and island), not the constant
+	# one every other creature uses, so the coast cay's second boat varies by run.
+	var dice: RandomNumberGenerator = _patrol_dice() if data.creature_tags.has(DataEnums.CreatureTag.PATROL) else world.rng
+	var each: int = _count(data, rule, dice)
 	var spots: Array[Vector2] = []
 	if rule.anchor == CreatureSpawnRuleData.Anchor.NEST_PALM:
 		for palm: int in layout.nest_palms:
@@ -137,21 +148,30 @@ func _spawn_rule(data: CreatureData, rule: CreatureSpawnRuleData) -> Array:
 		for group: PackedVector2Array in nav.beach_groups():
 			spots.append_array(_beach_spots(group, each))
 	else:
-		spots.append_array(_offshore_spots(data, rule, each))
-	for spot: Vector2 in spots:
+		spots.append_array(_offshore_spots(data, rule, each, dice))
+	for index: int in spots.size():
+		var spot: Vector2 = spots[index]
 		var creature := session.spawn_creature(data, spot)
 		if creature == null:
 			continue
 		creature.world = world
 		creature.nest = spot
 		spawned.append(creature)
+		var route := creature.brain as PatrolRoute
+		if route != null:
+			# Evenly spread loops: boat `index` of the rule's boats; placed on the loop at once.
+			route.set_member(creature, index, spots.size())
+			watch.boats.append(creature)
+			creature.advance(0.0)
 	return spawned
 
 
 # Per anchor, beach or island: the rolled count, scaled by the party (not for anchored members),
 # halved while a fire burns for creatures that flee fire.
-func _count(data: CreatureData, rule: CreatureSpawnRuleData) -> int:
-	var count: int = world.rng.randi_range(rule.count.x, rule.count.y)
+func _count(data: CreatureData, rule: CreatureSpawnRuleData, dice: RandomNumberGenerator) -> int:
+	var count: int = dice.randi_range(rule.count.x, rule.count.y)
+	if data.party_extra_count_every_n_players > 0:
+		count += floori(float(maxi(party_size, 1)) / data.party_extra_count_every_n_players)
 	if rule.anchor == CreatureSpawnRuleData.Anchor.NONE:
 		count = floori(count * pow(data.party_rate_mult_per_extra_player, maxi(party_size, 1) - 1))
 	if _is_fire_shy(data) and not world.lit_fires().is_empty():
@@ -171,7 +191,7 @@ func _beach_spots(group: PackedVector2Array, count: int) -> Array[Vector2]:
 	return picked
 
 
-func _offshore_spots(data: CreatureData, rule: CreatureSpawnRuleData, count: int) -> Array[Vector2]:
+func _offshore_spots(data: CreatureData, rule: CreatureSpawnRuleData, count: int, dice: RandomNumberGenerator) -> Array[Vector2]:
 	var margin: int = maxi(rule.min_shore_distance_tiles, data.keep_off_shore_tiles)
 	var cells: Array[Vector2i] = []
 	for cell: Vector2i in built.terrain.cells:
@@ -180,8 +200,19 @@ func _offshore_spots(data: CreatureData, rule: CreatureSpawnRuleData, count: int
 			cells.append(cell)
 	var picked: Array[Vector2] = []
 	for i: int in mini(count, cells.size()):
-		picked.append(CreatureNav.center_of(cells.pop_at(world.rng.randi_range(0, cells.size() - 1))))
+		picked.append(CreatureNav.center_of(cells.pop_at(dice.randi_range(0, cells.size() - 1))))
 	return picked
+
+
+# The patrol boats' dice: seeded from the run seed and the island id, so one run always gets the same
+# boats on an island and different runs differ. Host only, so no peer needs to agree.
+func _patrol_dice() -> RandomNumberGenerator:
+	if _patrol_stream == null:
+		_patrol_stream = RandomNumberGenerator.new()
+		var run_seed: Variant = session.world_state.get("run_seed", 0)
+		var text: String = "%d|%s" % [run_seed if run_seed is int else 0, layout.id]
+		_patrol_stream.seed = text.sha256_text().substr(0, 15).hex_to_int()
+	return _patrol_stream
 
 
 # The rule fits this island (its layout's chain family) and, for a phased rule, the phase.

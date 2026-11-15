@@ -142,20 +142,20 @@ How the tests are written:
 
 ## 7. The brain, the alert and spawning
 
-- [ ] 7.1 Write `game/tests/unit/test_patrol_route.gd` on the brain with a test world. Verify it fails. It checks the states in order (AWAY, HORIZON, LAP and the two alert states, with the state names) and the spec's "Alert" scenarios:
+- [x] 7.1 Write `game/tests/unit/test_patrol_route.gd` on the brain with a test world. Verify it fails. It checks the states in order (AWAY, HORIZON, LAP and the two alert states, with the state names) and the spec's "Alert" scenarios: Done: `test_patrol_route.gd`, 22 tests on a small island (states, lock and search, re-lock, the lap that waits 205 s, day smoke, noise, water, fog, squall, the meter once across boats). Seen failing first (the brain did not exist).
   - **Lock and search:** a locked player keeps the beam on them while visible. Hiding or moving more than 10 tiles away gives a 20 s search 30° either side of the last known position, then LAP. A spot during the search re-locks and restarts the 20 s.
   - **The lap waits:** an alert 30 s into the lap, lasting 25 s, gives a 205 s loop.
   - **Smoke by day:** the boat stops for 20 s with no beam.
   - **The report:** `patrol_alerted` is emitted once per alert, with the cause and position.
   - **The lines:** `alert_serial` steps up at the start and at the give-up.
   - **A squall:** it ends any alert, sends the boat AWAY with no light, and the next HORIZON comes only after the squall ends.
-- [ ] 7.2 Extend `test_creature_spawner.gd`. Verify it fails. It checks:
+- [x] 7.2 Extend `test_creature_spawner.gd`. Verify it fails. It checks: Done: 6 new tests in `test_creature_spawner.gd` (1/2/2/3 boats by party, the loop placement, the seeded coast roll, four boats at clocks 0/45/90/135, shark, crab and gull counts unchanged).
   - The sandbar gets one patrol for one player, and two for two or three players.
   - The coast cay's second boat comes from a roll seeded by the run seed and the island id: different run seeds give both outcomes, and one run seed always gives the same one.
   - With four players and a second boat, there are four boats 45 s apart.
   - The secret cay gets no patrol.
   - The reef shark, crab and gull counts are unchanged.
-- [ ] 7.3 Write `game/tests/unit/test_patrol_solo.gd` with one offline player on the real sandbar, driven by the named input actions only. Verify it fails. It covers:
+- [x] 7.3 Write `game/tests/unit/test_patrol_solo.gd` with one offline player on the real sandbar, driven by the named input actions only. Verify it fails. It covers: Done: `test_patrol_solo.gd`, 6 tests (a to f) in about 4 s, plus (g) the secret cay; no existing test changed.
   - **(a) A whole night, never spotted.** The test grants the materials. The player builds and lights a fire in the hut at dusk, crouches in scrub or stands in the hut through every lap, and is never spotted. No smoke alert is raised.
   - **(b) Spotted, hide and get away.** Standing on open sand in the beam gets the player spotted at 2 s and locked. They walk 3 tiles to scrub and crouch, and are not spotted again. The boat resumes its lap 20 s later, and its loudhailer line showed.
   - **(c) A beach fire.** A fire 1 tile from the sea at night raises one smoke alert per lap. Putting it out during HORIZON raises none.
@@ -163,12 +163,12 @@ How the tests are written:
   - **(e) Fog.** In the fog fixture there is no light, and standing on open sand all night is never spotted.
   - **(f) A squall.** No boat is in sight during a squall.
   - **(g) The secret cay.** It has no patrol and no horizon light (via `test_secret_cay_solo.gd`'s setup).
-- [ ] 7.4 Implement `game/scripts/ai/patrol_route.gd` (design.md §9). Then:
+- [x] 7.4 Implement `game/scripts/ai/patrol_route.gd` (design.md §9). Then: Done: `patrol_route.gd`, `patrol_watch.gd`, the `Creature` fields and signal, `PlayerBody.spot_meter`, the spawner changes; see design.md "Changes from the build plan", group 7.
   - in `creature.gd`, add the `patrol_alerted` signal and the patrol fields;
   - in `creature_spawner.gd`, honor `party_extra_count_every_n_players`, pass member index and count, and seed the patrol roll from the run seed.
 
   Verify that the three tests above pass, and that `test_creature_net.gd`, `test_coast_cay_solo.gd` and `test_inventory_hud_solo_run.gd` still pass. A patrol now runs on both islands, so if a solo run gets spotted, it shows only the alert.
-- [ ] 7.5 Run the import, smoke run and GUT commands, and verify all three pass.
+- [x] 7.5 Run the import, smoke run and GUT commands, and verify all three pass. Done: import clean, smoke 10 frames with 0 problems, GUT 228 scripts, 2040/2040 passing in 178 s (22 new route tests, 6 new spawner tests, 7 solo tests).
 
 ## 8. Network
 

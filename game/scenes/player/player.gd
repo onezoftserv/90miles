@@ -28,6 +28,9 @@ var climate: ClimateState = ClimateState.new()
 var model: MovementModel = MovementModel.new()
 var movement_state: MovementStep.Move = MovementStep.Move.WALK
 var stealth_state: MovementStep.Stealth = MovementStep.Stealth.VISIBLE
+## Host (guardacostas-stealth): the spot meter, stepped once per physics tick by the island's
+## PatrolWatch across every boat. The network group sends `spot_fraction()` as net_spot.
+var spot_meter: SpotMeter = SpotMeter.new()
 ## True when this body belongs to the local peer: it gets the camera and local input.
 ## Set before the body enters the tree.
 @export var local_player: bool = true
@@ -115,6 +118,11 @@ func advance(delta: float, with_interaction: bool = true) -> void:
 	stealth_state = result.stealth
 	velocity = result.velocity * TILE_SIZE
 	_move(velocity * delta)
+
+
+## The spot meter as a fraction of this player's spot time, 0 to 1 (the HUD's open eye).
+func spot_fraction() -> float:
+	return spot_meter.fraction(SpotMeter.stealth_bonus_s(SpotMeter.stealth_level_of(self)))
 
 
 ## The camera and keyboard follow this body only on its own player's peer.

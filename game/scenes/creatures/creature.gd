@@ -9,6 +9,11 @@ const SCENE: PackedScene = preload("res://scenes/creatures/creature.tscn")
 const SYNC_NAME: StringName = &"Sync"
 const SYNC_INTERVAL_S: float = 0.1
 
+## Host, patrol boats (guardacostas-stealth): the boat raised an alert. `cause` is &"sight", &"water",
+## &"smoke" or &"noise"; `position` is where its light aims, in pixels. Emitted once per alert, never
+## on a client.
+signal patrol_alerted(cause: StringName, position: Vector2)
+
 var data: CreatureData
 var brain: CreatureBrain
 ## Set by the host's spawner; without it the creature does nothing.
@@ -29,6 +34,14 @@ var passing: bool = false
 ## Synced: the peer whose player's head it sits on, 0 when it sits on nobody (perch_ride). Every
 ## peer draws it on that player's head.
 var perch_peer: int = 0
+## Host, patrol boats: the boat's own loop clock in seconds (it pauses during an alert), the beam's
+## centre in degrees in screen space, how many alert lines have been called (the loudhailer picks a
+## line by this number mod the line count), and whether the light is on. Written by PatrolRoute; the
+## network group syncs the first three.
+var route_t: float = 0.0
+var beam: float = 0.0
+var alert_serial: int = 0
+var light_on: bool = false
 
 @onready var interactable: Interactable = $Interactable
 
