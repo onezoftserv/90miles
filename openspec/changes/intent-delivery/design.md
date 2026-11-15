@@ -155,11 +155,11 @@ After each 1 s host frame the simulated-time bucket fell from about 1230 ms to 2
   - **Borrowed:** intents, never positions; a host-side rate limit.
   - **Rejected:** a separate channel for intents. Unsequenced unreliable packets have no per-channel order to protect, so a channel buys nothing, and it would need a channel count in `NetPeers`.
 
-**D2. How intents survive loss (decision Q1).** Each client message carries the newest intent and up to 7 earlier unacknowledged ones, as packed arrays: first `seq`, directions, flags, deltas. The message is sent unreliable (unsequenced). The host walks the numbers from oldest to newest and treats each one in this order:
-1. It skips a number not newer than the body's last queued one, so a repeat is never charged.
-2. It checks `is_valid_intent`.
-3. It charges the limits.
-4. It queues the intent.
+**D2. How intents survive loss (decision Q1).** Each client message carries the newest intent and up to 7 earlier unacknowledged ones, as packed arrays: first `seq`, directions, flags, deltas. The message is sent unreliable (unsequenced). The host checks and applies it in this order:
+1. It drops the whole message if it is empty, holds more than 8 intents, has arrays of different lengths, starts below 1, or holds any intent that fails `is_valid_intent`. A corrupt message never applies in part.
+2. It walks the numbers from oldest to newest and skips each one not newer than the body's last queued one, so a repeat is never charged.
+3. It charges the limits for each new one.
+4. It queues it.
 
 The cap of 8 covers 7 lost packets in a row (117 ms). On the probe's 100 ms relay a client usually has 7 or 8 unacknowledged intents. Up to 8 intents of about 17 bytes each (`Vector2` direction, a flag byte, a `float64` delta) is roughly 8 KB/s per client at 60 Hz.
 
@@ -177,7 +177,7 @@ Options for Q1 (recommended first):
 - Built as `EnetBackend.keep_throttle_open(peer)`, called by `EnetBackend.host()` and by `NetHarness`. It connects to the server peer's own `peer_connected` through a weak reference, so the signal does not keep the peer alive.
 
 Options for Q2 (recommended first):
-- (a) **Keep the throttle open** on every game connection, set where the coordinator says. Either the coordinator makes the edit on the seam branch, or this change makes it in `NetPeers` after the seam lands.
+- (a) **Keep the throttle open** on every game connection. Built in the seam's `enet_backend.gd` after `net-platform-seam` merged, as the coordinator asked.
 - (b) **Keep ENet's defaults** and rely on D2 alone. That covers a throttle down to 6/32 completely, but not the deep fall the art-pass logged (0/32: 31 packets dropped in a row). Host states to the client, which carry no copies, stay thinned too (the PR #43 rejoin flake).
 
 **D4. Rate-limit headroom (decision Q3).**
