@@ -1,13 +1,18 @@
 class_name PeerLimits
 extends RefCounted
-## One peer's rate limits on the host (coop-networking "Per-peer rate limits"). Provisional
-## numbers, see the coop-networking proposal (decision 6).
+## One peer's rate limits on the host (coop-networking "Per-peer rate limits"). The numbers are
+## the coop-networking proposal's decision 6, with headroom for host hitches from intent-delivery
+## (owner decision Q3, 2026-11-14).
 
-## Intents per second, with a burst for frames that arrive together.
-const INTENT_BURST: float = 30.0
+## Intents per second, with a burst for frames that arrive together: a second and a half of
+## frames, so the count never refuses a backlog the simulated-time slack allows.
+const INTENT_BURST: float = 90.0
 const INTENTS_PER_S: float = 90.0
-## Simulated movement time per second of real time, with slack for jitter.
-const SIM_TIME_SLACK_S: float = 0.25
+## Simulated movement time per second of real time, with slack for jitter and for a host
+## hitch. The host's clock runs through a hitch, so the bucket is back at its slack when the
+## client's backlog arrives: a 1 s host frame fits and leaves 0.25 s for jitter. The refill is
+## the honest rate, so a cheat gains one 1.25 s burst at most, never lasting speed.
+const SIM_TIME_SLACK_S: float = 1.25
 const SIM_TIME_PER_S: float = 1.0
 ## Every intent costs at least one physics frame, so tiny claimed steps cannot buy extra
 ## interaction presses (an honest client's step is exactly one frame).
