@@ -282,6 +282,18 @@ None of Shattered Pixel Dungeon, Brogue CE or DCSS has peer co-op, matchmaking, 
 - DCSS's app-level ping (`reset_timeout`, `check_connection`). Only the per-profile join watchdog exists.
 - Brogue's hand-packed byte protocol (`web_notifyEvent`). Godot's RPC already serialises.
 
+**Don't Starve Together** (the fourth reference since 2026-11-14; dontstarve.wiki.gg pages, read through `docs/REFERENCE_DST.md`; ideas only)
+
+*Borrowed:*
+- **Dedicated Server page:** one transport whether the host plays or not, with NAT traversal and then a relay only when a direct connection fails. That supports the seam's shape: the transport sits behind one backend, and a relay or platform backend is added beside ENet, not in place of it.
+- **"Don't Starve Together" page:** a Friends Only option limits joining to the host's platform friends. That supports deferring a session browser and leaning on platform friends and invites for the Steam change (Q7 a).
+- **Florid Postern page:** a fixed, readable arrival point for anyone who joins later. This is already the session's beach spawn, and nothing changes here.
+
+*Rejected:*
+- **Dedicated Server page:** headless dedicated servers and cluster tokens tied to a platform account. Our runs are short with no persistent world, and v1 has no backend.
+- **Console/Don't Starve Together Commands page:** votes, rollback and server-side admin files. Four friends need none of these, and rollback breaks permadeath.
+- **Crossplay:** whether DST lets platforms share a world is unclear [unverified in our notes]. Crossplay stays out of scope; a neutral relay or EOS would be its own decision.
+
 ## Player flow and strings
 
 Menus stay standard Spanish. Status and failure lines are system messages, so they are also standard Spanish.

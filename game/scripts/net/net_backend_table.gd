@@ -44,10 +44,10 @@ static func enet_only() -> NetBackendTable:
 
 
 static func _enet_profile() -> NetBackendProfile:
-	var profile := NetBackendProfile.new()
-	profile.id = ENET_ID
-	profile.backend_script = ENET_SCRIPT
-	return profile
+	var row := NetBackendProfile.new()
+	row.id = ENET_ID
+	row.backend_script = ENET_SCRIPT
+	return row
 
 
 ## The profile with `profile_id`, or null.

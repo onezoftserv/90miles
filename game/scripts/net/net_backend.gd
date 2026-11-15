@@ -11,6 +11,8 @@ extends RefCounted
 ## never writes their names.
 
 ## An accepted invite or a platform "join game", at any time (even before the title shows).
+## Emitted by subclasses only (ENet has none), hence the warning switch.
+@warning_ignore("unused_signal")
 signal join_requested(target: NetJoinTarget)
 
 ## Set by NetBackendTable.create(): the backend's tuning and text (capabilities stay in code).
