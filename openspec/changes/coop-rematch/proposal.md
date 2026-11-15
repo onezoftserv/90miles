@@ -45,7 +45,7 @@ None.
   - "Otra vez" or the client's note on the co-op summary;
   - the client's lobby shown at once.
 - `game/scenes/shell/summary_screen.gd`: a `show_waiting_for_host()` note.
-- `game/scenes/net/coop_session.gd`: a host-only `carried_looks` map, read when a player spawns, and `look_slots()`, which hands it over. New functions only. `request_join` (rewritten by the open PR #57) and the intent path (PR #55) are untouched.
+- `game/scenes/net/coop_session.gd`: a host-only `carried_looks` map, read when a player spawns, and `look_slots()`, which hands it over. New functions only. `request_join` (rewritten by the open PR #57) and the intent path (intent-delivery, #55) are untouched.
 - Tests:
   - A new `game/tests/helpers/shell_harness.gd`: real shells for the host and clients in one process, each on its own multiplayer branch.
   - A new `test_coop_rematch_net.gd`, host plus client:

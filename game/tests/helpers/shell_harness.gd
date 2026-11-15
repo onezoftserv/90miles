@@ -17,10 +17,6 @@ extends RefCounted
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const TIMEOUT_S: float = 5.0
-## The same ENet throttle settings as NetHarness, so a loaded machine does not read as congestion.
-const THROTTLE_INTERVAL_MS: int = 5000
-const THROTTLE_ACCELERATION: int = 2
-const THROTTLE_DECELERATION: int = 0
 
 var port: int = 0
 var shells: Array[GameShell] = []
@@ -40,7 +36,8 @@ func add_host(player_name: String, seeds: Callable) -> GameShell:
 	var peer := NetPeers.create_server(0)
 	port = NetPeers.bound_port(peer)
 	apis[0].multiplayer_peer = peer
-	apis[0].peer_connected.connect(_unthrottle)
+	# As EnetBackend does for the game's host, and NetHarness for its own.
+	EnetBackend.keep_throttle_open(peer)
 	shell._on_hosting()
 	return shell
 
@@ -183,13 +180,3 @@ func _close(api: SceneMultiplayer) -> void:
 		api.multiplayer_peer.close()
 	api.multiplayer_peer = null
 
-
-func _unthrottle(peer: int) -> void:
-	if apis.is_empty():
-		return
-	var enet := apis[0].multiplayer_peer as ENetMultiplayerPeer
-	if enet == null:
-		return
-	var connection: ENetPacketPeer = enet.get_peer(peer)
-	if connection != null:
-		connection.throttle_configure(THROTTLE_INTERVAL_MS, THROTTLE_ACCELERATION, THROTTLE_DECELERATION)

@@ -100,7 +100,7 @@ ENet delivers one reliable channel in order. The new run's unreliable synchroniz
 - Nobody reconnects, so every peer id survives the rematch, and a guest (a player with no valid identity) keeps their slot too.
 - The host's old session hands over `look_slots()`: the peer → slot map of the host and every connected peer with a body. The shell gives it to the new session's host-only `carried_looks` before `start()`.
 - In `_add_player` a peer with a kept slot gets it, unless a body holds it. `_free_look_slot()` skips slots kept for peers that are still connected and not spawned yet. A kept slot of a peer that disconnects becomes free.
-- Only the function that gives the slot changes. `request_join` (PR #57) and the intent path (PR #55) are untouched.
+- Only the function that gives the slot changes. `request_join` (PR #57) and the intent path (intent-delivery, #55) are untouched.
 
 **D7. Identity.**
 - Each client's new join request carries the same `PlayerIdentity` (from its settings).
@@ -163,7 +163,7 @@ ENet delivers one reliable channel in order. The new run's unreliable synchroniz
 - **[The despawns and the call reach a client in different frames while it is still in its run]** For one frame its HUD could read its despawned body. The despawns and the call are sent in the same host frame and bundled by ENet, so they normally arrive together. A client is almost never still in its run when a person on the host has already picked "Otra vez". → Mitigation if a playtest shows it: free the HUD when the local body leaves the tree.
 - **[Two shells in one process share `WeatherManager.sky`]** The client's `receive_sky` applies the state to the same sky, `changed` fires, and the host resends, so clock messages loop while both runs exist. The client's `_end_run()` also stops the shared weather. → The harness tests assert nothing about the client's weather. The two-process run on UDP 7792 is the authority for the full flow.
 - **[A client that is joining the old run when the call arrives]** It rebuilds like any client and joins the new lobby. If its old join request reaches the host's new session first, the new session answers it, and the client asks again after the call. The repeat is ignored (`roster.has(sender)`).
-- **[Open PRs]** #57 and #55 edit `coop_session.gd`. This change adds `carried_looks`, `look_slots()` and the slot pick, and edits no function they touch. #52 (dead-spectate) does not touch `game_shell.gd` or `summary_screen.gd`; rebase if it lands first.
+- **[Other PRs]** #55 (intent-delivery) merged first, and this branch is rebased on it: the old-messages test sends its intent with `send_intents`. #57 (still open) edits `request_join` in `coop_session.gd`. This change adds `carried_looks`, `look_slots()` and the slot pick, and edits no function either touches. #52 (dead-spectate) does not touch `game_shell.gd` or `summary_screen.gd`; rebase if it lands first.
 
 ## Migration Plan
 

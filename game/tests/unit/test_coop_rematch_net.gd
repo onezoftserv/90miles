@@ -210,7 +210,8 @@ func test_old_messages_reach_the_new_lobby_and_change_nothing() -> void:
 	var old_session := papo.session
 	var old_session_id: int = old_session.get_instance_id()
 	# Papo's old run sends movement and actions just before the host's call.
-	old_session.send_intent(1, MoveIntent.create(Vector2.RIGHT, false, false, false), 0.016)
+	var moving: Array[PendingIntent] = [PendingIntent.create(1, MoveIntent.create(Vector2.RIGHT, false, false, false), 0.016)]
+	old_session.send_intents(moving)
 	old_session.say(0)
 	old_session.start_route(&"raft")
 	var site := old_session.get_node_or_null(^"RaftSite") as BuildSite
