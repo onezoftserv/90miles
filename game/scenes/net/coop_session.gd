@@ -136,6 +136,8 @@ var clock: Callable
 var phrases: QuickChatPhrases
 ## Language of bubble and HUD text; Spanish first until a settings screen exists.
 var locale: String = DEFAULT_LOCALE
+## The world event bus (guardacostas-stealth): a child node, added in _ready; acts on the host only.
+var events: WorldEvents = null
 var run_record: RunRecord = RunRecord.new()  # Host: this run's flags, creature counts and effect limits (never sent).
 
 var _bodies: Dictionary[int, PlayerBody] = {}
@@ -185,6 +187,9 @@ func _ready() -> void:
 	player_spawner.spawn_function = _spawn_player
 	pickup_spawner.spawn_function = _spawn_pickup
 	entity_spawner.spawn_function = _spawn_entity
+	events = WorldEvents.new()
+	events.name = &"WorldEvents"
+	add_child(events)
 	if phrases == null:
 		phrases = QuickChatPhrases.from_catalog(GameState.content)
 

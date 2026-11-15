@@ -20,6 +20,9 @@ var light_radius_tiles: float = (preload("res://resources/survival_tuning.tres")
 var crossing: Crossing = null
 ## The run's flags, creature counts and effect limits: the session's (a fresh one in a bare rig).
 var record: RunRecord = RunRecord.new()
+## The session's world event bus (noise and smoke), or null in a bare rig. Group 7's patrol brain
+## listens to it; a noise made through it is scaled by `noise_multiplier_at`.
+var events: WorldEvents = null
 
 
 ## A world on `on`'s sea for the creatures that ride along with it, writing its session's record.
@@ -32,8 +35,15 @@ static func for_crossing(on: Crossing) -> CreatureWorld:
 	if session != null:
 		made.record = session.run_record
 		made.pickups = session.pickups
+		made.events = session.events if is_instance_valid(session.events) else null
 	made.rng.seed = hash([made.run_seed(), on.serial])
 	return made
+
+
+## How much a noise made in `cell` is amplified: a place's PoiData.noise_multiplier (a cave echoes
+## x2). 1 today: no handmade island has POIs yet, so this is the seam they fill.
+func noise_multiplier_at(_cell: Vector2i) -> float:
+	return 1.0
 
 
 func light_radius_px() -> float:

@@ -37,6 +37,9 @@ func setup(for_session: CoopSession, layout_data: IslandLayoutData, catalog: Con
 	world.nav = nav
 	world.pickups = session.pickups
 	world.record = session.run_record
+	world.events = session.events
+	if session.events != null:
+		session.events.world = world
 	world.rng.seed = WORLD_SEED
 
 

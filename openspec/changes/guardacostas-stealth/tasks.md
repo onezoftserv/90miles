@@ -110,21 +110,21 @@ How the tests are written:
 
 ## 5. The world event bus
 
-- [ ] 5.1 Write `game/tests/unit/test_world_events.gd`. Verify it fails. It checks:
+- [x] 5.1 Write `game/tests/unit/test_world_events.gd`. Verify it fails. It checks:
   - A solo player using the noise fixture item puts one `noise` event on the bus, at their position with radius 15.
   - A place whose noise multiplier is 2 doubles a radius-10 noise to 20, through the `noise_multiplier_at` seam.
   - Lighting a fire raises one `smoke` event, `smoke_sources()` lists the fire until it goes out, and then it does not.
   - The bus is a child of the session, not an autoload, so `project.godot`'s autoload list is unchanged.
   - The existing creatures-ai scenario "Blood draws investigation" is not exercised. No creature emits blood yet; the main spec has the same gap today.
-- [ ] 5.2 Write `game/tests/unit/test_world_events_net.gd` with host plus client. Verify it fails. It checks that the client's player using the noise item raises the noise once, on the host, at that player's position, and that the client's bus emits nothing.
-- [ ] 5.3 Implement `game/scripts/world/world_events.gd`. Then:
+- [x] 5.2 Write `game/tests/unit/test_world_events_net.gd` with host plus client. Verify it fails. It checks that the client's player using the noise item raises the noise once, on the host, at that player's position, and that the client's bus emits nothing.
+- [x] 5.3 Implement `game/scripts/world/world_events.gd`. Then:
   - add it in `coop_session.gd`;
   - expose it as `CreatureWorld.events`;
   - route NOISE and SMOKE in `effect_applier.gd`;
   - add a host-only `smoke_rose` call in `Fire.light()`.
 
   Verify both tests pass, and that `test_fire.gd` and `test_effect_delay.gd` still pass.
-- [ ] 5.4 Run the import, smoke run and GUT commands, and verify all three pass.
+- [x] 5.4 Run the import, smoke run and GUT commands, and verify all three pass. Done: import clean, smoke 10 frames with 0 problems, GUT 225 scripts, 1986 tests with every test passing except `test_suite_integrity`, which flagged the unimported draft of group 6's test file lying in the tree during the run (10 new tests: 8 in `test_world_events.gd`, 2 in `test_world_events_net.gd`).
 
 ## 6. Trigger rules (pure)
 
