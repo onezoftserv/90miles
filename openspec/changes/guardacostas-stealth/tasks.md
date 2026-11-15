@@ -51,7 +51,7 @@ How the tests are written:
 
 ## 2. The loop (pure)
 
-- [ ] 2.1 Write `game/tests/unit/test_patrol_loop.gd`. Verify it fails. It checks, on `sandbar.tres` and `coast_cay.tres` and on a small inline island:
+- [x] 2.1 Write `game/tests/unit/test_patrol_loop.gd`. Verify it fails. It checks, on `sandbar.tres` and `coast_cay.tres` and on a small inline island:
   - The loop (hull edges offset 4 tiles, mitred) has every half-tile sample on deep water, and no sample closer than 4 tiles to the hull.
   - The perimeter is within 1 tile of 180 on the sandbar and 195 on the coast cay.
   - The lap starts at the most easterly point and runs clockwise as seen on screen: the first step goes south.
@@ -61,8 +61,8 @@ How the tests are written:
   - With four boats, each boat's clock runs 45 s behind the one before.
   - An island whose hull cannot be pushed onto deep water within 4 extra tiles gets no loop and logs a warning.
   - Every result is the same on a second build.
-- [ ] 2.2 Implement `game/scripts/stealth/patrol_loop.gd` (design.md §3) and an Experiencia seam that returns 0 until Experiencia exists. Verify `test_patrol_loop.gd` passes.
-- [ ] 2.3 Run the import, smoke run and GUT commands, and verify all three pass.
+- [x] 2.2 Implement `game/scripts/stealth/patrol_loop.gd` (design.md §3) and an Experiencia seam that returns 0 until Experiencia exists. Verify `test_patrol_loop.gd` passes.
+- [x] 2.3 Run the import, smoke run and GUT commands, and verify all three pass. Done: import clean, smoke 10 frames with 0 problems, GUT 199 scripts, 1763/1763 passing in 187 s (`test_patrol_loop.gd` has 20 tests).
 
 ## 3. The searchlight and the spot meter (pure)
 
