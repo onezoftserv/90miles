@@ -48,7 +48,8 @@ Groups 1 to 4 follow the owner's answers of 2026-11-14: option A for each of Q1 
   - In `game_shell.gd`: the `Rematch` child, the host's `_rematch()` (D3 order: looks, `_end_run()`, `call_party()`, `_on_hosting()` with the looks), and the client's `_on_rematch_called()`, which rebuilds at once and shows its lobby (D4).
   - The co-op summary buttons and note, solo kept on `_restart_solo()`.
   - Verify: 3.2 and 3.3 pass, as do `test_game_shell.gd`, `test_run_summary.gd`, `test_shell_platform.gd`, `test_shell_join_rules.gd`, `test_lobby_net.gd` and `test_shell_sky.gd`.
-- [ ] 3.5 Import (twice), smoke run and GUT pass. Verify: the import's second pass has 0 error lines, smoke is clean, and GUT is all green with `test_suite_integrity.gd`.
+- [x] 3.5 Import (twice), smoke run and GUT pass. Verify: the import's second pass has 0 error lines, smoke is clean, and GUT is all green with `test_suite_integrity.gd`.
+  - Done 2026-11-14 on main 3cad48c (after the rebase onto #55, #59 and #60): see 4.3.
 
 ## 4. Two processes (CLAUDE.md: host plus client before merging networking)
 
@@ -62,7 +63,8 @@ Groups 1 to 4 follow the owner's answers of 2026-11-14: option A for each of Q1 
   - Verify: both processes exit 0 with every check passing.
   - Done 2026-11-14, twice: host 10 of 10, client 8 of 8. Both runs: 20 of 20 pick-ups and 5 of 5 creatures, look slot 1 kept, a new seed, the same peer id and connection, 0 engine error lines on either side.
 - [x] 4.2 Docs: in `TASKS.md` §4, tick the rematch line, note the ui-shell "Run summary" rewrite on its line, and add any follow-up found. Verify: `openspec validate coop-rematch --strict` passes.
-- [ ] 4.3 Import (twice), smoke run and GUT pass on the final tree. Verify: as in 3.5.
+- [x] 4.3 Import (twice), smoke run and GUT pass on the final tree. Verify: as in 3.5.
+  - Done 2026-11-14 on main 3cad48c: import twice (0 error lines on the second pass); smoke 10 frames, 0 problems; CI's four headless game runs 0 error lines; GUT 1996 of 1996 in 211 s (225 scripts). The two-process run passed again after the rebase.
 
 ## Workflow follow-up
 
