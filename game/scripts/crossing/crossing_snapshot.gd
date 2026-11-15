@@ -4,7 +4,7 @@ extends RefCounted
 ## peer that joins mid-crossing needs to build it. The host makes one with of() and sends
 ## to_dict(); a joiner checks what arrived with from_dict() and gives it to Crossing.restore().
 
-const KEYS: Array[String] = ["serial", "route", "riders", "plan", "elapsed_s", "maximum", "value", "broken", "states", "positions"]
+const KEYS: Array[String] = ["serial", "route", "riders", "plan", "elapsed_s", "maximum", "value", "broken", "states", "positions", "boards"]
 
 ## The crossing's number: its node name and where its sea lies.
 var serial: int = 0
@@ -20,6 +20,9 @@ var broken: bool = false
 var states: Dictionary[int, int] = {}
 ## Rider -> where the host has their body (session coordinates).
 var positions: Dictionary[int, Vector2] = {}
+## Rider -> their board's integrity on a board route, 0 when it broke (vessel-car-board); empty
+## otherwise.
+var boards: Dictionary[int, float] = {}
 
 
 ## Host: `crossing` as it is now.
@@ -38,6 +41,8 @@ static func of(crossing: Crossing) -> CrossingSnapshot:
 		var body := crossing.body_of(peer)
 		if body != null:
 			snapshot.positions[peer] = body.global_position
+		if crossing.boards.has(peer):
+			snapshot.boards[peer] = crossing.boards[peer].value
 	return snapshot
 
 
@@ -49,6 +54,8 @@ func to_dict() -> Dictionary:
 	state_map.merge(states)
 	var position_map: Dictionary = {}
 	position_map.merge(positions)
+	var board_map: Dictionary = {}
+	board_map.merge(boards)
 	return {
 		"serial": serial,
 		"route": String(route_id),
@@ -60,14 +67,16 @@ func to_dict() -> Dictionary:
 		"broken": broken,
 		"states": state_map,
 		"positions": position_map,
+		"boards": board_map,
 	}
 
 
 ## Null for malformed data (a joiner never trusts what arrives): a missing key, a serial outside
 ## 0..Crossing.MAX_SERIAL, a route not in the catalog, riders that are not 1 to 4 distinct peer
 ## ids, a malformed plan or one of no length, a number that is not finite, a rider without a valid
-## state, or a position that is not finite.
-## In-range numbers are clamped; states and positions of non-riders are dropped.
+## state, a position that is not finite, or a board that is not a peer's finite number.
+## In-range numbers are clamped (a board to 0..its route's vessel integrity); states, positions
+## and boards of non-riders are dropped.
 static func from_dict(data: Variant) -> CrossingSnapshot:
 	if not data is Dictionary:
 		return null
@@ -79,6 +88,8 @@ static func from_dict(data: Variant) -> CrossingSnapshot:
 	if not snapshot._read_head(raw) or not snapshot._read_numbers(raw):
 		return null
 	if not snapshot._read_states(raw.get("states")) or not snapshot._read_positions(raw.get("positions")):
+		return null
+	if not snapshot._read_boards(raw.get("boards")):
 		return null
 	return snapshot
 
@@ -134,6 +145,21 @@ func _read_states(raw_states: Variant) -> bool:
 		if not state is int or state < 0 or state >= Crossing.Rider.size():
 			return false
 		states[peer] = state
+	return true
+
+
+func _read_boards(raw_boards: Variant) -> bool:
+	if not raw_boards is Dictionary:
+		return false
+	var route := GameState.content.get_entry(&"routes", route_id) as RouteData
+	var top: float = maxf(float(route.vessel_integrity), 0.0) if route != null else 0.0
+	var map: Dictionary = raw_boards
+	for peer: Variant in map:
+		var number: Variant = map[peer]
+		if not peer is int or not (number is float or number is int) or not is_finite(float(number)):
+			return false
+		if riders.has(peer):
+			boards[peer] = clampf(float(number), 0.0, top)
 	return true
 
 

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="NetBackendTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/net/net_backend_table.gd" id="1_table"]
+[ext_resource type="Script" path="res://scripts/net/net_backend_profile.gd" id="2_profile"]
+
+[sub_resource type="Resource" id="Resource_enet"]
+script = ExtResource("2_profile")
+id = &"enet"
+backend_script = "res://scripts/net/enet_backend.gd"
+feature_tag = ""
+join_timeout_s = 0.0
+lobby_note = PackedStringArray("Los demás se unen por IP en el puerto UDP %d. Por internet, abre ese puerto en tu router.", "Others join by IP on UDP port %d. Over the internet, forward that port on your router.")
+
+[resource]
+script = ExtResource("1_table")
+default_id = &"enet"
+profiles = Array[ExtResource("2_profile")]([SubResource("Resource_enet")])
+failure_texts = Dictionary[int, PackedStringArray]({
+1: PackedStringArray("No se pudo conectar.", "Could not connect."),
+2: PackedStringArray("El anfitrión no respondió.", "The host did not answer."),
+3: PackedStringArray("La partida está llena.", "The game is full."),
+4: PackedStringArray("Esa partida ya no existe.", "That game no longer exists."),
+6: PackedStringArray("Esta versión del juego no puede hacer eso.", "This version of the game cannot do that."),
+7: PackedStringArray("La plataforma en línea no está disponible.", "The online platform is not available."),
+8: PackedStringArray("Inicia sesión en la plataforma para jugar en línea.", "Sign in to the platform to play online."),
+9: PackedStringArray("Tu cuenta no puede jugar en línea.", "Your account cannot play online."),
+10: PackedStringArray("No se pudo abrir el puerto %d.", "Could not open port %d."),
+11: PackedStringArray("Se perdió la conexión con el anfitrión.", "The connection to the host was lost."),
+12: PackedStringArray("Esa dirección no sirve.", "That address is not valid.")
+})

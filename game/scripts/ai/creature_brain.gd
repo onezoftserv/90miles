@@ -56,6 +56,12 @@ func shoo(_creature: Creature, _by: Node2D) -> bool:
 	return false
 
 
+## Its shoo prompt's interaction priority: 1 beats the ground's 0 (a gull over its palm); a
+## machine that stays by a rider ranks itself lower (creature-perch-ride).
+func interact_priority() -> int:
+	return 1
+
+
 ## Whether the creature may stand at `position`.
 func can_stand(_creature: Creature, _world: CreatureWorld, _position: Vector2) -> bool:
 	return true

@@ -1,19 +1,25 @@
 class_name LobbyScreen
 extends Control
 ## ui-shell "Lobby": who is aboard (the host first and marked), the host's start button and the
-## addresses others join, or, on a client, that it waits for the host. Leaving goes back to the
-## title (back_requested); the shell does the network side.
+## addresses others join, or, on a client, that it waits for the host. While a slower backend
+## opens the host's session it says OPENING and offers only Salir. Leaving goes back to the title
+## (back_requested); the shell does the network side.
 
 signal start_requested
 signal back_requested
 
 const HOST_TAG: String = " (anfitrión)"
+## The host's lobby while the backend opens the session (show_opening()).
+const OPENING: String = "Abriendo la partida…"
 
 ## Set before the screen enters the tree, or later (the buttons follow).
 var is_host: bool = true:
 	set(value):
 		is_host = value
 		_refresh_role()
+
+# The host's session is still opening: no roster, no start, only Salir.
+var _opening: bool = false
 
 @onready var start_button: Button = %Start
 @onready var leave_button: Button = %Leave
@@ -23,15 +29,9 @@ var is_host: bool = true:
 @onready var _rows: VBoxContainer = %Rows
 
 
-## The LAN IPv4 addresses worth showing (no loopback, no link-local), sorted.
+## The LAN IPv4 addresses worth showing (no loopback, no link-local), sorted: NetPeers.lan_addresses().
 static func local_addresses(all: PackedStringArray) -> PackedStringArray:
-	var shown: PackedStringArray = []
-	for address: String in all:
-		if address.is_valid_ip_address() and not address.contains(":") \
-				and not address.begins_with("127.") and not address.begins_with("169.254."):
-			shown.append(address)
-	shown.sort()
-	return shown
+	return NetPeers.lan_addresses(all)
 
 
 func _ready() -> void:
@@ -60,6 +60,16 @@ func show_roster(roster: Dictionary[int, String], host_id: int = CoopSession.HOS
 			_add_row(roster[peer_id])
 
 
+## The host's lobby while a slower backend opens the session: nobody listed, no "Empezar viaje",
+## note or addresses, Waiting says OPENING and Salir (which cancels) has the focus. The shell shows
+## a new lobby once hosting is ready.
+func show_opening() -> void:
+	_opening = true
+	is_host = true
+	if is_node_ready():
+		show_roster({} as Dictionary[int, String])
+
+
 func set_addresses(list: PackedStringArray) -> void:
 	addresses.text = "Tu IP: %s" % ", ".join(list) if not list.is_empty() else ""
 
@@ -81,8 +91,11 @@ func _add_row(text: String) -> void:
 func _refresh_role() -> void:
 	if not is_node_ready():
 		return
-	start_button.visible = is_host
-	note.visible = is_host
-	addresses.visible = is_host
-	waiting.visible = not is_host
-	(start_button if is_host else leave_button).grab_focus()
+	var host_view: bool = is_host and not _opening
+	start_button.visible = host_view
+	note.visible = host_view
+	addresses.visible = host_view
+	waiting.visible = not host_view
+	if _opening:
+		waiting.text = OPENING
+	(start_button if host_view else leave_button).grab_focus()

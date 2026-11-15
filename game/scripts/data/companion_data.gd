@@ -34,7 +34,7 @@ enum Ability {
 @export var walk_speed_mult: float = 1.0
 ## false for alfredo.
 @export var can_run: bool = true
-## false also rules out the SWIMMERS and DOLPHIN_POD vessels.
+## false also rules out the SWIMMERS, DOLPHIN_POD and BOARD vessels.
 @export var can_swim: bool = true
 ## Longest swim in tiles; -1 means unlimited.
 @export var max_swim_tiles: int = -1
