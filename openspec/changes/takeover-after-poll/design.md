@@ -20,7 +20,7 @@ The game:
 - Every packet from the old copy queued behind the join request in the same poll then logs the error.
 
 Measured before the fix, with the new test `test_a_takeover_while_the_old_copy_still_sends_is_clean`:
-- the old copy sends 4 intents a frame;
+- the old copy sends 4 intent messages a frame;
 - the error appears 9 times, in 3 of 3 runs;
 - with frame markers printed to stderr, every error came after "takeover closed" and before the same frame's `process_frame`, so all of them came in the poll that ran the takeover and none in a later frame.
 
@@ -94,7 +94,7 @@ A `_taking_over: Dictionary[int, bool]` holds the new peer from the claim until 
 
 All tests use NetHarness on ENet localhost; the solo test is offline.
 
-- **The run, old copy still sending:** the old copy (a live session, not frozen) sends 4 standing-still intents every process frame until it loses its connection. 2 would do, because the per-peer interleave then always puts at least one behind the join request; 4 leaves a margin. Red before the fix (9 errors, 3 of 3). The intents use sequence 0, so the host's `enqueue` refuses them, the body never moves, and only the engine's sender check is exercised.
+- **The run, old copy still sending:** the old copy (a live session, not frozen) sends 4 intent messages every process frame until it loses its connection. 2 would do, because the per-peer interleave then always puts at least one behind the join request; 4 leaves a margin. Red before the fix (9 errors, 3 of 3). Each message holds one standing-still intent numbered 1. After intent-delivery (`send_intents`/`submit_intents`), the host skips a number its body has already queued, so the body never moves and only the engine's sender check is exercised. Before that merge the test sent number 0 through `send_intent`, which the host's `enqueue` refused.
 - **The same in the lobby,** where the second copy takes the roster entry.
 - **A repeat join request:** a silent client with Papo's identity sends two requests in one frame while the old copy still sends.
 - **Solo (1 player, offline):** a join request reaching a solo session is ignored, nothing is pending, and the player keeps their body.

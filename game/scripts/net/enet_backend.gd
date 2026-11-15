@@ -5,6 +5,12 @@ extends NetBackend
 
 ## Launch argument for a join from outside the game: --connect=<address[:port]>.
 const LAUNCH_FLAG: String = "--connect="
+## ENet's packet throttle on each client connection (intent-delivery "Unreliable traffic is not
+## thinned on a lossless link", owner decision Q2): ENet's default interval and acceleration and
+## no deceleration, so the throttle never falls and never drops an intent or a host state.
+const THROTTLE_INTERVAL_MS: int = 5000
+const THROTTLE_ACCELERATION: int = 2
+const THROTTLE_DECELERATION: int = 0
 
 
 ## OK for an address target the join screen would accept (not blank, port 1 to 65535).
@@ -19,10 +25,32 @@ func host(request: NetRequest, port: int) -> void:
 	if peer == null:
 		request.fail(NetFailure.Reason.PORT_UNAVAILABLE, [port])
 		return
+	keep_throttle_open(peer)
 	var info := NetHostInfo.new()
 	info.port = NetPeers.bound_port(peer)
 	info.addresses = NetPeers.lan_addresses(IP.get_local_addresses())
 	request.succeed(peer, info)
+
+
+## Keeps ENet's packet throttle open on every client connection the server `peer` accepts from
+## now on. It is set the moment each client connects, before the join's reliable traffic:
+## deceleration 0 only stops falls, so set any later it would leave a fall from the join in place
+## for up to an interval (intent-delivery design.md, "When to open it"). ENet passes the setting
+## to the client, so the client's intents to the host stay open too. NetHarness uses it as well.
+static func keep_throttle_open(peer: MultiplayerPeer) -> void:
+	var enet := peer as ENetMultiplayerPeer
+	if enet != null:
+		# A weak reference, so the peer's own signal does not keep the peer alive.
+		enet.peer_connected.connect(_open_throttle.bind(weakref(enet)))
+
+
+static func _open_throttle(peer_id: int, server: WeakRef) -> void:
+	var enet := server.get_ref() as ENetMultiplayerPeer
+	if enet == null:
+		return
+	var connection: ENetPacketPeer = enet.get_peer(peer_id)
+	if connection != null:
+		connection.throttle_configure(THROTTLE_INTERVAL_MS, THROTTLE_ACCELERATION, THROTTLE_DECELERATION)
 
 
 func join(request: NetRequest) -> void:

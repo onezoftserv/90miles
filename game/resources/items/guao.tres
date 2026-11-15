@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_n6fmw"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_pawwv"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="3_iy0ff"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="4_hkmjn"]
+[ext_resource type="Texture2D" uid="uid://b3wdwp5onph8r" path="res://assets/art/items/guao.png" id="5_1qkna"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="6_8kueb"]
+
+[sub_resource type="Resource" id="Resource_o6af2"]
+script = ExtResource("1_n6fmw")
+kind = 4
+status = 2
+duration_s = 20.0
+
+[resource]
+script = ExtResource("4_hkmjn")
+description_es = "Guao. El que lo toca se acuerda de él to' el día. No se come, no se toca, no se mira mucho."
+description_en = "Guao. Whoever touches it remembers it all day. Don't eat it, don't touch it, don't look at it too long."
+sprite = ExtResource("5_1qkna")
+category = 2
+tags = Array[int]([12])
+stack_size = 5
+weight = 0.1
+pickup_effects = Array[ExtResource("1_n6fmw")]([SubResource("Resource_o6af2")])
+identify_group = 3
+id = &"guao"
+name_es = "Guao"
+name_en = "Guao"

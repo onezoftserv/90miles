@@ -9,7 +9,7 @@ const TILE: float = 16.0
 const SPAWNS: Array[Vector2] = [Vector2(32.0, 48.0), Vector2(48.0, 48.0), Vector2(64.0, 48.0), Vector2(80.0, 48.0)]
 const TIMEOUT_S: float = 5.0
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
-## Intents a frame from an old copy that keeps sending (the takeover case).
+## Intent messages a frame from an old copy that keeps sending (the takeover case).
 const STALE_BURST: int = 4
 
 var net: NetHarness
@@ -57,15 +57,17 @@ func _papo_drops(host: CoopSession) -> PlayerBody:
 	return papo_body
 
 
-# An old copy of a game that is still connected keeps sending: STALE_BURST standing-still intents
-# every process frame until it loses its connection, so some always share the host's poll with a
-# later join request. Sequence 0, so the host's queue refuses them and nothing moves.
+# An old copy of a game that is still connected keeps sending: STALE_BURST intent messages every
+# process frame until it loses its connection, so some always share the host's poll with a later
+# join request. Each holds one standing-still intent numbered 1, which the body has already
+# queued, so the host skips it and nothing moves.
 func _keep_sending(stale: CoopSession) -> void:
 	_burst = func() -> void:
 		if not is_instance_valid(stale) or not _connected(stale):
 			return
+		var standing: Array[PendingIntent] = [PendingIntent.create(1, MoveIntent.new(), 1.0 / Engine.physics_ticks_per_second)]
 		for i: int in STALE_BURST:
-			stale.send_intent(0, MoveIntent.new(), 1.0 / Engine.physics_ticks_per_second)
+			stale.send_intents(standing)
 	get_tree().process_frame.connect(_burst)
 
 

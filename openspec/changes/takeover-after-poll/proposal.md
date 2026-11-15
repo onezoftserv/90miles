@@ -2,7 +2,7 @@
 
 ## Why
 
-When a second copy of a player's game joins while the first is still connected and sending (coop-reconnect TAKEOVER), the host logs `Condition "!connected_peers.has(sender)" is true` from Godot's `SceneMultiplayer.poll`, once for each packet the old copy still had queued. net-platform-seam found it in its two-process check (`openspec/changes/net-platform-seam/tasks.md` 7.3, "One error, attributed"), and no test covered it. The host takes the join request inside the engine's packet loop and closes the old connection there. The packets from the old copy that the same poll already read are then dropped with an engine error. The game state ends up right, but a host that logs engine errors during normal play hides real ones, and GUT fails a test on any engine error.
+When a second copy of a player's game joins while the first is still connected and sending (coop-reconnect TAKEOVER), the host logs `Condition "!connected_peers.has(sender)" is true` from Godot's `SceneMultiplayer.poll`, once for each packet the old copy still had queued. net-platform-seam found it in its two-process check (`openspec/changes/archive/2026-11-14-net-platform-seam/tasks.md` 7.3, "One error, attributed"; kept open in `TASKS.md` §9 at the archive), and no test covered it. The host takes the join request inside the engine's packet loop and closes the old connection there. The packets from the old copy that the same poll already read are then dropped with an engine error. The game state ends up right, but a host that logs engine errors during normal play hides real ones, and GUT fails a test on any engine error.
 
 ## What Changes
 
@@ -24,6 +24,6 @@ None.
 
 ## Impact
 
-- `game/scenes/net/coop_session.gd`: `request_join` hands a TAKEOVER to a new `_take_over`, deferred until the current poll is done. The rest of the reply moves unchanged into `_answer_join`, and a small `_taking_over` set holds new peers whose takeover is pending. `_close_peer`, `_reclaim`, `_on_peer_disconnected`, `submit_intent` and the rate limits are not touched.
+- `game/scenes/net/coop_session.gd`: `request_join` hands a TAKEOVER to a new `_take_over`, deferred until the current poll is done. The rest of the reply moves unchanged into `_answer_join`, and a small `_taking_over` set holds new peers whose takeover is pending. `_close_peer`, `_reclaim`, `_on_peer_disconnected`, `submit_intents` and the rate limits are not touched.
 - Tests: `test_coop_reconnect.gd` gains a takeover with an old copy still sending, a repeat join request during the takeover, and a lobby takeover with an old copy still sending, plus a 1-player offline case.
 - No new autoload, no content, no backend, and no change to `NetHarness`, `NetManager`, `EnetBackend` or `IdentityRegistry`.

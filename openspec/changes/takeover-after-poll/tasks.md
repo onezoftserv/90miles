@@ -3,7 +3,7 @@
 ## 1. Takeover after the poll
 
 - [x] 1.1 Tests first, in `game/tests/unit/test_coop_reconnect.gd` (NetHarness). Run each alone and see it fail:
-  - A takeover in the run while the old copy still sends 4 intents a process frame, until it loses its connection: the second copy takes back the same body, the host closes the old connection, and the old copy loses its connection. GUT fails it on any engine error.
+  - A takeover in the run while the old copy still sends 4 intent messages a process frame, until it loses its connection: the second copy takes back the same body, the host closes the old connection, and the old copy loses its connection. GUT fails it on any engine error.
   - The same in the lobby: the roster lists Papo once, under the second copy.
   - A repeated join request: a silent client with Papo's identity sends its request twice in one frame while the old copy still sends. It takes back the body once and stays connected.
   - Done 2026-11-14:
@@ -31,6 +31,9 @@
     - the host logged 2, 2 and 1 `connected_peers` lines in 3 of 3 runs, and they were its only `ERROR` lines.
     - 60 fps is about the game's drawn rate, so the old copy's intents pile up one per host poll. Uncapped runs before the fix were not repeated: the first launcher started the host's session before the root had its multiplayer, so that run does not count.
   - **After the fix:** 5 runs at 60 fps and 2 uncapped. Every run had 0 `ERROR` lines on the host, A and B. The host logged "rebound A → B", A logged "host lost", and B owned the body at the end. The host ended with players `[1, B]`.
+  - **Again after merging main at 8f1eaae** (archive #53, intent-delivery #55, content batches). The host now opens ENet's throttle at connect through `EnetBackend.keep_throttle_open`, as the game does.
+    - Before the fix (`main`'s `coop_session.gd`), 60 fps: the host logged 1, 2 and 2 `connected_peers` lines in 3 of 3 runs.
+    - After the fix: 0 `ERROR` lines on all three processes in 7 of 7 runs (5 at 60 fps, 2 uncapped), each with the rebind, "host lost" on A and B owning the body.
 - [x] 1.5 Import (twice), smoke run and full GUT pass with no new engine error lines. Record the counts against the branch point.
   - Done 2026-11-14 at f197076 (branch point bd9df3f):
     - Import ×2: exit 0, no `ERROR` lines.
@@ -38,10 +41,16 @@
     - GUT: 217 scripts, 1903 tests, 1903 passing, 65981 asserts, exit 0. No "Nothing was run", no leak at exit, no `connected_peers` line.
     - The log's other `ERROR` lines are the suite's expected ones, each asserted by its test: 5 forged RPCs refused, the content validator's broken fixture, and "Couldn't create an ENet host" ×3.
     - Against the branch point, `game/` changes only `coop_session.gd` and `test_coop_reconnect.gd` (+4 tests). GUT was not rerun at bd9df3f, so the baseline count is not measured here.
+  - Again after merging main at 8f1eaae:
+    - The burst helper now sends through intent-delivery's `send_intents`; `send_intent` is gone.
+    - Import ×2: exit 0, no `ERROR` lines. Smoke: "10 frames, 0 problem(s)". `test_coop_reconnect.gd`: 19/19 with no `ERROR` lines.
+    - GUT: 220 scripts, 1956 tests, 1956 passing, 66749 asserts, exit 0. No "Nothing was run", no leak, no `connected_peers` line.
+    - The `ERROR` lines are the same expected set as above.
+    - Against `origin/main`, `game/` differs only in `coop_session.gd` (the takeover hunk) and `test_coop_reconnect.gd`.
 - [x] 1.6 `TASKS.md`: add and tick this change below the current milestone.
   - Done 2026-11-14: a line under Milestone B beside `structure-state-sync`, and an entry in Done.
 
 ## Workflow follow-up
 
-- Close net-platform-seam's "One error, attributed" note (its tasks.md 7.3) by pointing to this change, if that change is still open when this one merges.
+- net-platform-seam was archived before this merged. Its open TAKEOVER item in `TASKS.md` §9 is ticked here, pointing to this change.
 - Archive with `/opsx:archive` after the PR merges.
