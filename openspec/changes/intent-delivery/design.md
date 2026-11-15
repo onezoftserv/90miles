@@ -157,7 +157,7 @@ Options for Q1 (recommended first):
 - ENet sends the setting to the client, so the client's own sends stay open too.
 - It must happen at connect: set after the join request, it left the join's 28/32 in place for 6 s (sustained-load rows). Set at connect, the client never left 32/32 (batch 3).
 - Our traffic is a few kilobytes a second each way, so ENet's congestion control protects nothing here and costs intents and host states.
-- The code belongs in `NetPeers.create_server` (main) or the seam's ENet backend, both the coordinator's.
+- Built as `EnetBackend.keep_throttle_open(peer)`, called by `EnetBackend.host()` and by `NetHarness`. It connects to the server peer's own `peer_connected` through a weak reference, so the signal does not keep the peer alive.
 
 Options for Q2 (recommended first):
 - (a) **Keep the throttle open** on every game connection, set where the coordinator says. Either the coordinator makes the edit on the seam branch, or this change makes it in `NetPeers` after the seam lands.

@@ -34,6 +34,6 @@ None.
 - `game/scenes/net/coop_session.gd`: the intent RPC, its host handler, and the order of checks (repeat, validity, limits, queue). These are local edits to the intent path only. The disconnect, structure-sync, perch and spectate code is untouched.
 - `game/scripts/net/player_net.gd` and `prediction_buffer.gd`: send the newest unacknowledged intents, and expose the host's last queued number.
 - `game/scripts/net/peer_limits.gd` and `PlayerNet.MAX_QUEUED`: the limit numbers (decision Q3).
-- `game/scripts/net/net_peers.gd`, or the seam's `enet_backend.gd`: the throttle setting. The coordinator owns these files (decision Q2).
+- `game/scripts/net/enet_backend.gd` (from `net-platform-seam`): the throttle setting (decision Q2). `NetHarness` uses the same helper.
 - Tests: `test_player_net.gd`, `test_prediction_buffer.gd`, `test_coop_session_rate_limits.gd`, `test_coop_session_solo.gd` (the 1-player test), and a new `test_intent_delivery_net.gd` (host plus client over ENet with lost sends).
 - Bandwidth: up to 8 intents of about 17 bytes per client message at 60 Hz, roughly 8 KB/s from each client to the host. No new autoloads and no new dependencies.

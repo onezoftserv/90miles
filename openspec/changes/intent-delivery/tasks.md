@@ -1,7 +1,7 @@
 # Tasks
 
 The owner accepted the recommended answers to Q1 to Q3 on 2026-11-14 (design.md, "Owner decisions").
-Groups 1, 3 and 4 are built from `main`. Group 2 goes into the seam's `game/scripts/net/enet_backend.gd` as a follow-up commit, once `net-platform-seam` merges and this branch is rebased onto it.
+Groups 1 and 3 were built from `main`. Group 2 went into `game/scripts/net/enet_backend.gd` after `net-platform-seam` merged (e15369b, merged into this branch). Group 4 measures all three.
 
 ## 1. Redundant, unordered intents (Q1)
 
@@ -33,12 +33,16 @@ Groups 1, 3 and 4 are built from `main`. Group 2 goes into the seam's `game/scri
 
 ## 2. ENet's throttle kept open (Q2)
 
-- [ ] 2.1 After `net-platform-seam` merges, in `game/scripts/net/enet_backend.gd`, the host calls `throttle_configure(5000, 2, 0)` on each client connection when it connects. Tests first, in that backend's test file:
+- [x] 2.1 After `net-platform-seam` merges, in `game/scripts/net/enet_backend.gd`, the host calls `throttle_configure(5000, 2, 0)` on each client connection when it connects. Tests first, in that backend's test file:
   - A server peer from the factory, once a client connects, reports deceleration 0 on that connection.
   - The client's connection to the host reports the same once the setting arrives.
   - A solo session creates no peer at all.
   - Verify: seen failing, then passing; `test_net_harness_net.gd` still passes.
-- [ ] 2.2 Run the import, the smoke run and GUT. Verify: as in 1.4.
+  - Done 2026-11-14: `EnetBackend.keep_throttle_open`, called by `host()`. The tests are in `test_enet_backend.gd`; they failed with the constants alone (deceleration 2 on both ends), then passed.
+  - `NetHarness` now uses the same helper in place of its own `_unthrottle`.
+  - `test_enet_backend.gd` (15), `test_net_backend_contract.gd` (12), `test_net_harness_net.gd`, `test_intent_delivery_net.gd`, `test_interact_prompt_net.gd` and `test_coop_session_net.gd` pass.
+- [x] 2.2 Run the import, the smoke run and GUT. Verify: as in 1.4.
+  - Done 2026-11-14 on `main` at e15369b merged in: the import prints no `ERROR` line, smoke reports "10 frames, 0 problem(s)", and GUT runs 218 scripts and 1916 tests, all passing.
 
 ## 3. Rate-limit headroom (Q3)
 
@@ -67,5 +71,5 @@ Groups 1, 3 and 4 are built from `main`. Group 2 goes into the seam's `game/scri
 
 ## Workflow follow-up
 
-- Open the PR into `main` once groups 1, 3 and 4 are done. Group 2 follows on the same branch after `net-platform-seam` merges.
+- Open the PR into `main` once groups 1 to 4 are done.
 - Archive with `/opsx:archive` after the owner's review.
