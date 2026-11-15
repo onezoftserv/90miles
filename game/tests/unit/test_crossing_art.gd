@@ -199,7 +199,7 @@ func _assert_sea_follows(crossing: Crossing, peer: String) -> void:
 func test_a_solo_crossing_sea_is_the_deep_sea_shader_under_everything() -> void:
 	_start_solo()
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0)
-	await wait_frames(2)
+	await wait_process_frames(2)
 	_assert_sea_is_deep_shader(crossing, "solo")
 	var sea := _sea_of(crossing)
 	if sea != null:
@@ -209,7 +209,7 @@ func test_a_solo_crossing_sea_is_the_deep_sea_shader_under_everything() -> void:
 func test_a_solo_crossing_sea_follows_the_crossing_scroll() -> void:
 	_start_solo()
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0)
-	await wait_frames(2)
+	await wait_process_frames(2)
 	var first: float = crossing.scroll_px()
 	_assert_sea_follows(crossing, "solo")
 	await wait_seconds(0.3)
@@ -221,7 +221,7 @@ func test_a_solo_crossing_sea_follows_the_crossing_scroll() -> void:
 func test_the_deck_shows_the_raft_frame_for_its_integrity_and_is_gone_once_sunk() -> void:
 	_start_solo()
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0)
-	await wait_frames(2)
+	await wait_process_frames(2)
 	var deck := _deck_of(crossing)
 	assert_not_null(deck, "the deck is a sprite")
 	if deck == null:
@@ -235,7 +235,7 @@ func test_the_deck_shows_the_raft_frame_for_its_integrity_and_is_gone_once_sunk(
 	assert_eq(_deck_drawn_rect(deck), crossing.deck_rect(), "the raft frame covers the deck")
 	for value: float in [100.0, 50.0, 20.0, 0.0]:
 		crossing.hit_vessel(crossing.integrity.value - value)
-		await wait_frames(2)
+		await wait_process_frames(2)
 		assert_eq(crossing.integrity.value, value)
 		assert_true(_deck_shows(crossing, value), "at %d the deck shows %s" % [value, StructureArt.raft_frame(value)])
 	assert_true(crossing.integrity.broken)
@@ -250,7 +250,7 @@ func test_a_solo_raft_crossing_with_a_squall_throw_in() -> void:
 	assert_eq(crossing.rider_state(1), Crossing.Rider.IN_WATER, "the squall throws the rider in")
 	CrossingRig.put_beside_deck(crossing, body, 6.0)
 	CrossingRig.run(crossing, 0.3)
-	await wait_frames(2)
+	await wait_process_frames(2)
 	assert_true(_deck_shows(crossing, crossing.integrity.value), "the deck at the vessel's integrity")
 	assert_false(crossing.deck_rect().has_point(body.global_position), "the swimmer beside the deck")
 	assert_true(_water_line_on(body), "the swimmer is cut at the water line")
@@ -269,7 +269,7 @@ func test_drawing_the_crossing_changes_nothing_it_simulates() -> void:
 	var deck_terrain: DataEnums.Terrain = crossing.sea.terrain_at(Vector2i((crossing.deck_center() / Crossing.TILE_PX).floor()))
 	var spot := crossing.body_of(1).global_position
 	crossing.set_physics_process(false)
-	await wait_frames(3)
+	await wait_process_frames(3)
 	assert_eq(crossing.integrity.value, 100.0)
 	assert_eq(crossing.elapsed_s, 0.0, "the clock is the host's step, not the look's")
 	assert_eq(crossing.sea.cells.size(), cells)
@@ -307,7 +307,7 @@ func test_host_and_client_draw_riders_and_the_shark_over_the_sea_and_the_deck() 
 		return client_crossing.rider_state(client_id) == Crossing.Rider.IN_WATER and theirs != null and not client_crossing.deck_rect().has_point(theirs.global_position) \
 				and _sharks_in(client, sea).size() == 1 and _deck_shows(client_crossing, host_crossing.integrity.value)
 	assert_true(await wait_until(states, TIMEOUT_S), "the client has the swimmer where the host put it, the shark and the worn deck")
-	await wait_frames(3)
+	await wait_process_frames(3)
 	for side: Array in [["host", host, host_crossing], ["client", client, client_crossing]]:
 		var peer: String = side[0]
 		var session: CoopSession = side[1]
@@ -354,7 +354,7 @@ func test_a_late_joiner_draws_the_deck_at_the_host_integrity() -> void:
 	assert_not_null(theirs, "the late joiner builds the crossing")
 	if theirs == null:
 		return
-	await wait_frames(3)
+	await wait_process_frames(3)
 	assert_eq(theirs.integrity.value, 25.0)
 	assert_true(_deck_shows(theirs, 25.0), "the late joiner's deck is the breaking raft")
 	_assert_sea_is_deep_shader(theirs, "late joiner")
