@@ -4,7 +4,7 @@ Groups 1 to 4 follow the owner's answers of 2026-11-14: option A for each of Q1 
 
 ## 1. The host's call (coop-networking "Rematch is the host's call")
 
-- [ ] 1.1 Tests first in a new `test_run_rematch.gd`:
+- [x] 1.1 Tests first in a new `test_run_rematch.gd`:
   - `call_party()` returns false on the offline peer and sends nothing.
   - On a host with a connected client, it reaches the client's `RunRematch`, which emits `called` once.
   - `begin()` called locally on the client (no sender) is ignored.
@@ -12,11 +12,11 @@ Groups 1 to 4 follow the owner's answers of 2026-11-14: option A for each of Q1 
   - A client's `call_party()` returns false.
   - Host plus client on two branches, each with a `RunRematch` named `Rematch`.
   - Verify: seen failing (no class), then passing.
-- [ ] 1.2 Add `game/scripts/net/run_rematch.gd` (`RunRematch`, design D2): `called`, `call_party()`, and the `begin` RPC with its sender checks. Verify: 1.1 passes.
+- [x] 1.2 Add `game/scripts/net/run_rematch.gd` (`RunRematch`, design D2): `called`, `call_party()`, and the `begin` RPC with its sender checks. Verify: 1.1 passes.
 
 ## 2. Look slots kept (art-pass "Look slots in a rematch", design D6)
 
-- [ ] 2.1 Tests first in a new `test_look_slots_rematch.gd`, with `CoopSession` on the offline peer and `_add_player`, as `test_look_slots.gd` does:
+- [x] 2.1 Tests first in a new `test_look_slots_rematch.gd`, with `CoopSession` on the offline peer and `_add_player`, as `test_look_slots.gd` does:
   - A kept slot is given whatever the spawn order.
   - A held slot is not given twice.
   - A newcomer skips a slot kept for a connected peer not spawned yet.
@@ -24,7 +24,7 @@ Groups 1 to 4 follow the owner's answers of 2026-11-14: option A for each of Q1 
   - `look_slots()` maps the host and every connected peer with a body, and nothing on a client.
   - 1 player, offline: a solo session with nothing kept gives slot 0.
   - Verify: seen failing, then passing.
-- [ ] 2.2 In `coop_session.gd`, add the host-only `carried_looks`, `look_slots()`, and the slot pick in `_add_player` and `_free_look_slot`. Edit no other function. Verify: 2.1, `test_look_slots.gd` and `test_coop_reconnect.gd` pass.
+- [x] 2.2 In `coop_session.gd`, add the host-only `carried_looks`, `look_slots()`, and the slot pick in `_add_player` and `_free_look_slot`. Edit no other function. Verify: 2.1, `test_look_slots.gd` and `test_coop_reconnect.gd` pass.
 
 ## 3. The shell's rematch (endings-progression, ui-shell, coop-networking, design D3, D4, D9, D11)
 
