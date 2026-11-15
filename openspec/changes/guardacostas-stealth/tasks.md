@@ -215,7 +215,7 @@ How the tests are written:
 - [ ] 10.1 Update the docs with the confirmed numbers. Verify each edit by reading it back against the spec delta:
   - `docs/BESTIARY.md` "Guardacostas patrol boat": the loop, lap, arc, meter and alert;
   - `docs/GAME_DESIGN.md` §17 "Stealth": already updated with the docs PR on 2026-11-14; re-check it against the build;
-  - `docs/ISLANDS.md`: the mangrove line, if decision 7a stands;
+  - `docs/ISLANDS.md`: the mangrove line (decision 7a);
   - `docs/CONTENT_MANIFEST.md`: tick `patrol_boat`.
 - [ ] 10.2 Update `TASKS.md`:
   - tick `guardacostas-stealth` under Milestone D;
