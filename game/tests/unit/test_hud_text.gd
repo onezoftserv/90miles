@@ -195,3 +195,16 @@ func test_every_scene_interactable_names_a_prompt() -> void:
 	for path: String in scenes:
 		problems.append_array(_scene_problems(path))
 	assert_eq(problems, PackedStringArray(), "interactables without a prompt id")
+
+
+func test_the_watching_lines() -> void:
+	# ui-shell "The HUD while watching": the line is HUD text data, Spanish first.
+	var text := _text()
+	for key: StringName in [&"watching", &"watching_dropped", &"watch_keys"]:
+		assert_has(HudText.LINES, key)
+	assert_eq(text.line(&"watching") % "Papo", "Mirando a: Papo")
+	assert_eq(text.line(&"watching", "en") % "Papo", "Watching: Papo")
+	assert_eq(text.line(&"watching_dropped") % "Papo", "Mirando a: Papo (desconectado)")
+	assert_eq(text.line(&"watching_dropped", "en") % "Papo", "Watching: Papo (disconnected)")
+	assert_eq(text.line(&"watch_keys") % ["A", "D"], "[A] [D] Cambiar")
+	assert_eq(text.line(&"watch_keys", "en") % ["A", "D"], "[A] [D] Switch")
