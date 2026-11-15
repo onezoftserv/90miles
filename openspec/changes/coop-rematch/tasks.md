@@ -52,15 +52,16 @@ Groups 1 to 4 follow the owner's answers of 2026-11-14: option A for each of Q1 
 
 ## 4. Two processes (CLAUDE.md: host plus client before merging networking)
 
-- [ ] 4.1 Add `game/tests/manual/coop_rematch_run.gd`, after `dead_spectate_run.gd`. It runs the real shell in two headless processes on UDP 7792. The host Yuni and the client Papo meet in the lobby, start, and die. Yuni picks "Otra vez". Both reach the new lobby with the same names, then start again. Papo checks:
+- [x] 4.1 Add `game/tests/manual/coop_rematch_run.gd`, after `dead_spectate_run.gd`. It runs the real shell in two headless processes on UDP 7792. The host Yuni and the client Papo meet in the lobby, start, and die. Yuni picks "Otra vez". Both reach the new lobby with the same names, then start again. Papo checks:
   - his peer id is unchanged;
-  - his pick-ups and creatures equal the host's (sent by the host as a line);
+  - his pick-ups and creatures equal the host's (the host writes its seed and counts to a file both processes share in `user://`);
   - his look slot is kept;
   - his `run_seed` is new;
   - his log has no engine error.
   - Each check prints `REMATCH PASS|FAIL`.
   - Verify: both processes exit 0 with every check passing.
-- [ ] 4.2 Docs: in `TASKS.md` §4, tick the rematch line, note the ui-shell "Run summary" rewrite on its line, and add any follow-up found. Verify: `openspec validate coop-rematch --strict` passes.
+  - Done 2026-11-14, twice: host 10 of 10, client 8 of 8. Both runs: 20 of 20 pick-ups and 5 of 5 creatures, look slot 1 kept, a new seed, the same peer id and connection, 0 engine error lines on either side.
+- [x] 4.2 Docs: in `TASKS.md` §4, tick the rematch line, note the ui-shell "Run summary" rewrite on its line, and add any follow-up found. Verify: `openspec validate coop-rematch --strict` passes.
 - [ ] 4.3 Import (twice), smoke run and GUT pass on the final tree. Verify: as in 3.5.
 
 ## Workflow follow-up
