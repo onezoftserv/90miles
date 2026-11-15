@@ -43,6 +43,8 @@ Groups 1 and 3 were built from `main`. Group 2 went into `game/scripts/net/enet_
   - `test_enet_backend.gd` (15), `test_net_backend_contract.gd` (12), `test_net_harness_net.gd`, `test_intent_delivery_net.gd`, `test_interact_prompt_net.gd` and `test_coop_session_net.gd` pass.
 - [x] 2.2 Run the import, the smoke run and GUT. Verify: as in 1.4.
   - Done 2026-11-14 on `main` at e15369b merged in: the import prints no `ERROR` line, smoke reports "10 frames, 0 problem(s)", and GUT runs 218 scripts and 1916 tests, all passing.
+  - Again on `main` at 9b90289 merged in (#53 archived six changes, #54, #56): the second import prints no `ERROR` line, smoke is clean, and GUT runs 220 scripts and 1952 tests, all passing.
+    - One earlier full run had 17 failures in the five content tests that write fixed `user://test_content_*` folders. A GUT run in another worktree shares those folders. All five passed alone, and the full rerun passed.
 
 ## 3. Rate-limit headroom (Q3)
 

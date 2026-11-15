@@ -234,5 +234,6 @@ Other (was in Milestone G):
     - Solo and the host's own player still send one intent a frame, applied on that frame.
   - Results:
     - After the change, the same probe lost 0 intents, refused 0 and snapped 0 times in all 11 runs, including 2% loss, 1% reordering and 1 s host frames. The client's throttle stayed at 32/32.
-    - GUT 218 scripts, 1916 of 1916 on `main` at e15369b merged in. Import 0 error lines; smoke clean. The playground host plus client on 7788 had 0 error lines.
+    - GUT 220 scripts, 1952 of 1952 on `main` at 9b90289 merged in. Second import 0 error lines; smoke clean.
+    - On 7788: a 1 s host freeze lost, refused and snapped nothing, and the playground host plus client had 0 error lines.
   - Not archived: waiting for the owner's review.
