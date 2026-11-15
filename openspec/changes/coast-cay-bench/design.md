@@ -5,19 +5,20 @@
 - A workbench is level furniture. `IslandLayoutData.workbench_glyph` names it. `IslandLayout._read_cell` records the cell in `built.workbench`, and `SandbarIsland.furnish` adds one `Workbench` to the session on every peer, at the path `HutWorkbench`, when the layout has one (`game/scenes/levels/sandbar_island.gd`, `BENCH_NAME`). `IslandTravel._clear_level` frees it when the party moves on.
 - The sandbar's bench is its `W` glyph, a hut cell on BEACH, in `shade_glyphs` because it is inside the hut. The coast cay layout has no `workbench_glyph` and no `W`.
 - A fire site is placed at the bench (crafting-inventory "Placing a build site"). The player must be within `PlayerBody.HOLD_REACH_PX` (18 px) of the bench, so they stand in its 3×3. The host then puts the site on the player's own cell, or on the free cell nearest them within 1 tile. A placed fire can therefore land up to 2 tiles from the bench.
-- The fire recipe is 3 driftwood plus 1 item tagged TINDER. The lighter (fire-lighting tool) cuts the work from 30 s to 1 s. On the coast cay the cache holds the lighter and the beach holds 8 driftwood. `dry_grass` is the only TINDER item, and it lies only on the sandbar.
+- The fire recipe is 3 driftwood plus 1 item tagged TINDER. The lighter (fire-lighting tool) cuts the work from 30 s to 1 s. On the coast cay the cache holds the lighter and the beach holds 8 driftwood. `dry_grass` is the only TINDER item, and before this change it lay only on the sandbar.
 - `guardacostas-stealth` (docs merged in #50, build in progress) runs a patrol boat round each island's hull, pushed 4 tiles out. Its searchlight lights about 60% of the coast cay's land in one lap. Its smoke rule sees a lit fire within 2 tiles of the sea at night, and within 6 tiles by day, where the sea is deep or shallow water joined to the map edge.
 
 ## Goals / Non-Goals
 
 **Goals:**
 - One workbench on the coast cay, placed by data, near the landing, on walkable land in the lee, off every path and pick-up, and outside the searchlight's coverage.
+- Tinder on the cay itself, so a player who lands with nothing can light a fire there (owner, 2026-11-14).
 - A solo player can light a fire there. In co-op the bench and the fire show on every peer.
 
 **Non-Goals:**
 - Renaming the session node `HutWorkbench` (a code constant the tests use). The coast cay's bench uses the same name.
 - Bench art beyond the existing one-frame workbench look, a second bench, a stone-ring fire, or refuelling.
-- Tinder on the cay, unless the owner chooses it (see Open Questions).
+- New tinder items, regrowing grass or a grass-cutting tool.
 
 ## Decisions
 
@@ -56,12 +57,12 @@ The best is (16, 39):
 | Walk from landing cell 1 (4-neighbour steps over land and shallows) | 9 steps, about 2.3 s at 4 tiles/s |
 | Light on the bench cell and its 8 neighbours in one lap | 0 s |
 | Nearest lit cell | (14, 39), 2 tiles west, which faces the open sea |
-| Lit cells within 2 tiles | 6, all on the west side: (14, 37–41) and (15, 41) |
+| Lit cells within 2 tiles | 6, all on the west or south-west side: (14, 37–41) and (15, 41) |
 | Nearest sea | the bay, 5 tiles east |
 | Every cell within 2 tiles more than 2 tiles from the sea | yes, so a night fire anywhere a bench fire can land raises no smoke alert |
 | Day smoke | within 6 tiles of the sea, so a day fire is seen, as almost every day fire on this island is (stealth notes: every day fire on both islands is within 6 tiles of the sea) |
 | Free land neighbours | 8 |
-| Nearest other feature | the palm at (18, 40), 2.2 tiles |
+| Nearest other features | the palm at (18, 40), and the dry grass at (15, 37) and (17, 37) (D4), each 2.2 tiles |
 
 Alternatives:
 - **The middle of the north arm (row 22).** It is the only stretch where every cell within 2 tiles is dark, but it is 32 or more steps (8 s or more) from the landing. Rejected: the bench should be by the landing.
@@ -80,12 +81,18 @@ These pieces of code read the bench cell, and they now apply on the coast cay, w
 
 Full GUT is the check that no pinned expectation moved. Any that did is listed in tasks.md with the reason.
 
-### D4. Tests
+### D4. Two dry grass on the dune beside the bench
+
+The owner chose "Bench + 2 dry grass (Recommended)" on 2026-11-14. The grass uses a new glyph, `h` (*hierba*): `y` is the cay's aloe and stays so. `"h": 4` (DUNE) is in the legend, and one pick-up entry gives `dry_grass`, count 1, group `dune`, no respawn, as the sandbar's three do. The grass lies on (15, 37) and (17, 37), which were already dune, so the land count and the hull stay as they are. Both cells are dark in the lap re-run, and both lie 2 tiles north of the bench, outside its 8 neighbours, so a site at the bench never lands on them.
+
+The option's first wording said "on the north dune near the bench". It was written before the bench's cell was chosen. The cache's north dune (rows 15–19) is about 10 s from the bench, while the west arm's own dune runs up to row 38, just north of the bench. "Near the bench" therefore wins, and the grass sits on that dune. Two, not the sandbar's three: one fire and one spare. The cay's fire also needs 3 of its 8 driftwood, and the raft needs 6. That is 9 driftwood for a fire and a raft, so a player who wants both has to wait for a squall's refresh or bring wood. That is a fair trade, logged as a risk.
+
+### D5. Tests
 
 - **`test_coast_cay_bench.gd`, 1 player, offline:**
   - layout checks: the bench cell, its terrain, no shade, no overlap, reach from every landing cell, the 1–4 s walk, the smoke margin;
   - a shell solo run that travels to the coast cay;
-  - the player takes the lighter from the cache and 3 driftwood from the beach with real pick-ups, and carries one dry grass as if from the sandbar;
+  - the player lands carrying nothing and takes the lighter from the cache, 3 driftwood from the beach and 1 dry grass from beside the bench, all with real pick-ups;
   - they place a fire site through `CoopSession.craft_for` at the session's bench and deposit through `deposit_for`;
   - they work it: no fire at 0.9 s, a lit fire at 1 s, and the lighter at 19 uses.
 - **`test_coast_cay_bench_net.gd`, host and client over ENet (NetHarness):**
@@ -102,7 +109,7 @@ Full GUT is the check that no pinned expectation moved. Any that did is listed i
 - **Campfire/DST.** Rejected: DST's campfire needs no station or prototype. It is made from logs and grass wherever the player stands, and players build them at temporary camps far from base. The fetch covered only the page's first 100k characters, so "no placement limit" is as far as that part reads. We keep fire sites bench-placed (owner, inventory-hud, 2026-11-08), so an island where fire should be possible needs a bench. That is this change.
 - **Science Machine/DST.** Rejected: in DST the player builds the station anywhere. The wiki says only that the player stands "near" it, and gives no range. REFERENCE_DST already advises level-placed benches, because islands are left behind. This change places one by level data.
 - **Spawn Biome.** Borrowed: players start where basic resources are a short walk away. The bench is 2 s from the landing, as the cay's raft site is 3 s.
-- **Grass Tuft.** Noted for the open question: DST's tinder (cut grass) grows in large clusters in most biomes and regrows in about three days. That argues for tinder on every island where a fire is expected.
+- **Grass Tuft.** Borrowed in part: DST's tinder (cut grass) grows in large clusters in most biomes and regrows in about three days, so a fire is possible wherever players camp. The cay gets its own tinder (D4). Regrowth is rejected for now: islands stay mostly finite, as REFERENCE_DST's "Resource regrowth" advises.
 
 ### Shattered Pixel Dungeon (`reference/shattered-pixel-dungeon`)
 
@@ -124,12 +131,8 @@ Full GUT is the check that no pinned expectation moved. Any that did is listed i
 - **[A displaced fire 2 tiles west of the bench can be lit by the beam.]** It happens only when the player's own cell is taken and the nearest free one is on the west side. Five of the six lit cells within 2 tiles are on column 14. → The cell under the player is the first choice, and every cell within 1 tile is dark, so a player who stands on or east of the bench gets a dark fire. A night fire anywhere there raises no smoke alert.
 - **[The patrol is not built yet.]** The coverage numbers come from the stealth design's own algorithm, re-run, and they reproduce its table exactly. → A note for the guardacostas-stealth build is in the shared notes folder: pin "the coast cay bench and its 8 neighbours are never lit in one lap" when the lap simulation exists.
 - **[Pinned expectations in secret-cay or arrival-scatter tests may move]** (D3). → Full GUT. Any change is explained in tasks.md, never edited away silently.
-- **[No tinder on the cay.]** → Open question.
+- **[A fire and a raft need 9 driftwood, and the cay holds 8.]** → The cay's driftwood returns after a squall, and a player can carry wood from the sandbar. Raft first is still possible with 2 to spare. Retune at the playtest if it bites.
 
 ## Open Questions
 
-- **Tinder on the coast cay** (sent to the coordinating session, 2026-11-14):
-  - (a) Add 2 dry grass on the north dune near the lighter. This is data only, and it changes "Coast cay contents".
-  - (b) Bench only, with tinder carried from the sandbar.
-
-  This change ships (b) unless the owner picks (a) before it merges.
+None. The tinder question was answered by the owner on 2026-11-14 (D4).

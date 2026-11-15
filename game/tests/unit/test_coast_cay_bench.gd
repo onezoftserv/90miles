@@ -2,9 +2,9 @@ extends GutTest
 ## island-generation "Coast cay workbench", "Coast cay workbench out of the patrol's sight" and
 ## "Fire at the coast cay's workbench" (coast-cay-bench), with exactly 1 player, offline: the bench
 ## is layout data on an unshaded beach cell that holds nothing else, every landing cell reaches it,
-## the first within 1-4 s, no fire placed at it is within 2 tiles of the sea, and a solo player who
-## lands on the cay lights a fire there with the cache's lighter, the beach's driftwood and dry grass
-## carried from the sandbar.
+## the first within 1-4 s, no fire placed at it is within 2 tiles of the sea, 2 dry grass lie on the
+## dune beside it (owner, 2026-11-14), and a solo player who lands on the cay carrying nothing lights
+## a fire there with the cache's lighter, the beach's driftwood and that dry grass.
 
 const COAST_PATH: String = "res://resources/islands/coast_cay.tres"
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
@@ -171,6 +171,24 @@ func test_every_landing_cell_reaches_the_bench_and_the_first_within_1_to_4_s() -
 	assert_between(seconds, 1.0, 4.0, "the walk from the first landing cell in seconds")
 
 
+func test_two_dry_grass_lie_on_the_dune_beside_the_bench() -> void:
+	var bench: Vector2i = built.workbench
+	var grass: Array[Dictionary] = []
+	for pickup: Dictionary in built.pickups:
+		if pickup["item_id"] == &"dry_grass":
+			grass.append(pickup)
+	assert_eq(grass.size(), 2, "two dry grass pick-ups")
+	for pickup: Dictionary in grass:
+		var cell: Vector2i = pickup["cell"]
+		var off: Vector2i = (cell - bench).abs()
+		assert_eq(pickup["count"], 1)
+		assert_eq(pickup["respawn"], DataEnums.RespawnTrigger.NEVER, "the cay's tinder does not come back")
+		assert_eq(built.terrain.terrain_at(cell), DataEnums.Terrain.DUNE, "%s is dune" % cell)
+		assert_lte(maxi(off.x, off.y), 3, "%s is within 3 tiles of the bench" % cell)
+		assert_gt(maxi(off.x, off.y), 1, "%s is outside the bench's 8 neighbours, where its sites go" % cell)
+		assert_true(built.reachable_from(built.landing_cells()[0]).has(cell), "%s can be reached" % cell)
+
+
 # --- one player lights a fire at the bench ---------------------------------------------------------------
 
 func _shell() -> GameShell:
@@ -243,10 +261,10 @@ func test_solo_lights_a_fire_at_the_coast_cays_bench() -> void:
 	if bench == null:
 		return
 	assert_eq(bench.position, IslandLayout.cell_center(shell.island.built.workbench), "on the layout's cell")
-	# Tinder carried over the crossing: the cay itself holds none (coast-cay-bench, open question).
-	body.inventory.add(&"dry_grass", 1)
+	assert_eq(body.inventory.count_id(&"dry_grass"), 0, "the player lands carrying no tinder")
 	assert_eq(_take(shell, body, &"lighter", 1), 1, "the rope cache's lighter")
 	assert_eq(_take(shell, body, &"driftwood", 3), 3, "3 driftwood off the beach")
+	assert_eq(_take(shell, body, &"dry_grass", 1), 1, "dry grass off the dune beside the bench")
 	assert_eq(_lighter_uses(body), 20)
 	body.global_position = bench.global_position + Vector2(0.0, IslandLayout.TILE)
 	assert_true(session.craft_for(1, &"fire", session.get_path_to(bench)), "the fire is chosen at the bench")

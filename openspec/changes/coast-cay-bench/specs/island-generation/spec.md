@@ -23,14 +23,24 @@ The coast cay's workbench SHALL stand where a fire placed at it is hidden from t
 - **THEN** every one is more than 2 tiles
 
 ### Requirement: Fire at the coast cay's workbench
-A player within reach of the coast cay's workbench SHALL be able to place fire and rain-catcher sites there, as at any workbench (crafting-inventory "Workbench", "Placing a build site"). The bench, and what is built at it, SHALL reach every peer. Exactly 1 player, offline, places and lights a fire there alone.
+A player within reach of the coast cay's workbench SHALL be able to place fire and rain-catcher sites there, as at any workbench (crafting-inventory "Workbench", "Placing a build site"). The cay holds everything a fire needs: the cache's lighter, the beach's driftwood and its own dry grass. The bench, and what is built at it, SHALL reach every peer. Exactly 1 player, offline, places and lights a fire there alone with what the cay holds.
 
 #### Scenario: A solo player lights a fire at the coast cay's bench
-- **GIVEN** one offline player who has landed on the coast cay, carrying one dry grass from the sandbar
-- **WHEN** they take the lighter from the rope cache and 3 driftwood from the beach, choose the fire at the bench, deposit everything and work the site
+- **GIVEN** one offline player who has landed on the coast cay carrying nothing
+- **WHEN** they take the lighter from the rope cache, 3 driftwood from the beach and 1 dry grass from the dune beside the bench, choose the fire at the bench, deposit everything and work the site
 - **THEN** there is no fire at 0.9 s, one lit fire stands at 1 s within 2 tiles of the bench, and the lighter has 19 uses left
 
 #### Scenario: The bench and its fire on a client
 - **GIVEN** a host and a client whose party has travelled to the coast cay
 - **WHEN** the client's player places a fire site at the bench, and the fire is built
 - **THEN** the client's bench stands where the host's does, on the layout's bench cell, and the client's copy of the fire is lit where the host's is
+
+## MODIFIED Requirements
+
+### Requirement: Coast cay contents
+The coast cay SHALL hold the observation post on the rocky point (4 nails, 1 mirror; a dead radio and two wall slogans as signs; the only shade), the lagoon, 4 aloe on a dune, a rope cache on the north dune (4 rope, 1 lighter, a crossed-stick sign), a flotsam line (2 inner tubes, 2 plastic jugs), 8 driftwood, 2 dry grass on the dune beside the workbench, 5 palms with 10 coconuts and the raft build site. This changes the counts in `docs/ISLANDS.md` §2, which listed no dry grass. Flotsam and driftwood return after a squall; the dry grass does not. Counts are fixed, not scaled by party size. Exactly 1 player finds the same counts.
+
+#### Scenario: The coast cay loads
+- GIVEN the coast cay layout file
+- WHEN the island is built
+- THEN it has 5 palms holding 10 coconuts, its pick-ups are 4 nails and 1 mirror at the post, 4 aloe on the dune, 4 rope and 1 lighter in the cache, 2 inner tubes and 2 plastic jugs on the flotsam line, 8 driftwood on the beach and 2 dry grass on the dune within 3 tiles of the workbench, it has 4 signs (the radio and two slogans at the post, and the crossed-stick sign), one lagoon drinking spot and one raft build site, and the post's cells are the only shaded cells

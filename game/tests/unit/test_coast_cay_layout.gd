@@ -78,7 +78,7 @@ func test_the_coast_cay_loads() -> void:
 	var items: Dictionary = _by_item()
 	var expected: Dictionary = {
 		&"nails": 4, &"mirror": 1, &"aloe": 4, &"rope": 4, &"lighter": 1,
-		&"inner_tube": 2, &"plastic_jug": 2, &"driftwood": 8,
+		&"inner_tube": 2, &"plastic_jug": 2, &"driftwood": 8, &"dry_grass": 2,
 	}
 	assert_eq(items, expected)
 	for pickup: Dictionary in built.pickups:
