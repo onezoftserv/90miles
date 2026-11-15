@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_modifier"]
+[ext_resource type="Texture2D" uid="uid://tu320w5icbct" path="res://assets/art/items/military_belt.png" id="icon_military_belt"]
+
+[sub_resource type="Resource" id="Resource_mod0"]
+script = ExtResource("2_modifier")
+stat = 5
+op = 1
+value = 2.0
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_military_belt")
+description_es = "Cinto verde olivo con más bolsillos que un revendedor. Dos huecos más pa' cargar."
+description_en = "An olive-green belt with more pockets than a revendedor. Two more slots to carry."
+category = 5
+tags = Array[int]([5])
+weight = 0.5
+equip_slot = 7
+modifiers = Array[ExtResource("2_modifier")]([SubResource("Resource_mod0")])
+id = &"military_belt"
+name_es = "Cinto militar"
+name_en = "Military belt"

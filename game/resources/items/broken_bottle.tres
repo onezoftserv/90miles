@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="3_effect"]
+[ext_resource type="Texture2D" uid="uid://cm0wyft1wk5tx" path="res://assets/art/items/broken_bottle.png" id="icon_broken_bottle"]
+
+[sub_resource type="Resource" id="Resource_cut"]
+script = ExtResource("3_effect")
+kind = 4
+target = 1
+status = 1
+duration_s = 10.0
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_broken_bottle")
+description_es = "El cuello de una botella de ron con el filo que le dejó la piedra. Corta, brilla y no dura na'."
+description_en = "The neck of a rum bottle with the edge the rock left on it. It cuts, it shines, and it doesn't last."
+category = 3
+tags = Array[int]([2, 3, 6])
+weight = 0.3
+durability = 5
+hit_effects = Array[ExtResource("3_effect")]([SubResource("Resource_cut")])
+weapon_class = 1
+weapon_damage = 8.0
+id = &"broken_bottle"
+name_es = "Botella rota"
+name_en = "Broken bottle"

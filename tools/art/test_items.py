@@ -147,11 +147,12 @@ class BuildTests(unittest.TestCase):
 
 class TrackedRecipeTests(unittest.TestCase):
     def test_the_recipe_names_every_item_and_its_hand_sources(self):
-        # The 14 items of art-pass, the 4 secret items of secret-cay and the 4 of content-batch-3.
+        # The 14 items of art-pass, the 4 secret items of secret-cay, the 26 of content-batch-3 and
+        # the 26 of content-batch-4.
         recipe = items.load_recipe()
         ids = [entry["id"] for entry in recipe["icons"]]
-        self.assertEqual(len(ids), 44)
-        self.assertEqual(len(set(ids)), 44)
+        self.assertEqual(len(ids), 70)
+        self.assertEqual(len(set(ids)), 70)
         for entry in recipe["icons"]:
             if "hand" in entry:
                 self.assertTrue((items.DEFAULT_FIXES / entry["hand"]).is_file(), entry["hand"])

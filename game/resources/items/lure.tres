@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_modifier"]
+[ext_resource type="Texture2D" uid="uid://c7p756f5qqrgb" path="res://assets/art/items/lure.png" id="icon_lure"]
+
+[sub_resource type="Resource" id="Resource_mod0"]
+script = ExtResource("2_modifier")
+stat = 9
+value = 2.0
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_lure")
+description_es = "Una cucharita brillosa con anzuelo: los peces pican el doble. Si te metes al agua con ella, la picúa viene pa' ti."
+description_en = "A shiny little spoon with a hook: the fish bite twice as often. Go in the water with it and the picúa comes for you."
+category = 3
+tags = Array[int]([2, 6])
+weight = 0.1
+modifiers = Array[ExtResource("2_modifier")]([SubResource("Resource_mod0")])
+id = &"lure"
+name_es = "Señuelo"
+name_en = "Lure"

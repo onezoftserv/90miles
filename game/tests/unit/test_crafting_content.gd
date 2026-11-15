@@ -61,6 +61,7 @@ func test_knife() -> void:
 	var knife := _item(&"knife")
 	assert_true(knife.capabilities.has(DataEnums.Capability.OPEN_COCONUT))
 	assert_true(knife.capabilities.has(DataEnums.Capability.OPEN_CAN), "content-batch-3: a knife opens cans")
+	assert_true(_item(&"pliers").capabilities.has(DataEnums.Capability.OPEN_CAN), "content-batch-4: so do the pliers")
 	assert_eq(knife.durability, 40)
 
 

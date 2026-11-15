@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_item"]
+[ext_resource type="Texture2D" uid="uid://fitseyoe3msj" path="res://assets/art/items/flint_steel.png" id="icon_flint_steel"]
+
+[resource]
+script = ExtResource("1_item")
+sprite = ExtResource("icon_flint_steel")
+description_es = "Una piedra y un pedazo de acero. Diez segundos de chispazos y hay candela, sin gastar na'."
+description_en = "A stone and a piece of steel. Ten seconds of sparks and there's candela, and nothing gets used up."
+category = 3
+tags = Array[int]([2])
+weight = 0.2
+capabilities = Array[int]([19])
+tool_action_time_s = 10.0
+id = &"flint_steel"
+name_es = "Pedernal y eslabón"
+name_en = "Flint and steel"
