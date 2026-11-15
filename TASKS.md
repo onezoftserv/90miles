@@ -97,8 +97,8 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 
 ## 6. Milestone D — Threats and stealth
 
-- [ ] `guardacostas-stealth`: patrol loop, searchlight cone, hidden states, smoke/noise bus. The conch horn's `NOISE` radius 15 (content-batch-4) is the first item noise on the bus; `EffectApplier` skips it until then
-- [ ] Shore squad, capture, free-a-captive, `la_captura` scene; with capture at sea, the `almendron_hundido` gate test (`balsero-lore` 9b.1)
+- [x] `guardacostas-stealth`: patrol loop, searchlight cone, hidden states, smoke/noise bus. The OpenSpec change was written on 2026-11-14 (docs PR #50). The owner chose the recommended option on all ten decisions and approved the build, which was done test-first on 2026-11-14 (see Done). Not archived. The conch horn's `NOISE` radius 15 (content-batch-4) is the first item noise on the bus, and `EffectApplier` now routes it there.
+- [ ] `guardacostas-capture`, hooked to `patrol_alerted`: chase, shore squad, capture, free-a-captive, the `la_captura` scene, the previous-island restart and capture on the final crossing. With capture at sea, it also covers the `almendron_hundido` gate test (`balsero-lore` 9b.1).
 - [ ] Eels, barracuda, man o' war, mosquitoes, crocodile grab, fire ants, manchineel
 - [ ] Bosses: cutter chase, old crocodile nest, tiger shark dives
 - [ ] Lighthouse, storm key, shipwreck reef and final approach chains
@@ -260,3 +260,16 @@ Other (was in Milestone G):
   - Stepping reuses the walk, ui and slot actions instead of two new actions, because inventory-hud "Inputs do not collide" forbids an input on two actions.
   - Tests: `test_spectate_view.gd` (offline, 22 cases), `test_dead_spectate_net.gd` (6, host plus clients), `test_dead_spectate_crossing_net.gd` (2, a real swim crossing and the coast cay landing), a solo shell case, and `tests/manual/dead_spectate_run.gd`, two processes on UDP 7787 (host 6 of 6, client 10 of 10, 0 error lines). Closes the coast-cay follow-up "a spectate camera for waiting riders" and ui-shell proposal question 7.
 - 2026-11-14: `coast-cay-bench` built test-first on `claude/coast-cay-bench-68ec0f` (data only: `coast_cay.tres` gets `W` at (16, 39) and `workbench_glyph`, plus 2 dry grass (`h`) on the dune beside it, the owner's choice). The cell was picked by re-running the guardacostas-stealth lap per cell; the re-run reproduces its 621 lit and 350 spotted of 1,021. The bench and its 8 neighbours are never lit, and every cell a bench fire can land on is more than 2 tiles from the sea. New tests: `test_coast_cay_bench.gd` (layout and a 1-player fire at the bench with the cay's own lighter, driftwood and dry grass, offline) and `test_coast_cay_bench_net.gd` (the bench and its fire on a client); the bench joins the reach goals in `test_coast_cay_layout.gd`. GUT 221 scripts, 1942 of 1942 on main 9b90289; second import 0 error lines; smoke clean.
+- 2026-11-14: `guardacostas-stealth` built test-first on `claude/guardacostas-stealth-build`. It covers the detection slice only, and the owner chose the recommended option on all ten decisions.
+  - **The patrol boat** (`patrol_boat.tres`, `PatrolRoute`) circles the island 4 tiles outside its convex hull: 20 s on the horizon, then a 100 s lap from the east end, then out of sight. There is one boat on the sandbar, one or two on the coast cay (the roll is seeded from the run seed and the island id), plus one per 2 players, spread evenly in time. There is none on the secret cay. A squall keeps the boats in port, and each boat runs its own horizon warning before coming back.
+  - **The searchlight**, at night only, is a 60° cone, 10 tiles long, sweeping 30°/s over a 120° arc, tested as host geometry. Fog turns it off.
+  - **The spot meter** fills 1 s per second and drains 0.5 s per second; a player is spotted at 2 s. `PatrolWatch` steps it once per tick across every boat, and dropped players have none.
+  - **Hidden states:** brush when crouching; mangrove and roofed cells in any posture; dives.
+  - **Triggers:** smoke (night 2 tiles, day 6, once per fire per lap), noise (radius 8 within that radius) and water (6 tiles).
+  - **The world event bus** is `WorldEvents`, a session child. NOISE and SMOKE effects and lit fires feed it.
+  - **The alert:** the light locks on the spotted player, sweeps their last known position for 20 s, then the boat gives up. `patrol_alerted` is reported for `guardacostas-capture`.
+  - **Every peer** draws the boat and its cone from the synced loop clock and aim, and `net_spot` drives the open-eye mark. There is a horizon light on the HUD band and the formal-Spanish loudhailer lines.
+  - **Checks:** after merging main at cb7834f, GUT 243 scripts, 2212 tests, all passing; import and smoke clean. A host and a client as two processes on UDP 7789 (`tests/manual/patrol_run.gd`) passed 22 and 18 checks with 0 error lines. Captures are in `docs/guardacostas-stealth/`.
+  - **Found by the two-process run:** a client that joins and then travels to the host's island now draws the boat on that island's loop.
+  - **Review fixes:** the squall restart, dropped players, per-kind trigger rules, the watch's empty case and a stricter content check.
+  - Deviations are in the change's design.md "Changes from the build plan". Not archived.

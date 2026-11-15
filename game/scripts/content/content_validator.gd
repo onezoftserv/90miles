@@ -45,6 +45,7 @@ static func _validate_type(catalog: ContentCatalog, type: StringName) -> PackedS
 			errors.append("%s: name_es is empty" % where)
 		errors.append_array(_check_references(catalog, where, data))
 		errors.append_array(_check_secret(where, data))
+		errors.append_array(_check_patrol(where, data))
 	return errors
 
 
@@ -54,6 +55,40 @@ static func _check_secret(where: String, data: ContentData) -> PackedStringArray
 	if item != null and item.tags.has(DataEnums.ItemTag.SECRET) and item.spawn_weight > 0.0:
 		return PackedStringArray(["%s: a secret item must have spawn_weight 0, not %s" % [where, item.spawn_weight]])
 	return PackedStringArray()
+
+
+# guardacostas-stealth: a PATROL-tagged creature has a patrol part whose lap fits its period,
+# whose cone and range make a light, whose meter drains and which has loudhailer lines.
+static func _check_patrol(where: String, data: ContentData) -> PackedStringArray:
+	var errors: PackedStringArray = []
+	var creature := data as CreatureData if data is CreatureData else null
+	if creature == null or not creature.creature_tags.has(DataEnums.CreatureTag.PATROL):
+		return errors
+	var patrol: PatrolData = creature.patrol
+	if patrol == null:
+		errors.append("%s: a PATROL creature needs a patrol part" % where)
+		return errors
+	if patrol.route_lap_s >= patrol.route_period_s - patrol.horizon_warning_s:
+		errors.append("%s: route_lap_s %s must be shorter than route_period_s %s minus horizon_warning_s %s" % [where, patrol.route_lap_s, patrol.route_period_s, patrol.horizon_warning_s])
+	if patrol.route_lap_s <= 0.0:
+		errors.append("%s: route_lap_s must be above 0" % where)
+	if patrol.spot_time_s <= 0.0:
+		errors.append("%s: spot_time_s must be above 0" % where)
+	if patrol.alert_s <= 0.0:
+		errors.append("%s: alert_s must be above 0" % where)
+	if patrol.searchlight_cone_deg <= 0.0 or patrol.searchlight_cone_deg > 180.0:
+		errors.append("%s: searchlight_cone_deg %s must be above 0 and at most 180" % [where, patrol.searchlight_cone_deg])
+	if patrol.searchlight_range_tiles <= 0.0:
+		errors.append("%s: searchlight_range_tiles must be above 0" % where)
+	if patrol.spot_drain_per_s <= 0.0:
+		errors.append("%s: spot_drain_per_s must be above 0" % where)
+	for lines: Array in [
+		["alert_lines_es", patrol.alert_lines_es], ["alert_lines_en", patrol.alert_lines_en],
+		["give_up_lines_es", patrol.give_up_lines_es], ["give_up_lines_en", patrol.give_up_lines_en],
+	]:
+		if (lines[1] as PackedStringArray).is_empty():
+			errors.append("%s: %s needs at least one line" % [where, lines[0]])
+	return errors
 
 
 ## Checks the references `obj` declares (a ContentData entry or an embedded DataPart), then

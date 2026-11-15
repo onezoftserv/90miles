@@ -140,6 +140,8 @@ var clock: Callable
 var phrases: QuickChatPhrases
 ## Language of bubble and HUD text; Spanish first until a settings screen exists.
 var locale: String = DEFAULT_LOCALE
+## The world event bus (guardacostas-stealth): a child node, added in _ready; acts on the host only.
+var events: WorldEvents = null
 var run_record: RunRecord = RunRecord.new()  # Host: this run's flags, creature counts and effect limits (never sent).
 ## Host, in a rematch (art-pass "Look slots in a rematch"): the look slot each peer kept from the
 ## run that ended, by peer id (nobody reconnects, so the ids stay). The shell sets it before
@@ -195,6 +197,9 @@ func _ready() -> void:
 	player_spawner.spawn_function = _spawn_player
 	pickup_spawner.spawn_function = _spawn_pickup
 	entity_spawner.spawn_function = _spawn_entity
+	events = WorldEvents.new()
+	events.name = &"WorldEvents"
+	add_child(events)
 	if phrases == null:
 		phrases = QuickChatPhrases.from_catalog(GameState.content)
 
@@ -1003,7 +1008,7 @@ static func checked_arrivals(arrivals: Dictionary) -> Variant:
 
 
 ## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.
-func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> SpeechBubble:
+func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null, show_s: float = SpeechBubble.SHOW_S) -> SpeechBubble:
 	var old := speaker.get_node_or_null(NodePath(BUBBLE_NAME))
 	if old != null:
 		speaker.remove_child(old)
@@ -1012,6 +1017,7 @@ func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> Sp
 	bubble.name = BUBBLE_NAME
 	bubble.text = text
 	bubble.voice = voice
+	bubble.show_s = show_s
 	speaker.add_child(bubble)
 	return bubble
 

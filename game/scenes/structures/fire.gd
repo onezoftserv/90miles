@@ -46,6 +46,10 @@ func on_built(_recipe: RecipeData) -> void:
 
 func light() -> void:
 	_burn()
+	# Smoke rises on the session's world event bus, on the host only (guardacostas-stealth).
+	var bus := WorldEvents.of(self)
+	if bus != null:
+		bus.raise_smoke(global_position, self)
 	for node: Node in get_tree().get_nodes_in_group(PlayerBody.GROUP):
 		var player := node as PlayerBody
 		var radius_px: float = player.meters.tuning.company_radius_tiles * PlayerBody.TILE_SIZE

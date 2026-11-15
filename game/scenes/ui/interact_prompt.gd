@@ -348,8 +348,8 @@ func _over_player(player: PlayerBody) -> Vector2:
 	var origin: Vector2 = (to_hud.call(canvas.origin) as Vector2).round()
 	var label_top: Vector2 = to_hud.call(canvas * Vector2(0.0, NameTag.label_top_over(player)))
 	var bottom: float = roundf(label_top.y) - PLAYER_GAP_PX
-	if is_instance_valid(marks) and marks.has_mark(player):
-		bottom = minf(bottom, marks.mark_rect(player).position.y - PLAYER_GAP_PX)
+	if is_instance_valid(marks) and marks.has_marker(player):
+		bottom = minf(bottom, marks.marker_rect(player).position.y - PLAYER_GAP_PX)
 	return Vector2(origin.x, bottom)
 
 

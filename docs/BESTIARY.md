@@ -162,13 +162,27 @@ The same species, the laughing gull Cubans call *galleguito*, and the same attit
 
 **Lore.** Twelve-meter patrol boats out of Mariel and Matanzas. The crews are kids doing service and one sergeant who has done this for years.
 
-**Behavior.** `route → spotlight → chase → board`
-- Runs a fixed loop around coast-chain islands, 3-minute period, visible on the horizon 20 s before it passes.
-- Night: searchlight cone (60°, 10 tiles) sweeps the beach and water. Any player in the cone for 2 s is **spotted**.
-- Spotted → the boat chases anything in the water (speed 2× swimmer) and launches a **shore squad** if the party is on land.
-- Also triggered by **smoke** (any fire 2 tiles from cover) and **noise** (gunshots, breaking wood near the shore).
+**Behavior.** `route → spotlight → alert → chase → board` (built: route, spotlight and alert; chase and board come with `guardacostas-capture`)
+- **The loop.** It runs round the whole island, 4 tiles outside its convex hull. Each 3-minute period has three parts:
+  - 20 s as a light on the horizon;
+  - a 100 s lap that starts and ends at the windward (east) end;
+  - out of sight for the rest of the period.
+- **Numbers.** One boat on the sandbar, one or two on the coast cay, plus one per 2 players. Experiencia adds 10 s per level to the period. A squall keeps it in port.
+- **Night: the searchlight.** A 60° cone, 10 tiles long, sweeps back and forth at 30°/s over a 120° arc facing the island.
+- **The spot meter.** A player lit and not hidden fills it 1 s per second; otherwise it drains 0.5 s per second. At 2 s the player is **spotted**, plus 1 s per Stealth level, up to +3.
+- **Spotted → alert.** The boat stops and the loudhailer calls out. The light locks on the player while they stay visible within 10 tiles. Once they hide or get away, it sweeps their last known position for 20 s, then the boat resumes its lap.
+- **Later, with capture:** the boat chases anything in the water (2× swimmer speed) and launches a **shore squad** if the party is on land.
+- **Other triggers, while the boat is in sight:**
+  - **Smoke:** a lit fire within 2 tiles of the sea at night, never one under a roof; or any lit fire within 6 tiles of the sea by day. Once per fire per lap.
+  - **Noise:** radius 8 tiles or more, when the boat is within that radius.
+  - **Water:** a swimmer within 6 tiles of the boat is spotted at once, unless diving.
 
-**Counters.** Learn the loop; cross right after it passes. At night: crouch in brush (hidden), dive under water (hidden 5 s), stand in mangroves (hidden). Put fires out when the horizon shows a light. Stealth skill lengthens all hidden timers.
+**Counters.** Learn the loop, and cross right after it passes. At night:
+- crouch in brush (hidden);
+- stand in mangroves or under a roof, the hut or the observation post (hidden in any posture);
+- dive (hidden for 5 s).
+
+Light night fires inland or in the hut, and put fires out while the horizon shows a light. Fog makes the searchlight useless. Stealth skill lengthens the spot time.
 
 **Reference.** Brogue stealth range and noise system.
 

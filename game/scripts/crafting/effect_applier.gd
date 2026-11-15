@@ -38,10 +38,28 @@ static func apply_now(effect: EffectData, actor: PlayerBody, target: PlayerBody)
 			_set_flag(effect, actor, true)
 		EffectData.Kind.CLEAR_FLAG:
 			_set_flag(effect, actor, false)
+		EffectData.Kind.NOISE:
+			_make_noise(effect, actor)
+		EffectData.Kind.SMOKE:
+			_raise_smoke(actor)
 		_:
 			if not _warned.has(effect.kind):
 				_warned[effect.kind] = true
 				push_warning("EffectApplier: kind %s is not built yet, skipped" % EffectData.Kind.keys()[effect.kind])
+
+
+# NOISE and SMOKE go to the session's world event bus (guardacostas-stealth), at the actor. The bus
+# acts only on the host, which is where effects apply; a body in no session raises nothing.
+static func _make_noise(effect: EffectData, actor: PlayerBody) -> void:
+	var bus := WorldEvents.of(actor)
+	if bus != null:
+		bus.make_noise(actor.global_position, effect.radius_tiles, effect.ref_id if not effect.ref_id.is_empty() else &"effect")
+
+
+static func _raise_smoke(actor: PlayerBody) -> void:
+	var bus := WorldEvents.of(actor)
+	if bus != null:
+		bus.raise_smoke(actor.global_position, null)
 
 
 static func _subject(effect: EffectData, actor: PlayerBody, target: PlayerBody) -> PlayerBody:
