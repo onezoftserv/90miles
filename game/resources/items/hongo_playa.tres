@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_cpdlu"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_n4gp2"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_g6ys5"]
+[ext_resource type="Texture2D" uid="uid://bpu4imy61ndxl" path="res://assets/art/items/hongo_playa.png" id="4_lcddj"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_hor25"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_g1egu"]
+
+[sub_resource type="Resource" id="Resource_xri4i"]
+script = ExtResource("1_cpdlu")
+kind = 4
+status = 8
+duration_s = 120.0
+chance = 0.4
+roll_group = 1
+
+[sub_resource type="Resource" id="Resource_786yc"]
+script = ExtResource("1_cpdlu")
+meter = 2
+amount = 10.0
+chance = 0.6
+roll_group = 1
+
+[sub_resource type="Resource" id="Resource_v4f8j"]
+script = ExtResource("5_hor25")
+time_s = 1.0
+effects = Array[ExtResource("1_cpdlu")]([SubResource("Resource_xri4i"), SubResource("Resource_786yc")])
+
+[resource]
+script = ExtResource("3_g6ys5")
+description_es = "Hongo de playa. A veces llena la barriga; a veces te pone a hablar con las gaviotas. Es cara o cruz, mi socio."
+description_en = "Beach mushroom. Sometimes it fills your belly; sometimes it has you chatting with the gulls. Heads or tails, mi socio."
+sprite = ExtResource("4_lcddj")
+category = 2
+tags = Array[int]([0, 12])
+stack_size = 5
+weight = 0.1
+uses = Array[ExtResource("5_hor25")]([SubResource("Resource_v4f8j")])
+identify_group = 2
+id = &"hongo_playa"
+name_es = "Hongo de playa"
+name_en = "Beach mushroom"

@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_tt8tt"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_3k06p"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_y3vnn"]
+[ext_resource type="Texture2D" uid="uid://bsc4oe6kvov13" path="res://assets/art/items/rum.png" id="4_5thxo"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_lehjk"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_7dako"]
+
+[sub_resource type="Resource" id="Resource_x4ias"]
+script = ExtResource("1_tt8tt")
+meter = 1
+amount = 5.0
+
+[sub_resource type="Resource" id="Resource_554l6"]
+script = ExtResource("1_tt8tt")
+meter = 5
+amount = 15.0
+
+[sub_resource type="Resource" id="Resource_n4t4b"]
+script = ExtResource("1_tt8tt")
+meter = 4
+amount = -10.0
+
+[sub_resource type="Resource" id="Resource_u62ef"]
+script = ExtResource("1_tt8tt")
+meter = 1
+amount = -10.0
+delay_s = 60.0
+
+[sub_resource type="Resource" id="Resource_rxdqw"]
+script = ExtResource("5_lehjk")
+action = 1
+time_s = 1.0
+effects = Array[ExtResource("1_tt8tt")]([SubResource("Resource_x4ias"), SubResource("Resource_554l6"), SubResource("Resource_n4t4b"), SubResource("Resource_u62ef")])
+
+[resource]
+script = ExtResource("3_y3vnn")
+description_es = "Ron de la bodega de un barco de turistas. Tres buches: alegra, cansa y después da más sed. Pa' Papo es medicina."
+description_en = "Rum from a tourist boat's hold. Three swigs: it cheers you up, wears you out and then makes you thirstier. For Papo it's medicine."
+sprite = ExtResource("4_5thxo")
+category = 0
+durability = 3
+uses = Array[ExtResource("5_lehjk")]([SubResource("Resource_rxdqw")])
+id = &"rum"
+name_es = "Botella de ron"
+name_en = "Rum (bottle)"

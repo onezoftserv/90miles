@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_wax8t"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_hgwm7"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_bt1j8"]
+[ext_resource type="Texture2D" uid="uid://u64n27hcnhnn" path="res://assets/art/items/crab_raw.png" id="4_a3mf3"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_hlr6q"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_ugysr"]
+
+[sub_resource type="Resource" id="Resource_qkc7j"]
+script = ExtResource("1_wax8t")
+meter = 2
+amount = 20.0
+
+[sub_resource type="Resource" id="Resource_cl4ci"]
+script = ExtResource("1_wax8t")
+kind = 4
+meter = 6
+status = 3
+amount = -20.0
+duration_s = 30.0
+chance = 0.3
+
+[sub_resource type="Resource" id="Resource_tkkj1"]
+script = ExtResource("5_hlr6q")
+time_s = 2.0
+effects = Array[ExtResource("1_wax8t")]([SubResource("Resource_qkc7j"), SubResource("Resource_cl4ci")])
+
+[resource]
+script = ExtResource("3_bt1j8")
+description_es = "Cangrejo crudo, vivito hace un minuto. Se come así si 'tás desesperado, pero a veces cae mal. Mejor a la candela."
+description_en = "Raw crab, alive a minute ago. You can eat it like this if you're desperate, but sometimes it goes down wrong. Better over the candela."
+sprite = ExtResource("4_a3mf3")
+category = 1
+tags = Array[int]([0, 14])
+stack_size = 3
+weight = 0.5
+uses = Array[ExtResource("5_hlr6q")]([SubResource("Resource_tkkj1")])
+cooks_into = &"crab_cooked"
+cook_time_s = 20.0
+id = &"crab_raw"
+name_es = "Cangrejo crudo"
+name_en = "Raw crab"
