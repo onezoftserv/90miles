@@ -10,6 +10,10 @@ extends Node
 ## later), never under the offline peer standing in for a pending one, so a pending joiner never
 ## acts as host. A join from outside the game (an invite, --connect=) starts at once from a menu
 ## screen and otherwise waits for the title; a lobby or a run is never interrupted.
+##
+## A co-op host's "Otra vez" is a rematch (coop-networking "Rematch with the same party"): the host
+## frees its run, calls every connected client through its `Rematch` child and opens a new lobby on
+## the same connection; each client rebuilds its run inside that call and joins again.
 
 enum Flow {
 	TITLE,
@@ -68,6 +72,8 @@ var clock: Callable
 var seed_source: Callable
 ## The death one-liners the summary picks from (the content's unless a test sets others).
 var death_lines: DeathLines
+## The host's rematch call, on a child named "Rematch" that outlives every run (design D2).
+var rematch: RunRematch
 var _run_started_s: float = 0.0
 ## While the local rider waits on the shore: who is still playing (null outside a run).
 var _wait_label: Label
@@ -100,6 +106,10 @@ func _ready() -> void:
 	NetManager.host_failed.connect(_on_host_failed)
 	NetManager.outside_join_requested.connect(_on_outside_join)
 	death_lines = DeathLines.from_catalog(GameState.content)
+	rematch = RunRematch.new()
+	rematch.name = "Rematch"
+	add_child(rematch)
+	rematch.called.connect(_on_rematch_called)
 	apply_display()
 	apply_pixel_filter()
 	show_title()
@@ -254,9 +264,11 @@ func _continue(request: NetRequest) -> void:
 		_on_joining()
 
 
-# The server peer is installed: the host's run, and the lobby with the host alone.
-func _on_hosting() -> void:
+# The server peer is installed: the host's run, and the lobby with the host alone. A rematch passes
+# the look slots each connected player keeps (art-pass "Look slots in a rematch").
+func _on_hosting(kept_looks: Dictionary[int, int] = {}) -> void:
 	_build_run()
+	session.carried_looks = kept_looks
 	session.local_name = settings.player_name
 	session.roster_updated.connect(_refresh_lobby)
 	session.run_started.connect(_enter_run)
@@ -392,6 +404,32 @@ func start_solo() -> void:
 func _restart_solo() -> void:
 	_end_run()
 	start_solo()
+
+
+## A co-op host's "Otra vez" (endings-progression "Rematch from a co-op summary"): a new lobby on the
+## same connection, which every connected client follows. The order is the rule (design D3): the
+## old run is freed first, so its despawns reach each client before the call; the new lobby opens
+## last, so its spawns reach each client after the call, in the session it rebuilt. NetManager is
+## asked for nothing and the port stays open.
+func _rematch() -> void:
+	if session == null or not session.multiplayer.is_server():
+		return
+	var kept_looks: Dictionary[int, int] = session.look_slots()
+	_end_run()
+	rematch.call_party()
+	_on_hosting(kept_looks)
+
+
+# A client, inside the host's rematch call (design D4): the run is rebuilt now, not deferred, so the
+# new run's spawns that follow the call in the same poll land in the new session; the call arrives
+# on the Rematch node, not on the session being freed. The new session joins again on the same
+# connection, with the same name and player id. The lobby shows at once, its list empty until the
+# host answers; that also leaves Flow.RUN, so a run the host starts at once is entered with its HUD.
+func _on_rematch_called() -> void:
+	if session == null or session.multiplayer.is_server():
+		return
+	_on_joining()
+	show_lobby(false)
 
 
 ## Ends the run (if any), cancels a host or join under way, goes offline and shows the title.
@@ -571,10 +609,14 @@ func _check_run_over() -> void:
 		hud.queue_free()
 		hud = null
 	_wait_label = null
+	var hosting: bool = not solo and session.multiplayer.is_server()
 	var summary := _show(SUMMARY_SCENE, Flow.SUMMARY) as SummaryScreen
-	summary.show_summary(made, "Otra vez" if solo else "")
+	# Solo starts again alone; a co-op host starts a rematch; a client waits for the host.
+	summary.show_summary(made, "Otra vez" if solo or hosting else "")
+	if not solo and not hosting:
+		summary.show_waiting_for_host()
 	summary.home_requested.connect(back_to_title)
-	summary.restart_requested.connect(_restart_solo)
+	summary.restart_requested.connect(_restart_solo if solo else _rematch)
 
 
 func _process(_delta: float) -> void:
