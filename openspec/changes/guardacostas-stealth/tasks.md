@@ -128,7 +128,7 @@ How the tests are written:
 
 ## 6. Trigger rules (pure)
 
-- [ ] 6.1 Write `game/tests/unit/test_patrol_triggers.gd`. Verify it fails. It checks:
+- [x] 6.1 Write `game/tests/unit/test_patrol_triggers.gd`. Verify it fails. It checks:
   - **Distance to the sea:** it matches design.md's table (farthest 5.7 on the sandbar and 6.3 on the coast cay; 617 and 632 cells more than 2 tiles from the sea), and the coast cay's lagoon is not sea.
   - **Smoke at night:** fires 1 and 4 tiles from the sea, and a fire on a roofed cell. Only the first alerts.
   - **Smoke by day:** a fire 5 tiles from the sea alerts, and dawn and dusk follow the night rule.
@@ -137,8 +137,8 @@ How the tests are written:
   - **Water:** a swimmer at 5 tiles is spotted, a diver at 3 tiles is not, and a floater at 5 tiles is spotted.
   - **Fog:** the water rule is off in the fog fixture.
   - **Out of sight:** a boat that is not in sight never triggers.
-- [ ] 6.2 Implement `game/scripts/stealth/patrol_triggers.gd` (design.md §7). Verify the test passes.
-- [ ] 6.3 Run the import, smoke run and GUT commands, and verify all three pass.
+- [x] 6.2 Implement `game/scripts/stealth/patrol_triggers.gd` (design.md §7). Verify the test passes.
+- [x] 6.3 Run the import, smoke run and GUT commands, and verify all three pass. Done: import clean, smoke 10 frames with 0 problems, GUT 226 scripts, 2005/2005 passing in 209 s (`test_patrol_triggers.gd` has 19 tests; the sea distances match the table exactly).
 
 ## 7. The brain, the alert and spawning
 
