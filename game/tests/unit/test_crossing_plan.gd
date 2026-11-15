@@ -50,6 +50,11 @@ func test_running_squall_hits_10s_in() -> void:
 	assert_eq((squalls[0] as CrossingBeat).time_s, 10.0)
 
 
+func test_the_standard_tuning_caps_rolled_creatures_at_2() -> void:
+	# creature-perch-ride "Crossing creature roll": chance-1.0 creatures are not counted.
+	assert_eq(tuning.max_rolled_creatures, 2)
+
+
 func test_same_seed_same_plan() -> void:
 	var route := _route(&"raft")
 	for seed_value: int in 20:
