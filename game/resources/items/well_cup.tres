@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_bvp3u"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_t0des"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_mkfbd"]
+[ext_resource type="Texture2D" uid="uid://b6v8r130apht6" path="res://assets/art/items/well_cup.png" id="4_m2jeb"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_oq2v8"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_dv7n7"]
+
+[sub_resource type="Resource" id="Resource_ytus0"]
+script = ExtResource("1_bvp3u")
+meter = 1
+amount = 30.0
+
+[sub_resource type="Resource" id="Resource_1ipbx"]
+script = ExtResource("5_oq2v8")
+action = 1
+time_s = 1.0
+effects = Array[ExtResource("1_bvp3u")]([SubResource("Resource_ytus0")])
+
+[sub_resource type="Resource" id="Resource_h0wd6"]
+script = ExtResource("1_bvp3u")
+kind = 7
+target = 1
+
+[sub_resource type="Resource" id="Resource_uw11k"]
+script = ExtResource("1_bvp3u")
+target = 1
+meter = 1
+amount = 30.0
+
+[sub_resource type="Resource" id="Resource_cfcct"]
+script = ExtResource("5_oq2v8")
+action = 1
+time_s = 1.0
+can_target_others = true
+effects = Array[ExtResource("1_bvp3u")]([SubResource("Resource_h0wd6"), SubResource("Resource_uw11k")])
+
+[resource]
+script = ExtResource("3_mkfbd")
+description_es = "Agua del pozo del faro. Fría, limpia y sin cola: aquí no hay que marcar pa' coger agua."
+description_en = "Water from the lighthouse well. Cold, clean and no cola: out here you don't have to mark your place in line to get water."
+sprite = ExtResource("4_m2jeb")
+category = 0
+tags = Array[int]([1])
+stack_size = 4
+weight = 0.5
+durability = 1
+uses = Array[ExtResource("5_oq2v8")]([SubResource("Resource_1ipbx"), SubResource("Resource_cfcct")])
+id = &"well_cup"
+name_es = "Vaso de agua de pozo"
+name_en = "Well cup"

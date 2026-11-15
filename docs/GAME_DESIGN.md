@@ -297,7 +297,7 @@ Claude Haiku 4.5 on Amazon Bedrock generates dialogue for **important NPCs and t
 | Survival meters | `SurvivalMeters` component, host-synced | Original |
 | Multiplayer | ENet by default behind a platform backend (net-platform); MultiplayerSpawner, MultiplayerSynchronizer | Godot docs |
 | Weather and day-night | `WeatherManager` autoload driving CanvasModulate and spawns | Original |
-| Stealth | Light cones with Area2D, noise events on a bus | Brogue stealth |
+| Stealth | Searchlight cones tested by the host as plain geometry (angle and distance; no Area2D, no occlusion), a spot meter per player, noise and smoke events on a bus owned by the session (not an autoload) | Brogue stealth, SPD guard cones, DCSS noise |
 | Dialogue | `DialogueService` autoload with cache + fallback | Original |
 
 ### Tooling

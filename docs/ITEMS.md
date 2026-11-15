@@ -13,10 +13,10 @@ Tags: `food`, `water`, `tool`, `weapon`, `material`, `wearable`, `shiny` (attrac
 | Still cup | +40 | Solar still, 1 per 12 in-game hours | |
 | Well cup | +30 | Lighthouse well only | |
 | Seawater cup | +10, then −30 over 120 s | Anywhere | The desperate option |
-| Rum (bottle) | +5, morale +15, energy −10, thirst −10 after | Tourist wreck, Papo | 3 uses; Papo's need |
+| Rum (bottle) | +5, morale +15, energy −10, thirst −10 60 s later | Tourist wreck, Papo | 3 uses; Papo's need; no `water` tag, never revives |
 | Milordo | +20, hunger 0, morale +3 once a day | Craft: 1 sugar + 1 rain cup, 5 s, no station | *Milordo*: sugar water served as "coffee". Not a meal (no energy), no `water` tag, never revives; seawater cups cannot make it |
 
-## Food (16)
+## Food (15)
 
 | Item | Hunger | Source | Risk |
 | --- | --- | --- | --- |
@@ -29,7 +29,6 @@ Tags: `food`, `water`, `tool`, `weapon`, `material`, `wearable`, `shiny` (attrac
 | Conch | +25 | Reef flats | Shell becomes a horn (noise radius 15) |
 | Bird eggs (5) | +10 | Nests | Gulls |
 | Sea grapes | +5 | Dunes | — |
-| Coco plum | +8, thirst +3 | Dunes | — |
 | Mango | +20, thirst +10 | Lighthouse garden only | — |
 | Hutía (cooked) | +40 | Snare, far cays | — |
 | Iguana (cooked) | +35 | Rock, storm key | — |
@@ -37,20 +36,30 @@ Tags: `food`, `water`, `tool`, `weapon`, `material`, `wearable`, `shiny` (attrac
 | Toronja (grapefruit) | +5, thirst −2 | Fishermen's houses (1–3, respawns daily), lighthouse old garden | "Amarga." Cooks into the steak at a fire in 20 s (`cooks_into`, no recipe) |
 | Bistec de toronja | +8, morale +5 to the eater once a day | Fire + toronja | A joke dish, not a food source (cooked fish is +35). Grapefruit pith, breaded and fried (`docs/LORE.md` §3) |
 
-## Unknown plants and fruit (10) — the identify game
+Built by `content-batch-3` (owner, 2026-11-14), with first-pass numbers where the tables give none:
 
-Each run assigns a random look ("fruta roja", "fruta verde", "baya morada", "hongo blanco"…) to each plant below. One player eating it, a Médico seeing it, or an NPC naming it identifies it for the party. Identifications carry over between runs (Experiencia).
+- The coco plum is *hicaco*, one of the plants below; it was listed twice.
+- Raw crab and raw fish cook into their cooked forms in 20 s at a fire (`cooks_into`, no recipe). Cooked forms carry no risk.
+- Every poison in these tables is the raw-food profile: 20 health over 30 s.
+- "Oysters (6)" and "Bird eggs (5)" are stack sizes.
+- Canned food opens with anything that opens cans (the knife now, the pliers later), one use per can.
+- Oysters cut (bleeding) whoever picks them up without hand protection. Red tide, the Pescador's exemption and the ex-militar spotting wild tobacco wait for the batches that build them.
+- The game rolls none of these risks yet: chances, statuses, pick-up effects and cooking are data until the `item-effects-runtime` change.
+
+## Plants (10) — the identify game
+
+Nine are unknown; sábila is always known (it ships as `aloe`, and the Médico starts with it; owner, 2026-11-14). Plants of one look group (fruit, mushroom, herb) share tags, stack size and weight, so nothing on the item gives it away. Each run assigns a random look ("fruta roja", "fruta verde", "baya morada", "hongo blanco"…) to each plant below. One player eating it, a Médico seeing it, or an NPC naming it identifies it for the party. Identifications carry over between runs (Experiencia).
 
 | Plant | True effect | Lore |
 | --- | --- | --- |
-| Manzanillo (manchineel) | −50 health over 60 s, thirst ×2 | The little apple of death |
+| Manzanillo (manchineel) | −50 health over 60 s, thirst ×2 for the same 60 s | The little apple of death |
 | Guao | Touch: burning 20 s, no food | Cuba's poison ivy, worse |
 | Jagüey fig | +15 hunger | Safe, sticky |
 | Uva caleta (sea grape, unripe) | +3 hunger, thirst −5 | Sour and useless |
-| Hicaco (coco plum) | +8, thirst +3 | Safe |
+| Hicaco (coco plum) | +8, thirst +3 | Safe; the dunes' coco plum |
 | Guanábana (rare) | +25, thirst +15, morale +10 | Grandmother's fruit |
 | Noni | +5 hunger, heals 10, cures poison | Smells like vomit, works |
-| Sábila (aloe) | Heals sunburn and bleeding | Known to any Cuban over 40 |
+| Sábila (aloe) | Heals sunburn and bleeding | Known to any Cuban over 40, so always identified (`aloe`) |
 | Hongo de playa | 40% hallucinations for 2 min, 60% +10 hunger | A coin flip |
 | Hierba de tabaco silvestre | Morale +10 when smoked (needs fire) | Ex-militar identifies on sight |
 
@@ -206,4 +215,4 @@ The hat is a plain Cuban yarey hat with a red band. No name, emblem or line from
 
 ## Counts
 
-7 water, 16 food, 10 plants, 18 tools, 17 materials, 9 wearables, 15 oddities, 9 keepsakes, 16 texts = **117 item definitions** (the 16 added by `balsero-lore`: 11 items, 2 keepsakes, 3 texts; the 4 added by `secret-cay`: 1 wearable, 2 oddities, 1 text).
+7 water, 15 food, 10 plants, 18 tools, 17 materials, 9 wearables, 15 oddities, 9 keepsakes, 16 texts = **116 item definitions** (the 16 added by `balsero-lore`: 11 items, 2 keepsakes, 3 texts; the 4 added by `secret-cay`: 1 wearable, 2 oddities, 1 text; `content-batch-3` folded the coco plum into hicaco).

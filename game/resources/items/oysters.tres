@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_m5oei"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_so7p6"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="3_glksb"]
+[ext_resource type="Script" path="res://scripts/data/data_part.gd" id="4_f23av"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="5_ijs2u"]
+[ext_resource type="Texture2D" uid="uid://bavcdbqr23pqg" path="res://assets/art/items/oysters.png" id="6_3fody"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="7_ve620"]
+
+[sub_resource type="Resource" id="Resource_ptdj7"]
+script = ExtResource("3_glksb")
+kind = 4
+scope = 0
+negate = true
+capability = 24
+
+[sub_resource type="Resource" id="Resource_dpm0o"]
+script = ExtResource("1_m5oei")
+kind = 4
+status = 1
+conditions = Array[ExtResource("3_glksb")]([SubResource("Resource_ptdj7")])
+
+[sub_resource type="Resource" id="Resource_5i0oq"]
+script = ExtResource("1_m5oei")
+meter = 2
+amount = 12.0
+
+[sub_resource type="Resource" id="Resource_x4ie7"]
+script = ExtResource("1_m5oei")
+meter = 1
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_mhhx1"]
+script = ExtResource("7_ve620")
+time_s = 1.0
+effects = Array[ExtResource("1_m5oei")]([SubResource("Resource_5i0oq"), SubResource("Resource_x4ie7")])
+
+[resource]
+script = ExtResource("5_ijs2u")
+description_es = "Ostiones del mangle. Saben a mar y le cortan las manos al que los arranca sin trapo: pa' eso se inventaron los guantes."
+description_en = "Oysters off the mangrove roots. They taste of the sea and cut the hands of whoever pulls them off without a rag: that's what gloves were invented for."
+sprite = ExtResource("6_3fody")
+category = 1
+tags = Array[int]([0, 14])
+stack_size = 6
+weight = 0.1
+uses = Array[ExtResource("7_ve620")]([SubResource("Resource_mhhx1")])
+pickup_effects = Array[ExtResource("1_m5oei")]([SubResource("Resource_dpm0o")])
+id = &"oysters"
+name_es = "Ostiones"
+name_en = "Oysters"

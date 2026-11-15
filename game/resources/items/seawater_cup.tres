@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_fih7p"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_lq6lp"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_y0jcl"]
+[ext_resource type="Texture2D" uid="uid://cr1mj80owrt44" path="res://assets/art/items/seawater_cup.png" id="4_jj15n"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_jfmf3"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_h583t"]
+
+[sub_resource type="Resource" id="Resource_qv7ue"]
+script = ExtResource("1_fih7p")
+meter = 1
+amount = 10.0
+
+[sub_resource type="Resource" id="Resource_jpvo5"]
+script = ExtResource("1_fih7p")
+meter = 1
+amount = -30.0
+duration_s = 120.0
+
+[sub_resource type="Resource" id="Resource_bigxw"]
+script = ExtResource("5_jfmf3")
+action = 1
+time_s = 1.0
+effects = Array[ExtResource("1_fih7p")]([SubResource("Resource_qv7ue"), SubResource("Resource_jpvo5")])
+
+[resource]
+script = ExtResource("3_y0jcl")
+description_es = "Agua de mar. Quita la sed un ratico y después te la cobra doble. To' el mundo lo sabe y to' el mundo se la toma igual."
+description_en = "Seawater. Takes the thirst away for a little while and then charges it back double. Everybody knows it and everybody drinks it anyway."
+sprite = ExtResource("4_jj15n")
+category = 0
+tags = Array[int]([1])
+stack_size = 4
+weight = 0.5
+durability = 1
+uses = Array[ExtResource("5_jfmf3")]([SubResource("Resource_bigxw")])
+id = &"seawater_cup"
+name_es = "Vaso de agua de mar"
+name_en = "Seawater cup"

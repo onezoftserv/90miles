@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_a2r6f"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_ti551"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_qj61b"]
+[ext_resource type="Texture2D" uid="uid://we4kwld3aniw" path="res://assets/art/items/sea_grapes.png" id="4_7kb1h"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_77f7d"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_g46xp"]
+
+[sub_resource type="Resource" id="Resource_0mbeo"]
+script = ExtResource("1_a2r6f")
+meter = 2
+amount = 5.0
+
+[sub_resource type="Resource" id="Resource_majlk"]
+script = ExtResource("5_77f7d")
+time_s = 1.0
+effects = Array[ExtResource("1_a2r6f")]([SubResource("Resource_0mbeo")])
+
+[resource]
+script = ExtResource("3_qj61b")
+description_es = "Uvas caleta maduras de la duna. Casi no llenan na', pero el que pasó el Período Especial sabe que poquito también es comida."
+description_en = "Ripe sea grapes from the dune. They hardly fill you up, but anyone who lived through the Período Especial knows a little is food too."
+sprite = ExtResource("4_7kb1h")
+category = 1
+tags = Array[int]([0])
+stack_size = 10
+weight = 0.1
+uses = Array[ExtResource("5_77f7d")]([SubResource("Resource_majlk")])
+id = &"sea_grapes"
+name_es = "Uvas caleta"
+name_en = "Sea grapes"

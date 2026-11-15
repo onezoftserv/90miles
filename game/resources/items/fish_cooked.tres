@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_iijjk"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_wydnc"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_sp3qd"]
+[ext_resource type="Texture2D" uid="uid://l3gjihp4c0gi" path="res://assets/art/items/fish_cooked.png" id="4_mbf2g"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="5_14t00"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="6_7k8bb"]
+
+[sub_resource type="Resource" id="Resource_4yt2o"]
+script = ExtResource("1_iijjk")
+meter = 2
+amount = 35.0
+
+[sub_resource type="Resource" id="Resource_jix4b"]
+script = ExtResource("5_14t00")
+time_s = 2.0
+effects = Array[ExtResource("1_iijjk")]([SubResource("Resource_4yt2o")])
+
+[resource]
+script = ExtResource("3_sp3qd")
+description_es = "Pescado asado en un palito. Asere, esto es lo más cerca de un paladar que vas a estar en mucho tiempo."
+description_en = "Fish roasted on a stick. Asere, this is the closest to a paladar you'll get for a long while."
+sprite = ExtResource("4_mbf2g")
+category = 1
+tags = Array[int]([0, 14])
+stack_size = 2
+uses = Array[ExtResource("5_14t00")]([SubResource("Resource_jix4b")])
+id = &"fish_cooked"
+name_es = "Pescado asado"
+name_en = "Cooked fish"
