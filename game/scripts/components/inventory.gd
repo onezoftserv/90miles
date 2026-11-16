@@ -102,6 +102,25 @@ func take_tag(tag: DataEnums.ItemTag, count: int) -> Array[StringName]:
 	return taken
 
 
+## Removes every item with `capability` except those tagged `keep_tag` (guardacostas-capture: a
+## restart takes the fire sources, LIGHT_FIRE, and keeps keepsakes). Returns the ids taken, one entry
+## per unit.
+func take_capability(capability: DataEnums.Capability, keep_tag: DataEnums.ItemTag) -> Array[StringName]:
+	var taken: Array[StringName] = []
+	for slot: InventorySlot in slots:
+		if slot.is_empty() or _has_tag(slot.item_id, keep_tag):
+			continue
+		var item := item_for(slot.item_id)
+		if item == null or not item.capabilities.has(capability):
+			continue
+		for i: int in slot.count:
+			taken.append(slot.item_id)
+		slot.clear()
+	if not taken.is_empty():
+		changed.emit()
+	return taken
+
+
 ## First slot holding an item with `capability`, or -1.
 func capability_slot(capability: DataEnums.Capability) -> int:
 	for i: int in slots.size():

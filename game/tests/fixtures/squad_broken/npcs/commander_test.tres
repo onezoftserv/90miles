@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="NpcData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/ending_role_data.gd" id="1_6b5fj"]
+[ext_resource type="Script" path="res://scripts/data/npc_hook_data.gd" id="2_vg3gl"]
+[ext_resource type="Script" path="res://scripts/data/quest_data.gd" id="3_scmw8"]
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="4_3s641"]
+[ext_resource type="Script" path="res://scripts/data/npc_spawn_rule_data.gd" id="5_q2awy"]
+
+[resource]
+script = ExtResource("4_3s641")
+dialogue_id = &"beat_test"
+id = &"commander_test"
+name_es = "Capitán de prueba"
+name_en = "Test captain"

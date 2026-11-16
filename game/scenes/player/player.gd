@@ -53,6 +53,10 @@ var swim_energy_factor: float = 1.0
 ## its clothing colour and look. A plain field, never replicated; set before the body enters the
 ## tree. Solo is slot 0.
 var look_slot: int = 0
+## The background this player plays (a BackgroundData id), read by the persuasion check
+## (guardacostas-capture, ConditionData BACKGROUND_PRESENT). Empty until the backgrounds change ships
+## a way to pick one; host state, never sent.
+var background_id: StringName = &""
 var interaction_hold: InteractionHold = InteractionHold.new()
 ## False once coop-networking drives the body: PlayerNet then steps it per intent (host),
 ## predicts it (owning client) or draws it from host states (other clients).
