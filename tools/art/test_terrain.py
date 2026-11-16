@@ -51,6 +51,23 @@ def opaque_columns(image):
     return [x for x in range(image.width) if any(image.alpha(x, y) for y in range(image.height))]
 
 
+def enclosed_clear(image):
+    """The clear pixels that no 4-connected run of clear pixels joins to the image's border: holes
+    the drawn pixels close in, where the ground shows through (design pass TR14)."""
+    seen = set()
+    todo = [(x, y) for y in range(image.height) for x in range(image.width)
+            if (x in (0, image.width - 1) or y in (0, image.height - 1)) and not image.alpha(x, y)]
+    while todo:
+        x, y = todo.pop()
+        if (x, y) in seen:
+            continue
+        seen.add((x, y))
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < image.width and 0 <= ny < image.height and not image.alpha(nx, ny) and (nx, ny) not in seen:
+                todo.append((nx, ny))
+    return [(x, y) for y in range(image.height) for x in range(image.width) if not image.alpha(x, y) and (x, y) not in seen]
+
+
 class PieceTests(unittest.TestCase):
     def test_cut_takes_one_16_px_tile_and_refuses_one_off_the_sheet(self):
         sheet = png.blank(32, 16)
@@ -1028,6 +1045,21 @@ class BuildTests(unittest.TestCase):
             cell = overlay.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16)
             self.assertGreater(sum(1 for alpha in cell.pixels[3::4] if alpha), 10, f"variant {column} is redrawn by hand")
         self.assertTrue(overlay.crop(0, 0, 64, 64).is_empty(), "the masks keep the pack's bush")
+
+    def test_no_tracked_brush_pick_has_a_hole_inside_its_outline(self):
+        """art-terrain-polish TR14: a lone bush is solid, so no sand shows through inside it."""
+        brush = png.read_png(terrain.DEFAULT_OUT / "terrain" / "brush.png")
+        for column in range(terrain.SET_COLUMNS):
+            cell = brush.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16)
+            self.assertEqual(enclosed_clear(cell), [], f"brush pick {column} has no hole inside its outline")
+
+    def test_a_hole_is_a_clear_pixel_closed_in_by_drawn_ones(self):
+        ring = filled(BLACK, rows=range(4, 9), columns=range(4, 9))
+        ring.set(6, 6, (0, 0, 0, 0))
+        self.assertEqual(enclosed_clear(ring), [(6, 6)])
+        notch = filled(BLACK, rows=range(4, 9), columns=range(4, 9))
+        notch.set(6, 4, (0, 0, 0, 0))
+        self.assertEqual(enclosed_clear(notch), [], "a bite open to the outside is not a hole")
 
     def test_the_tracked_rock_has_the_pack_variant_and_two_hand_ones_that_keep_its_border(self):
         rock = terrain.load_recipe(terrain.DEFAULT_RECIPE)["plain"]["rows"][0]

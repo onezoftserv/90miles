@@ -437,6 +437,65 @@ func test_a_solo_sandbar_shore_bush_is_whole() -> void:
 	assert_true(_is_moved(drawn, pick), "and only the small bush, whole")
 
 
+## art-terrain-polish TR14: the clear pixels of `tile` that no 4-connected run of clear pixels
+## joins to the tile's border, so the ground shows through inside the drawing.
+func _enclosed_clear(tile: Image) -> int:
+	var size: Vector2i = tile.get_size()
+	var seen: Dictionary[Vector2i, bool] = {}
+	var todo: Array[Vector2i] = []
+	for y: int in size.y:
+		for x: int in size.x:
+			var edge: bool = x == 0 or y == 0 or x == size.x - 1 or y == size.y - 1
+			if edge and tile.get_pixel(x, y).a == 0.0:
+				todo.append(Vector2i(x, y))
+	while not todo.is_empty():
+		var at: Vector2i = todo.pop_back()
+		if seen.has(at):
+			continue
+		seen[at] = true
+		for step: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			var next: Vector2i = at + step
+			var inside: bool = next.x >= 0 and next.y >= 0 and next.x < size.x and next.y < size.y
+			if inside and not seen.has(next) and tile.get_pixel(next.x, next.y).a == 0.0:
+				todo.append(next)
+	var holes: int = 0
+	for y: int in size.y:
+		for x: int in size.x:
+			if tile.get_pixel(x, y).a == 0.0 and not seen.has(Vector2i(x, y)):
+				holes += 1
+	return holes
+
+
+## art-terrain-polish TR14 ("Scrub varies", "No hole in a bush"): every lone-bush pick on row 4 of
+## the brush sheet is solid inside its outline.
+func test_no_brush_pick_has_a_hole_inside_its_outline() -> void:
+	var brush: Image = _sheet("res://assets/art/terrain/brush.png")
+	if brush == null:
+		return
+	for column: int in SET_COLUMNS:
+		var pick: Image = brush.get_region(Rect2i(column * TILE, PICK_ROW * TILE, TILE, TILE))
+		assert_eq(_enclosed_clear(pick), 0, "brush pick %d has no hole inside its outline" % column)
+
+
+## One player, offline: every lone bush on the solo sandbar (a brush pick on row 4) is drawn with
+## no sand showing through inside it. Reads the sheet's bytes, not a render.
+func test_a_solo_sandbar_lone_bush_has_no_hole() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	var brush: Image = _sheet("res://assets/art/terrain/brush.png")
+	if brush == null:
+		return
+	var lone: int = 0
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.BRUSH, built.terrain, built.tide_pools):
+		var tile: Dictionary = TerrainArt.tile(TerrainArt.BRUSH, cell, SANDBAR.id, built.terrain, built.tide_pools)
+		var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+		if tile.get(&"source") != TerrainArt.data().source_of[TerrainArt.BRUSH] or atlas.y != PICK_ROW:
+			continue
+		lone += 1
+		var drawn: Image = brush.get_region(Rect2i(atlas * TILE, Vector2i(TILE, TILE)))
+		assert_eq(_enclosed_clear(drawn), 0, "the lone bush at %s (pick %d) has no hole" % [cell, atlas.x])
+	assert_gt(lone, 0, "the sandbar has lone bushes")
+
+
 ## art-pass "No water in land tiles": a recipe that mapped a baked water strip or foam rim to a
 ## sea or foam colour, instead of keying it out, fails here.
 func test_the_corner_sets_hold_no_sea_or_foam_colour() -> void:
