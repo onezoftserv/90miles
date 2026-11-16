@@ -4,19 +4,19 @@ Every art rebuild runs `python -I tools/art/terrain.py --packs C:/Users/liann/sr
 
 ## 1. Setup
 
-- [ ] 1.1 Copy `DESIGN_PASS.md` and the four `mockups/m*.png` into `docs/art-pass/review-2026-11-14/`. Verify the five files are there and `DESIGN_PASS.md`'s mock paths still name them.
+- [x] 1.1 Copy `DESIGN_PASS.md` and the four `mockups/m*.png` into `docs/art-pass/review-2026-11-14/`. Verify the five files are there and `DESIGN_PASS.md`'s mock paths still name them.
 
 ## 2. C2: random-looking picks (TR8)
 
-- [ ] 2.1 In `test_terrain_art.gd`, write the stripe tests and see them fail on today's hash:
+- [x] 2.1 In `test_terrain_art.gd`, write the stripe tests and see them fail on today's hash:
   - over a 16×16 block the 2-bit pick equals its north-east neighbour's in under 40% of cells;
   - (x, y) and (y, x) are not always equal.
   Add a 1-player test: a solo sandbar build gives the same picks twice.
-- [ ] 2.2 Pass `TerrainArt.cell_hash` through fmix32 with 32-bit masking (design D2). Verify that the new tests and every test that recomputes through `cell_hash` pass.
+- [x] 2.2 Pass `TerrainArt.cell_hash` through fmix32 with 32-bit masking (design D2). Verify that the new tests and every test that recomputes through `cell_hash` pass.
 
 ## 3. C1: whole bushes on the waterline (TR1)
 
-- [ ] 3.1 In `tools/art/test_terrain.py`, write the fit tests on fixtures:
+- [x] 3.1 In `tools/art/test_terrain.py`, write the fit tests on fixtures:
   - a fit at the inset;
   - an inset-0 fallback;
   - the tuft fallback;
@@ -26,8 +26,8 @@ Every art rebuild runs `python -I tools/art/terrain.py --packs C:/Users/liann/sr
   - `"fit"` keys are validated;
   - the tuft file is a read fix file.
   See them fail.
-- [ ] 3.2 Implement the `"fit"` key in `terrain.py` (design D1) and draw `tools/art/fixes/terrain/shore_tuft.png`. Add the key to the brush shore in `terrain_tiles.json`. Rebuild. Verify that only `brush_shore.png` changes against a scratch rebuild of today's recipe.
-- [ ] 3.3 In `test_terrain_art.gd`, verify on the made sheet that every own-mask-0 tile of `brush_shore.png` for sand masks 1–14 is a whole, unchanged shift of the pick or the tuft ("no shore bush pixel is cut"). Add the 1-player test: on the solo sandbar, shore scrub cell (20, 35) takes atlas (10, 0) of the brush shore source, and that tile holds all 90 pixels of the pick.
+- [x] 3.2 Implement the `"fit"` key in `terrain.py` (design D1) and draw `tools/art/fixes/terrain/shore_tuft.png`. Add the key to the brush shore in `terrain_tiles.json`. Rebuild. Verify that only `brush_shore.png` changes against a scratch rebuild of today's recipe.
+- [x] 3.3 In `test_terrain_art.gd`, verify on the made sheet that every own-mask-0 tile of `brush_shore.png` for sand masks 1–14 is a whole, unchanged shift of the pick or the tuft ("no shore bush pixel is cut"). Add the 1-player test: on the solo sandbar, shore scrub cell (20, 35) takes atlas (10, 0) of the brush shore source, and that tile holds all 90 pixels of the pick.
 
 ## 4. C3: rounded coast corners, an even lip, lighter corner foam (TR2, TR5, TR6)
 

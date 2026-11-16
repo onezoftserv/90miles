@@ -982,6 +982,28 @@ class BuildTests(unittest.TestCase):
             self.assertEqual([at for at in border if cell.alpha(*at)], [], f"column {column} keeps the full tile's border, so any two join")
 
 
+    def test_the_tracked_brush_shore_fits_the_small_pick_or_the_tuft_whole(self):
+        brush = terrain.load_recipe(terrain.DEFAULT_RECIPE)["sets"][2]
+        self.assertEqual(brush["shore"]["fit"], {"pick": 1, "fallback_inset": 0, "tuft": "shore_tuft.png"})
+        tuft = png.read_png(terrain.DEFAULT_FIXES / "shore_tuft.png")
+        rows, columns = opaque_rows(tuft), opaque_columns(tuft)
+        self.assertLessEqual((len(columns), len(rows)), (8, 7), "an 8x7 sprig at most")
+        self.assertEqual(tuft.colours(), {png.parse_colour(c) for c in ("#4b692f", "#37946e", "#6abe30", "#99e550", "#323c39")}, "the brush greens and its outline")
+        made = terrain.DEFAULT_OUT / "terrain"
+        pick = drawn(png.read_png(made / "brush.png").crop(16, 64, 16, 16))
+        shore = png.read_png(made / "brush_shore.png")
+
+        def moved(tile, piece):
+            if len(tile) != len(piece):
+                return False
+            dx = min(x for x, _y in tile) - min(x for x, _y in piece)
+            dy = min(y for _x, y in tile) - min(y for _x, y in piece)
+            return all(tile.get((x + dx, y + dy)) == colour for (x, y), colour in piece.items())
+
+        for s in range(1, 15):
+            tile = drawn(shore.crop(s * 16, 0, 16, 16))
+            self.assertTrue(moved(tile, pick) or moved(tile, drawn(tuft)), f"sand mask {s}: the pick or the tuft, whole")
+
     def test_the_tracked_overlays_hold_only_hand_pixels(self):
         recipe = terrain.load_recipe(terrain.DEFAULT_RECIPE)
         for entry in recipe["sets"][:2]:

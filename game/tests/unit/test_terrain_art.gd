@@ -228,6 +228,80 @@ func test_no_shore_tile_of_an_upper_layer_leaves_the_sand_under_it() -> void:
 				assert_eq(_off_the_sand(tile, sand, shore, false), 0, "%s column %d row %d: pixels off the sand" % [id, shore, row])
 
 
+## The drawn bounding box of `tile` (an empty rect when nothing is drawn).
+func _drawn_rect(tile: Image) -> Rect2i:
+	var found: Rect2i = Rect2i()
+	var any: bool = false
+	for y: int in tile.get_height():
+		for x: int in tile.get_width():
+			if tile.get_pixel(x, y).a > 0.0:
+				found = Rect2i(x, y, 1, 1) if not any else found.expand(Vector2i(x, y)).expand(Vector2i(x + 1, y + 1))
+				any = true
+	return found
+
+
+## Whether `tile` is `piece` moved whole: the same pixels, every one, with nothing cut or added.
+func _is_moved(tile: Image, piece: Image) -> bool:
+	var a: Rect2i = _drawn_rect(tile)
+	var b: Rect2i = _drawn_rect(piece)
+	if a.size != b.size or a.size == Vector2i.ZERO:
+		return false
+	for y: int in a.size.y:
+		for x: int in a.size.x:
+			var mine: Color = tile.get_pixel(a.position.x + x, a.position.y + y)
+			var theirs: Color = piece.get_pixel(b.position.x + x, b.position.y + y)
+			if (mine.a > 0.0) != (theirs.a > 0.0) or (mine.a > 0.0 and mine != theirs):
+				return false
+	return true
+
+
+## art-pass "A bush on a shore cell is drawn whole" (art-coast-pass D1, review TR1): a lone bush on
+## a shore cell (own mask 0, sand masks 1-14) is the small pick, or the one hand-drawn tuft where
+## the pick does not fit, moved whole onto the sand: no pixel cut, no rim. Today's cut bushes fail.
+func test_no_shore_bush_pixel_is_cut() -> void:
+	var brush: Image = _sheet("res://assets/art/terrain/brush.png")
+	var shore: Image = _sheet("res://assets/art/terrain/brush_shore.png")
+	if brush == null or shore == null:
+		return
+	var pick: Image = brush.get_region(Rect2i(1 * TILE, PICK_ROW * TILE, TILE, TILE))
+	var tuft: Image = null
+	for s: int in range(1, 15):
+		var tile: Image = shore.get_region(Rect2i(s * TILE, 0, TILE, TILE))
+		if _is_moved(tile, pick):
+			continue
+		var size: Vector2i = _drawn_rect(tile).size
+		assert_true(size.x <= 8 and size.y <= 7 and size != Vector2i.ZERO, "sand mask %d: the pick moved whole, or a tuft of at most 8x7 (drawn %s)" % [s, size])
+		if tuft == null:
+			tuft = tile
+		assert_true(_is_moved(tile, tuft), "sand mask %d: the same tuft as every other mask that needs one" % s)
+	var islet: Image = shore.get_region(Rect2i(0, 0, TILE, TILE))
+	assert_false(_is_moved(islet, pick), "a lone sand cell (mask 0) keeps the cut bush")
+
+
+## One player, offline: the owner's spot. Shore scrub cell (20, 35) of the solo sandbar is drawn
+## with the brush shore tile of its sand mask, and that tile is all 90 pixels of the small pick.
+func test_a_solo_sandbar_shore_bush_is_whole() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	var cell: Vector2i = Vector2i(20, 35)
+	assert_eq(built.terrain.terrain_at(cell), DataEnums.Terrain.SCRUB, "the owner's spot is scrub")
+	var tile: Dictionary = TerrainArt.tile(TerrainArt.BRUSH, cell, SANDBAR.id, built.terrain, built.tide_pools)
+	assert_eq(tile.get(&"source"), TerrainArt.data().shore_source_of[TerrainArt.BRUSH], "the brush shore source")
+	assert_eq(tile.get(&"atlas"), Vector2i(10, 0), "sand mask 10 (sea to the west), own mask 0")
+	var shore: Image = _sheet("res://assets/art/terrain/brush_shore.png")
+	var brush: Image = _sheet("res://assets/art/terrain/brush.png")
+	if shore == null or brush == null:
+		return
+	var drawn: Image = shore.get_region(Rect2i(Vector2i(tile[&"atlas"]) * TILE, Vector2i(TILE, TILE)))
+	var pick: Image = brush.get_region(Rect2i(1 * TILE, PICK_ROW * TILE, TILE, TILE))
+	var count: int = 0
+	for y: int in TILE:
+		for x: int in TILE:
+			if drawn.get_pixel(x, y).a > 0.0:
+				count += 1
+	assert_eq(count, 90, "every pixel of the small bush")
+	assert_true(_is_moved(drawn, pick), "and only the small bush, whole")
+
+
 ## art-pass "No water in land tiles": a recipe that mapped a baked water strip or foam rim to a
 ## sea or foam colour, instead of keying it out, fails here.
 func test_the_corner_sets_hold_no_sea_or_foam_colour() -> void:
