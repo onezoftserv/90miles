@@ -24,6 +24,7 @@ prompt_verbs = Dictionary[StringName, PackedStringArray]({
 &"climb_aboard": PackedStringArray("Subir", "Climb"),
 &"climb_palm": PackedStringArray("Trepar", "Climb"),
 &"drag": PackedStringArray("Arrastrar a", "Drag"),
+&"free_captive": PackedStringArray("Soltar a", "Free"),
 &"launch": PackedStringArray("Zarpar", "Set off"),
 &"look_sign": PackedStringArray("Mirar", "Look"),
 &"open_chest": PackedStringArray("Abrir", "Open"),

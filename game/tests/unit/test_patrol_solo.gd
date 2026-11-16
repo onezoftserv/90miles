@@ -102,12 +102,15 @@ func _clock(seconds: float) -> void:
 
 
 # One frame of `dt` in the engine's order: the input to an intent, the host stepping the body, then
-# the island's boat and its meter watch.
+# the island's boat, its soldiers when a squad is ashore (guardacostas-capture) and the meter watch.
 func _frame(dt: float = DT) -> void:
 	body.player_input._physics_process(dt)
 	body.net._physics_process(dt)
 	body._physics_process(dt)
 	boat.advance(dt)
+	for creature: Creature in spawner.creatures():
+		if creature != boat:
+			creature.advance(dt)
 	spawner._physics_process(dt)
 	max_meter = maxf(max_meter, body.spot_meter.value)
 	if boat.light_on:
@@ -255,10 +258,19 @@ func _find_spot() -> Dictionary:
 	sands.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return (a - from).length_squared() < (b - from).length_squared())
 	var window: int = 36
 	for cell: Vector2i in sands:
+		# guardacostas-capture (the modified Alert): scrub within 3 tiles whose patch runs on to a scrub
+		# cell more than 2 tiles from it, so a crouching player can slip away while still hidden.
 		var scrub: Vector2i = Vector2i(-1, -1)
+		var away: Array[Vector2i] = []
 		for candidate: Vector2i in scrubs:
-			if Vector2(candidate - cell).length() <= 3.0 and (scrub.x < 0 or Vector2(candidate - cell).length() < Vector2(scrub - cell).length()):
+			if Vector2(candidate - cell).length() > 3.0:
+				continue
+			if scrub.x >= 0 and Vector2(candidate - cell).length() >= Vector2(scrub - cell).length():
+				continue
+			var through := _through_scrub(candidate)
+			if not through.is_empty():
 				scrub = candidate
+				away = through
 		if scrub.x < 0 or land.get_id_path(from, cell).is_empty():
 			continue
 		var centre := Vector2(cell) + Vector2(0.5, 0.5)
@@ -267,12 +279,38 @@ func _find_spot() -> Dictionary:
 			if light.is_lit(centre, poses[i], beams[i]):
 				run += 1
 				if run == window and i - window >= 10:
-					return {"cell": cell, "scrub": scrub, "start_s": (i - window + 1) * IDLE_DT}
+					return {"cell": cell, "scrub": scrub, "away": away, "start_s": (i - window + 1) * IDLE_DT}
 			else:
 				run = 0
 	return {}
 
 
+# The scrub cells from `start` (4-neighbour, scrub only) to the first one more than 2.5 tiles from it,
+# in walking order without `start`; empty when the patch is too small.
+func _through_scrub(start: Vector2i) -> Array[Vector2i]:
+	var came: Dictionary[Vector2i, Vector2i] = {start: start}
+	var queue: Array[Vector2i] = [start]
+	var head: int = 0
+	while head < queue.size():
+		var cell: Vector2i = queue[head]
+		head += 1
+		if Vector2(cell - start).length() > 2.5:
+			var path: Array[Vector2i] = []
+			while cell != start:
+				path.push_front(cell)
+				cell = came[cell]
+			return path
+		for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var next: Vector2i = cell + step
+			if not came.has(next) and island.built.terrain.cells.get(next) == DataEnums.Terrain.SCRUB:
+				came[next] = cell
+				queue.append(next)
+	return [] as Array[Vector2i]
+
+
+# The modified Alert's "Solo player spotted, hides and gets away" (guardacostas-capture): the lock
+# breaks where they hid, the squad lands and searches that place without finding them (they crouched
+# on through the scrub), and once the squad is back aboard the boat resumes its lap.
 func test_spotted_on_open_sand_at_2_s_then_scrub_and_crouch_and_the_boat_resumes_its_lap() -> void:
 	await _start(NIGHT_S)
 	var spot := _find_spot()
@@ -290,33 +328,46 @@ func test_spotted_on_open_sand_at_2_s_then_scrub_and_crouch_and_the_boat_resumes
 	var spotted_at: float = -1.0
 	for i: int in 150:
 		_frame()
-		if brain.state == PatrolRoute.State.ALERT_LOCK:
+		if brain.state == PatrolRoute.State.DOCKED:
 			spotted_at = (i + 1) * DT
 			break
 	assert_gt(spotted_at, 0.0, "spotted")
 	assert_almost_eq(spotted_at, 2.0, 0.15, "at 2 s on the sand in the beam")
 	assert_eq(alerts, [&"sight"] as Array[StringName])
 	assert_eq(boat.alert_serial, 1, "the loudhailer's first line")
+	assert_eq(brain.locked, body, "the docked boat's light follows them")
 	var stopped_at: float = boat.route_t
 	# Out: the 3 tiles to the scrub, then down. The light follows them the whole way.
 	assert_true(_walk_to(scrub), "walked to the scrub")
-	assert_eq(brain.state, PatrolRoute.State.ALERT_LOCK, "still visible: still locked")
+	assert_eq(brain.locked, body, "still visible: still locked")
 	_act(&"crouch", true)
 	var broke: bool = false
 	for i: int in 30:
 		_frame()
-		if brain.state == PatrolRoute.State.ALERT_SEARCH:
+		if brain.locked == null:
 			broke = true
 			break
 	assert_true(broke, "crouching on scrub hides them and the lock breaks")
 	assert_eq(body.stealth_state, MovementStep.Stealth.HIDDEN)
-	var searched_s: float = 0.0
-	while brain.state == PatrolRoute.State.ALERT_SEARCH and searched_s < 25.0:
-		_frame()
-		searched_s += DT
-		assert_eq(body.stealth_state, MovementStep.Stealth.HIDDEN)
-	assert_almost_eq(searched_s, patrol.alert_s, 0.15, "20 s later the boat resumes its lap")
-	assert_eq(brain.state, PatrolRoute.State.LAP)
+	# Crouch on through the scrub until more than 2 tiles from where they hid.
+	for step_cell: Vector2i in spot["away"]:
+		var goal: Vector2 = IslandLayout.cell_center(step_cell)
+		var budget: int = 200
+		while body.global_position.distance_to(goal) > AT_TARGET_PX and budget > 0:
+			_steer(goal)
+			_frame()
+			budget -= 1
+			assert_eq(body.stealth_state, MovementStep.Stealth.HIDDEN, "hidden all the way")
+	_stop()
+	assert_gt(Vector2(_cell_of(body.global_position) - scrub).length(), 2.0, "more than 2 tiles from where they hid")
+	# The squad lands, searches where they hid, walks the island and rows out; then the lap goes on.
+	var waited_s: float = 0.0
+	while brain.state == PatrolRoute.State.DOCKED and waited_s < patrol.search_duration_s + 120.0:
+		_frame(IDLE_DT)
+		waited_s += IDLE_DT
+		assert_false(body.captive, "never found")
+	assert_eq(brain.state, PatrolRoute.State.LAP, "the boat resumes its lap once the squad is back aboard")
+	assert_gte(waited_s, patrol.search_duration_s, "after the squad's 180 s")
 	assert_eq(alerts.size(), 1, "never spotted again")
 	assert_eq(body.spot_meter.value, 0.0)
 	assert_eq(boat.alert_serial, 2, "the give-up line")

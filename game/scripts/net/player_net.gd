@@ -51,6 +51,10 @@ var net_spot: float = 0.0
 var net_dropped: bool = false
 ## The player's inventory as Inventory.to_net() writes it: the host's, shown on every peer.
 var net_inventory: Array = []
+## guardacostas-capture: the player's capture state as PlayerBody.capture_code() writes it (none, a
+## captive, a captive aboard the boat, taken). The host writes it; every peer applies it, late joiners
+## with the spawn state.
+var net_capture: int = 0
 
 ## The client's unacknowledged intents (PREDICTED).
 var buffer: PredictionBuffer = PredictionBuffer.new()
@@ -138,9 +142,10 @@ func apply_host_state() -> void:
 		return
 	_body().inventory.from_net(net_inventory)
 	_body().spot_shown = clampf(net_spot, 0.0, 1.0) if is_finite(net_spot) else 0.0
+	_body().apply_capture_code(net_capture)
 	match role:
 		Role.PREDICTED:
-			if net_downed:
+			if net_downed or _body().captive:
 				# Nothing to replay once the player is down: the host acks only what it queued.
 				buffer.clear()
 				_take_drawn_state()
@@ -169,19 +174,21 @@ func _physics_process(delta: float) -> void:
 			_step_host(delta)
 			_write_shadow()
 		Role.PREDICTED:
-			if not _body().downed:
+			# A downed body or a captive is never predicted: its owner draws it as the host has it.
+			if not _body().downed and not _body().captive:
 				_predict(delta)
 
 
 func _process(_delta: float) -> void:
-	if role == Role.REMOTE or (role == Role.PREDICTED and _body().downed):
+	if role == Role.REMOTE or (role == Role.PREDICTED and (_body().downed or _body().captive)):
 		update_drawn_position(clock.call())
 
 
 func _step_host(delta: float) -> void:
 	var body := _body()
-	if body.downed:
-		# Intents are acknowledged but not applied; the body still moves when dragged.
+	if body.downed or body.captive:
+		# Intents are acknowledged but not applied; the body still moves when dragged (a captive by its
+		# soldier) and a captive's handle is refreshed by its own step.
 		if not _queue.is_empty():
 			net_ack_seq = _queue[_queue.size() - 1].seq
 			_queue.clear()
@@ -204,6 +211,7 @@ func _write_shadow() -> void:
 	net_movement = body.movement_state
 	net_stealth = body.stealth_state
 	net_downed = body.downed
+	net_capture = body.capture_code()
 	net_spot = body.spot_fraction()
 	body.spot_shown = net_spot
 	var inventory_state: Array = body.inventory.to_net()

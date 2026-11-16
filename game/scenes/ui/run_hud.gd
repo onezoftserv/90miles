@@ -83,6 +83,9 @@ var _text: HudText = HudText.load_default()
 ## damage-feedback: the change floats over every player (survival-meters "Change floats over the
 ## body"), made here beside the marks.
 var floats: ChangeFloats = ChangeFloats.new()
+## guardacostas-capture: the scene panel (la_captura's speaker and line), made here and bound to the
+## session's capture scene.
+var scene_panel: ScenePanel = null
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
 @onready var watching_panel: PanelContainer = %WatchingPanel
@@ -130,6 +133,9 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	patrol_horizon.bind(session, local_peer_id)
 	floats.locale = CoopSession.locale_of(session)
 	floats.bind(session)
+	scene_panel = ScenePanel.new()
+	add_child(scene_panel)
+	scene_panel.bind(session)
 	for peer_id: int in session.peer_ids():
 		_follow(peer_id)
 	refresh()
@@ -213,6 +219,8 @@ func set_screen_shown(value: bool) -> void:
 	marks.screen_shown = value
 	patrol_horizon.screen_shown = value
 	floats.screen_shown = value
+	if scene_panel != null:
+		scene_panel.screen_shown = value
 	refresh_watching()
 
 
