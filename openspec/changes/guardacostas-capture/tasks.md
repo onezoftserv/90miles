@@ -223,13 +223,16 @@ How the tests are written:
 
 ## 11. Fade with distance
 
-- [ ] 11.1 Write `game/tests/unit/test_patrol_fade.gd` and verify it fails. Using the REEF fixture, it checks:
+- [x] 11.1 Write `game/tests/unit/test_patrol_fade.gd` and verify it fails. Using the REEF fixture, it checks:
   - 26–34% with patrols over 1,000 seeds, each with one or two boats;
   - the same count on a second set-up from the same seed;
   - no rule for STORM or SHIPWRECK ("Far chain");
   - one player getting the base count.
-- [ ] 11.2 Add the mid-chain rule to `patrol_boat.tres` (design.md §12). Verify the test passes and the stealth spawner tests still pass.
-- [ ] 11.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: it failed to parse on the missing `CreatureSpawner.patrol_stream` and `roll_patrol`, then passed (5 tests: 31.6% of 1,000 seeds have boats).
+- [x] 11.2 Add the mid-chain rule to `patrol_boat.tres` (design.md §12). Verify the test passes and the stealth spawner tests still pass.
+  - Done: the patrol's chance is now rolled from its own run-seed stream. `test_creature_spawner.gd` and the patrol spawner tests pass; `test_patrol_data.gd`'s rule count is now three.
+- [x] 11.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 274 scripts, 2509/2509.
 
 ## 12. Cues, the two-process run and docs
 

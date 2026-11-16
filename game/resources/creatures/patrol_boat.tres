@@ -15,6 +15,13 @@ chain_families = Array[int]([1])
 terrain = Array[int]([0])
 count = Vector2i(1, 2)
 
+[sub_resource type="Resource" id="Resource_mid"]
+script = ExtResource("2_rule")
+chain_families = Array[int]([2, 3, 4, 5])
+terrain = Array[int]([0])
+count = Vector2i(1, 2)
+chance = 0.3
+
 [sub_resource type="Resource" id="Resource_patrol"]
 script = ExtResource("3_patrol")
 route_period_s = 180.0
@@ -85,6 +92,6 @@ domains = Array[int]([2])
 behavior = 10
 senses = Array[int]([0, 1, 4])
 patrol = SubResource("Resource_patrol")
-spawn_rules = Array[ExtResource("2_rule")]([SubResource("Resource_sandbar"), SubResource("Resource_coast")])
+spawn_rules = Array[ExtResource("2_rule")]([SubResource("Resource_sandbar"), SubResource("Resource_coast"), SubResource("Resource_mid")])
 party_rate_mult_per_extra_player = 1.0
 party_extra_count_every_n_players = 2
