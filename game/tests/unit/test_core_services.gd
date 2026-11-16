@@ -87,3 +87,11 @@ func test_game_state_owns_the_content_catalog() -> void:
 	assert_not_null(game_state)
 	if game_state:
 		assert_true(game_state.get(&"content") is ContentCatalog)
+
+
+# damage-feedback design D7: the sound hook the hit and use cues call; a no-op until sounds exist.
+func test_audio_manager_takes_a_sound_effect_id() -> void:
+	assert_true(AudioManager.has_method(&"play_sfx"))
+	AudioManager.play_sfx(&"hurt_hit")
+	AudioManager.play_sfx(&"")
+	assert_eq(AudioManager.get_child_count(), 0, "plays nothing yet")

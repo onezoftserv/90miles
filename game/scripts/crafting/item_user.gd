@@ -7,8 +7,10 @@ extends RefCounted
 
 ## Why a use would be refused (inventory-hud design D5), shared by the host and the HUD. The
 ## item's own reasons follow `use`'s checks in their order (EMPTY, NO_USE, NOT_TARGETABLE,
-## TARGET_DEAD, NOT_DOWNED_TARGET, CONDITION); the acting player's are DOWN, AT_SEA and
-## OUT_OF_REACH. OK: nothing stands in the way.
+## TARGET_DEAD, NOT_DOWNED_TARGET, CONDITION, then NOTHING_TO_DO); the acting player's are DOWN,
+## AT_SEA and OUT_OF_REACH. OK: nothing stands in the way. NOTHING_TO_DO (damage-feedback,
+## crafting-inventory "A use that changes nothing is refused"): no effect would change anything for
+## whoever it goes on (UseOutcome.changes_nothing) and the item leaves no remainder.
 enum Reason {
 	OK,
 	EMPTY,
@@ -20,6 +22,7 @@ enum Reason {
 	DOWN,
 	AT_SEA,
 	OUT_OF_REACH,
+	NOTHING_TO_DO,
 }
 
 
@@ -61,6 +64,9 @@ static func check(actor: PlayerBody, slot_index: int, use_index: int, target: Pl
 		return Reason.NOT_DOWNED_TARGET
 	if not ConditionCheck.all_hold(action.conditions, actor):
 		return Reason.CONDITION
+	# An item that leaves a remainder (a conch's horn) always gives something.
+	if item.remainder_item_id.is_empty() and UseOutcome.changes_nothing(action, actor, target):
+		return Reason.NOTHING_TO_DO
 	return Reason.OK
 
 
