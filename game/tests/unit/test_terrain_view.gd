@@ -353,6 +353,7 @@ func test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule() -> void:
 	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
 		var island := _island(layout)
 		var pools: Array[Vector2i] = island.built.tide_pools
+		var palms: Array[Vector2i] = island.built.palms
 		var terrain: GridTerrain = island.terrain
 		var sand: Dictionary = _cells(island, &"Sand")
 		var empty: int = 0
@@ -362,11 +363,11 @@ func test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule() -> void:
 		assert_eq(empty, 0, "%s: no land cell without a sand tile" % layout.id)
 		for layer: StringName in LAND_LAYERS:
 			var drawn: Dictionary = _cells(island, layer)
-			var expected: Array[Vector2i] = TerrainArt.layer_cells(layer, terrain, pools)
+			var expected: Array[Vector2i] = TerrainArt.layer_cells(layer, terrain, pools, palms)
 			assert_eq(drawn.size(), expected.size(), "%s %s: one tile per member cell" % [layout.id, layer])
 			var wrong: int = 0
 			for cell: Vector2i in expected:
-				if drawn.get(cell, []) != _as_list(TerrainArt.tile(layer, cell, layout.id, terrain, pools)):
+				if drawn.get(cell, []) != _as_list(TerrainArt.tile(layer, cell, layout.id, terrain, pools, palms)):
 					wrong += 1
 			assert_eq(wrong, 0, "%s %s: every cell is TerrainArt's tile" % [layout.id, layer])
 		var shore: Dictionary = _cells(island, &"Shore")

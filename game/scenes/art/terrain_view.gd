@@ -83,8 +83,8 @@ func _build(source: Node, grid: GridTerrain) -> void:
 	for layer: StringName in LAND_LAYERS:
 		var tiles := get_node(NodePath(layer)) as TileMapLayer
 		tiles.clear()
-		for cell: Vector2i in TerrainArt.layer_cells(layer, grid, pools):
-			_put(tiles, cell, TerrainArt.tile(layer, cell, layout_id, grid, pools))
+		for cell: Vector2i in TerrainArt.layer_cells(layer, grid, pools, palms):
+			_put(tiles, cell, TerrainArt.tile(layer, cell, layout_id, grid, pools, palms))
 	_shore.clear()
 	var shore_cells: Array[Vector2i] = ShoreRule.shore_cells(grid, pools)
 	for cell: Vector2i in shore_cells:
