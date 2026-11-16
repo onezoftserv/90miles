@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="IslandLayoutData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_x21tq"]
+[ext_resource type="Script" path="res://scripts/data/island_glyph_data.gd" id="2_nkcp7"]
+[ext_resource type="Script" path="res://scripts/data/island_layout_data.gd" id="3_y0p0m"]
+[ext_resource type="Script" path="res://scripts/data/island_sign_data.gd" id="4_6cd6j"]
+
+[sub_resource type="Resource" id="Resource_2mps1"]
+script = ExtResource("2_nkcp7")
+glyph = "d"
+item_id = &"driftwood"
+
+[resource]
+script = ExtResource("3_y0p0m")
+description_es = "Un cayito de prueba."
+description_en = "A tiny test cay."
+rows = PackedStringArray("~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~", "~~~~----------~~~~", "~~~--...P....--~~~", "~~~-..1.2..d..-~~~", "~~~-..S.3.4...-~~~", "~~~-...g.g....-~~~", "~~~--........--~~~", "~~~~----------~~~~", "~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~", "~~~~~~~~~~~~~~~~~~")
+terrain_glyphs = Dictionary[String, int]({
+"-": 1,
+".": 3,
+"1": 3,
+"2": 3,
+"3": 3,
+"4": 3,
+"P": 3,
+"S": 3,
+"d": 3,
+"g": 7,
+"~": 0
+})
+palm_glyph = "P"
+coconut_total = 1
+solo_spawn_glyph = "S"
+coop_spawn_glyphs = "1234"
+next_island = &"chain_c"
+chain_family = 1
+pickups = Array[ExtResource("2_nkcp7")]([SubResource("Resource_2mps1")])
+id = &"chain_b"
+name_es = "Cayito chain_b"
+name_en = "Tiny cay chain_b"

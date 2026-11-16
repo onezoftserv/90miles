@@ -5,7 +5,8 @@ extends RefCounted
 ## them: "Sed +15 · Hambre +5 · Energía +10" (a hunger gain at once is a meal), "Sed +15 (+6 útil)"
 ## when only part fits (Brogue's food check), "Salud -50 en 60 s", "Cura quemadura y sangrado",
 ## "Levanta", "Hace ruido". It knows exactly the kinds EffectApplier interprets (HANDLED, kept equal by a test);
-## flags say nothing, and kinds the host skips are left out. Words come from hud_text.tres.
+## flags and the capture scene's kinds (taking fire sources, the two travels: no item uses them) say
+## nothing, and kinds the host skips are left out. Words come from hud_text.tres.
 
 ## The notice row's width in the 8 px pixel font (400 px).
 const MAX_CHARS: int = 50
@@ -17,6 +18,8 @@ const HANDLED: Array[EffectData.Kind] = [
 	EffectData.Kind.METER_ADD, EffectData.Kind.CURE_STATUS, EffectData.Kind.REVIVE,
 	EffectData.Kind.GIVE_ITEM, EffectData.Kind.TAKE_ITEM, EffectData.Kind.START_ROUTE,
 	EffectData.Kind.SET_FLAG, EffectData.Kind.CLEAR_FLAG, EffectData.Kind.NOISE, EffectData.Kind.SMOKE,
+	EffectData.Kind.TAKE_ITEMS_WITH_CAPABILITY, EffectData.Kind.TRAVEL_NEXT_ISLAND,
+	EffectData.Kind.TRAVEL_PREVIOUS_ISLAND,
 ]
 
 

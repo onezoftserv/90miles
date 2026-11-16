@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1_npc"]
+
+[resource]
+script = ExtResource("1_npc")
+description_es = "El capitán de la lancha guardafronteras. De Baracoa, cansado, con la cifra del mes siempre en la cabeza. Por el altavoz habla como el reglamento; en persona, como cualquiera."
+description_en = "The captain of the border guard launch. From Baracoa, tired, always thinking about the month's quota. Over the loudhailer he talks like the regulations; in person, like anyone else."
+category = 0
+age = 44
+dialogue_mode = 1
+speech_registers = Array[StringName]([&"loudhailer", &"in_person"])
+dialogue_id = &"beat_la_captura"
+presence = 2
+id = &"rodriguez"
+name_es = "El Capitán Rodríguez"
+name_en = "Captain Rodríguez"

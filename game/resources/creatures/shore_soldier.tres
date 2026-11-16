@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CreatureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="1_creature"]
+
+[resource]
+script = ExtResource("1_creature")
+id = &"shore_soldier"
+name_es = "Guardafrontera"
+name_en = "Border guard"
+description_es = "Un soldado de la escuadra que baja de la lancha en un bote de remos. No pelea: busca. Primero va al fuego, después a donde te vieron por última vez, y luego camina el cayo. Si te toca dos segundos, te lleva al bote."
+description_en = "A soldier of the squad that comes ashore from the patrol boat in a rowing dinghy. He does not fight: he searches. First the fire, then where you were last seen, then he walks the cay. If he touches you for two seconds, he takes you to the dinghy."
+hint_es = "Corre más que él, aléjate de donde te vieron y escóndete en el monte hasta que se vayan."
+hint_en = "Outrun him, get away from where you were seen and hide in the brush until they leave."
+category = 2
+speed_tiles_s = 3.0
+domains = Array[int]([0])
+behavior = 11
+disposition = 3
+senses = Array[int]([0])
+party_rate_mult_per_extra_player = 1.0
