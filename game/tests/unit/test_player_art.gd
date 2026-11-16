@@ -287,6 +287,31 @@ func test_a_standing_solo_player_has_the_12x7_shadow_at_its_feet() -> void:
 	assert_lt(shadow.z_index, 0, "under the body")
 
 
+## art-sprite-polish D8 (C25): one player, offline, downed lies on the lying frames over the lying
+## shadow; dead too; standing up again brings back the 12x7.
+func test_a_solo_downed_player_lies_over_the_lying_shadow() -> void:
+	var body: PlayerBody = _spawn()
+	assert_eq(_shadow(body).texture.get_size(), Vector2(12.0, 7.0), "standing: the 12x7")
+	body.downed = true
+	_step(body, 2)
+	assert_eq(String(_sprite(body).animation), "downed")
+	var shadow: DropShadow = _shadow(body)
+	assert_true(shadow.visible, "a lying body has a shadow")
+	assert_eq(shadow.size, DropShadow.Size.LYING)
+	assert_eq(shadow.texture.get_size(), Vector2(23.0, 5.0), "the lying 23x5")
+	var image: Image = (_frame(body).atlas as Texture2D).get_image().get_region(Rect2i(_frame(body).region))
+	var used: Rect2i = image.get_used_rect()
+	assert_gt(used.size.x, used.size.y, "the body lies wider than tall")
+	body.meters.dead = true
+	_step(body, 2)
+	assert_eq(String(_sprite(body).animation), "dead")
+	assert_eq(_shadow(body).size, DropShadow.Size.LYING, "dead lies too")
+	body.meters.dead = false
+	body.downed = false
+	_step(body, 2)
+	assert_eq(_shadow(body).size, DropShadow.Size.LARGE, "standing again: the 12x7")
+
+
 func test_a_slot_0_swimmers_clothing_maps_the_key_ramp_to_azul() -> void:
 	# art-pass "A swimmer keeps its colours", through the reference mapping (design.md K32).
 	var body: PlayerBody = _spawn()

@@ -10,8 +10,10 @@ extends RefCounted
 ## - crouch, from walk frames 0 and 1: frame rows 21-23 and 27-29 deleted, rows above 21 down
 ##   6 px, rows 24-26 down 3 px, the feet row 30 kept;
 ## - swim: copies of walk frames 1 and 3 (art-sprite-polish D1: a 1 px bob above the line);
-## - downed: the down-facing walk frame 0 turned 90 degrees clockwise ((x, y) -> (31 - y, x)) and
-##   moved 8 px down; its second frame lifts columns 8-14 (the chest) by 1 px;
+## - downed (art-sprite-polish D8, LIE): from the down-facing walk frame 0, the rows below the
+##   shoulders (20 on) turned 90 degrees clockwise ((x, y) -> (31 - y, x)) and moved 8 px down, the
+##   head block with its neck row (rows 0-17) moved by (5, 13) unturned, and the shoulder rows 18-19
+##   left out; its second frame lifts columns 7-11 (the chest) by 1 px;
 ## - dead: downed frame 0.
 
 const CELL: int = 32
@@ -20,13 +22,16 @@ const FACING_ROWS: int = 3
 const WALK_FRAMES: int = 6
 const CROUCH_DELETED_ROWS: Array[int] = [21, 22, 23, 27, 28, 29]
 const DOWNED_DROP: int = 8
-const CHEST_FIRST: int = 8
-const CHEST_LAST: int = 14
+const NECK_ROW: int = 18
+const LIE_DELETED_ROWS: Array[int] = [18, 19]
+const HEAD_SHIFT: Vector2i = Vector2i(5, 13)
+const CHEST_FIRST: int = 7
+const CHEST_LAST: int = 11
 const NEIGHBOURS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 ## Pose family -> its cells (column, row) on the layout.
 const FAMILIES: Array[StringName] = [&"walk", &"crouch", &"swim", &"downed", &"dead"]
 
-enum Rule { CROUCH, TURN_DOWN, CHEST_LIFT }
+enum Rule { CROUCH, TURN_DOWN, CHEST_LIFT, LIE }
 
 
 ## The cells of a pose family on the frame layout.
@@ -66,9 +71,9 @@ static func made_cells() -> Array[Dictionary]:
 		made.append({"cell": Vector2i(7, row), "source": Vector2i(1, row), "rules": [Rule.CROUCH]})
 		made.append({"cell": Vector2i(8, row), "source": Vector2i(1, row), "rules": []})
 		made.append({"cell": Vector2i(9, row), "source": Vector2i(3, row), "rules": []})
-	made.append({"cell": Vector2i(0, 3), "source": Vector2i(0, 0), "rules": [Rule.TURN_DOWN]})
-	made.append({"cell": Vector2i(1, 3), "source": Vector2i(0, 0), "rules": [Rule.TURN_DOWN, Rule.CHEST_LIFT]})
-	made.append({"cell": Vector2i(2, 3), "source": Vector2i(0, 0), "rules": [Rule.TURN_DOWN]})
+	made.append({"cell": Vector2i(0, 3), "source": Vector2i(0, 0), "rules": [Rule.LIE]})
+	made.append({"cell": Vector2i(1, 3), "source": Vector2i(0, 0), "rules": [Rule.LIE, Rule.CHEST_LIFT]})
+	made.append({"cell": Vector2i(2, 3), "source": Vector2i(0, 0), "rules": [Rule.LIE]})
 	return made
 
 
@@ -89,6 +94,12 @@ static func map_pixel(rule: Rule, at: Vector2i) -> Vector2i:
 			if at.x >= CHEST_FIRST and at.x <= CHEST_LAST:
 				return at + Vector2i(0, -1)
 			return at
+		Rule.LIE:
+			if LIE_DELETED_ROWS.has(at.y):
+				return Vector2i(-1, -1)
+			if at.y < NECK_ROW:
+				return at + HEAD_SHIFT
+			return Vector2i(CELL - 1 - at.y, at.x + DOWNED_DROP)
 	return at
 
 

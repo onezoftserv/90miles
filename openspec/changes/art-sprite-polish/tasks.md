@@ -33,13 +33,13 @@ Rebuilds: `python -I tools/art/compose.py --packs C:/Users/liann/src/90miles/gam
 
 ## 4. Lying pose (C25; SP9)
 
-- [ ] 4.1 Write the tests and see them fail:
+- [x] 4.1 Write the tests and see them fail:
   - `test_poses.py`: the lying rule turns the rows below the neck and moves the head block unturned (the eye row stays one row); the lying figure is wider than tall; the per-layer invariant holds for every part;
   - replace `test_downed_is_the_down_frame_turned_clockwise_and_moved_down_with_a_chest_lift` with the lying rule and its chest lift;
   - `test_drop_shadow.gd`: the LYING size is a 22–24×5 ellipse in the darkest colour, and the existing sizes keep their enum values;
   - `test_player_art.gd`, 1-player: a solo downed player shows the lying frames over the LYING shadow, and a standing one the 12×7.
-- [ ] 4.2 Add the `LIE` rule in `poses.py` and use it for downed, the breath frame and dead (design D8). Rebuild the parts. Add the lying ellipse to `fx.py` and LYING to `DropShadow.Size`, appended; `PlayerLook` picks it for lying poses. Verify that `BALSERO_ANCHORS` downed and dead are re-measured and recorded, `test_a_solo_player_who_walks_crouches_swims_and_is_downed_is_drawn_from_those_cells` and the dead-is-not-downed tests pass.
-- [ ] 4.3 Windowed 1-player capture of a solo downed body and a dead one: compare with `before/cr_player_downed_crop8.png` and `before/hud_downed_solo.png`. If the remap still reads as a turned standing frame, stop and record it; a hand lying cell is a new task, not a silent switch.
+- [x] 4.2 Add the `LIE` rule in `poses.py` and use it for downed, the breath frame and dead (design D8). Rebuild the parts. Add the lying ellipse to `fx.py` and LYING to `DropShadow.Size`, appended; `PlayerLook` picks it for lying poses. Verify that `BALSERO_ANCHORS` downed and dead are re-measured and recorded, `test_a_solo_player_who_walks_crouches_swims_and_is_downed_is_drawn_from_those_cells` and the dead-is-not-downed tests pass.
+- [x] 4.3 Windowed 1-player capture of a solo downed body and a dead one: compare with `before/cr_player_downed_crop8.png` and `before/hud_downed_solo.png`. If the remap still reads as a turned standing frame, stop and record it; a hand lying cell is a new task, not a silent switch.
 
 ## 5. Bush in front (C8; PR1) — after art-terrain-polish C10
 

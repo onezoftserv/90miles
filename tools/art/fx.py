@@ -11,6 +11,9 @@ Piece kinds ("pieces" is a list of objects with a "name" and a "kind"):
   drawn and `gap` pixels left out, and the runs move one pixel along each frame, so the frames loop
   when `frames` is dash + gap. A pixel below the oval's middle row (nearer the viewer) takes
   `front`, the rest `back`.
+- shadow: {size: [w, h], colour, alpha}: a filled ellipse (by pixel centre) in `colour` at
+  `alpha` (1-254), the soft drop shadow kind; it belongs in the shadows folder, the only one that
+  may hold partial alpha besides decals.
 
 Usage: python -I tools/art/fx.py [--recipe tools/art/fx.json] [--out game/assets/art]
        [--palette game/assets/art/palette/master_palette.png]
@@ -118,7 +121,25 @@ def draw_ring(piece):
     return image
 
 
-KINDS = {"ring": draw_ring}
+def draw_shadow(piece):
+    size = need(piece, "size")
+    if not (isinstance(size, list) and len(size) == 2 and all(isinstance(v, int) and v >= 2 for v in size)):
+        raise FxError(f"piece {piece['name']!r}: size must be [w, h], each at least 2")
+    alpha = whole(piece, "alpha", 1)
+    if alpha > 254:
+        raise FxError(f"piece {piece['name']!r}: a shadow's alpha is soft, 1 to 254")
+    colour = rgba(need(piece, "colour"))[:3] + (alpha,)
+    w, h = size
+    cx, cy = w / 2.0, h / 2.0
+    image = png.blank(w, h)
+    for y in range(h):
+        for x in range(w):
+            if ((x + 0.5 - cx) / cx) ** 2 + ((y + 0.5 - cy) / cy) ** 2 <= 1.0:
+                image.set(x, y, colour)
+    return image
+
+
+KINDS = {"ring": draw_ring, "shadow": draw_shadow}
 
 
 def load_recipe(path=DEFAULT_RECIPE):

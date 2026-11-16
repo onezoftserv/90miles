@@ -107,7 +107,7 @@ A flying gull SHALL be drawn from flight frames wider than its 16 px standing ce
 - **THEN** it plays a flight animation for its facing, its frame has no opaque pixel in its outer columns, and its feet are 14–16 px above its shadow on the ground
 
 ### Requirement: Lying pose
-A downed, dragged or dead player SHALL be drawn lying along the ground with the face upright, the eyes side by side, made by a pose rule from the walk frame so every look part follows with no hand pixels, and with a lying shadow about 22–24×5 px in place of the standing one. The downed pose keeps its breath frame and dead keeps none. A solo player sees their own lying pose.
+A downed, dragged or dead player SHALL be drawn lying along the ground with the face upright, the eyes side by side, made by a pose rule from the walk frame so every look part follows with no hand-drawn lying cell, and with a lying shadow about 22–24×5 px in place of the standing one. The downed pose keeps its breath frame and its eyes open; dead keeps no breath frame and shuts its eyes. A solo player sees their own lying pose.
 
 #### Scenario: A solo player is downed
 - **GIVEN** a sandbar built for one offline player
