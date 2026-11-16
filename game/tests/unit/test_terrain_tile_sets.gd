@@ -27,7 +27,7 @@ const SHEETS: Dictionary = {
 ## foam.png 8 frames of the 15 masks that have a shore, and foam_still.png the same 8 alike
 ## (art-terrain-polish D2); shade.png 16 masks and 3 spots.
 const TILE_COUNTS: Dictionary = {
-	TERRAIN_TILES: [20, 20, 24, 147, 65, 65, 585],
+	TERRAIN_TILES: [20, 20, 24, 147, 65, 195, 585],
 	SHORE_TILES: [120, 120],
 	DECAL_TILES: [1, 19],
 }

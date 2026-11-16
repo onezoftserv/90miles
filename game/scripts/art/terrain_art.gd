@@ -144,7 +144,9 @@ static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terra
 	var atlas: Vector2i
 	if sand != FULL and layer != SAND:
 		source = art.shore_source_of[layer]
-		atlas = Vector2i(sand, art.shore_row_stride * row + own)
+		# A lone sand cell (mask 0) keeps the cut piece: the fit, and so its variants, start at mask 1.
+		var block: int = row if layer == PLAIN else (shore_row(layer, cell, layout_id) if sand != 0 else 0)
+		atlas = Vector2i(sand, art.shore_row_stride * block + own)
 	elif sand == FULL and _pick_row(layer, own) >= 0:
 		atlas = Vector2i(_variant(layer, cell, layout_id), PICK_ROW + _pick_row(layer, own))
 	elif layer == PLAIN and own == FULL:
@@ -155,6 +157,16 @@ static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terra
 		@warning_ignore("integer_division")
 		atlas = Vector2i(own % COLUMNS, own / COLUMNS)
 	return {&"source": source, &"atlas": atlas, &"alternative": 0}
+
+
+## The block of 16 rows of `layer`'s shore sheet that `cell` takes: one block per whole shore piece
+## (art-terrain-polish D5), picked by the cell's hash; 0 for a layer with one piece. Plain rows
+## are blocks by terrain instead (`plain_row`).
+static func shore_row(layer: StringName, cell: Vector2i, layout_id: StringName) -> int:
+	var count: int = int(data().shore_variants.get(layer, 1))
+	if count <= 1:
+		return 0
+	return (cell_hash(layout_id, cell) >> 1) % count
 
 
 ## The pick row (0 for row 4) whose picks replace the tile of `own` on `layer`, or -1.
