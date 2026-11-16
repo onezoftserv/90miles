@@ -274,7 +274,7 @@ Time comes only from `delta`: no Tween, Timer, await, `_enter_tree` or RNG. `_dr
 ### D11. The effect line is built from the use's data
 
 `EffectLine.text(action, actor, target, words, tuning, locale)` walks `action.effects` in order and keeps only the kinds `EffectApplier.apply_now` interprets:
-- METER_ADD becomes "Sed +15", or "Salud −50 en 60 s" when `duration_s > 0`;
+- METER_ADD becomes "Sed +15", or "Salud -50 en 60 s" when `duration_s > 0`;
 - a hunger gain at once also adds "Energía +N" from `SurvivalTuning`'s meal energy, as `eat()` does;
 - CURE_STATUS gathers into "Cura a y b";
 - REVIVE becomes "Levanta";
@@ -297,7 +297,7 @@ So a session that teaches the applier a new kind (sábila's fix may add APPLY_ST
 
 `ItemUser.check` gets a last reason, `NOTHING_TO_DO`, after CONDITION, so both the HUD and the host use it.
 - **The "something" kinds:** if the use has any kind other than METER_ADD with a positive amount at once, or CURE_STATUS, it is never wasted. That covers a revive, items, routes, flags, a delay, a change over time, any loss, and kinds the host does not apply yet (so a horn or a raw crab is never refused with an odd reason). An item that leaves a remainder (a conch's horn) is never wasted either: it always gives something.
-- **The dry run:** otherwise the check copies the subject's meter values and statuses into a scratch `SurvivalMeters` outside the tree, with the same tuning, and applies the METER_ADD and CURE_STATUS effects there through the same setters (`eat`, `add`, `set_status`). The use is wasted if every meter and the flags come out unchanged. Energy's starving cap and a meal's energy come along for free.
+- **The dry run:** otherwise the check copies the subject's meter values and statuses into a scratch `SurvivalMeters` outside the tree, with the same tuning, and applies the METER_ADD and CURE_STATUS effects there through the same setters (`eat`, `add`, `set_status`). The use is wasted if the flags come out unchanged and no meter moves by 1 point or more: the HUD shows whole points, and a living player's meters drain all the time, so "full" is 99.9 as often as 100. Energy's starving cap and a meal's energy come along for free.
 - **The reason line:**
   - `refusal_wasted_meter_<meter>` for the first meter it raises ("No tienes sed.", "No tienes hambre.", "No 'tás cansao.", "'Tás entero.", "'Tás de lo más bien.", "No tienes calor.");
   - `refusal_wasted_status_<status>` when it cures one status ("No 'tás sangrando.", "No 'tás quemao.");

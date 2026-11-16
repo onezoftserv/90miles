@@ -7,7 +7,9 @@ extends RefCounted
 ## of effect (a revive, items, routes, flags, a delay, a change over time, a loss, or a kind the host
 ## does not apply yet) counts as doing something.
 
-const EPSILON: float = 0.0001
+## A meter that would move by less than this counts as unchanged: the HUD shows whole points, and
+## a living player's meters drain all the time, so "full" is 99.9 as often as 100.
+const MIN_CHANGE: float = 1.0
 const METERS: Array[DataEnums.Meter] = [
 	DataEnums.Meter.THIRST, DataEnums.Meter.HUNGER, DataEnums.Meter.HEAT,
 	DataEnums.Meter.ENERGY, DataEnums.Meter.MORALE, DataEnums.Meter.HEALTH,
@@ -110,7 +112,7 @@ class _Runs:
 			if _real[i].status_flags != _scratch[i].status_flags:
 				return false
 			for meter: DataEnums.Meter in UseOutcome.METERS:
-				if absf(_real[i].value(meter) - _scratch[i].value(meter)) > UseOutcome.EPSILON:
+				if absf(_real[i].value(meter) - _scratch[i].value(meter)) >= UseOutcome.MIN_CHANGE:
 					return false
 		return true
 

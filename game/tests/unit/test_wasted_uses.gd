@@ -202,3 +202,13 @@ func test_a_conch_still_leaves_its_horn_at_full_hunger() -> void:
 	assert_true(session.use_for(CoopSession.HOST_ID, _slot_of(&"conch"), 0, 0))
 	assert_eq(me.inventory.count_id(&"conch"), 0)
 	assert_eq(me.inventory.count_id(&"conch_horn"), 1)
+
+
+func test_nearly_full_is_full() -> void:
+	_full(me)
+	me.meters.thirst = 99.9
+	me.inventory.add(&"knife", 1)
+	me.inventory.add(&"coco", 1)
+	assert_eq(ItemUser.check(me, _slot_of(&"coco"), 0), R.NOTHING_TO_DO, "a hair drained off is still full")
+	me.meters.thirst = 98.9
+	assert_eq(ItemUser.check(me, _slot_of(&"coco"), 0), R.OK, "a whole point to gain is something")

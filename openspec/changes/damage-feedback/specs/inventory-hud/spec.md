@@ -4,7 +4,7 @@
 While the selected item has a use, the row above its line (the refusal row) SHALL say what the use the button would send does. The text is built from that use's effects by the rules the host applies:
 - signed meter changes ("Sed +15");
 - a meal's energy;
-- a change over time ("Salud −50 en 60 s");
+- a change over time ("Salud -50 en 60 s");
 - statuses cured ("Cura sangrado y quemadura");
 - a revive ("Levanta").
 
@@ -28,7 +28,7 @@ Kinds the host does not apply are left out. A refusal replaces the row for 2 s. 
 #### Scenario: A drain over time
 - **GIVEN** a solo player with manzanillo selected
 - **WHEN** the strip is drawn
-- **THEN** the row reads "Salud −50 en 60 s"
+- **THEN** the row reads "Salud -50 en 60 s"
 
 #### Scenario: The line follows the use the button picks
 - **GIVEN** a co-op player with a coconut selected, 0.5 tiles from a downed teammate
@@ -51,7 +51,7 @@ Kinds the host does not apply are left out. A refusal replaces the row for 2 s. 
 - **THEN** each effect kind the host applies has its words in `hud_text.tres`, and no line names a kind the host skips
 
 ### Requirement: Uses that would do nothing
-Before sending, the HUD SHALL refuse a use that would change nothing for whoever it goes on: every meter it raises is already full, every status it cures is absent, and it has no other effect. It shows a Cuban reason from `hud_text.tres` for 2 s, and nothing is sent or spent. Solo the same.
+Before sending, the HUD SHALL refuse a use that would change nothing for whoever it goes on: every meter it raises is already full or less than 1 point from it, every status it cures is absent, and it has no other effect. It shows a Cuban reason from `hud_text.tres` for 2 s, and nothing is sent or spent. Solo the same.
 
 #### Scenario: Which reason shows
 - **GIVEN** a refused use that would do nothing

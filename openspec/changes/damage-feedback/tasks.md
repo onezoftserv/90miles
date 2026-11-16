@@ -120,7 +120,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
   Verify: it fails first, then passes.
 - [x] 5.2 Write `game/scenes/ui/change_floats.gd`, add `ChangeFloats` to `run_hud.tscn` beside `Marks`, and follow every body as `_follow` does. Add the meter and status words for floats to `hud_text.gd` and `hud_text.tres` (Spanish first, English beside). Verify: 5.1, `test_hud_text.gd` and `test_run_hud*.gd` pass.
-- [ ] 5.3 Import ×2, Smoke and GUT pass.
+- [x] 5.3 Import ×2, Smoke and GUT pass.
 
 ## 6. Effect line and wasted uses (inventory-hud "Effect line", "Uses that would do nothing"; crafting-inventory "A use that changes nothing is refused")
 
@@ -129,7 +129,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - coco reads "Sed +15 · Hambre +5 · Energía +10";
   - at thirst 94 and energy 50 it reads "Sed +15 (+6 útil) · Hambre +5 · Energía +10", and at full energy the energy part reads "Energía +10 (+0 útil)";
   - aloe reads "Cura quemadura y sangrado";
-  - manzanillo reads "Salud −50 en 60 s";
+  - manzanillo reads "Salud -50 en 60 s";
   - the revive use reads "Levanta · …";
   - driftwood reads "";
   - lines are cut at 50 characters with "…";
@@ -146,18 +146,18 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
   Extend `test_inventory_strip.gd` with the refusal lines ("No hay na' que curar.", "No tienes sed.", "A Papo no le hace falta.") and the effect line on the notice row, which returns after a refusal. Verify: they fail first, then pass.
 - [x] 6.4 Write `game/scripts/ui/effect_line.gd` (`EffectLine`) as design D11. Add `ItemUser.Reason.NOTHING_TO_DO` and its dry run as design D12. Add the strip's refusal keys and effect line in `inventory_strip.gd`, and the refusal and effect words in `hud_text.tres`, Cuban for the refusals. Verify: 6.2 and 6.3 pass, and `test_hud_text.gd` passes.
-- [ ] 6.5 Import ×2, Smoke and GUT pass.
+- [x] 6.5 Import ×2, Smoke and GUT pass.
 
 ## 7. Solo and co-op end to end
 
-- [ ] 7.1 Write the solo test `game/tests/unit/test_damage_feedback_solo.gd`, with exactly 1 player, offline, `NetManager.start_solo()`, a sandbar session and its `RunHud`. It covers:
+- [x] 7.1 Write the solo test `game/tests/unit/test_damage_feedback_solo.gd`, with exactly 1 player, offline, `NetManager.start_solo()`, a sandbar session and its `RunHud`. It covers:
   - a land crab's `CreatureWorld.pinch` blinks the look, flashes the edges and leaves a 5-point chunk, with no number floating;
   - thirst at 0 for 3 s of host ticks glows the bar with no blink, flash or float;
   - drinking a coconut through the strip floats "+15 Sed" and lights the Sed bar;
   - sábila with nothing to cure is refused with "No hay na' que curar." and stays.
 
   Verify: it passes.
-- [ ] 7.2 Tests first, in-process host plus client with `NetHarness` (as `test_status_net.gd`), written as `game/tests/unit/test_damage_feedback_net.gd`. Await only the sync, then step the cues by hand. It covers:
+- [x] 7.2 Tests first, in-process host plus client with `NetHarness` (as `test_status_net.gd`), written as `game/tests/unit/test_damage_feedback_net.gd`. Await only the sync, then step the cues by hand. It covers:
   - a host-side crab pinch on the client's player flashes the client's edges and blinks its own look, and the host's HUD does not flash;
   - a pinch on the host's player blinks that body on the client, with no number floating;
   - the host drinking a coconut floats "+15 Sed" over the host's body on the client;

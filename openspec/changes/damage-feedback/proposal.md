@@ -59,7 +59,7 @@ Nothing shows on the body either, so a teammate's hits are invisible too.
 - The row just above the selected item's line reads what the use the button would send does, built from that use's own effect data and the rules the host applies:
   - "Sed +15 · Hambre +5 · Energía +10" (the coconut is a meal);
   - "Cura sangrado y quemadura" (sábila);
-  - "Salud −50 en 60 s" (manzanillo).
+  - "Salud -50 en 60 s" (manzanillo).
 - The text cannot drift from the effects. Kinds the host does not apply yet, such as `APPLY_STATUS`, are left out.
 - A refusal still replaces the row for 2 s.
 
