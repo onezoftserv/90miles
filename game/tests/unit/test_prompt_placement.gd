@@ -110,7 +110,7 @@ func test_centred_at_whole_pixels_with_its_bottom_12_px_above_the_target() -> vo
 	assert_eq(rect.position, rect.position.round(), "whole pixels")
 	assert_almost_eq(rect.get_center().x, anchor.x, 0.5, "centred on the target's x")
 	assert_eq(rect.end.y, anchor.y - 12.0, "its bottom edge 12 px above the target")
-	assert_eq(prompt.panel.theme_type_variation, &"HudPanel", "on a HUD panel")
+	assert_eq(prompt.panel.theme_type_variation, &"HudPanelThin", "on a thin HUD window")
 	assert_eq(prompt.panel.get_global_rect(), rect)
 
 

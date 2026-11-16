@@ -169,7 +169,10 @@ func test_the_list_is_in_pixelify_sans_inside_the_screen_and_scrolls() -> void:
 	assert_true(SCREEN_RECT.encloses(screen.scroll.get_global_rect()), "the view inside 640×360")
 	assert_true(SCREEN_RECT.encloses(screen.back_button.get_global_rect()), "Volver inside 640×360")
 	for label: Label in screen.entry_labels():
-		assert_eq(label.get_theme_font(&"font").resource_path, PIXELIFY_SANS, label.text)
+		var font := label.get_theme_font(&"font") as FontVariation
+		assert_not_null(font, "%s: the menu font (hud-window-kit design D3)" % label.text)
+		if font != null:
+			assert_eq(font.base_font.resource_path, PIXELIFY_SANS, label.text)
 		assert_eq(label.get_theme_font_size(&"font_size"), 16, label.text)
 		assert_lte(label.get_global_rect().end.x, SCREEN_RECT.end.x, "%s fits across" % label.text)
 	screen._unhandled_input(_down_event())

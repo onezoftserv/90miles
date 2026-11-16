@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c5rfp314aeeah"
-path="res://.godot/imported/panel_tan.png-471fd37fa8617c493b06a68a26b80c54.ctex"
+uid="uid://nrp8tt87jk27"
+path="res://.godot/imported/radio_off.png-de1fabfe2ddb15d0f71c6043fa5d26b4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/ui/panel_tan.png"
-dest_files=["res://.godot/imported/panel_tan.png-471fd37fa8617c493b06a68a26b80c54.ctex"]
+source_file="res://assets/art/ui/radio_off.png"
+dest_files=["res://.godot/imported/radio_off.png-de1fabfe2ddb15d0f71c6043fa5d26b4.ctex"]
 
 [params]
 

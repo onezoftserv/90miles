@@ -1,8 +1,12 @@
 class_name EffectApplier
 extends RefCounted
 ## Applies an EffectData to players. Interpreted: METER_ADD, CURE_STATUS, REVIVE, GIVE_ITEM, TAKE_ITEM,
-## START_ROUTE, SET_FLAG and CLEAR_FLAG (the run flags in the session's RunRecord; nothing outside a
-## session), NOISE and SMOKE (the world event bus); any other kind is skipped with one warning. Anything that restores hunger is a meal
+## TAKE_ITEMS_WITH_CAPABILITY (every item with the capability but keepsakes; PARTY or ALL_PLAYERS takes
+## from every player of the session), START_ROUTE, SET_FLAG and CLEAR_FLAG (the run flags in the
+## session's RunRecord; nothing outside a session), NOISE and SMOKE (the world event bus), and
+## TRAVEL_NEXT_ISLAND and TRAVEL_PREVIOUS_ISLAND (guardacostas-capture: the session's IslandTravel
+## releases or restarts the party, on the host only); any other kind is skipped with one warning.
+## Anything that restores hunger is a meal
 ## (survival-meters). An effect with delay_s waits in the subject's meters for that many seconds of
 ## their own time (frozen while they are out of play), then applies to them.
 
@@ -13,6 +17,8 @@ const INTERPRETED: Array[EffectData.Kind] = [
 	EffectData.Kind.METER_ADD, EffectData.Kind.CURE_STATUS, EffectData.Kind.REVIVE,
 	EffectData.Kind.GIVE_ITEM, EffectData.Kind.TAKE_ITEM, EffectData.Kind.START_ROUTE,
 	EffectData.Kind.SET_FLAG, EffectData.Kind.CLEAR_FLAG, EffectData.Kind.NOISE, EffectData.Kind.SMOKE,
+	EffectData.Kind.TAKE_ITEMS_WITH_CAPABILITY, EffectData.Kind.TRAVEL_NEXT_ISLAND,
+	EffectData.Kind.TRAVEL_PREVIOUS_ISLAND,
 ]
 
 static var _warned: Dictionary[int, bool] = {}
@@ -41,6 +47,13 @@ static func apply_now(effect: EffectData, actor: PlayerBody, target: PlayerBody)
 			subject.inventory.add(effect.ref_id, effect.count)
 		EffectData.Kind.TAKE_ITEM:
 			subject.inventory.remove_id(effect.ref_id, effect.count)
+		EffectData.Kind.TAKE_ITEMS_WITH_CAPABILITY:
+			for player: PlayerBody in _players_hit(effect, subject):
+				player.inventory.take_capability(effect.capability, DataEnums.ItemTag.KEEPSAKE)
+		EffectData.Kind.TRAVEL_NEXT_ISLAND:
+			_travel(actor, true)
+		EffectData.Kind.TRAVEL_PREVIOUS_ISLAND:
+			_travel(actor, false)
 		EffectData.Kind.START_ROUTE:
 			_start_route(effect, actor)
 		EffectData.Kind.SET_FLAG:
@@ -87,6 +100,32 @@ static func _raise_smoke(actor: PlayerBody) -> void:
 	var bus := WorldEvents.of(actor)
 	if bus != null:
 		bus.raise_smoke(actor.global_position, null)
+
+
+# The players an item effect reaches: every player of the subject's session for PARTY and
+# ALL_PLAYERS (the whole party is in a capture scene), else the subject alone.
+static func _players_hit(effect: EffectData, subject: PlayerBody) -> Array[PlayerBody]:
+	var hit: Array[PlayerBody] = []
+	var session := CoopSession.of(subject)
+	if session != null and (effect.target == EffectData.Target.PARTY or effect.target == EffectData.Target.ALL_PLAYERS):
+		for peer_id: int in session.peer_ids():
+			var player := session.body(peer_id)
+			if player != null:
+				hit.append(player)
+	else:
+		hit.append(subject)
+	return hit
+
+
+# The session's island keeper releases the party at the next island or restarts the previous one
+# (it listens to party_travel_requested; naming IslandTravel here would load the island scene from
+# inside the scripts that scene uses). Only the host moves the party; on a client, or outside a
+# session, nothing happens.
+static func _travel(actor: PlayerBody, onward: bool) -> void:
+	var session := CoopSession.of(actor)
+	if session == null or not session.multiplayer.is_server():
+		return
+	session.party_travel_requested.emit(onward)
 
 
 static func _subject(effect: EffectData, actor: PlayerBody, target: PlayerBody) -> PlayerBody:

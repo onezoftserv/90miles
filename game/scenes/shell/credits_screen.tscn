@@ -24,9 +24,7 @@ theme_override_constants/separation = 6
 
 [node name="Heading" type="Label" parent="Panel/Box"]
 layout_mode = 2
-theme_type_variation = &"HeadingLabel"
-theme_override_colors/font_color = Color(0.23, 0.16, 0.09, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+theme_type_variation = &"PanelHeading"
 text = "Créditos"
 horizontal_alignment = 1
 
