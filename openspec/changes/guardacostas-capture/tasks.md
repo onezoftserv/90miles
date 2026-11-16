@@ -117,7 +117,7 @@ How the tests are written:
 
 ## 6. The squad plan (pure)
 
-- [ ] 6.1 Write `game/tests/unit/test_squad_plan.gd` and verify it fails. It checks:
+- [x] 6.1 Write `game/tests/unit/test_squad_plan.gd` and verify it fails. It checks:
   - the landing cell;
   - the dinghy's row time at 2 tiles/s;
   - the point order (fires nearest the landing first, then the last known position);
@@ -125,16 +125,20 @@ How the tests are written:
   - the 3 s point search finding within 2 tiles and not at 3;
   - the random walk being equal for equal seeds;
   - leaving at 180 s, the 60 s grace, no free player left, and a squall.
-- [ ] 6.2 Implement `game/scripts/stealth/squad_plan.gd` (design.md §6). Verify the test passes.
-- [ ] 6.3 Write `game/tests/unit/test_squad_search_coverage.gd`, which pins the built plan's outcomes on both islands with the shipped numbers. Verify it passes, and record its run time in design.md "Changes from the build plan" if it takes over 2 s. The design.md figures come from a throwaway model, not the real plan, so measure first:
+  - Done: it failed to parse on the missing `SquadPlan`, then passed (11 tests).
+- [x] 6.2 Implement `game/scripts/stealth/squad_plan.gd` (design.md §6). Verify the test passes.
+  - Done.
+- [x] 6.3 Write `game/tests/unit/test_squad_search_coverage.gd`, which pins the built plan's outcomes on both islands with the shipped numbers. Verify it passes, and record its run time in design.md "Changes from the build plan" if it takes over 2 s. The design.md figures come from a throwaway model, not the real plan, so measure first:
   1. Run the real `SquadPlan` and soldier sight over 100 seeded runs per island.
   2. Record the share of runs in which a still player in the open is spotted, beside design.md's 66% and 54%.
   3. Pin that share to within ±10 points.
+  - Done: the real plan spots a still player in the open in 50% of sandbar runs and 52% of coast cay runs (the model said 66% and 54%), pinned within ±10. Cover is a median of 3 steps away, with a maximum of 8 and 13, as design.md measured. It runs in about 7 s, which design.md "Changes from the build plan" (group 6) records.
 
   The test also checks, by rule:
   - a hidden player more than 2 tiles from every searched point is never found;
   - from each island's solo landing, cover more than 2 tiles from any cell is at most 13 steps away (design.md's measured maximum).
-- [ ] 6.4 Run the import, smoke run and GUT commands, and verify all three pass.
+- [x] 6.4 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 261 scripts, 2386/2386.
 
 ## 7. The soldier, captives and freeing
 
