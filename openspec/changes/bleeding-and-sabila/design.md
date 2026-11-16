@@ -138,7 +138,7 @@ The aloe's SUNBURN cure stays as data. It does nothing until a source exists, an
 
 ### D7. Specs that name health right after a wound are kept
 
-Two scenarios read exact health at the moment of a shark's hit: `creatures-ai` "Solo bleeding swimmer" ("health is 75") and `crossing` "Shark prefers a weak swimmer". They stay true, because the drain starts after the wound. Only the GUT tests that read health a little later change: they use a tolerance (`assert_almost_eq`, 0.5) or subtract the drain since. Those tests are `test_patrol_circle_strike`, `test_crossing_shark` and `test_crossing_creature_shark`.
+Two scenarios read exact health at the moment of a shark's hit: `creatures-ai` "Solo bleeding swimmer" ("health is 75") and `crossing` "Shark prefers a weak swimmer". They stay true, because the drain starts after the wound. Building showed that the GUT tests behind them need no change either: `CreatureRig.run` and `CrossingRig.run` advance creatures and crossings by hand and never tick the player's meters, so health stays at the strike's value there. `test_patrol_circle_strike`, `test_crossing_shark`, `test_crossing_creature_shark` and `test_death_cause` pass unchanged.
 
 ## Solo worst case
 
@@ -149,9 +149,9 @@ Two scenarios read exact health at the moment of a shark's hit: `creatures-ai` "
 - **In a crossing.** Uses are refused at sea. A 60–90 s crossing lets bleeding take at most 9 before landfall, and the coast cay's aloe is 7–13 s from the landing.
 - **Run-1 death rule.** Death at 0 is unaffected, because bleeding never reaches 0.
 
-## Owner decisions (asked 2026-11-15, pending)
+## Owner decisions (2026-11-15)
 
-The specs above follow the recommended option of each. Any other answer changes the named spec and tasks before building.
+The owner chose **A on all four**, in option dialogs relayed by the coordinator on 2026-11-15. The specs above already follow those options, so nothing changed. `damage-feedback` (#65) merged into main at 3b5f9b1 the same day, and this branch is rebased on it rather than stacked.
 
 - **Q1. Bleeding.**
   - **(A, recommended)** 0.1 health/s, ends 120 s after the latest wound, never below 1.
@@ -176,8 +176,8 @@ Refusing a wasted use is not a question here: `damage-feedback` (PR #65) decided
 
 ## Risks / Trade-offs
 
-- **PR #65 not merged when building starts** → Build on main after it merges. If it hasn't merged yet, stack this branch on `claude/damage-feedback-1cc261` and retarget to main once it lands. This change touches none of #65's files except possibly `TASKS.md` and `docs/GAME_DESIGN.md`, where both edit different rows.
-- **Tests that read exact health while a player bleeds** → The three shark tests (D7) and `test_death_cause`'s strike test, where the strike kills at once, so no drain is involved. Run the whole GUT suite, not only the new tests.
+- **#65's own tests read sábila as cures only** → With the heal, the effect line reads "Cura quemadura y sangrado · Salud +5". The wasted-use reason becomes `wasted_meters` Health ("'Tás entero."), because `InventoryStrip.wasted_line` names the first meter gain before any cure. That is the right refusal for a leaf that heals and cures. Only the expected strings in `test_effect_line`, `test_wasted_uses` and `test_damage_feedback_solo` change; no HUD code changes.
+- **Tests that read exact health while a player bleeds** → The rigs never tick meters (D7). Run the whole GUT suite, not only the new tests, to catch any test that ticks a bleeding body.
 - **A player held at 1 health looks stuck** → It is the floor by design. The Salud bar's drain glow (from #65) stops when the drain stops, and the "Sangrando" tag hides at 120 s.
 - **The host's timer is lost if the host leaves** → Only the host simulates, so a run without its host has ended. A rejoining client gets the bit through the synchronizer as before.
 - **A forged use aimed at a far teammate** → Refused by `UsePlan.actor_reason` (`OUT_OF_REACH`) on the host. That is covered by a scenario.

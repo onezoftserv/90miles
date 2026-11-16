@@ -10,14 +10,16 @@ A group may run only its own scripts with `-gdir=res://tests/unit -gselect=<name
 
 ## 0. Decisions and base
 
-- [ ] 0.1 Record the owner's answers to Q1–Q4 in design.md. "Owner decisions (asked 2026-11-15, pending)" becomes "Owner decisions", with the date. Adjust the specs, D1–D6 and these tasks to any answer other than the recommended one. Verify that `openspec validate bleeding-and-sabila --strict` passes.
-- [ ] 0.2 Base the branch on `origin/main` with PR #65 (`damage-feedback`) in it. If #65 has not merged, stack on `claude/damage-feedback-1cc261` and say so in the PR. Then:
+- [x] 0.1 Record the owner's answers to Q1–Q4 in design.md. "Owner decisions (asked 2026-11-15, pending)" becomes "Owner decisions", with the date. Adjust the specs, D1–D6 and these tasks to any answer other than the recommended one. Verify that `openspec validate bleeding-and-sabila --strict` passes. Done: A on all four (2026-11-15), so no spec changed.
+- [x] 0.2 Base the branch on `origin/main` with PR #65 (`damage-feedback`) in it. If #65 has not merged, stack on `claude/damage-feedback-1cc261` and say so in the PR. Then:
   - re-read `use_outcome.gd`, `item_user.gd`, `effect_applier.gd`, `survival_meters.gd`, `use_plan.gd` and `aloe.tres` as merged, and note any drift in design.md;
   - verify the three commands pass on the untouched branch.
 
+  Done: #65 merged into main at 3b5f9b1 and the branch is rebased on it; no drift in `survival_meters.gd` or `use_plan.gd`. The second import printed 0 error lines.
+
 ## 1. Bleeding drains and ends on its own (survival-meters)
 
-- [ ] 1.1 Write `game/tests/unit/test_bleeding.gd`, plain `SurvivalMeters` with the real tuning, failing first. It covers:
+- [x] 1.1 Write `game/tests/unit/test_bleeding.gd`, plain `SurvivalMeters` with the real tuning, failing first. It covers:
   - 30 s of bleeding at 100 takes 3;
   - at 2 health, 60 s leaves 1 and no last stand, death or cause;
   - 120 s ends it, and health is 88 and stays there;
@@ -27,17 +29,19 @@ A group may run only its own scripts with `-gdir=res://tests/unit -gselect=<name
   - a revive at 30 keeps bleeding and keeps its time left;
   - `statuses_changed` fires once when the time runs out;
   - other statuses (POISON set by hand) have no timer and no drain.
-- [ ] 1.2 Add the `Statuses` group to `survival_tuning.gd` (`bleeding_health_per_s`, `bleeding_s`, `bleeding_floor`, with no defaults) and the values 0.1, 120 and 1 to `survival_tuning.tres`. Verify that `test_survival_tuning` (or the tuning load test) still passes.
-- [ ] 1.3 Add the host-only time left and the drain to `SurvivalMeters` (design D1, D3). Verify that `test_bleeding.gd` passes:
+- [x] 1.2 Add the `Statuses` group to `survival_tuning.gd` (`bleeding_health_per_s`, `bleeding_s`, `bleeding_floor`, with no defaults) and the values 0.1, 120 and 1 to `survival_tuning.tres`. Verify that `test_survival_tuning` (or the tuning load test) still passes.
+- [x] 1.3 Add the host-only time left and the drain to `SurvivalMeters` (design D1, D3). Verify that `test_bleeding.gd` passes:
   - `set_status` starts, restarts or clears the count;
   - `tick` drains, then counts down, and ends the status at 0;
   - the drain does not touch `_last_harm`.
-- [ ] 1.4 Write the 1-player wiring test `test_bleeding_solo.gd`, through a real body in a 1-player `CoopSession`:
+- [x] 1.4 Write the 1-player wiring test `test_bleeding_solo.gd`, through a real body in a 1-player `CoopSession`:
   - a reef shark's strike (`CreatureWorld.strike`) is 75 at once and 74 after 10 s more;
   - the "Sangrando" tag hides when the bleeding ends at 120 s;
   - an arrival rider waiting out of play for 60 s keeps the time left it had.
-- [ ] 1.5 Give the shark tests that read health a little after a strike a tolerance for the drain since (design D7): `test_patrol_circle_strike`, `test_crossing_shark` and `test_crossing_creature_shark`. Verify that those scripts pass and that each one still fails when the strike is removed.
-- [ ] 1.6 Update the docs. Verify each by reading it back.
+
+  Done, plus a case in `test_escape_routes_solo`: binoculars-and-swim starts once the bleeding has ended. Both fail against the old `survival_meters.gd`.
+- [x] 1.5 Give the shark tests that read health a little after a strike a tolerance for the drain since (design D7): `test_patrol_circle_strike`, `test_crossing_shark` and `test_crossing_creature_shark`. Verify that those scripts pass and that each one still fails when the strike is removed. Done: no change needed. Their rigs never tick the player's meters (design D7), and all four scripts, `test_death_cause` included, pass unchanged.
+- [x] 1.6 Update the docs. Verify each by reading it back.
   - `docs/GAME_DESIGN.md` §4: in the Health row, "Drains from" gains "bleeding (0.1/s for 120 s after the latest wound, never the last point)", and "Restored by" names sábila's 5.
   - `docs/BESTIARY.md`: the reef shark section defines "bleeding" once, with a pointer to §4.
   - `TASKS.md`: the `item-effects-runtime` line says data-model-questions 22 is answered for bleeding by this change; the "bleeding cause" line (70) says bleeding never kills.
