@@ -10,6 +10,7 @@ const PLAYER_PATH: String = "res://scenes/player/player.tscn"
 const FRAMES_PATH: String = "res://assets/art/characters/balsero_frames.tres"
 const ART_PATH: String = "res://assets/art/characters/balsero_art.tres"
 const RIPPLE_PATH: String = "res://assets/art/fx/dive_ripple.tres"
+const RING_PATH: String = "res://assets/art/fx/swim_ring.tres"
 const ATLAS_PATH: String = "res://assets/art/characters/parts/body_man.png"
 const M := MovementStep.Move
 const CELL: int = 32
@@ -61,6 +62,10 @@ func _sprite(body: PlayerBody) -> AnimatedSprite2D:
 
 func _ripple(body: PlayerBody) -> AnimatedSprite2D:
 	return body.get_node(^"Look/Ripple") as AnimatedSprite2D
+
+
+func _ring(body: PlayerBody) -> AnimatedSprite2D:
+	return body.get_node(^"Look/SwimRing") as AnimatedSprite2D
 
 
 func _shadow(body: PlayerBody) -> DropShadow:
@@ -210,6 +215,43 @@ func test_a_slot_0_swimmer_is_cut_at_the_feet_line_with_no_shadow() -> void:
 	assert_eq(sprite.position, Vector2.ZERO, "never through the node's position")
 	assert_false(_shadow(body).visible, "no shadow on a swimmer")
 	assert_false(_ripple(body).visible, "the ripple is the dive's")
+
+
+## art-sprite-polish D1 (C20): one player, offline, swimming shows the ripple ring round the body at
+## the water line, drawn after the shadow and before the body; nobody else shows it.
+func test_a_solo_swimmer_shows_the_swim_ring_at_the_water_line() -> void:
+	var body: PlayerBody = _spawn()
+	var ring: AnimatedSprite2D = _ring(body)
+	assert_not_null(ring, "Look/SwimRing")
+	if ring == null:
+		return
+	assert_lt(ring.get_index(), _sprite(body).get_index(), "before the body")
+	assert_gt(ring.get_index(), _shadow(body).get_index(), "after the shadow")
+	assert_eq(ring.sprite_frames.resource_path, RING_PATH)
+	assert_eq(ring.texture_filter, CanvasItem.TEXTURE_FILTER_NEAREST)
+	assert_false(ring.visible, "a standing player shows no ring")
+	body.movement_state = M.SWIM
+	_walk(body, Vector2(0.5, 0.0), 12)
+	assert_true(ring.visible, "a swimmer shows the ring")
+	assert_true(ring.is_playing(), "and it plays")
+	assert_eq(ring.sprite_frames.get_frame_count(ring.animation), 3)
+	assert_eq(ring.sprite_frames.get_animation_speed(ring.animation), 4.0)
+	var frame: Texture2D = ring.sprite_frames.get_frame_texture(ring.animation, 0)
+	var top: float = ring.position.y + ring.offset.y
+	var line: float = float((_sprite(body).material as ShaderMaterial).get_shader_parameter(&"water_line_y"))
+	assert_eq(top + floorf(frame.get_size().y / 2.0), line, "the ring's middle row lies on the water line")
+	assert_eq(ring.position.x + ring.offset.x + frame.get_size().x / 2.0, 0.0, "centred on the body")
+	body.movement_state = M.FLOAT
+	_step(body, 2)
+	assert_true(ring.visible, "a floater shows it too")
+	body.movement_state = M.DIVE
+	_step(body, 2)
+	assert_false(ring.visible, "a diver shows only the dive ripple")
+	body.movement_state = M.SWIM
+	_step(body, 2)
+	body.downed = true
+	_step(body, 2)
+	assert_false(ring.visible, "a downed body shows none")
 
 
 func test_a_diver_shows_only_the_ripple() -> void:

@@ -4,6 +4,7 @@ Run: python -I -m unittest discover -s tools/art -p "test_*.py"
 """
 import unittest
 
+import palette
 import png
 import poses
 import rim
@@ -135,6 +136,25 @@ class LayoutTest(unittest.TestCase):
             for x in range(32):
                 expected = downed.get(x, y + 1) if x in poses.CHEST_COLUMNS else downed.get(x, y)
                 self.assertEqual(lifted.get(x, y), expected, f"({x}, {y})")
+
+
+## balsero_art.tres water_row: the rows above it are drawn while swimming.
+WATER_ROW = 19
+
+
+class SwimBobTest(unittest.TestCase):
+    """art-sprite-polish D1 (C19, SP3): the two swim frames bob above the water line."""
+
+    def test_the_swim_cells_come_from_walk_frames_1_and_3(self):
+        self.assertEqual(poses.SWIM_FROM, (1, 3), "walk 1 and 4 are both high steps; 1 and 3 bob")
+
+    def test_the_tracked_body_sheets_two_swim_cells_differ_above_the_water_row(self):
+        for name in ("body_man", "body_woman"):
+            sheet = png.read_png(palette.ART / "characters" / "parts" / f"{name}.png")
+            for row, facing in enumerate(poses.FACINGS):
+                first = poses.cell(sheet, poses.SWIM_COLUMNS[0], row).crop(0, 0, poses.CELL, WATER_ROW)
+                second = poses.cell(sheet, poses.SWIM_COLUMNS[1], row).crop(0, 0, poses.CELL, WATER_ROW)
+                self.assertNotEqual(first.pixels, second.pixels, f"{name} swim {facing}: the two frames differ above the line")
 
 
 class CompositeTest(unittest.TestCase):

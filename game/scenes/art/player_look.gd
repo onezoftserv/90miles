@@ -3,13 +3,15 @@ extends Node2D
 ## How a player is drawn (art-pass "Player frames and anchor", "Player poses", "Player facing",
 ## "Swimmers at the water line", "Clothing colours", "Player look slots"; design.md D1-D3, D6, D19,
 ## C1, C2): the composite of its look slot's look on `Sprite`, in the pose its body's states pick,
-## turned by its drawn motion; the dive ripple on `Ripple`; the shadow; and the hurt blink on a hit
+## turned by its drawn motion; the dive ripple on `Ripple`; the swim ring on `SwimRing` (art-sprite-
+## polish D1), centred on the water line the body is cut at; the shadow; and the hurt blink on a hit
 ## (survival-meters "Hurt cue on the body"; damage-feedback design D4), from the health this peer
 ## holds for the body. Drawing only (`art_view`,
 ## set in the scene): every frame it reads the body's states and position and writes nothing back.
 ## `step(delta)` is one frame; `_process` calls it and the tests drive it.
 
 const RIPPLE_ANIMATION: StringName = &"dive"
+const SWIM_RING_ANIMATION: StringName = &"swim"
 
 ## The pose drawn now.
 var pose: PlayerPose.Pose = PlayerPose.Pose.STANDING
@@ -26,15 +28,19 @@ var _blink: HurtBlink = HurtBlink.new(_tuning.blink_s, _tuning.blink_hz)
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var ripple: AnimatedSprite2D = $Ripple
+@onready var swim_ring: AnimatedSprite2D = $SwimRing
 @onready var shadow: DropShadow = $Shadow
 
 
 func _ready() -> void:
 	_art = BodyArt.standard()
 	_material = sprite.material as ShaderMaterial
+	var frame_top: int = _art.feet_y - _art.feet_row - 1
+	var water_line_y: float = float(_art.water_row + frame_top + _art.swim_drop_px)
 	if _material != null:
-		var frame_top: int = _art.feet_y - _art.feet_row - 1
-		_material.set_shader_parameter(&"water_line_y", float(_art.water_row + frame_top + _art.swim_drop_px))
+		_material.set_shader_parameter(&"water_line_y", water_line_y)
+	# The ring's middle row on the line the body is cut at (its offset centres it, in the scene).
+	swim_ring.position = Vector2(0.0, water_line_y)
 	step(0.0)
 
 
@@ -73,6 +79,7 @@ func _draw_pose() -> void:
 	sprite.visible = body_shown
 	shadow.visible = PlayerPose.shows_shadow(pose)
 	_show_ripple(PlayerPose.shows_ripple(pose))
+	_show_swim_ring(PlayerPose.shows_swim_ring(pose))
 	if _material != null:
 		_material.set_shader_parameter(&"water_line_on", PlayerPose.shows_water_line(pose))
 	if not body_shown or sprite.sprite_frames == null:
@@ -109,6 +116,14 @@ func _draw_hurt(meters: SurvivalMeters, delta: float) -> void:
 		_material.set_shader_parameter(&"hurt_hidden", _blink.hidden(reduce))
 		_material.set_shader_parameter(&"hurt_tint", _tuning.tint_color if _blink.tinted(reduce) else Color(0.0, 0.0, 0.0, 0.0))
 	_blink.advance(delta)
+
+
+func _show_swim_ring(shown: bool) -> void:
+	swim_ring.visible = shown
+	if shown and not swim_ring.is_playing():
+		swim_ring.play(SWIM_RING_ANIMATION)
+	elif not shown and swim_ring.is_playing():
+		swim_ring.stop()
 
 
 func _show_ripple(shown: bool) -> void:

@@ -9,7 +9,7 @@ extends RefCounted
 ## walk cell by its rules:
 ## - crouch, from walk frames 0 and 1: frame rows 21-23 and 27-29 deleted, rows above 21 down
 ##   6 px, rows 24-26 down 3 px, the feet row 30 kept;
-## - swim: copies of walk frames 1 and 4;
+## - swim: copies of walk frames 1 and 3 (art-sprite-polish D1: a 1 px bob above the line);
 ## - downed: the down-facing walk frame 0 turned 90 degrees clockwise ((x, y) -> (31 - y, x)) and
 ##   moved 8 px down; its second frame lifts columns 8-14 (the chest) by 1 px;
 ## - dead: downed frame 0.
@@ -65,7 +65,7 @@ static func made_cells() -> Array[Dictionary]:
 		made.append({"cell": Vector2i(6, row), "source": Vector2i(0, row), "rules": [Rule.CROUCH]})
 		made.append({"cell": Vector2i(7, row), "source": Vector2i(1, row), "rules": [Rule.CROUCH]})
 		made.append({"cell": Vector2i(8, row), "source": Vector2i(1, row), "rules": []})
-		made.append({"cell": Vector2i(9, row), "source": Vector2i(4, row), "rules": []})
+		made.append({"cell": Vector2i(9, row), "source": Vector2i(3, row), "rules": []})
 	made.append({"cell": Vector2i(0, 3), "source": Vector2i(0, 0), "rules": [Rule.TURN_DOWN]})
 	made.append({"cell": Vector2i(1, 3), "source": Vector2i(0, 0), "rules": [Rule.TURN_DOWN, Rule.CHEST_LIFT]})
 	made.append({"cell": Vector2i(2, 3), "source": Vector2i(0, 0), "rules": [Rule.TURN_DOWN]})

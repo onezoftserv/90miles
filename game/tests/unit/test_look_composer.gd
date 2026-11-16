@@ -11,6 +11,7 @@ const ROOT: String = "res://assets/art/characters"
 const FIXTURE_ROOT: String = "res://tests/fixtures/art/look"
 const ART_PATH: String = "res://assets/art/characters/balsero_art.tres"
 const RIPPLE_PATH: String = "res://assets/art/fx/dive_ripple.tres"
+const RING_PATH: String = "res://assets/art/fx/swim_ring.tres"
 const CELL: Vector2i = Vector2i(32, 32)
 const HAIRS: Array[StringName] = [&"hair_0", &"hair_1", &"hair_2", &"hair_3", &"hair_4", &"hair_5", &"hair_6", &"hair_7"]
 const BODIES: Array[StringName] = [&"body_man", &"body_woman"]
@@ -249,10 +250,15 @@ func test_the_composed_look_keeps_the_frame_budget_with_the_ripple() -> void:
 		return
 	var ripple_frames: int = ArtChecks.total_unique_frames(ripple)
 	assert_eq(ripple_frames, 2)
+	# art-sprite-polish D1: the swim ring's 3 frames count too (24 + 2 + 3 <= 48).
+	var ring: SpriteFrames = load(RING_PATH) as SpriteFrames
+	assert_not_null(ring)
+	var ring_frames: int = ArtChecks.total_unique_frames(ring) if ring != null else 0
+	assert_eq(ring_frames, 3)
 	for slot: int in 4:
 		var image: Image = _image(LookComposer.compose(_art().look_for_slot(slot)))
-		var count: int = ArtChecks.unique_cells(image, CELL) + ripple_frames
-		assert_lte(count, _tuning().max_character_frames, "slot %d: %d unique frames with the ripple" % [slot, count])
+		var count: int = ArtChecks.unique_cells(image, CELL) + ripple_frames + ring_frames
+		assert_lte(count, _tuning().max_character_frames, "slot %d: %d unique frames with the ripple and the ring" % [slot, count])
 
 
 func test_swimmers_stand_out_on_shallows_and_deep() -> void:
