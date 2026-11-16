@@ -595,6 +595,23 @@ Recorded while building. Each entry says what moved and why.
   - `CreatureSpawner.patrol_stream(run_seed, layout_id)` and `roll_patrol(data, rule, dice, players)` are statics the spawner uses and the test shares.
   - Over 1,000 run seeds the REEF fixture has boats in **31.6%** of them, each with one or two. The real spawner set up twice from the same seed gives the same boats.
   - `test_patrol_data.gd`'s "two spawn rules" test now counts three.
+- **Group 12, the cues.**
+  - The rope mark: `BodyMarks` draws a 7×5 braid (`ROPE_PIXELS`, cream on the outline) over every captive on the island, the local player included. It wins over both eyes, and `has_marker` and `marker_rect` include it, so a bubble or the prompt stacks over it.
+  - The prompt: group 7's handle is disabled while a soldier is within 3 tiles, so the picker, and with it the HUD prompt, offers nothing until the soldier leaves. Its words, "Soltar a" and the captive's name, are in `hud_text.tres`, and the hold ring is the handle's 1 s.
+  - `SquadLook` (`game/scenes/creatures/squad_look.gd`, a new `art_view` child of `creature.tscn` beside `PatrolLook`) draws three things, reading the synced state only:
+    - the soldier, as a placeholder body (an olive uniform, a cap, a flashlight glint on its facing side) until the art pass;
+    - the boat's dinghy, as a 9×5 hull `dinghy_t` of the way from the boat to the landing;
+    - the squad's calls: a 3 s bubble over the soldier nearest the landing for the landing and leaving calls, and over the soldier giving chase for a spot call. A call waits up to 2 s for a soldier to show over, because on a client the call can arrive before the soldiers do.
+  - The open eye needed no new code: it reads `spot_shown`, which a soldier's sight fills.
+- **Group 12, the art invariance test.** `test_art_sim_invariance.gd`'s night lap now docks the boat, because its alert is on land. The built run draws the soldiers, the dinghy and a squad call, and every frame still matches the stripped run. The snapshot also holds each creature's squad fields.
+- **Group 12, the two-process run.** `game/tests/manual/guardacostas_capture_run.gd` on UDP 7796, both headless:
+  - the squad lands and both peers see it;
+  - the client is captured, seated and freed by the host's 1 s hold, with the soldiers held away by the hut;
+  - both players are caught, and `la_captura` plays the same five plural lines on both;
+  - the restart lands both on the sandbar.
+
+  Host 14/14, client 10/10, no engine errors. The first try failed only on the run script's own wait, which held the old island node across the restart. It now compares instance ids.
+- **Group 12, the stealth run.** `tests/manual/patrol_run.gd` (the stealth slice's two-process run) clears its world's spawner, so its boat runs the plain alert it checks. Re-run: host 22/22, client 18/18.
 - **Review fixes (before merge).**
   - **A found player was never captured.** A soldier that found a hidden player by its point search started a chase, and the chase broke on the next tick, because the target was hidden. A player crouched by their own fire was therefore safe. A player found by a point search is now exposed: hiding does not break that chase while they stay within `point_search_tiles` of where they were found (`SearchCapture.is_exposed`). A player spotted by sight who then hides still shakes the soldier, so the rejected Bush Hat rule stays rejected. `test_capture_solo.gd`'s fire case now plays on to the capture and to the scene, through the boat's `captured` signal and the spawner's connection to the keeper; no other test had exercised that path. `test_search_capture.gd` gained the found-and-captured and the seen-then-hides cases.
   - **A hauled captive trailed the boat by one tick.** The boat now carries its captives aboard after its move (in `_publish`).
