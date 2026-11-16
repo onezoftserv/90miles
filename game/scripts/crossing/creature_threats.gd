@@ -77,18 +77,24 @@ func _shark_pass(crossing: Crossing, event: CrossingBeat) -> void:
 			arrives_at = body.global_position
 			bitten = true
 			break
+	var strikes_at: Vector2 = arrives_at + SHARK_OFFSET_PX
 	if not bitten:
+		var afloat: bool = crossing.integrity.intact()
+		for board: VesselIntegrity in crossing.boards.values():
+			afloat = afloat or board.intact()
 		arrives_at = crossing.hit_vessel(crossing.tuning.shark_hit, true)
+		# A vessel strike lands 1 tile off the hit deck's edge on the pass's side, never on the planks.
+		strikes_at = crossing.strike_spot(event, arrives_at) if afloat else arrives_at + SHARK_OFFSET_PX
 	# The warned shark stops circling its spot and goes beside its victim; one never warned (a
 	# restored crossing past its warning) comes now.
 	_spots.erase(event)
 	var waiting := _sharks.get(event) as Creature
 	_sharks.erase(event)
 	if is_instance_valid(waiting) and data != null:
-		waiting.position = arrives_at + SHARK_OFFSET_PX
+		waiting.position = strikes_at
 		waiting.lifetime_s = data.circle_time_s.x
 		return
-	_show_shark(crossing, data, arrives_at + SHARK_OFFSET_PX)
+	_show_shark(crossing, data, strikes_at)
 
 
 # The visual shark: it appears beside the victim, circles for its circle time and frees itself.

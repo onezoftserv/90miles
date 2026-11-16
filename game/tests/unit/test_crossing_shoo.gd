@@ -134,3 +134,36 @@ func test_the_scripted_threats_honour_a_shoo() -> void:
 	assert_true(crossing.shoo_shark(0))
 	CrossingRig.run(crossing, 5.0)
 	assert_eq(crossing.integrity.value, 100.0)
+
+
+# --- the strike lands beside the hit deck, never on it (owner, art waves QS1 (a), 2026-11-16) -------
+
+func test_solo_strike_lands_one_tile_off_the_east_edge() -> void:
+	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0, [CrossingBeat.create(10.0, K.SHARK_PASS, 0, E)])
+	CrossingRig.run(crossing, 10.1)
+	assert_eq(crossing.integrity.value, 80.0, "the shark hit the raft")
+	var sharks := _sharks(crossing)
+	assert_eq(sharks.size(), 1)
+	var deck := crossing.deck_rect()
+	assert_almost_eq(sharks[0].global_position.x, deck.end.x + Crossing.TILE_PX, 0.01, "1 tile off the east edge")
+	assert_almost_eq(sharks[0].global_position.y, deck.get_center().y, 0.01, "level with the deck's middle")
+	assert_false(deck.has_point(sharks[0].global_position), "never on the planks")
+
+
+func test_an_old_form_strike_lands_off_the_west_edge() -> void:
+	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0, [CrossingBeat.create(10.0, K.SHARK_PASS)])
+	CrossingRig.run(crossing, 10.1)
+	var deck := crossing.deck_rect()
+	assert_almost_eq(_sharks(crossing)[0].global_position.x, deck.position.x - Crossing.TILE_PX, 0.01, "an old-form pass comes from the west")
+
+
+func test_a_board_strike_lands_off_the_hit_boards_edge() -> void:
+	FixtureRoutes.put_in()
+	var crossing := CrossingRig.make(self, &"test_board", 2, 60.0, 60.0, [CrossingBeat.create(10.0, K.SHARK_PASS, 0, E)])
+	CrossingRig.run(crossing, 10.1)
+	assert_eq(crossing.boards[1].value, 40.0, "the first board in turn took it")
+	var board := crossing.deck_rect_of(1)
+	var at: Vector2 = _sharks(crossing)[0].global_position
+	assert_almost_eq(at.x, board.end.x + Crossing.TILE_PX, 0.01, "1 tile off the hit board's east edge")
+	assert_false(board.has_point(at) or crossing.deck_rect_of(2).has_point(at), "on no board")
+	FixtureRoutes.take_out()

@@ -515,6 +515,19 @@ func fin_spot(beat: CrossingBeat) -> Vector2:
 				count += 1
 		var centre: Vector2 = middle / count if count > 0 else deck_center()
 		rect = Rect2(centre - Vector2(TILE_PX, TILE_PX) * 0.5, Vector2(TILE_PX, TILE_PX))
+	return _beside(rect, east)
+
+
+## Host: where the shark of `beat` strikes a vessel it hit, whose deck (or board) is centred at
+## `hit_center`: 1 tile off that deck's edge on the side the pass names, level with its middle, so
+## the shark is never on the planks (owner, art waves QS1 (a), 2026-11-16).
+func strike_spot(beat: CrossingBeat, hit_center: Vector2) -> Vector2:
+	var size := Vector2(BOARD_TILES if is_board_route() else DECK_TILES) * TILE_PX
+	return _beside(Rect2(hit_center - size * 0.5, size), beat.side() == CrossingBeat.Side.EAST)
+
+
+# 1 tile off `rect`'s east or west edge, level with its middle.
+func _beside(rect: Rect2, east: bool) -> Vector2:
 	var x: float = rect.end.x + TILE_PX if east else rect.position.x - TILE_PX
 	return Vector2(x, rect.get_center().y)
 

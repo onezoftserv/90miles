@@ -127,7 +127,7 @@ Debris opens a leak on the hit half of the deck: −0.5/s until plugged by a 2 s
 A separate "water aboard" meter with bailing was weighed and kept as Q3(b). It is more balsero, but it adds a second gauge and a second job to a 75 s scene.
 
 ### D6. Shark: warn, circle, strike or be shooed
-`CrossingThreats` gains `warn(beat, crossing)`, called at the beat's time − 5 s (the base class does nothing). `CreatureThreats.warn` spawns the reef shark 1 tile off the named side and keeps it circling there. At the strike, `resolve` runs today's choice (the swimmer first, then the vessel −20, with a dump on routes that dump), unless the beat was shooed.
+`CrossingThreats` gains `warn(beat, crossing)`, called at the beat's time − 5 s (the base class does nothing). `CreatureThreats.warn` spawns the reef shark 1 tile off the named side and keeps it circling there. At the strike, `resolve` runs today's choice (the swimmer first, then the vessel −20, with a dump on routes that dump), unless the beat was shooed. A vessel strike puts the shark 1 tile off the hit deck's or board's edge on the pass's side (`Crossing.strike_spot`), never on the planks; before, it sat 16 px east of the deck's centre, on the deck (owner, art waves QS1 (a), 2026-11-16). A bitten swimmer still has it beside them.
 
 Shooing is a `RescuePoint` kind SHOO that follows the fin: a 1 s hold by a rider aboard. A shooed shark is freed at once; the spawner takes it off every peer. A pass that fires with no lead, because it is in the first 5 s, or a plan restored past its warning, spawns the shark at the restored point.
 
