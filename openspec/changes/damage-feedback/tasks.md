@@ -172,7 +172,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   3. the host drinks a coconut.
 
   The client asserts its HUD flash, its own blink, the drain glow and the "+15 Sed" float over the host. The host asserts that the client's body blinks. Run it 3 times. Verify: both processes report every check passing with 0 engine errors.
-- [ ] 7.4 Import ×2, Smoke, GUT and CI's four headless game runs pass with 0 error lines.
+- [x] 7.4 Import ×2, Smoke, GUT and CI's four headless game runs pass with 0 error lines.
 
 ## 8. Docs
 
