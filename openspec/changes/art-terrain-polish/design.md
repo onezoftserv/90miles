@@ -234,7 +234,10 @@ Ideas and structure only, never code, data or text.
 - **The dune's inland corners (D9).** When wave 1 merged, the owner chose "Next PR" for them, so they are in this change.
 - **TR14 first.** The bush hole shows in wave 1's after capture, so it ships as the first group.
 
-**New:**
+**Answered on 2026-11-15** (the owner, "Accept all recommended", relayed by the coordinating session):
+- **QT1 (a):** uncover wave 1's 1 px lip below the foam; no second wet row.
+
+**Asked:**
 - **QT1. The wet-sand edge.** Wave 1 already replaced the review's two-row band (#d9a066 over #c08a5a) with one 1 px lip on every side.
   - (a) *Recommended:* uncover that 1 px lip below the foam. It keeps wave 1's "same lip on every side" rule.
   - (b) Add a second, darker wet row on all four sides (a 2 px wet edge). It amends wave 1's lip scenario, and the south side again ends in a two-row band.
@@ -261,3 +264,12 @@ This change archives after art-coast-pass. Before archiving, the MODIFIED "Shore
 ## Build notes
 
 Measured values and departures are recorded here as the tasks ship.
+
+**Gate (0.1, 0.2), 2026-11-15.** art-coast-pass merged at c0a1915 and this queue at 10b2723; the coordinating session said go. Its "Shoreline overlay" delta on main is byte-identical to the copy this change's MODIFIED block was made from, so the block needs no re-sync until art-coast-pass is archived.
+
+**TR14 (group 1).**
+- The hole was 6 clear pixels inside pick 3, at (56, 68), (57, 68), (55, 69), (56, 69), (57, 69) and (56, 70), where the overlay held #ff00ff erase marks. On the solo sandbar, 4 lone bushes take pick 3 after wave 1's re-rolled hash: (21, 36) beside the owner's spot, (27, 51), (33, 56) and (41, 59).
+- Painted as a shaded crease between the two lobes: #4b692f at (56, 68) and (55, 69) beside the left lobe's #323c39 outline, and #37946e on the other four. The hole test counts clear pixels that no 4-connected clear run joins to the tile's border.
+- Rebuilt: only `game/assets/art/terrain/brush.png` changed; `check.py` reports 0 problems.
+- Checks: `tools/art` unit tests OK; import twice clean; smoke 0 problems; GUT 256 scripts, 2343 of 2343 passing.
+- Windowed capture (`capture_terrain.tscn`, cells (17..24, 30..40) at x6): `docs/art-pass/terrain-polish/tr14_west_shore_x6_after.png`. The bush at (21, 36), the middle-right one in wave 1's after capture, is solid.

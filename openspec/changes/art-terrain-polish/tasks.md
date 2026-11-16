@@ -21,20 +21,20 @@
 
 ## 0. Gate
 
-- [ ] 0.1 art-coast-pass (wave 1) merged into main at c0a1915 on 2026-11-15. Wait until this docs change is merged and the coordinating session says go. Then:
+- [x] 0.1 art-coast-pass (wave 1) merged into main at c0a1915 on 2026-11-15. Wait until this docs change is merged and the coordinating session says go. Then:
   - branch from main;
   - re-read the merged `terrain.py`, `terrain_tiles.json`, `sand.png` and `dune.png` overlays, `TerrainArt`, `ShoreRule`, `SeaMask` and the art-coast-pass build notes;
   - check that the design's assumptions still hold: the 1 px #d9a066 lip, the fit and tuft placements, the `"corners"` foam key, and fmix32 in `cell_hash`.
-- [ ] 0.2 Re-sync the MODIFIED "Shoreline overlay" block in `specs/art-pass/spec.md` with the art-pass text as art-coast-pass archived it (its scenarios included). Run `openspec validate art-terrain-polish --strict`.
+- [x] 0.2 Re-sync the MODIFIED "Shoreline overlay" block in `specs/art-pass/spec.md` with the art-pass text as art-coast-pass archived it (its scenarios included). Run `openspec validate art-terrain-polish --strict`.
 
 ## 1. TR14: the hole in a bush pick
 
-- [ ] 1.1 Write these tests first and see them fail on pick 3:
+- [x] 1.1 Write these tests first and see them fail on pick 3:
   - in `tools/art/test_terrain.py`, on the tracked recipe's made brush sheet: no row-4 brush pick has a clear or sand-coloured pixel inside its outline (a pixel the pick's opaque pixels enclose);
   - in `test_terrain_art.gd`, the same on `brush.png` as the game loads it.
   Add the 1-player test: on the sandbar built for one offline player, every lone scrub cell's brush tile (whichever pick its hash takes) has no sand pixel inside the bush's outline. It reads the sheet's bytes, not a render.
-- [ ] 1.2 Paint the 6 px gap at (55–57, 68–70) of `tools/art/fixes/terrain/brush.png` #37946e with a #4b692f and #323c39 inner edge (design D5, "The hole"). This reverses K39 (g)'s erase for that pick only. Rebuild. Verify that only `brush.png` and the sheets built from its picks change, and that `test_the_tracked_overlays_hold_only_hand_pixels` and the brush tests pass.
-- [ ] 1.3 Windowed 1-player capture of the sandbar's west shore at x6. Compare with wave 1's after capture, `docs/art-pass/review-2026-11-14/west_shore_bushes_x6_before_after.png`: its middle-right bush shows the hole.
+- [x] 1.2 Paint the 6 px gap at (55–57, 68–70) of `tools/art/fixes/terrain/brush.png` #37946e with a #4b692f and #323c39 inner edge (design D5, "The hole"). This reverses K39 (g)'s erase for that pick only. Rebuild. Verify that only `brush.png` and the sheets built from its picks change, and that `test_the_tracked_overlays_hold_only_hand_pixels` and the brush tests pass.
+- [x] 1.3 Windowed 1-player capture of the sandbar's west shore at x6. Compare with wave 1's after capture, `docs/art-pass/review-2026-11-14/west_shore_bushes_x6_before_after.png`: its middle-right bush shows the hole.
 
 ## 2. C9: palms count as dune (TR11)
 
