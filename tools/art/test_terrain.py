@@ -51,6 +51,14 @@ def opaque_columns(image):
     return [x for x in range(image.width) if any(image.alpha(x, y) for y in range(image.height))]
 
 
+def mirrored(image):
+    out = png.blank(image.width, image.height)
+    for y in range(image.height):
+        for x in range(image.width):
+            out.set(image.width - 1 - x, y, image.get(x, y))
+    return out
+
+
 def enclosed_clear(image):
     """The clear pixels that no 4-connected run of clear pixels joins to the image's border: holes
     the drawn pixels close in, where the ground shows through (design pass TR14)."""
@@ -1142,6 +1150,35 @@ class StillFoamTests(unittest.TestCase):
             for frame in range(1, 8):
                 self.assertEqual(still.crop(frame * 16, mask * 16, 16, 16).pixels, first.pixels, f"mask {mask} frame {frame}")
         self.assertNotIn((0xFF, 0xFF, 0xFF), still.colours(), "no white")
+
+
+class SandTextureTests(unittest.TestCase):
+    """art-terrain-polish D4 (TR12): a beach with no grid."""
+
+    def test_the_tracked_sand_fill_is_one_tone_and_its_picks_are_distinct_and_not_mirrors(self):
+        made = png.read_png(terrain.DEFAULT_OUT / "terrain" / "sand.png")
+        full = made.crop(3 * 16, 3 * 16, 16, 16)
+        self.assertEqual(len(full.colours()), 1, "the whole tile is one tone, no stripes")
+        picks = [made.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16) for column in range(terrain.SET_COLUMNS)]
+        self.assertEqual(picks[0].pixels, full.pixels, "pick 0 is the clean tile")
+        seen = []
+        for column, pick in enumerate(picks):
+            self.assertNotIn(pick.pixels, seen, f"pick {column} repeats another")
+            self.assertNotIn(mirrored(pick).pixels, seen, f"pick {column} mirrors another")
+            seen.append(pick.pixels)
+        for column in range(1, terrain.SET_COLUMNS):
+            marks = [(x, y) for y in range(16) for x in range(16) if picks[column].get(x, y) != full.get(x, y)]
+            self.assertTrue(0 < len(marks) <= 16, f"pick {column} has a few sparse marks, not a field ({len(marks)})")
+
+    def test_the_sand_picks_marks_are_off_the_old_three_spot_lattice(self):
+        made = png.read_png(terrain.DEFAULT_OUT / "terrain" / "sand.png")
+        full = made.crop(3 * 16, 3 * 16, 16, 16)
+        marked = {}
+        for column in range(1, terrain.SET_COLUMNS):
+            pick = made.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16)
+            for at in ((x, y) for y in range(16) for x in range(16) if pick.get(x, y) != full.get(x, y)):
+                self.assertNotIn(at, marked, f"pick {column} marks {at}, as pick {marked.get(at)} does: a lattice")
+                marked[at] = column
 
 
 if __name__ == "__main__":

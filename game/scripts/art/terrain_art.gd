@@ -158,7 +158,19 @@ static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terra
 
 
 static func _variant(layer: StringName, cell: Vector2i, layout_id: StringName) -> int:
-	return (cell_hash(layout_id, cell) >> 1) % int(data().variant_count[layer])
+	var roll: int = cell_hash(layout_id, cell) >> 1
+	var weights: PackedInt32Array = data().variant_weights.get(layer, PackedInt32Array())
+	if weights.is_empty():
+		return roll % int(data().variant_count[layer])
+	var total: int = 0
+	for weight: int in weights:
+		total += weight
+	var at: int = roll % total
+	for pick: int in weights.size():
+		if at < weights[pick]:
+			return pick
+		at -= weights[pick]
+	return weights.size() - 1
 
 
 ## 0 for the full tile, n for the row's n-th variant after it.

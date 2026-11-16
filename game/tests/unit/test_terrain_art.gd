@@ -1158,6 +1158,45 @@ func test_a_solo_sandbars_dune_corners_are_rounded() -> void:
 	assert_gt(checked, 0, "the sandbar has inland dune corners")
 
 
+# --- art-terrain-polish C11, TR12: weighted sand picks (design D4) ---
+
+## The share of whole cells of `rows` that take sand pick 0, the clean one.
+func _clean_share(terrain: GridTerrain, pools: Array[Vector2i], layout_id: StringName) -> float:
+	var whole: int = 0
+	var clean: int = 0
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.SAND, terrain, pools):
+		var tile: Dictionary = TerrainArt.tile(TerrainArt.SAND, cell, layout_id, terrain, pools)
+		var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+		if atlas.y != PICK_ROW:
+			continue
+		whole += 1
+		if atlas.x == 0:
+			clean += 1
+	return float(clean) / float(maxi(whole, 1))
+
+
+func test_the_sand_picks_are_weighted_toward_the_clean_one() -> void:
+	# art-pass "The beach shows no grid": about 70% clean, by art data
+	var weights: PackedInt32Array = TerrainArt.data().variant_weights.get(TerrainArt.SAND, PackedInt32Array())
+	assert_eq(weights.size(), int(TerrainArt.data().variant_count[TerrainArt.SAND]), "one weight per sand pick")
+	var rows: PackedStringArray = []
+	for y: int in 34:
+		rows.append("s".repeat(34))
+	var share: float = _clean_share(TerrainRows.build(rows), [], &"weights")
+	assert_between(share, 0.6, 0.8, "a 32x32 block of whole sand: %.2f clean" % share)
+	assert_true(TerrainArt.data().variant_weights.get(TerrainArt.DUNE, PackedInt32Array()).is_empty(), "the dune keeps its even pick")
+
+
+## One player, offline: the solo sandbar's whole sand cells take the clean pick 60-80% of the
+## time, the same on every build.
+func test_a_solo_sandbars_beach_is_mostly_clean_sand() -> void:
+	var first: IslandLayout = IslandLayout.build(SANDBAR)
+	var share: float = _clean_share(first.terrain, first.tide_pools, SANDBAR.id)
+	assert_between(share, 0.6, 0.8, "the sandbar's whole sand cells: %.2f clean" % share)
+	var again: IslandLayout = IslandLayout.build(SANDBAR)
+	assert_eq(_clean_share(again.terrain, again.tide_pools, SANDBAR.id), share, "every build picks the same")
+
+
 ## Every layer's tile of every cell of `layout`, by layer and cell.
 func _all_tiles(layout: IslandLayoutData) -> Dictionary:
 	var built: IslandLayout = IslandLayout.build(layout)
