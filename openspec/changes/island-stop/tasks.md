@@ -1,10 +1,10 @@
 # Tasks
 
-Nothing here is built until the owner answers design.md "Owner decisions". The tasks follow option (a) on every question. Groups 1–2 are PR 1 (the mend) and can go before crossing-gameplay. Group 3 is PR 2 (the fittings) and waits for crossing-gameplay's three PRs.
+The owner answered (a) on all eight questions on 2026-11-15 (design.md "Owner decisions"). Groups 1–2 are PR 1 (the mend) and can go before crossing-gameplay. Group 3 is PR 2 (the fittings) and waits for crossing-gameplay's three PRs.
 
 ## 0. Owner answers and sequencing
 
-- [ ] 0.1 Record the owner's answers to Q1–Q8 in design.md "Owner decisions" and in proposal.md. If any answer is not (a), update the affected specs and these tasks. Verify that `openspec validate island-stop --strict` passes.
+- [x] 0.1 Record the owner's answers to Q1–Q8 in design.md "Owner decisions" and in proposal.md. If any answer is not (a), update the affected specs and these tasks. Verify that `openspec validate island-stop --strict` passes.
 - [ ] 0.2 Before group 3, confirm that crossing-gameplay's three PRs are merged. Before task 2.6, rebase onto the guardacostas-capture build if it has landed, because both edit `game/scripts/levels/island_travel.gd`. Verify that `git log main` shows the merges.
 
 ## 1. Vessel recipes as data

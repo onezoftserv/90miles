@@ -296,9 +296,20 @@ In the crossing's hit resolution, a rock or debris that overlaps the vessel (cro
 - **Health.** *Deferred:* "sleep heals but costs hunger" goes to `night-ashore`.
 - **Drowning.** Not used: our fall-in rules stay.
 
-## Owner decisions
+## Owner decisions (answered 2026-11-15: option (a) on all eight)
 
-The specs follow (a) on every question. Two dialogs:
+The owner answered in option dialogs relayed by the coordinating session:
+- **Q1:** (a), "Allowed; stopping pays". There is no gate. The owner saw the note that a skilled rider can still skip islands until companions, texts and NPCs exist.
+- **Q2–Q8:** "Accept all recommended", so (a) on each:
+  - a mend is 1 driftwood + 1 rope for +20 in 10 s;
+  - all three fittings, with the defensas at ×0.75;
+  - a work point opens the raft's list, and launching stays a 1 s hold;
+  - the sandbar keeps its one tarp;
+  - fittings are lost when the raft breaks;
+  - the defensas use an inner tube and a rope;
+  - the next follow-up is `night-ashore`, then the patrol spotting a launch.
+
+This approves building PR 1 (the mend) now, and PR 2 (the fittings) after crossing-gameplay's PRs merge. The options stay listed for the record. The specs follow (a) on every question. Two dialogs:
 
 ### Dialog 1: the core
 

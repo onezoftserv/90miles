@@ -56,7 +56,11 @@ Every job is one player's:
 
 ## Owner decisions
 
-Eight questions in two dialogs, each with the recommended option first, are listed in design.md "Owner decisions". The specs follow the recommended options. Nothing is built until the owner answers.
+Answered on 2026-11-15:
+- Q1: the owner chose (a), "Allowed; stopping pays", after seeing that a skilled rider can still skip islands.
+- Q2–Q8: the owner accepted the recommended option (a) on each.
+
+Details are in design.md "Owner decisions". The specs follow those answers. PR 1 (the mend) is approved to build now, and PR 2 (the fittings) after crossing-gameplay's PRs merge.
 
 ## Capabilities
 
