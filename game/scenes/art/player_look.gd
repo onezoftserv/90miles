@@ -78,6 +78,9 @@ func _draw_pose() -> void:
 	var body_shown: bool = PlayerPose.shows_body(pose)
 	sprite.visible = body_shown
 	shadow.visible = PlayerPose.shows_shadow(pose)
+	var shadow_size: DropShadow.Size = DropShadow.Size.LYING if PlayerPose.lies(pose) else DropShadow.Size.LARGE
+	if shadow.size != shadow_size:
+		shadow.size = shadow_size
 	_show_ripple(PlayerPose.shows_ripple(pose))
 	_show_swim_ring(PlayerPose.shows_swim_ring(pose))
 	if _material != null:

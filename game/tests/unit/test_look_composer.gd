@@ -21,7 +21,8 @@ const SLOT_ROWS: Array[int] = [1, 2, 3, 4]
 const FRAME_TOP_Y: int = -27
 const SWIM_DROP: int = 12
 ## design.md C1 D20, measured with hair_0.
-const BALSERO_ANCHORS: Dictionary = {&"walk": -28, &"crouch": -22, &"swim": -16, &"downed": -13, &"dead": -13, &"dive": -4}
+## art-sprite-polish D8: downed and dead re-measured on the lying pose (-13 on the turned frame).
+const BALSERO_ANCHORS: Dictionary = {&"walk": -28, &"crouch": -22, &"swim": -16, &"downed": -14, &"dead": -14, &"dive": -4}
 ## The water row: the rows above it are scored on water (the shader's ripple is not counted).
 const WATER_ROW: int = 19
 

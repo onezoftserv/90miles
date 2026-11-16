@@ -11,6 +11,8 @@ enum Size {
 	MEDIUM,
 	## 6x3: the smallest things.
 	SMALL,
+	## 23x5: a downed or dead player lying along the ground (art-sprite-polish D8).
+	LYING,
 }
 
 ## The ellipse of each Size, in the enum's order (set in shadow.tscn).
