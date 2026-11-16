@@ -465,6 +465,9 @@ func test_both_peers_show_the_same_loudhailer_line_at_an_alerts_start_and_end() 
 	host_look.step(0.0)
 	client_look.step(0.0)
 	var player: PlayerBody = host.body(CoopSession.HOST_ID)
+	# On the sand (guardacostas-capture: a spotted swimmer in deep water is chased, not locked).
+	player.global_position = IslandLayout.cell_center(IslandLayout.build(LAYOUT).solo_spawn)
+	player.movement_state = MovementStep.Move.WALK
 	brain.spot(player, &"sight")
 	assert_eq(made.alert_serial, 1)
 	var alerted := func() -> bool: return client_look.lines_shown == 1 and theirs.state_name() == &"ALERT_LOCK"

@@ -90,14 +90,17 @@ How the tests are written:
 
 ## 4. The chase at sea (pure, then the brain)
 
-- [ ] 4.1 Write `game/tests/unit/test_boat_chase.gd` (pure) and verify it fails. It checks:
+- [x] 4.1 Write `game/tests/unit/test_boat_chase.gd` (pure) and verify it fails. It checks:
   - the speed of 6 tiles/s;
   - deep water only;
   - the haul at 2 s within 1 tile, reset on leaving;
   - breaks on a dive, shallows, land and 10 tiles;
   - land turning into a landing cause.
-- [ ] 4.2 Implement `game/scripts/stealth/boat_chase.gd` and the boat's `CHASE` state in `patrol_route.gd` (design.md §1, §3). Verify the test passes and the stealth tests still pass, except the water-spot cases in `test_patrol_route.gd` and `test_patrol_solo.gd` that expect the 20 s give-up. Update those to expect the chase, as the modified Alert says, and list each one in design.md "Changes from the build plan".
-- [ ] 4.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: it failed to parse on the missing `BoatChase`, then passed (10 tests).
+- [x] 4.2 Implement `game/scripts/stealth/boat_chase.gd` and the boat's `CHASE` state in `patrol_route.gd` (design.md §1, §3). Verify the test passes and the stealth tests still pass, except the water-spot cases in `test_patrol_route.gd` and `test_patrol_solo.gd` that expect the 20 s give-up. Update those to expect the chase, as the modified Alert says, and list each one in design.md "Changes from the build plan".
+  - Done: the brain's `CHASE` state hands a haul, a landing and every break off as design.md "Changes from the build plan" (group 4) says, and the boat heads back to its loop while it searches. In `test_patrol_route.gd` the water case expects the chase, and five chase tests were added. `test_patrol_solo.gd` needed no change. `test_patrol_cues.gd` moved its spotted player out of deep water.
+- [x] 4.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean. GUT 258 scripts, 2361/2362; the one failure was `test_patrol_cues.gd`'s player in deep water, fixed and that script re-run (14/14).
 
 ## 5. Soldier sight (pure)
 

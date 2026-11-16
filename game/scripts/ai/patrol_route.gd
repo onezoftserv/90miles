@@ -10,6 +10,12 @@ extends CreatureBrain
 ## blinds the light and the water rule but not smoke or noise. Host only: writes route_t, beam,
 ## alert_serial and light_on on the Creature for the network group, and emits Creature.patrol_alerted.
 ## States are append-only: `state` is synced.
+##
+## guardacostas-capture design.md §1 and §3: a spot of a swimmer in deep water (the water rule, or the
+## meter on a swimmer) starts a CHASE instead of a lock. The boat leaves its loop and closes through
+## deep water (BoatChase); a haul makes the swimmer a captive aboard, and a dive, the shallows, a
+## 10-tile gap or a landing break it into the plain search round where they were. While it searches
+## after a chase the boat makes its way back to its loop, and it resumes its lap where it stopped.
 
 enum State {
 	AWAY,
@@ -17,6 +23,8 @@ enum State {
 	LAP,
 	ALERT_LOCK,
 	ALERT_SEARCH,
+	CHASE,
+	DOCKED,
 }
 
 const EPSILON: float = 0.000001
@@ -25,11 +33,17 @@ const TILE: float = 16.0
 const SMOKE_CHECK_S: float = 1.0
 ## How far ahead of the boat the facing looks, in seconds of its lap.
 const FACING_LOOKAHEAD_S: float = 0.1
+## Tiles per second a boat off its loop (after a chase) makes its way back while it searches.
+const RETURN_SPEED_TILES_S: float = 3.0
 
 ## The boat's seconds into its loop. Pauses during an alert.
 var clock_s: float = 0.0
 ## The player the light follows in ALERT_LOCK, else null.
 var locked: PlayerBody = null
+## The swimmer the boat chases in CHASE, else null.
+var chased: PlayerBody = null
+## The swimmers hauled aboard (captives aboard), in the order they were hauled.
+var aboard: Array[PlayerBody] = []
 var member_index: int = 0
 var member_count: int = 1
 
@@ -49,10 +63,22 @@ var _restart_wait_s: float = 0.0
 var _search_s: float = 0.0
 var _smoke_s: float = 0.0
 var _aim_px: Vector2 = Vector2.ZERO
+var _chase: BoatChase = null
 
 
 func names() -> Array[StringName]:
-	return [&"AWAY", &"HORIZON", &"LAP", &"ALERT_LOCK", &"ALERT_SEARCH"]
+	return [&"AWAY", &"HORIZON", &"LAP", &"ALERT_LOCK", &"ALERT_SEARCH", &"CHASE", &"DOCKED"]
+
+
+## True for a state in which the boat is alerting (its clock paused). Every peer reads the synced
+## `state_id` through this, so a client's look and view agree with the host's brain.
+static func is_alert_state(value: int) -> bool:
+	return value == State.ALERT_LOCK or value == State.ALERT_SEARCH or value == State.CHASE or value == State.DOCKED
+
+
+## True for a state in which the boat is in sight: its lap or an alert.
+static func is_in_sight_state(value: int) -> bool:
+	return value == State.LAP or is_alert_state(value)
 
 
 ## Boat `index` of `count` on its island's loop: its clock starts that far behind boat 0's, so the
@@ -72,12 +98,12 @@ func set_clock(seconds: float) -> void:
 
 ## True while the boat is in sight: its lap or an alert.
 func in_sight() -> bool:
-	return state == State.LAP or state == State.ALERT_LOCK or state == State.ALERT_SEARCH
+	return is_in_sight_state(state)
 
 
 ## True while the boat is alerting.
 func alerting() -> bool:
-	return state == State.ALERT_LOCK or state == State.ALERT_SEARCH
+	return is_alert_state(state)
 
 
 ## Seconds of the search left; 0 outside ALERT_SEARCH.
@@ -85,6 +111,13 @@ func search_left_s() -> float:
 	if state != State.ALERT_SEARCH or _patrol == null:
 		return 0.0
 	return maxf(_patrol.alert_s - _search_s, 0.0)
+
+
+## Where the boat stands on its loop at its clock now, in pixels (where it resumes its lap).
+func lap_pose_px() -> Vector2:
+	if _loop == null or _patrol == null:
+		return Vector2.ZERO
+	return _loop.pose_px(PatrolLoop.lap_time(clock_s, _patrol.horizon_warning_s))
 
 
 ## Whether the boat's light covers `point_px` now (the light on, the range and the cone).
@@ -99,14 +132,14 @@ func lights(point_px: Vector2) -> bool:
 ## next loudhailer line) but the lock, the clock and the timers stay as they are; the locked player is
 ## not reported again (the same player must not be reported every tick). Ignored out of sight.
 func spot(body: PlayerBody, cause: StringName) -> void:
-	if _creature == null or not in_sight():
+	if _creature == null or not in_sight() or aboard.has(body):
 		return
-	if state == State.ALERT_LOCK:
-		if body != locked:
+	if state == State.ALERT_LOCK or state == State.CHASE:
+		if body != locked and body != chased:
 			_creature.alert_serial += 1
 			_creature.patrol_alerted.emit(cause, body.global_position)
 		return
-	_raise(cause, body.global_position, body)
+	_respond(cause, body)
 
 
 ## The lock breaks: the boat searches round the last known position.
@@ -129,6 +162,7 @@ func tick(creature: Creature, world: CreatureWorld, delta: float) -> void:
 		if not _in_port:
 			_in_port = true
 			locked = null
+			_drop_chase()
 			_restart_wait_s = 0.0
 		enter(State.AWAY)
 		_park()
@@ -198,7 +232,11 @@ func _tick_alert(delta: float, weather: WeatherData) -> void:
 		else:
 			forget_lock()
 		return
+	if state == State.CHASE:
+		_tick_chase(delta)
+		return
 	_search_s += delta
+	_return_to_loop(delta)
 	if _search_s >= _patrol.alert_s - EPSILON:
 		_creature.alert_serial += 1
 		locked = null
@@ -212,6 +250,15 @@ func _lock_holds(weather: WeatherData) -> bool:
 	if weather.disabled_senses.has(DataEnums.Sense.SIGHT) or locked.stealth_state != MovementStep.Stealth.VISIBLE:
 		return false
 	return _creature.position.distance_to(locked.global_position) <= _patrol.searchlight_range_tiles * TILE + EPSILON
+
+
+# A spot of `body` (sight or water): a swimmer in deep water is chased by a boat that can chase;
+# anyone else is locked.
+func _respond(cause: StringName, body: PlayerBody) -> void:
+	if _can_chase() and _in_deep_water(body):
+		_start_chase(cause, body)
+	else:
+		_raise(cause, body.global_position, body)
 
 
 # A new alert: stops the boat (its clock is not advanced while it alerts), calls the next line and
@@ -230,17 +277,17 @@ func _raise(cause: StringName, at_px: Vector2, target: PlayerBody) -> void:
 
 func _watch_water(weather: WeatherData) -> void:
 	for body: PlayerBody in _world.players():
-		if state == State.ALERT_LOCK:
+		if state == State.ALERT_LOCK or state == State.CHASE:
 			return
-		if body.left_island or CreatureWorld.is_dropped(body):
+		if body.left_island or CreatureWorld.is_dropped(body) or aboard.has(body):
 			continue
 		if _triggers.water_spots(body.movement_state, body.global_position / TILE, _creature.position / TILE, weather.disabled_senses, true):
-			_raise(&"water", body.global_position, body)
+			_respond(&"water", body)
 			return
 
 
 func _watch_smoke(delta: float) -> void:
-	if state == State.ALERT_LOCK:
+	if state == State.ALERT_LOCK or state == State.CHASE:
 		return
 	_smoke_s += delta
 	if _smoke_s < SMOKE_CHECK_S - EPSILON:
@@ -253,10 +300,98 @@ func _watch_smoke(delta: float) -> void:
 
 
 func _on_noise(position_px: Vector2, radius_tiles: float, _source: StringName) -> void:
-	if _creature == null or state == State.ALERT_LOCK or not in_sight():
+	if _creature == null or state == State.ALERT_LOCK or state == State.CHASE or not in_sight():
 		return
 	if _triggers.noise_heard(_creature.position / TILE, position_px / TILE, radius_tiles, true):
 		_raise(&"noise", position_px, null)
+
+
+# --- the chase at sea (guardacostas-capture) ------------------------------------------------------
+
+# A boat chases when its data gives it a chase speed and a haul time.
+func _can_chase() -> bool:
+	return _patrol != null and BoatChase.can_chase(_patrol, _creature.data.speed_tiles_s)
+
+
+# The player swims in deep water: the boat can reach them.
+func _in_deep_water(body: PlayerBody) -> bool:
+	return CreatureWorld.is_swimming(body) and _is_deep(CreatureNav.cell_of(body.global_position))
+
+
+func _start_chase(cause: StringName, body: PlayerBody) -> void:
+	_creature.alert_serial += 1
+	locked = null
+	chased = body
+	_chase = BoatChase.from_patrol(_patrol, _creature.data.speed_tiles_s)
+	_search_s = 0.0
+	_aim_px = body.global_position
+	enter(State.CHASE)
+	_creature.state_id = state
+	_creature.patrol_alerted.emit(cause, body.global_position)
+
+
+func _tick_chase(delta: float) -> void:
+	if not is_instance_valid(chased) or not CoopSession.is_alive(chased) or chased.left_island or CreatureWorld.is_dropped(chased):
+		_search_from(_aim_px)
+		return
+	var cell: Vector2i = CreatureNav.cell_of(chased.global_position)
+	var submerged: bool = chased.stealth_state == MovementStep.Stealth.SUBMERGED
+	var before: Vector2 = _creature.position
+	var step := _chase.step(before / TILE, chased.global_position / TILE, _world.terrain.terrain_at(cell), submerged, delta, _is_deep)
+	_creature.position = step.position * TILE
+	if _creature.position != before:
+		_creature.facing = (_creature.position - before).normalized()
+	_aim_px = chased.global_position
+	match step.outcome:
+		BoatChase.Outcome.HAULED:
+			_haul(chased)
+		BoatChase.Outcome.LANDED:
+			_came_ashore(chased)
+		BoatChase.Outcome.DIVED, BoatChase.Outcome.SHALLOWS, BoatChase.Outcome.LOST:
+			_search_from(chased.global_position)
+
+
+# The swimmer is hauled aboard: a captive aboard, and the boat searches round where it took them.
+func _haul(body: PlayerBody) -> void:
+	if not aboard.has(body):
+		aboard.append(body)
+	_search_from(body.global_position)
+
+
+# The swimmer came ashore before the haul: the boat searches round the place they came ashore.
+func _came_ashore(body: PlayerBody) -> void:
+	_search_from(body.global_position)
+
+
+# The chase ends: the plain search round `at_px`, the boat making its way back to its loop.
+func _search_from(at_px: Vector2) -> void:
+	_drop_chase()
+	_search_s = 0.0
+	_aim_px = at_px
+	enter(State.ALERT_SEARCH)
+	_creature.state_id = state
+
+
+func _drop_chase() -> void:
+	chased = null
+	_chase = null
+
+
+func _is_deep(cell: Vector2i) -> bool:
+	return _world.terrain.terrain_at(cell) == DataEnums.Terrain.DEEP
+
+
+# While it searches, a boat off its loop (after a chase) heads back to where it stopped, through deep
+# water, so it resumes its lap from there.
+func _return_to_loop(delta: float) -> void:
+	var home: Vector2 = lap_pose_px() / TILE
+	var here: Vector2 = _creature.position / TILE
+	if here.distance_to(home) <= EPSILON:
+		return
+	var next: Vector2 = BoatChase.move_toward(here, home, RETURN_SPEED_TILES_S * delta, _is_deep)
+	if next != here:
+		_creature.facing = (next - here).normalized()
+	_creature.position = next * TILE
 
 
 # --- the Creature's fields -------------------------------------------------------------------------
@@ -271,7 +406,7 @@ func _publish(weather: WeatherData) -> void:
 func _beam_now() -> float:
 	var boat: Vector2 = _creature.position / TILE
 	match state:
-		State.ALERT_LOCK:
+		State.ALERT_LOCK, State.CHASE:
 			return rad_to_deg((_aim_px / TILE - boat).angle())
 		State.ALERT_SEARCH:
 			return rad_to_deg((_aim_px / TILE - boat).angle()) + _search_light.offset_deg(_search_s)
@@ -313,3 +448,5 @@ func _release() -> void:
 	_creature = null
 	_world = null
 	locked = null
+	chased = null
+	aboard.clear()
