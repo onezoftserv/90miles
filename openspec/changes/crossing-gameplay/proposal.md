@@ -75,7 +75,7 @@ None. Everything here belongs to the existing crossing and creatures-ai capabili
 - **Data:** new tuning fields only, at the root of `game/resources/`. The flotsam table is part of the crossing tuning. No new content folder, no new autoload.
 - **Tests:** outcome checks in the existing crossing tests stay valid because of the old-form rule.
   - `test_crossing_plan.gd` changes, because rolled plans change.
-  - The snapshot builders in `test_crossing_snapshot.gd`, `test_crossing_join.gd`, `test_crossing_board_state.gd` and `test_game_shell.gd` gain four new required keys.
+  - The snapshot gains required keys; the existing snapshot tests build their dicts with `CrossingSnapshot.of`, so they needed no edit (checked in the build).
   - Shark tests that check when or where the shark shows (`test_crossing_creature_shark.gd`, `test_crossing_shark_net.gd`) follow the 5 s early fin.
   - New: 1-player, host-plus-client and late-join tests, and plan-statistics tests for the pacing budget and the difficulty target.
 - **Docs:** GAME_DESIGN.md §8 (the crossing) and BESTIARY.md (the reef shark's crossing tell).

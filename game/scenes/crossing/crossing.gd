@@ -696,7 +696,7 @@ func _process(delta: float) -> void:
 	if plan != null and not finished and is_inside_tree() and not multiplayer.is_server():
 		elapsed_s = minf(elapsed_s + delta, plan.length_s)
 		steer.extrapolate(delta, tuning)
-		_refresh_grab_points()
+		_refresh_play_points()
 
 func _fire(event: CrossingBeat) -> void:
 	match event.kind:
@@ -924,16 +924,7 @@ func _on_point_used(by: Node, point: RescuePoint) -> void:
 func _refresh_points() -> void:
 	if is_instance_valid(_lash):
 		_lash.enabled = integrity.intact()
-	_refresh_grab_points()
-	for index: int in _shoo_points:
-		var beat := plan.beat_at(index)
-		_shoo_points[index].enabled = beat != null and elapsed_s < beat.time_s and not shooed.has(index)
-	for paddle: RescuePoint in _paddles:
-		var vessel: VesselIntegrity = vessel_of(paddle.swimmer) if paddle.swimmer != 0 else integrity
-		paddle.enabled = vessel.intact()
-		if paddle.swimmer != 0:
-			var board := deck_rect_of(paddle.swimmer)
-			paddle.global_position = board.get_center() + Vector2(paddle.side * BOARD_PADDLE_PX, 0.0)
+	_refresh_play_points()
 	var reach_px: float = tuning.reach_tiles * TILE_PX
 	for peer: int in _peers:
 		var body := body_of(peer)
@@ -1154,6 +1145,22 @@ func _touch_flotsam() -> void:
 				break
 
 
+# Every peer: where the crossing-gameplay points sit and whether they are on, from the state this
+# peer has (the host each step, a client each frame), so a client's prompts follow the host's.
+func _refresh_play_points() -> void:
+	_refresh_grab_points()
+	# A fin's shoo point is on from its warning to its strike, unless it was shooed.
+	for index: int in _shoo_points:
+		var beat := plan.beat_at(index) if plan != null else null
+		_shoo_points[index].enabled = beat != null and elapsed_s < beat.time_s and not shooed.has(index)
+	for paddle: RescuePoint in _paddles:
+		var vessel: VesselIntegrity = vessel_of(paddle.swimmer) if paddle.swimmer != 0 else integrity
+		paddle.enabled = vessel.intact()
+		if paddle.swimmer != 0:
+			var board := deck_rect_of(paddle.swimmer)
+			paddle.global_position = board.get_center() + Vector2(paddle.side * BOARD_PADDLE_PX, 0.0)
+
+
 # Host: the lateral position to every recipient at most every STEER_SEND_S while it changes.
 func _send_steer(delta: float) -> void:
 	_steer_send_left_s -= delta
@@ -1165,13 +1172,32 @@ func _send_steer(delta: float) -> void:
 		receive_steer.rpc_id(peer, steer.to_array(), elapsed_s)
 
 
-# Host: the riders whose paddling counts now: aboard and untied.
+# Host: the riders whose paddling counts now: aboard and untied, still holding interact, within
+# reach of a paddle on the side they paddle and not dropped. So a rider who walks off the paddle
+# with the button held, or whose game stops sending mid-hold, stops paddling, and the current takes
+# the vessel back to the line.
 func _active_paddlers() -> Array[int]:
 	var active: Array[int] = []
 	for peer: int in steer.paddlers:
-		if rider_state(peer) == Rider.ABOARD:
+		if rider_state(peer) != Rider.ABOARD:
+			continue
+		var body := body_of(peer)
+		if body == null or not body.intent.interact_held:
+			continue
+		if is_instance_valid(_session) and _session.is_dropped(peer):
+			continue
+		if _paddle_in_reach(body, peer, steer.paddlers[peer]):
 			active.append(peer)
 	return active
+
+
+func _paddle_in_reach(body: PlayerBody, peer: int, side: int) -> bool:
+	for paddle: RescuePoint in _paddles:
+		if paddle.side != side or (paddle.swimmer != 0 and paddle.swimmer != peer):
+			continue
+		if body.global_position.distance_to(paddle.global_position) <= PlayerBody.HOLD_REACH_PX:
+			return true
+	return false
 
 
 # Two paddles on the shared deck, just inside its west and east edges; or two beside each board,
