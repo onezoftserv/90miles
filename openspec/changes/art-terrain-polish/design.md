@@ -287,3 +287,10 @@ Measured values and departures are recorded here as the tasks ship.
 - The new GUT tests (`test_the_dune_corners_are_rounded`, `test_neighbouring_dune_tiles_meet_without_a_jog`, the solo sandbar test) failed on the old sheet (21–38 px off, a 1 px bite, and the sandbar's corner cells at (41, 14), (38, 15), (53, 15) and others) and pass on the new one.
 - Checks: `tools/art` unit tests OK, import twice clean, smoke 0 problems, GUT 256 scripts, 2350 of 2350.
 - Capture: `docs/art-pass/terrain-polish/dune_corners_north_before_after_x3.png` (the sandbar's north dunes, before above, after below). The step corners now read as curves. The staircase itself remains, because it is the layout's one-cell steps; tiles can only round each step, and true diagonals are C5's slope tiles.
+
+**C13, still water (group 4, D2).**
+- `ShoreRule.still_water(terrain, pools)` flood-fills 4-connected water (tide pools are land) and keeps the bodies with no deep cell that stay inside the grid. `foam_tile` takes an optional `still` and picks `STILL_SOURCE` (1) when the cell has water among its 8 neighbours and all of it is still; `TerrainView` computes the bodies once per build. With nothing passed, every caller keeps today's surf.
+- On the coast cay the still body is the lagoon: its brackish water and the shallows ring round it, closed in by beach. The rim's shore cells take the still piece; every shore cell with open water beside it keeps the surf, and the 265 shore cells are unchanged. The sandbar has no still water.
+- `terrain.py` builds `sea/foam_still.png` from the foam recipe's new `"still": {"colour": "#8fe0f0"}`: a 1 px line on the first water pixel round each sand shape, the same in all 8 frames, 128×256 like `foam.png`, so the shore shader's frame steps change nothing. `foam.png` is byte-identical. It is source 1 of `sea/shore_tiles.tres` (no texture padding), with an own-work block in `sea/License.txt`.
+- The line is #8fe0f0, the shallows ramp's lightest step: on the lagoon's shallows ring it reads as a calm wet edge, not surf.
+- Capture: `docs/art-pass/terrain-polish/c13_lagoon_before_after_x3.png` (before left, after right).

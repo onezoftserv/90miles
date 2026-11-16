@@ -698,6 +698,25 @@ def build_foam(spec, sources, sets):
     return sheet
 
 
+def build_foam_still(spec, sets, frames):
+    """The still piece of each mask (art-terrain-polish D2): a 1 px line of `colour` on the first water
+    step round the shape set's tile of mask m, the same in all `frames` columns, so the shore
+    shader's frame steps change nothing."""
+    if not isinstance(spec, dict):
+        raise TerrainError(f"foam: \"still\" is a table, not {spec!r}")
+    line = colour(need(spec, "colour", "foam still"), "foam still")
+    sheet = png.blank(frames * TILE, MASKS * TILE)
+    for mask in range(MASKS):
+        edge = sheet_tile(sets, mask)
+        piece = png.blank(TILE, TILE)
+        for x, y, steps, _along in shore_field(edge):
+            if steps == 1:
+                piece.set(x, y, line + (255,))
+        for index in range(frames):
+            sheet.paste(piece, index * TILE, mask * TILE)
+    return sheet
+
+
 def hand_source(source, fixes):
     """The path of a hand-drawn source: a bare lower-case .png name, a file of the fixes folder."""
     if not isinstance(source, str) or not HAND_SOURCE.match(source):
@@ -857,6 +876,9 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
         if foam.is_empty():
             raise TerrainError("foam: no pixel at all (is \"white\" a colour of the strip?)")
         add("sea/foam.png", foam)
+        if "still" in recipe["foam"]:
+            frames = whole(need(recipe["foam"], "frames", "foam"), "foam", "frames", low=1)
+            add("sea/foam_still.png", build_foam_still(recipe["foam"]["still"], _shape(recipe["foam"], sets, "foam"), frames))
     if "shade" in recipe:
         add("decals/shade.png", build_shade(recipe["shade"], sets, fixes), True)
     for target, image in _copies(section(recipe, "copies", list), fixes).items():

@@ -19,15 +19,16 @@ const SHEETS: Dictionary = {
 		"res://assets/art/terrain/brush_shore.png",
 		"res://assets/art/terrain/plain_shore.png",
 	],
-	SHORE_TILES: ["res://assets/art/sea/foam.png"],
+	SHORE_TILES: ["res://assets/art/sea/foam.png", "res://assets/art/sea/foam_still.png"],
 	DECAL_TILES: ["res://assets/art/terrain/tide_pool.png", "res://assets/art/decals/shade.png"],
 }
 ## Tiles per sheet: a corner set has 16 masks and 4 variants; plain.png 16 shapes of
 ## 9 terrains and the rock's 3 full-tile variants; a shore sheet the 65 pairs of an own mask inside a sand mask that has a shore;
-## foam.png 8 frames of the 15 masks that have a shore; shade.png 16 masks and 3 spots.
+## foam.png 8 frames of the 15 masks that have a shore, and foam_still.png the same 8 alike
+## (art-terrain-polish D2); shade.png 16 masks and 3 spots.
 const TILE_COUNTS: Dictionary = {
 	TERRAIN_TILES: [20, 20, 20, 147, 65, 65, 585],
-	SHORE_TILES: [120],
+	SHORE_TILES: [120, 120],
 	DECAL_TILES: [1, 19],
 }
 
@@ -100,7 +101,8 @@ func test_the_foam_source_has_no_texture_padding() -> void:
 	var tile_set: TileSet = _tile_set(SHORE_TILES)
 	if tile_set == null:
 		return
-	var source: TileSetAtlasSource = _source(tile_set, 0)
-	assert_not_null(source)
-	if source != null:
-		assert_false(source.use_texture_padding)
+	for id: int in [ShoreRule.FOAM_SOURCE, ShoreRule.STILL_SOURCE]:
+		var source: TileSetAtlasSource = _source(tile_set, id)
+		assert_not_null(source, "shore source %d" % id)
+		if source != null:
+			assert_false(source.use_texture_padding, "the shore shader steps whole tiles along source %d" % id)
