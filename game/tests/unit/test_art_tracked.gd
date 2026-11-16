@@ -2,8 +2,8 @@ extends GutTest
 ## art-pass "Tracked art with its licence", "Master palette", "Outlines", "Pixel-exact import" and
 ## "Frame budget" over every tracked file in res://assets/art (task 1.3), with the folder rules of
 ## design.md D9 and D21 as amended by C1:
-## - palette and alpha everywhere but art/ui/ (Kenney's 9-slices keep their colours until a UI
-##   pass);
+## - palette and alpha everywhere, the UI window kit in art/ui/ included (hud-window-kit, art-pass
+##   "Master palette": Kenney's 9-slices and their exemption are gone);
 ## - the outline rule on every frame cell in creatures/, items/ and structures/; characters are
 ##   outlined as composed (task 5.3), so the part sheets in characters/parts/ get palette, alpha
 ##   and import only, a hair or outfit alone having open edges by design;
@@ -11,6 +11,7 @@ extends GutTest
 
 const ART_ROOT: String = "res://assets/art"
 const UI_DIR: String = "res://assets/art/ui/"
+const UI_PIECE: String = "res://assets/art/ui/window_dark.png"
 const OUTLINE_DIRS: PackedStringArray = ["res://assets/art/creatures/", "res://assets/art/items/", "res://assets/art/structures/"]
 const ITEMS_DIR: String = "res://assets/art/items/"
 const ITEM_CELL: Vector2i = Vector2i(16, 16)
@@ -43,7 +44,7 @@ func _pngs() -> PackedStringArray:
 func _world_pngs() -> PackedStringArray:
 	var world: PackedStringArray = []
 	for path: String in _pngs():
-		if not path.begins_with(UI_DIR) and not EXEMPT.has(path):
+		if not EXEMPT.has(path):
 			world.append(path)
 	return world
 
@@ -98,6 +99,19 @@ func test_every_png_imports_lossless_without_mipmaps() -> void:
 	for path: String in _pngs():
 		failures.append_array(ArtChecks.check_import(path))
 	assert_eq(failures, PackedStringArray())
+
+
+func test_the_ui_kit_is_under_the_palette_rule() -> void:
+	assert_true(_world_pngs().has(UI_PIECE), "art/ui/ has no palette exemption")
+	var piece: Image = ArtChecks.read_png(UI_PIECE)
+	assert_not_null(piece)
+	if piece == null:
+		return
+	piece.set_pixel(5, 5, Color(0.5, 0.25, 0.75, 1.0))
+	var failures: PackedStringArray = ArtChecks.check_palette(UI_PIECE, piece, _palette())
+	assert_eq(failures.size(), 1, "one off-palette pixel, one failure")
+	if failures.size() == 1:
+		assert_string_contains(failures[0], UI_PIECE)
 
 
 func test_every_world_image_uses_only_palette_colours_and_whole_alpha() -> void:

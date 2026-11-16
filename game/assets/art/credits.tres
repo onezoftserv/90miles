@@ -80,15 +80,6 @@ source = "https://opengameart.org/node/144858"
 modified = true
 line_es = "16x16 Shoreline Wave Animation Tiles, de Eldiran (CC0) – opengameart.org/node/144858"
 
-[sub_resource type="Resource" id="credit_kenney_pixel_ui"]
-script = ExtResource("2_credit")
-pack = "Pixel UI Pack"
-author = "Kenney (kenney.nl)"
-licence = "CC0 1.0"
-licence_url = "https://creativecommons.org/publicdomain/zero/1.0/"
-source = "https://kenney.nl/assets/pixel-ui-pack"
-line_es = "Pixel UI Pack, de Kenney (CC0) – kenney.nl/assets/pixel-ui-pack"
-
 [sub_resource type="Resource" id="credit_kenney_tiny_dungeon"]
 script = ExtResource("2_credit")
 pack = "Tiny Dungeon"
@@ -127,4 +118,4 @@ line_es = "Pixelify Sans, de The Pixelify Sans Project Authors (SIL OFL 1.1) –
 
 [resource]
 script = ExtResource("1_credits")
-entries = Array[ExtResource("2_credit")]([SubResource("credit_dawnlike"), SubResource("credit_tth_animals"), SubResource("credit_kyrise"), SubResource("credit_metrocity"), SubResource("credit_zelda_like"), SubResource("credit_scallywag"), SubResource("credit_eldiran"), SubResource("credit_kenney_pixel_ui"), SubResource("credit_kenney_tiny_dungeon"), SubResource("credit_db32"), SubResource("credit_press_start_2p"), SubResource("credit_pixelify_sans")])
+entries = Array[ExtResource("2_credit")]([SubResource("credit_dawnlike"), SubResource("credit_tth_animals"), SubResource("credit_kyrise"), SubResource("credit_metrocity"), SubResource("credit_zelda_like"), SubResource("credit_scallywag"), SubResource("credit_eldiran"), SubResource("credit_kenney_tiny_dungeon"), SubResource("credit_db32"), SubResource("credit_press_start_2p"), SubResource("credit_pixelify_sans")])

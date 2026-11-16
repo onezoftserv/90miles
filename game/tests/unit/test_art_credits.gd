@@ -18,13 +18,13 @@ const CC_BY_LINES: Dictionary[String, String] = {
 	"https://thkaspar.itch.io/tth-animals": "Tiny, Tiny Heroes - Animals, de Kacper Woźniak (thkaspar) (CC BY 4.0) – thkaspar.itch.io/tth-animals",
 	"https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack": "Kyrise's Free 16x16 RPG Icon Pack © 2018 Kyrise (CC BY 4.0) – kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack",
 }
-## design.md D10's CC0 courtesy lines: MetroCity, ArMM1998, Foozle and Pixel Carvel, Eldiran, Kenney.
+## design.md D10's CC0 courtesy lines: MetroCity, ArMM1998, Foozle and Pixel Carvel, Eldiran, Kenney's
+## Tiny Dungeon (the Pixel UI Pack left with its files: hud-window-kit, owner answer D1).
 const CC0_SOURCES: PackedStringArray = [
 	"https://jik-a-4.itch.io/metrocity-free-topdown-character-pack",
 	"https://opengameart.org/content/zelda-like-tilesets-and-sprites",
 	"https://foozlecc.itch.io/scallywag-water-islands",
 	"https://opengameart.org/node/144858",
-	"https://kenney.nl/assets/pixel-ui-pack",
 	"https://kenney.nl/assets/tiny-dungeon",
 ]
 ## Packs credited ahead of their files (design.md K20, K33): each leaves this list in the group that

@@ -60,4 +60,4 @@ extends Resource
 ## Each meter's float colour (DataEnums.Meter → Color), equal to its HUD bar's fill colour.
 @export var meter_colors: Dictionary[int, Color] = {}
 ## A cure's float colour.
-@export var cure_color: Color = Color(0.95686275, 0.9372549, 0.8784314)
+@export var cure_color: Color = HudStyle.CREAM

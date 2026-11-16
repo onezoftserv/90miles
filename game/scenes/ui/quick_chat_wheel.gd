@@ -12,8 +12,9 @@ const SECTORS: int = 8
 ## Below this length (stick units, or RADIUS_PX for the mouse) nothing is picked.
 const DEAD_ZONE: float = 0.35
 const RADIUS_PX: float = 56.0
-const SELECTED_COLOR: Color = Color(1.0, 0.85, 0.3)
-const IDLE_COLOR: Color = Color(1.0, 1.0, 1.0)
+## The selected phrase in the kit's sun yellow, the others in the HUD cream (hud-window-kit design D9).
+const SELECTED_COLOR: Color = HudStyle.SUN
+const IDLE_COLOR: Color = HudStyle.CREAM
 
 ## Set before the wheel enters the tree (or call rebuild()).
 var phrases: QuickChatPhrases = QuickChatPhrases.new()
@@ -103,4 +104,4 @@ func _aim_direction() -> Vector2:
 
 func _highlight() -> void:
 	for slot: int in _labels.size():
-		_labels[slot].modulate = SELECTED_COLOR if slot == selected else IDLE_COLOR
+		_labels[slot].add_theme_color_override(&"font_color", SELECTED_COLOR if slot == selected else IDLE_COLOR)

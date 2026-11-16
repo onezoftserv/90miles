@@ -71,7 +71,7 @@ During a run the HUD SHALL keep to a 640×360 budget. The six meters sit in one 
 ## ADDED Requirements
 
 ### Requirement: Readable HUD and menu text
-HUD and menu text SHALL have a contrast of at least 4.5:1 against the fill it is drawn on. The one exception is the alert red, which may go down to 4:1 on the dark window, and only for a short alert word (Sangrando, Caído, Muerto), a critical meter's label or a pulsing value. HUD text is Press Start 2P at 8 px; menu text is Pixelify Sans at 16 or 32 px. A meter label is drawn on the window, never on a bar's fill. Solo and co-op show the same.
+HUD and menu text SHALL have a contrast of at least 4.5:1 against the fill it is drawn on, except the alert red, which may go down to 4:1 on the dark window for a short alert word (Sangrando, Caído, Muerto), a critical meter's label or a pulsing value. HUD text is Press Start 2P at 8 px; menu titles and buttons Pixelify Sans at 16 or 32 px, menu body text Press Start 2P at 8 px. Meter labels sit on the window, never on a bar.
 
 #### Scenario: Meter labels on the window
 - **GIVEN** a solo run, offline, with exactly 1 player and every meter at 50
@@ -80,7 +80,7 @@ HUD and menu text SHALL have a contrast of at least 4.5:1 against the fill it is
 
 #### Scenario: Menu text
 - **WHEN** the title, settings, lobby, join, credits and run summary screens are drawn
-- **THEN** every label drawn on a panel or a button that is not disabled reaches at least 4.5:1 against it, at 16 or 32 px
+- **THEN** every label drawn on a panel or a button that is not disabled reaches at least 4.5:1 against it, in Pixelify Sans at 16 or 32 px or Press Start 2P at 8 px
 
 #### Scenario: Alert words
 - **GIVEN** a co-op HUD showing a downed teammate and its own player bleeding

@@ -7,7 +7,7 @@ Rules by folder, relative to the root:
   "Work:" (vendor text above the first is not checked) and have a licence line and their own
   Source: line; a pack's source is its page, never a licence deed, and an own-work block's source
   is "90 Millas (own work)". Inside a Godot project every PNG must be named by a .tscn or .tres.
-- palette and alpha: every PNG but those under ui/ (and EXEMPT) uses only master palette colours,
+- palette and alpha: every PNG (the UI kit under ui/ included; but EXEMPT) uses only master palette colours,
   fully opaque or fully transparent, except under shadows/ and decals/ (the darkest colour).
 - outline: every edge pixel under creatures/, items/ (16x16 cells) and structures/ is an outline
   colour.
@@ -32,7 +32,7 @@ LICENCE_HOSTS = ("creativecommons.org", "opensource.org", "gnu.org", "spdx.org",
 PARTIAL_ALPHA_DIRS = ("shadows", "decals")
 OUTLINE_DIRS = ("creatures", "items", "structures")
 ITEM_CELL = 16
-PALETTE_EXEMPT_DIRS = ("ui",)
+PALETTE_EXEMPT_DIRS = ()
 ## Temporary exemptions, relative to game/assets/art (and the list in test_art_tracked.gd). Task 5.7
 ## deleted the Kenney placeholder, the last one; a file listed here must exist.
 EXEMPT = ()
