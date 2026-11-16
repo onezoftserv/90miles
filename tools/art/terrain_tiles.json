@@ -36,7 +36,9 @@
       "map": {"#62eb3d": "#99e550", "#2eca35": "#6abe30", "#29973b": "#37946e", "#2d5b3f": "#4b692f", "#302639": "#323c39"},
       "erase": [],
       "stamp": [2, 14],
+      "canopy": "#4b692f",
       "variants": ["0", "0", "0", "0"],
+      "full_variants": ["15", "15", "15", "15"],
       "shore": {"shape": "sand", "inset": 1, "rim": "#323c39", "fit": {"pick": 1, "fallback_inset": 0, "tuft": "shore_tuft.png"}}
     }
   ],

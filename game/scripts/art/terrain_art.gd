@@ -145,8 +145,8 @@ static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terra
 	if sand != FULL and layer != SAND:
 		source = art.shore_source_of[layer]
 		atlas = Vector2i(sand, art.shore_row_stride * row + own)
-	elif sand == FULL and own == art.variant_mask.get(layer, -1):
-		atlas = Vector2i(_variant(layer, cell, layout_id), PICK_ROW)
+	elif sand == FULL and _pick_row(layer, own) >= 0:
+		atlas = Vector2i(_variant(layer, cell, layout_id), PICK_ROW + _pick_row(layer, own))
 	elif layer == PLAIN and own == FULL:
 		atlas = Vector2i(FULL + _plain_variant(row, cell, layout_id), row)
 	elif layer == PLAIN:
@@ -155,6 +155,14 @@ static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terra
 		@warning_ignore("integer_division")
 		atlas = Vector2i(own % COLUMNS, own / COLUMNS)
 	return {&"source": source, &"atlas": atlas, &"alternative": 0}
+
+
+## The pick row (0 for row 4) whose picks replace the tile of `own` on `layer`, or -1.
+static func _pick_row(layer: StringName, own: int) -> int:
+	var masks: PackedInt32Array = data().variant_masks.get(layer, PackedInt32Array())
+	if not masks.is_empty():
+		return masks.find(own)
+	return 0 if own == data().variant_mask.get(layer, -1) else -1
 
 
 static func _variant(layer: StringName, cell: Vector2i, layout_id: StringName) -> int:
