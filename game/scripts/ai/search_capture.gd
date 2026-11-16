@@ -11,7 +11,10 @@ extends CreatureBrain
 ## - CHASE: a spot sends it running at the player at `soldier_chase_tiles_s` while they stay unhidden
 ##   within its sight length. Touching them within `capture_touch_tiles` for `capture_touch_s` captures
 ##   them; the count resets when contact breaks. When the chase breaks, where it last saw them becomes
-##   the last known position, which it searches itself.
+##   the last known position, which it searches itself. A player found by a point search is exposed:
+##   hiding does not break that chase while they stay within `point_search_tiles` of where they were
+##   found (a player spotted by sight who then hides still shakes the soldier: design.md §5 rejects the
+##   Bush Hat rule).
 ## - ESCORT: it leads its captive to the dinghy at drag speed (the captive follows it as a dragged
 ##   body does), seats them there and goes back to its plan.
 ## - RETURN: the squad leaves; it walks back to the dinghy and waits there.
@@ -31,6 +34,7 @@ const EPSILON: float = 0.000001
 const NO_CELL: Vector2i = Vector2i(-1, -1)
 ## Within this many tiles of its goal cell's centre a soldier has arrived.
 const ARRIVE_TILES: float = 0.5
+const NO_FIND: Vector2 = Vector2(-INF, -INF)
 
 ## The patrol whose numbers the soldier uses (its boat's): sight, speeds, search, touch.
 var patrol: PatrolData = null
@@ -49,6 +53,8 @@ var touch_s: float = 0.0
 
 var _last_seen_px: Vector2 = Vector2.ZERO
 var _goal: Vector2i = NO_CELL
+## Where the chased player was found by a point search (pixels); NO_FIND for a chase by sight.
+var _found_px: Vector2 = NO_FIND
 var _point_s: float = 0.0
 
 
@@ -149,6 +155,7 @@ func _tick_point(creature: Creature, world: CreatureWorld, delta: float) -> void
 	enter(State.SEARCH)
 	if found != null:
 		_chase(creature, found)
+		_found_px = found.global_position
 		if squad != null:
 			squad.soldier_spotted(creature)
 
@@ -172,13 +179,22 @@ func _chase(creature: Creature, body: PlayerBody) -> void:
 	target = body
 	touch_s = 0.0
 	_last_seen_px = body.global_position
+	_found_px = NO_FIND
 	forget_path()
 	enter(State.CHASE)
 	creature.state_id = state
 
 
+## True while the chased player was found by a point search and is still within its reach of where
+## they were found: their hiding no longer hides them from this soldier.
+func is_exposed() -> bool:
+	if not is_instance_valid(target) or _found_px == NO_FIND or patrol == null:
+		return false
+	return target.global_position.distance_to(_found_px) <= patrol.point_search_tiles * CreatureNav.TILE + EPSILON
+
+
 func _tick_chase(creature: Creature, world: CreatureWorld, delta: float) -> void:
-	var hidden: bool = is_instance_valid(target) and target.stealth_state != MovementStep.Stealth.VISIBLE
+	var hidden: bool = is_instance_valid(target) and target.stealth_state != MovementStep.Stealth.VISIBLE and not is_exposed()
 	var holds: bool = can_target(target) and cone(world).chase_holds(target.global_position / CreatureNav.TILE,
 		creature.position / CreatureNav.TILE, hidden, world.weather().disabled_senses)
 	if not holds:
@@ -203,6 +219,7 @@ func _tick_chase(creature: Creature, world: CreatureWorld, delta: float) -> void
 func _lose(creature: Creature, world: CreatureWorld) -> void:
 	target = null
 	touch_s = 0.0
+	_found_px = NO_FIND
 	lost_at = CreatureNav.cell_of(_last_seen_px)
 	forget_path()
 	if squad != null:
@@ -215,6 +232,7 @@ func _lose(creature: Creature, world: CreatureWorld) -> void:
 func _capture(creature: Creature, body: PlayerBody) -> void:
 	target = null
 	touch_s = 0.0
+	_found_px = NO_FIND
 	forget_path()
 	if squad != null:
 		escorting = squad.capture(body, creature)

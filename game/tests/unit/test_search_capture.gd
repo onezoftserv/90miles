@@ -312,3 +312,99 @@ func test_the_squad_leaves_with_its_captive_and_the_boat_resumes_its_lap() -> vo
 	assert_eq(rowed[0], [captive] as Array[PlayerBody], "with its captive")
 	for soldier: Creature in spawned:
 		assert_true(not is_instance_valid(soldier) or soldier.is_queued_for_deletion(), "the soldiers went aboard")
+
+
+# --- found or seen (design.md §5) ---------------------------------------------------------------------
+
+# Spec "Hiding by your own fire", on the brain: a hidden player within 2 tiles of a searched point is
+# found and captured where they hide.
+func test_a_hidden_player_found_at_a_point_is_captured_where_they_hide() -> void:
+	_land_squad()
+	var soldier := _soldier()
+	_send_away(soldier)
+	var point: Vector2i = Vector2i(_inland(4))
+	brain.plan.set_last_known(point, {0: soldier.position / TILE})
+	var body := _player(Vector2(point) + Vector2(1, 0))
+	body.stealth_state = MovementStep.Stealth.HIDDEN
+	var seconds: float = 0.0
+	while not body.captive and seconds < 30.0:
+		_tick()
+		body.stealth_state = MovementStep.Stealth.HIDDEN
+		seconds += STEP_S
+	assert_true(body.captive, "found by the point search, then caught by the touch while still hiding")
+
+
+# Design.md §5 rejects the Bush Hat rule: a player spotted by sight who then hides shakes the soldier.
+func test_a_player_spotted_by_sight_who_hides_shakes_the_soldier() -> void:
+	_land_squad()
+	var soldier := _soldier()
+	_send_away(soldier)
+	var body := _player(_inland(6))
+	soldier.position = body.global_position - Vector2(3.0 * TILE, 0.0)
+	(soldier.brain as SearchCapture).spot(soldier, body)
+	_tick()
+	assert_eq(soldier.state_name(), &"CHASE")
+	body.stealth_state = MovementStep.Stealth.HIDDEN
+	_tick()
+	assert_ne(soldier.state_name(), &"CHASE", "hiding breaks a chase by sight")
+	assert_false(body.captive)
+
+
+# --- one squad at a time --------------------------------------------------------------------------
+
+# Specs "One squad at a time" and "A second boat while the squad is ashore".
+func test_a_second_boat_lands_no_squad_and_moves_the_squads_last_known_position() -> void:
+	_land_squad()
+	var second := Creature.make(GameState.content.get_entry(&"creatures", &"patrol_boat") as CreatureData)
+	second.world = world
+	root.add_child(second)
+	watch.boats.append(second)
+	var second_brain := second.brain as PatrolRoute
+	second_brain.set_clock(patrol.horizon_warning_s + 40.0)
+	second.advance(0.0)
+	var seen := _player(_inland(8))
+	var spawned_before: int = spawned.size()
+	second_brain.spot(seen, &"sight")
+	assert_eq(second.state_name(), &"ALERT_LOCK", "the plain alert")
+	assert_eq(second.squad_state, PatrolRoute.Squad.NONE, "no second squad")
+	assert_eq(spawned.size(), spawned_before, "nobody else landed")
+	assert_eq(brain.plan.last_known(), CreatureNav.cell_of(seen.global_position), "the squad's last known position moved there")
+
+
+# Spec "A squall recalls the squad".
+func test_a_squall_recalls_the_squad_and_then_the_boat_leaves_sight() -> void:
+	var captive := _seated_captive()
+	var free_player := _player(Vector2(2, 2))
+	free_player.global_position = Vector2(36.5, 15.5) * TILE
+	free_player.stealth_state = MovementStep.Stealth.HIDDEN
+	brain.plan.elapsed_s = 40.0
+	watch_signals(brain)
+	world.weather_override = GameState.content.get_entry(&"weather", &"squall") as WeatherData
+	assert_true(world.weather_override.patrols_in_port)
+	_tick([captive])
+	assert_true(brain.squad_leaving(), "the soldiers walk back at once")
+	assert_eq(boat.state_name(), &"DOCKED", "the boat waits for them")
+	var seconds: float = 0.0
+	while boat.state_name() != &"AWAY" and seconds < 60.0:
+		_tick([captive])
+		seconds += STEP_S
+	assert_signal_emitted(brain, "rowed_out", "they rowed out with their captive")
+	assert_eq(boat.state_name(), &"AWAY", "then the boat leaves sight")
+	assert_eq(boat.squad_state, PatrolRoute.Squad.NONE)
+
+
+# A swimmer hauled aboard rides with the boat; when it leaves sight it hands them to the keeper.
+func test_a_hauled_captive_is_handed_over_when_the_boat_leaves_sight() -> void:
+	var swimmer := _player(Vector2(2, 2))
+	CaptureRules.capture(swimmer, boat, patrol, true)
+	brain.aboard.append(swimmer)
+	_tick([swimmer])
+	assert_eq(swimmer.global_position, boat.position, "carried aboard")
+	watch_signals(brain)
+	brain.set_clock(patrol.horizon_warning_s + patrol.route_lap_s + 1.0)
+	_tick([swimmer])
+	assert_eq(boat.state_name(), &"AWAY")
+	assert_signal_emitted(brain, "rowed_out")
+	var handed: Array = get_signal_parameters(brain, "rowed_out", 0)
+	assert_eq(handed[0], [swimmer] as Array[PlayerBody])
+	assert_true(brain.aboard.is_empty())

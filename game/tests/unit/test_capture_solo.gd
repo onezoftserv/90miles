@@ -313,6 +313,12 @@ func test_hiding_1_tile_from_your_own_fire_is_found_when_a_soldier_searches_it()
 				return true
 		return false
 	assert_true(_until(found, 90.0), "a soldier searches the fire and runs at them")
+	# Found where they hide, they stay crouched: the soldier's touch captures them, and through the
+	# boat's captured signal and the session's keeper, la_captura plays at once (a solo capture is the
+	# whole party's).
+	assert_true(_until(func() -> bool: return body.captive, 15.0, DT), "a found player is captured where they hide")
+	await wait_process_frames(2)
+	assert_true(CaptureScene.of(session).playing, "la_captura plays at once")
 
 
 # --- outrunning a soldier ---------------------------------------------------------------------------

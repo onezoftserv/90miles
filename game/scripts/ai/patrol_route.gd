@@ -200,7 +200,6 @@ func tick(creature: Creature, world: CreatureWorld, delta: float) -> void:
 	if not _build(creature, world):
 		return
 	var weather: WeatherData = world.weather()
-	_hold_aboard()
 	if weather.patrols_in_port and squad_ashore():
 		# A squall recalls the squad: the boat waits for it before it leaves sight.
 		_tick_docked(delta, weather, true)
@@ -776,6 +775,8 @@ func _return_to_loop(delta: float) -> void:
 # --- the Creature's fields -------------------------------------------------------------------------
 
 func _publish(weather: WeatherData) -> void:
+	# After this tick's move: the captives aboard ride where the boat now is.
+	_hold_aboard()
 	_creature.route_t = clock_s
 	var sighted: bool = in_sight()
 	_creature.light_on = sighted and _light.is_on(_world.phase, weather.disabled_senses)
