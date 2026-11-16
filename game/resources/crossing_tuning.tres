@@ -21,8 +21,55 @@ scroll_tiles_per_s = 2.0
 shark_chance = Dictionary[int, float]({
 0: 0.5
 })
-rock_chance = Dictionary[int, float]({
-0: 0.25
-})
 event_margin_s = 10.0
 max_rolled_creatures = 2
+hazard_lead_s = 5.0
+shark_lead_s = 5.0
+paddle_tiles_per_s = 1.5
+paddle_crew_tiles_per_s = 2.25
+pull_back_tiles_per_s = 0.5
+max_offset_tiles = 6.0
+rock_width_tiles = 2.0
+debris_width_tiles = 1.0
+vessel_width_tiles = 4.0
+debris_hit = 5.0
+leak_drain_per_s = 0.5
+plug_hold_s = 2.0
+max_leaks = 3
+plank_repair = 10.0
+rock_cut_health = 15.0
+debris_cut_health = 5.0
+grab_hold_s = 0.3
+shoo_hold_s = 1.0
+shoo_priority = 4
+pull_priority = 3
+grab_priority = 2
+plug_priority = 1
+squall_blow_s = 15.0
+blow_paddle_factor = 0.5
+pre_squall_window_s = 10.0
+pre_squall_s = Vector2(4, 8)
+pre_squall_min_hit_s = 16.0
+calm_start_s = 6.0
+first_beat_spread_s = 3.0
+target_gap_s = 7.5
+gap_jitter_s = 1.5
+max_gap_s = 9.0
+min_gap_s = 3.0
+rider_gap_factor = 0.9
+reef_before_end_s = 4.0
+reef_half_gap_tiles = 5
+reef_gap_lane_max = 3
+rock_weight = Dictionary[int, float]({
+0: 0.12
+})
+debris_weight = Dictionary[int, float]({
+0: 0.2
+})
+flotsam_weight = Dictionary[int, float]({
+0: 0.68
+})
+hazard_lane_max = 4
+flotsam_lanes = Vector2i(2, 5)
+flotsam_items = Array[StringName]([&"coco", &"driftwood", &"rope", &"plastic_jug", &"cloth", &"inner_tube", &"plank"])
+flotsam_weights = Array[float]([3.0, 3.0, 2.0, 1.0, 1.0, 0.5, 2.0])
