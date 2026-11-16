@@ -1,0 +1,5 @@
+{
+  "pieces": [
+    {"name": "swim_ring", "folder": "fx", "kind": "ring", "size": [20, 5], "frames": 3, "front": "#ffffff", "back": "#cbdbfc", "dash": 2, "gap": 1}
+  ]
+}

@@ -19,7 +19,7 @@ WALK_FRAMES = 6
 ## The MetroCity columns of each facing's first walk frame; the left facing (18-23) is a mirror.
 SOURCE_COLUMNS = {"down": 0, "side": 6, "up": 12}
 CROUCH_FROM, CROUCH_COLUMNS = (0, 1), (6, 7)
-SWIM_FROM, SWIM_COLUMNS = (1, 4), (8, 9)
+SWIM_FROM, SWIM_COLUMNS = (1, 3), (8, 9)
 DOWNED_ROW, DOWNED_COLUMNS, DEAD_COLUMN = 3, (0, 1), 2
 CROUCH_DELETED_ROWS = frozenset({21, 22, 23, 27, 28, 29})
 DOWNED_DROP = 8

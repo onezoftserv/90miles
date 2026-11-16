@@ -4,20 +4,20 @@ Rebuilds: `python -I tools/art/compose.py --packs C:/Users/liann/src/90miles/gam
 
 ## 0. Gate
 
-- [ ] 0.1 Start only after art-coast-pass (art wave 1) has merged into `main` and the coordinator says go. Branch from `main`. Re-read the merged `player_look.gd`, `player_pose.gd`, `creature_look.gd`, `crossing.gd` and `creature_threats.gd`, and update this design where they moved.
-- [ ] 0.2 Check that the before captures this change compares against are in `docs/art-pass/review-2026-11-14/before/` (tracked with the proposal; `before/README.md` names each source): `sandbar_day_swimming_west.png`, `cr_swim_deep_left_crop8.png`, `cr_lineup_day_crop6.png`, `cr_gull_swoop_down_crop8.png`, `cr_player_downed_crop8.png`, `hud_downed_solo.png`, `scrub_three.png`, `cr_water_day_crop5.png`, `crossing_shark.png` and `crossing_raft_squall.png`.
+- [x] 0.1 Start only after art-coast-pass (art wave 1) has merged into `main` and the coordinator says go. Branch from `main`. Re-read the merged `player_look.gd`, `player_pose.gd`, `creature_look.gd`, `crossing.gd` and `creature_threats.gd`, and update this design where they moved.
+- [x] 0.2 Check that the before captures this change compares against are in `docs/art-pass/review-2026-11-14/before/` (tracked with the proposal; `before/README.md` names each source): `sandbar_day_swimming_west.png`, `cr_swim_deep_left_crop8.png`, `cr_lineup_day_crop6.png`, `cr_gull_swoop_down_crop8.png`, `cr_player_downed_crop8.png`, `hud_downed_solo.png`, `scrub_three.png`, `cr_water_day_crop5.png`, `crossing_shark.png` and `crossing_raft_squall.png`.
 - Groups 1–4 need only 0.1. Group 5 also waits for art-terrain-polish C10 (scrub variants). Groups 6 and 7 also wait for crossing-gameplay (its shark tell, group 7 there) to merge.
 
 ## 1. Swim bob and ripple ring (C19, C20; SP3, SP2)
 
-- [ ] 1.1 Write the tests and see them fail:
+- [x] 1.1 Write the tests and see them fail:
   - `test_poses.py`: the swim cells come from walk frames 1 and 3, and the two swim cells of each facing differ above the water row;
   - `test_fx.py`: `fx.py` draws 3 ring frames of about 20×5 in #ffffff and #cbdbfc only, whole alpha, the same bytes on a second run, and nothing outside its out folder;
   - `test_player_art.gd`: a solo swimmer shows `Look/SwimRing`, ordered after Shadow and before Sprite, playing; a standing, diving or downed player hides it;
   - `test_palette_swap.gd`: `player_look.gdshader` no longer reads `art_on_ripple` or `art_water_alpha`, still cuts on the node-local y, and `art_common.gdshaderinc` is unchanged.
-- [ ] 1.2 Set `SWIM_FROM = (1, 3)` and rebuild the player parts. Verify that `test_the_head_anchors_of_the_default_look` still reads swim −16, and that only the swim cells changed in each part sheet.
-- [ ] 1.3 Add `tools/art/fx.py`, `fx.json` and the ring; add `game/assets/art/fx/swim_ring.tres` (4 fps) and its licence block; add `Look/SwimRing` and `PlayerPose.shows_swim_ring`; make the shader's cut hard (design D1). Verify `test_a_slot_0_swimmer_is_cut_at_the_feet_line_with_no_shadow` (updated to the hard cut), `test_swimmers_stand_out_on_shallows_and_deep` (counting the ring), `test_the_composed_look_keeps_the_frame_budget_with_the_ripple` and the `Look/Ripple` tests.
-- [ ] 1.4 Windowed 1-player capture with `tests/manual/capture_looks.tscn` and a solo sandbar swim west: compare with `before/sandbar_day_swimming_west.png` and `before/cr_swim_deep_left_crop8.png`. Record the ring's size and the bob in the build notes.
+- [x] 1.2 Set `SWIM_FROM = (1, 3)` and rebuild the player parts. Verify that `test_the_head_anchors_of_the_default_look` still reads swim −16, and that only the swim cells changed in each part sheet.
+- [x] 1.3 Add `tools/art/fx.py`, `fx.json` and the ring; add `game/assets/art/fx/swim_ring.tres` (4 fps) and its licence block; add `Look/SwimRing` and `PlayerPose.shows_swim_ring`; make the shader's cut hard (design D1). Verify `test_a_slot_0_swimmer_is_cut_at_the_feet_line_with_no_shadow` (updated to the hard cut), `test_swimmers_stand_out_on_shallows_and_deep` (counting the ring), `test_the_composed_look_keeps_the_frame_budget_with_the_ripple` and the `Look/Ripple` tests.
+- [x] 1.4 Windowed 1-player capture with `tests/manual/capture_looks.tscn` and a solo sandbar swim west: compare with `before/sandbar_day_swimming_west.png` and `before/cr_swim_deep_left_crop8.png`. Record the ring's size and the bob in the build notes.
 
 ## 2. Crab (C25; SP8)
 

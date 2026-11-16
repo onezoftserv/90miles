@@ -164,3 +164,13 @@ Art only. Rebuild with `python -I tools/art/compose.py --packs C:/Users/liann/sr
 ## Build notes
 
 Measured values and departures are recorded here as the tasks ship.
+
+**Gate (0.1, 0.2), 2026-11-15.** art-coast-pass merged into main and the coordinator said go. `player_look.gd`, `player_pose.gd` and `creature_look.gd` are as this design describes. The ten before captures are tracked in `docs/art-pass/review-2026-11-14/before/`.
+
+**Group 1, swim bob and ring (D1).**
+- `SWIM_FROM` is (1, 3). Rebuilding the parts changed only column 9 (the second swim cell) of each of the 11 part sheets. On `body_man` the head's top row moves 1 px between the two swim cells in every facing, and 81–98 px differ above the water row. The swim head anchor is still −16. The GDScript mirror of the rules (`tests/helpers/pose_rules.gd`, which `test_look_parts.gd` checks the made sheets against) follows: swim from walk frames 1 and 3.
+- `tools/art/fx.py` and `fx.json` draw `fx/swim_ring.png`: 3 frames of 20×5, a dashed 1 px oval (2 px drawn, 1 left out, moving 1 px a frame, so the loop is seamless), #ffffff below the middle row and #cbdbfc above it. Two runs give the same bytes. `swim_ring.tres` plays it at 4 fps; the fx licence has its own-work block.
+- `Look/SwimRing` sits between Shadow and Sprite, at x −10 and y = the water line − 2 from the body, so its middle row lies on the cut. `PlayerLook._ready` places it from the same `BodyArt` numbers as the shader's `water_line_y` (4). `PlayerPose.shows_swim_ring` is true for SWIM and FLOAT only.
+- `player_look.gdshader` cuts hard (`art_local_y < water_line_y`) and has no foam colour; `art_common.gdshaderinc` and `waterline.gdshader` are unchanged, so the shark and the deck keep their fade.
+- The frame budget counts the ring: 24 + 2 + 3 stays under 48. `test_swimmers_stand_out_on_shallows_and_deep` scores the body above the line, as before, and passes; the ring is not asked to reach 3:1 on its own (white on today's shallows is about 1.8:1).
+- Capture: `docs/art-pass/sprite-polish/swim_ring_before_after_x3.png` (`capture_looks.tscn`'s `looks_swim.png`, the four slots in the sea; before above, after below). Each swimmer is a head and shoulders over a dashed white oval at the line, where before a flat white bar ran across the body over faded lower rows. `docs/art-pass/looks_swim.png` itself is re-shot in task 8.2.
