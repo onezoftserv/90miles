@@ -12,7 +12,7 @@ const SITE_SCENE: PackedScene = preload("res://scenes/structures/build_site.tscn
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SANDBAR: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
-const SETTINGS_PATH: String = "user://test_structure_looks_settings.cfg"
+var settings_path: String = UserTmp.path("test_structure_looks_settings.cfg")
 
 var data: StructureArtData
 var body: PlayerBody
@@ -31,8 +31,8 @@ func before_each() -> void:
 
 func after_each() -> void:
 	WeatherManager.stop()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _look(structure: Node) -> StructureLook:
@@ -112,7 +112,7 @@ func test_on_the_sandbar_the_nest_shows_on_palms_4_and_5_and_a_solo_climb_leaves
 	WeatherManager.stop()
 	WeatherManager.sky.start_at(0.0)
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	var player := shell.session.body(CoopSession.HOST_ID)

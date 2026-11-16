@@ -6,7 +6,7 @@ const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const FIRE_SCENE: PackedScene = preload("res://scenes/structures/fire.tscn")
 const SANDBAR: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
 const COAST_CAY: IslandLayoutData = preload("res://resources/islands/coast_cay.tres")
-const TEMP_ROOT: String = "user://test_creature_spawner"
+var temp_root: String = UserTmp.path("test_creature_spawner")
 
 var session: CoopSession
 var spawner: CreatureSpawner
@@ -20,7 +20,7 @@ func before_each() -> void:
 
 func after_each() -> void:
 	NetManager.leave()
-	FsHelpers.remove_tree(TEMP_ROOT)
+	FsHelpers.remove_tree(temp_root)
 
 
 func _spawner(party: int = 1, catalog: ContentCatalog = null, layout: IslandLayoutData = SANDBAR, run_seed: int = 0) -> CreatureSpawner:
@@ -114,8 +114,8 @@ func test_one_reef_shark_waits_offshore_in_deep_water() -> void:
 func test_a_new_shark_file_spawns_with_no_script_edited() -> void:
 	var data := (GameState.content.get_entry(&"creatures", &"reef_shark") as CreatureData).duplicate() as CreatureData
 	data.id = &"tiburon_prueba"
-	FsHelpers.save_content(TEMP_ROOT, "creatures", "tiburon_prueba", data)
-	_spawner(1, ContentCatalog.new(TEMP_ROOT))
+	FsHelpers.save_content(temp_root, "creatures", "tiburon_prueba", data)
+	_spawner(1, ContentCatalog.new(temp_root))
 	var made := spawner.creatures(&"tiburon_prueba")
 	assert_eq(made.size(), 1)
 	assert_true((made[0] as Creature).brain is PatrolCircleStrike)

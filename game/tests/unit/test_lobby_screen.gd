@@ -4,7 +4,7 @@ extends GutTest
 
 const LOBBY_SCENE: PackedScene = preload("res://scenes/shell/lobby_screen.tscn")
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_lobby_screen_settings.cfg"
+var settings_path: String = UserTmp.path("test_lobby_screen_settings.cfg")
 
 
 func before_each() -> void:
@@ -13,8 +13,8 @@ func before_each() -> void:
 
 func after_each() -> void:
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _lobby(host: bool) -> LobbyScreen:
@@ -26,7 +26,7 @@ func _lobby(host: bool) -> LobbyScreen:
 
 func _shell() -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	shell.port = 0
 	add_child_autofree(shell)
 	return shell

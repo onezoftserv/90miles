@@ -8,7 +8,7 @@ extends GutTest
 ## ticked by hand.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_prompt_placement_settings.cfg"
+var settings_path: String = UserTmp.path("test_prompt_placement_settings.cfg")
 const TILE: float = 16.0
 const STEP_S: float = 0.1
 const BOUNDS: Rect2 = Rect2(4.0, 22.0, 632.0, 280.0)
@@ -27,13 +27,13 @@ func before_each() -> void:
 func after_each() -> void:
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _start() -> PlayerBody:
 	shell = SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	var body := shell.session.body(1)

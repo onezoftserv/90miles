@@ -14,7 +14,7 @@ const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const FIRE_SCENE: PackedScene = preload("res://scenes/structures/fire.tscn")
 const FOG: WeatherData = preload("res://tests/fixtures/content/weather/fog_test.tres")
 const SECRET_SCENE: PackedScene = preload("res://scenes/dev/secret_cay_playground.tscn")
-const SETTINGS_PATH: String = "user://test_patrol_solo_settings.cfg"
+var settings_path: String = UserTmp.path("test_patrol_solo_settings.cfg")
 const DT: float = 1.0 / 30.0
 const IDLE_DT: float = 0.1
 const TILE: float = 16.0
@@ -61,8 +61,8 @@ func after_each() -> void:
 	WeatherManager.sky.start_at(0.0)
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 # --- the run -------------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ func after_each() -> void:
 # A solo run on the sandbar at `at_s` seconds since dawn, with its one boat parked in AWAY.
 func _start(at_s: float) -> void:
 	shell = SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	session = shell.session

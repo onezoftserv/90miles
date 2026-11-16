@@ -5,7 +5,7 @@ extends GutTest
 ## land falls back to the landing cells; only a raft kept on arrival is beached.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_arrival_by_vessel_settings.cfg"
+var settings_path: String = UserTmp.path("test_arrival_by_vessel_settings.cfg")
 const COAST: StringName = &"coast_cay"
 
 
@@ -20,13 +20,13 @@ func after_each() -> void:
 	WeatherManager.stop()
 	NetManager.leave()
 	FixtureRoutes.take_out()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _shell() -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	shell.session.body(1).player_input.enabled = false

@@ -6,7 +6,7 @@ extends GutTest
 ## need no second peer.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_shell_platform_settings.cfg"
+var settings_path: String = UserTmp.path("test_shell_platform_settings.cfg")
 const NOBODY_PORT: int = 7999
 const ENET_NOTE: String = "Los demás se unen por IP en el puerto UDP %d. Por internet, abre ese puerto en tu router."
 
@@ -42,13 +42,13 @@ func after_each() -> void:
 	for peer: MultiplayerPeer in _held:
 		peer.close()
 	_held.clear()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _shell(host_port: int = 0) -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	shell.port = host_port
 	add_child(shell)
 	_shells.append(shell)

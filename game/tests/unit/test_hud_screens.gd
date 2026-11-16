@@ -8,7 +8,7 @@ extends GutTest
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
-const SETTINGS_PATH: String = "user://test_hud_screens_settings.cfg"
+var settings_path: String = UserTmp.path("test_hud_screens_settings.cfg")
 const STEP_S: float = 0.1
 const TIMEOUT_S: float = 5.0
 const HOLD_S: float = 2.5
@@ -41,8 +41,8 @@ func after_each() -> void:
 	islands.clear()
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _key(keycode: Key, pressed: bool) -> void:
@@ -97,7 +97,7 @@ func _assert_hidden_and_silent(hud: RunHud, where: String) -> void:
 
 func test_under_the_run_summary_the_hud_takes_no_input() -> void:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	var session := shell.session
