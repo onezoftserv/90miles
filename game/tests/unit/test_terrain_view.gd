@@ -550,3 +550,61 @@ func test_a_solo_player_walks_across_a_tile_edge_on_the_sandbar() -> void:
 	body.intent = MoveIntent.new()
 	assert_gte(body.global_position.x, edge_x + TILE * 0.5, "walked over the sand-to-dune edge in %d frames" % frames)
 	assert_eq(floori(body.global_position.y / TILE), cell.y, "kept its row: nothing pushed it aside")
+
+# --- art-terrain-polish C12, TR9: pebbles at the foot of the rock (design D6) ---
+
+## The pebble decal tile for a straight rock seam's own mask: the sand strip faces the beach.
+const PEBBLE_SOURCE: int = 2
+const PEBBLE_SIDE: Dictionary[int, Vector2i] = {10: Vector2i(0, 0), 5: Vector2i(1, 0), 12: Vector2i(2, 0), 3: Vector2i(3, 0)}
+
+
+func test_pebbles_lie_only_at_the_foot_of_straight_inland_rock_seams() -> void:
+	for layout: IslandLayoutData in [COAST_CAY]:
+		var island := _island(layout)
+		var terrain: GridTerrain = island.terrain
+		var pools: Array[Vector2i] = island.built.tide_pools
+		var decals := _layer(island, &"Decals")
+		var placed: int = 0
+		var eligible: int = 0
+		for cell: Vector2i in terrain.cells:
+			var source: int = decals.get_cell_source_id(cell)
+			var straight: bool = false
+			if terrain.terrain_at(cell) == DataEnums.Terrain.ROCK and TerrainArt.corner_mask(TerrainArt.SAND, cell, terrain, pools) == TerrainArt.FULL:
+				straight = PEBBLE_SIDE.has(TerrainArt.corner_mask(TerrainArt.PLAIN, cell, terrain, pools))
+			if straight:
+				eligible += 1
+			if source != PEBBLE_SOURCE:
+				continue
+			placed += 1
+			assert_true(straight, "%s: pebbles only on a straight inland rock seam" % cell)
+			assert_eq(decals.get_cell_atlas_coords(cell), PEBBLE_SIDE[TerrainArt.corner_mask(TerrainArt.PLAIN, cell, terrain, pools)], "%s: the side facing the beach" % cell)
+			assert_eq(TerrainView.has_pebbles(layout.id, cell), true, "%s: chosen by the cell's hash" % cell)
+		assert_gt(placed, 0, "%s has pebbles" % layout.id)
+		assert_lt(placed, eligible, "%s: not every seam cell" % layout.id)
+
+
+## One player, offline: on the coast cay, a rock cell with the sea to its south (found from the
+## layout) draws the plain shore tile whose bottom rows hold the face over the water.
+func test_a_solo_coast_cay_rock_shore_cell_draws_its_face() -> void:
+	var island := _island(COAST_CAY)
+	var terrain: GridTerrain = island.terrain
+	var pools: Array[Vector2i] = island.built.tide_pools
+	var shore: Image = Image.load_from_file(ProjectSettings.globalize_path("res://assets/art/terrain/plain_shore.png"))
+	var face: Color = Color("#595652")
+	var found: int = 0
+	for cell: Vector2i in terrain.cells:
+		if terrain.terrain_at(cell) != DataEnums.Terrain.ROCK or not TerrainQuery.is_water(terrain.terrain_at(cell + Vector2i.DOWN)):
+			continue
+		var tile: Array = _tile_at(island, &"Plain", cell)
+		if tile.is_empty() or tile[0] != TerrainArt.data().shore_source_of[TerrainArt.PLAIN]:
+			continue
+		var atlas: Vector2i = tile[1]
+		var region: Image = shore.get_region(Rect2i(atlas * 16, Vector2i(16, 16)))
+		var has_face: bool = false
+		for x: int in 16:
+			for y: int in 16:
+				if region.get_pixel(x, y).is_equal_approx(face):
+					has_face = true
+		assert_true(has_face, "rock shore %s (atlas %s) shows its face" % [cell, atlas])
+		found += 1
+	assert_gt(found, 0, "the cay has rock over the sea to its south")

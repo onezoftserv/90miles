@@ -47,7 +47,7 @@
     "shape": "sand",
     "shore": {"inset": 0},
     "rows": [
-      {"id": "rock", "tile": [12, 13], "variants": [[12, 14], "15", "15"], "rim": "#696a6a", "map": {"#79584f": "#595652", "#94785c": "#847e87", "#bc9a78": "#696a6a"}},
+      {"id": "rock", "tile": [12, 13], "variants": [[12, 14], "15", "15"], "rim": "#323c39", "lip": "#9badb7", "face": ["#696a6a", "#595652"], "map": {"#79584f": "#595652", "#94785c": "#847e87", "#bc9a78": "#696a6a"}},
       {"id": "shingle", "tile": [14, 11], "map": {"#c0c0c0": "#847e87", "#a3aab1": "#9badb7", "#848a96": "#696a6a"}},
       {"id": "cliff", "tile": [12, 13], "rim": "#323c39", "map": {"#79584f": "#323c39", "#94785c": "#696a6a", "#bc9a78": "#595652"}},
       {"id": "hammock", "tile": [2, 16], "map": {"#2eca5c": "#4b692f", "#50eb6c": "#6abe30"}},
@@ -89,6 +89,7 @@
     "spots": "shade_spots.png"
   },
   "copies": [
-    {"from": "tide_pool.png", "to": "terrain/tide_pool.png"}
+    {"from": "tide_pool.png", "to": "terrain/tide_pool.png"},
+    {"from": "pebbles.png", "to": "decals/pebbles.png"}
   ]
 }

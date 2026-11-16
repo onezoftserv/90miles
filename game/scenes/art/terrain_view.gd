@@ -14,6 +14,10 @@ const LAND_LAYERS: Array[StringName] = [TerrainArt.SAND, TerrainArt.DUNE, Terrai
 ## foot shade (design.md K36, K39).
 const POOL_SOURCE: int = 0
 const SHADE_SOURCE: int = 1
+## The pebble decals at the foot of a straight rock seam (art-terrain-polish D6), by the rock
+## cell's own plain mask: the tile whose stones sit in the sand strip that seam leaves.
+const PEBBLE_SOURCE: int = 2
+const PEBBLE_SIDE: Dictionary[int, Vector2i] = {10: Vector2i(0, 0), 5: Vector2i(1, 0), 12: Vector2i(2, 0), 3: Vector2i(3, 0)}
 const PALM_SHADE: Vector2i = Vector2i(0, 4)
 ## The two halves of the wide shade under the raft site, on the two cells west of its own cell:
 ## the site's cell is a shore cell, and a decal there would lie over the foam and the water.
@@ -117,11 +121,31 @@ func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vecto
 	for foot: Vector2i in palms + spots:
 		if foot.x >= 0 and _decals.get_cell_source_id(foot) < 0:
 			_decals.set_cell(foot, SHADE_SOURCE, PALM_SHADE)
+	for cell: Vector2i in grid.cells:
+		var side: Vector2i = _pebble_side(cell, grid, pools)
+		if side.x >= 0 and has_pebbles(layout_id, cell) and _decals.get_cell_source_id(cell) < 0:
+			_decals.set_cell(cell, PEBBLE_SOURCE, side)
 	if raft_site.x >= 0:
 		for half: Dictionary in [{&"cell": raft_site + WIDE_WEST_OFFSET, &"atlas": WIDE_WEST}, {&"cell": raft_site + WIDE_EAST_OFFSET, &"atlas": WIDE_EAST}]:
 			var cell: Vector2i = half[&"cell"]
 			if TerrainArt.depth_step(grid.terrain_at(cell)) < 0 and _decals.get_cell_source_id(cell) < 0:
 				_decals.set_cell(cell, SHADE_SOURCE, half[&"atlas"])
+
+
+## Whether the rock cell `cell` of the layout `layout_id` shows pebbles at its foot: about one
+## seam cell in two, by its hash (art-terrain-polish D6), the same on every peer.
+static func has_pebbles(layout_id: StringName, cell: Vector2i) -> bool:
+	return (TerrainArt.cell_hash(layout_id, cell) >> 3) & 1 == 0
+
+
+# The pebble tile for a rock cell on a straight inland seam (its sand whole, its own plain mask
+# one straight edge): the one that sits in the sand strip the seam leaves; (-1, -1) otherwise.
+static func _pebble_side(cell: Vector2i, grid: GridTerrain, pools: Array[Vector2i]) -> Vector2i:
+	if grid.terrain_at(cell) != DataEnums.Terrain.ROCK:
+		return Vector2i(-1, -1)
+	if TerrainArt.corner_mask(TerrainArt.SAND, cell, grid, pools) != TerrainArt.FULL:
+		return Vector2i(-1, -1)
+	return PEBBLE_SIDE.get(TerrainArt.corner_mask(TerrainArt.PLAIN, cell, grid, pools), Vector2i(-1, -1))
 
 
 # A corner of a shaded cell counts when the four cells round it are shaded (design.md K39).

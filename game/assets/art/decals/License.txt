@@ -9,3 +9,9 @@ Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
 Files: shade.png, row 4 (the soft foot shade and the two halves of the wide shade, black at alphas 20, 40 and 64)
+
+Work: 90 Millas pebbles
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: pebbles.png (art-terrain-polish C12: four pebble decals, two or three small stones in #9badb7, #847e87 and #595652, one tile per straight rock seam, each inside the sand strip the seam leaves: west, east, north and south)
