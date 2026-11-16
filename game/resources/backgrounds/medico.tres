@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BackgroundData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/background_data.gd" id="1_background"]
+
+[resource]
+script = ExtResource("1_background")
+description_es = "Médica de familia en un consultorio sin guantes ni aspirinas. Cura con lo que haya y sabe cuándo alguien está asusta'o de verdad."
+description_en = "A family doctor in a clinic with no gloves and no aspirin. Heals with whatever there is and knows when someone is truly scared."
+skill_summary_es = "Medicina: cura mejor, reconoce las plantas"
+skill_summary_en = "Medicine: better healing, identifies plants"
+skills = Array[int]([3])
+id = &"medico"
+name_es = "Médico"
+name_en = "Médico (doctor)"

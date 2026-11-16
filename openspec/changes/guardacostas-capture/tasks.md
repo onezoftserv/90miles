@@ -26,55 +26,67 @@ How the tests are written:
   - Where an answer differs from the recommended option, first update proposal.md, design.md, the spec delta and these tasks.
   - Verify: `openspec validate guardacostas-capture --type change --strict` passes.
   - Done on 2026-11-14: the owner accepted (a) on all eleven. No artifact changed beyond recording the answers, and the strict validation passes.
-- [ ] 0.2 Wait for the `guardacostas-stealth` build to merge.
+- [x] 0.2 Wait for the `guardacostas-stealth` build to merge.
   - Branch from the updated `main`.
   - Re-read these files as merged: `patrol_route.gd`, `spot_meter.gd`, `hidden_rules.gd`, `patrol_triggers.gd`, `world_events.gd`, `patrol_data.gd`, `creature.gd`, `creature_spawner.gd`, `creature_world.gd`, `player.gd`, `player_net.gd`, `coop_session.gd`, `body_marks.gd` and `patrol_boat.tres`.
   - Verify by recording in design.md "Changes from the build plan" any name that differs from design.md.
+  - Done on 2026-11-15: the stealth build (PR #62) is merged; the build branched from main 8edc5ab and rebased on 3b5f9b1. The merged files were re-read, and the names that differ are in design.md "Changes from the build plan" (task 0.2).
 
 ## 1. Data and content
 
-- [ ] 1.1 Write `game/tests/unit/test_capture_data.gd` and verify it fails. It checks:
+- [x] 1.1 Write `game/tests/unit/test_capture_data.gd` and verify it fails. It checks:
   - the new `PatrolData` fields and their defaults (design.md §15);
   - that `shore_soldier.tres`, `rodriguez.tres`, `beat_la_captura.tres`, `maestro.tres` and `medico.tres` load and pass the content check;
   - that the patrol boat's squad, scene and commander references resolve;
   - that the validator reports a patrol whose squad creature lacks `SEARCH_CAPTURE`, and a missing call list.
-- [ ] 1.2 Add the fields, the validator check and the content files, with the draft lines of design.md §10 and §11. Then:
+  - Done: it failed to parse on the missing fields, `_check_squad`, `FixtureIslands` and `FixtureBackgrounds`, then passed (16 tests).
+- [x] 1.2 Add the fields, the validator check and the content files, with the draft lines of design.md §10 and §11. Then:
   - Write `beat_la_captura.tres` as the state table in design.md §9.
   - Fill the existing squad and capture fields in `patrol_boat.tres`.
   - Verify `test_capture_data.gd` passes.
-- [ ] 1.3 Add these fixtures under `game/tests/fixtures/` and verify each loads in `test_capture_data.gd`:
+  - Done: the fields default to §15's numbers, with the squad off until a patrol names one (`has_squad()`). `_check_squad` holds a patrol with a squad, `la_captura` was written by a one-off script, and `patrol_boat.tres` carries every number and the calls.
+- [x] 1.3 Add these fixtures under `game/tests/fixtures/` and verify each loads in `test_capture_data.gd`:
   - a chain of three tiny islands (`chain_a` → `chain_b` → `chain_c`, the last naming no next island);
   - a tiny off-graph island;
   - a tiny island of family REEF;
   - fixture backgrounds that set `PlayerBody.background_id` to `medico` or `maestro`;
   - a fixture keepsake item (KEEPSAKE tag) that stands in for the Foto de la familia until keepsakes exist;
   - a test soldier and a test patrol (`squad_test`) with a 2-soldier squad and a 120 s search.
-- [ ] 1.4 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: in `tests/fixtures/content/` (`soldier_test`, `squad_test`, `foto_test`, and islands `chain_a`, `chain_b`, `chain_c`, `chain_off` and `reef_test`), with `FixtureIslands` and `FixtureBackgrounds` in `tests/helpers/`. The broken squads are in `tests/fixtures/squad_broken/`.
+- [x] 1.4 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done with groups 2 and 3 (one PR): import and smoke clean, GUT 247 scripts, 2252/2252; after the rebase on main 3b5f9b1, import twice and smoke clean, GUT 257 scripts, 2347/2347.
 
 ## 2. Island history and travel
 
-- [ ] 2.1 Write `game/tests/unit/test_island_history.gd` (pure) and verify it fails. It checks:
+- [x] 2.1 Write `game/tests/unit/test_island_history.gd` (pure) and verify it fails. It checks:
   - previous on index 1, 2 and 3;
   - the off-graph cay skipped (main spec "Caught after the detour");
   - islands reached as the highest index (the spec's "Counted once").
-- [ ] 2.2 Write `game/tests/unit/test_capture_travel_solo.gd` and verify it fails. It uses one offline player, the fixture chain, and the real sandbar and coast cay. It covers:
+  - Done: it failed to parse on the missing `IslandHistory`, then passed (9 tests).
+- [x] 2.2 Write `game/tests/unit/test_capture_travel_solo.gd` and verify it fails. It uses one offline player, the fixture chain, and the real sandbar and coast cay. It covers:
   - the restart of island 2 from island 3 with pick-ups as on first arrival ("Previous island is fresh");
   - island 1 restarting island 1 ("Caught on the sandbar");
   - a release from the sandbar onto the coast cay's first landing cell with no raft beached;
   - a release from the coast cay ending the run;
   - landing cells within 5 tiles.
-- [ ] 2.3 Implement `game/scripts/run/island_history.gd` and the `IslandTravel` changes (design.md §8): the index in the travel message, `previous()`, and `travel` with `raft_integrity` 0 for a restart or a release. Verify both tests pass, and that `test_coast_cay_solo.gd`, `test_coast_cay_net.gd`, `test_arrival_by_vessel.gd`, `test_arrival_scatter_net.gd`, `test_run_restart.gd` and `test_secret_cay_solo.gd` still pass.
-- [ ] 2.4 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: it failed on the missing `restart` and `release`, then passed (5 tests). The 5-tile check covers the islands a release lands on; island 1's landing cells are its four start spots (design.md, group 2).
+- [x] 2.3 Implement `game/scripts/run/island_history.gd` and the `IslandTravel` changes (design.md §8): the index in the travel message, `previous()`, and `travel` with `raft_integrity` 0 for a restart or a release. Verify both tests pass, and that `test_coast_cay_solo.gd`, `test_coast_cay_net.gd`, `test_arrival_by_vessel.gd`, `test_arrival_scatter_net.gd`, `test_run_restart.gd` and `test_secret_cay_solo.gd` still pass.
+  - Done, with a fix the solo test found: the session's `WorldEvents` bus is now one of `SESSION_NODES`, so it survives a travel. The six listed tests pass in the full run.
+- [x] 2.4 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 2252/2252 (2347/2347 after the rebase).
 
 ## 3. Conditions and effects
 
-- [ ] 3.1 Write `game/tests/unit/test_capture_conditions.gd`, beside `test_condition_check_routes.gd` and `test_effect_flags.gd`, and verify it fails. Its cases are:
+- [x] 3.1 Write `game/tests/unit/test_capture_conditions.gd`, beside `test_condition_check_routes.gd` and `test_effect_flags.gd`, and verify it fails. Its cases are:
   - `ANY_PLAYER` over an `ALL_OF` (one Maestro at morale 50 and one Médico at 70 passes; no background never passes);
   - `BACKGROUND_PRESENT` reading `PlayerBody.background_id`;
   - `TAKE_ITEMS_WITH_CAPABILITY LIGHT_FIRE` removing the lighter and keeping a KEEPSAKE-tagged item;
   - `TRAVEL_NEXT_ISLAND` and `TRAVEL_PREVIOUS_ISLAND` calling `IslandTravel` on the host only.
-- [ ] 3.2 Implement them in `condition_check.gd`, `effect_applier.gd` and `inventory.gd`, and add `PlayerBody.background_id`, empty by default. Verify the test passes, and that `test_condition_check_routes.gd`, `test_effect_flags.gd` and `test_effect_delay.gd` still pass.
-- [ ] 3.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: it failed to parse on the missing `take_capability` and the party parameter, then passed (10 tests, with `FLAG_SET`, the party's `PLAYERS_AT_LEAST` and a downed speaker added).
+- [x] 3.2 Implement them in `condition_check.gd`, `effect_applier.gd` and `inventory.gd`, and add `PlayerBody.background_id`, empty by default. Verify the test passes, and that `test_condition_check_routes.gd`, `test_effect_flags.gd` and `test_effect_delay.gd` still pass.
+  - Done: the travel effects reach `IslandTravel` through `CoopSession.party_travel_requested`, because naming the class in `effect_applier.gd` made a load cycle. The three listed tests pass in the full run.
+- [x] 3.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 247 scripts, 2252/2252 (257 scripts, 2347/2347 after the rebase).
 
 ## 4. The chase at sea (pure, then the brain)
 

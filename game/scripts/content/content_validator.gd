@@ -46,6 +46,44 @@ static func _validate_type(catalog: ContentCatalog, type: StringName) -> PackedS
 		errors.append_array(_check_references(catalog, where, data))
 		errors.append_array(_check_secret(where, data))
 		errors.append_array(_check_patrol(where, data))
+		errors.append_array(_check_squad(catalog, where, data))
+	return errors
+
+
+# guardacostas-capture "Shore squad data": a patrol creature that names a squad lands soldiers that
+# search and capture, with a touch and a free radius, its calls in both languages, a scene and a
+# commander. A missing id is the reference check's to report, so it is not reported twice here.
+static func _check_squad(catalog: ContentCatalog, where: String, data: ContentData) -> PackedStringArray:
+	var errors: PackedStringArray = []
+	var creature := data as CreatureData if data is CreatureData else null
+	if creature == null or creature.patrol == null:
+		return errors
+	var patrol: PatrolData = creature.patrol
+	if patrol.squad_size <= 0 and patrol.squad_creature_id.is_empty():
+		return errors
+	if patrol.squad_size < 1:
+		errors.append("%s: squad_size %d must be at least 1 for a patrol with a squad" % [where, patrol.squad_size])
+	if patrol.squad_creature_id.is_empty():
+		errors.append("%s: squad_creature_id is empty for a patrol with a squad" % where)
+	elif catalog.has_entry(&"creatures", patrol.squad_creature_id):
+		var soldier := catalog.get_entry(&"creatures", patrol.squad_creature_id) as CreatureData
+		if soldier != null and soldier.behavior != CreatureData.Behavior.SEARCH_CAPTURE:
+			errors.append("%s: squad creature %s must have the SEARCH_CAPTURE behavior" % [where, patrol.squad_creature_id])
+	if patrol.capture_touch_tiles <= 0.0 or patrol.capture_touch_s <= 0.0:
+		errors.append("%s: capture_touch_tiles and capture_touch_s must be above 0" % where)
+	if patrol.free_guard_radius_tiles <= 0.0:
+		errors.append("%s: free_guard_radius_tiles must be above 0" % where)
+	if patrol.capture_dialogue_id.is_empty():
+		errors.append("%s: capture_dialogue_id names no scene" % where)
+	if patrol.commander_npc_id.is_empty():
+		errors.append("%s: commander_npc_id names no commander" % where)
+	for lines: Array in [
+		["squad_land_lines_es", patrol.squad_land_lines_es], ["squad_land_lines_en", patrol.squad_land_lines_en],
+		["squad_spot_lines_es", patrol.squad_spot_lines_es], ["squad_spot_lines_en", patrol.squad_spot_lines_en],
+		["squad_leave_lines_es", patrol.squad_leave_lines_es], ["squad_leave_lines_en", patrol.squad_leave_lines_en],
+	]:
+		if (lines[1] as PackedStringArray).is_empty():
+			errors.append("%s: %s needs at least one line" % [where, lines[0]])
 	return errors
 
 

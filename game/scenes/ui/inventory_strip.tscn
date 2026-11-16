@@ -23,7 +23,7 @@ offset_top = 330.0
 offset_right = 487.0
 offset_bottom = 356.0
 mouse_filter = 2
-theme_type_variation = &"HudPanel"
+theme_type_variation = &"HudStripBack"
 
 [node name="Slots" type="Control" parent="."]
 layout_mode = 0
@@ -36,7 +36,7 @@ offset_top = 318.0
 offset_right = 487.0
 offset_bottom = 328.0
 mouse_filter = 2
-theme_type_variation = &"HudPanel"
+theme_type_variation = &"HudPanelThin"
 
 [node name="ItemLine" type="Label" parent="."]
 layout_mode = 0
@@ -55,7 +55,7 @@ offset_top = 339.0
 offset_right = 591.0
 offset_bottom = 349.0
 mouse_filter = 2
-theme_type_variation = &"HudPanel"
+theme_type_variation = &"HudPanelThin"
 
 [node name="Weight" type="Label" parent="."]
 layout_mode = 0

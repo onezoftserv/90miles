@@ -1,0 +1,462 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/dialogue_data.gd" id="1_flm6x"]
+[ext_resource type="Script" path="res://scripts/data/dialogue_state_data.gd" id="2_tfpqk"]
+[ext_resource type="Script" path="res://scripts/data/choice_data.gd" id="3_6ixny"]
+[ext_resource type="Script" path="res://scripts/data/condition_data.gd" id="4_gvtwb"]
+[ext_resource type="Script" path="res://scripts/data/data_part.gd" id="5_yf3cb"]
+[ext_resource type="Script" path="res://scripts/data/dialogue_line_data.gd" id="6_ofart"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="7_ove2u"]
+
+[sub_resource type="Resource" id="Resource_cgbl5"]
+script = ExtResource("4_gvtwb")
+ref_id = &"captura_previa"
+
+[sub_resource type="Resource" id="Resource_kjtb6"]
+script = ExtResource("4_gvtwb")
+kind = 32
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_u3jmo"]
+script = ExtResource("6_ofart")
+id = &"captura_open_again_plural"
+speaker_id = &"rodriguez"
+text_es = "¿Ustedes otra vez? Mira, yo no estoy pa' esto. Ya los tengo en el acta de la semana pasada."
+text_en = "You lot again? Look, I'm not up for this. I've already got you in last week's acta."
+emotion = 3
+
+[sub_resource type="Resource" id="Resource_87rpk"]
+script = ExtResource("2_tfpqk")
+state = &"open"
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_cgbl5"), SubResource("Resource_kjtb6")])
+priority = 3
+lines = Array[ExtResource("6_ofart")]([SubResource("Resource_u3jmo")])
+next_state = &"act"
+
+[sub_resource type="Resource" id="Resource_5i5kf"]
+script = ExtResource("6_ofart")
+id = &"captura_open_again"
+speaker_id = &"rodriguez"
+text_es = "¿Tú otra vez? Mira, yo no estoy pa' esto. Ya te tengo en el acta de la semana pasada."
+text_en = "You again? Look, I'm not up for this. I've already got you in last week's acta."
+emotion = 3
+
+[sub_resource type="Resource" id="Resource_ff3jm"]
+script = ExtResource("2_tfpqk")
+state = &"open"
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_cgbl5")])
+priority = 2
+lines = Array[ExtResource("6_ofart")]([SubResource("Resource_5i5kf")])
+next_state = &"act"
+
+[sub_resource type="Resource" id="Resource_7bv3a"]
+script = ExtResource("6_ofart")
+id = &"captura_open_plural_1"
+speaker_id = &"rodriguez"
+text_es = "No me miren así. Yo también tengo que llenar la planilla: tres copias, y no hay papel carbón."
+text_en = "Don't look at me like that. I have to fill in the planilla too: three copies, and there's no carbon paper."
+
+[sub_resource type="Resource" id="Resource_iv6v7"]
+script = ExtResource("6_ofart")
+id = &"captura_open_plural_2"
+speaker_id = &"rodriguez"
+text_es = "¿Saben cuántos he saca'o del agua este mes? Ni yo. La cifra la ponen allá arriba."
+text_en = "Do you know how many I've pulled out of the water this month? Neither do I. The number gets set up there."
+
+[sub_resource type="Resource" id="Resource_fw2k8"]
+script = ExtResource("2_tfpqk")
+state = &"open"
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_kjtb6")])
+priority = 1
+lines = Array[ExtResource("6_ofart")]([SubResource("Resource_7bv3a"), SubResource("Resource_iv6v7")])
+next_state = &"act"
+
+[sub_resource type="Resource" id="Resource_5krnx"]
+script = ExtResource("6_ofart")
+id = &"captura_open_1"
+speaker_id = &"rodriguez"
+text_es = "No me mires así. Yo también tengo que llenar la planilla: tres copias, y no hay papel carbón."
+text_en = "Don't look at me like that. I have to fill in the planilla too: three copies, and there's no carbon paper."
+
+[sub_resource type="Resource" id="Resource_cladr"]
+script = ExtResource("6_ofart")
+id = &"captura_open_2"
+speaker_id = &"rodriguez"
+text_es = "¿Sabes cuántos he saca'o del agua este mes? Ni yo. La cifra la ponen allá arriba."
+text_en = "Do you know how many I've pulled out of the water this month? Neither do I. The number gets set up there."
+
+[sub_resource type="Resource" id="Resource_1hwbd"]
+script = ExtResource("2_tfpqk")
+state = &"open"
+lines = Array[ExtResource("6_ofart")]([SubResource("Resource_5krnx"), SubResource("Resource_cladr")])
+next_state = &"act"
+
+[sub_resource type="Resource" id="Resource_4lh8c"]
+script = ExtResource("4_gvtwb")
+kind = 32
+negate = true
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_j40lu"]
+script = ExtResource("6_ofart")
+id = &"captura_act_singular_acta"
+speaker_id = &"rodriguez"
+text_es = "Acta de interceptación número cuatrocientos doce. Nombre, municipio de residencia y motivo de la salida ilegal del territorio nacional."
+text_en = "Interception acta number four hundred and twelve. Name, municipality of residence and reason for the illegal departure from national territory."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_4lh8c")])
+
+[sub_resource type="Resource" id="Resource_4yeux"]
+script = ExtResource("4_gvtwb")
+kind = 32
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_xgfth"]
+script = ExtResource("6_ofart")
+id = &"captura_act_plural_acta"
+speaker_id = &"rodriguez"
+text_es = "Acta de interceptación número cuatrocientos doce. Nombres, municipios de residencia y motivo de la salida ilegal del territorio nacional."
+text_en = "Interception acta number four hundred and twelve. Names, municipalities of residence and reason for the illegal departure from national territory."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_4yeux")])
+
+[sub_resource type="Resource" id="Resource_b0u37"]
+script = ExtResource("2_tfpqk")
+state = &"act"
+lines = Array[ExtResource("6_ofart")]([SubResource("Resource_j40lu"), SubResource("Resource_xgfth")])
+next_state = &"plea"
+
+[sub_resource type="Resource" id="Resource_ytk6d"]
+script = ExtResource("4_gvtwb")
+kind = 13
+ref_id = &"medico"
+scope = 0
+
+[sub_resource type="Resource" id="Resource_5l2r5"]
+script = ExtResource("4_gvtwb")
+kind = 18
+scope = 0
+meter = 5
+amount = 60.0
+
+[sub_resource type="Resource" id="Resource_ynm6w"]
+script = ExtResource("4_gvtwb")
+kind = 0
+scope = 2
+children = Array[ExtResource("5_yf3cb")]([SubResource("Resource_ytk6d"), SubResource("Resource_5l2r5")])
+
+[sub_resource type="Resource" id="Resource_uofdn"]
+script = ExtResource("4_gvtwb")
+kind = 32
+negate = true
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_08yte"]
+script = ExtResource("6_ofart")
+id = &"captura_plea_medico_singular"
+speaker_id = &"player"
+text_es = "Capitán, con esa cara usted no duerme desde el lunes. Yo soy médico y se lo digo: suélteme en el próximo cayo, y usted no me vio."
+text_en = "Captain, with that face you haven't slept since Monday. I'm a doctor and I'm telling you: let me off at the next cayo, and you never saw me."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_uofdn")])
+
+[sub_resource type="Resource" id="Resource_g0kg5"]
+script = ExtResource("4_gvtwb")
+kind = 32
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_rs8bc"]
+script = ExtResource("6_ofart")
+id = &"captura_plea_medico_plural"
+speaker_id = &"player"
+text_es = "Capitán, el muchacho de la proa tiene fiebre desde que subimos. Déjeme verlo, y usted no nos vio."
+text_en = "Captain, the kid at the bow has had a fever since we came aboard. Let me see to him, and you never saw us."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_g0kg5")])
+
+[sub_resource type="Resource" id="Resource_hiunf"]
+script = ExtResource("2_tfpqk")
+state = &"plea"
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_ynm6w")])
+priority = 2
+lines = Array[ExtResource("6_ofart")]([SubResource("Resource_08yte"), SubResource("Resource_rs8bc")])
+next_state = &"outcome"
+
+[sub_resource type="Resource" id="Resource_8rdt5"]
+script = ExtResource("4_gvtwb")
+kind = 13
+ref_id = &"maestro"
+scope = 0
+
+[sub_resource type="Resource" id="Resource_3hctm"]
+script = ExtResource("4_gvtwb")
+kind = 18
+scope = 0
+meter = 5
+amount = 60.0
+
+[sub_resource type="Resource" id="Resource_lymdl"]
+script = ExtResource("4_gvtwb")
+kind = 0
+scope = 2
+children = Array[ExtResource("5_yf3cb")]([SubResource("Resource_8rdt5"), SubResource("Resource_3hctm")])
+
+[sub_resource type="Resource" id="Resource_nrpmk"]
+script = ExtResource("4_gvtwb")
+kind = 32
+negate = true
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_34s8m"]
+script = ExtResource("6_ofart")
+id = &"captura_plea_maestro_singular"
+speaker_id = &"player"
+text_es = "Capitán, con esta corriente usted sabe dónde termina un bote sin rumbo. Si me devuelve, mañana me saca del agua otra vez, y esa cifra no se la cuadra nadie."
+text_en = "Captain, with this current you know where a boat with no heading ends up. Send me back and tomorrow you'll be pulling me out of the water again, and nobody can square that number."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_nrpmk")])
+
+[sub_resource type="Resource" id="Resource_rs3yb"]
+script = ExtResource("4_gvtwb")
+kind = 32
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_qjkqo"]
+script = ExtResource("6_ofart")
+id = &"captura_plea_maestro_plural"
+speaker_id = &"player"
+text_es = "Capitán, con esta corriente usted sabe dónde termina un bote sin rumbo. Si nos devuelve, mañana nos saca del agua otra vez, y esa cifra no se la cuadra nadie."
+text_en = "Captain, with this current you know where a boat with no heading ends up. Send us back and tomorrow you'll be pulling us out of the water again, and nobody can square that number."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_rs3yb")])
+
+[sub_resource type="Resource" id="Resource_45kvm"]
+script = ExtResource("2_tfpqk")
+state = &"plea"
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_lymdl")])
+priority = 1
+lines = Array[ExtResource("6_ofart")]([SubResource("Resource_34s8m"), SubResource("Resource_qjkqo")])
+next_state = &"outcome"
+
+[sub_resource type="Resource" id="Resource_5oyhc"]
+script = ExtResource("2_tfpqk")
+state = &"plea"
+next_state = &"outcome"
+
+[sub_resource type="Resource" id="Resource_5sgps"]
+script = ExtResource("4_gvtwb")
+kind = 13
+ref_id = &"maestro"
+scope = 0
+
+[sub_resource type="Resource" id="Resource_xinc8"]
+script = ExtResource("4_gvtwb")
+kind = 13
+ref_id = &"medico"
+scope = 0
+
+[sub_resource type="Resource" id="Resource_08p6h"]
+script = ExtResource("4_gvtwb")
+kind = 1
+scope = 0
+children = Array[ExtResource("5_yf3cb")]([SubResource("Resource_5sgps"), SubResource("Resource_xinc8")])
+
+[sub_resource type="Resource" id="Resource_ybxt1"]
+script = ExtResource("4_gvtwb")
+kind = 18
+scope = 0
+meter = 5
+amount = 60.0
+
+[sub_resource type="Resource" id="Resource_joa2g"]
+script = ExtResource("4_gvtwb")
+kind = 0
+scope = 2
+children = Array[ExtResource("5_yf3cb")]([SubResource("Resource_08p6h"), SubResource("Resource_ybxt1")])
+
+[sub_resource type="Resource" id="Resource_j1esc"]
+script = ExtResource("6_ofart")
+id = &"captura_release_1"
+speaker_id = &"rodriguez"
+text_es = "Bueno. Aquí no ha pasa'o na'. El acta dice 'sector sin novedad'."
+text_en = "Fine. Nothing happened here. The acta says 'sector all clear'."
+
+[sub_resource type="Resource" id="Resource_l3ruo"]
+script = ExtResource("4_gvtwb")
+kind = 32
+negate = true
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_o5hca"]
+script = ExtResource("6_ofart")
+id = &"captura_release_singular"
+speaker_id = &"rodriguez"
+text_es = "Te dejo en el próximo cayo. Y si alguien pregunta, yo 'taba mirando pa'l otro la'o."
+text_en = "I'll drop you at the next cayo. And if anyone asks, I was looking the other way."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_l3ruo")])
+
+[sub_resource type="Resource" id="Resource_xmxjy"]
+script = ExtResource("4_gvtwb")
+kind = 32
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_63axk"]
+script = ExtResource("6_ofart")
+id = &"captura_release_plural"
+speaker_id = &"rodriguez"
+text_es = "Los dejo en el próximo cayo. Y si alguien pregunta, yo 'taba mirando pa'l otro la'o."
+text_en = "I'll drop you all at the next cayo. And if anyone asks, I was looking the other way."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_xmxjy")])
+
+[sub_resource type="Resource" id="Resource_jxn4j"]
+script = ExtResource("4_gvtwb")
+kind = 32
+negate = true
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_propr"]
+script = ExtResource("6_ofart")
+id = &"captura_release_singular_acta"
+speaker_id = &"rodriguez"
+text_es = "Se cierra el acta por no localizarse al interceptado."
+text_en = "The acta is closed: the intercepted person could not be located."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_jxn4j")])
+
+[sub_resource type="Resource" id="Resource_jcicx"]
+script = ExtResource("4_gvtwb")
+kind = 32
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_oebyu"]
+script = ExtResource("6_ofart")
+id = &"captura_release_plural_acta"
+speaker_id = &"rodriguez"
+text_es = "Se cierra el acta por no localizarse a los interceptados."
+text_en = "The acta is closed: the intercepted persons could not be located."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_jcicx")])
+
+[sub_resource type="Resource" id="Resource_wcjqc"]
+script = ExtResource("7_ove2u")
+kind = 13
+ref_id = &"captura_previa"
+
+[sub_resource type="Resource" id="Resource_he16p"]
+script = ExtResource("7_ove2u")
+kind = 37
+
+[sub_resource type="Resource" id="Resource_b4yn8"]
+script = ExtResource("2_tfpqk")
+state = &"outcome"
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_joa2g")])
+priority = 2
+lines = Array[ExtResource("6_ofart")]([SubResource("Resource_j1esc"), SubResource("Resource_o5hca"), SubResource("Resource_63axk"), SubResource("Resource_propr"), SubResource("Resource_oebyu")])
+on_enter_effects = Array[ExtResource("7_ove2u")]([SubResource("Resource_wcjqc"), SubResource("Resource_he16p")])
+
+[sub_resource type="Resource" id="Resource_y36f4"]
+script = ExtResource("4_gvtwb")
+ref_id = &"almendron_a_bordo"
+
+[sub_resource type="Resource" id="Resource_ftulg"]
+script = ExtResource("4_gvtwb")
+kind = 32
+negate = true
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_nafec"]
+script = ExtResource("6_ofart")
+id = &"captura_car_singular"
+speaker_id = &"rodriguez"
+text_es = "El carro ese lo hundimos, como manda el reglamento. Me dolió más que a ti."
+text_en = "We sank that car, as the regulations say. It hurt me more than you."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_ftulg")])
+
+[sub_resource type="Resource" id="Resource_0pk8e"]
+script = ExtResource("4_gvtwb")
+kind = 32
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_t70ey"]
+script = ExtResource("6_ofart")
+id = &"captura_car_plural"
+speaker_id = &"rodriguez"
+text_es = "El carro ese lo hundimos, como manda el reglamento. Me dolió más que a ustedes."
+text_en = "We sank that car, as the regulations say. It hurt me more than all of you."
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_0pk8e")])
+
+[sub_resource type="Resource" id="Resource_0awxu"]
+script = ExtResource("6_ofart")
+id = &"captura_car_acta"
+speaker_id = &"rodriguez"
+text_es = "Se hace constar el hundimiento del vehículo utilizado como embarcación."
+text_en = "Let it be recorded that the vehicle used as a vessel was sunk."
+
+[sub_resource type="Resource" id="Resource_t0myk"]
+script = ExtResource("4_gvtwb")
+kind = 32
+negate = true
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_kkteq"]
+script = ExtResource("6_ofart")
+id = &"captura_return_singular"
+speaker_id = &"rodriguez"
+text_es = "Lo siento, de verdad. Las cifras son las cifras. Pa'trás, pa'l cayo de antes. Y da gracias que no es pa' Mariel."
+text_en = "I'm sorry, really. The numbers are the numbers. Back you go, to the cayo before. And be thankful it's not Mariel."
+emotion = 2
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_t0myk")])
+
+[sub_resource type="Resource" id="Resource_q1dp0"]
+script = ExtResource("4_gvtwb")
+kind = 32
+amount = 2.0
+
+[sub_resource type="Resource" id="Resource_ih14s"]
+script = ExtResource("6_ofart")
+id = &"captura_return_plural"
+speaker_id = &"rodriguez"
+text_es = "Lo siento, de verdad. Las cifras son las cifras. Pa'trás, pa'l cayo de antes. Y den gracias que no es pa' Mariel."
+text_en = "I'm sorry, really. The numbers are the numbers. Back you go, to the cayo before. And be thankful it's not Mariel."
+emotion = 2
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_q1dp0")])
+
+[sub_resource type="Resource" id="Resource_s2ays"]
+script = ExtResource("6_ofart")
+id = &"captura_return_acta"
+speaker_id = &"rodriguez"
+text_es = "Se procede a la devolución al punto de partida. Se decomisan los medios de ignición."
+text_en = "The return to the point of departure is carried out. The means of ignition are confiscated."
+
+[sub_resource type="Resource" id="Resource_f75kx"]
+script = ExtResource("7_ove2u")
+kind = 13
+ref_id = &"almendron_hundido"
+
+[sub_resource type="Resource" id="Resource_bts8o"]
+script = ExtResource("7_ove2u")
+kind = 13
+ref_id = &"captura_previa"
+
+[sub_resource type="Resource" id="Resource_3eaqt"]
+script = ExtResource("7_ove2u")
+kind = 10
+target = 2
+capability = 19
+
+[sub_resource type="Resource" id="Resource_5ja3a"]
+script = ExtResource("7_ove2u")
+kind = 38
+
+[sub_resource type="Resource" id="Resource_o22tp"]
+script = ExtResource("2_tfpqk")
+state = &"outcome"
+conditions = Array[ExtResource("4_gvtwb")]([SubResource("Resource_y36f4")])
+priority = 1
+lines = Array[ExtResource("6_ofart")]([SubResource("Resource_nafec"), SubResource("Resource_t70ey"), SubResource("Resource_0awxu"), SubResource("Resource_kkteq"), SubResource("Resource_ih14s"), SubResource("Resource_s2ays")])
+on_enter_effects = Array[ExtResource("7_ove2u")]([SubResource("Resource_f75kx"), SubResource("Resource_bts8o"), SubResource("Resource_3eaqt"), SubResource("Resource_5ja3a")])
+
+[sub_resource type="Resource" id="Resource_req8o"]
+script = ExtResource("2_tfpqk")
+state = &"outcome"
+lines = Array[ExtResource("6_ofart")]([SubResource("Resource_kkteq"), SubResource("Resource_ih14s"), SubResource("Resource_s2ays")])
+on_enter_effects = Array[ExtResource("7_ove2u")]([SubResource("Resource_bts8o"), SubResource("Resource_3eaqt"), SubResource("Resource_5ja3a")])
+
+[resource]
+script = ExtResource("1_flm6x")
+kind = 1
+npc_id = &"rodriguez"
+states = Array[ExtResource("2_tfpqk")]([SubResource("Resource_87rpk"), SubResource("Resource_ff3jm"), SubResource("Resource_fw2k8"), SubResource("Resource_1hwbd"), SubResource("Resource_b0u37"), SubResource("Resource_hiunf"), SubResource("Resource_45kvm"), SubResource("Resource_5oyhc"), SubResource("Resource_b4yn8"), SubResource("Resource_o22tp"), SubResource("Resource_req8o")])
+id = &"beat_la_captura"
