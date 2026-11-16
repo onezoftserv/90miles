@@ -137,9 +137,13 @@ Ideas and structure only, never code, data or text.
 Accepted on 2026-11-14 (all recommended): Q6 (a), the ripple ring. Q7 (a), the shark just south of the raft, is overtaken by crossing-gameplay.
 
 **New question for the owner (via the coordinator), recommended first:**
-- **Q-S1. Where the shark shows at the raft.** On 2026-11-14 Q7 (a) put it just south of the raft, drawn in front of the riders. crossing-gameplay's later approved Q4 (a) has the fin circle 1 tile off the east or west side its pass names, with a shoo hold on it.
+- **QS1. Where the shark shows at the raft.** On 2026-11-14 Q7 (a) put it just south of the raft, drawn in front of the riders. crossing-gameplay's later approved Q4 (a) has the fin circle 1 tile off the east or west side its pass names, with a shoo hold on it.
   - (a) *Recommended:* crossing-gameplay's side wins. This change only guarantees the fin is never drawn over an intact deck (D3).
   - (b) South at the strike only: a crossing delta in crossing-gameplay that moves the shark south of the deck when it strikes, keeping the side for the tell.
+
+- **QL1. How the lying pose is made.** The design canvas (artboard A20) showed a hand-drawn, foreshortened lying body with arms. D8 makes it with a pose rule instead, so every look part follows with no hand pixels.
+  - (a) *Recommended:* the pose rule (D8), with the face upright. If the windowed capture (task 4.3) still reads as a turned standing frame, the build stops and asks again.
+  - (b) A hand-drawn lying cell as on the canvas. This needs hand pixels for each of the 11 look parts and for every future part.
 
 **Seam for crossing-gameplay (not an owner question):** its strike placement "beside the hit deck" must leave the fin's drawn box clear of the deck: 1 tile off the hit side's edge, not `deck_center() + SHARK_OFFSET_PX`.
 
