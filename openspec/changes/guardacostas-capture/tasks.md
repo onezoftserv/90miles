@@ -187,7 +187,7 @@ How the tests are written:
 
 ## 9. The scene
 
-- [ ] 9.1 Write `game/tests/unit/test_capture_scene.gd` and verify it fails. Using solo play, it checks:
+- [x] 9.1 Write `game/tests/unit/test_capture_scene.gd` and verify it fails. Using solo play, it checks:
   - the singular lines;
   - the second-capture opening after a restart;
   - the formal act;
@@ -197,8 +197,11 @@ How the tests are written:
   - the "Solo capture fails" and "Solo Médico talks their way out" scenarios with the fixture background;
   - every player out of play during the scene;
   - a downed player taken along standing at 30 health after it.
-- [ ] 9.2 Implement `CaptureScene` and `game/scenes/ui/scene_panel.gd` (design.md §9). Verify the test passes, and verify by hand in a 300-frame solo run that the panel's text fits at 640×360.
-- [ ] 9.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: it failed to parse on the missing `ScenePanel`, then passed (12 tests). The downed teammate taken along needs two players, so it is in `test_capture_net.gd`.
+- [x] 9.2 Implement `CaptureScene` and `game/scenes/ui/scene_panel.gd` (design.md §9). Verify the test passes, and verify by hand in a 300-frame solo run that the panel's text fits at 640×360.
+  - Done. In the 300-frame solo run (`tests/manual/capture_la_captura.tscn`, windowed), the card first stayed one line tall while the text wrapped below it. The card now measures the wrapped text, the re-run shows the longest line inside it, and a test checks every line's height against the card and the card against 640×360.
+- [x] 9.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 266 scripts, 2428/2428. The orphans rose by 8: the HUD made its scene panel before `bind`, so the unbound HUDs in `test_patrol_cues.gd` and `test_run_hud.gd` leaked it. The panel is now made in `bind`, and `test_run_hud.gd` reports none.
 
 ## 10. Network
 
