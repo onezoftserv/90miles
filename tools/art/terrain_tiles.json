@@ -76,7 +76,8 @@
     "white": "#ffffff",
     "colour": "#ffffff",
     "fade": {"from": 3, "colour": "#8fe0f0"},
-    "corners": {"keep": 2, "colour": "#8fe0f0"}
+    "corners": {"keep": 2, "colour": "#8fe0f0"},
+    "still": {"colour": "#8fe0f0"}
   },
   "shade": {
     "shape": "sand",

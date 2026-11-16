@@ -65,14 +65,14 @@
 
 ## 4. C13: still water is still (TR13)
 
-- [ ] 4.1 In `test_shoreline.gd`, write these tests and see them fail:
+- [x] 4.1 In `test_shoreline.gd`, write these tests and see them fail:
   - `ShoreRule.still_water` finds a pond with no deep cell on a fixture, and not a bay joined to deep;
   - a shore cell with all its water neighbours in the pond takes source 1, and a cell touching both takes source 0;
   - the shore cell counts of both islands are unchanged.
   Add the 1-player test: on the coast cay built for one offline player, find the lagoon from the layout (the brackish body with no deep cell); every rim cell takes source 1 and every open-sea shore cell source 0.
-- [ ] 4.2 In `tools/art/test_terrain.py`, write the still-foam fixture tests: one tile per mask, all frames identical, a 1 px line on the first water step, no white. Add the still step to `terrain.py` and the recipe, building `sea/foam_still.png`. Add it as source 1 of `sea/shore_tiles.tres`. Verify with a byte diff that `foam.png` is unchanged.
-- [ ] 4.3 Implement `ShoreRule.still_water` and the source pick (design D2), and use them in `TerrainView`. Verify that `test_terrain_tile_sets.gd` checks both sources (`test_every_source_has_a_tile_exactly_where_its_sheet_has_art`, `test_the_foam_source_has_no_texture_padding`) and that the phase tests pass.
-- [ ] 4.4 Windowed 1-player capture of the cay's lagoon, compared with `before/cay_day_lagoon_crop4.png`.
+- [x] 4.2 In `tools/art/test_terrain.py`, write the still-foam fixture tests: one tile per mask, all frames identical, a 1 px line on the first water step, no white. Add the still step to `terrain.py` and the recipe, building `sea/foam_still.png`. Add it as source 1 of `sea/shore_tiles.tres`. Verify with a byte diff that `foam.png` is unchanged.
+- [x] 4.3 Implement `ShoreRule.still_water` and the source pick (design D2), and use them in `TerrainView`. Verify that `test_terrain_tile_sets.gd` checks both sources (`test_every_source_has_a_tile_exactly_where_its_sheet_has_art`, `test_the_foam_source_has_no_texture_padding`) and that the phase tests pass.
+- [x] 4.4 Windowed 1-player capture of the cay's lagoon, compared with `before/cay_day_lagoon_crop4.png`.
 
 ## 5. C14: the raft on the sand (TR15)
 

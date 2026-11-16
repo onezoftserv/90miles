@@ -372,10 +372,11 @@ func test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule() -> void:
 			assert_eq(wrong, 0, "%s %s: every cell is TerrainArt's tile" % [layout.id, layer])
 		var shore: Dictionary = _cells(island, &"Shore")
 		var foam_cells: Array[Vector2i] = ShoreRule.shore_cells(terrain, pools)
+		var still: Dictionary[Vector2i, bool] = ShoreRule.still_water(terrain, pools)
 		assert_eq(shore.size(), foam_cells.size(), "%s: one foam tile per shore cell" % layout.id)
 		var wrong_foam: int = 0
 		for cell: Vector2i in foam_cells:
-			if shore.get(cell, []) != _as_list(ShoreRule.foam_tile(cell, terrain, pools)):
+			if shore.get(cell, []) != _as_list(ShoreRule.foam_tile(cell, terrain, pools, still)):
 				wrong_foam += 1
 		assert_eq(wrong_foam, 0, "%s: every shore cell has its foam piece" % layout.id)
 		var size: Vector2i = island.built.size

@@ -1107,5 +1107,42 @@ class BuildTests(unittest.TestCase):
             self.assertEqual(sum(1 for alpha in overlay.crop(0, 0, 16, 16).pixels[3::4] if alpha), 256 if hand else 0)
 
 
+class StillFoamTests(unittest.TestCase):
+    """art-terrain-polish D2: the still piece of a lagoon's rim."""
+
+    def shapes(self):
+        sets = png.blank(64, 80)
+        sets.paste(filled(SAND, rows=range(0, 12)), 3 * 16, 0)  # mask 3: land north, sea south
+        sets.paste(filled(SAND), 3 * 16, 3 * 16)  # mask 15: whole
+        return sets
+
+    def test_the_still_piece_is_one_line_on_the_first_water_step_alike_in_every_frame(self):
+        sheet = terrain.build_foam_still({"colour": "#8fe0f0"}, self.shapes(), 8)
+        self.assertEqual((sheet.width, sheet.height), (8 * 16, 16 * 16))
+        piece = sheet.crop(0, 3 * 16, 16, 16)
+        self.assertEqual(opaque_rows(piece), [12], "one line, on the first water row")
+        self.assertEqual(piece.colours(), {png.parse_colour("#8fe0f0")}, "no white")
+        for frame in range(1, 8):
+            self.assertEqual(sheet.crop(frame * 16, 3 * 16, 16, 16).pixels, piece.pixels, f"frame {frame} is frame 0")
+        self.assertTrue(sheet.crop(0, 15 * 16, 8 * 16, 16).is_empty(), "a whole tile has no shore")
+
+    def test_still_is_a_table_with_a_colour(self):
+        with self.assertRaisesRegex(terrain.TerrainError, r'"still" is a table'):
+            terrain.build_foam_still("#8fe0f0", self.shapes(), 8)
+        with self.assertRaisesRegex(terrain.TerrainError, r"colour"):
+            terrain.build_foam_still({}, self.shapes(), 8)
+
+    def test_the_tracked_still_foam_is_the_foam_sheets_size_and_alike_in_every_frame(self):
+        made = terrain.DEFAULT_OUT / "sea"
+        still = png.read_png(made / "foam_still.png")
+        foam = png.read_png(made / "foam.png")
+        self.assertEqual((still.width, still.height), (foam.width, foam.height))
+        for mask in range(16):
+            first = still.crop(0, mask * 16, 16, 16)
+            for frame in range(1, 8):
+                self.assertEqual(still.crop(frame * 16, mask * 16, 16, 16).pixels, first.pixels, f"mask {mask} frame {frame}")
+        self.assertNotIn((0xFF, 0xFF, 0xFF), still.colours(), "no white")
+
+
 if __name__ == "__main__":
     unittest.main()
