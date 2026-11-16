@@ -66,6 +66,14 @@ text = "Filtro de píxeles"
 unique_name_in_owner = true
 layout_mode = 2
 
+[node name="ReduceFlashes" type="CheckBox" parent="Panel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.23, 0.16, 0.09, 1)
+theme_override_colors/font_hover_color = Color(0.23, 0.16, 0.09, 1)
+theme_override_colors/font_pressed_color = Color(0.23, 0.16, 0.09, 1)
+text = "Reducir destellos"
+
 [node name="Back" type="Button" parent="Panel/Rows"]
 unique_name_in_owner = true
 layout_mode = 2

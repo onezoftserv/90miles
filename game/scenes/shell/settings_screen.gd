@@ -1,11 +1,13 @@
 class_name SettingsScreen
 extends Control
-## ui-shell "Settings": the player name, fullscreen, the scale and the pixel filter, saved as soon
-## as they change.
+## ui-shell "Settings": the player name, fullscreen, the scale, the pixel filter and "Reducir
+## destellos", saved as soon as they change.
 
 signal back_requested
 ## Fullscreen, the scale or the pixel filter changed: the shell re-applies the display.
 signal display_changed
+## "Reducir destellos" changed: the shell hands it to every hit and change cue.
+signal flashes_changed
 
 const SCALE_LABELS: Array[String] = ["Automática", "1×", "2×", "3×", "4×"]
 
@@ -15,6 +17,7 @@ var settings: GameSettings = GameSettings.new()
 @onready var fullscreen_box: CheckBox = %Fullscreen
 @onready var scale_picker: OptionButton = %Scale
 @onready var filter_picker: OptionButton = %PixelFilter
+@onready var reduce_flashes_box: CheckBox = %ReduceFlashes
 @onready var back_button: Button = %Back
 
 
@@ -29,6 +32,7 @@ func _ready() -> void:
 	fullscreen_box.toggled.connect(_on_fullscreen)
 	scale_picker.item_selected.connect(_on_scale)
 	filter_picker.item_selected.connect(_on_filter)
+	reduce_flashes_box.toggled.connect(_on_reduce_flashes)
 	back_button.pressed.connect(_back)
 	name_field.grab_focus()
 
@@ -40,6 +44,7 @@ func bind(source: GameSettings) -> void:
 	fullscreen_box.set_pressed_no_signal(settings.fullscreen)
 	scale_picker.select(settings.ui_scale)
 	filter_picker.select(settings.pixel_filter)
+	reduce_flashes_box.set_pressed_no_signal(settings.reduce_flashes)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -76,3 +81,9 @@ func _on_filter(index: int) -> void:
 	settings.pixel_filter = index as PixelFilter.Mode
 	settings.save()
 	display_changed.emit()
+
+
+func _on_reduce_flashes(on: bool) -> void:
+	settings.reduce_flashes = on
+	settings.save()
+	flashes_changed.emit()

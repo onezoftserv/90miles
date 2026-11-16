@@ -134,6 +134,12 @@ Voice acting, cloned voices, runtime TTS, challenges, seeded and daily runs, and
   - a soft deep-water edge: a blurred, clamped mask and a static ±4 px warp, with every water cell's centre kept on its step (C4).
 
   Built test-first on `claude/art-wave-1-d6d1b2`. Next waves, each its own change: darker shallows (C7), rock, palms and scrub (C9 to C12), sprites, the HUD window kit below, night light and squall rain. The coast cay's rectangles are content (C6).
+- [x] `damage-feedback` (OpenSpec change written 2026-11-14, built test-first 2026-11-15; owner playtest: "it's hard to notice when you are getting damage"): every peer tells hits from drains using the health it already has, and nothing is sent. A hit blinks the body on every screen. On the screen whose HUD shows that body, it also flashes the edges red, scaled to the hit, and leaves a pale red chunk on the Salud bar that drains away. Drains show only the chunk and a dim glow. Widened the same day by the owner ("it's hard to know what happens when you use coconuts or sabila") to cover item uses:
+  - "+15 Sed" and "Sin sangrado" float over the body, and the changed bar lights its gained slice;
+  - an effect line above the selected item is built from its effect data;
+  - a use that would change nothing is refused with a Cuban reason and spends nothing.
+
+  Also adds a "Reducir destellos" setting and an AudioManager hook. The owner chose A for Q1, Q2 and Q4–Q7, and no hit numbers for Q3. Optional follow-ups from the research pass are listed in its design.md D1: a forecast segment, low-Salud threshold cues, a heat haze, dimmed slots, meter icons on floats.
 - [ ] `hud-window-kit` (OpenSpec change written 2026-11-14, wave 4 of the art and HUD design pass; owner: Q8 a, Q9 a, Q10 a, Q11 a, Q16 a). One GBA window kit in the master palette, built by `tools/art/ui.py`:
   - dark rounded HUD windows at 94%, cream paper for notes, paper panels and palette buttons in menus, Kenney's UI files gone;
   - meters as a label column with thin pre-shaded bars, Salud first, in a 132 px window clear of the secret cay's note;

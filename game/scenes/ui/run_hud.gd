@@ -76,6 +76,9 @@ var _text: HudText = HudText.load_default()
 @onready var note_label: NoteLabel = %NoteLabel
 @onready var marks: BodyMarks = %Marks
 @onready var patrol_horizon: PatrolHorizon = %PatrolHorizon
+## damage-feedback: the change floats over every player (survival-meters "Change floats over the
+## body"), made here beside the marks.
+var floats: ChangeFloats = ChangeFloats.new()
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
 @onready var watching_panel: PanelContainer = %WatchingPanel
@@ -121,6 +124,8 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	session.player_rebound.connect(_on_player_rebound)
 	marks.bind(session)
 	patrol_horizon.bind(session, local_peer_id)
+	floats.locale = CoopSession.locale_of(session)
+	floats.bind(session)
 	for peer_id: int in session.peer_ids():
 		_follow(peer_id)
 	refresh()
@@ -145,6 +150,10 @@ func _ready() -> void:
 	sign_note.closed.connect(func() -> void: list_open = false)
 	prompt.sign_pressed.connect(sign_note.open)
 	marks.to_hud = world_to_hud
+	floats.name = &"Floats"
+	add_child(floats)
+	move_child(floats, marks.get_index() + 1)
+	floats.to_hud = world_to_hud
 
 
 func _process(_delta: float) -> void:
@@ -199,6 +208,7 @@ func set_screen_shown(value: bool) -> void:
 	sign_note.set_screen_shown(value)
 	marks.screen_shown = value
 	patrol_horizon.screen_shown = value
+	floats.screen_shown = value
 	refresh_watching()
 
 

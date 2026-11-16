@@ -2,9 +2,18 @@ class_name EffectApplier
 extends RefCounted
 ## Applies an EffectData to players. Interpreted: METER_ADD, CURE_STATUS, REVIVE, GIVE_ITEM, TAKE_ITEM,
 ## START_ROUTE, SET_FLAG and CLEAR_FLAG (the run flags in the session's RunRecord; nothing outside a
-## session); any other kind is skipped with one warning. Anything that restores hunger is a meal
+## session), NOISE and SMOKE (the world event bus); any other kind is skipped with one warning. Anything that restores hunger is a meal
 ## (survival-meters). An effect with delay_s waits in the subject's meters for that many seconds of
 ## their own time (frozen while they are out of play), then applies to them.
+
+## The kinds apply_now interprets, as its match lists them; any other is skipped with one warning. The
+## effect line (EffectLine.HANDLED) knows exactly these, and a test checks both lists against the
+## match in this file, so a kind added there without being listed here fails it.
+const INTERPRETED: Array[EffectData.Kind] = [
+	EffectData.Kind.METER_ADD, EffectData.Kind.CURE_STATUS, EffectData.Kind.REVIVE,
+	EffectData.Kind.GIVE_ITEM, EffectData.Kind.TAKE_ITEM, EffectData.Kind.START_ROUTE,
+	EffectData.Kind.SET_FLAG, EffectData.Kind.CLEAR_FLAG, EffectData.Kind.NOISE, EffectData.Kind.SMOKE,
+]
 
 static var _warned: Dictionary[int, bool] = {}
 
@@ -43,9 +52,27 @@ static func apply_now(effect: EffectData, actor: PlayerBody, target: PlayerBody)
 		EffectData.Kind.SMOKE:
 			_raise_smoke(actor)
 		_:
-			if not _warned.has(effect.kind):
-				_warned[effect.kind] = true
-				push_warning("EffectApplier: kind %s is not built yet, skipped" % EffectData.Kind.keys()[effect.kind])
+			_warn(effect.kind)
+
+
+## Who `effect` lands on: the target for a USE_TARGET effect with one, else the actor.
+static func subject_of(effect: EffectData, actor: PlayerBody, target: PlayerBody) -> PlayerBody:
+	return _subject(effect, actor, target)
+
+
+## A METER_ADD on `meters`: a hunger gain at once is a meal (eat, with its energy); anything else
+## is added at once or spread over its duration. UseOutcome's dry runs go through this too.
+static func add_meter_to(effect: EffectData, meters: SurvivalMeters) -> void:
+	if effect.meter == DataEnums.Meter.HUNGER and effect.amount > 0.0 and effect.duration_s <= 0.0:
+		meters.eat(effect.amount)
+	else:
+		meters.add_over_time(effect.meter, effect.amount, effect.duration_s)
+
+
+static func _warn(kind: EffectData.Kind) -> void:
+	if not _warned.has(kind):
+		_warned[kind] = true
+		push_warning("EffectApplier: kind %s is not built yet, skipped" % EffectData.Kind.keys()[kind])
 
 
 # NOISE and SMOKE go to the session's world event bus (guardacostas-stealth), at the actor. The bus
@@ -85,7 +112,4 @@ static func _set_flag(effect: EffectData, actor: PlayerBody, on: bool) -> void:
 
 
 static func _add_meter(effect: EffectData, subject: PlayerBody) -> void:
-	if effect.meter == DataEnums.Meter.HUNGER and effect.amount > 0.0 and effect.duration_s <= 0.0:
-		subject.meters.eat(effect.amount)
-	else:
-		subject.meters.add_over_time(effect.meter, effect.amount, effect.duration_s)
+	add_meter_to(effect, subject.meters)
