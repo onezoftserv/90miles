@@ -31,20 +31,20 @@ Every art rebuild runs `python -I tools/art/terrain.py --packs C:/Users/liann/sr
 
 ## 4. C3: rounded coast corners, an even lip, lighter corner foam (TR2, TR5, TR6)
 
-- [ ] 4.1 In `tools/art/test_terrain.py`, write the rim and foam-corner tests on fixtures and see them fail:
+- [x] 4.1 In `tools/art/test_terrain.py`, write the rim and foam-corner tests on fixtures and see them fail:
   - the rim of a 45° fixture is exactly the pixels with a 4-neighbour off the shape;
   - with `"corners"` set, white on sand pixels that face water two ways is only at steps 0 and -1;
   - the outer diagonal of a convex fixture fades;
   - the step-1 ring stays white;
   - a straight fixture is unchanged.
-- [ ] 4.2 Make `rimmed` and the inset-0 rim of `shore_cut` 4-adjacent (design D4), and add the foam `"corners"` key (design D5) to `terrain.py` and the recipe.
-- [ ] 4.3 Regenerate `tools/art/fixes/terrain/sand.png` (design D3):
+- [x] 4.2 Make `rimmed` and the inset-0 rim of `shore_cut` 4-adjacent (design D4), and add the foam `"corners"` key (design D5) to `terrain.py` and the recipe.
+- [x] 4.3 Regenerate `tools/art/fixes/terrain/sand.png` (design D3):
   - arcs on masks 1, 2, 4 and 8;
   - fillets on 7, 11, 13 and 14, and two each on saddles 6 and 9;
   - the even 1 px lip on every mask but 0;
   - row 4 kept.
   Rebuild. Verify with a byte diff that the straight foam rows 3, 5, 10 and 12 are unchanged and that every derived sheet keeps its size.
-- [ ] 4.4 In `test_terrain_art.gd`, pin the result and see these fail on today's sheets:
+- [x] 4.4 In `test_terrain_art.gd`, pin the result and see these fail on today's sheets:
   - no corner foam frame has an 8×8 patch more than half white;
   - the sand tiles of the four straight edges and the corners end in the one #d9a066 lip with no #c08a5a band;
   - convex tiles keep their land corner's quarter arc.

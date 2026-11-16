@@ -80,7 +80,8 @@ Every shore cell, a land cell whose sand tile has at least one water corner, SHA
 #### Scenario: Corner foam is no heavier than a straight run
 - **GIVEN** the foam of every corner and diagonal tile, in every frame
 - **WHEN** the white pixels in each 8×8 patch of a frame are counted
-- **THEN** no patch is more than half white, the outer diagonal of an outer corner fades out of white, and the straight edges' foam is unchanged
+- **THEN** no patch is whiter than the whitest patch of a straight edge's foam, an inner corner's patches are at most half white and an outer corner's about half
+- **AND** where the shore turns the foam fades from its second step out, and the straight edges' foam is unchanged
 
 ### Requirement: Seeded cosmetic variants
 Decorative variants (sand speckles, shell tufts, foam starting frames) SHALL be chosen from a hash of the island layout's id and the cell, never from a random generator the simulation uses, so every peer and every rebuild of the same layout shows the same variants and drawing never shifts a simulation roll.

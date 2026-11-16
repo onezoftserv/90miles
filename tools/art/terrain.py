@@ -26,7 +26,10 @@ game/assets/art/:
   colours per depth.
 - sea/foam.png: frame f of the shoreline strip wrapped round the sand tile of mask m, at column
   f, row m. A pixel n steps out from the sand edge takes row land_rows - 1 + n of the frame, so
-  the foam starts on the pixel after the sand ends.
+  the foam starts on the pixel after the sand ends. With "corners" the foam is lighter where the
+  shore turns, on every mask but the four straight edges (art-coast-pass D5): the wash keeps
+  only the last "keep" sand steps there, and the water from its second step takes "colour".
+  A cut plain tile's rim marks only pixels 4-adjacent to the sea, one pixel on a diagonal.
 - decals/shade.png, a 64x80 corner set of soft shadow in the sand set's outline, laid out like
   a set (a corner counts when the four cells round it are shaded), in the darkest colour at
   partial alpha and thinner on its edge pixels; row 4 holds the hand-drawn spot shades (a foot
@@ -74,6 +77,9 @@ VARIANT_ROW = MASKS // SET_COLUMNS
 FULL = MASKS - 1
 PLAIN_VARIANTS = 4
 NW, NE, SW, SE = 1, 2, 4, 8
+## The four straight edges: two land corners on one side. Their shore never turns, so the foam's
+## corner damping leaves them as they are (a wavy pack edge is not a corner).
+STRAIGHT = (NW | NE, SW | SE, NW | SW, NE | SE)
 CLEAR = (0, 0, 0, 0)
 
 
@@ -265,33 +271,75 @@ def shore_field(sand):
     return [_shore_point(x, y, land, False) for x, y in water] + [_shore_point(x, y, water, True) for x, y in land]
 
 
-def foam_piece(field, frame, land_rows, white, tint, fade=None):
+def turning(shape):
+    """The pixels of a sand tile where its shore turns (art-coast-pass D5): those whose nearest
+    pixels of the other kind (water for sand, sand for water, inside the tile) all lie off their
+    row and off their column. A straight run of shore has none; the sand and water round a
+    rounded corner or a bite do."""
+    cells = [(x, y) for y in range(shape.height) for x in range(shape.width)]
+    sides = {True: [c for c in cells if shape.alpha(*c)], False: [c for c in cells if not shape.alpha(*c)]}
+    if not sides[True] or not sides[False]:
+        return set()
+    found = set()
+    for x, y in cells:
+        others = sides[not shape.alpha(x, y)]
+        nearest = min((ox - x) ** 2 + (oy - y) ** 2 for ox, oy in others)
+        if all(ox != x and oy != y for ox, oy in others if (ox - x) ** 2 + (oy - y) ** 2 == nearest):
+            found.add((x, y))
+    return found
+
+
+def foam_piece(field, frame, land_rows, white, tint, fade=None, corners=None):
     """One frame of a straight shoreline strip wrapped round a sand tile's edge; with `fade`
-    (steps, colour) the foam takes that colour from that many steps out."""
+    (steps, colour) the foam takes that colour from that many steps out. With `corners` (the
+    pixels where the shore turns, how many sand steps keep their wash, and a colour),
+    those pixels are lighter (art-coast-pass D5): on the sand the wash stays only on the last
+    `keep` steps, and on the water the foam takes the colour from its second step out, so a corner
+    is no whiter than a straight run; the first water step is never touched."""
     piece = png.blank(TILE, TILE)
+    turning, keep, corner_colour = corners if corners else (set(), 0, None)
     for x, y, steps, along in field:
         row = land_rows - 1 + steps
         if not 0 <= row < frame.height:
             continue
         pixel = frame.get(along % frame.width, row)
         if pixel[3] and pixel[:3] == white:
-            piece.set(x, y, (fade[1] if fade and steps >= fade[0] else tint) + (255,))
+            colour = fade[1] if fade and steps >= fade[0] else tint
+            if (x, y) in turning:
+                if steps <= -keep:
+                    continue
+                if steps >= 2:
+                    colour = corner_colour
+            piece.set(x, y, colour + (255,))
     return piece
 
 
-def rimmed(tile, field, rim):
-    """The tile with the rim colour on its pixels that touch the cut edge of a shape's shore field."""
+def edge_pixels(tile, shape):
+    """The drawn pixels of `tile` with a 4-neighbour inside the tile that `shape` leaves clear: one
+    pixel per row and column on a diagonal, never a two-pixel stair (art-coast-pass D4)."""
+    found = set()
+    for y in range(tile.height):
+        for x in range(tile.width):
+            if tile.alpha(x, y) and any(0 <= x + dx < shape.width and 0 <= y + dy < shape.height and not shape.alpha(x + dx, y + dy)
+                                        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                found.add((x, y))
+    return found
+
+
+def rimmed(tile, shape, rim):
+    """The tile with the rim colour on its pixels 4-adjacent to the pixels `shape` leaves clear."""
     out = tile.copy()
-    for x, y, steps, _along in field:
-        if steps == 0 and out.alpha(x, y):
-            out.set(x, y, rim + (255,))
+    for x, y in edge_pixels(tile, shape):
+        out.set(x, y, rim + (255,))
     return out
 
 
 def shore_cut(tile, shape, field, inset=0, rim=None):
     """The tile kept only where `shape` is drawn and at least `inset` pixels inside its edge
-    (`field` is the shape's shore field), with the rim colour on the kept pixels on that cut."""
+    (`field` is the shape's shore field), with the rim colour on the kept pixels on that cut: at
+    inset 0 those 4-adjacent to the shape's clear pixels, deeper in those `inset` steps in."""
     depth = {(x, y): -steps for x, y, steps, _along in field}
+    edge = edge_pixels(tile, shape) if rim is not None and inset == 0 else set()
     out = png.blank(tile.width, tile.height)
     for y in range(tile.height):
         for x in range(tile.width):
@@ -300,7 +348,8 @@ def shore_cut(tile, shape, field, inset=0, rim=None):
             inside = depth.get((x, y), TILE)
             if inside < inset:
                 continue
-            out.set(x, y, rim + (255,) if rim is not None and inside == inset else tile.get(x, y))
+            on_rim = rim is not None and ((x, y) in edge if inset == 0 else inside == inset)
+            out.set(x, y, rim + (255,) if on_rim else tile.get(x, y))
     return out
 
 
@@ -563,7 +612,6 @@ def build_plain(spec, sources, sets, fixes):
         raise TerrainError(f"plain: \"rows\" is a list of at least one row, not {rows!r}")
     shape = _shape(spec, sets, "plain")
     edges = [sheet_tile(shape, mask) for mask in range(MASKS)]
-    fields = [shore_field(edge) for edge in edges]
     wholes = []
     for row, entry in enumerate(rows):
         if not isinstance(entry, dict):
@@ -587,7 +635,7 @@ def build_plain(spec, sources, sets, fixes):
         for mask in range(FULL):
             tile = masked(full, edges[mask])
             if "rim" in entry:
-                tile = rimmed(tile, fields[mask], colour(entry["rim"], f"plain {entry.get('id', row)}"))
+                tile = rimmed(tile, edges[mask], colour(entry["rim"], f"plain {entry.get('id', row)}"))
             sheet.paste(tile, mask * TILE, row * TILE)
     return sheet
 
@@ -631,12 +679,21 @@ def build_foam(spec, sources, sets):
         if not isinstance(spec["fade"], dict):
             raise TerrainError(f"foam: \"fade\" is a table, not {spec['fade']!r}")
         fade = (whole(need(spec["fade"], "from", "foam fade"), "foam fade", "from", low=0), colour(need(spec["fade"], "colour", "foam fade"), "foam"))
+    corners = None
+    if "corners" in spec:
+        table = spec["corners"]
+        if not isinstance(table, dict):
+            raise TerrainError(f"foam: \"corners\" is a table, not {table!r}")
+        corners = (whole(need(table, "keep", "foam corners"), "foam corners", "keep", low=1, high=HALF),
+                   colour(need(table, "colour", "foam corners"), "foam corners"))
     shape = _shape(spec, sets, "foam")
     sheet = png.blank(count * TILE, MASKS * TILE)
     for mask in range(MASKS):
-        field = shore_field(sheet_tile(shape, mask))
+        edge = sheet_tile(shape, mask)
+        field = shore_field(edge)
+        bends = (turning(edge),) + corners if corners and mask not in STRAIGHT else None
         for index, frame in enumerate(frames):
-            piece = foam_piece(field, frame, land_rows, white, tint, fade)
+            piece = foam_piece(field, frame, land_rows, white, tint, fade, bends)
             sheet.paste(piece, index * TILE, mask * TILE)
     return sheet
 

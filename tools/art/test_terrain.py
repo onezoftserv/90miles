@@ -198,6 +198,40 @@ class FoamTests(unittest.TestCase):
             for x, y in first_water:
                 self.assertEqual(piece.get(x, y), WHITE + (255,), name)
 
+    def test_a_straight_shore_never_turns_and_a_square_corner_turns_only_on_its_outer_diagonal(self):
+        self.assertEqual(terrain.turning(filled(SAND, rows=range(0, 12))), set())
+        self.assertEqual(terrain.turning(filled(SAND)), set(), "no shore at all")
+        corner = self.shapes()["outer corner"]  # land where x < 8 and y < 8
+        bends = terrain.turning(corner)
+        self.assertIn((8, 8), bends)
+        self.assertIn((10, 10), bends)
+        self.assertNotIn((7, 7), bends, "the sand's nearest water is straight beside it")
+        self.assertNotIn((12, 3), bends, "beside a straight run of the edge")
+
+    def test_with_corners_the_foam_is_lighter_where_the_shore_turns_but_keeps_its_first_water_step(self):
+        frame = filled(WHITE, rows=range(2, 10))  # white from three steps up the sand to four out
+        islet = self.shapes()["islet"]
+        field = terrain.shore_field(islet)
+        bends = terrain.turning(islet)
+        plain = terrain.foam_piece(field, frame, 6, WHITE, WHITE)
+        lighter = terrain.foam_piece(field, frame, 6, WHITE, WHITE, corners=(bends, 2, ROCK))
+        trimmed = faded = 0
+        for x, y, steps, _along in field:
+            if steps == 1:
+                self.assertEqual(lighter.get(x, y), WHITE + (255,), f"({x}, {y}): the first water step stays white")
+            elif (x, y) in bends and steps <= -2:
+                self.assertEqual(lighter.alpha(x, y), 0, f"({x}, {y}): the wash keeps only the last two sand steps")
+                trimmed += plain.alpha(x, y) > 0
+            elif (x, y) in bends and steps >= 2 and plain.alpha(x, y):
+                self.assertEqual(lighter.get(x, y)[:3], ROCK, f"({x}, {y}): the outer foam fades")
+                faded += 1
+            elif (x, y) not in bends:
+                self.assertEqual(lighter.get(x, y), plain.get(x, y), f"({x}, {y}): untouched where the shore runs straight")
+        self.assertGreater(trimmed, 0, "the fixture has wash to trim")
+        self.assertGreater(faded, 0, "and outer foam to fade")
+        straight = terrain.shore_field(filled(SAND, rows=range(0, 12)))
+        self.assertEqual(terrain.foam_piece(straight, frame, 6, WHITE, WHITE, corners=(set(), 2, ROCK)), terrain.foam_piece(straight, frame, 6, WHITE, WHITE))
+
     def test_the_fade_colours_the_foam_from_that_distance_on(self):
         frame = self.frame()
         for y in range(7, 10):
@@ -235,6 +269,16 @@ class ShoreCutTests(unittest.TestCase):
         self.assertEqual(opaque_rows(cut), list(range(0, 11)), "the sand's last row shows")
         self.assertEqual({cut.get(x, 10)[:3] for x in range(16)}, {BLACK})
         self.assertEqual({cut.get(x, 9)[:3] for x in range(16)}, {ROCK})
+
+    def test_the_rim_of_a_diagonal_is_one_pixel_per_row_not_a_stair(self):
+        diagonal = land_where(lambda x, y: x + y < 15)
+        line = {(x, 14 - x) for x in range(15)}
+        rimmed = terrain.rimmed(terrain.masked(filled(ROCK), diagonal), diagonal, BLACK)
+        cut = terrain.shore_cut(filled(ROCK), diagonal, terrain.shore_field(diagonal), 0, BLACK)
+        for name, tile in (("rimmed", rimmed), ("shore_cut", cut)):
+            rim = {(x, y) for y in range(16) for x in range(16) if tile.alpha(x, y) and tile.get(x, y)[:3] == BLACK}
+            self.assertEqual(rim, line, f"{name}: the rim is the pixels with a 4-neighbour in the sea")
+            self.assertEqual(tile.get(5, 8)[:3], ROCK, f"{name}: the pixel diagonal to the sea is not rim")
 
     def test_a_shore_cut_never_adds_a_pixel_the_tile_does_not_have(self):
         edge = self.edge()
@@ -513,6 +557,20 @@ class BuildTests(unittest.TestCase):
         with self.assertRaisesRegex(terrain.TerrainError, r"sand shore: \"fit\" needs a stamp set"):
             self.build(recipe)
         self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_the_foams_corners_are_checked_and_leave_a_straight_shore_as_it_was(self):
+        self.build()
+        straight = png.read_png(self.out / "sea" / "foam.png")
+        recipe = self.recipe()
+        recipe["foam"]["corners"] = {"keep": 2, "colour": png.colour_hex(ROCK)}
+        self.build(recipe)
+        self.assertEqual(png.read_png(self.out / "sea" / "foam.png"), straight, "the fixture's sand is straight on every mask")
+        for corners, message in (("x", r"foam: \"corners\" is a table"), ({"colour": "#000000"}, r"foam corners has no \"keep\""),
+                                 ({"keep": 0, "colour": "#000000"}, r"foam corners: \"keep\" is a whole number from 1 to 8"),
+                                 ({"keep": 2, "colour": "black"}, r"foam corners: 'black' is not a #rrggbb colour")):
+            recipe["foam"]["corners"] = corners
+            with self.subTest(corners=corners), self.assertRaisesRegex(terrain.TerrainError, message):
+                self.build(recipe)
 
     def test_a_fits_tuft_is_a_fix_the_recipe_reads(self):
         recipe = self.fit_recipe(tuft="tuft.png")

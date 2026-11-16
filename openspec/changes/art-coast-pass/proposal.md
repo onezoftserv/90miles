@@ -21,7 +21,7 @@ The changes go in this order, smallest first. They are art only: no layout, terr
   - The sand's 3 px south ledge face becomes the same 1 px lip the other sides have (TR6). The alpha of the straight edges does not change.
   - Every sheet derived from the sand follows: plain, plain shore, dune shore, brush shore, foam and shade.
   - The rim of a cut plain tile marks only pixels 4-adjacent to water, so it stays 1 px on a diagonal.
-  - An opt-in foam `"corners"` key keeps white only on the two sand pixels nearest the water where the sand faces water two ways, and fades the outer diagonal of convex corners. The straight foam pieces stay byte for byte.
+  - An opt-in foam `"corners"` key keeps white only on the two sand pixels nearest the water where the shore turns, and fades the foam beyond the first water step there, so a convex corner's outer diagonal fades. The straight foam pieces stay byte for byte.
 - **C4, a soft deep edge (TR3).**
   - The sea's depth mask is blurred with a separable Gaussian (σ 1 cell), still one texel per cell.
   - Each cell's texel is then clamped back to its own side of the cut, so no cell centre changes step.

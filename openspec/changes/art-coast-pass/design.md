@@ -57,9 +57,10 @@ Constraints:
   - an opaque pixel where the target differs;
   - `#ff00ff` where the target is clear and the built pixel is not.
   The existing row-4 hand pixels are kept.
-- **Convex masks 1, 2, 4, 8.** The sand keeps the pixels within radius 11.6 of the land corner's outer point, for example (15.5, 15.5) in pixel-centre coordinates for mask 8. That is the review's measured radius: the arc meets the straight edges where they cross today, and the cell centre stays on land.
-- **Concave masks 7, 11, 13, 14.** A fillet of radius 4.6 round the water corner. Saddles 6 and 9 get two fillets each.
-- **The border.** Each tile's outermost ring keeps its alpha wherever a neighbour's straight edge meets it, so no 1 px jog appears against masks 3, 5, 10 and 12. The corner pixels pinned by `test_each_corner_set_holds_mask_m_at_its_place` stay as they are.
+- **Where the borders are.** The four straight edge tiles cross the cell borders at fixed points: the north edge's sand starts on row 4, the south edge's ends on row 11, the west edge's starts at x 4 and the east edge's ends at x 10. The corner shapes are anchored to those points.
+- **Convex masks 1, 2, 4, 8.** The sand is an ellipse quarter round the land corner's outer point, for example (15.5, 15.5) in pixel-centre coordinates for mask 8. Its semi-axes reach the far edges' border points, which makes them 12 × 12 on today's sand: about the review's measured radius of 11.6 to 12. The cell centre toward the land stays on the sand.
+- **Concave masks 7, 11, 13, 14.** The water corner is an ellipse-quarter bite that reaches the near edges' border points: 4 × 4, a 4 px fillet. Saddles 6 and 9 get two bites each.
+- **The border.** Because both shapes pass through the straight edges' border points, every pair of masks that can sit side by side meets without a jog. Today's sheet has 30 jogging pairs; the new one has none. The four corner pixels pinned by `test_each_corner_set_holds_mask_m_at_its_place` stay as they are.
 - **Colour (TR6).** Inside the new alpha, the fill is the full tile's ripple. The pack's #c08a5a ledge band and the extra #d9a066 above it become fill. Every sand pixel 4-adjacent to clear pixels inside the tile becomes the 1 px #d9a066 lip. The alpha of the straight masks is untouched, so their foam is too.
 - **Rejected:**
   - chamfers (Q1 (b)): a chamfer leaves a tip cell's centre in drawn water and leaves no room for a bush;
@@ -72,14 +73,22 @@ Constraints:
 - On a 45° edge the rim is then one pixel per row and column, not a 2 px stair.
 
 ### D5. Lighter foam corners, opt-in (C3, TR5)
-- **The key.** The foam recipe gains `"corners": {"reach": r, "keep": 2}`.
-- **Facing water two ways.** A pixel faces water two ways when a clear pixel lies within r steps of it along its row and within r along its column, inside the tile.
-- **The damping.**
-  - On such sand pixels, white is kept only at steps 0 and -1. The wash further up becomes clear.
-  - On such water pixels, white is kept at step 1, and from step 2 on it takes the fade colour #8fe0f0. This is the "outer diagonal" of a convex corner.
-- **What it never touches.** It never removes a step-1 water pixel, so the "no gap round a corner" rule holds. It never varies the fade step per mask, which would make new seams. A straight edge has no pixel that faces water two ways, so the straight pieces stay byte for byte.
+- **The key.** The foam recipe gains `"corners": {"keep": 2, "colour": "#8fe0f0"}`.
+- **Where the shore turns.** A pixel turns when every nearest pixel of the other kind (water for a sand pixel, sand for a water pixel, inside the tile) lies off its row and off its column. A straight run has none. Round a convex arc and a concave bite, both the sand and the water turn.
+- **The damping.** On turning pixels:
+  - on the sand, white is kept only on the last two steps (0 and -1); the wash further up becomes clear;
+  - on the water, white is kept on step 1, and from step 2 on it takes #8fe0f0. This fades the outer diagonal of a convex corner and the inside of a bite.
+- **What it never touches.** It never removes a step-1 water pixel, so the "no gap round a corner" rule holds. The fade step of the straight foam never changes.
+- **The four straight masks are skipped.** The pack's west and east edges are wavy, so a few of their pixels have a diagonal nearest pixel. Damping them would change the straight foam and make seams against straight neighbours. A straight edge has no corner by definition, so masks 3, 5, 10 and 12 keep their foam byte for byte.
 - **Why opt-in.** The fixture tests, which pass no key, keep today's foam.
-- **The test.** No 8×8 patch of a corner frame is more than half white. Today's sheet has 41 to 55 of 64.
+- **The test.** In any 8×8 patch of a frame:
+  - no corner frame is whiter than the straight edges' whitest patch (42 of 64);
+  - inner corners and saddles are at most half white;
+  - outer corners have at most 36 of 64 white.
+  Today's sheet has 41 to 55. A whole-tile measure would pin nothing: today's whitest frame is 120 of 256.
+- **Rejected:**
+  - **scanning the pixel's row and column for water within a reach.** It misses the sand round a concave bite, which sees water only diagonally, and from a reach of 3 it already changes the wavy straight edges;
+  - **`keep` 1.** It brings outer corners to 32 but thins the wash to one pixel, which reads as a gap beside the straight runs.
 
 ### D6. A soft, warped deep edge (C4, TR3)
 - **Blur.** A pure `SeaMask.soft_channels(depth_bytes, size)` builds the RG8 bytes, blurs r and g with one separable Gaussian (σ 1 cell, radius 3, clamped at the grid's edge), and stays one texel per cell. The linear filter does the upsampling.
