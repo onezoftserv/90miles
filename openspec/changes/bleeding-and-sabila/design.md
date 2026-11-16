@@ -176,6 +176,7 @@ Refusing a wasted use is not a question here: `damage-feedback` (PR #65) decided
 
 ## Risks / Trade-offs
 
+- **#65's own spec and docs quoted sábila's old words** → Its un-archived `damage-feedback` deltas (inventory-hud "Sábila's line" and "Sábila with nothing to cure, solo"; crafting-inventory "Solo sábila with nothing to cure") and GAME_DESIGN's "Using an item" lines now say "Cura quemadura y sangrado · Salud +5" and "'Tás entero." at full health, so archiving #65 writes no stale text.
 - **#65's own tests read sábila as cures only** → With the heal, the effect line reads "Cura quemadura y sangrado · Salud +5". The wasted-use reason becomes `wasted_meters` Health ("'Tás entero."), because `InventoryStrip.wasted_line` names the first meter gain before any cure. That is the right refusal for a leaf that heals and cures. Only the expected strings in `test_effect_line`, `test_wasted_uses` and `test_damage_feedback_solo` change; no HUD code changes.
 - **Tests that read exact health while a player bleeds** → The rigs never tick meters (D7). Run the whole GUT suite, not only the new tests, to catch any test that ticks a bleeding body.
 - **A player held at 1 health looks stuck** → It is the floor by design. The Salud bar's drain glow (from #65) stops when the drain stops, and the "Sangrando" tag hides at 120 s.

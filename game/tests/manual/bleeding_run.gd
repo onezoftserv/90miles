@@ -7,8 +7,9 @@ extends SceneTree
 ## The host (Yuni) starts the run once the client (Papo) is in the lobby. Then:
 ## 1. A shark's bite on Papo (host meters): 25 and bleeding. Papo's bleeding is shortened to 8 s on
 ##    the host so the end is seen here (the 120 s is tested on plain meters). Papo checks he bleeds,
-##    the "Sangrando" tag shows, he never holds the time, his health falls by the drain, and the
-##    bleeding and the tag end. The host checks the drain ran and the bleeding ended.
+##    the "Sangrando" tag shows, he never holds the time, his health falls by the drain, his Salud
+##    frame glows with no blink and no flash (damage-feedback's drain cue), and the bleeding and the
+##    tag end, with "Sin sangrado" floating over him. The host checks the drain ran and the bleeding ended.
 ## 2. Yuni bleeds at 50 health beside Papo, and Papo gets a sábila leaf. Papo selects it, checks his
 ##    item line names Yuni ("Untar: Yuni"), and holds F. The host checks Yuni stopped bleeding with
 ##    +5 and Papo's leaf is gone; Papo checks he sees Yuni stop bleeding.
@@ -19,6 +20,7 @@ const SHELL_PATH: String = "res://scenes/shell/game_shell.tscn"
 const FLOW_RUN: int = 3
 const HOST_ID: int = 1
 const BLEEDING_BIT: int = 1 << 1
+const HEALTH: int = 6
 const DEADLINE_S: float = 300.0
 const SHORT_BLEED_S: float = 8.0
 const USE_ACTION: StringName = &"use_item"
@@ -149,10 +151,25 @@ func _client() -> void:
 	_check("the Sangrando tag shows on Papo's screen", tag.get("visible") == true)
 	_check("Papo never holds the time, only the bit", float(own_meters.call("status_time_left", 1)) == 0.0)
 	_check("Papo's health falls by the drain", await _wait_for("the drain", func() -> bool: return float(own_meters.get("health")) < 74.9, 15.0))
+	# The drain is a drain to damage-feedback: the Salud frame glows, with no blink and no flash.
+	await _seconds(1.0)
+	var flashes: int = meters_hud.call("flashes_started")
+	var bar: Object = meters_hud.call("bar_for", HEALTH)
+	_check("Papo's Salud frame glows while he bleeds", await _wait_for("the drain glow", func() -> bool: return bar.call("glowing"), 5.0))
+	var blinked: bool = false
+	for i: int in 60:
+		await process_frame
+		blinked = blinked or ((own.get_node("Look") as Object).call("hurt_blink") as Object).call("active")
+	_check("the bleeding does not blink Papo", not blinked)
+	_check("nor flash his edges", int(meters_hud.call("flashes_started")) == flashes, str(meters_hud.call("flashes_started")))
 	if not await _wait_for("the bleeding's end", func() -> bool: return not _bleeds(own_meters), 20.0):
 		return
 	await process_frame
 	_check("the Sangrando tag hides when it ends", tag.get("visible") == false)
+	var floats: Object = hud.get("floats")
+	var ended := func() -> bool: return (floats.call("texts_over", own) as PackedStringArray).has("Sin sangrado")
+	_check("'Sin sangrado' floats over Papo when it ends on its own", await _wait_for("the end's float", ended, 3.0), str(floats.call("texts_over", own)))
+	_check("the glow stops after the drain", await _wait_for("the glow's end", func() -> bool: return not bar.call("glowing"), 5.0))
 	# 2. Papo treats Yuni with the use button.
 	var ready := func() -> bool:
 		return _slot_of(own, &"aloe") >= 0 and _bleeds(yuni_meters) \

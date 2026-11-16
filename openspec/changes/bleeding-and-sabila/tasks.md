@@ -85,7 +85,7 @@ A group may run only its own scripts with `-gdir=res://tests/unit -gselect=<name
 
   Run it 3 times, with 0 engine error lines.
 
-  Done: 3 runs, host 7/7 and client 7/7 each time, 0 engine error lines. Papo's bleeding is shortened to 8 s on the host so the end is seen; the client treats Yuni through the real F hold, and its line reads "Sábila · [F] Untar: Yuni".
+  Done: 3 runs, host 7/7 and client 7/7 each time, 0 engine error lines. After the drain-cue checks were added, 3 more runs: host 7/7 and client 12/12 each time, 0 errors. On the client the bleeding glows the Salud frame with no blink and no edge flash, the glow stops after the drain, and "Sin sangrado" floats when the bleeding ends on its own. Papo's bleeding is shortened to 8 s on the host so the end is seen; the client treats Yuni through the real F hold, and its line reads "Sábila · [F] Untar: Yuni".
 
 ## 4. Solo stays winnable
 

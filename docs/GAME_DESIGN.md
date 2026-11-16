@@ -120,10 +120,11 @@ Night is cooler (thirst ×0.5) but dark. Searchlights, crocodiles and crabs come
 **Using an item** (`damage-feedback`). The row above the selected item says what its use does, built from the item's own data:
 - "Sed +15 · Hambre +5 · Energía +10" for a coconut, which counts as a meal;
 - "Sed +15 (+6 útil)" when only part fits;
-- "Cura quemadura y sangrado" for sábila.
+- "Cura quemadura y sangrado · Salud +5" for sábila.
 
 A use that would change nothing is refused with a reason and spends nothing:
 - "No tienes sed.";
+- "'Tás entero." (sábila at full health);
 - "No hay na' que curar.";
 - "A Papo no le hace falta.".
 
