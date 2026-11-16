@@ -15,6 +15,11 @@ uniform bool water_line_on = false;
 // Look/Sprite-local px: the water row - 27 + the swim drop = 19 - 27 + 12 = +4, the feet line.
 uniform float water_line_y = 4.0;
 uniform vec4 foam_color : source_color = vec4(1.0);
+// damage-feedback D4, the hurt blink, after the water-line cut: white for the frame of a hit, hidden
+// on half of each blink, or a steady tint (alpha 0: none) with "Reducir destellos".
+uniform bool hurt_white = false;
+uniform bool hurt_hidden = false;
+uniform vec4 hurt_tint : source_color = vec4(0.0);
 
 void vertex() {
 	art_modulate = COLOR;
@@ -27,6 +32,13 @@ void fragment() {
 		bool ripple = texel.a > 0.0 && art_on_ripple(art_local_y, water_line_y);
 		texel.rgb = ripple ? foam_color.rgb : texel.rgb;
 		texel.a *= art_water_alpha(art_local_y, water_line_y);
+	}
+	if (hurt_white) {
+		texel.rgb = vec3(1.0);
+	}
+	texel.rgb = mix(texel.rgb, hurt_tint.rgb, hurt_tint.a);
+	if (hurt_hidden) {
+		texel.a = 0.0;
 	}
 	COLOR = texel * art_modulate;
 }

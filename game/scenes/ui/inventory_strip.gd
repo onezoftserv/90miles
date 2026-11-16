@@ -297,8 +297,13 @@ func use_reason(plan: UsePlan, slot: int) -> ItemUser.Reason:
 
 ## The refusal line for `reason` about slot `slot`'s use `use_index`: a missing tool is named by
 ## its phrase ("Te falta con qué abrir el coco."), any other failed condition reads "not now".
-func refusal_line(reason: ItemUser.Reason, slot: int, use_index: int) -> String:
+## A use that would do nothing names why (wasted_line).
+func refusal_line(reason: ItemUser.Reason, slot: int, use_index: int, target: PlayerBody = null) -> String:
 	var locale := _locale()
+	if reason == ItemUser.Reason.NOTHING_TO_DO:
+		var item := ItemUser.item_at(body, slot)
+		var target_name: String = session.player_name(session.peer_of(target)) if target != null and session != null else ""
+		return wasted_line(item.uses[use_index], body, target, target_name, text, locale)
 	if reason == ItemUser.Reason.CONDITION:
 		var missing := ItemUser.failed_condition(body, slot, use_index)
 		var is_tool: bool = missing != null and missing.kind == ConditionData.Kind.HAS_CAPABILITY and not missing.negate
@@ -306,6 +311,23 @@ func refusal_line(reason: ItemUser.Reason, slot: int, use_index: int) -> String:
 		if not phrase.is_empty():
 			return text.refusal(CONDITION_KEY, locale) % phrase
 	return text.refusal(REFUSAL_KEYS.get(reason, NOT_NOW_KEY), locale)
+
+
+## Why `action` would do nothing (inventory-hud "Uses that would do nothing"): on a teammate, that
+## they do not need it; else the line of the first meter it raises ("No tienes sed."), of the one
+## status it cures ("No 'tás sangrando."), or that there is nothing to cure.
+static func wasted_line(action: ItemUseData, actor: PlayerBody, target: PlayerBody, target_name: String, words: HudText, locale: String = "es") -> String:
+	if target != null and target != actor:
+		return words.refusal(&"wasted_other", locale) % target_name
+	var cures: Array[DataEnums.Status] = []
+	for effect: EffectData in action.effects:
+		if effect.kind == EffectData.Kind.METER_ADD and effect.amount > 0.0:
+			return words.wasted_meter(effect.meter, locale)
+		if effect.kind == EffectData.Kind.CURE_STATUS and not cures.has(effect.status):
+			cures.append(effect.status)
+	if cures.size() == 1:
+		return words.wasted_status(cures[0], locale)
+	return words.refusal(&"wasted_cures", locale)
 
 
 ## Whether the local player left the island by a route and is on the crossing (design D11).
@@ -347,7 +369,7 @@ func _begin_use() -> void:
 	var plan := UsePlan.choose(body, selected, session)
 	var reason: ItemUser.Reason = use_reason(plan, selected)
 	if reason != ItemUser.Reason.OK:
-		notice.show_line(refusal_line(reason, selected, plan.use_index))
+		notice.show_line(refusal_line(reason, selected, plan.use_index, plan.target))
 		return
 	_use_plan = plan
 	_use_slot = selected
@@ -466,6 +488,7 @@ func _show_weight() -> void:
 # goes to. Nothing for an empty slot.
 func _show_line() -> void:
 	var line: String = ""
+	var effects: String = ""
 	var item: ItemData = ItemUser.item_at(body, selected) if _has_body() else null
 	if item != null:
 		var locale := _locale()
@@ -477,8 +500,11 @@ func _show_line() -> void:
 			verb = text.use_verb(item.uses[plan.use_index].action, locale)
 			if plan.target != null and session != null:
 				teammate = session.player_name(plan.target_peer)
+			# damage-feedback (inventory-hud "Effect line"): what that use does, on the notice row.
+			effects = EffectLine.text(item.uses[plan.use_index], body, plan.target, text, locale)
 		line = item_line_text(item.get_display_name(locale), _use_key, verb, teammate)
 	if item_line.text != line:
 		item_line.text = line
 	item_line.visible = not line.is_empty()
 	item_line_panel.visible = item_line.visible
+	notice.show_rest(effects)
