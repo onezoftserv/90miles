@@ -52,14 +52,14 @@ Every art rebuild runs `python -I tools/art/terrain.py --packs C:/Users/liann/sr
 
 ## 5. C4: a soft deep-water edge (TR3)
 
-- [ ] 5.1 In `test_terrain_view.gd`, write the guard and see it fail on today's code:
+- [x] 5.1 In `test_terrain_view.gd`, write the guard and see it fail on today's code:
   - `SeaMask.soft_channels` exists;
   - on the sandbar and the coast cay, every water cell's warped centre is on its own side of 0.5, by a margin, in both channels;
   - g ≤ r on every texel;
   - a deep cell beside shallows is graded, neither 0 nor 255.
   Add the 1-player test: a solo sandbar run's sea material holds the softened mask, and a shallows cell beside deep keeps the shallows row.
-- [ ] 5.2 Implement `SeaMask.soft_channels` and its warp mirror (design D6). Use it in `TerrainView.setup_sea`, with the signature unchanged. Add the warp and the 0.06 sway to `world_sea.gdshader`. Verify that the guard, the crossing art test, the movement playground test and the 1500 ms build bound pass.
-- [ ] 5.3 Pin the shader's warp constants against the GDScript mirror in `test_terrain_view.gd`, and update K47's sway number in this design's build notes.
+- [x] 5.2 Implement `SeaMask.soft_channels` and its warp mirror (design D6). Use it in `TerrainView.setup_sea`, with the signature unchanged. Add the warp and the 0.06 sway to `world_sea.gdshader`. Verify that the guard, the crossing art test, the movement playground test and the 1500 ms build bound pass.
+- [x] 5.3 Pin the shader's warp constants against the GDScript mirror in `test_terrain_view.gd`, and update K47's sway number in this design's build notes.
 
 ## 6. Integration
 
