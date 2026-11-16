@@ -263,7 +263,8 @@ func test_the_soft_deep_edge_keeps_every_water_cells_centre_on_its_step() -> voi
 ## line never folds; it is static, a function of the position only.
 func test_the_sea_warp_is_static_gentle_and_mirrored_in_the_shader() -> void:
 	var source: String = SeaShaderChecks.source()
-	for pair: Array in [["warp_px", SeaMask.WARP_PX], ["warp_period_px", SeaMask.WARP_PERIOD_PX]]:
+	# The sway is 0.05 (0.14 before art-coast-pass): with the warp the line moves about 5 px at most.
+	for pair: Array in [["warp_px", SeaMask.WARP_PX], ["warp_period_px", SeaMask.WARP_PERIOD_PX], ["wobble", 0.05]]:
 		var found := RegEx.create_from_string("uniform\\s+float\\s+%s\\s*=\\s*([\\d.]+)" % pair[0]).search(source)
 		assert_not_null(found, "%s is a uniform" % pair[0])
 		if found != null:

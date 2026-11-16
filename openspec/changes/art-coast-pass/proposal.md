@@ -25,7 +25,7 @@ The changes go in this order, smallest first. They are art only: no layout, terr
 - **C4, a soft deep edge (TR3).**
   - The sea's depth mask is blurred with a separable Gaussian (σ 1 cell), still one texel per cell.
   - Each cell's texel is then clamped back to its own side of the cut, so no cell centre changes step.
-  - The sea shader adds a static, position-only noise warp of about ±4 px to bend long straight runs. Its sway is halved so the line moves no more than half a cell.
+  - The sea shader adds a static, position-only noise warp of about ±4 px to bend long straight runs. Its sway drops from 0.14 to 0.05, so the line moves no more than about half a cell in all.
 
 ## Capabilities
 
@@ -55,6 +55,6 @@ None.
   - `game/scripts/art/sea_mask.gd`: a pure `soft_channels` and the warp it mirrors.
   - `game/scenes/art/terrain_view.gd`: `setup_sea` uses `soft_channels`, with its signature unchanged (the crossing's sea calls it).
   - `game/scenes/art/sea/world_sea.gdshader`: the warp and the smaller sway.
-- Tests: `test_terrain_art.gd`, `test_terrain_view.gd`, `test_shoreline.gd` and the art tool tests gain the pins below. `test_art_sim_invariance`, `test_draw_order` and the terrain tests stay green.
+- Tests: `test_terrain_art.gd`, `test_terrain_view.gd`, the `SeaShaderChecks` helper and the art tool tests gain the pins below. `test_shoreline`, `test_art_sim_invariance`, `test_draw_order` and the other terrain tests stay green, unchanged.
 - Docs: the design pass and its four mockups are copied to `docs/art-pass/review-2026-11-14/`. The `docs/art-pass` terrain images are re-shot, because every pick changes.
 - No layout, simulation, networking or HUD file changes. The coast cay's rectangles (C6), the darker shallows (C7) and slope tiles (C5) are later changes.

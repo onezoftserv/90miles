@@ -129,7 +129,7 @@ Ideas and structure only, never code, data or text.
 - *Rejected for stairs:* blob autotiling, as in D3.
 
 **Don't Starve Together** (dontstarve.wiki.gg; nothing in `docs/REFERENCE_DST.md` covers terrain drawing)
-- *Borrowed for C4:* [Ocean/DST](https://dontstarve.wiki.gg/wiki/Ocean/DST) says "the darker it is, the deeper the water". Its coastal, swell, rough and hazardous waters read as bands of shade that grow darker with distance from land, not as tiles.
+- *Borrowed for C4:* on [Ocean/DST](https://dontstarve.wiki.gg/wiki/Ocean/DST), the ocean's depth is read by its shade, darker for deeper. Its coastal, swell, rough and hazardous waters grow darker with distance from land, as bands rather than tiles.
 - *Rejected:* DST's four depth bands and its wave shapes per zone. They are more than a shallows-and-deep island needs (C7 handles value).
 - How DST draws its coastline foam is not on that page [unverified], so nothing is borrowed for it.
 
@@ -227,4 +227,10 @@ The owner's spot, sandbar cell (20, 35), is sand mask 10 and takes the whole pic
 - The old per-texel test `test_a_shallows_cell_picks_the_shallows_row_and_a_deep_cell_the_deep_row` still holds by the clamp. Headless, it stays pending.
 - The windowed captures compiled the shader with no error: `docs/art-pass/sandbar_day.png`, `coast_cay_day.png` and `sandbar_night.png` are re-shot, and the review driver's sandbar pass ran clean.
 
-**1-player check.** The after capture of the owner's spot comes from the review's own driver (`--only=sandbar`, solo, offline). It is `sandbar_day_west_shore_mid_x3.png` against the review's `captures/sandbar_day_west_shore_mid_x3.png`. The bushes are whole, with no cut line. The coast's corners are round. The south-facing beaches end in the 1 px lip instead of a dark ledge. The deep edge curves instead of copying the coast's staircase. C2 re-rolls every pick, so specks and bush variants differ in the after capture by design.
+**Checked after review.**
+- No scene or material saves a value for the sea's `wobble`, so the shader's 0.05 default is what runs. A test pins that default.
+- Neither shipped island has a sand-mask-0 cell (counted on the built layouts), so leaving the islet's tile untouched changes nothing anyone sees today.
+- The GPU's warp and the GDScript mirror agree. On the re-shot `sandbar_day.png` and `coast_cay_day.png`, each water cell's centre pixel was classified by its ramp colour: 1 of 4,769 and 1 of 4,611 show the other step. That fits the sway at the moment of capture; a drifted mirror would show far more.
+- The shader was compiled only in the windowed Windows runs. Headless CI never compiles it.
+
+**1-player check.** The after capture of the owner's spot comes from the review's own driver (`--only=sandbar`, solo, offline). The pair is kept in `docs/art-pass/review-2026-11-14/` as `before_west_shore_x3.png` and `after_west_shore_x3.png`, with the x4 inner bay and the x6 bush crop side by side. The bushes are whole, with no cut line. The coast's corners are round. The south-facing beaches end in the 1 px lip instead of a dark ledge. The deep edge curves instead of copying the coast's staircase. C2 re-rolls every pick, so specks and bush variants differ in the after capture by design.
