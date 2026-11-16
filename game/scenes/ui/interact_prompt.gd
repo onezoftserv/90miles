@@ -160,8 +160,10 @@ static func raft_state_line(raft: Raft, words: HudText, locale: String) -> Strin
 
 
 ## The lines a raft's launch prompt adds: its state, then the warning while it has less than half
-## its maximum left. The warning never stops the launch.
+## its maximum left. The warning never stops the launch. A raft with no recipe yet adds none.
 static func raft_lines(raft: Raft, words: HudText, locale: String) -> PackedStringArray:
+	if raft.max_integrity <= 0.0:
+		return PackedStringArray()
 	var shown := PackedStringArray([raft_state_line(raft, words, locale)])
 	if raft.integrity < raft.max_integrity / 2.0:
 		shown.append(words.line(&"raft_warning", locale))

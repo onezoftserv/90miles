@@ -57,6 +57,7 @@ func test_a_solo_player_completes_every_recipe_alone() -> void:
 	for id: StringName in ids:
 		var recipe := GameState.content.get_entry(&"recipes", id) as RecipeData
 		body.inventory.from_net([])
+		body.global_position = Vector2.ZERO
 		_give_everything(body, recipe)
 		var done: bool = false
 		if Raft.is_job_recipe(recipe):
