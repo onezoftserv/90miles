@@ -18,7 +18,7 @@ const PALM_SCENE: PackedScene = preload("res://scenes/levels/palm.tscn")
 const WATERLINE_SHADER: String = "res://scenes/art/waterline.gdshader"
 const CREATURE_ART: String = "res://assets/art/creatures/creature_art.tres"
 const FIXTURE_ROOT: String = "res://tests/fixtures/art/creatures/content"
-const SETTINGS_PATH: String = "user://test_creature_art_settings.cfg"
+var settings_path: String = UserTmp.path("test_creature_art_settings.cfg")
 const TILE: float = 16.0
 ## The gull's lift in flight (design.md D16).
 const AIR_LIFT_PX: float = 8.0
@@ -39,8 +39,8 @@ func after_each() -> void:
 	net.teardown()
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _data(id: StringName) -> CreatureData:
@@ -302,7 +302,7 @@ func test_a_solo_players_perched_gull_sorts_over_its_palm_and_behind_a_player_so
 	WeatherManager.stop()
 	WeatherManager.sky.start_at(0.0)
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	var body := shell.session.body(CoopSession.HOST_ID)

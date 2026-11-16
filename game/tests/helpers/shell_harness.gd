@@ -159,7 +159,7 @@ func _add_shell(branch_name: String, player_name: String, seeds: Callable) -> Ga
 	api.server_relay = false
 	_test.get_tree().set_multiplayer(api, branch.get_path())
 	# Each peer has its own settings, so its own name and player id.
-	var path: String = "user://test_shell_harness_%s.cfg" % branch_name.to_lower()
+	var path: String = UserTmp.path("test_shell_harness_%s.cfg" % branch_name.to_lower())
 	var config := ConfigFile.new()
 	config.set_value("player", "name", player_name)
 	config.save(path)

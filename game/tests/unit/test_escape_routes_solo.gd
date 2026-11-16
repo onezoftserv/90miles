@@ -5,7 +5,7 @@ extends GutTest
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_escape_routes_settings.cfg"
+var settings_path: String = UserTmp.path("test_escape_routes_settings.cfg")
 
 var island: SandbarIsland
 var session: CoopSession
@@ -23,8 +23,8 @@ func before_each() -> void:
 func after_each() -> void:
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _run() -> PlayerBody:
@@ -122,7 +122,7 @@ func test_the_swim_is_discovered_when_a_squall_start_ends() -> void:
 
 func test_solo_leaving_by_raft_lands_on_the_coast_cay() -> void:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	var body := shell.session.body(1)

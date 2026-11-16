@@ -11,7 +11,7 @@ extends GutTest
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_body_look_settings.cfg"
+var settings_path: String = UserTmp.path("test_body_look_settings.cfg")
 const T := DataEnums.Terrain
 const TILE: float = 16.0
 const STEP_S: float = 0.1
@@ -42,8 +42,8 @@ func after_each() -> void:
 	NetManager.leave()
 	get_tree().root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
 	get_tree().root.oversampling = true
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _grid(default_terrain: DataEnums.Terrain = T.BEACH) -> GridTerrain:
@@ -236,11 +236,11 @@ func _filtered(item: Node) -> bool:
 
 
 func _shell_smooth() -> GameShell:
-	var settings := GameSettings.new(SETTINGS_PATH)
+	var settings := GameSettings.new(settings_path)
 	settings.pixel_filter = PixelFilter.Mode.SMOOTH
 	settings.save()
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	return shell
