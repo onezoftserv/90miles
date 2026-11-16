@@ -104,13 +104,16 @@ How the tests are written:
 
 ## 5. Soldier sight (pure)
 
-- [ ] 5.1 Write `game/tests/unit/test_soldier_sight.gd` and verify it fails. It checks the spec's "Soldier sight" scenarios on the cone geometry and the shared spot meter:
+- [x] 5.1 Write `game/tests/unit/test_soldier_sight.gd` and verify it fails. It checks the spec's "Soldier sight" scenarios on the cone geometry and the shared spot meter:
   - the day and night cones;
   - hidden players never seen;
   - fog;
   - the 5 against 6 tiles/s footrace breaking past 6 tiles.
-- [ ] 5.2 Implement the soldier as a sight source in `SpotMeter`'s input, with the cone helper beside `searchlight.gd`. Verify the test passes and `test_spot_meter.gd` still passes.
-- [ ] 5.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: it failed to parse on the missing `SearchCapture` and `SightCone`, then passed (10 tests).
+- [x] 5.2 Implement the soldier as a sight source in `SpotMeter`'s input, with the cone helper beside `searchlight.gd`. Verify the test passes and `test_spot_meter.gd` still passes.
+  - Done: `SightCone` beside `searchlight.gd`, soldiers as sight sources of `PatrolWatch` (which steps every meter), and the start of `SearchCapture`. `test_spot_meter.gd` still passes (14/14).
+- [x] 5.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 259 scripts, 2372/2372.
 
 ## 6. The squad plan (pure)
 
