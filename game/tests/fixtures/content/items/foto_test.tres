@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_84a6t"]
+[ext_resource type="Script" path="res://scripts/data/modifier_data.gd" id="2_kxe6q"]
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="3_g3d7i"]
+[ext_resource type="Script" path="res://scripts/data/item_use_data.gd" id="4_e8kfe"]
+
+[resource]
+script = ExtResource("3_g3d7i")
+description_es = "Una foto de la familia de prueba, hasta que existan los recuerdos."
+description_en = "A test family photo, until keepsakes exist."
+tags = Array[int]([7])
+weight = 0.1
+id = &"foto_test"
+name_es = "Foto de prueba"
+name_en = "Test photo"

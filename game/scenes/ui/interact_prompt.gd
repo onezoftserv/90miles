@@ -32,6 +32,9 @@ signal sign_pressed(sign_node: IslandSign)
 const INTERACT_ACTION: StringName = &"interact"
 const KEY_FORMAT: String = "[%s]"
 const LINE_HEIGHT: float = 10.0
+## Each line's text starts 1 px down its 10 px row, inside the thin window's 1 px frame (hud-window-kit
+## design D8).
+const TEXT_TOP: float = 1.0
 ## Width of one glyph of the HUD's font.
 const GLYPH_PX: float = HudStyle.GLYPH_PX
 const MAX_WIDTH: float = 240.0
@@ -379,8 +382,8 @@ func _set_lines(shown: PackedStringArray, indents: Array[float]) -> void:
 			continue
 		var left: float = indents[i]
 		label.text = shown[i]
-		label.position = Vector2(left, i * LINE_HEIGHT)
-		label.size = Vector2(size.x - left, LINE_HEIGHT)
+		label.position = Vector2(left, i * LINE_HEIGHT + TEXT_TOP)
+		label.size = Vector2(size.x - left, LINE_HEIGHT - TEXT_TOP)
 
 
 func _hide() -> void:

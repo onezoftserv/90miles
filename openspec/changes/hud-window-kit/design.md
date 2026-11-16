@@ -354,7 +354,8 @@ Its cues keep their behaviour and timing; only their geometry and colours change
 **The bar's slices**
 - **Lost:** the `Lost` ColorRect is placed inside the 38×5 fill area, from the new fill's end to the old value, in `HudStyle.ALERT`.
 - **Gain:** the `Gain` ColorRect spans the gained part in the ramp's highlight colour across all 5 rows, and blends into the fill as before. Its "fill lightened" becomes this palette step.
-- **The 2-frame brightening** lerps the fill texture's modulate toward white. It is not a new colour.
+- **Flash:** the `Flash` ColorRect (white at 50% over the bar for `gain_flash_s`, on a gain) stays as it is. It is a brief overlay, not a drawn image, so the palette rule does not apply to it.
+- **Tuning colours:** `hurt_cue_tuning.tres` `loss_color` becomes `#d95763`, `glow_color` becomes opaque `#ac3232`, and `meter_colors` becomes the six ramp bases, together with each `MeterBar.fill_color`. The screen-edge `flash_color` and the body's `tint_color` stay damage-feedback's.
 
 **Drain glow:** the `Glow` Panel becomes the bar box's 1 px outline drawn steady in `#ac3232`. The precedence is pulse (`ALERT`), then glow (`#ac3232`), then plain (`#222034`).
 
@@ -495,7 +496,7 @@ A test helper, `tests/unit/hud_contrast.gd` (`HudContrast`), computes WCAG relat
 | `AlertLabel` | `window_dark` | 4:1 |
 | Black | `slot_well` | 5:1 |
 
-**Font sizes:** every Label in the run HUD is Press Start 2P at 8, and every menu label is the menu font at 16 or 32.
+**Font sizes:** every Label in the run HUD is Press Start 2P at 8. Every menu label is either the menu font at 16 or 32 (titles, headings, buttons, credits) or Press Start 2P at 8 (`PanelLabel` body text).
 
 ### D13. Build order and PR stages
 

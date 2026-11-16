@@ -12,7 +12,7 @@ script = ExtResource("1_prompt")
 [node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 0
 mouse_filter = 2
-theme_type_variation = &"HudPanel"
+theme_type_variation = &"HudPanelThin"
 
 [node name="Ring" type="Control" parent="."]
 layout_mode = 0

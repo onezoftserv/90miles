@@ -1,0 +1,26 @@
+{
+ "pieces": [
+  {"name": "window_dark", "kind": "window", "size": [10, 10], "margin": 3, "outline": "#222034", "light": "#d9a066", "dark": "#8f563b", "fill": "#222034"},
+  {"name": "window_thin", "kind": "window", "size": [6, 6], "margin": 2, "outline": "#222034", "light": "#222034", "dark": "#222034", "fill": "#222034"},
+  {"name": "tab_dark", "kind": "tab", "size": [10, 10], "margin": 3, "open_rows": 2, "outline": "#222034", "light": "#d9a066", "dark": "#8f563b", "fill": "#222034"},
+  {"name": "window_paper", "kind": "window", "size": [10, 10], "margin": 3, "outline": "#222034", "light": "#ffffff", "dark": "#e4b488", "fill": "#ffedde"},
+  {"name": "panel_paper", "kind": "window", "size": [10, 10], "margin": 3, "outline": "#663931", "light": "#f6dcb4", "dark": "#c08a5a", "fill": "#eec39a"},
+  {"name": "slot_well", "kind": "window", "size": [8, 8], "margin": 3, "outline": "#222034", "light": "#696a6a", "dark": "#9badb7", "fill": "#847e87"},
+  {"name": "slot_selected", "kind": "selected", "size": [8, 8], "margin": 3, "outline": "#fbf236", "ring": "#df7126", "fill": "#847e87"},
+  {"name": "button", "kind": "window", "size": [10, 10], "margin": 3, "outline": "#222034", "light": "#639bff", "dark": "#3f3f74", "fill": "#306082"},
+  {"name": "button_hover", "kind": "window", "size": [10, 10], "margin": 3, "outline": "#222034", "light": "#cbdbfc", "dark": "#3f3f74", "fill": "#306082"},
+  {"name": "button_pressed", "kind": "window", "size": [10, 10], "margin": 3, "outline": "#222034", "light": "#3f3f74", "dark": "#639bff", "fill": "#3f3f74"},
+  {"name": "focus_ring", "kind": "focus", "size": [6, 6], "margin": 2, "colour": "#fbf236"},
+  {"name": "line_edit", "kind": "window", "size": [8, 8], "margin": 3, "outline": "#222034", "light": "#c08a5a", "dark": "#ffedde", "fill": "#ffedde"},
+  {"name": "scroll_track", "kind": "window", "size": [6, 6], "margin": 2, "outline": "#222034", "light": "#3f3f74", "dark": "#3f3f74", "fill": "#3f3f74"},
+  {"name": "scroll_grabber", "kind": "window", "size": [6, 8], "margin": 3, "outline": "#222034", "light": "#eec39a", "dark": "#8f563b", "fill": "#d9a066"},
+  {"name": "check_off", "kind": "box", "size": [9, 9], "outline": "#222034", "fill": "#ffedde"},
+  {"name": "check_on", "kind": "box", "size": [9, 9], "outline": "#222034", "fill": "#ffedde",
+   "tick": {"colour": "#222034", "pixels": [[2, 4], [2, 5], [3, 5], [3, 6], [4, 5], [4, 6], [5, 3], [5, 4], [6, 2], [6, 3]]}},
+  {"name": "arrow_down", "kind": "icon", "size": [7, 4], "layers": [{"colour": "#ffedde", "rows": ["#######", ".#####.", "..###..", "...#..."]}]},
+  {"name": "radio_off", "kind": "icon", "size": [7, 7], "layers": [{"colour": "#ffedde", "rows": ["..###..", ".#...#.", "#.....#", "#.....#", "#.....#", ".#...#.", "..###.."]}]},
+  {"name": "radio_on", "kind": "icon", "size": [7, 7], "layers": [
+   {"colour": "#ffedde", "rows": ["..###..", ".#...#.", "#.....#", "#.....#", "#.....#", ".#...#.", "..###.."]},
+   {"colour": "#fbf236", "rows": ["", "", "..###..", "..###..", "..###.."]}]}
+ ]
+}

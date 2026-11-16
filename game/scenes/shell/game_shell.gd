@@ -476,6 +476,7 @@ func _build_run(as_client: bool = false) -> void:
 	session.add_child(travel)
 	travel.setup(session, island)
 	travel.island_loaded.connect(_on_island_loaded)
+	travel.left_the_chain.connect(_check_run_over)
 	var routes := session.get_node(^"Routes") as IslandRoutes
 	routes.route_started.connect(_on_route_started)
 	routes.progress_received.connect(_on_progress_received)
