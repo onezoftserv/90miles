@@ -136,7 +136,9 @@ Ideas and structure only, never code, data or text.
 
 Accepted on 2026-11-14 (all recommended): Q6 (a), the ripple ring. Q7 (a), the shark just south of the raft, is overtaken by crossing-gameplay.
 
-**New question for the owner (via the coordinator), recommended first:**
+**Answered on 2026-11-15:** the owner chose "Accept all recommended" for QS1 and QL1, so QS1 (a) and QL1 (a) hold: crossing-gameplay's east or west side wins, and the lying pose is made by the pose rule (D8).
+
+**The questions as they were asked, recommended first:**
 - **QS1. Where the shark shows at the raft.** On 2026-11-14 Q7 (a) put it just south of the raft, drawn in front of the riders. crossing-gameplay's later approved Q4 (a) has the fin circle 1 tile off the east or west side its pass names, with a shoo hold on it.
   - (a) *Recommended:* crossing-gameplay's side wins. This change only guarantees the fin is never drawn over an intact deck (D3).
   - (b) South at the strike only: a crossing delta in crossing-gameplay that moves the shark south of the deck when it strikes, keeping the side for the tell.

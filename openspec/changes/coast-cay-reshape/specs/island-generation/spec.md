@@ -40,3 +40,11 @@ Reshaping the coast cay SHALL keep the cells of its landing, raft site, workbenc
 - **GIVEN** the reshaped coast cay built for one offline player, standing on the first landing cell
 - **WHEN** the shortest walks over land and shallows are measured at 4 tiles/s and the player gathers alone
 - **THEN** every walk band of "Coast cay reach" holds, the workbench is a 1–4 s walk, and with the nails, the mirror, 2 inner tubes, 6 driftwood and the 4 rope the player builds a raft at integrity 100 with nobody else
+
+### Requirement: Sandbar bay tips have no notch
+The sandbar's inner bay SHALL end at its two tips without a 2-cell notch: cells (45, 20), (46, 20), (45, 51) and (46, 51) are beach (the owner's QC1 answer, 2026-11-15). Every other rule of "Handmade sandbar" and "Sandbar contents" holds. Exactly 1 player, offline, finds the same sandbar.
+
+#### Scenario: The filled tips, solo
+- **GIVEN** the sandbar built for one offline player
+- **WHEN** its cells are read
+- **THEN** (45, 20), (46, 20), (45, 51) and (46, 51) are beach, it has 995 land cells, and its land band, land share and 6-tile rule still hold
