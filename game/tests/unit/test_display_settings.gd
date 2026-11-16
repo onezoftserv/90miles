@@ -155,25 +155,25 @@ func test_each_pixel_filter_mode_picks_its_presentation() -> void:
 # --- damage-feedback: "Reducir destellos" (ui-shell "Settings") ----------------------------------
 
 func test_reduce_flashes_is_off_by_default() -> void:
-	assert_false(GameSettings.new(PATH).reduce_flashes)
-	assert_false(GameSettings.load_from("user://does_not_exist_ui_shell.cfg").reduce_flashes)
+	assert_false(GameSettings.new(settings_path).reduce_flashes)
+	assert_false(GameSettings.load_from(UserTmp.path("does_not_exist_ui_shell.cfg")).reduce_flashes)
 
 
 func test_reduce_flashes_is_kept() -> void:
-	var settings := GameSettings.new(PATH)
+	var settings := GameSettings.new(settings_path)
 	settings.reduce_flashes = true
 	assert_eq(settings.save(), OK)
-	assert_true(GameSettings.load_from(PATH).reduce_flashes)
+	assert_true(GameSettings.load_from(settings_path).reduce_flashes)
 	var config := ConfigFile.new()
-	config.load(PATH)
+	config.load(settings_path)
 	assert_eq(config.get_value("display", "reduce_flashes"), true, "stored with the display settings")
 
 
 func test_an_old_file_or_a_bad_value_reads_off() -> void:
 	var config := ConfigFile.new()
 	config.set_value("display", "fullscreen", true)
-	config.save(PATH)
-	assert_false(GameSettings.load_from(PATH).reduce_flashes, "a file from before the setting")
+	config.save(settings_path)
+	assert_false(GameSettings.load_from(settings_path).reduce_flashes, "a file from before the setting")
 	config.set_value("display", "reduce_flashes", "sí")
-	config.save(PATH)
-	assert_false(GameSettings.load_from(PATH).reduce_flashes)
+	config.save(settings_path)
+	assert_false(GameSettings.load_from(settings_path).reduce_flashes)

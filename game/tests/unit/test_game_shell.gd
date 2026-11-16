@@ -285,7 +285,7 @@ func test_the_reduce_flashes_box_saves_and_applies() -> void:
 	assert_eq(screen.reduce_flashes_box.text, "Reducir destellos")
 	assert_false(screen.reduce_flashes_box.button_pressed, "off by default")
 	screen.reduce_flashes_box.button_pressed = true
-	assert_true(GameSettings.load_from(SETTINGS_PATH).reduce_flashes, "saved at once")
+	assert_true(GameSettings.load_from(settings_path).reduce_flashes, "saved at once")
 	assert_true(HurtCues.reduce_flashes, "every cue reads it from now on")
 	screen.reduce_flashes_box.button_pressed = false
 	assert_false(HurtCues.reduce_flashes)
@@ -294,7 +294,7 @@ func test_the_reduce_flashes_box_saves_and_applies() -> void:
 
 func test_the_shell_applies_reduce_flashes_from_the_saved_settings() -> void:
 	HurtCues.reduce_flashes = false
-	var saved := GameSettings.new(SETTINGS_PATH)
+	var saved := GameSettings.new(settings_path)
 	saved.reduce_flashes = true
 	saved.save()
 	var shell := _shell()
