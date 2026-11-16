@@ -37,7 +37,7 @@ The owner answered (a) on all eight questions on 2026-11-15 (design.md "Owner de
   - the state line and warning line in the launch prompt;
   - the job prompt "[E] Trabajar en <recipe>" with build-site lines;
   - the new ids appended to `game/resources/hud_text.tres`.
-  Verify with 1-player tests of every inventory-hud scenario in this change ("Solo at a worn raft", "A fitted raft" as 90 of 120 with no warning (the fitting names come with PR 2), "Solo opens the raft's list on the coast cay", the two refusals, "Solo mend missing its rope").
+  Verify with 1-player tests of every inventory-hud scenario in this change ("Solo at a worn raft", "A fitted raft" as 90 of 120 with no warning, its fittings on a line of their own (the mend's name stands in for a fitting's until PR 2), "Solo opens the raft's list on the coast cay", the two refusals, "Solo mend missing its rope").
 - [x] 2.4 Route a client's start, deposit and work on a raft job through the host as interact intents. Verify with host-plus-client GUT tests:
   - "Two players pool a mend";
   - "One job at a time" (a forged second start is refused);
@@ -58,7 +58,12 @@ The owner answered (a) on all eight questions on 2026-11-15 (design.md "Owner de
   - GAME_DESIGN §6 "Durability": the mend's numbers and "no gate: a raft can always sail on";
   - TASKS.md: tick the mend and add the follow-ups (`night-ashore`, the launch seen by the patrol with the cutter boss).
   Verify that the docs match the specs' numbers.
-- [ ] 2.8 Run `godot --headless --path game --import` (twice on a fresh checkout), the smoke run `-s res://tests/smoke.gd` and GUT `-s res://addons/gut/gut_cmdln.gd -gexit`, and check that they all pass. Run the project through the Godot MCP and check that it runs clean. Run a host and a client locally, and check that a pooled mend and a late joiner work.
+- [x] 2.8 Run `godot --headless --path game --import` (twice on a fresh checkout), the smoke run `-s res://tests/smoke.gd` and GUT `-s res://addons/gut/gut_cmdln.gd -gexit`, and check that they all pass. Run the project through the Godot MCP and check that it runs clean. Run a host and a client locally, and check that a pooled mend and a late joiner work.
+  Done 2026-11-15:
+  - The import ran twice on a fresh worktree and is clean, and the smoke run reports 0 problems.
+  - GUT gave 2408 of 2410. The two failures were this PR's own (the every-recipe test left the player at the raft; an unbuilt raft showed "Balsa 0/0"). Both are fixed, and every touched file was rerun green.
+  - The Godot MCP run showed no errors and one new warning (a ternary in `craft_list.gd`), which is fixed.
+  - Two processes on UDP 7798 (`tests/manual/island_stop_run.gd`): host 16/16 and client 11/11, with 0 engine errors. That run's client joined in the lobby. The late joiner is checked in-process over ENet (`test_raft_job_net.gd`, "A joiner reads a half-done mend").
 
 ## 3. The fittings (PR 2, after crossing-gameplay)
 

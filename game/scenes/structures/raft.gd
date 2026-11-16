@@ -99,9 +99,12 @@ func refusal(recipe: RecipeData) -> StringName:
 
 
 ## Host: `player` opens a job of `recipe` at the work point, which they must be in reach of. False,
-## changing nothing, when the raft cannot take it (`refusal`).
+## changing nothing, when the raft cannot take it (`refusal`) or the recipe is not one every player
+## knows (an NPC teaches it), as the site placer refuses one.
 func open_job_for(player: PlayerBody, recipe: RecipeData) -> bool:
 	if not multiplayer.is_server() or player == null or not refusal(recipe).is_empty():
+		return false
+	if recipe.availability != RecipeData.Availability.KNOWN:
 		return false
 	if player.global_position.distance_to(work_point.global_position) > PlayerBody.HOLD_REACH_PX:
 		return false

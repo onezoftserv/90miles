@@ -112,6 +112,25 @@ func test_a_raft_at_half_or_more_shows_no_warning() -> void:
 	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Zarpar en la balsa", "Balsa 60/120"]), "60 is half: no warning")
 
 
+# No fitting recipe ships until the fittings PR, so the mend's name stands in for a fitting's: the
+# lines read whatever recipe names the raft holds.
+func test_a_fitted_raft_lists_its_fittings_on_a_line_of_their_own() -> void:
+	raft.integrity = 90.0
+	raft.max_integrity = 120.0
+	raft.fittings = [&"raft_mend"] as Array[StringName]
+	body.global_position = raft.global_position
+	_frame()
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Zarpar en la balsa", "Balsa 90/120", "Remiendo"]))
+	var text := HudText.load_default()
+	assert_eq(InteractPrompt.raft_fittings_line(raft, text, "es"), "Remiendo")
+	raft.fittings = [&"raft_mend", &"fire", &"raft"] as Array[StringName]
+	assert_eq(InteractPrompt.raft_fittings_line(raft, text, "es"), "Remiendo · Fogata · Balsa", "names joined with a middle dot")
+	raft.fittings = [&"raft_mend"] as Array[StringName]
+	_open_list()
+	assert_eq(hud.craft_list.head_texts(), PackedStringArray(["Balsa 90/120", "Remiendo"]), "the list's head too")
+	assert_eq(hud.craft_list.row_texts(), PackedStringArray(["Remiendo"]), "the rows below both head lines")
+
+
 func test_the_work_points_prompt() -> void:
 	_at_work_point()
 	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Arreglar la balsa"]))
@@ -121,7 +140,7 @@ func test_solo_opens_the_rafts_list_on_the_coast_cay() -> void:
 	body.inventory.add(&"driftwood", 1)
 	body.inventory.add(&"rope", 1)
 	_open_list()
-	assert_eq(hud.craft_list.head_text(), "Balsa 48/100")
+	assert_eq(hud.craft_list.head_texts(), PackedStringArray(["Balsa 48/100"]))
 	assert_eq(hud.craft_list.row_texts(), PackedStringArray(["Remiendo"]))
 	assert_false(hud.craft_list.row_dimmed(0))
 	assert_eq(hud.craft_list.detail_texts(), PackedStringArray(["1/1 Madera de la costa", "1/1 Soga"]))

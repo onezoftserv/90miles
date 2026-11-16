@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: The raft's prompt shows its state
-A built raft's launch prompt SHALL add a line with its integrity and maximum as this peer has them, followed by the Spanish names of its fittings ("Balsa 90/120 · Clavazón · Toldo"). While its integrity is below half its maximum, it adds the raft's warning line from the HUD text file. The warning never refuses a launch. Solo the same.
+A built raft's launch prompt SHALL add a line with its integrity and maximum as this peer has them ("Balsa 90/120"), then, when it has fittings, a line with their Spanish names ("Clavazón · Toldo"). While its integrity is below half its maximum, it adds the raft's warning line from the HUD text file. The warning never refuses a launch. Solo the same.
 
 #### Scenario: Solo at a worn raft
 - **GIVEN** a solo player beside the coast cay's beached raft at 48 of 100 with no fittings
@@ -11,10 +11,10 @@ A built raft's launch prompt SHALL add a line with its integrity and maximum as 
 #### Scenario: A fitted raft
 - **GIVEN** a solo player beside a beached raft at 90 of 120 with the clavazón and a toldo
 - **WHEN** the HUD is drawn
-- **THEN** its line reads "Balsa 90/120 · Clavazón · Toldo" and no warning line shows
+- **THEN** its lines read "Balsa 90/120" and "Clavazón · Toldo", and no warning line shows
 
 ### Requirement: Raft work list
-Pressing interact at a built raft's work point with no job open SHALL open the raft's list where the crafting list opens. Its head line is the raft's state line, then every known mend and fitting recipe follows, sorted by Spanish name, with carried/needed counts as on the workbench list. A row the raft cannot take now (at its maximum, a fitting it has) is dimmed, and choosing it shows a Spanish reason and sends nothing. Choosing another row starts that job. Solo the same.
+Pressing interact at a built raft's work point with no job open SHALL open the raft's list where the crafting list opens: the raft's state line (and its fittings' line when it has any), then every known mend and fitting recipe by Spanish name, with carried/needed counts as on the workbench list. A row the raft cannot take now (at its maximum, a fitting it has) is dimmed, and choosing it shows a Spanish reason and sends nothing; another starts that job. Solo the same.
 
 #### Scenario: Solo opens the raft's list on the coast cay
 - **GIVEN** a solo player at the work point of a beached raft at 48 of 100 with no fittings, carrying 4 nails, 1 driftwood and 1 rope

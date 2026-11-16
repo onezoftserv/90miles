@@ -145,6 +145,17 @@ func test_a_mend_out_of_reach_of_the_work_point_is_refused() -> void:
 	assert_null(raft.job)
 
 
+func test_a_mend_the_player_does_not_know_is_refused() -> void:
+	var mend := GameState.content.get_entry(&"recipes", MEND) as RecipeData
+	var taught := mend.duplicate() as RecipeData
+	taught.availability = RecipeData.Availability.TAUGHT_BY_NPC
+	body.crafter.register(taught)
+	assert_false(session.craft_for(CoopSession.HOST_ID, MEND, _raft_path()), "an NPC teaches it here")
+	assert_null(raft.job)
+	body.crafter.register(mend)
+	assert_true(session.craft_for(CoopSession.HOST_ID, MEND, _raft_path()), "the known one opens")
+
+
 func test_a_mend_is_never_worked_at_the_bench() -> void:
 	var bench := session.get_node("HutWorkbench") as Workbench
 	body.global_position = bench.global_position

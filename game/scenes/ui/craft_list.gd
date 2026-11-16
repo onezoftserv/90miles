@@ -66,8 +66,8 @@ var raft: Raft = null
 var highlighted: int = 0
 var _open: bool = false
 var _recipes: Array[RecipeData] = []
-# The raft's state line, over the rows in the raft's list.
-var _head: Label = null
+# The raft's state line and its fittings' line, over the rows in the raft's list.
+var _heads: Array[Label] = []
 # One label per row on show: row label k shows recipe _first_row + k.
 var _rows: Array[Label] = []
 var _first_row: int = 0
@@ -161,9 +161,13 @@ func close() -> void:
 	closed.emit()
 
 
-## The raft's list's head line, or "" outside it.
-func head_text() -> String:
-	return _head.text if _head != null and _head.visible else ""
+## The raft's list's head lines (its state, then its fittings when it has any); none outside it.
+func head_texts() -> PackedStringArray:
+	var texts: PackedStringArray = []
+	for label: Label in _heads:
+		if label.visible:
+			texts.append(label.text)
+	return texts
 
 
 ## Whether a list input counts now: the list is open, the HUD takes input, and no text field is
@@ -370,24 +374,30 @@ func _show() -> void:
 		label.modulate = DIM if lines[i][1] else FULL
 
 
-# The raft's state line over the rows, in the raft's list only; returns the lines it takes.
+# The raft's state line over the rows, and its fittings' line when it has any, in the raft's list
+# only; returns the lines they take.
 func _show_head(locale: String) -> int:
-	if not is_instance_valid(raft):
-		if _head != null:
-			_head.visible = false
-		return 0
-	if _head == null:
-		_head = Label.new()
-		_head.size = Vector2(RECT.size.x - 2.0 * PADDING.x, LINE_HEIGHT)
-		_head.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		_head.clip_text = true
-		_head.focus_mode = Control.FOCUS_NONE
-		_head.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(_head)
-	_head.text = InventoryStrip.cut(InteractPrompt.raft_state_line(raft, text, locale), ROW_MAX_CHARS)
-	_head.position = RECT.position + PADDING
-	_head.visible = true
-	return 1
+	var texts: PackedStringArray = []
+	if is_instance_valid(raft):
+		texts.append(InteractPrompt.raft_state_line(raft, text, locale))
+		var fitted: String = InteractPrompt.raft_fittings_line(raft, text, locale)
+		if not fitted.is_empty():
+			texts.append(fitted)
+	while _heads.size() < texts.size():
+		var label := Label.new()
+		label.size = Vector2(RECT.size.x - 2.0 * PADDING.x, LINE_HEIGHT)
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.clip_text = true
+		label.focus_mode = Control.FOCUS_NONE
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(label)
+		_heads.append(label)
+	for i: int in _heads.size():
+		_heads[i].visible = i < texts.size()
+		if _heads[i].visible:
+			_heads[i].text = InventoryStrip.cut(texts[i], ROW_MAX_CHARS)
+			_heads[i].position = RECT.position + PADDING + Vector2(0.0, i * LINE_HEIGHT)
+	return texts.size()
 
 
 # A workbench recipe missing an input or a tool, or a row the raft cannot take now; a build-site

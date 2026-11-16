@@ -148,23 +148,32 @@ static func site_lines(site: BuildSite, words: HudText, locale: String) -> Packe
 	return shown
 
 
-## The raft's state as this peer has it: "Balsa 90/120 · Clavazón · Toldo" (its integrity, its
-## maximum and its fittings' Spanish names).
+## The raft's state as this peer has it: "Balsa 90/120" (its integrity and its maximum).
 static func raft_state_line(raft: Raft, words: HudText, locale: String) -> String:
-	var line: String = words.line(&"raft_state", locale) % [ceili(raft.integrity), roundi(raft.max_integrity)]
+	return words.line(&"raft_state", locale) % [ceili(raft.integrity), roundi(raft.max_integrity)]
+
+
+## The raft's fittings' Spanish names on a line of their own, "Clavazón · Toldo" (all three fit the
+## 30-glyph line), or "" with none.
+static func raft_fittings_line(raft: Raft, words: HudText, locale: String) -> String:
+	var names: PackedStringArray = []
 	for id: StringName in raft.fittings:
 		var fitting := GameState.content.get_entry(&"recipes", id) as RecipeData
 		if fitting != null:
-			line += words.line(&"raft_fitting_sep", locale) + fitting.get_display_name(locale)
-	return line
+			names.append(fitting.get_display_name(locale))
+	return words.line(&"raft_fitting_sep", locale).join(names)
 
 
-## The lines a raft's launch prompt adds: its state, then the warning while it has less than half
-## its maximum left. The warning never stops the launch. A raft with no recipe yet adds none.
+## The lines a raft's launch prompt adds: its state, its fittings when it has any, then the warning
+## while it has less than half its maximum left. The warning never stops the launch. A raft with no
+## recipe yet adds none.
 static func raft_lines(raft: Raft, words: HudText, locale: String) -> PackedStringArray:
 	if raft.max_integrity <= 0.0:
 		return PackedStringArray()
 	var shown := PackedStringArray([raft_state_line(raft, words, locale)])
+	var fitted: String = raft_fittings_line(raft, words, locale)
+	if not fitted.is_empty():
+		shown.append(fitted)
 	if raft.integrity < raft.max_integrity / 2.0:
 		shown.append(words.line(&"raft_warning", locale))
 	return shown
