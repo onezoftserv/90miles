@@ -8,7 +8,9 @@ game/assets/art/:
   A set is cut tile by tile from a pack sheet, with the colours of "erase" keyed out (the baked
   water strip and foam rim) and every other colour sent through "map"; the tiles of "quadrants"
   (the islet and the two diagonals) are put together from quarters of the cut tiles. A "stamp"
-  set draws one pack tile on the cell and a quarter of it on each land corner (the brush).
+  set draws one pack tile on the cell and a quarter of it on each land corner (the brush); its
+  "canopy" colour fills the ground left between the lobes on an edge whose two corners are land,
+  and its "full_variants" are whole-cell picks on a row 5 (art-terrain-polish D5).
 - terrain/plain.png: one row per plain terrain, the tile cut by the sand tile of mask m at
   column m (column 15 is the whole tile), with an optional rim colour on the cut edge, and the
   row's full-tile "variants" (a pack tile through the row's map, or "15", the full tile for hand
@@ -209,12 +211,30 @@ def _stamp(out, stamp, dx, dy):
                 out.set(x + dx, y + dy, pixel)
 
 
-def stamped(stamp, mask):
-    """The stamp on the cell, with a stamp centred on each land corner: north ones behind, south ones in front."""
+# The sand left between the lobes of a stamp set where an edge's two corners are both land: the
+# corner bits of the edge and the pixels within three of the edge's middle (art-terrain-polish D5).
+CANOPY_GAPS = (
+    (NW | NE, [(x, y) for y in range(0, 3) for x in range(4, 12)]),
+    (SW | SE, [(x, y) for y in range(13, 16) for x in range(4, 12)]),
+    (NW | SW, [(x, y) for x in range(0, 3) for y in range(4, 12)]),
+    (NE | SE, [(x, y) for x in range(13, 16) for y in range(4, 12)]),
+)
+
+
+def stamped(stamp, mask, canopy=None):
+    """The stamp on the cell, with a stamp centred on each land corner: north ones behind, south ones
+    in front. With a `canopy` colour, the gaps between the lobes on an edge whose two corners are
+    land are filled with it, so no ground shows inside a thicket and both sides of the edge match."""
     out = png.blank(TILE, TILE)
     for bit, offset in ((NW, (-HALF, -HALF)), (NE, (HALF, -HALF)), (0, (0, 0)), (SW, (-HALF, HALF)), (SE, (HALF, HALF))):
         if bit == 0 or mask & bit:
             _stamp(out, stamp, *offset)
+    if canopy is not None:
+        for corners, band in CANOPY_GAPS:
+            if mask & corners == corners:
+                for x, y in band:
+                    if not out.alpha(x, y):
+                        out.set(x, y, canopy + (255,))
     return out
 
 
@@ -226,17 +246,22 @@ def mirrored(tile):
     return out
 
 
-def set_sheet(tiles, variants):
-    """The 64x80 sheet of a corner set: mask m at (m % 4, m // 4), the variants on row 4."""
+def set_sheet(tiles, variants, full_variants=()):
+    """The 64x80 sheet of a corner set: mask m at (m % 4, m // 4), the variants on row 4; with
+    `full_variants`, a 64x96 sheet with those on row 5 (art-terrain-polish D5)."""
     if len(variants) > SET_COLUMNS:
         raise TerrainError(f"{len(variants)} variants, and row {VARIANT_ROW} holds {SET_COLUMNS}")
-    sheet = png.blank(SET_COLUMNS * TILE, (VARIANT_ROW + 1) * TILE)
+    if len(full_variants) > SET_COLUMNS:
+        raise TerrainError(f"{len(full_variants)} full variants, and row {VARIANT_ROW + 1} holds {SET_COLUMNS}")
+    sheet = png.blank(SET_COLUMNS * TILE, (VARIANT_ROW + (2 if full_variants else 1)) * TILE)
     for mask in range(MASKS):
         if mask not in tiles:
             raise TerrainError(f"no tile for mask {mask}")
         sheet.paste(tiles[mask], (mask % SET_COLUMNS) * TILE, (mask // SET_COLUMNS) * TILE)
     for column, tile in enumerate(variants):
         sheet.paste(tile, column * TILE, VARIANT_ROW * TILE)
+    for column, tile in enumerate(full_variants):
+        sheet.paste(tile, column * TILE, (VARIANT_ROW + 1) * TILE)
     return sheet
 
 
@@ -398,13 +423,22 @@ def quarters(stamp, mask, bits):
     return out
 
 
-def fit_tile(stamp, mask, edge, field, centre):
+def fit_tile(stamp, mask, edge, field, centre, canopy=None):
     """A stamp set's shore tile with its centre stamp replaced by `centre` (a whole piece, already
     fitted on the sand): the north quarter stamps of `mask`, the piece, then the south ones; the
-    quarters are kept on the sand with no rim (they lie on its land corners)."""
+    quarters are kept on the sand with no rim (they lie on its land corners). With a `canopy`
+    colour, the pixels the inland tile of `mask` fills between its lobes are filled here too, where
+    they are still clear and on the sand, so a shore tile meets its inland neighbour exactly."""
     out = shore_cut(quarters(stamp, mask, NW | NE), edge, field)
     _stamp(out, centre, 0, 0)
     _stamp(out, shore_cut(quarters(stamp, mask, SW | SE), edge, field), 0, 0)
+    if canopy is not None:
+        bare = stamped(stamp, mask)
+        filled_in = stamped(stamp, mask, canopy)
+        for y in range(TILE):
+            for x in range(TILE):
+                if filled_in.alpha(x, y) and not bare.alpha(x, y) and not out.alpha(x, y) and edge.alpha(x, y):
+                    out.set(x, y, canopy + (255,))
     return out
 
 
@@ -428,7 +462,7 @@ def shore_sheet(rows, shape, inset=0, rims=None, fit=None):
             for d in range(MASKS):
                 if d & ~s == 0:
                     if centre is not None:
-                        tile = fit_tile(fit["stamp"], d, edge, field, centre)
+                        tile = fit_tile(fit["stamp"], d, edge, field, centre, fit.get("canopy"))
                     else:
                         tile = shore_cut(tiles[d], edge, field, inset, rims[r] if rims else None)
                     sheet.paste(tile, s * TILE, (r * MASKS + d) * TILE)
@@ -465,7 +499,8 @@ def _fit_spec(entry, sheet, inset, fixes, where):
             raise TerrainError(f"{spec['tuft']}: a tuft is a drawn {TILE}x{TILE} tile, not {tuft.width}x{tuft.height}{' and empty' if tuft.is_empty() else ''}")
         pieces.append(tuft)
     insets = [inset] if fallback == inset else [inset, fallback]
-    return {"stamp": sheet_tile(sheet, 0), "pieces": pieces, "insets": insets}
+    canopy = colour(entry["canopy"], f"{where} canopy") if "canopy" in entry else None
+    return {"stamp": sheet_tile(sheet, 0), "pieces": pieces, "insets": insets, "canopy": canopy}
 
 
 class Sources:
@@ -502,7 +537,8 @@ def _variant(tiles, spec, name):
 def _set_tiles(entry, made, name):
     if "stamp" in entry:
         stamp = made(entry["stamp"], "stamp")
-        return {mask: stamped(stamp, mask) for mask in range(MASKS)}
+        canopy = colour(entry["canopy"], f"{name} canopy") if "canopy" in entry else None
+        return {mask: stamped(stamp, mask, canopy) for mask in range(MASKS)}
     listed = need(entry, "tiles", name)
     if not isinstance(listed, dict):
         raise TerrainError(f"{name}: \"tiles\" is a table of masks, not {listed!r}")
@@ -538,7 +574,8 @@ def build_set(entry, sources):
 
     tiles = _set_tiles(entry, made, name)
     try:
-        return set_sheet(tiles, [_variant(tiles, spec, name) for spec in member(entry, "variants", list, name)])
+        return set_sheet(tiles, [_variant(tiles, spec, name) for spec in member(entry, "variants", list, name)],
+                         [_variant(tiles, spec, name) for spec in member(entry, "full_variants", list, name)])
     except TerrainError as error:
         raise TerrainError(f"{name}: {error}") from error
 

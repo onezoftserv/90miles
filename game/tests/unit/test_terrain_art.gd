@@ -1197,6 +1197,55 @@ func test_a_solo_sandbars_beach_is_mostly_clean_sand() -> void:
 	assert_eq(_clean_share(again.terrain, again.tide_pools, SANDBAR.id), share, "every build picks the same")
 
 
+# --- art-terrain-polish C10a, TR10: whole scrub cells vary (design D5) ---
+
+const BRUSH_SHEET: String = "res://assets/art/terrain/brush.png"
+## The brush's whole-cell picks are on the row after the islet picks.
+const FULL_PICK_ROW: int = PICK_ROW + 1
+
+
+func test_a_whole_scrub_cell_takes_a_full_pick_and_a_lone_bush_an_islet_pick() -> void:
+	assert_eq(TerrainArt.data().variant_masks.get(TerrainArt.BRUSH, PackedInt32Array()), PackedInt32Array([0, 15]), "the brush picks its islet and its full tile")
+	var rows := PackedStringArray(["..........", ".ssssssss.", ".sbbbbsss.", ".sbbbbsss.", ".sbbbbsbs.", ".sbbbbsss.", ".ssssssss.", ".........."])
+	var whole: Dictionary = _pick(TerrainArt.BRUSH, rows, Vector2i(3, 3))
+	assert_eq(whole.get(&"source"), TerrainArt.data().source_of[TerrainArt.BRUSH])
+	assert_eq(Vector2i(whole.get(&"atlas", Vector2i(-1, -1))).y, FULL_PICK_ROW, "a whole scrub cell: a full-tile pick")
+	var lone: Dictionary = _pick(TerrainArt.BRUSH, rows, Vector2i(7, 4))
+	assert_eq(Vector2i(lone.get(&"atlas", Vector2i(-1, -1))).y, PICK_ROW, "a lone bush: an islet pick")
+	var edge: Dictionary = _pick(TerrainArt.BRUSH, rows, Vector2i(2, 2))
+	assert_eq(edge.get(&"atlas"), _mask_atlas(TerrainArt.SE), "an outer corner keeps its own mask's tile")
+
+
+func test_the_brush_full_picks_keep_the_full_tiles_corner_quarters() -> void:
+	var sheet: Image = _sheet(BRUSH_SHEET)
+	if sheet == null:
+		return
+	var full: Image = sheet.get_region(Rect2i(_mask_atlas(15) * TILE, Vector2i(TILE, TILE)))
+	for column: int in SET_COLUMNS:
+		var pick: Image = sheet.get_region(Rect2i(column * TILE, FULL_PICK_ROW * TILE, TILE, TILE))
+		var outside: int = 0
+		for y: int in TILE:
+			for x: int in TILE:
+				var centre: bool = x >= 3 and x <= 12 and y >= 3 and y <= 12
+				if not centre and pick.get_pixel(x, y) != full.get_pixel(x, y):
+					outside += 1
+		assert_eq(outside, 0, "full pick %d keeps the corner quarters, so neighbours join" % column)
+		assert_eq(_enclosed_clear(pick), 0, "full pick %d has no hole" % column)
+
+
+## One player, offline: the secret cay's scrub block (cayo_sin_norte) is not one wallpaper bush.
+func test_a_solo_secret_cay_scrub_block_uses_more_than_one_pick() -> void:
+	var layout: IslandLayoutData = load("res://resources/islands/cayo_sin_norte.tres") as IslandLayoutData
+	var built: IslandLayout = IslandLayout.build(layout)
+	var picks: Dictionary[int, int] = {}
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.BRUSH, built.terrain, built.tide_pools, built.palms):
+		var tile: Dictionary = TerrainArt.tile(TerrainArt.BRUSH, cell, layout.id, built.terrain, built.tide_pools, built.palms)
+		var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+		if atlas.y == FULL_PICK_ROW:
+			picks[atlas.x] = picks.get(atlas.x, 0) + 1
+	assert_gt(picks.size(), 1, "the secret cay's whole scrub cells use %d picks" % picks.size())
+
+
 ## Every layer's tile of every cell of `layout`, by layer and cell.
 func _all_tiles(layout: IslandLayoutData) -> Dictionary:
 	var built: IslandLayout = IslandLayout.build(layout)

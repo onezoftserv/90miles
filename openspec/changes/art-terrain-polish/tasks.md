@@ -94,7 +94,7 @@
 - [x] 6.2 Change the sand `map`, redraw the row-4 picks in the `sand.png` overlay, and retone the dune lip in `dune.png` (design D4). Add `TerrainArtData.variant_weights` and the weighted pick in `_variant`. Rebuild. Recompute the `art_tuning.tres` ground means. Verify that `test_the_variants_on_row_4_have_their_masks_corners_and_differ`, `test_the_sheets_hold_16_masks_and_8_foam_frames`, `test_the_dune_edges_carry_no_tuft_and_the_islet_is_ragged`, wave 1's corner and lip tests and the overlay hand-pixel test pass.
 - [x] 6.3 Windowed 1-player capture of the sandbar's tide pools and dune edge, compared with `before/sandbar_day_tide_pools_crop4.png` and `before/cap_dune_edge.png`.
 
-## 7. C10: scrub variety (TR10)
+## 7. C10: scrub variety (TR10), in two PRs: C10a inland picks and the canopy, C10b shore variants
 
 - [ ] 7.1 Write these tests first and see them fail:
   - in `tools/art/test_terrain.py`: three mask-15 brush picks whose corner quarters are byte-identical to mask 15's; and the fit's `"variants"` placing each piece by the search, falling back when one does not fit.

@@ -1181,5 +1181,71 @@ class SandTextureTests(unittest.TestCase):
                 marked[at] = column
 
 
+class CanopyTests(unittest.TestCase):
+    """art-terrain-polish D5 (TR10): no ground inside a thicket, and whole-bush picks."""
+
+    def stamp(self):
+        disc = png.blank(16, 16)
+        for y in range(16):
+            for x in range(16):
+                if (x - 7.5) ** 2 + (y - 7.5) ** 2 <= 36:
+                    disc.set(x, y, SAND + (255,))
+        return disc
+
+    def gaps(self, tile, corners):
+        band = dict(terrain.CANOPY_GAPS)[corners]
+        return [(x, y) for x, y in band if not tile.alpha(x, y)]
+
+    def test_the_canopy_fills_the_gaps_between_lobes_on_an_edge_whose_corners_are_land(self):
+        bare = terrain.stamped(self.stamp(), 15)
+        self.assertTrue(self.gaps(bare, terrain.NW | terrain.NE), "a round stamp leaves ground between its lobes")
+        full = terrain.stamped(self.stamp(), 15, DEEP)
+        for corners, _band in terrain.CANOPY_GAPS:
+            self.assertEqual(self.gaps(full, corners), [], f"edge {corners} is filled")
+        self.assertEqual({full.get(x, y)[:3] for x, y in self.gaps(bare, terrain.NW | terrain.NE)}, {DEEP}, "in the canopy colour")
+
+    def test_an_edge_with_one_land_corner_keeps_its_ground(self):
+        self.assertEqual(terrain.stamped(self.stamp(), terrain.NW, DEEP).pixels, terrain.stamped(self.stamp(), terrain.NW).pixels)
+
+    def test_a_fitted_shore_tile_fills_the_same_gaps_as_its_inland_tile(self):
+        edge = filled(SAND)  # a shore tile whose sand covers the gaps (the fit never cuts them)
+        field = terrain.shore_field(filled(SAND, rows=range(0, 15)))
+        centre = png.blank(16, 16)
+        inland = terrain.stamped(self.stamp(), 15, DEEP)
+        tile = terrain.fit_tile(self.stamp(), 15, edge, field, centre, DEEP)
+        for corners, _band in terrain.CANOPY_GAPS:
+            for x, y in self.gaps(terrain.stamped(self.stamp(), 15), corners):
+                self.assertEqual(tile.get(x, y), inland.get(x, y), f"({x}, {y}) as inland")
+        self.assertEqual(terrain.fit_tile(self.stamp(), 15, edge, field, centre).pixels, terrain.fit_tile(self.stamp(), 15, edge, field, centre, None).pixels)
+
+    def test_a_full_variant_row_makes_the_sheet_96_high(self):
+        tiles = {mask: filled(SAND) for mask in range(16)}
+        sheet = terrain.set_sheet(tiles, [filled(SAND)], [filled(ROCK), filled(DEEP)])
+        self.assertEqual((sheet.width, sheet.height), (64, 96))
+        self.assertEqual(sheet.crop(16, 80, 16, 16).colours(), {DEEP})
+        self.assertEqual((terrain.set_sheet(tiles, [filled(SAND)]).height), 80, "no full variants, no row 5")
+        with self.assertRaisesRegex(terrain.TerrainError, "full variants"):
+            terrain.set_sheet(tiles, [], [filled(SAND)] * 5)
+
+    def test_the_tracked_brush_has_a_canopy_and_three_full_picks_that_keep_the_corner_quarters(self):
+        brush = terrain.load_recipe(terrain.DEFAULT_RECIPE)["sets"][2]
+        self.assertEqual(brush["canopy"], "#4b692f")
+        made = png.read_png(terrain.DEFAULT_OUT / "terrain" / "brush.png")
+        self.assertEqual((made.width, made.height), (64, 96))
+        full = terrain.sheet_tile(made, 15)
+        self.assertEqual(sum(1 for alpha in full.pixels[3::4] if not alpha), 0, "a whole scrub cell shows no ground")
+        picks = [made.crop(column * 16, 80, 16, 16) for column in range(4)]
+        self.assertEqual(picks[0].pixels, full.pixels, "pick 0 is the full tile")
+        seen = []
+        for column, pick in enumerate(picks):
+            self.assertNotIn(pick.pixels, seen, f"pick {column} repeats another")
+            self.assertNotIn(mirrored(pick).pixels, seen, f"pick {column} mirrors another")
+            seen.append(pick.pixels)
+            changed = [(x, y) for y in range(16) for x in range(16) if pick.get(x, y) != full.get(x, y)]
+            self.assertTrue(all(3 <= x <= 12 and 3 <= y <= 12 for x, y in changed), f"pick {column} changes only its centre lobe")
+            self.assertEqual(column > 0, bool(changed), f"pick {column}")
+            self.assertEqual(enclosed_clear(pick), [], f"pick {column} has no hole")
+
+
 if __name__ == "__main__":
     unittest.main()
