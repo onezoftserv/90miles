@@ -16,6 +16,7 @@ enum Kind {
 	PADDLE,
 	PLUG,
 	GRAB,
+	SHOO,
 }
 
 var kind: Kind = Kind.CLIMB
@@ -39,7 +40,7 @@ func usable_by(by: Node) -> bool:
 		Kind.PADDLE, Kind.PLUG:
 			# Jobs aboard: an untied rider aboard; a board's paddles and leaks are its own rider's.
 			return state == Crossing.Rider.ABOARD and (swimmer == 0 or user == swimmer)
-		Kind.GRAB:
+		Kind.GRAB, Kind.SHOO:
 			return state == Crossing.Rider.ABOARD
 	var aboard: bool = state == Crossing.Rider.ABOARD or state == Crossing.Rider.TIED
 	return aboard and (kind == Kind.LASH or user != swimmer)
@@ -68,6 +69,8 @@ func prompt_id_for(by: Node) -> StringName:
 			return &"plug"
 		Kind.GRAB:
 			return &"grab"
+		Kind.SHOO:
+			return &"shoo"
 		_:
 			return &"climb_aboard"
 
@@ -75,6 +78,9 @@ func prompt_id_for(by: Node) -> StringName:
 func prompt_target(_by: Node, locale: String) -> String:
 	if kind == Kind.GRAB and is_instance_valid(crossing):
 		return crossing.flotsam_name(target_id, locale)
+	if kind == Kind.SHOO:
+		var shark := GameState.content.get_entry(&"creatures", CreatureThreats.SHARK_ID) as CreatureData
+		return shark.get_display_name(locale) if shark != null else ""
 	var session := CoopSession.of(crossing) if is_instance_valid(crossing) else null
 	if kind != Kind.PULL or session == null:
 		return ""

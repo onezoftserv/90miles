@@ -15,7 +15,8 @@ func resolve(event: CrossingBeat, crossing: Crossing) -> void:
 			if crossing.beat_hits_vessel(event):
 				crossing.hole_vessel(event)
 		CrossingBeat.Kind.SHARK_PASS:
-			_shark_pass(crossing)
+			if not crossing.is_shooed(event):
+				_shark_pass(crossing)
 
 
 func _shark_pass(crossing: Crossing) -> void:

@@ -80,6 +80,10 @@ var steer: CrossingSteer = CrossingSteer.new()
 var leaks: CrossingLeaks = CrossingLeaks.new()
 ## Flotsam taken: beat index -> the peer who took it (crossing "Flotsam").
 var taken: Dictionary[int, int] = {}
+## Shark passes warned (beat index -> where the fin circles) and shooed (beat index -> true)
+## (crossing "Shooing the shark").
+var fins: Dictionary[int, Vector2] = {}
+var shooed: Dictionary[int, bool] = {}
 
 var _session: CoopSession
 ## Host: the peers that have this crossing, so the only ones sent its messages (crossing-late-join).
@@ -103,6 +107,8 @@ var _cut: Dictionary[int, Array] = {}
 # Leak id -> its plug point; flotsam beat index -> its grab point.
 var _plug_points: Dictionary[int, RescuePoint] = {}
 var _grab_points: Dictionary[int, RescuePoint] = {}
+# Shark pass beat index -> its shoo point.
+var _shoo_points: Dictionary[int, RescuePoint] = {}
 
 
 ## Builds the crossing for `peer_ids` under `session`. The host rolls and sends the plan; a client
@@ -197,6 +203,10 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 	_make_paddles()
 	for index: int in _peers.size():
 		_enter_rider(_peers[index], index)
+	# The crossing's own HUD on every peer; it shows only to this crossing's riders.
+	var hud := CrossingHud.new()
+	hud.name = "Hud"
+	add_child(hud)
 
 
 func peers() -> Array[int]:
@@ -281,6 +291,8 @@ func advance(delta: float) -> void:
 	steer.step(delta, tuning, _active_paddlers(), in_blow())
 	# Leaks drain before this step's beats fire, so a leak opened now drains from the next step.
 	_drain_leaks(delta)
+	_warn_sharks()
+	threats.tick(self, delta)
 	var reached_s: float = elapsed_s + EPSILON_S
 	for item: RefCounted in plan.due(_fired_to_s, reached_s):
 		_fire(item as CrossingBeat)
@@ -465,6 +477,48 @@ func take_flotsam(index: int, peer: int) -> bool:
 	return true
 
 
+## Whether the shark pass `beat` was shooed before its strike.
+func is_shooed(beat: CrossingBeat) -> bool:
+	return plan != null and shooed.has(plan.index_of(beat))
+
+
+## Host: the shark pass of beat `index` is shooed off, when a rider's hold completes before its
+## strike: it leaves and bites and hits nothing. False once it struck, or for anything else.
+func shoo_shark(index: int) -> bool:
+	var beat := plan.beat_at(index) if plan != null else null
+	if beat == null or beat.kind != CrossingBeat.Kind.SHARK_PASS or shooed.has(index) or not fins.has(index):
+		return false
+	if elapsed_s >= beat.time_s - EPSILON_S:
+		return false
+	shooed[index] = true
+	threats.shooed(beat, self)
+	_dirty = true
+	_sync_shoo_points()
+	return true
+
+
+## Host: where the shark pass `beat`'s fin circles: 1 tile off the side it names, beside the shared
+## deck, beside the board next in turn, or beside the swimmers with no vessel.
+func fin_spot(beat: CrossingBeat) -> Vector2:
+	var east: bool = beat.side() == CrossingBeat.Side.EAST
+	var rect: Rect2 = deck_rect()
+	if is_board_route():
+		var peer: int = _peek_next_board()
+		rect = deck_rect_of(peer) if peer != 0 else _board_rect(0)
+	elif not integrity.has_integrity():
+		var middle := Vector2.ZERO
+		var count: int = 0
+		for peer: int in _peers:
+			var body := body_of(peer)
+			if body != null and rider_state(peer) == Rider.IN_WATER:
+				middle += body.global_position
+				count += 1
+		var centre: Vector2 = middle / count if count > 0 else deck_center()
+		rect = Rect2(centre - Vector2(TILE_PX, TILE_PX) * 0.5, Vector2(TILE_PX, TILE_PX))
+	var x: float = rect.end.x + TILE_PX if east else rect.position.x - TILE_PX
+	return Vector2(x, rect.get_center().y)
+
+
 ## The prompt's name for the flotsam piece of beat `index` in `locale`: the item's name, or "" for a
 ## plank (the prompt's own label names it).
 func flotsam_name(index: int, locale: String) -> String:
@@ -552,7 +606,11 @@ func receive_steer(steer_data: Array, time_s: float) -> void:
 func play_state() -> Dictionary:
 	var taken_map: Dictionary = {}
 	taken_map.merge(taken)
-	return {"steer": steer.to_array(), "leaks": leaks.to_array(), "taken": taken_map}
+	var fin_map: Dictionary = {}
+	fin_map.merge(fins)
+	var shooed_list: Array = []
+	shooed_list.append_array(shooed.keys())
+	return {"steer": steer.to_array(), "leaks": leaks.to_array(), "taken": taken_map, "fins": fin_map, "shooed": shooed_list}
 
 
 ## Clients and joiners: the host's play state; malformed parts are ignored.
@@ -567,6 +625,21 @@ func apply_play(play: Dictionary) -> void:
 			var peer: Variant = play["taken"][index]
 			if index is int and peer is int and index >= 0 and index < events:
 				taken[index] = peer
+	var shark_changed: bool = false
+	if play.get("fins") is Dictionary:
+		var count: int = plan.events.size() if plan != null else 0
+		for index: Variant in play["fins"]:
+			var spot: Variant = play["fins"][index]
+			if index is int and spot is Vector2 and (spot as Vector2).is_finite() and index >= 0 and index < count and not fins.has(index):
+				fins[index] = spot
+				shark_changed = true
+	if play.get("shooed") is Array:
+		for index: Variant in play["shooed"]:
+			if index is int and not shooed.has(index):
+				shooed[index] = true
+				shark_changed = true
+	if shark_changed:
+		_sync_shoo_points()
 
 
 ## Every board's integrity by rider, as plain values (empty off a board route).
@@ -838,6 +911,9 @@ func _on_point_used(by: Node, point: RescuePoint) -> void:
 		RescuePoint.Kind.GRAB:
 			if point.usable_by(by):
 				take_flotsam(point.target_id, user)
+		RescuePoint.Kind.SHOO:
+			if point.usable_by(by):
+				shoo_shark(point.target_id)
 		_:
 			bring_aboard(point.swimmer)
 
@@ -849,6 +925,9 @@ func _refresh_points() -> void:
 	if is_instance_valid(_lash):
 		_lash.enabled = integrity.intact()
 	_refresh_grab_points()
+	for index: int in _shoo_points:
+		var beat := plan.beat_at(index)
+		_shoo_points[index].enabled = beat != null and elapsed_s < beat.time_s and not shooed.has(index)
 	for paddle: RescuePoint in _paddles:
 		var vessel: VesselIntegrity = vessel_of(paddle.swimmer) if paddle.swimmer != 0 else integrity
 		paddle.enabled = vessel.intact()
@@ -966,6 +1045,48 @@ func _send_state() -> void:
 	for peer: int in _connected_recipients():
 		receive_state.rpc_id(peer, _states.duplicate(), integrity.value, elapsed_s, board_values(), play_state())
 	_steer_sent = steer.position
+
+
+# Host: each shark pass whose warning time has come gets its fin spot and its shark (crossing
+# "Shooing the shark"; creatures-ai "Crossing reef shark"). A pass in the first seconds is warned at
+# once, with whatever lead is left.
+func _warn_sharks() -> void:
+	for index: int in plan.events.size():
+		var beat := plan.events[index] as CrossingBeat
+		if beat.kind != CrossingBeat.Kind.SHARK_PASS or fins.has(index) or shooed.has(index):
+			continue
+		if elapsed_s < beat.time_s - tuning.shark_lead_s - EPSILON_S or elapsed_s >= beat.time_s - EPSILON_S:
+			continue
+		var spot: Vector2 = fin_spot(beat)
+		fins[index] = spot
+		threats.warn(beat, self, spot)
+		_dirty = true
+	_sync_shoo_points()
+
+
+# Every peer: a shoo point on each warned fin, until its strike or its shooing.
+func _sync_shoo_points() -> void:
+	for index: int in fins:
+		var point := _shoo_points.get(index) as RescuePoint
+		if point == null:
+			point = _make_point(RescuePoint.Kind.SHOO, 0, tuning.shoo_hold_s)
+			point.target_id = index
+			point.priority = tuning.shoo_priority
+			_shoo_points[index] = point
+		# Half a tile nearer the vessel than the fin, so a rider at the deck's edge reaches it.
+		point.global_position = fins[index] + Vector2(signf(deck_center().x - fins[index].x) * TILE_PX * 0.5, 0.0)
+		var beat := plan.beat_at(index) if plan != null else null
+		point.enabled = beat != null and elapsed_s < beat.time_s and not shooed.has(index)
+
+
+# Host: the board the next single-board hit would take, without taking the turn.
+func _peek_next_board() -> int:
+	for step: int in _peers.size():
+		var slot: int = (_board_turn + step) % _peers.size()
+		var board := boards.get(_peers[slot]) as VesselIntegrity
+		if board != null and board.intact():
+			return _peers[slot]
+	return 0
 
 
 # Host: each open leak drains its vessel (crossing "Leaks").

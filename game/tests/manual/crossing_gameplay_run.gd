@@ -2,14 +2,17 @@ extends SceneTree
 ## Manual host-and-client run for crossing-gameplay (tasks 4.4 and 9.1): two Godot processes playing
 ## the real game shell over UDP port 7794 (other sessions share the machine, so never 7777). Both
 ## ride the sandbar's raft on a hand-written plan: a rock in line at 12 s, a coconut at 16 s, debris
-## in line at 20 s and the reef line at 26 s. The client paddles east from 8 s to 11.5 s and the rock
-## passes; the host grabs the coconut at the east edge; the raft drifts back and takes the debris,
-## whose leak the client plugs; the reef line passes. Both processes check the raft's lateral
-## position, integrity, the taken coconut and the leak against what the host has, then land on the
-## coast cay.
+## in line at 20 s, a shark pass on the east side at 33 s and the reef line at 41 s, over 45 s. The
+## client paddles east from 8 s to 11.5 s and the rock passes; the host grabs the coconut at the
+## east edge; the raft drifts back and takes the debris, whose leak the client plugs; the client
+## shoos the shark's fin before it strikes; the reef line passes. Both riders check the raft's
+## lateral position, integrity, the taken coconut, the leak and the fin against what the host has,
+## then land on the coast cay. A third process (--mode=late), started once the host prints
+## "CGRUN join-window", joins mid-crossing and checks that it shows the crossing as the host has it.
 ## Headless, host first:
 ##   godot --headless --path game -s res://tests/manual/crossing_gameplay_run.gd -- --mode=host
 ##   godot --headless --path game -s res://tests/manual/crossing_gameplay_run.gd -- --mode=client
+##   godot --headless --path game -s res://tests/manual/crossing_gameplay_run.gd -- --mode=late
 ## Each check prints "CGRUN PASS|FAIL <what> | <detail>", and the run quits non-zero on a fail or on
 ## any engine or script error logged. What a player cannot reach by playing (the plan, where the
 ## client stands) is set through hooks and printed as "CGRUN set <what>". Compiled before the
@@ -23,10 +26,13 @@ const FLOW_RUN: int = 3
 const COAST: StringName = &"coast_cay"
 ## Crossing.Rider
 const ABOARD: int = 0
-const CROSSING_S: float = 30.0
+const CROSSING_S: float = 45.0
 const ROCK_AT_S: float = 12.0
 const DEBRIS_AT_S: float = 20.0
-const REEF_AT_S: float = 26.0
+const REEF_AT_S: float = 41.0
+const SHARK_AT_S: float = 33.0
+const SHOO_FROM_S: float = 29.0
+const JOIN_WINDOW_S: float = 34.0
 const COCO_AT_S: float = 16.0
 const COCO_LANE: int = 6
 const PLUG_FROM_S: float = 21.0
@@ -77,7 +83,7 @@ func _initialize() -> void:
 	physics_hz = Engine.physics_ticks_per_second
 	var settings_path: String = "user://crossing_gameplay_run_%s.cfg" % mode
 	var config := ConfigFile.new()
-	config.set_value("player", "name", "Papo" if mode == "client" else "Yuni")
+	config.set_value("player", "name", {"client": "Papo", "late": "Mayito"}.get(mode, "Yuni"))
 	config.set_value("display", "fullscreen", false)
 	config.save(settings_path)
 	shell = (load(SHELL_PATH) as PackedScene).instantiate()
@@ -95,6 +101,8 @@ func _main() -> void:
 		await _host()
 	elif mode == "client":
 		await _client()
+	elif mode == "late":
+		await _late()
 	else:
 		_check("a known mode", false, mode)
 	Input.action_release(&"interact")
@@ -159,6 +167,11 @@ func _beat(at_s: float, kind: String, lane: int) -> RefCounted:
 	return (load(BEAT_PATH) as Script).call("create", at_s, _kind(kind), lane, 0)
 
 
+func _shark() -> RefCounted:
+	var east: int = ((load(BEAT_PATH) as Script).get_script_constant_map()["Side"] as Dictionary)["EAST"]
+	return (load(BEAT_PATH) as Script).call("create", SHARK_AT_S, _kind("SHARK_PASS"), 0, east)
+
+
 func _coconut() -> RefCounted:
 	var tuning: Resource = load("res://resources/crossing_tuning.tres")
 	var piece: int = (tuning.get("flotsam_items") as Array).find(&"coco")
@@ -207,10 +220,10 @@ func _host() -> void:
 	var crossing: Node = crossings[0]
 	var beats: Array[RefCounted] = [
 		_beat(ROCK_AT_S, "ROCK", 0), _beat(DEBRIS_AT_S, "DEBRIS", 0), _coconut(),
-		_beat(REEF_AT_S, "ROCK", -3), _beat(REEF_AT_S, "ROCK", 7),
+		_beat(REEF_AT_S, "ROCK", -3), _beat(REEF_AT_S, "ROCK", 7), _shark(),
 	]
 	crossing.set("plan", (load(PLAN_PATH) as Script).call("create", CROSSING_S, beats))
-	_hooked("the host's plan: %d s, a rock in line at %d s, debris at %d s, the reef line at %d s" % [int(CROSSING_S), int(ROCK_AT_S), int(DEBRIS_AT_S), int(REEF_AT_S)])
+	_hooked("the host's plan: %d s, a rock in line at %d s, debris at %d s, a shark at %d s, the reef line at %d s" % [int(CROSSING_S), int(ROCK_AT_S), int(DEBRIS_AT_S), int(SHARK_AT_S), int(REEF_AT_S)])
 	var deck: Rect2 = crossing.call("deck_rect")
 	_body(other).global_position = Vector2(deck.end.x - 4.0, deck.get_center().y)
 	_body(_me()).global_position = Vector2(deck.position.x + 20.0, deck.get_center().y)
@@ -296,10 +309,67 @@ func _ride(crossing: Node, is_host: bool) -> void:
 	_check("the client plugged the leak, on this peer too", await _wait_for("no leak", func() -> bool: return (leaks.get("list") as Array).is_empty(), 8.0))
 	var after_plug: float = integrity.get("value")
 	_check("the leak drained a little before the plug", after_plug < 94.8 and after_plug > 90.0, "%.1f" % after_plug)
+	# The shark: its fin is told 5 s ahead on the east side; the client shoos it from the east edge.
+	await _wait_for("the fin's warning", func() -> bool: return float(crossing.get("elapsed_s")) >= SHOO_FROM_S - 1.0, 15.0)
+	_check("the fin is told before the strike, on this peer too", await _wait_for("a fin", func() -> bool: return (crossing.get("fins") as Dictionary).size() == 1, 5.0))
+	if is_host:
+		var deck: Rect2 = crossing.call("deck_rect")
+		_body(_other_rider(crossing)).global_position = Vector2(deck.end.x - 1.0, deck.get_center().y)
+		_body(_me()).global_position = Vector2(deck.position.x + 20.0, deck.get_center().y)
+		_hooked("the client at the east edge, the host west of the middle")
+	else:
+		var deck: Rect2 = crossing.call("deck_rect")
+		_body(_me()).global_position = Vector2(deck.end.x - 1.0, deck.get_center().y)
+		await _wait_for("%d s" % int(SHOO_FROM_S), func() -> bool: return float(crossing.get("elapsed_s")) >= SHOO_FROM_S, 5.0)
+		Input.action_press(&"interact")
+		await _wait_for("the shark shooed", func() -> bool: return not (crossing.get("shooed") as Dictionary).is_empty(), 4.0)
+		Input.action_release(&"interact")
+	var shooed := func() -> bool: return not (crossing.get("shooed") as Dictionary).is_empty()
+	_check("the client shooed the shark, on this peer too", await _wait_for("the shark shooed", shooed, 6.0))
+	_check("before its strike", float(crossing.get("elapsed_s")) < SHARK_AT_S, "%.1f s" % crossing.get("elapsed_s"))
+	if is_host:
+		await _wait_for("the join window", func() -> bool: return float(crossing.get("elapsed_s")) >= JOIN_WINDOW_S, 10.0)
+		print("CGRUN join-window at %.1f s: integrity %.1f, position %.2f" % [crossing.get("elapsed_s"), integrity.get("value"), steer.get("position")])
+	await _wait_for("past the strike", func() -> bool: return float(crossing.get("elapsed_s")) >= SHARK_AT_S + 0.5, 10.0)
+	_check("the shooed shark hit nothing", absf(float(integrity.get("value")) - after_plug) < 0.6, "%.1f" % integrity.get("value"))
 	await _wait_for("past the reef line", func() -> bool: return float(crossing.get("elapsed_s")) >= REEF_AT_S + 1.0, 15.0)
 	_check("the reef line passed and nothing more drained", absf(float(integrity.get("value")) - after_plug) < 0.6, "%.1f" % integrity.get("value"))
 	print("CGRUN %s at %.1f s: position %.2f, integrity %.1f" % [mode, crossing.get("elapsed_s"), steer.get("position"), integrity.get("value")])
 	_check("the crossing ended", await _wait_for("the crossing to end", func() -> bool: return ended[0], CROSSING_S + 10.0))
+
+
+# --- the late joiner ---------------------------------------------------------------------------
+
+func _late() -> void:
+	shell.call("_join", "127.0.0.1", PORT)
+	if not await _wait_run(120.0):
+		return
+	_check("joined 127.0.0.1:%d mid-crossing" % PORT, not session.multiplayer.is_server())
+	var restored := func() -> bool:
+		var crossings: Array = shell.get("crossings")
+		return not crossings.is_empty() and crossings[0].get("plan") != null
+	if not await _wait_for("the crossing under way here", restored, 30.0):
+		return
+	var crossing: Node = shell.get("crossings")[0]
+	var plan: Object = crossing.get("plan")
+	var elapsed: float = crossing.get("elapsed_s")
+	_check("the host's plan, not a roll of its own", absf(float(plan.get("length_s")) - CROSSING_S) < 0.01, "%.1f s" % plan.get("length_s"))
+	_check("joined between the shoo and the reef line", elapsed >= SHOO_FROM_S and elapsed < REEF_AT_S, "%.1f s" % elapsed)
+	var integrity: float = (crossing.get("integrity") as Object).get("value")
+	_check("the raft at the host's integrity after the debris and the leak", integrity > 90.0 and integrity < 95.0, "%.1f" % integrity)
+	_check("the raft back near the line", absf(float((crossing.get("steer") as Object).get("position"))) < 1.5)
+	_check("no open leak", ((crossing.get("leaks") as Object).get("list") as Array).is_empty())
+	_check("the coconut taken by the host", (crossing.get("taken") as Dictionary).values().has(1))
+	_check("the shark already shooed", not (crossing.get("shooed") as Dictionary).is_empty() and (crossing.get("fins") as Dictionary).size() == 1)
+	var riders: Array = crossing.call("peers")
+	var aboard: bool = riders.size() == 2
+	for peer: int in riders:
+		aboard = aboard and crossing.call("rider_state", peer) == ABOARD
+	_check("both riders aboard", aboard)
+	_check("no crossing HUD for someone who is not riding", not (crossing.get_node(^"Hud/Strip") as Control).visible)
+	var ended: Array[bool] = [false]
+	crossing.connect(&"ended", func(_result: Object) -> void: ended[0] = true)
+	_check("the crossing ends here when it ends on the host", await _wait_for("the crossing to end", func() -> bool: return ended[0], CROSSING_S))
 
 
 # Host: the rider who is not the host.

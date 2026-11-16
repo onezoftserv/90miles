@@ -50,6 +50,35 @@ The other runs:
 
 **HUD.** The crossing shows no clock, no progress and no integrity number. The only feedback is the raft frame (whole, worn, breaking) and the squall's horizon line.
 
+## After the build (2026-11-15)
+
+**Method.** `tests/manual/capture_crossing_timeline.tscn` ran windowed, first through the Godot MCP and then from the shell to keep the whole log. It is a solo run through the game shell: the sandbar's raft, the shell's own rolled plan, and an idle rider. It printed, every second, what was on the sea and the rider's choice for each beat (log in the shared notes folder, `crossing-gameplay-baseline/after_rolled_timeline.log`).
+
+**One rolled crossing:** 82.2 s, no squall. The beats were:
+- a shark pass at 6.7 s;
+- debris at 13.4 and 27.7 s;
+- flotsam at 20.5, 35.5, 42.1, 49.1, 56.3 and 70.3 s;
+- a rock at 64.1 s;
+- the reef line at 78.2 s.
+
+| Time | On the sea | The rider's choice |
+| --- | --- | --- |
+| 0–1 s | nothing (the calm start) | none |
+| 2–6 s | the fin, coming on the strike at 6.7 s | shoo it, or (a swimmer) climb out |
+| 8–13 s | debris in lane 1, seen from 8.4 s | paddle out of its lane, or take it and plug the leak |
+| 15–20 s | a coconut 4 tiles west | paddle over and grab it, or let it pass |
+| 22–27 s | debris in line | paddle out, or plug |
+| 30–56 s | four pieces of flotsam, one every 6–7 s | go for each or not; meanwhile the idle rider's two leaks drain 1 a second |
+| 59–64 s | a rock in lane 2 | paddle west out of it |
+| 66–70 s | a piece of flotsam | grab or not |
+| 73–78 s | the reef line, gap at lane −3 | steer to the gap |
+
+**Compared with the baseline:**
+- *Gaps.* The widest gap between decisions was 7.9 s against the 9 s budget, and 28 of the 82 seconds had nothing on the sea. Before, 81 of about 82 seconds had nothing to decide.
+- *Outcome for the idle rider.* It took the shark (−20), both debris and their leaks (−10, then 1 a second), and the rock (−40), and broke at 64 s. On cb7834f the same idle rider's plan would have rolled about one hit.
+- *A second run.* A 70.3 s run with a squall warned at 0.1 s showed the warning on screen throughout, the hazard before the hit (debris at 50.8 s), and the reef line at 66.3 s inside the blow.
+- *Balance.* Over 500 plans the idle rider keeps 29.5 on average and an attentive one 91.8 ("Expected loss", above).
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -149,7 +178,13 @@ A Monte Carlo of this director (20,000 plans, script in the shared notes folder'
 | 1 | 48.5 / 12.6 % | 33.5 / 26.7 % | 25.8 / 38.9 % |
 | 4 | 40.2 / 20.5 % | 25.0 / 39.5 % | 16.5 / 55.8 % |
 
-An idle co-op party does worse, because it gets more beats; it also has more hands. The attentive figure is still an estimate. The tasks check both against rolled plans in the game and tune the `.tres` weights.
+An idle co-op party does worse, because it gets more beats; it also has more hands.
+
+**Measured in the game** (`test_crossing_balance.gd`, task 4.3, on the built change, 2026-11-15): 500 rolled 75 s solo coast raft plans at dawn in calm weather, each played twice:
+- *Idle rider:* 29.5 integrity left on average, 30.4 % of rafts broken.
+- *Scripted attentive rider:* 91.8 left, none broken. It dodges what it sees 4 s out, plugs leaks and shoos fins 2.5 s after they show, and ties down 2 s before a squall. A 150-plan breakdown showed it loses only to squalls.
+
+Both are inside the owner's target (Q8: idle about 30, attentive 70 or more), so the provisional weights stay. The check is deterministic (fixed seeds) and takes about 110 s of the suite.
 
 ### D9. The squall's blow and the cost of tying down
 For 15 s after the hit (the blow; the squall weather itself rains for its whole 120 s) paddling is halved (`squall_blow_s`, `blow_paddle_factor`). Jobs aboard need an untied rider (crossing "Jobs aboard"). The director's pre-hit hazard makes tying down early cost a dodge. Today's "tie early, wait" stays possible, but it now costs integrity.
@@ -158,7 +193,7 @@ For 15 s after the hit (the blow; the squall weather itself rains for its whole 
 - **Plan.** `CrossingBeat` serialises as `[time, kind]` or `[time, kind, lane, extra]`. `from_array` accepts both, checks that `lane` is in −10..10 and that `extra` is a side (0 or 1) or a valid flotsam index, and refuses anything else. New kinds DEBRIS and FLOTSAM are appended to the enum, so existing ints keep their meaning.
 - **State.** `receive_state` gains the position, the paddle velocity, the open leaks (spot and opening time), the flotsam taken (beat index → peer) and the passes shooed. A small unreliable `receive_steer(position, velocity, time)` goes at up to 10 Hz while the velocity is non-zero. Clients extrapolate the position by velocity between messages.
 - **Clock.** Clients also advance `elapsed_s` locally between resyncs. Today it moves only on receipt, every 1 s, which would make hazards stutter.
-- **Snapshot.** `CrossingSnapshot.KEYS` gains "steer", "leaks", "taken" and "shooed". A snapshot without them is refused, as for "boards".
+- **Snapshot.** `CrossingSnapshot.KEYS` gains "steer", "leaks", "taken", "shooed" and "fins" (each warned fin's spot, so a joiner's shoo point sits where the host's does). A snapshot without them is refused, as for "boards".
 - **Result.** Unchanged.
 
 ### D11. HUD and lines
