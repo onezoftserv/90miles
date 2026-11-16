@@ -106,12 +106,12 @@
 
 ## 8. C12: a rocky point with an edge (TR9)
 
-- [ ] 8.1 Write these tests first and see them fail:
+- [x] 8.1 Write these tests first and see them fail:
   - in `tools/art/test_terrain.py`: the rock's rim is #323c39 and 4-adjacent; its north lip is lit; its water-edge face is 2–3 px and lighter and shorter than the cliff's; the pebble decal is at most 8×6.
   - in `test_terrain_view.gd`: pebble decals lie only on sand cells beside rock, chosen by hash.
   Add the 1-player test: on the coast cay built for one offline player, a rock cell with water to its south, found from the layout, draws the faced `plain_shore.png` tile.
-- [ ] 8.2 Implement the rim, the ragged edge and redrawn interiors in the `plain.png` overlay, the lip and face step in `terrain.py`, and the pebble decals (design D6). Rebuild. Verify that `test_each_plain_full_tile_is_seamless`, `test_no_tile_set_has_a_physics_navigation_or_occlusion_layer`, `test_the_art_scripts_call_no_random_number_generator`, `test_the_tracked_rock_has_the_pack_variant_and_two_hand_ones_that_keep_its_border` and the cliff test pass.
-- [ ] 8.3 Windowed 1-player capture of the cay's rocky point, compared with `before/cay_day_rocky_point.png` and `before/cay_day_rock_edge_crop4.png`.
+- [x] 8.2 Implement the rim, the ragged edge and redrawn interiors in the `plain.png` overlay, the lip and face step in `terrain.py`, and the pebble decals (design D6). Rebuild. Verify that `test_each_plain_full_tile_is_seamless`, `test_no_tile_set_has_a_physics_navigation_or_occlusion_layer`, `test_the_art_scripts_call_no_random_number_generator`, `test_the_tracked_rock_has_the_pack_variant_and_two_hand_ones_that_keep_its_border` and the cliff test pass.
+- [x] 8.3 Windowed 1-player capture of the cay's rocky point, compared with `before/cay_day_rocky_point.png` and `before/cay_day_rock_edge_crop4.png`.
 
 ## 9. C7: land and water apart by value (TR7)
 

@@ -20,7 +20,7 @@ const SHEETS: Dictionary = {
 		"res://assets/art/terrain/plain_shore.png",
 	],
 	SHORE_TILES: ["res://assets/art/sea/foam.png", "res://assets/art/sea/foam_still.png"],
-	DECAL_TILES: ["res://assets/art/terrain/tide_pool.png", "res://assets/art/decals/shade.png"],
+	DECAL_TILES: ["res://assets/art/terrain/tide_pool.png", "res://assets/art/decals/shade.png", "res://assets/art/decals/pebbles.png"],
 }
 ## Tiles per sheet: a corner set has 16 masks and 4 variants; plain.png 16 shapes of
 ## 9 terrains and the rock's 3 full-tile variants; a shore sheet the 65 pairs of an own mask inside a sand mask that has a shore;
@@ -29,7 +29,7 @@ const SHEETS: Dictionary = {
 const TILE_COUNTS: Dictionary = {
 	TERRAIN_TILES: [20, 20, 24, 147, 65, 195, 585],
 	SHORE_TILES: [120, 120],
-	DECAL_TILES: [1, 19],
+	DECAL_TILES: [1, 19, 4],
 }
 
 

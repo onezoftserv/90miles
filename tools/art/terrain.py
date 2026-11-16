@@ -15,6 +15,9 @@ game/assets/art/:
   column m (column 15 is the whole tile), with an optional rim colour on the cut edge, and the
   row's full-tile "variants" (a pack tile through the row's map, or "15", the full tile for hand
   pixels) from column 16 on; the sheet is as wide as the row with the most variants needs.
+  A plain row's "lip" colour lights the row under a north-facing rim, and its "face" colours
+  (top row first) draw a low face over a south-facing rim that meets the water, in
+  plain_shore.png only (art-terrain-polish D6).
 - terrain/<set>_shore.png and terrain/plain_shore.png, for a set or the plain rows with a
   "shore" entry: the upper layers' tiles for shore cells, where the sand under them is cut. The
   tile of the layer's own corner mask d, kept only on the sand tile of the cell's sand mask s
@@ -359,6 +362,34 @@ def rimmed(tile, shape, rim):
     return out
 
 
+def lipped(tile, rim, lip):
+    """The tile with the pixel under each rim pixel of a north-facing edge (clear just above the rim)
+    in the `lip` colour, so the top of a plain terrain catches the light (art-terrain-polish D6)."""
+    out = tile.copy()
+    for y in range(2, tile.height):
+        for x in range(tile.width):
+            if (tile.alpha(x, y) and tile.get(x, y)[:3] != rim and tile.alpha(x, y - 1)
+                    and tile.get(x, y - 1)[:3] == rim and not tile.alpha(x, y - 2)):
+                out.set(x, y, lip + (255,))
+    return out
+
+
+def faced(tile, edge, rim, colours):
+    """The tile with a low face over each south-facing rim pixel whose pixel below is water (clear in
+    the shape `edge` too, not a land seam): `colours` from the top row down, the last just above the
+    rim (art-terrain-polish D6)."""
+    out = tile.copy()
+    for y in range(tile.height - 1):
+        for x in range(tile.width):
+            if tile.alpha(x, y) and tile.get(x, y)[:3] == rim and not tile.alpha(x, y + 1) and not edge.alpha(x, y + 1):
+                for k in range(1, len(colours) + 1):
+                    above = y - k
+                    if above < 0 or not tile.alpha(x, above) or tile.get(x, above)[:3] == rim:
+                        break
+                    out.set(x, above, colours[len(colours) - k] + (255,))
+    return out
+
+
 def shore_cut(tile, shape, field, inset=0, rim=None):
     """The tile kept only where `shape` is drawn and at least `inset` pixels inside its edge
     (`field` is the shape's shore field), with the rim colour on the kept pixels on that cut: at
@@ -442,7 +473,7 @@ def fit_tile(stamp, mask, edge, field, centre, canopy=None):
     return out
 
 
-def shore_sheet(rows, shape, inset=0, rims=None, fit=None):
+def shore_sheet(rows, shape, inset=0, rims=None, fit=None, lips=None, faces=None):
     """Column s, row 16 * r + d: tile d of `rows[r]` (16 tiles by own corner mask) cut by the
     shape set's tile of mask s, for every d whose corners are all corners of s, s below 15.
     With `fit` ({"stamp", "pieces", "insets"}, for a one-row stamp set) a sand mask s from 1 to
@@ -470,7 +501,12 @@ def shore_sheet(rows, shape, inset=0, rims=None, fit=None):
                         if centre is not None:
                             tile = fit_tile(fit["stamp"], d, edge, field, centre, fit.get("canopy"))
                         else:
-                            tile = shore_cut(tiles[d], edge, field, inset, rims[r] if rims else None)
+                            rim = rims[r] if rims else None
+                            tile = shore_cut(tiles[d], edge, field, inset, rim)
+                            if rim is not None and lips and lips[r] is not None:
+                                tile = lipped(tile, rim, lips[r])
+                            if rim is not None and faces and faces[r]:
+                                tile = faced(tile, edge, rim, faces[r])
                         sheet.paste(tile, s * TILE, ((v if fit else r) * MASKS + d) * TILE)
     return sheet
 
@@ -692,7 +728,10 @@ def build_plain(spec, sources, sets, fixes):
         for mask in range(FULL):
             tile = masked(full, edges[mask])
             if "rim" in entry:
-                tile = rimmed(tile, edges[mask], colour(entry["rim"], f"plain {entry.get('id', row)}"))
+                rim = colour(entry["rim"], f"plain {entry.get('id', row)}")
+                tile = rimmed(tile, edges[mask], rim)
+                if "lip" in entry:
+                    tile = lipped(tile, rim, colour(entry["lip"], f"plain {entry.get('id', row)} lip"))
             sheet.paste(tile, mask * TILE, row * TILE)
     return sheet
 
@@ -925,7 +964,9 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
             entries = recipe["plain"]["rows"]
             rows = [[plain.crop(mask * TILE, row * TILE, TILE, TILE) for mask in range(MASKS)] for row in range(len(entries))]
             rims = [colour(entry["rim"], "plain shore") if "rim" in entry else None for entry in entries]
-            add("terrain/plain_shore.png", shore_sheet(rows, shape, inset, rims))
+            lips = [colour(entry["lip"], "plain shore lip") if "lip" in entry else None for entry in entries]
+            faces = [[colour(c, "plain shore face") for c in member(entry, "face", list, "plain shore")] for entry in entries]
+            add("terrain/plain_shore.png", shore_sheet(rows, shape, inset, rims, lips=lips, faces=faces))
     if "water" in recipe:
         add("sea/water.png", build_water(recipe["water"], sources))
         if "ramps" in recipe["water"]:

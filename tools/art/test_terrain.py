@@ -1303,5 +1303,60 @@ class ShoreVariantTests(unittest.TestCase):
                 self.assertTrue(moved(tile, piece) or moved(tile, tuft), f"block {v}, sand mask {s}: its bush or the tuft, whole")
 
 
+class RockEdgeTests(unittest.TestCase):
+    """art-terrain-polish D6 (TR9): a dark rim, a lit north lip, a low face on the water, pebbles."""
+
+    LIP = (0x9B, 0xAD, 0xB7)
+    FACE = [(0x69, 0x6A, 0x6A), (0x59, 0x56, 0x52)]
+
+    def test_a_lip_lights_the_row_under_a_north_facing_rim_only(self):
+        shape = filled(SAND, rows=range(4, 16), columns=range(0, 12))  # north edge on row 4, east edge at x 11
+        tile = terrain.rimmed(terrain.masked(filled(ROCK), shape), shape, BLACK)
+        lit = terrain.lipped(tile, BLACK, self.LIP)
+        self.assertEqual({lit.get(x, 5)[:3] for x in range(1, 11)}, {self.LIP}, "the row under the north rim")
+        self.assertEqual({lit.get(x, 4)[:3] for x in range(0, 12)}, {BLACK}, "the rim stays")
+        self.assertEqual(lit.get(10, 9)[:3], ROCK, "no lip on the east edge")
+        self.assertEqual(terrain.lipped(terrain.rimmed(terrain.masked(filled(ROCK), filled(SAND, rows=range(0, 12))), filled(SAND, rows=range(0, 12)), BLACK), BLACK, self.LIP).colours(), {ROCK, BLACK}, "a south edge gets none")
+
+    def test_a_face_shows_above_a_south_facing_rim_on_the_water_only(self):
+        sand = filled(SAND, rows=range(0, 12))  # the sea from row 12
+        tile = terrain.rimmed(terrain.masked(filled(ROCK), sand), sand, BLACK)
+        faced = terrain.faced(tile, sand, BLACK, self.FACE)
+        self.assertEqual(faced.get(5, 11)[:3], BLACK, "the rim stays at the water")
+        self.assertEqual(faced.get(5, 10)[:3], self.FACE[1], "the low face row just above it")
+        self.assertEqual(faced.get(5, 9)[:3], self.FACE[0])
+        self.assertEqual(faced.get(5, 8)[:3], ROCK, "two rows, no more")
+        seam = terrain.rimmed(terrain.masked(filled(ROCK), sand), sand, BLACK)
+        land = filled(SAND)  # the same edge against land, not water
+        self.assertEqual(terrain.faced(seam, land, BLACK, self.FACE).pixels, seam.pixels, "no face on a land seam")
+
+    def test_the_tracked_rock_has_a_dark_rim_a_lit_lip_and_a_low_face_on_the_water(self):
+        rock = terrain.load_recipe(terrain.DEFAULT_RECIPE)["plain"]["rows"][0]
+        self.assertEqual((rock["rim"], rock["lip"], rock["face"]), ("#323c39", "#9badb7", ["#696a6a", "#595652"]))
+        made = terrain.DEFAULT_OUT / "terrain"
+        plain = png.read_png(made / "plain.png")
+        north = plain.crop(12 * 16, 0, 16, 16)  # mask 12: rock to the south, a north-facing edge
+        rows = opaque_rows(north)
+        self.assertEqual({north.get(x, rows[0])[:3] for x in range(16) if north.alpha(x, rows[0])}, {png.parse_colour("#323c39")}, "the rim is #323c39")
+        self.assertIn(png.parse_colour("#9badb7"), {north.get(x, rows[0] + 1)[:3] for x in range(16)}, "a lit lip under it")
+        shore = png.read_png(made / "plain_shore.png")
+        faced = shore.crop(3 * 16, 3 * 16, 16, 16)  # sand mask 3 (the sea to the south), own mask 3
+        bottom = opaque_rows(faced)[-1]
+        self.assertEqual(faced.get(8, bottom - 1)[:3], png.parse_colour("#595652"), "the face over the water")
+        cliff = terrain.load_recipe(terrain.DEFAULT_RECIPE)["plain"]["rows"][2]
+        self.assertNotIn("face", cliff, "the cliff keeps its own deeper drop")
+
+    def test_the_tracked_pebbles_sit_in_the_sand_strip_of_each_straight_seam(self):
+        pebbles = png.read_png(terrain.DEFAULT_OUT / "decals" / "pebbles.png")
+        self.assertEqual((pebbles.width, pebbles.height), (64, 16))
+        strips = {0: (range(0, 4), range(0, 16)), 1: (range(12, 16), range(0, 16)), 2: (range(0, 16), range(0, 4)), 3: (range(0, 16), range(12, 16))}
+        for column, (xs, ys) in strips.items():
+            tile = pebbles.crop(column * 16, 0, 16, 16)
+            drawn_at = [(x, y) for y in range(16) for x in range(16) if tile.alpha(x, y)]
+            self.assertTrue(drawn_at, f"pebble tile {column} is drawn")
+            self.assertTrue(all(x in xs and y in ys for x, y in drawn_at), f"pebble tile {column} stays in its strip")
+            self.assertLessEqual((len({x for x, _ in drawn_at}), len({y for _, y in drawn_at})) if column < 2 else (len({y for _, y in drawn_at}), len({x for x, _ in drawn_at})), (6, 8), f"pebble tile {column}: at most 8x6")
+
+
 if __name__ == "__main__":
     unittest.main()
