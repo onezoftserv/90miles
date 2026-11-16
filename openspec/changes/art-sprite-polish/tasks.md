@@ -21,9 +21,9 @@ Rebuilds: `python -I tools/art/compose.py --packs C:/Users/liann/src/90miles/gam
 
 ## 2. Crab (C25; SP8)
 
-- [ ] 2.1 Write the tests and see them fail: in `test_creature_art.gd`, the crab's `idle` has 3 unique frames in the order 0, 1, 0, 2 at 4–5 fps, `move` 4 frames at no more than 12 fps, no opaque pixel in a frame's two outer columns, the feet on row 15. Add the 1-player test: on the solo sandbar a still crab plays `idle` and a walking one `move`.
-- [ ] 2.2 Redraw `tools/art/fixes/creatures/land_crab.png` (design D6), update its sheet size in `creature_sheets.json` and its frames in `land_crab_frames.tres`. Verify `test_every_creature_has_frames_with_an_idle_within_the_budget`, `test_a_solo_crab_on_the_sand_has_its_shadow_under_it`, `test_a_client_crab_fed_positions_at_10_hz_plays_move_every_frame_then_idle`, the outline contrast check and `tools/art/test_creatures.py`.
-- [ ] 2.3 Windowed 1-player capture of the crab lineup by day and at night: compare with `before/cr_lineup_day_crop6.png`.
+- [x] 2.1 Write the tests and see them fail: in `test_creature_art.gd`, the crab's `idle` has 3 unique frames in the order 0, 1, 0, 2 at 4–5 fps, `move` 4 frames at no more than 12 fps, no opaque pixel in a frame's two outer columns, the feet on row 15. Add the 1-player test: on the solo sandbar a still crab plays `idle` and a walking one `move`.
+- [x] 2.2 Redraw `tools/art/fixes/creatures/land_crab.png` (design D6), update its sheet size in `creature_sheets.json` and its frames in `land_crab_frames.tres`. Verify `test_every_creature_has_frames_with_an_idle_within_the_budget`, `test_a_solo_crab_on_the_sand_has_its_shadow_under_it`, `test_a_client_crab_fed_positions_at_10_hz_plays_move_every_frame_then_idle`, the outline contrast check and `tools/art/test_creatures.py`.
+- [x] 2.3 Windowed 1-player capture of the crab lineup by day and at night: compare with `before/cr_lineup_day_crop6.png`.
 
 ## 3. Gull flight (C25; SP10)
 

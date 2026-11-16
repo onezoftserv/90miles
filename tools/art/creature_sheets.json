@@ -13,7 +13,7 @@
     },
     {
       "id": "land_crab",
-      "size": [96, 16],
+      "size": [160, 16],
       "cell": [16, 16],
       "layers": [
         {"hand": "land_crab.png"}

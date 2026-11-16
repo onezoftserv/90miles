@@ -182,6 +182,69 @@ func test_a_client_crab_fed_positions_at_10_hz_plays_move_every_frame_then_idle(
 	assert_eq(sprite.animation, &"idle", "idle 0.15 s after the last change")
 
 
+# --- art-sprite-polish D6 (C25, SP8): a smaller, livelier crab --------------------------------------
+
+## The atlas regions an animation plays, in order.
+func _regions(frames: SpriteFrames, animation: StringName) -> Array[Rect2]:
+	var found: Array[Rect2] = []
+	for index: int in frames.get_frame_count(animation):
+		found.append((frames.get_frame_texture(animation, index) as AtlasTexture).region)
+	return found
+
+
+func _cell(frames: SpriteFrames, animation: StringName, index: int) -> Image:
+	var atlas := frames.get_frame_texture(animation, index) as AtlasTexture
+	return ArtChecks.read_png(atlas.atlas.resource_path).get_region(Rect2i(atlas.region))
+
+
+func test_the_crab_idles_on_frames_0_1_0_2_and_scuttles_on_four() -> void:
+	var frames := _data(&"land_crab").sprite_frames
+	var idle: Array[Rect2] = _regions(frames, &"idle")
+	assert_eq(idle.size(), 4, "idle plays four frames")
+	if idle.size() == 4:
+		assert_eq(idle[2], idle[0], "frames 0, 1, 0, 2")
+		assert_ne(idle[1], idle[0])
+		assert_ne(idle[3], idle[0])
+		assert_ne(idle[3], idle[1])
+	assert_between(frames.get_animation_speed(&"idle"), 4.0, 5.0, "idle at 4-5 fps")
+	var move: Array[Rect2] = _regions(frames, &"move")
+	assert_eq(move.size(), 4, "move plays four frames")
+	var unique: Dictionary[Rect2, bool] = {}
+	for region: Rect2 in move:
+		unique[region] = true
+	assert_eq(unique.size(), 4, "four different move frames")
+	assert_lte(frames.get_animation_speed(&"move"), 12.0, "move at no more than 12 fps")
+
+
+func test_every_crab_frame_is_narrow_with_its_feet_on_row_15() -> void:
+	var frames := _data(&"land_crab").sprite_frames
+	for animation: StringName in frames.get_animation_names():
+		for index: int in frames.get_frame_count(animation):
+			var cell: Image = _cell(frames, animation, index)
+			var used: Rect2i = cell.get_used_rect()
+			var label: String = "%s[%d]" % [animation, index]
+			assert_eq(cell.get_size(), Vector2i(16, 16), label)
+			assert_gte(used.position.x, 2, "%s: nothing in the two left columns" % label)
+			assert_lte(used.end.x, 14, "%s: nothing in the two right columns" % label)
+			assert_eq(used.end.y, 16, "%s: the feet end on row 15" % label)
+
+
+## One player, offline: a solo sandbar-style crab that stands still plays idle, and one that walks
+## plays move.
+func test_a_solo_crab_idles_when_still_and_scuttles_when_it_walks() -> void:
+	NetManager.start_solo()
+	var rig := CreatureRig.make(self)
+	var crab := rig.creature(&"land_crab", Vector2i(3, 10))
+	_step(crab, 12)
+	var sprite := _sprite(crab)
+	assert_eq(sprite.animation, &"idle", "a still crab idles")
+	assert_true(sprite.is_playing(), "and its idle plays")
+	for frame: int in 12:
+		crab.position += Vector2(0.5, 0.0)
+		_step(crab)
+	assert_eq(sprite.animation, &"move", "a walking crab scuttles")
+
+
 # --- the sandbar's creatures ---------------------------------------------------------------------
 
 func test_the_shark_draws_at_the_water_line_with_no_shadow() -> void:
