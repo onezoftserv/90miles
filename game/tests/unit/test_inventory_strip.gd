@@ -129,29 +129,91 @@ func test_a_stack_a_tool_and_an_empty_slot() -> void:
 	inventory.add(&"coco", 3)
 	inventory.add(&"knife", 1, 39)
 	var coco := strip.slot_view(0)
+	assert_true(coco.selected, "screen slot 1 is selected")
 	assert_eq(StripIcon.item_shown(coco), "coco")
 	assert_eq(coco.name_label.text, "", "no letters under an icon")
 	assert_eq(coco.count_label.text, "3")
-	assert_eq(coco.count_label.theme_type_variation, &"HudCount")
-	assert_eq(coco.key_label.text, "1")
-	assert_eq(coco.key_label.position, Vector2(2.0, 1.0), "the key top-left")
-	# Three 8 px rows in the 24 px interior: key, letters, count, none over another.
-	var interior := Rect2(Vector2.ONE, StripSlot.SIZE - 2.0 * Vector2.ONE)
-	var rows: Array[Rect2] = [coco.key_label.get_rect(), coco.name_label.get_rect(), coco.count_label.get_rect()]
-	for i: int in rows.size():
-		assert_true(interior.encloses(rows[i]), "row %d %s inside the interior %s" % [i, rows[i], interior])
-		for j: int in range(i + 1, rows.size()):
-			assert_false(rows[i].intersects(rows[j]), "row %d %s clear of row %d %s" % [i, rows[i], j, rows[j]])
+	assert_eq(coco.count_digits.text, "3", "drawn in the small digits")
+	assert_eq(coco.key_label.text, "1", "the selected slot's key")
+	assert_eq(coco.key_digits.text, "1")
+	assert_eq(coco.icon.position, Vector2(5.0, 4.0), "the icon at (5,4)")
 	var knife := strip.slot_view(1)
 	assert_eq(StripIcon.item_shown(knife), "knife")
 	assert_eq(knife.count_label.text, "39", "uses left")
+	assert_eq(knife.key_label.text, "", "no key on a slot that is not selected")
+	assert_eq(knife.key_digits.text, "")
 	var empty := strip.slot_view(2)
 	assert_eq(StripIcon.item_shown(empty), "")
 	assert_eq(empty.name_label.text, "")
 	assert_eq(empty.count_label.text, "")
 	assert_false(empty.icon.visible)
-	assert_eq(empty.key_label.text, "3", "an empty slot keeps its frame and key")
+	assert_eq(empty.key_label.text, "", "an empty slot shows only its well")
+	assert_eq(empty.theme_type_variation, &"HudSlot", "its well")
 	assert_eq(strip.weight_label.text, "Peso 2,5/30")
+
+
+# hud-window-kit design D6: the key follows the selection, on the keyboard only.
+func test_the_key_follows_the_selection() -> void:
+	var hud := _hud(_session())
+	var strip := hud.strip
+	get_viewport().push_input(_key_press(KEY_4))
+	await wait_process_frames(1)
+	assert_eq(strip.selected, 3, "4 selects screen slot 4")
+	for i: int in strip.slot_count():
+		var expected: String = "4" if i == 3 else ""
+		assert_eq(strip.slot_view(i).key_label.text, expected, "slot %d's key" % (i + 1))
+	strip.select(10)
+	assert_eq(strip.slot_view(10).key_digits.text, "-", "slot 11's key is -")
+	strip.select(11)
+	assert_eq(strip.slot_view(11).key_digits.text, "=", "slot 12's key is =")
+	assert_eq(strip.slot_view(10).key_digits.text, "", "and slot 11's is gone")
+
+
+# inventory-hud "Slot contents": no digit pixel inside the icon's 16x16 square.
+func test_no_digit_pixel_inside_the_icon() -> void:
+	var hud := _hud(_session())
+	var strip := hud.strip
+	var inventory := strip.body.inventory
+	inventory.add(&"coco", 7)
+	inventory.add(&"driftwood", 40)
+	inventory.add(&"knife", 1, 39)
+	for count: String in ["7", "40", "100"]:
+		var slot := strip.slot_view(0)
+		slot.count_digits.show_text(count)
+		for glyph: Rect2 in slot.count_digits.glyph_rects():
+			assert_false(glyph.intersects(StripSlot.ICON_RECT), "%s: %s clear of the icon" % [count, glyph])
+			assert_true(Rect2(Vector2(2.0, 2.0), Vector2(22.0, 23.0)).encloses(glyph), "%s: %s inside the well" % [count, glyph])
+		assert_eq(slot.count_digits.glyph_rects().back().end.x, 24.0, "%s: the last glyph ends at x 23" % count)
+	for key: String in ["1", "0", "-", "="]:
+		var slot := strip.slot_view(0)
+		slot.key_digits.show_text(key)
+		for glyph: Rect2 in slot.key_digits.glyph_rects():
+			assert_false(glyph.intersects(StripSlot.ICON_RECT), "key %s: clear of the icon" % key)
+
+
+# inventory-hud "Slot contents": black icon rims read on the well.
+func test_black_rims_read_on_the_well() -> void:
+	var fill: Color = HudContrast.centre_color("res://assets/art/ui/slot_well.png")
+	assert_gte(HudContrast.ratio(Color.BLACK, fill), 5.0, "black on the well's fill")
+	var selected_fill: Color = HudContrast.centre_color("res://assets/art/ui/slot_selected.png")
+	assert_gte(HudContrast.ratio(Color.BLACK, selected_fill), 5.0, "and on the selected slot's")
+
+
+# Solo, offline, one player: a strip with seven items draws keys, counts and icons as the spec says.
+func test_solo_strip_with_seven_items() -> void:
+	var hud := _hud(_session())
+	var strip := hud.strip
+	var inventory := strip.body.inventory
+	for id: StringName in [&"knife", &"coco", &"driftwood", &"rope", &"dry_grass", &"rain_cup", &"tarp"]:
+		inventory.add(id, 1)
+	strip.select(1)
+	var keyed: int = 0
+	for i: int in strip.slot_count():
+		if not strip.slot_view(i).key_label.text.is_empty():
+			keyed += 1
+	assert_eq(keyed, 1, "one key, on the selected slot")
+	assert_eq(strip.slot_view(1).key_digits.text, "2")
+	assert_eq(strip.slot_view(1).theme_type_variation, &"HudSlotSelected")
 
 
 func test_an_item_without_an_icon_shows_its_first_three_letters() -> void:
