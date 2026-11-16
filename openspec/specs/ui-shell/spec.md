@@ -52,7 +52,7 @@ Every screen SHALL use one theme: Pixelify Sans at 16 or 32 px for titles and bu
 - **THEN** its pixels are whole (no smoothing between font pixels)
 
 ### Requirement: Screen flow
-The game SHALL open on the title screen. Solo goes straight to a run, with no lobby and nothing waiting for another player. Hosting opens the lobby; while a slower backend opens the session the lobby says "Abriendo la partida…" and only "Salir" works, which cancels, and asking to host again while it opens does nothing; if hosting fails the title says why. Joining opens the join screen, then the lobby, or the run if one is under way; a join requested from outside the game opens the join screen already connecting, and a join failure always shows on the join screen. When every player still in the run is dead the run summary shows, then the title or a new run; a disconnected player keeps the run open until they are removed. Losing the host shows the host-lost screen, then the title.
+The game SHALL open on the title screen. Solo goes straight to a run, with no lobby and nothing waiting for another player. Hosting opens the lobby; while a slower backend opens the session the lobby says "Abriendo la partida…" and only "Salir" works, which cancels, and asking to host again while it opens does nothing; if hosting fails the title says why. Joining opens the join screen, then the lobby, or the run if one is under way; a join requested from outside the game opens the join screen already connecting, and a join failure always shows on the join screen. When every player still in the run is dead the run summary shows, then the title or a new run; in co-op the host's "Otra vez" opens a new lobby on the host and every connected client, with nobody joining again. A disconnected player keeps the run open until they are removed. Losing the host shows the host-lost screen, then the title.
 
 #### Scenario: Solo from the title
 - **GIVEN** the title screen
@@ -88,6 +88,11 @@ The game SHALL open on the title screen. Solo goes straight to a run, with no lo
 - **GIVEN** a lobby still showing "Abriendo la partida…"
 - **WHEN** the player picks "Salir"
 - **THEN** the title shows, the game is offline, and the backend has left its session
+
+#### Scenario: The party again
+- **GIVEN** a host and a client on their run summaries
+- **WHEN** the host picks "Otra vez"
+- **THEN** the lobby shows on both, listing both players, and the client's lobby shows as soon as the host's call arrives, before the host's answer fills in its list
 
 ### Requirement: Title screen
 The title screen SHALL show the logo over an animated sea, the buttons "Jugar solo", "Hospedar partida", "Unirse", "Ajustes", "Créditos" and "Salir", a panel describing the focused button, and the game version. The first button has focus on arrival.
@@ -181,12 +186,17 @@ The player name SHALL be at most 16 characters, default "Balsero". Cleaning remo
 - **THEN** it reads "Yuni", with no direction marks left
 
 ### Requirement: Run summary
-The run summary SHALL list each player of the run with their name, whether they died, and how long the run lasted, then offer "Volver al inicio". In solo it lists the one player.
+The run summary SHALL show what endings-progression's "Run summary", "Run summary totals", "Cause of death on the run summary", "Death one-liners" and "Restart from the summary" define, one row per player of the run with their name and fate, in the shell's theme. Those requirements own the summary's content and buttons. In solo it lists the one player.
 
 #### Scenario: Solo summary
 - **GIVEN** a solo player who died after 3 minutes
 - **WHEN** the summary shows
-- **THEN** it lists their name as dead and a run length of 3:00
+- **THEN** it lists their name as dead and a run length of 3:00, and offers "Otra vez" and "Volver al inicio"
+
+#### Scenario: Co-op summary
+- **GIVEN** a host Yuni and a client Papo who both died
+- **WHEN** their summaries show
+- **THEN** each lists Yuni and Papo as dead; Yuni's offers "Otra vez" and "Volver al inicio", and Papo's only "Volver al inicio"
 
 ### Requirement: Inventory band and world marks
 During a run the HUD's bottom band (y 306 to 360) SHALL hold the local player's inventory strip, its selected item's line and refusal line, and the crafting list opens above it at the left edge (4,162 to 244,302) while the player is at a workbench (inventory-hud). In the centre the HUD draws only marks anchored to something in the world: a teammate's name tag, the interact prompt and the hidden mark. Solo the same.
