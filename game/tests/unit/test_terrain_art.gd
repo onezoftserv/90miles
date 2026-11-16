@@ -957,6 +957,78 @@ func test_layer_cell_counts_of_the_two_islands() -> void:
 		var layers: Array[StringName] = [TerrainArt.SAND, TerrainArt.DUNE, TerrainArt.BRUSH, TerrainArt.PLAIN]
 		for index: int in layers.size():
 			assert_eq(TerrainArt.layer_cells(layers[index], built.terrain, built.tide_pools).size(), expected[id][index], "%s: %s" % [id, layers[index]])
+		# art-terrain-polish C9: with the palms, the dune gains each palm with 3 or 4 dune sides.
+		var joined: int = 0
+		for palm: Vector2i in built.palms:
+			if TerrainArt.is_member(TerrainArt.DUNE, palm, built.terrain, built.tide_pools, built.palms) and not TerrainArt.is_member(TerrainArt.DUNE, palm, built.terrain, built.tide_pools):
+				joined += 1
+		var dune: int = TerrainArt.layer_cells(TerrainArt.DUNE, built.terrain, built.tide_pools, built.palms).size()
+		assert_eq(dune, int(expected[id][1]) + joined, "%s: the dune with its palms" % id)
+		if id == &"sandbar":
+			assert_eq(dune, 425, "the sandbar's dune with its three palms")
+		assert_eq(TerrainArt.layer_cells(TerrainArt.BRUSH, built.terrain, built.tide_pools, built.palms).size(), expected[id][2], "%s: no palm on the brush" % id)
+
+
+# --- art-terrain-polish C9, TR11: a palm counts for the dune by its neighbours (design D1) ---
+
+## The tile `layer` gives cell `at` of `rows`, or {}, with `palms` as the palm cells (beach `s`).
+func _palm_pick(layer: StringName, rows: PackedStringArray, at: Vector2i, palms: Array[Vector2i]) -> Dictionary:
+	return TerrainArt.tile(layer, at, &"test", TerrainRows.build(rows), TerrainRows.pools(rows), palms)
+
+
+func test_a_palm_with_three_or_four_dune_sides_is_on_the_dune_and_never_the_brush() -> void:
+	# art-pass "A palm stands in its dune"
+	var rows := PackedStringArray([".......", ".ddddd.", ".ddsdd.", ".ddbdd.", ".ddddd.", "......."])
+	var palm: Vector2i = Vector2i(3, 2)
+	var palms: Array[Vector2i] = [palm]
+	var terrain: GridTerrain = TerrainRows.build(rows)
+	assert_true(TerrainArt.is_member(TerrainArt.DUNE, palm, terrain, [], palms), "four dune sides")
+	assert_false(TerrainArt.is_member(TerrainArt.BRUSH, palm, terrain, [], palms), "never the brush")
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, palm, terrain, [], palms), TerrainArt.FULL, "an enclosed palm is whole dune")
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, Vector2i(2, 2), terrain, [], palms), TerrainArt.FULL, "the dune beside it keeps its corners")
+	assert_false(TerrainArt.is_member(TerrainArt.DUNE, palm, terrain, []), "with no palms, today's rule")
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, Vector2i(2, 2), terrain, []), TerrainArt.NW | TerrainArt.SW, "and today's bite")
+
+
+func test_notch_palms_take_the_dune_edge_tiles() -> void:
+	var north := PackedStringArray([".....", ".ddd.", ".dsd.", ".sss.", "....."])
+	var west := PackedStringArray([".....", ".sdd.", ".ssd.", ".sdd.", "....."])
+	var palms: Array[Vector2i] = [Vector2i(2, 2)]
+	var terrain_n: GridTerrain = TerrainRows.build(north)
+	var terrain_w: GridTerrain = TerrainRows.build(west)
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, Vector2i(2, 2), terrain_n, [], palms), TerrainArt.NW | TerrainArt.NE, "dune to the north: mask 3")
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, Vector2i(2, 2), terrain_w, [], palms), TerrainArt.NE | TerrainArt.SE, "dune to the east: mask 10")
+	assert_eq(_palm_pick(TerrainArt.DUNE, north, Vector2i(2, 2), palms).get(&"atlas"), Vector2i(3, 0), "the north edge tile")
+
+
+func test_a_palm_out_on_the_beach_is_on_no_upper_layer() -> void:
+	var rows := PackedStringArray([".....", ".sss.", ".ssd.", ".sss.", "....."])
+	var palms: Array[Vector2i] = [Vector2i(2, 2)]
+	assert_eq(_palm_pick(TerrainArt.DUNE, rows, Vector2i(2, 2), palms), {}, "one dune side is not enough")
+	assert_eq(_palm_pick(TerrainArt.BRUSH, rows, Vector2i(2, 2), palms), {}, "nor the brush")
+	assert_eq(_palm_pick(TerrainArt.SAND, rows, Vector2i(2, 2), palms), _pick(TerrainArt.SAND, rows, Vector2i(2, 2)), "its sand tile is unchanged")
+
+
+## One player, offline: the sandbar's palms in the dune join it; the coast cay's palms with all
+## eight neighbours in the dune take its full tile (found from the layout, so a reshape keeps it).
+func test_a_solo_sandbars_palms_stand_in_their_dune() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	for palm: Vector2i in [Vector2i(23, 31), Vector2i(23, 36), Vector2i(24, 42)]:
+		assert_true(built.palms.has(palm), "%s is a palm" % palm)
+		assert_true(TerrainArt.is_member(TerrainArt.DUNE, palm, built.terrain, built.tide_pools, built.palms), "palm %s is on the dune" % palm)
+		assert_false(TerrainArt.is_member(TerrainArt.BRUSH, palm, built.terrain, built.tide_pools, built.palms), "palm %s is not on the brush" % palm)
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, Vector2i(23, 31), built.terrain, built.tide_pools, built.palms), 7, "(23, 31): beach at its south-east diagonal")
+	var cay: IslandLayout = IslandLayout.build(COAST_CAY)
+	for palm: Vector2i in cay.palms:
+		var around: int = 0
+		for y: int in range(-1, 2):
+			for x: int in range(-1, 2):
+				if (x != 0 or y != 0) and TerrainArt.is_member(TerrainArt.DUNE, palm + Vector2i(x, y), cay.terrain, cay.tide_pools):
+					around += 1
+		if around == 8:
+			assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, palm, cay.terrain, cay.tide_pools, cay.palms), TerrainArt.FULL, "cay palm %s is whole dune" % palm)
+	# How many cay palms stand inside a dune is the layout's business (coast-cay-reshape may move
+	# them); the fixture test above pins the whole-dune rule itself.
 
 
 ## Every layer's tile of every cell of `layout`, by layer and cell.

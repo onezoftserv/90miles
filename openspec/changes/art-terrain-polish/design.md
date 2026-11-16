@@ -273,3 +273,9 @@ Measured values and departures are recorded here as the tasks ship.
 - Rebuilt: only `game/assets/art/terrain/brush.png` changed; `check.py` reports 0 problems.
 - Checks: `tools/art` unit tests OK; import twice clean; smoke 0 problems; GUT 256 scripts, 2343 of 2343 passing.
 - Windowed capture (`capture_terrain.tscn`, cells (17..24, 30..40) at x6): `docs/art-pass/terrain-polish/tr14_west_shore_x6_after.png`. The bush at (21, 36), the middle-right one in wave 1's after capture, is solid.
+
+**C9 (group 2).**
+- `TerrainArt.is_member`, `layer_cells`, `corner_mask`, `tile` and `_counts` take an optional trailing `palms`. On the dune layer a palm cell counts when `PALM_DUNE_SIDES` (3) of its four orthogonal neighbours count by their terrain alone (`_dune_sides`). `TerrainView` passes `built.palms`; `ShoreRule` and every caller that passes nothing keep the terrain-only rule.
+- Measured: sandbar Dune 422 → 425 ((23, 31), (23, 36), (24, 42)); (23, 31) takes mask 7. The coast cay's count is derived in the test as the terrain-only count plus the palms that join, so coast-cay-reshape can move it. The Brush counts are unchanged with the palms.
+- `test_terrain_view.gd` `test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule` passes the palms, so the drawn layers still equal `TerrainArt`'s tiles.
+- Windowed captures at x3, before (left) and after (right): `docs/art-pass/terrain-polish/c9_sandbar_palms_before_after_x3.png` and `c9_cay_north_before_after_x3.png`. The beach pits and notches round the palm bases are gone; a palm cell on a whole dune can now show one of the dune's tuft picks.

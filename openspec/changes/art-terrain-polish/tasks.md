@@ -38,13 +38,13 @@
 
 ## 2. C9: palms count as dune (TR11)
 
-- [ ] 2.1 In `test_terrain_art.gd`, write these tests and see them fail:
+- [x] 2.1 In `test_terrain_art.gd`, write these tests and see them fail:
   - on a fixture, a palm with 3 or 4 dune or scrub orthogonal neighbours is a Dune member and never a Brush member, and a palm with 1 is on neither;
   - notch fixtures give a palm masks 3 and 10;
   - with no `palms` argument, every call gives today's result.
   Add the 1-player test: on the sandbar built for one offline player, palm (23, 31) is a Dune member with mask 7, and (23, 36) and (24, 42) are members. On the coast cay, derive from the layout that every palm whose eight neighbours all count takes Dune mask 15.
-- [ ] 2.2 Add the optional trailing `palms` parameter to `TerrainArt.is_member`, `layer_cells`, `corner_mask` and `tile` (design D1). Pass `built.palms` from `TerrainView`. Update `test_layer_cell_counts_of_the_two_islands` to Dune 425 on the sandbar and to the cay count recomputed from its layout, which is 397 today. Verify that `test_dune_and_scrub_shore_cells_on_the_sandbar_take_their_shore_sheets` and `test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule` pass, and that `ShoreRule` is untouched.
-- [ ] 2.3 Windowed 1-player capture: compare the sandbar's palms and the cay's north dunes with the review's `before/cay_day_north_dunes.png` and `before/cay_palm_pit.png`. Note the result in the build notes.
+- [x] 2.2 Add the optional trailing `palms` parameter to `TerrainArt.is_member`, `layer_cells`, `corner_mask` and `tile` (design D1). Pass `built.palms` from `TerrainView`. Update `test_layer_cell_counts_of_the_two_islands` to Dune 425 on the sandbar and to the cay count recomputed from its layout, which is 397 today. Verify that `test_dune_and_scrub_shore_cells_on_the_sandbar_take_their_shore_sheets` and `test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule` pass, and that `ShoreRule` is untouched.
+- [x] 2.3 Windowed 1-player capture: compare the sandbar's palms and the cay's north dunes with the review's `before/cay_day_north_dunes.png` and `before/cay_palm_pit.png`. Note the result in the build notes.
 
 ## 3. The dune's inland corners (C3's dune part)
 
