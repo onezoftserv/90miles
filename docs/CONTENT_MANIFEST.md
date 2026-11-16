@@ -9,7 +9,7 @@ Tick when the file exists and loads in Godot.
 - [ ] reef_shark · moray_eel · barracuda_school · man_o_war · land_crab · seagull · mosquito_cloud · crocodile · fire_ants · manchineel_tree
 - [ ] bull_shark · stingray · urchin_field · lionfish · remora · jellyfish_bloom · needlefish · sea_snake · hammerhead · sperm_whale
 - [ ] hutia · iguana · feral_dogs · sand_fleas · boa · rats · pelican · scorpion
-- [ ] patrol_boat · shore_soldier · jet_ski · smugglers
+- [ ] patrol_boat · shore_soldier · jet_ski · smugglers (patrol_boat: guardacostas-stealth, with its squad, chase and mid-chain rule from guardacostas-capture; shore_soldier: guardacostas-capture)
 - [ ] birds (4, content-batch-12): galleguito · pajarito · pajaro_bobo · rabihorcado
 - [ ] boss_cutter · boss_old_crocodile · boss_tiger_shark · boss_hurricane (weather) · boss_straits (crossing script)
 
@@ -33,7 +33,7 @@ The grapefruit steak is `toronja.cooks_into`, not a recipe.
 
 ## game/resources/npcs/ (24) — `docs/CHARACTERS.md`
 
-- [ ] important (4): ramon · caridad · yunior · rodriguez
+- [ ] important (4): ramon · caridad · yunior · rodriguez (rodriguez: guardacostas-capture, handwritten in v1)
 - [ ] companions (8): dayana · papo · el_chino · marisol · alfredo · yusnavy · tania · tomas
 - [ ] minor (8): otros_balseros · senora_del_cayo · pescador_miami · loco_radio · cubanos_bahamas · ahogado · jineteras · turista
 - [ ] animals (2): vieja_turtle · dolphin_pod
@@ -41,7 +41,7 @@ The grapefruit steak is `toronja.cooks_into`, not a recipe.
 
 ## game/resources/dialogue/ (handwritten, es + en)
 
-- [ ] minor NPC lines (8 files) · story beats (intro, la_captura, each boss) · endings (5) · quick-chat (8 phrases) · death one-liners (20; `death_one_liners.tres`, draft, `run-end`)
+- [ ] minor NPC lines (8 files) · story beats (intro, la_captura (done: `beat_la_captura`, guardacostas-capture), each boss) · endings (5) · quick-chat (8 phrases) · death one-liners (20; `death_one_liners.tres`, draft, `run-end`)
 - [ ] balsero lore beats (2, content-batch-12): beat_galleguito · beat_pies_secos
 
 ## game/resources/chains/ (9 chains × 2 variants = 18) — `docs/ISLANDS.md`
@@ -63,7 +63,7 @@ The grapefruit steak is `toronja.cooks_into`, not a recipe.
 
 ## game/resources/backgrounds/ (6)
 
-- [ ] pescador · mecanico · medico · maestro · musico · ex_militar
+- [ ] pescador · mecanico · medico · maestro · musico · ex_militar (medico and maestro: stubs from guardacostas-capture, for the persuasion check; the backgrounds change fills them)
 
 ## game/resources/weather/ (11)
 
@@ -90,7 +90,7 @@ Batch 12 also edits existing entries (no new files; do these in the batch that c
 
 - `bottle_note` (+4 entries), `wall_slogan` (+4), `radio_fragment` (+3), `diario_periodo_especial` (+4 pages).
 - `seagull`: codex line and the `pluma_galleguito` counter.
-- `la_captura`: the `almendron_a_bordo` variant state that sets `almendron_hundido`.
+- `la_captura`: the `almendron_a_bordo` variant state that sets `almendron_hundido` (done in guardacostas-capture: the car return).
 - Ending dialogue (`ending_todos`, `ending_los_que_llegamos`, `ending_solo`, `ending_el_nino`, `ending_devuelto`): the galleguito, piling and almendrón lines, gated by flags.
 - Chains: the `almendron` and `tabla` route rows on `coast_village`, `storm_resort`, `mangrove_maze` and `wreck_yachts`, the empty-raft and raft-for-sale `poi_chances`.
 - POI loot: `fishermen_houses` (toronja, camara_bici, tanque_55, botija), `village_dock` (bidon_combustible), `resort_generator` (tanque_55, bidon_combustible, botija), the galley (azucar).

@@ -590,6 +590,28 @@ Recorded while building. Each entry says what moved and why.
   - Boats: `squad_state`, `landing`, `dinghy_t`, `squad_serial` and `squad_call` join the patrol's synced properties. `dinghy_t` is synced at the creatures' 10 Hz, not advanced between syncs by each peer. The dinghy is drawn from it, so a step every 0.1 s is enough.
   - Soldiers are ordinary creatures, so a joiner gets them in the entity spawner's spawn state. The scene's lines are `CaptureScene`'s RPCs. A joiner during the scene is sent the begin and the current line (group 9). Freeing uses the ordinary interact intent, so no client message was added.
   - A dropped captive keeps the flag. `set_downed` no longer enables the drag handle for a captive or clears its soldier's lead, so nobody can drag a dropped captive away. On a rejoin, the identity takes the captive body back, still a captive.
+- **Group 11, fade with distance.** `patrol_boat.tres` gains a third spawn rule: the families MANGROVE, REEF, ROCK and LIGHTHOUSE, DEEP water, count (1, 2), chance 0.3.
+  - A patrol's chance is now rolled from its own stream: the run seed and the island, the same stream its count and spots use. Before, every chance was rolled from the world's constant stream, which would give every run the same mid-chain roll. Every other creature still rolls from the world's stream, and the sandbar and coast rules (chance 1) draw nothing more, so no other spawn changed.
+  - `CreatureSpawner.patrol_stream(run_seed, layout_id)` and `roll_patrol(data, rule, dice, players)` are statics the spawner uses and the test shares.
+  - Over 1,000 run seeds the REEF fixture has boats in **31.6%** of them, each with one or two. The real spawner set up twice from the same seed gives the same boats.
+  - `test_patrol_data.gd`'s "two spawn rules" test now counts three.
+- **Group 12, the cues.**
+  - The rope mark: `BodyMarks` draws a 7×5 braid (`ROPE_PIXELS`, cream on the outline) over every captive on the island, the local player included. It wins over both eyes, and `has_marker` and `marker_rect` include it, so a bubble or the prompt stacks over it.
+  - The prompt: group 7's handle is disabled while a soldier is within 3 tiles, so the picker, and with it the HUD prompt, offers nothing until the soldier leaves. Its words, "Soltar a" and the captive's name, are in `hud_text.tres`, and the hold ring is the handle's 1 s.
+  - `SquadLook` (`game/scenes/creatures/squad_look.gd`, a new `art_view` child of `creature.tscn` beside `PatrolLook`) draws three things, reading the synced state only:
+    - the soldier, as a placeholder body (an olive uniform, a cap, a flashlight glint on its facing side) until the art pass;
+    - the boat's dinghy, as a 9×5 hull `dinghy_t` of the way from the boat to the landing;
+    - the squad's calls: a 3 s bubble over the soldier nearest the landing for the landing and leaving calls, and over the soldier giving chase for a spot call. A call waits up to 2 s for a soldier to show over, because on a client the call can arrive before the soldiers do.
+  - The open eye needed no new code: it reads `spot_shown`, which a soldier's sight fills.
+- **Group 12, the art invariance test.** `test_art_sim_invariance.gd`'s night lap now docks the boat, because its alert is on land. The built run draws the soldiers, the dinghy and a squad call, and every frame still matches the stripped run. The snapshot also holds each creature's squad fields.
+- **Group 12, the two-process run.** `game/tests/manual/guardacostas_capture_run.gd` on UDP 7796, both headless:
+  - the squad lands and both peers see it;
+  - the client is captured, seated and freed by the host's 1 s hold, with the soldiers held away by the hut;
+  - both players are caught, and `la_captura` plays the same five plural lines on both;
+  - the restart lands both on the sandbar.
+
+  Host 14/14, client 10/10, no engine errors. The first try failed only on the run script's own wait, which held the old island node across the restart. It now compares instance ids.
+- **Group 12, the stealth run.** `tests/manual/patrol_run.gd` (the stealth slice's two-process run) clears its world's spawner, so its boat runs the plain alert it checks. Re-run: host 22/22, client 18/18.
 - **Review fixes (before merge).**
   - **A found player was never captured.** A soldier that found a hidden player by its point search started a chase, and the chase broke on the next tick, because the target was hidden. A player crouched by their own fire was therefore safe. A player found by a point search is now exposed: hiding does not break that chase while they stay within `point_search_tiles` of where they were found (`SearchCapture.is_exposed`). A player spotted by sight who then hides still shakes the soldier, so the rejected Bush Hat rule stays rejected. `test_capture_solo.gd`'s fire case now plays on to the capture and to the scene, through the boat's `captured` signal and the spawner's connection to the keeper; no other test had exercised that path. `test_search_capture.gd` gained the found-and-captured and the seen-then-hides cases.
   - **A hauled captive trailed the boat by one tick.** The boat now carries its captives aboard after its move (in `_publish`).
@@ -601,3 +623,4 @@ Recorded while building. Each entry says what moved and why.
 - **References checked (task brief).**
   - Every function design.md cites was found by grep in `reference/` on 2026-11-16, in the file it names. The line numbers differ by up to about 30 lines (design.md calls them approximate): SPD `Mob.java` `Hunting` is at 1358 and `handleUnreachableTarget` at 1397; DCSS `foe_memory` is at `mon-behv.cc` 665, `struggle_against_net` at `traps.cc` 1102, `attempt_escape` at `player.cc` 8704 and `set_random_target` at `mon-movetarget.cc` 697; Brogue's `freeCaptive` is in `Movement.c` and `Items.c`, and `MB_CAPTIVE` in `Architect.c` and `Combat.c`.
   - Don't Starve Together is in `docs/REFERENCE_DST.md`, under "Leashing and aggro" (the visible give-up), "At sea: pirate raids", "Lore in fragments" and the Drowning entry. Ghost Characters is linked there, and Bush Hat is cited by its wiki page name only.
+- **The windowed captures** are in `docs/guardacostas-capture/`. `la_captura_panel.png` comes from `tests/manual/capture_la_captura.tscn`: the scene panel on its longest line, after the card fix. `squad_ashore.png` comes from `tests/manual/capture_squad.tscn`: a solo run by day with the squad landed, showing the three placeholder soldiers, the dinghy on the landing and the landing call in formal Spanish. Both were taken at scale 2 and confirm that the looks draw.

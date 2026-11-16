@@ -223,38 +223,46 @@ How the tests are written:
 
 ## 11. Fade with distance
 
-- [ ] 11.1 Write `game/tests/unit/test_patrol_fade.gd` and verify it fails. Using the REEF fixture, it checks:
+- [x] 11.1 Write `game/tests/unit/test_patrol_fade.gd` and verify it fails. Using the REEF fixture, it checks:
   - 26–34% with patrols over 1,000 seeds, each with one or two boats;
   - the same count on a second set-up from the same seed;
   - no rule for STORM or SHIPWRECK ("Far chain");
   - one player getting the base count.
-- [ ] 11.2 Add the mid-chain rule to `patrol_boat.tres` (design.md §12). Verify the test passes and the stealth spawner tests still pass.
-- [ ] 11.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: it failed to parse on the missing `CreatureSpawner.patrol_stream` and `roll_patrol`, then passed (5 tests: 31.6% of 1,000 seeds have boats).
+- [x] 11.2 Add the mid-chain rule to `patrol_boat.tres` (design.md §12). Verify the test passes and the stealth spawner tests still pass.
+  - Done: the patrol's chance is now rolled from its own run-seed stream. `test_creature_spawner.gd` and the patrol spawner tests pass; `test_patrol_data.gd`'s rule count is now three.
+- [x] 11.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 274 scripts, 2509/2509.
 
 ## 12. Cues, the two-process run and docs
 
-- [ ] 12.1 Write `game/tests/unit/test_capture_cues.gd` with solo, and with host plus client, and verify it fails. It covers the spec's "Capture cues" scenarios:
+- [x] 12.1 Write `game/tests/unit/test_capture_cues.gd` with solo, and with host plus client, and verify it fails. It covers the spec's "Capture cues" scenarios:
   - the rope mark on both peers;
   - the prompt hidden while a guard is near;
   - the landing, spot and leaving calls in Spanish;
   - the open eye filling under a soldier's sight.
-- [ ] 12.2 Implement the cues (design.md §14), with all text in `hud_text.tres`. Verify:
+  - Done: it failed to parse on the missing `SquadLook`, then passed (5 tests, solo and host plus client).
+- [x] 12.2 Implement the cues (design.md §14), with all text in `hud_text.tres`. Verify:
   - the test passes;
   - art-pass's "drawing never changes the simulation" test is extended to the soldier and the dinghy.
-- [ ] 12.3 Run a host and a client as two processes on the sandbar at night, written as `game/tests/manual/guardacostas_capture_run.gd` after `patrol_run.gd`, on a free UDP port. Do not name it `capture_*.gd`, which is the screenshot tooling's prefix. Verify each of these by its log line:
+  - Done: the rope mark in `BodyMarks`, `SquadLook` (the soldier, the dinghy and the calls), and the prompt words in `hud_text.tres`. `test_art_sim_invariance.gd`'s night lap now lands a squad, draws the soldiers, the dinghy and a call, and stays equal frame for frame.
+- [x] 12.3 Run a host and a client as two processes on the sandbar at night, written as `game/tests/manual/guardacostas_capture_run.gd` after `patrol_run.gd`, on a free UDP port. Do not name it `capture_*.gd`, which is the screenshot tooling's prefix. Verify each of these by its log line:
   1. the squad lands and is seen on both;
   2. the client is captured and freed from the dinghy;
   3. both are captured;
   4. the scene plays on both;
   5. the restart lands both on the sandbar.
-- [ ] 12.4 Update the docs with the confirmed numbers, and verify each edit by reading it back against the spec delta:
+  - Done on UDP 7796: host 14/14, client 10/10, no engine errors. Each of the five steps has its log line. The stealth slice's `patrol_run.gd` was re-run with its boat squad-less: host 22/22, client 18/18.
+- [x] 12.4 Update the docs with the confirmed numbers, and verify each edit by reading it back against the spec delta:
   - `docs/GAME_DESIGN.md` §9 (the dinghy, taken captives, the router);
   - `docs/BESTIARY.md` "Guardacostas patrol boat" (the chase) and "Shore squad" (sight, point searches, the dinghy, leaving, taken captives);
   - `docs/ISLANDS.md` "Chains and distance" (a 30% chance);
   - `docs/CHARACTERS.md` Rodríguez (*La captura*'s check and lines);
   - `docs/CONTENT_MANIFEST.md`;
   - `TASKS.md` §6, which ticks "Shore squad, capture, free-a-captive, `la_captura` scene" and keeps `balsero-lore` 9b.1 open for the chain rows.
-- [ ] 12.5 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: `GAME_DESIGN.md` §9, `BESTIARY.md` (the chase and landing on the patrol boat, and the whole "Shore squad"), `ISLANDS.md` (the 30% chance), `CHARACTERS.md` (Rodríguez's *La captura*), `CONTENT_MANIFEST.md` and `TASKS.md` §6 (ticked, with `balsero-lore` 9b.1 kept open). Each was read back against the spec delta.
+- [x] 12.5 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 275 scripts, 2514/2514. Every task in this file is now ticked. After the review fix and the restack: GUT 275 scripts, 2519/2519, and the two-process run again host 14/14, client 10/10.
 
 ## Workflow follow-up
 

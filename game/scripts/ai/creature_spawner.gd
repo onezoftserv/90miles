@@ -136,7 +136,10 @@ func _spawn_rules(phase: Variant) -> void:
 			var key := "%s:%d" % [id, index]
 			if not _matches(rule, phase) or _has_live(key):
 				continue
-			if rule.chance < 1.0 and world.rng.randf() > rule.chance:
+			# guardacostas-capture "Fade with distance": a patrol's chance is rolled from its own stream
+			# (the run seed and the island), so a restarted island rolls the same.
+			var dice: RandomNumberGenerator = _patrol_dice() if data.creature_tags.has(DataEnums.CreatureTag.PATROL) else world.rng
+			if rule.chance < 1.0 and dice.randf() > rule.chance:
 				continue
 			_live[key] = _spawn_rule(data, rule)
 
@@ -222,11 +225,31 @@ func _offshore_spots(data: CreatureData, rule: CreatureSpawnRuleData, count: int
 # boats on an island and different runs differ. Host only, so no peer needs to agree.
 func _patrol_dice() -> RandomNumberGenerator:
 	if _patrol_stream == null:
-		_patrol_stream = RandomNumberGenerator.new()
 		var run_seed: Variant = session.world_state.get("run_seed", 0)
-		var text: String = "%d|%s" % [run_seed if run_seed is int else 0, layout.id]
-		_patrol_stream.seed = text.sha256_text().substr(0, 15).hex_to_int()
+		_patrol_stream = patrol_stream(run_seed if run_seed is int else 0, layout.id)
 	return _patrol_stream
+
+
+## The patrol boats' dice for `run_seed` on the island `layout_id`: seeded with the first 15 hex digits
+## of sha256("<run seed>|<layout id>").
+static func patrol_stream(run_seed: int, layout_id: StringName) -> RandomNumberGenerator:
+	var stream := RandomNumberGenerator.new()
+	stream.seed = ("%d|%s" % [run_seed, layout_id]).sha256_text().substr(0, 15).hex_to_int()
+	return stream
+
+
+## How many boats of `data` one island-wide `rule` (no phases, no anchor) puts on an island for
+## `players`, drawn from `dice` as the spawner draws: the chance first (0 when it fails), then the
+## count, scaled for the party. The fade-with-distance test rolls islands with it.
+static func roll_patrol(data: CreatureData, rule: CreatureSpawnRuleData, dice: RandomNumberGenerator, players: int) -> int:
+	if rule.chance < 1.0 and dice.randf() > rule.chance:
+		return 0
+	var count: int = dice.randi_range(rule.count.x, rule.count.y)
+	if data.party_extra_count_every_n_players > 0:
+		count += floori(float(maxi(players, 1)) / data.party_extra_count_every_n_players)
+	if rule.anchor == CreatureSpawnRuleData.Anchor.NONE:
+		count = floori(count * pow(data.party_rate_mult_per_extra_player, maxi(players, 1) - 1))
+	return count
 
 
 # The rule fits this island (its layout's chain family) and, for a phased rule, the phase.

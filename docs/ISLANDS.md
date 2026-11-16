@@ -11,7 +11,7 @@ Generation: `IslandGenerator` builds a landmass from seeded integer steps (heigh
 | Distance | Chains available | Threat level |
 | --- | --- | --- |
 | Islands 1–2 (coast) | Sandbar, Coast cay | Guardacostas at full strength, reef sharks |
-| Islands 3–5 (mid) | Mangrove, Reef, Rocky key, Lighthouse | Crocodiles, barracuda, tiger shark, fewer patrols |
+| Islands 3–5 (mid) | Mangrove, Reef, Rocky key, Lighthouse | Crocodiles, barracuda, tiger shark, fewer patrols (a 30% chance per island, rolled from the run seed; then as many boats as a coast island) |
 | Islands 6–7 (far) | Storm key, Shipwreck reef, Bahamas family | Hurricane, open water, no patrols |
 | Island 8 (final) | Final approach | The Florida Straits |
 
