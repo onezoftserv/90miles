@@ -37,7 +37,7 @@
       "erase": [],
       "stamp": [2, 14],
       "variants": ["0", "0", "0", "0"],
-      "shore": {"shape": "sand", "inset": 1, "rim": "#323c39"}
+      "shore": {"shape": "sand", "inset": 1, "rim": "#323c39", "fit": {"pick": 1, "fallback_inset": 0, "tuft": "shore_tuft.png"}}
     }
   ],
   "plain": {
@@ -75,7 +75,8 @@
     "land_rows": 9,
     "white": "#ffffff",
     "colour": "#ffffff",
-    "fade": {"from": 3, "colour": "#8fe0f0"}
+    "fade": {"from": 3, "colour": "#8fe0f0"},
+    "corners": {"keep": 2, "colour": "#8fe0f0"}
   },
   "shade": {
     "shape": "sand",

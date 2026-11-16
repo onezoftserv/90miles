@@ -205,6 +205,118 @@ func test_a_shallows_cell_picks_the_shallows_row_and_a_deep_cell_the_deep_row() 
 	assert_gt(_row_light(ramps, shallows_row), deep_light, "the shallows ramp is lighter than the deep one")
 
 
+## art-pass "The deep edge is soft and every cell keeps its step" (art-coast-pass D6, review TR3).
+## The guard reads the bytes SeaMask.soft_channels gives the shader, not the texture (the headless
+## dummy renderer keeps no image). On both islands every water cell's centre, sampled where the
+## shader samples it (moved by the static warp) and cut at 0.5 with the sway at rest, shows its own
+## step, a margin clear of the cut; g never rises above r; every texel is clamped to its own side;
+## and the deep cells beside shallows are graded, not a hard step at the cell border.
+func test_the_soft_deep_edge_keeps_every_water_cells_centre_on_its_step() -> void:
+	var art: TerrainArtData = TerrainArt.data()
+	var deep: int = art.depth_steps[DataEnums.Terrain.DEEP]
+	var shallows: int = art.depth_steps[DataEnums.Terrain.SHALLOWS]
+	var brackish: int = art.depth_steps[DataEnums.Terrain.BRACKISH]
+	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
+		var built: IslandLayout = IslandLayout.build(layout)
+		var size: Vector2i = built.size
+		var bytes: PackedByteArray = SeaMask.depth_bytes(size, built.terrain)
+		var soft: PackedByteArray = SeaMask.soft_channels(bytes, size, TILE)
+		assert_eq(soft.size(), bytes.size() * 2, "%s: two bytes a cell" % layout.id)
+		var wrong: int = 0
+		var thin: int = 0
+		var edges: int = 0
+		var graded: int = 0
+		for y: int in size.y:
+			for x: int in size.x:
+				var cell: Vector2i = Vector2i(x, y)
+				var index: int = y * size.x + x
+				var r: int = soft[index * 2]
+				var g: int = soft[index * 2 + 1]
+				assert_true(g <= r, "%s %s: brackishness %d above shallowness %d" % [layout.id, cell, g, r])
+				assert_true(r <= 114 if bytes[index] == deep else r >= 141, "%s %s: r %d on its own side" % [layout.id, cell, r])
+				assert_true(g >= 141 if bytes[index] == brackish else g <= 114, "%s %s: g %d on its own side" % [layout.id, cell, g])
+				var kind: int = built.terrain.terrain_at(cell)
+				if TerrainArt.depth_step(kind) < 0:
+					continue
+				var centre: Vector2 = (Vector2(cell) + Vector2(0.5, 0.5)) * TILE
+				var seen: Color = SeaShaderChecks.sample(soft, size, TILE, centre + SeaMask.warp_offset(centre))
+				if SeaShaderChecks.row_for(seen, deep, shallows, brackish) != TerrainArt.depth_step(kind):
+					wrong += 1
+					if wrong < 5:
+						fail_test("%s %s (terrain %d): its centre shows another step, r %.3f g %.3f" % [layout.id, cell, kind, seen.r, seen.g])
+				if absf(seen.r - 0.5) < 0.01 or absf(seen.g - 0.5) < 0.01:
+					thin += 1
+				if kind == DataEnums.Terrain.DEEP:
+					for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+						if built.terrain.terrain_at(cell + d) == DataEnums.Terrain.SHALLOWS:
+							edges += 1
+							graded += 1 if r > 0 else 0
+							break
+		assert_eq(wrong, 0, "%s: every water cell's centre keeps its step" % layout.id)
+		assert_eq(thin, 0, "%s: and stays clear of the cut" % layout.id)
+		assert_gt(edges, 20, "%s: has deep cells beside shallows" % layout.id)
+		assert_gt(graded, edges * 9 / 10, "%s: those are graded, so the line rounds the coast's corners" % layout.id)
+
+
+## The warp the shader applies and the one SeaMask mirrors are the same numbers and the same hash,
+## it stays within WARP_PX on each axis, and it bends gently (under half a pixel per pixel), so the
+## line never folds; it is static, a function of the position only.
+func test_the_sea_warp_is_static_gentle_and_mirrored_in_the_shader() -> void:
+	var source: String = SeaShaderChecks.source()
+	# The sway is 0.05 (0.14 before art-coast-pass): with the warp the line moves about 5 px at most.
+	for pair: Array in [["warp_px", SeaMask.WARP_PX], ["warp_period_px", SeaMask.WARP_PERIOD_PX], ["wobble", 0.05]]:
+		var found := RegEx.create_from_string("uniform\\s+float\\s+%s\\s*=\\s*([\\d.]+)" % pair[0]).search(source)
+		assert_not_null(found, "%s is a uniform" % pair[0])
+		if found != null:
+			assert_eq(float(found.get_string(1)), pair[1], "%s matches SeaMask" % pair[0])
+	for word: String in ["2246822507u", "3266489909u", "65535u", "sea_warp(px)"]:
+		assert_true(source.contains(word), "the shader's warp uses %s, as SeaMask does" % word)
+	assert_eq(TerrainArt.mix32(1), 0x514e28b7, "the mix both use")
+	var warp: String = source.substr(source.find("vec2 sea_warp"))
+	assert_false(warp.substr(0, warp.find("}")).contains("TIME"), "the warp is static")
+	var steepest: float = 0.0
+	for y: int in range(-64, 320, 5):
+		for x: int in range(-64, 320, 5):
+			var at: Vector2 = Vector2(x, y)
+			var here: Vector2 = SeaMask.warp_offset(at)
+			assert_true(absf(here.x) <= SeaMask.WARP_PX and absf(here.y) <= SeaMask.WARP_PX, "%s: within the warp" % at)
+			steepest = maxf(steepest, (SeaMask.warp_offset(at + Vector2(1, 0)) - here).length())
+			steepest = maxf(steepest, (SeaMask.warp_offset(at + Vector2(0, 1)) - here).length())
+	assert_lt(steepest, 0.5, "the warp bends less than half a pixel per pixel")
+	assert_gt(steepest, 0.0, "but it does bend")
+
+
+## A sea of one step (the crossing's, all deep) is not blurred: every texel stays deep.
+func test_a_sea_of_one_step_stays_as_it_is() -> void:
+	var deep: int = TerrainArt.data().depth_steps[DataEnums.Terrain.DEEP]
+	var bytes: PackedByteArray = PackedByteArray()
+	bytes.resize(24 * 22)
+	bytes.fill(deep)
+	var soft: PackedByteArray = SeaMask.soft_channels(bytes, Vector2i(24, 22), TILE)
+	assert_eq(soft.size(), bytes.size() * 2)
+	assert_eq(soft.count(0), soft.size(), "every texel is deep, both channels 0")
+
+
+## One player, offline: a solo sandbar's sea holds the softened mask, and a shallows cell beside a
+## deep one still shows the shallows row at its centre.
+func test_a_solo_sandbar_sea_holds_the_soft_mask() -> void:
+	var island := _island(SANDBAR)
+	var view := _view(island)
+	assert_eq(view.sea_channels, SeaMask.soft_channels(view.depth_bytes, view.grid_size, TILE), "the material's mask is the softened one")
+	var art: TerrainArtData = TerrainArt.data()
+	var shallows: int = art.depth_steps[DataEnums.Terrain.SHALLOWS]
+	var found: bool = false
+	for cell: Vector2i in island.terrain.cells:
+		if island.terrain.terrain_at(cell) != DataEnums.Terrain.SHALLOWS or island.terrain.terrain_at(cell + Vector2i.LEFT) != DataEnums.Terrain.DEEP:
+			continue
+		var centre: Vector2 = (Vector2(cell) + Vector2(0.5, 0.5)) * TILE
+		var seen: Color = SeaShaderChecks.sample(view.sea_channels, view.grid_size, TILE, centre + SeaMask.warp_offset(centre))
+		assert_eq(SeaShaderChecks.row_for(seen, art.depth_steps[DataEnums.Terrain.DEEP], shallows, art.depth_steps[DataEnums.Terrain.BRACKISH]), shallows, "%s keeps the shallows row" % cell)
+		found = true
+		break
+	assert_true(found, "the sandbar has a shallows cell with deep water to its west")
+
+
 func _row_light(ramps: Image, row: int) -> float:
 	var total: float = 0.0
 	for shade: int in ramps.get_width():

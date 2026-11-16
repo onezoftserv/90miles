@@ -77,6 +77,8 @@ layout_mode = 2
 meter = 6
 label_text = "Salud"
 fill_color = Color(0.36, 0.75, 0.36, 1)
+shows_losses = true
+glows_on_drain = true
 
 [node name="Bleeding" type="Label" parent="Panel/Bars"]
 visible = false
