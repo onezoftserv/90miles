@@ -13,14 +13,16 @@ On 2026-11-14 the owner asked: "can i go from island 2 to island 3 as soon as i 
   - Items are refused at sea (the owner kept that rule on 2026-11-15, crossing-gameplay Q5).
   - The next island has its own coconuts.
 - **Leaving early loses nothing that lasts.** Experiencia gives a point per island reached, not per island used.
-- **Raft damage stops only careless riders.** With crossing-gameplay (being built now):
-  - An idle rider arrives with about 48 and a raft that breaks 27 % of the time, and their next crossing ends intact only 31 % of the time.
-  - An attentive rider arrives with about 89 and can chain three crossings on one raft with 95 % intact and about 70 left.
-  - So a fix built only on raft damage changes nothing for a good player.
+- **Raft damage stops only careless riders.** With crossing-gameplay (being built now), simulated with an assumed rider skill model:
+  - An idle rider's raft breaks on 27 % of 75 s crossings, and the rest arrive with about 46. Relaunched at once, under a third of those reach the next island intact.
+  - An attentive rider arrives with about 86–89 and can chain three crossings on one raft with 95 % intact and about 70 left.
+  - In the owner's own case, the coast cay to island 3, a stop lifts an attentive rider's next crossing from 98.7 % intact to 100 %, and the coast cay holds no tarp. So a fix built only on raft damage changes almost nothing for a good player.
 
 ## What Changes
 
 The design is **"Parar paga" (stopping pays)**. Sailing on at once stays legal, as diving down stairs stays legal in Shattered Pixel Dungeon, Brogue and DCSS. The stop is where the raft is mended and fitted out from what the island holds, and the fittings stay on the raft for every later crossing.
+
+Said plainly: with the recommended option, a skilled rider can still skip every island until companions, texts and NPCs give islands more pull. The owner's Q1 offers the one lever that bites at full skill, **beaching wear** (each arrival costs the beached raft 15, so even an expert mends every second or third island). It is not recommended here because it changes crossing "Arrival", which balsero-lore also modifies, and every arrival test.
 
 - **Mending ashore.**
   - A built raft (beached after a crossing, or built and not yet launched) can be mended: 1 driftwood and 1 rope give +20 integrity after 10 s of work, or 5 s for a Mecánico, never above the raft's maximum. The mend repeats.
@@ -28,7 +30,7 @@ The design is **"Parar paga" (stopping pays)**. Sailing on at once stays legal, 
   - Data: `game/resources/recipes/raft_mend.tres` (`VESSEL_REPAIR`).
 - **Raft fittings** (`VESSEL_UPGRADE` recipes, one of each per raft). Each stays on the raft while it is intact, through the crossing and the beaching on the next island, and is lost when the raft breaks:
   - *Clavazón* (4 nails, ITEMS.md "reinforce raft"): +20 to the maximum and +20 now. The coast cay's observation post holds exactly 4 nails.
-  - *Defensas* (1 inner tube and 1 rope, ITEMS.md "raft fender"): rocks and debris that hit, including the reef line, take half.
+  - *Defensas* (1 inner tube and 1 rope, ITEMS.md "raft fender"): rocks and debris that hit, including the reef line, do three quarters of their damage. That keeps an idle rider's loss near crossing-gameplay's approved target (design.md D3).
   - *Toldo* (1 tarp and 2 driftwood): the deck is shade for riders aboard, so the sun factor on thirst stops and heat falls. Without it, a midday crossing brings sunstroke at about 67 s whatever the rider does.
 - **The raft shows its state.**
   - The raft's prompt adds its integrity, its maximum and its fittings, and a warning line below half its maximum.
@@ -70,11 +72,10 @@ None.
   - Raft jobs are shared
   - A launch ends an unfinished job
   - The raft's state on every peer
-- `crossing`, all ADDED, with no existing requirement modified, because crossing-gameplay and balsero-lore already modify "Raft integrity on the crossing", "Arrival" and "Joining during a crossing":
-  - Raft maximum and fittings at sea
-  - Defensas at sea
-  - Toldo at sea
-  - Fittings ride with the raft
+- `crossing`:
+  - ADDED: Raft maximum and fittings at sea, Defensas at sea, Toldo at sea, and Fittings ride with the raft.
+  - MODIFIED: Vessel look on the crossing (the share is of the vessel's maximum, which a fitted raft raises). No in-flight change modifies it.
+  - Not touched: "Raft integrity on the crossing", "Arrival" and "Joining during a crossing", which crossing-gameplay and balsero-lore already modify.
 - `inventory-hud`, all ADDED:
   - The raft's prompt shows its state
   - Raft work list
@@ -84,9 +85,9 @@ None.
 
 - **Data.** New files:
   - `game/resources/recipes/raft_mend.tres`, `raft_clavazon.tres`, `raft_defensas.tres` and `raft_toldo.tres`.
-  - `RecipeData` gains `vessel_modifiers: Array[ModifierData]` (scope VESSEL).
+  - `RecipeData` gains `vessel_modifiers: Array[ModifierData]` (scope VESSEL). A `VESSEL_UPGRADE`'s existing `integrity_delta` (the bonus to the maximum) carries the clavazón.
   - `ModifierData.Stat` gains `VESSEL_HAZARD_DAMAGE` and `VESSEL_DECK_SHADE`, appended to the end of the enum.
-  - `VESSEL_MAX_INTEGRITY` already exists.
+  - The four vessel recipes set `station = NONE`, so the workbench list never shows them.
   - New prompt ids are appended to `hud_text.tres`.
 - **Code:**
   - `game/scenes/structures/raft.gd` and `.tscn`: a maximum, fittings, a work point and a job.

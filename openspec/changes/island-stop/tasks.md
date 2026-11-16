@@ -12,9 +12,9 @@ Nothing here is built until the owner answers design.md "Owner decisions". The t
 - [ ] 1.1 Change the data scripts and the content check:
   - add `vessel_modifiers: Array[ModifierData]` to `game/scripts/data/recipe_data.gd`;
   - append `VESSEL_HAZARD_DAMAGE` and `VESSEL_DECK_SHADE` to the end of `ModifierData.Stat`;
-  - teach the content check that a `VESSEL_REPAIR` recipe needs `integrity_delta` > 0 and that a `VESSEL_UPGRADE` recipe needs `integrity_delta` or a vessel-scoped modifier.
-  Verify with a new `game/tests/unit/test_vessel_recipes.gd`: it accepts a valid repair recipe and refuses one with neither field, and existing enum values keep their numbers.
-- [ ] 1.2 Add `game/resources/recipes/raft_mend.tres`: "Remiendo", 1 driftwood and 1 rope, 10 s, Building ×2, `integrity_delta` 20, with Spanish and English names and the D9 draft description. Verify that the content check reports no errors.
+  - teach the content check that a `VESSEL_REPAIR` recipe needs `integrity_delta` > 0, that a `VESSEL_UPGRADE` recipe needs `integrity_delta` or a vessel-scoped modifier, and that both use `station = NONE` and `build_site = false`.
+  Verify with a new `game/tests/unit/test_vessel_recipes.gd`: it accepts a valid repair recipe, refuses one with neither field, refuses one on the workbench station, and existing enum values keep their numbers.
+- [ ] 1.2 Add `game/resources/recipes/raft_mend.tres`: "Remiendo", 1 driftwood and 1 rope, 10 s, Building ×2, `integrity_delta` 20, `station = NONE`, with Spanish and English names and the D9 draft description. Verify that the content check reports no errors and that the workbench list on the sandbar still reads only "Fogata" and "Recogedor de lluvia".
 - [ ] 1.3 Update the crafting-inventory test for "A solo player crafts every recipe" so that a vessel recipe is crafted at a built raft. Verify that the test passes with `raft_mend` in the catalog.
 
 ## 2. The mend on the island (PR 1)
@@ -61,23 +61,24 @@ Nothing here is built until the owner answers design.md "Owner decisions". The t
 
 ## 3. The fittings (PR 2, after crossing-gameplay)
 
-- [ ] 3.1 Add the fitting recipes, with Spanish and English names and the D9 draft descriptions:
-  - `raft_clavazon.tres`: 4 nails, 20 s, `VESSEL_MAX_INTEGRITY` ADD 20 and `integrity_delta` 20;
-  - `raft_defensas.tres`: 1 inner tube and 1 rope, 10 s, `VESSEL_HAZARD_DAMAGE` MULTIPLY 0.5;
+- [ ] 3.1 Add the fitting recipes, each with `station = NONE` and Spanish and English names and the D9 draft descriptions:
+  - `raft_clavazon.tres`: 4 nails, 20 s, `integrity_delta` 20, raising the maximum and integrity by the same amount (D3), with no `VESSEL_MAX_INTEGRITY` modifier;
+  - `raft_defensas.tres`: 1 inner tube and 1 rope, 10 s, `VESSEL_HAZARD_DAMAGE` MULTIPLY 0.75 (or the factor the owner picks in Q3);
   - `raft_toldo.tres`: 1 tarp and 2 driftwood, 15 s, `VESSEL_DECK_SHADE` SET 1.
   Each is refused once the raft has it. Verify with 1-player tests:
   - "Solo nails the raft on the coast cay" (70 of 100 → 90 of 120);
   - "Solo puts a toldo on the sandbar raft";
   - "A fitting only once";
   - "Fittings from data", which loads all four recipes with no content-check errors.
-- [ ] 3.2 Bring a raft's maximum to sea: the crossing starts at the beached integrity and maximum, planks stop at the maximum, and the frame's look uses the share of the maximum. Verify with 1-player tests:
+- [ ] 3.2 Bring a raft's maximum to sea: the crossing starts at the beached integrity and maximum, planks stop at the maximum, and the frame's look uses the share of the maximum (crossing "Vessel look on the crossing", modified). Verify with 1-player tests:
   - "Solo launches a nailed raft" (90 of 120, then 60 after a tied squall);
   - "A plank stops at the maximum";
-  - "The look follows the maximum".
+  - "The look follows a fitted raft's maximum";
+  - the existing car and board look tests still pass.
 - [ ] 3.3 Apply `VESSEL_HAZARD_DAMAGE` to rocks and debris, the reef line's rocks included, leaving leaks, squalls and sharks unchanged. Verify with 1-player tests:
-  - "Solo rock on the defensas" (80);
+  - "Solo rock on the defensas" (70);
   - "A squall is unchanged" (70);
-  - "Debris on the defensas" (97.5 and a leak).
+  - "Debris on the defensas" (96.25 and a leak).
 - [ ] 3.4 Make the toldo shade the deck: mark the crossing's deck cells as shaded on its `GridTerrain` when the vessel has `VESSEL_DECK_SHADE`. Verify with 1-player tests:
   - "Solo midday crossing under the toldo" (11:00, calm, 75 s: heat 0, thirst 72.5);
   - "The same crossing without the toldo" (thirst 65, sunstroke).

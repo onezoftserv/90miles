@@ -58,6 +58,8 @@ Three crossings back to back by day cost 45 thirst and 11 hunger and nothing els
 
 "Handles a beat" means the rider dodges a rock or debris in its lane, threads the reef gap, shoos the fin and grabs a plank. A plugged leak costs 1.5. The 90–120 s legs use the coast weights, because the mid weights do not exist. Scripts and logs are in the shared notes folder, `island-stop-baseline/`, and are not committed.
 
+The skill model is an assumption, not a measurement.
+
 The table gives, for each crossing (leg), the share of rafts still intact and the mean integrity they have left.
 
 | Rider | Leg 1 (75 s) | Leg 2 (75 s) | Leg 3 (75 s) |
@@ -71,7 +73,9 @@ A coast leg (60–90 s) followed by two 90–120 s legs gives nearly the same fi
 
 ### What a stop on the coast cay buys for the next 75 s crossing
 
-| Rider (arrives with) | Relaunch at once | Two mends (+40) | Mended to 100 | 100 + clavazón | + clavazón + defensas |
+Here the first leg is a 60–90 s coast crossing from the sandbar, so the rafts that arrive intact come in a little higher than after the 75 s leg above: 48 rather than 46 for idle, 89 rather than 86 for attentive. The defensas column uses a factor of 0.5; see Q3 for 0.75.
+
+| Rider (arrives with) | Relaunch at once | Two mends (+40) | Mended to 100 | 100 + clavazón | + clavazón + defensas (×0.5) |
 | --- | --- | --- | --- | --- | --- |
 | Idle (48) | 31 % intact | 59 % | 73 % | 85 % | 97 % |
 | Half (73) | 85 % | 96 % | 97 % | 99 % | 100 % |
@@ -79,21 +83,35 @@ A coast leg (60–90 s) followed by two 90–120 s legs gives nearly the same fi
 
 On a 90–120 s next crossing, idle goes from 17 % at once to 83 % fully fitted.
 
+### Beaching wear, if the owner wants every island to cost a stop (Q1(b))
+
+The idea: each arrival costs the beached raft 15, whatever the rider did, and the party never stops to mend. The table gives the share still intact on each island's beach and the mean integrity there.
+
+| Rider | Island 2 | Island 3 | Island 4 | Island 5 |
+| --- | --- | --- | --- | --- |
+| Attentive, no wear | 99.9 %, 86 | 98.3 %, 76 | 94.6 %, 69 | 89.5 %, 64 |
+| Attentive, wear 15 | 99.7 %, 71 | 92.0 %, 53 | 76.3 %, 41 | 54.3 %, 34 |
+| Expert, wear 15 | 100 %, 75 | 97.7 %, 59 | 90.0 %, 47 | 74.6 %, 40 |
+
+With wear, an attentive rider has to mend about once per island, and an expert every second or third island.
+
 ### Reading
 
 - Raft damage already makes careless riders stop: an idle relaunch is a coin toss at best.
-- The attentive rider loses nothing by diving, apart from the fittings' margin on later, harsher legs.
+- **The attentive rider loses almost nothing by diving.** In the owner's own case, the coast cay to island 3, a stop lifts that rider's next crossing from 98.7 % intact to 100 %, and the coast cay has no tarp for a toldo. With option (a), a skilled rider can skip every island by design. Only Q1(b) bites at full integrity.
 - The skill-independent costs are the midday sun and the thirst clock, and both are fixed by the stop: shade, coconuts and the lagoon.
 - The design therefore keeps diving legal and makes the stop pay twice:
   - in safety now, through the mend;
   - in a better raft for every later crossing, through the fittings, including the toldo that takes the sun off.
+- The pull that would hold a skilled player on every island is in the full design but not built: companions (the endings count who you brought), found texts and NPCs. Until they exist, Q1(b) is the one lever that makes a good player stop now.
 
 ## Options weighed
 
 Each option from the brief, with its solo path and the verdict.
 
 1. **A beached raft needs repairs before it can sail.**
-   - *As a hard gate* ("below 50, mend first"): a solo player on the final sandbar (6 driftwood, no rope) or on an island already stripped could be stranded, so a waiver rule would be needed. Offered as Q1(c), not recommended.
+   - *As a hard gate* ("below 50, mend first"): a solo player on the final sandbar (6 driftwood, no rope) or on an island already stripped could be stranded, so a waiver rule would be needed. Offered as Q1(d), not recommended.
+   - *As beaching wear* (each arrival costs 15, then mend): the one lever that bites at full integrity, with numbers above. It never strands anyone, because there is no gate. It changes crossing "Arrival" ("beached with its remaining integrity" and its scenarios), which balsero-lore also modifies, plus every arrival test. Offered as Q1(b).
    - *As the mend with no gate:* recommended (D1, D2). Solo: one player mends alone.
 2. **Relaunch costs a supplies check** (water and food aboard).
    - Items are refused at sea (inventory-hud D11, which the owner kept on 2026-11-15, crossing-gameplay Q5). A stowed larder that the raft hands out works around that rule in spirit.
@@ -133,7 +151,12 @@ An intact raft can still launch at once. The prompt shows the raft's state and w
 
 **Why:** SPD, Brogue and DCSS all allow the dive and price it in missed loot. A gate needs a waiver for every thin island (the final sandbar, a stripped coast cay, a party scaled to ×0.8), and every waiver is a solo trap waiting to be found.
 
-*Alternatives:* Q1(b), re-lash before relaunch, and Q1(c), a seaworthy line at 50.
+**Said plainly:** with this decision, a skilled rider can skip every island today. The stop's later pull, companions, texts and NPCs, is not built yet.
+
+*Alternatives:*
+- Q1(b), beaching wear of 15 per arrival. It bites at full skill and modifies crossing "Arrival".
+- Q1(c), re-lash before relaunch.
+- Q1(d), a seaworthy line at 50.
 
 ### D2. The mend
 `raft_mend.tres` (`VESSEL_REPAIR`) takes 1 driftwood and 1 rope and 10 s of work (Building, ×2 for a Mecánico), and gives `integrity_delta` 20, never above the maximum.
@@ -149,17 +172,35 @@ An intact raft can still launch at once. The prompt shows the raft's state and w
 - Driftwood only (Q2(c)): it makes rope worthless on the stop.
 
 ### D3. Fittings are vessel-upgrade recipes with vessel modifiers
-`RecipeData` gains `vessel_modifiers: Array[ModifierData]`, applied with scope VESSEL. `ModifierData.Stat` gains two values, appended to the end of the enum so existing values keep their numbers:
+A `VESSEL_UPGRADE`'s `integrity_delta` already means "bonus to max integrity" (`recipe_data.gd`). This change adds one rule to it: the same amount is added to the raft's integrity when the fitting is done, so a fitting never makes a raft look more worn. That is the whole of the clavazón.
+
+For effects other than the maximum, `RecipeData` gains `vessel_modifiers: Array[ModifierData]`, applied with scope VESSEL. `ModifierData.Stat` gains two values, appended to the end of the enum so existing values keep their numbers:
 - `VESSEL_HAZARD_DAMAGE`: multiplies a rock's or a debris's integrity loss.
 - `VESSEL_DECK_SHADE`: SET 1 marks the deck as shade.
 
-`VESSEL_MAX_INTEGRITY` exists already. The three fittings:
+`VESSEL_MAX_INTEGRITY` is left for keepsakes such as the *Nudo del pescador*. The three fittings:
 
 | Id | Name | Inputs | Work | Effect |
 | --- | --- | --- | --- | --- |
-| `raft_clavazon` | Clavazón | 4 nails | 20 s | `VESSEL_MAX_INTEGRITY` ADD 20, and `integrity_delta` 20 |
-| `raft_defensas` | Defensas | 1 inner tube, 1 rope | 10 s | `VESSEL_HAZARD_DAMAGE` MULTIPLY 0.5 |
+| `raft_clavazon` | Clavazón | 4 nails | 20 s | `integrity_delta` 20 (maximum and integrity) |
+| `raft_defensas` | Defensas | 1 inner tube, 1 rope | 10 s | `VESSEL_HAZARD_DAMAGE` MULTIPLY 0.75 |
 | `raft_toldo` | Toldo | 1 tarp, 2 driftwood | 15 s | `VESSEL_DECK_SHADE` SET 1 |
+
+**Station.** The four vessel recipes, the mend included, set `station = NONE` and `build_site = false`, so the workbench list never shows them (the default station is WORKBENCH). The raft list picks them by output kind (`VESSEL_REPAIR`, `VESSEL_UPGRADE`).
+
+**Why defensas at 0.75 and not 0.5.** crossing-gameplay's difficulty target, approved on 2026-11-15 (its Q8(a)), is "idle about 30 left" on a bare raft. Fittings keep an idle rider much safer, and the factor sets how much.
+
+Idle 75 s crossing, from a raft mended to 100 (with the clavazón, 120):
+
+| Raft | Intact | Mean left, broken counted as 0 |
+| --- | --- | --- |
+| Bare | 74 % | 34 |
+| Defensas ×0.75 | 83 % | 39 |
+| Clavazón | 86 % | 50 |
+| Clavazón and defensas ×0.75 | 93 % | 57 |
+| Clavazón and defensas ×0.5 | 98 % | 66 |
+
+At 0.75 an idle rider still loses about 63 of 120, close to the bare raft's 66, so paying attention matters as much as before. At 0.5 the loss drops to 54. Q3 lets the owner choose.
 
 Each fitting goes on a raft once. `requires_upgrade_ids` stays free for later chains, such as a mast before a sail.
 
@@ -262,17 +303,19 @@ The specs follow (a) on every question. Two dialogs:
 ### Dialog 1: the core
 
 1. **Can an intact raft still sail on at once?**
-   a. *Recommended:* yes, and stopping pays. No gate: the mend and the fittings are the reasons to stay, and the prompt shows the raft's state, with a warning below half. Solo: nothing can strand one player.
-   b. Re-lash first. Every beached raft needs 1 rope and 10 s before it can launch again: a short forced stop, waived on an island with no rope left so a solo player is never stuck.
-   c. A seaworthy line. Below 50 the raft cannot launch until mended to 50, waived where the island holds no driftwood or rope (the final sandbar, a stripped cay).
+   a. *Recommended:* yes, by design. No gate: the mend and the fittings are the reasons to stay, and the prompt shows the raft's state, with a warning below half. Said plainly: a skilled rider can skip every island until companions, texts and NPCs give islands more pull. In the owner's coast cay case, a stop lifts an attentive rider from 98.7 % to 100 % intact. Solo: nothing can strand one player.
+   b. Beaching wear. Each arrival costs the beached raft 15, whatever the rider did, so an attentive rider mends about once per island and an expert every second or third: without mending, island 3 is reached at about 53 and island 5 at about 34, 54 % intact. No gate, so solo-safe. It modifies crossing "Arrival" (which balsero-lore also modifies) and the arrival tests.
+   c. Re-lash first. Every beached raft needs 1 rope and 10 s before it can launch again: a short forced stop, waived on an island with no rope left so a solo player is never stuck. Flotsam rope makes it cheap for a good rider.
+   d. A seaworthy line. Below 50 the raft cannot launch until mended to 50, waived where the island holds no driftwood or rope (the final sandbar, a stripped cay). It does not bind a rider who arrives above 50.
 2. **What a mend costs.**
    a. *Recommended:* 1 driftwood and 1 rope for +20, 10 s (5 s for a Mecánico).
    b. 2 driftwood and 1 rope for +30, 20 s. Uses less rope, but costs the coast cay its fire.
    c. Driftwood only: 1 for +10, 5 s.
-3. **Fittings in this change.**
-   a. *Recommended:* all three. Clavazón (4 nails: +20 to the maximum), defensas (tube and rope: rocks and debris do half) and toldo (tarp and 2 driftwood: the deck is shade). All are buildable by one player from the sandbar and coast cay.
-   b. Clavazón only: data plus the maximum, no new crossing rule.
-   c. None now: the mend only, fittings later.
+3. **Fittings in this change**, against crossing-gameplay's approved target (idle about 30 left on a bare raft; here a bare idle raft keeps 34, 74 % intact).
+   a. *Recommended:* all three, defensas at ×0.75. Clavazón (4 nails: +20 to the maximum and to integrity), defensas (tube and rope: rocks and debris do three quarters) and toldo (tarp and 2 driftwood: the deck is shade). An idle rider on a fully fitted raft keeps 57, 93 % intact, losing about what a bare raft loses. All are buildable by one player from the sandbar and coast cay.
+   b. All three, defensas at ×0.5: idle fully fitted keeps 66, 98 % intact, so attention matters less.
+   c. Clavazón only: data plus the maximum, no new crossing rule. Idle keeps 50, 86 % intact.
+   d. None now: the mend only, fittings later.
 4. **How a player works on the raft.**
    a. *Recommended:* a work point on the raft's land side opens the raft's list of mends and fittings, like the bench's list, and a chosen job takes deposits and work like a build site. Launching stays a 1 s hold on the raft.
    b. One list: E on the raft opens a list with "Zarpar" first, then mends and fittings. Launching becomes two presses.
@@ -296,7 +339,7 @@ The specs follow (a) on every question. Two dialogs:
 ## Risks / Trade-offs
 
 - [An attentive diver still dives] → Accepted and measured: diving is the skill reward, and its price is the fittings' margin on harsher legs. Companions, texts and NPCs (later changes) add more reasons to stay.
-- [Fittings make crossings too easy] → A fully fitted raft keeps an idle rider 97 % intact at 75 s, against crossing-gameplay's bare-raft target of about 30 left. Fittings cost a stop and materials. If the playtest disagrees, the factors are data.
+- [Fittings make crossings too easy] → At ×0.75, an idle rider on a fully fitted raft keeps 57 of 120 (93 % intact) and loses about what a bare raft loses (D3). Fittings cost a stop and materials, the owner picks the factor in Q3, and the factors are data if the playtest disagrees.
 - [Two interactables on a small raft] → The work point sits on the land-side neighbour cell, and the picker takes the nearest. Tests cover both prompts from each side.
 - [Collisions with work in flight] →
   - crossing-gameplay touches the crossing's hit code and the snapshot, so PR 2 waits for it.
