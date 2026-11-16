@@ -1,0 +1,160 @@
+# Design
+
+## Context
+
+See proposal.md for why. The review that found these problems, with root causes, measurements and before captures, is `docs/art-pass/review-2026-11-14/DESIGN_PASS.md` (it lands with art-coast-pass): section 2.3 (SP1–SP5, SP8–SP10), section 2.4 (PR1), section 3 "Wave 3: sprites" (C8, C19–C22, C24, C25) and section 5 (artboards A8–A10, A20, A21). Captures named "AR/…" below are in the review's scratchpad folder, `C:/Users/liann/AppData/Local/Temp/claude/3e391225d1d53c33/033b02a6-abc6-4589-bc32-d2c7f6771443/scratchpad/art_review/`; task 0.2 copies the ones this change compares against into the repo, because that folder is temporary.
+
+How the sprites are made and drawn today:
+- **Players.** `tools/art/compose.py` builds one 320×128 sheet per look part (11 parts in `look_parts.json`) on the frame layout of `poses.py`. Every made cell (crouch, swim, downed, dead) is a pure pixel remap of a walk cell, so applying a rule per layer and compositing equals compositing and applying it (`test_each_rule_per_layer_then_composited_equals_the_rule_on_the_composite`). `PlayerLook` (`scenes/art/player_look.gd`, children Shadow, Sprite, Ripple) picks the pose through `PlayerPose` (`scripts/art/player_pose.gd`). While swimming, `player_look.gdshader` turns the frame's own row at the water line to foam white and fades the next 4 rows through `art_common.gdshaderinc` (`art_on_ripple`, `art_water_alpha`), which `waterline.gdshader` shares for the shark and the deck.
+- **Creatures.** `tools/art/creatures.py` builds each sheet in `creature_sheets.json` from pack rects and hand sources in `tools/art/fixes/creatures/`. The `_frames.tres` files name the animations. `CreatureLook` (`scenes/creatures/creature_look.gd`) centres the frame on the creature, places its feet by `CreatureArtEntry` (`foot_px`, `air_lift_px`, `water_line_px`) and cuts water creatures with `waterline.gdshader`. The shark sheet is 160×16 (five 32×16 side cells), the crab 96×16 (six 16×16 cells, every frame 16 px wide), the gull 128×48 (16×16 cells, idle and move per facing).
+- **Crossing.** `crossing.tscn`: Sea at z −40, Deck and Boards at z −20, riders at z 0. Today `CreatureThreats` shows the shark at `deck_center() + SHARK_OFFSET_PX` (16, 0), inside the 64×32 deck.
+
+What is changing beside this change: crossing-gameplay (branch `claude/crossing-gameplay-53b440`, owner-approved, not merged) gives the shark a 5 s tell. `CreatureThreats.warn` spawns it 1 tile off the side the pass names and keeps it there until the strike; a `RescuePoint` kind SHOO follows the fin; at the strike the shark moves beside its victim or the hit deck (its tasks 7.2). It also adds `CrossingHazards` at z −30. art-terrain-polish adds scrub variants (C10) and darker shallows (C7).
+
+Constraints:
+- Art never changes the simulation: no art node writes a synced value, and no synced property is added (`test_art_sim_invariance`).
+- Only `tools/art/` recipes and hand overlays, written with `png.py`, never Pillow. The packs stay read-only. Master palette only, 1 px outlines, nearest filtering.
+- Frame budget: at most 4 unique frames per creature animation, at most 12 fps, at most 48 unique 32×32 frames per character (art-pass "Frame budget").
+
+## Goals / Non-Goals
+
+**Goals:**
+- Fix each sprite at its source (the recipe, the pose rule, the hand source), so every look part and every peer follows.
+- Pin each fix with a test that fails on today's art.
+- Keep the shoo point, the bite reach and every other host rule exactly where crossing-gameplay puts them.
+
+**Non-Goals:**
+- C23 vessels (waterline wobble, the raft's 3/4 redraw, the car's fins and drums, the wider board).
+- SP11 (crouch lean, run dust) and SP12 (the occlusion outline for a player under the hut roof).
+- C21's move of the shark's spawn south of the deck, and C21's drawn `idle_drift_px` (see D3).
+- Bush fronts for creatures. Only players hide in scrub.
+- The night crab's visibility, which is lighting (art-mood-pass).
+
+## Decisions
+
+### Crossing draw order (shared with art-mood-pass)
+
+| z | What | Owner |
+|---|---|---|
+| −40 | Sea | today |
+| −38 | Crests | art-mood-pass |
+| −35 | Wake | art-mood-pass |
+| −30 | `CrossingHazards` (rocks, debris, flotsam, leaks) | crossing-gameplay |
+| −21 | A swimmer north of a drawn deck (D2) | this change |
+| −20 | Deck, Boards | today |
+| 0 | Riders, swimmers elsewhere and the fin, y-sorted | today |
+
+### D1. Swim bob and ripple ring (C19, C20; SP3, SP2)
+- **The bob.** `SWIM_FROM` goes from (1, 4) to (1, 3). Walk frames 1 and 4 are both high-step frames, so today the two swim cells are the same above the line. Frames 1 and 3 differ by a 1 px bob above the line, from the source art, with no new pixels. The swim head anchor (−16 for the balsero, `BALSERO_ANCHORS`) is re-measured and must not change; if it does, the build stops and records why.
+- **The ring.** `game/assets/art/fx/swim_ring.png`: 3 frames of about 20×5, a dashed oval in #ffffff and #cbdbfc, each frame shifting the dashes along the oval. It is drawn by a new recipe, `tools/art/fx.py` with `fx.json` (png.py only, colours through `palette.nearest`), with an own-work block in `game/assets/art/fx/License.txt`. `swim_ring.tres` plays it at 4 fps.
+- **The node.** `Look/SwimRing`, an AnimatedSprite2D after Shadow and before Sprite, centred on the feet line where the cut lies. `PlayerPose.shows_swim_ring(pose)` is true for SWIM and FLOAT only. The dive ring (`Look/Ripple`) is unchanged.
+- **The cut.** `player_look.gdshader` drops the foam row and the fade: rows above the line are opaque, rows at and below it are clear. `art_common.gdshaderinc` is untouched, so the shark and the deck keep their cut. Any bend of the line uses the node-local y passed from `vertex()`, never UV (`test_the_water_line_cuts_on_a_node_local_y_never_on_uv`). The hurt blink keeps working on the cut frame; the ring is the water's, so it does not blink.
+- **Contrast.** "Actors stand out from the ground" counts a swimmer's ripple. The swimmer contrast test (`test_swimmers_stand_out_on_shallows_and_deep`) counts the ring's pixels instead of the white row, on today's shallows and on art-terrain-polish C7's darker shallows if that has landed.
+- **Budget.** 24 + 2 (dive) + 3 (ring) stays under the 48-frame budget (`test_the_composed_look_keeps_the_frame_budget_with_the_ripple`).
+- **Rejected:** DCSS's submerged split (`tilebuf.h` `SubmergedTileBuffer`, used by `tiledgnbuf.h`), which is today's straight cut with a translucent lower half: it reads as a box. Also rejected: keeping the cut and only shortening or tinting the white row (Q6 (b)).
+
+### D2. A swimmer north of the deck goes under it (C22; SP5)
+- `PlayerLook.step` sets Look's `z_index` to −21 when all three hold, and back to 0 otherwise:
+  1. the pose is wet (SWIM or FLOAT);
+  2. the body rides a running crossing with a drawn deck or board (not sunk);
+  3. its position is north of that deck's or board's top edge, within its x span widened by the sprite's half-width.
+- Why: swimmers are drawn 12 px lower than their feet (`SWIM_DROP_PX`), so a swimmer just north of the top edge is drawn over the deck's top rows. Under the deck, only the head shows above the planks.
+- **Rejected:** a rect mask that clips the swimmer to the water. It needs the deck's drawn shape per integrity frame and breaks the moment the raft art changes.
+- Riders aboard, a swimmer beside the deck (`crossing_rig.gd` `put_beside_deck`, east) or south of it, and every island swimmer keep z 0. `test_the_crossing_sea_and_deck_lie_under_its_riders` keeps its rider and gains the north swimmer.
+
+### D3. The fin stays off the deck, drawing only (SP1)
+- **No crossing delta.** crossing-gameplay already puts the fin 1 tile off the named side during the tell and moves it at the strike. The shark's synced position stays the only place it is drawn, so the SHOO point, which follows that position, stays on the fin.
+- **No drawn drift.** The design pass's `idle_drift_px` (an ellipse of up to 10 px drawn round a still shark) would move the drawn fin off the SHOO point and off the bite reach the host uses. It is dropped. At most the circle animation bobs the fin 1 px in place.
+- **The art side of the guarantee.** Today's frames are opaque from x 1 to 31 and y 0 to 12 of their 32×16 cells. With `foot_px` 9 that is about x −15..+15 and y −7..+5 round the position. A fin held 1 tile (16 px) off the deck's edge then clears it by 1 px. D4's redraw keeps every frame's drawn half-width at most 15 px, so the guarantee survives the redraw.
+- **The test.** On crossing-gameplay's merged placement, for a solo raft crossing and a solo board crossing, the fin's drawn box, measured from the frame's non-clear texels and `CreatureLook`'s placement (not hard-coded), lies outside every intact deck or board rect from the warning to the retreat, and inside `sea_rect()`.
+- **The seam.** If crossing-gameplay's strike still uses `deck_center() + SHARK_OFFSET_PX`, the test fails at the strike. The fix belongs in crossing-gameplay's placement (1 tile off the hit side's edge), not in the art. This is sent to the coordinator.
+- **Never** lower the fin's z or clip it to the water: either hides almost all of its 66 fin texels (review SP1).
+
+### D4. Shark redraw and facings (C24; SP4)
+- **The hand source** `tools/art/fixes/creatures/reef_shark.png` is redrawn:
+  - the fin keeps its shape and its 3:1 contrast on shallows and deep;
+  - the water-line row (row 9, recoloured to foam at run time by `waterline.gdshader`) holds only the fin's base and 1–2 broken dashes in #222034, not a 17–27 px solid run;
+  - rows 10–12 become a tapered spindle, not rectangles.
+- **Facings.** The sheet gains rows for `patrol_up`, `patrol_down`, `circle_up`, `circle_down`, `move_up` and `move_down`: an edge-on fin with a short dash. The side frames become `_side`. Facing variants are picked by art-pass "Facing variants for creatures" with no script change. `strike` and `idle` stay single.
+- **Budget.** At most 4 unique frames per animation; every frame's drawn half-width at most 15 px (D3).
+- **Borrowed:** SPD `PiranhaSprite`: a water creature with no shadow (`link` sets `renderShadow = false`) and a ripple at the end of its attack (`onComplete` calls `GameScene.ripple`). We keep the strike's foam dash as that ripple.
+
+### D5. Bush in front of a body in scrub (C8; PR1)
+- `Look/BushFront`, a Sprite2D after Sprite. While the body's cell (`PlayerBody.cell()`) holds a Brush tile and the pose shows the body on land, it shows that exact tile: the source, atlas coordinates and alternative are read from the island `TerrainView`'s Brush layer, so a scrub variant or a fitted shore bush (art-terrain-polish C10, art-coast-pass C1) comes along. Off scrub, swimming or diving, it is hidden.
+- It is placed at the cell, not on the body, so the bush does not walk with the player. It shows only the tile's rows that hold the bush's front (about rows 4–14, measured on the sheet), so the body's head stays clear when crouched: covered to about the chin crouched, to mid-thigh standing (artboard A21).
+- It sorts inside the body's subtree, so a palm or a player one cell south still draws over it.
+- Every peer draws it from the body's drawn position. The hidden state and its closed-eye mark (`BodyMarks`, HUD layer) are unchanged.
+- **Rejected:** y-sorted scrub sprites. They amend the layer rule D15 and break `test_terrain_view.gd`'s layer tests and `test_draw_order.gd`'s ground test (the review's P4 verifier).
+- **Order.** It builds after art-terrain-polish C10, so its copy test covers a variant tile.
+
+### D6. A smaller, livelier crab (C25; SP8)
+- `land_crab.png` is redrawn about 12–13 px wide, asymmetric (one big claw), its feet on row 15, keeping the dark red shell. Lighter orange lowers its contrast by day and by night.
+- `idle` plays frames 0, 1, 0, 2 at 4–5 fps; `move` 4 frames at no more than 12 fps; `steal` and `pinch` keep their raised claws. The sheet grows as needed; side-on frames are still mirrored facing left, so the big claw swaps sides, which reads fine on a crab.
+- **Borrowed:** SPD `CrabSprite`: an idle of frames 0, 1, 0, 2 at 5 fps and a 4-frame run. Its 15 fps run is over our 12 fps cap.
+
+### D7. Gull flight frames (C25; SP10)
+- A hand source `tools/art/fixes/creatures/seagull_flight.png`, kitbashed from the Tiny Tiny Heroes gull already in the sheet (credit unchanged): flight frames in 24×16 cells with bent M wings and no opaque pixel in a frame's outer column. 32×16 is the fallback if the wings need it.
+- The frames file gains `swoop_*`, `flee_*` and `return_*` facings sharing those frames; `idle_*` and `move_*` keep the 16×16 cells. `CreatureLook` centres any frame width, so no script changes.
+- The flying lift (`creature_art.tres` gull `air_lift_px`) goes from 8 to 15 px, within the review's 14–16. This amends archived art-pass D16. The shadow stays on the ground.
+
+### D8. A lying pose (C25; SP9)
+- A new pose rule `LIE` in `poses.py` replaces `TURN_DOWN` for downed, the downed breath frame and dead. It is still a pure pixel remap, so every look part follows and the per-layer invariant holds:
+  - the rows from the neck down turn to lie along the ground, as today;
+  - the head block is moved, not turned, so the face stays upright with the eyes side by side (a stated cheat: lying bodies in ALttP and Pokémon show an upright face);
+  - the figure is about 26×12, its feet line and anchor unchanged;
+  - the breath frame keeps its chest lift, and dead keeps no breathing frame.
+- **Shadow.** `DropShadow.Size` gains LYING, appended (existing ints keep their meaning), a 23×5 ellipse drawn by `fx.py` in the darkest colour at MetroCity's alpha. `PlayerLook` uses it for the lying poses.
+- **Rejected:** a hand "lying cell" kind. It needs hand pixels for each of the 11 look parts and for every future part, and it breaks "a new part needs no hand pose".
+
+## Reference games
+
+Ideas and structure only, never code, data or text.
+
+**Shattered Pixel Dungeon**
+- *Borrowed for D1:* `effects/Ripple.java`, a short ring effect a sprite spawns on water (`CharSprite.java` calls `GameScene.ripple`). Our ring is that effect held while swimming.
+- *Borrowed for D4:* `sprites/PiranhaSprite.java`, a water creature with no shadow and a ripple on its bite.
+- *Borrowed for D5:* `scenes/GameScene.java` adds the walls tilemap after the mobs group, so overhangs draw over actors. Our bush front is that overhang for one cell.
+- *Borrowed for D6:* `sprites/CrabSprite.java`'s idle of frames 0, 1, 0, 2.
+
+**DCSS**
+- *Rejected for D1:* `SubmergedTileBuffer` (`tilebuf.h`, used by `tiledgnbuf.h`), a straight split with a translucent lower half.
+
+**Brogue CE**
+- Draws glyphs, not sprites; nothing applies.
+
+**ALttP and Pokémon** (general knowledge of how they look; nothing copied)
+- *Borrowed:* swimmers drawn as a head over a small ring; a knocked-out body lying with an upright face; bushes drawn over a body that stands in them; birds with M-shaped wings in flight.
+
+**Don't Starve Together** (dontstarve.wiki.gg, `docs/REFERENCE_DST.md`)
+- *Borrowed for D5:* "Hiding as a bush" ([Bush Hat/DST](https://dontstarve.wiki.gg/wiki/Bush_Hat/DST)). A hidden player reads as the bush they hide in. *Rejected:* replacing the body with a bush sprite. Teammates must still see a crouched body and its mark.
+- *Rejected for D1:* "Falling overboard" ([Drowning](https://dontstarve.wiki.gg/wiki/Drowning)). DST players do not swim, so there is no swimmer look to borrow.
+- *Nothing for D7:* "Birds landing and scattering" ([Birds](https://dontstarve.wiki.gg/wiki/Birds)) covers when birds land and flee, not how flight is drawn.
+- *Borrowed for D8, as an aim only:* "Ghost form and haunting" ([Death/DST](https://dontstarve.wiki.gg/wiki/Death/DST)). Death reads at a glance as a different silhouette (a ghost, a skeleton). *Rejected:* the ghost itself. Our downed body stays a body teammates revive.
+- *Nothing for D4 and D6:* the DST notes on the rock fish and the crabs cover behaviour, not drawing.
+
+## Owner decisions
+
+Accepted on 2026-11-14 (all recommended): Q6 (a), the ripple ring. Q7 (a), the shark just south of the raft, is overtaken by crossing-gameplay.
+
+**New question for the owner (via the coordinator), recommended first:**
+- **Q-S1. Where the shark shows at the raft.** On 2026-11-14 Q7 (a) put it just south of the raft, drawn in front of the riders. crossing-gameplay's later approved Q4 (a) has the fin circle 1 tile off the east or west side its pass names, with a shoo hold on it.
+  - (a) *Recommended:* crossing-gameplay's side wins. This change only guarantees the fin is never drawn over an intact deck (D3).
+  - (b) South at the strike only: a crossing delta in crossing-gameplay that moves the shark south of the deck when it strikes, keeping the side for the tell.
+
+**Seam for crossing-gameplay (not an owner question):** its strike placement "beside the hit deck" must leave the fin's drawn box clear of the deck: 1 tile off the hit side's edge, not `deck_center() + SHARK_OFFSET_PX`.
+
+## Risks / Trade-offs
+
+- **[The hard cut is plainer than the white row]** The ring carries the water line instead. The swimmer contrast test counts the ring, so a swimmer that stops reading fails the build.
+- **[The lying remap may still read as a turned standing frame]** The capture decides. A hand cell is the fallback, and it is a larger change recorded in the build notes.
+- **[crossing-gameplay changes after this is written]** Group 0 re-reads its merged code. D3 and D2 cite its placement and its z −30, nothing else.
+- **[Wider gull cells]** A 24 px frame still centres on the gull, so its sort position and shadow do not move.
+- **[Re-shot images]** `docs/art-pass/looks_swim.png`, `looks_downed.png` and `crossing.png` change and are re-shot.
+
+## Migration Plan
+
+Art only. Rebuild with `python -I tools/art/compose.py --packs C:/Users/liann/src/90miles/game/assets`, `python -I tools/art/creatures.py --packs C:/Users/liann/src/90miles/game/assets` and `python -I tools/art/fx.py` (it reads only the master palette), then import twice. To roll back, revert the commit: no save, network message or layout depends on these pixels.
+
+## Build notes
+
+Measured values and departures are recorded here as the tasks ship.
