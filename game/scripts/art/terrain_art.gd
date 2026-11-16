@@ -17,6 +17,8 @@ const NE: int = 2
 const SW: int = 4
 const SE: int = 8
 const FULL: int = 15
+## The low 32 bits of an int.
+const MASK_32: int = 0xffffffff
 ## A corner set's tile of mask m is at column m % COLUMNS, row m / COLUMNS; its picks are on PICK_ROW.
 const COLUMNS: int = 4
 const PICK_ROW: int = 4
@@ -39,8 +41,27 @@ static func data() -> TerrainArtData:
 
 ## The cosmetic seed of a cell: the same for the same layout and cell on every peer and every
 ## build (design.md D14). Bit 0 is the shore phase's (ShoreRule); the variants use the higher ones.
+## The string hash's low bits barely mix (33 is 1 mod 8), so it goes through an avalanche first
+## (art-coast-pass D2): without it the picks ran in diagonal stripes.
 static func cell_hash(layout_id: StringName, cell: Vector2i) -> int:
-	return hash("%s:%d,%d" % [layout_id, cell.x, cell.y])
+	return mix32(hash("%s:%d,%d" % [layout_id, cell.x, cell.y]))
+
+
+## murmur3's 32-bit finaliser (fmix32) of the low 32 bits of `value`, from 0 to 2^32 - 1. Every
+## product is taken in 16-bit halves and masked, so the 64-bit ints never overflow.
+static func mix32(value: int) -> int:
+	var mixed: int = value & MASK_32
+	mixed ^= mixed >> 16
+	mixed = _times32(mixed, 0x85ebca6b)
+	mixed ^= mixed >> 13
+	mixed = _times32(mixed, 0xc2b2ae35)
+	mixed ^= mixed >> 16
+	return mixed
+
+
+# (a * b) mod 2^32 for a and b below 2^32.
+static func _times32(a: int, b: int) -> int:
+	return (a * (b & 0xffff) + (((a * (b >> 16)) & 0xffff) << 16)) & MASK_32
 
 
 ## The depth-mask step of a water kind; -1 for land.
