@@ -20,6 +20,8 @@ Difficulty scales by **distance** (islands 1–2: coast, 3–5: mid, 6–8: far)
 
 **Counters.** Bandage cuts before swimming. Stay in shallows (≤1 tile). Throw raw fish away from you (decoy, 10 s). Spear hits in the nose cause a 15 s retreat.
 
+**At sea.** On a crossing a rock that passes over a swimmer is a coral cut: −15 health and bleeding, which makes that swimmer the shark's first choice. Swim out of the rock's lane, or stay aboard. A shark pass is told 5 s ahead: its fin circles 1 tile off one side of the vessel ("¡Aleta! Por la izquierda."). A rider aboard who holds interact on the fin for 1 s before it strikes shoos it off, and it bites and hits nothing; a tired or bleeding swimmer can climb aboard in those 5 s instead. Unshooed, it strikes as before (`crossing-gameplay`).
+
 **Reference.** DCSS sharks frenzy when their target is wounded; Brogue's eels only attack from water.
 
 ---
