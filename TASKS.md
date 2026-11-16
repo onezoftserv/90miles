@@ -127,6 +127,13 @@ Voice acting, cloned voices, runtime TTS, challenges, seeded and daily runs, and
 - [ ] Profanity toggle, English localization pass
 - [ ] Set pieces (Brogue machines): six from `docs/ISLANDS.md`
 - [x] A dead co-op player spectates a living teammate, a key cycling between them, instead of watching their own body (owner, 2026-11-08; `dead-spectate`, 2026-11-14)
+- [ ] `art-coast-pass` (wave 1 of the art and HUD design pass of 2026-11-14, `docs/art-pass/review-2026-11-14/`; owner: Q1 a, Q2 a, Q4 a). It fixes the owner's "things look too square" and "grass at the border of the beach looks cut", art only, with no layout or simulation change:
+  - whole bushes on the waterline, moved onto the sand by a placement search, with a hand-drawn tuft on convex tips (C1);
+  - picks mixed by an fmix32 avalanche so they no longer run in diagonal stripes (C2);
+  - rounded coast corners through the straight edges' border points, one 1 px lip on every side, a 4-adjacent rim, and lighter corner foam (C3);
+  - a soft deep-water edge: a blurred, clamped mask and a static ±4 px warp, with every water cell's centre kept on its step (C4).
+
+  Built test-first on `claude/art-wave-1-d6d1b2`, PR #68 (GUT 2320/2320, import and smoke clean); archive after the owner has seen the captures. Follow-up: round the dune's own inland corners the same way (a `dune.png` overlay). Next waves, each its own change: darker shallows (C7), rock, palms and scrub (C9 to C12), sprites, the HUD window kit below, night light and squall rain. The coast cay's rectangles are content (C6).
 - [x] `damage-feedback` (OpenSpec change written 2026-11-14, built test-first 2026-11-15; owner playtest: "it's hard to notice when you are getting damage"): every peer tells hits from drains using the health it already has, and nothing is sent. A hit blinks the body on every screen. On the screen whose HUD shows that body, it also flashes the edges red, scaled to the hit, and leaves a pale red chunk on the Salud bar that drains away. Drains show only the chunk and a dim glow. Widened the same day by the owner ("it's hard to know what happens when you use coconuts or sabila") to cover item uses:
   - "+15 Sed" and "Sin sangrado" float over the body, and the changed bar lights its gained slice;
   - an effect line above the selected item is built from its effect data;
