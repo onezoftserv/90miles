@@ -105,7 +105,7 @@ Night is cooler (thirst ×0.5) but dark. Searchlights, crocodiles and crabs come
 
 **Identification.** Unknown fruit shows as "fruta roja" until someone eats it or an NPC names it. Manchineel looks like a small green apple and burns you from the inside. Once one player learns a plant, the party knows it.
 
-**Durability.** Tools wear out. The raft loses 25% integrity per crossing and more in squalls; repair with driftwood and rope.
+**Durability.** Tools wear out. The raft loses integrity on each crossing to what its riders do not dodge, plug or shoo (§8 "Playing the crossing"; measured on a 75 s coast crossing: about 70 for a rider who does nothing, under 10 for an attentive one, a squall's 30 aside) and more in squalls; a plank caught at sea mends 10, and on land it is repaired with driftwood and rope.
 
 ## 7. Escape routes
 

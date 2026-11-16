@@ -147,6 +147,26 @@ func test_a_joiner_during_the_circle_sees_the_fin() -> void:
 	assert_eq(theirs.fins[0], host_crossing.fins[0], "where the host has it")
 
 
+func test_a_clients_shoo_prompt_goes_off_after_a_strike() -> void:
+	var pair := await _pair()
+	var host_crossing := _raft_for_both(pair[0])
+	var theirs := await _crossing_on(pair[1])
+	if host_crossing == null or theirs == null:
+		fail_test("no crossing")
+		return
+	var strike_s: float = host_crossing.elapsed_s + 3.0
+	var beats: Array[RefCounted] = [CrossingBeat.create(strike_s, K.SHARK_PASS, 0, CrossingBeat.Side.WEST)]
+	host_crossing.plan = CrossingPlan.create(600.0, beats)
+	var copy: Array[RefCounted] = [CrossingBeat.create(strike_s, K.SHARK_PASS, 0, CrossingBeat.Side.WEST)]
+	theirs.plan = CrossingPlan.create(600.0, copy)
+	var on := func() -> bool: return theirs._shoo_points.has(0) and theirs._shoo_points[0].enabled
+	assert_true(await wait_until(on, TIMEOUT_S), "the client's shoo point is on while the fin circles")
+	var struck := func() -> bool: return host_crossing.elapsed_s > strike_s + 0.5
+	assert_true(await wait_until(struck, TIMEOUT_S))
+	var off := func() -> bool: return not theirs._shoo_points[0].enabled
+	assert_true(await wait_until(off, TIMEOUT_S), "and off once the shark struck, unshooed")
+
+
 func test_a_snapshot_without_the_shooed_passes_is_refused() -> void:
 	NetManager.start_solo()
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0, [CrossingBeat.create(30.0, K.SHARK_PASS)])

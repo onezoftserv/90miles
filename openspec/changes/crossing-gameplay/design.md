@@ -184,7 +184,11 @@ An idle co-op party does worse, because it gets more beats; it also has more han
 - *Idle rider:* 29.5 integrity left on average, 30.4 % of rafts broken.
 - *Scripted attentive rider:* 91.8 left, none broken. It dodges what it sees 4 s out, plugs leaks and shoos fins 2.5 s after they show, and ties down 2 s before a squall. A 150-plan breakdown showed it loses only to squalls.
 
-Both are inside the owner's target (Q8: idle about 30, attentive 70 or more), so the provisional weights stay. The check is deterministic (fixed seeds) and takes about 110 s of the suite.
+Both are inside the owner's target (Q8: idle about 30, attentive 70 or more), so the provisional weights stay.
+
+The attentive figure is a ceiling. The bot stands on whichever paddle it needs with no walking, and plugs and shoos through the crossing's calls; a person loses a little more.
+
+The check is deterministic (fixed seeds). CI's GUT step has a 300 s limit and ran #66 in 202 s, so the suite plays the first 100 plans (about 35 s locally: idle 31.7 left, 18 % broken; attentive 92.5). `CROSSING_BALANCE_RUNS=500` plays all of them.
 
 ### D9. The squall's blow and the cost of tying down
 For 15 s after the hit (the blow; the squall weather itself rains for its whole 120 s) paddling is halved (`squall_blow_s`, `blow_paddle_factor`). Jobs aboard need an untied rider (crossing "Jobs aboard"). The director's pre-hit hazard makes tying down early cost a dodge. Today's "tie early, wait" stays possible, but it now costs integrity.
