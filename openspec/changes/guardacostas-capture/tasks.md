@@ -262,7 +262,7 @@ How the tests are written:
   - `TASKS.md` §6, which ticks "Shore squad, capture, free-a-captive, `la_captura` scene" and keeps `balsero-lore` 9b.1 open for the chain rows.
   - Done: `GAME_DESIGN.md` §9, `BESTIARY.md` (the chase and landing on the patrol boat, and the whole "Shore squad"), `ISLANDS.md` (the 30% chance), `CHARACTERS.md` (Rodríguez's *La captura*), `CONTENT_MANIFEST.md` and `TASKS.md` §6 (ticked, with `balsero-lore` 9b.1 kept open). Each was read back against the spec delta.
 - [x] 12.5 Run the import, smoke run and GUT commands, and verify all three pass.
-  - Done: import and smoke clean, GUT 275 scripts, 2514/2514. Every task in this file is now ticked.
+  - Done: import and smoke clean, GUT 275 scripts, 2514/2514. Every task in this file is now ticked. After the review fix and the restack: GUT 275 scripts, 2519/2519, and the two-process run again host 14/14, client 10/10.
 
 ## Workflow follow-up
 
