@@ -20,14 +20,14 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
 
 ## 1. Plan form and tuning
 
-- [ ] 1.1 Write the tests first, in `test_crossing_plan.gd` and a new `test_crossing_beat_lanes.gd`:
+- [x] 1.1 Write the tests first, in `test_crossing_plan.gd` and a new `test_crossing_beat_lanes.gd`:
   - `[time, kind]` and `[time, kind, lane, extra]` round-trip;
   - `from_array` refuses a lane outside −10..10, a side other than 0 or 1, a flotsam index outside the table, and an unknown kind;
   - an old-form rock rides lane 0 and a shark pass with no side comes from the west.
 
   See them fail.
-- [ ] 1.2 Append `DEBRIS` and `FLOTSAM` to `CrossingBeat.Kind`. Add `lane: int` and `extra: int` with defaults 0, and make `to_array` and `from_array` emit and accept the two forms. Verify that the new tests and every existing crossing test pass unchanged.
-- [ ] 1.3 Add the new numbers to `CrossingTuning` and `crossing_tuning.tres`, with no script defaults (as now):
+- [x] 1.2 Append `DEBRIS` and `FLOTSAM` to `CrossingBeat.Kind`. Add `lane: int` and `extra: int` with defaults 0, and make `to_array` and `from_array` emit and accept the two forms. Verify that the new tests and every existing crossing test pass unchanged.
+- [x] 1.3 Add the new numbers to `CrossingTuning` and `crossing_tuning.tres`, with no script defaults (as now):
   - lead times: hazard 5 s, shark 5 s;
   - paddling: speed 1.5 and 2.25 tiles/s, pull-back 0.5, limit 6;
   - widths: rock 2, debris 1, vessel 4;
@@ -43,7 +43,7 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
 
 ## 2. Paddling (crossing "Paddling", "Jobs aboard", "Coast drift", "Steering and current")
 
-- [ ] 2.1 Write `test_crossing_paddle.gd` first:
+- [x] 2.1 Write `test_crossing_paddle.gd` first:
   - solo 2 s east then 2 s released (3, then 2);
   - two paddlers on one side (4.5);
   - paddles on both sides (0);
@@ -53,8 +53,8 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
   - the result's drift stays 0.
 
   See it fail.
-- [ ] 2.2 Add `crossing_steer.gd` (host position and velocity from active paddlers, pull-back, limit, blow factor) and `RescuePoint` kind PADDLE (hold 0; `use` starts paddling for that rider and `release` stops it), one on each deck edge and on each side of each board, enabled for riders aboard and untied. Prompt id `paddle` ("Remar") is appended to `hud_text.tres`. Set the PULL point's priority to 3 (crossing "Which job a press takes"). Verify that `test_crossing_paddle.gd`, `test_crossing_prompt.gd`, `test_crossing_rescue.gd`, the perched-gull tests and the board tests pass, plus a new solo test where a press at the west edge with the paddle and the lashing both in reach ties down at the centre and paddles at the edge.
-- [ ] 2.3 Sync the position: add it to `receive_state`, add an unreliable `receive_steer` at up to 10 Hz while the velocity is non-zero, have clients extrapolate the position and advance `elapsed_s` locally between resyncs, and add a required snapshot key "steer". Update the hand-built snapshot dicts in `test_crossing_snapshot.gd`, `test_crossing_join.gd`, `test_crossing_board_state.gd` and `test_game_shell.gd` for the new key. Verify these in `test_crossing_paddle_net.gd`:
+- [x] 2.2 Add `crossing_steer.gd` (host position and velocity from active paddlers, pull-back, limit, blow factor) and `RescuePoint` kind PADDLE (hold 0; `use` starts paddling for that rider and `release` stops it), one on each deck edge and on each side of each board, enabled for riders aboard and untied. Prompt id `paddle` ("Remar") is appended to `hud_text.tres`. Set the PULL point's priority to 3 (crossing "Which job a press takes"). Verify that `test_crossing_paddle.gd`, `test_crossing_prompt.gd`, `test_crossing_rescue.gd`, the perched-gull tests and the board tests pass, plus a new solo test where a press at the west edge with the paddle and the lashing both in reach ties down at the centre and paddles at the edge.
+- [x] 2.3 Sync the position: add it to `receive_state`, add an unreliable `receive_steer` at up to 10 Hz while the velocity is non-zero, have clients extrapolate the position and advance `elapsed_s` locally between resyncs, and add a required snapshot key "steer". Update the hand-built snapshot dicts in `test_crossing_snapshot.gd`, `test_crossing_join.gd`, `test_crossing_board_state.gd` and `test_game_shell.gd` for the new key. Verify these in `test_crossing_paddle_net.gd`:
   - a client paddles and the host moves the raft;
   - both peers show 3 tiles east;
   - a joiner mid-paddle shows the host's position;
@@ -63,7 +63,7 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
 
 ## 3. Scrolling hazards (crossing "Scrolling hazards", "Hazards and swimmers", "Board hits")
 
-- [ ] 3.1 Write `test_crossing_hazards.gd` first:
+- [x] 3.1 Write `test_crossing_hazards.gd` first:
   - solo idle takes a rock in line (60);
   - solo dodges by paddling 27–30 s (100);
   - a rock in lane 4 passes (100);
@@ -73,13 +73,13 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
   - a rock on the row goes round the boards as in "Hits go round the boards".
 
   See it fail.
-- [ ] 3.2 Resolve ROCK and DEBRIS by overlap at the beat's time in `CreatureThreats` and `ScriptedThreats`, through `hit_vessel`. Test swimmers every tick against the hazard's moving rect, once each. Verify that `test_crossing_hazards.gd` and every existing rock scenario pass (`test_crossing_squall.gd`, `test_crossing_board.gd`, `test_crossing_car.gd`).
-- [ ] 3.3 Add `CrossingHazards` (Node2D, z −30) to `crossing.tscn`. It draws rocks and debris from the plan, the elapsed time and the position, with placeholder sprites kitbashed from tracked packs, and credits are updated if a new source file is copied. Verify that a GUT art test sees a lane-2 rock at the north edge at time − 5 s on the host and on a client, and that `test_crossing_art.gd` passes.
-- [ ] 3.4 Update GAME_DESIGN.md §8 for debris and the swimmer's cuts, and BESTIARY.md "Reef shark" for coral cuts at sea. Verify that the doc lines match the spec numbers.
+- [x] 3.2 Resolve ROCK and DEBRIS by overlap at the beat's time in `CreatureThreats` and `ScriptedThreats`, through `hit_vessel`. Test swimmers every tick against the hazard's moving rect, once each. Verify that `test_crossing_hazards.gd` and every existing rock scenario pass (`test_crossing_squall.gd`, `test_crossing_board.gd`, `test_crossing_car.gd`).
+- [x] 3.3 Add `CrossingHazards` (Node2D, z −30) to `crossing.tscn`. It draws rocks and debris from the plan, the elapsed time and the position, with placeholder sprites kitbashed from tracked packs, and credits are updated if a new source file is copied. Verify that a GUT art test sees a lane-2 rock at the north edge at time − 5 s on the host and on a client, and that `test_crossing_art.gd` passes.
+- [x] 3.4 Update GAME_DESIGN.md §8 for debris and the swimmer's cuts, and BESTIARY.md "Reef shark" for coral cuts at sea. Verify that the doc lines match the spec numbers.
 
 ## 4. The director (crossing "Threat plan", "Crossing pacing")
 
-- [ ] 4.1 Write `test_crossing_pacing.gd` first. Over 2,000 seeds each for 1 and 4 riders:
+- [x] 4.1 Write `test_crossing_pacing.gd` first. Over 2,000 seeds each for 1 and 4 riders:
   - the first beat falls between 6 and 9 s;
   - the reef line is at L − 4;
   - gaps are between 3 and 9·0.9^(n−1) s, except across a squall's blow;
@@ -89,9 +89,9 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
   - the same seed gives the same plan.
 
   See it fail.
-- [ ] 4.2 Rewrite `CrossingPlan.roll(route, band, sky, rng, tuning, riders)` as design.md D8. `GameShell._on_route_started` passes the rider count. Verify that `test_crossing_pacing.gd` passes and that `test_crossing_plan.gd`'s rolled-plan cases are updated to the new rule, and nothing else.
-- [ ] 4.3 Add a statistics test, `test_crossing_balance.gd`, with an idle solo rider and a scripted attentive solo rider (it paddles out of each hazard's lane, plugs, shoos and ties down 2 s before the hit) over 500 rolled 75 s coast raft plans. Verify that the idle average left is 20–40 (the design's Monte Carlo predicts 33.5, with 27 % broken) and the attentive average is 70 or more. Tune only the `.tres` weights to get there, and record the measured numbers in design.md.
-- [ ] 4.4 Update GAME_DESIGN.md §8 with the pacing budget and the reef line. Open the first PR (groups 1–4) after a solo windowed crossing from the sandbar runs clean through the Godot MCP.
+- [x] 4.2 Rewrite `CrossingPlan.roll(route, band, sky, rng, tuning, riders)` as design.md D8. `GameShell._on_route_started` passes the rider count. Verify that `test_crossing_pacing.gd` passes and that `test_crossing_plan.gd`'s rolled-plan cases are updated to the new rule, and nothing else.
+- [ ] 4.3 (Run after groups 5–7, since the attentive rider plugs leaks and shoos the shark, so it ships in the third PR.) Add a statistics test, `test_crossing_balance.gd`, with an idle solo rider and a scripted attentive solo rider (it paddles out of each hazard's lane, plugs, shoos and ties down 2 s before the hit) over 500 rolled 75 s coast raft plans. Verify that the idle average left is 20–40 (the design's Monte Carlo predicts 33.5, with 27 % broken) and the attentive average is 70 or more. Tune only the `.tres` weights to get there, and record the measured numbers in design.md.
+- [x] 4.4 Update GAME_DESIGN.md §8 with the pacing budget and the reef line. Open the first PR (groups 1–4) after a solo windowed crossing from the sandbar runs clean through the Godot MCP.
 
 ## 5. Leaks (crossing "Leaks", "Raft integrity on the crossing")
 

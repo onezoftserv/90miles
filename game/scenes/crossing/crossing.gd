@@ -14,6 +14,9 @@ extends Node2D
 ## A board route (vessel-car-board) gives each rider their own board, a 1x2-tile deck in a row
 ## through the sea's centre, beside a shared vessel of no integrity: `vessel_of` and `deck_rect_of`
 ## answer per rider, so the raft and the car keep their one shared deck and lashing unchanged.
+## crossing-gameplay: riders paddle the vessel sideways (`steer`, a number: the deck never moves and
+## the sea slides past it), and rocks and debris come down lanes from the north edge, hitting the
+## vessel only where their lane overlaps it and cutting the swimmers they pass over.
 
 ## Host and clients: the crossing ended with this result.
 signal ended(result: CrossingResult)
@@ -45,6 +48,14 @@ const SESSION_SERIAL_META: StringName = &"crossing_serial"
 ## The highest crossing number a joiner accepts: far more than a run holds, and its sea stays where
 ## float positions are exact to a fraction of a pixel.
 const MAX_SERIAL: int = 1023
+## Paddle points sit this far inside each edge of the deck, and this far beside each side of a
+## board's centre (crossing "Paddling").
+const PADDLE_INSET_PX: float = 6.0
+const BOARD_PADDLE_PX: float = 12.0
+## The host sends the lateral position at most this often while it changes.
+const STEER_SEND_S: float = 0.1
+## A hazard passing a swimmer cuts them when the swimmer is this close to its rect.
+const CUT_SLACK_PX: float = 4.0
 const SCENE: PackedScene = preload("res://scenes/crossing/crossing.tscn")
 
 var route: RouteData
@@ -62,6 +73,8 @@ var sea: GridTerrain = GridTerrain.new()
 var origin: Vector2 = Vector2.ZERO
 ## The crossing's number in its session: its node name and where its sea lies.
 var serial: int = 0
+## The vessel's lateral position and its paddlers (crossing "Paddling").
+var steer: CrossingSteer = CrossingSteer.new()
 
 var _session: CoopSession
 ## Host: the peers that have this crossing, so the only ones sent its messages (crossing-late-join).
@@ -77,6 +90,11 @@ var _scroll_px: float = 0.0
 var _fired_to_s: float = -1.0
 # Host: the rider slot the next single-board hit starts looking from (crossing "Board hits").
 var _board_turn: int = 0
+var _paddles: Array[RescuePoint] = []
+var _steer_send_left_s: float = 0.0
+var _steer_sent: float = 0.0
+# Host: beat index -> the peers that beat already cut (each hazard cuts a swimmer once).
+var _cut: Dictionary[int, Array] = {}
 
 
 ## Builds the crossing for `peer_ids` under `session`. The host rolls and sends the plan; a client
@@ -89,7 +107,7 @@ static func launch(session: CoopSession, started: RouteData, peer_ids: Array[int
 	session.add_child(crossing)
 	var rolled: CrossingPlan = null
 	if session.multiplayer.is_server():
-		rolled = CrossingPlan.roll(started, band, WeatherManager.sky, rng, crossing.tuning)
+		rolled = CrossingPlan.roll(started, band, WeatherManager.sky, rng, crossing.tuning, peer_ids.size())
 	crossing.setup(session, started, peer_ids, starting_integrity, rolled, number)
 	if rolled != null:
 		# Every peer in the run heard the route start just before, so it has this crossing. A peer
@@ -168,6 +186,7 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 	if is_board_route():
 		for index: int in _peers.size():
 			_add_board(_peers[index], index)
+	_make_paddles()
 	for index: int in _peers.size():
 		_enter_rider(_peers[index], index)
 
@@ -251,12 +270,14 @@ func advance(delta: float) -> void:
 	if finished or plan == null or not multiplayer.is_server():
 		return
 	elapsed_s += delta
+	steer.step(delta, tuning, _active_paddlers(), in_blow())
 	var reached_s: float = elapsed_s + EPSILON_S
 	for item: RefCounted in plan.due(_fired_to_s, reached_s):
 		_fire(item as CrossingBeat)
 	_fired_to_s = reached_s
 	for peer: int in _peers:
 		_tick_rider(peer, delta)
+	_cut_swimmers()
 	_refresh_points()
 	if elapsed_s >= plan.length_s - EPSILON_S:
 		_finish()
@@ -264,6 +285,7 @@ func advance(delta: float) -> void:
 	_resync_left_s -= delta
 	if _dirty or _resync_left_s <= 0.0:
 		_send_state()
+	_send_steer(delta)
 
 
 ## The vessel takes a hit; at 0 it breaks (`_on_broke`). Nothing happens without a vessel. On a
@@ -297,6 +319,88 @@ func hit_every_vessel(amount: float) -> void:
 	for peer: int in boards:
 		boards[peer].hit(amount)
 	_dirty = true
+
+
+## Host: `peer` stops paddling (they let go of the paddle).
+func stop_paddling(peer: int) -> void:
+	steer.stop(peer)
+
+
+## True during a squall's blow: the squall's hit and the seconds after it (crossing "Squall line on
+## the crossing").
+func in_blow() -> bool:
+	if plan == null:
+		return false
+	var hit: float = plan.squall_hit_s()
+	return hit >= 0.0 and elapsed_s >= hit - EPSILON_S and elapsed_s < hit + tuning.squall_blow_s
+
+
+## How fast a lane beat comes down the sea, in px/s: from the sea's north edge to the deck's middle
+## in the hazard lead time.
+func beat_speed_px() -> float:
+	return TILE_PX * SEA_TILES.y * 0.5 / tuning.hazard_lead_s
+
+
+## Where a lane beat is now (session coordinates): its lane beside the vessel's lateral position,
+## and its time to come measured up the sea from the deck's middle.
+func beat_center(beat: CrossingBeat) -> Vector2:
+	var x: float = deck_center().x + (beat.lane - steer.position) * TILE_PX
+	var y: float = deck_center().y - (beat.time_s - elapsed_s) * beat_speed_px()
+	return Vector2(x, y)
+
+
+## The width in tiles of a lane beat: a rock, debris, or a flotsam piece (one tile).
+func beat_width_tiles(beat: CrossingBeat) -> float:
+	match beat.kind:
+		CrossingBeat.Kind.ROCK:
+			return tuning.rock_width_tiles
+		CrossingBeat.Kind.DEBRIS:
+			return tuning.debris_width_tiles
+	return 1.0
+
+
+## Whether a lane beat is still to be drawn: every rock and debris, and each flotsam piece nobody
+## has taken.
+func beat_shown(beat: CrossingBeat) -> bool:
+	return beat.is_lane_beat()
+
+
+## True while a lane beat is anywhere on the sea.
+func beat_on_sea(beat: CrossingBeat) -> bool:
+	var rect := sea_rect().grow(TILE_PX)
+	return beat.is_lane_beat() and rect.has_point(beat_center(beat))
+
+
+## The vessel's half width in tiles and its centre's offset east of the deck's centre in tiles: the
+## shared deck, or the whole row of boards. Zero width with no vessel.
+func vessel_span_tiles() -> Vector2:
+	if is_board_route():
+		var first := _board_rect(0)
+		var last := _board_rect(maxi(_peers.size() - 1, 0))
+		var centre_px: float = (first.position.x + last.end.x) * 0.5
+		return Vector2((last.end.x - first.position.x) * 0.5 / TILE_PX, (centre_px - deck_center().x) / TILE_PX)
+	if integrity.has_integrity():
+		return Vector2(tuning.vessel_width_tiles * 0.5, 0.0)
+	return Vector2.ZERO
+
+
+## Host: whether the rock or debris `beat` hits the vessel at its time: its lane closer to the
+## vessel's lateral position than their two half widths (crossing "Scrolling hazards"). False with
+## no vessel left to hit.
+func beat_hits_vessel(beat: CrossingBeat) -> bool:
+	var span: Vector2 = vessel_span_tiles()
+	if span.x <= 0.0:
+		return false
+	if is_board_route():
+		var any_intact: bool = false
+		for peer: int in boards:
+			any_intact = any_intact or boards[peer].intact()
+		if not any_intact:
+			return false
+	elif not integrity.intact():
+		return false
+	var centre: float = steer.position + span.y
+	return absf(beat.lane - centre) < span.x + beat_width_tiles(beat) * 0.5 - EPSILON_S
 
 
 ## A shark's bite on a swimmer: health and bleeding. `by` is the biting creature's id, the cause
@@ -355,10 +459,31 @@ func receive_plan(plan_data: Array, vessel_value: float) -> void:
 ## Clients: every rider's state, the vessel's integrity and every board's (peer -> value, a board
 ## route only), on change and every second.
 @rpc("authority", "call_remote", "reliable")
-func receive_state(states: Dictionary, vessel_value: float, time_s: float, board_values: Dictionary = {}) -> void:
+func receive_state(states: Dictionary, vessel_value: float, time_s: float, board_values: Dictionary = {}, play: Dictionary = {}) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID or finished or not is_finite(vessel_value) or not is_finite(time_s):
 		return
 	_apply_state(states, vessel_value, time_s, board_values)
+	apply_play(play)
+
+
+## Clients: the vessel's lateral position and velocity as the host has it now, sent while it changes.
+@rpc("authority", "call_remote", "unreliable_ordered")
+func receive_steer(steer_data: Array, time_s: float) -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID or finished or not is_finite(time_s):
+		return
+	steer.read(steer_data, tuning)
+
+
+## What the crossing's play state is now (crossing "Crossing play state on every peer"), as plain
+## values: the lateral position.
+func play_state() -> Dictionary:
+	return {"steer": steer.to_array()}
+
+
+## Clients and joiners: the host's play state; malformed parts are ignored.
+func apply_play(play: Dictionary) -> void:
+	if play.has("steer"):
+		steer.read(play["steer"], tuning)
 
 
 ## Every board's integrity by rider, as plain values (empty off a board route).
@@ -378,6 +503,7 @@ func apply_snapshot(snapshot: CrossingSnapshot) -> void:
 	if plan == null:
 		plan = snapshot.plan
 	_apply_state(snapshot.states, snapshot.value, snapshot.elapsed_s, snapshot.boards)
+	apply_play(snapshot.play)
 	if snapshot.broken:
 		_show_broken()
 	var inside: Rect2 = sea_rect().grow(-EDGE_GAP_PX)
@@ -410,6 +536,10 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_scroll_px = fmod(_scroll_px + tuning.scroll_tiles_per_s * TILE_PX * route.speed_multiplier * delta, TILE_PX * 4.0)
+	# Clients run the host's clock and position forward between messages, so hazards slide smoothly.
+	if plan != null and not finished and is_inside_tree() and not multiplayer.is_server():
+		elapsed_s = minf(elapsed_s + delta, plan.length_s)
+		steer.extrapolate(delta, tuning)
 
 func _fire(event: CrossingBeat) -> void:
 	match event.kind:
@@ -590,6 +720,9 @@ func _make_point(kind: RescuePoint.Kind, swimmer: int, hold_s: float) -> RescueP
 	point.hold_time_s = hold_s
 	point.enabled = kind == RescuePoint.Kind.LASH
 	point.position = deck_center()
+	# crossing "Which job a press takes": a swimmer to pull outranks flotsam, leaks and paddles.
+	if kind == RescuePoint.Kind.PULL:
+		point.priority = tuning.pull_priority
 	point.interacted.connect(_on_point_used.bind(point))
 	add_child(point)
 	return point
@@ -605,6 +738,9 @@ func _on_point_used(by: Node, point: RescuePoint) -> void:
 				untie(user)
 			else:
 				tie(user)
+		RescuePoint.Kind.PADDLE:
+			if point.usable_by(by):
+				steer.start(user, point.side)
 		_:
 			bring_aboard(point.swimmer)
 
@@ -615,6 +751,12 @@ func _on_point_used(by: Node, point: RescuePoint) -> void:
 func _refresh_points() -> void:
 	if is_instance_valid(_lash):
 		_lash.enabled = integrity.intact()
+	for paddle: RescuePoint in _paddles:
+		var vessel: VesselIntegrity = vessel_of(paddle.swimmer) if paddle.swimmer != 0 else integrity
+		paddle.enabled = vessel.intact()
+		if paddle.swimmer != 0:
+			var board := deck_rect_of(paddle.swimmer)
+			paddle.global_position = board.get_center() + Vector2(paddle.side * BOARD_PADDLE_PX, 0.0)
 	var reach_px: float = tuning.reach_tiles * TILE_PX
 	for peer: int in _peers:
 		var body := body_of(peer)
@@ -646,6 +788,12 @@ func _on_player_rebound(old_peer: int, new_peer: int, _body: PlayerBody) -> void
 	if boards.has(old_peer):
 		boards[new_peer] = boards[old_peer]
 		boards.erase(old_peer)
+	if steer.paddlers.has(old_peer):
+		steer.paddlers[new_peer] = steer.paddlers[old_peer]
+		steer.paddlers.erase(old_peer)
+	for paddle: RescuePoint in _paddles:
+		if paddle.swimmer == old_peer:
+			paddle.swimmer = new_peer
 	for offset: int in 2:
 		var point := _points.get(old_peer * 2 + offset) as RescuePoint
 		_points.erase(old_peer * 2 + offset)
@@ -711,7 +859,82 @@ func _send_state() -> void:
 	_dirty = false
 	_resync_left_s = RESYNC_S
 	for peer: int in _connected_recipients():
-		receive_state.rpc_id(peer, _states.duplicate(), integrity.value, elapsed_s, board_values())
+		receive_state.rpc_id(peer, _states.duplicate(), integrity.value, elapsed_s, board_values(), play_state())
+	_steer_sent = steer.position
+
+
+# Host: the lateral position to every recipient at most every STEER_SEND_S while it changes.
+func _send_steer(delta: float) -> void:
+	_steer_send_left_s -= delta
+	if _steer_send_left_s > 0.0 or (steer.velocity == 0.0 and steer.position == _steer_sent):
+		return
+	_steer_send_left_s = STEER_SEND_S
+	_steer_sent = steer.position
+	for peer: int in _connected_recipients():
+		receive_steer.rpc_id(peer, steer.to_array(), elapsed_s)
+
+
+# Host: the riders whose paddling counts now: aboard and untied.
+func _active_paddlers() -> Array[int]:
+	var active: Array[int] = []
+	for peer: int in steer.paddlers:
+		if rider_state(peer) == Rider.ABOARD:
+			active.append(peer)
+	return active
+
+
+# Two paddles on the shared deck, just inside its west and east edges; or two beside each board,
+# for that board's rider. Swimmers' routes have none.
+func _make_paddles() -> void:
+	if is_board_route():
+		for peer: int in _peers:
+			for side: int in [CrossingSteer.WEST, CrossingSteer.EAST]:
+				_paddles.append(_make_paddle(side, peer))
+		return
+	if not integrity.has_integrity():
+		return
+	for side: int in [CrossingSteer.WEST, CrossingSteer.EAST]:
+		var paddle := _make_paddle(side, 0)
+		paddle.position = deck_center() + Vector2(side * (DECK_TILES.x * TILE_PX * 0.5 - PADDLE_INSET_PX), 0.0)
+		_paddles.append(paddle)
+
+
+func _make_paddle(side: int, owner_peer: int) -> RescuePoint:
+	var paddle := _make_point(RescuePoint.Kind.PADDLE, owner_peer, 0.0)
+	paddle.side = side
+	paddle.enabled = true
+	if owner_peer != 0:
+		paddle.position = deck_rect_of(owner_peer).get_center() + Vector2(side * BOARD_PADDLE_PX, 0.0)
+	return paddle
+
+
+# Host: each rock or debris on the sea cuts each swimmer it passes over, once (crossing "Hazards and
+# swimmers"): a rock takes health and starts bleeding, debris takes less.
+func _cut_swimmers() -> void:
+	for index: int in plan.events.size():
+		var beat := plan.events[index] as CrossingBeat
+		if beat.kind != CrossingBeat.Kind.ROCK and beat.kind != CrossingBeat.Kind.DEBRIS:
+			continue
+		if absf(beat.time_s - elapsed_s) > tuning.hazard_lead_s + 1.0:
+			continue
+		var size := Vector2(beat_width_tiles(beat), 1.0) * TILE_PX
+		var rect := Rect2(beat_center(beat) - size * 0.5, size).grow(CUT_SLACK_PX)
+		for peer: int in _peers:
+			if rider_state(peer) != Rider.IN_WATER:
+				continue
+			var body := body_of(peer)
+			if body == null or body.meters.dead or not rect.has_point(body.global_position):
+				continue
+			var already: Array = _cut.get(index, [])
+			if already.has(peer):
+				continue
+			already.append(peer)
+			_cut[index] = already
+			if beat.kind == CrossingBeat.Kind.ROCK:
+				body.meters.harm(tuning.rock_cut_health, DeathCause.OTHER)
+				body.meters.set_status(DataEnums.Status.BLEEDING, true)
+			else:
+				body.meters.harm(tuning.debris_cut_health, DeathCause.OTHER)
 
 
 func _finish() -> void:

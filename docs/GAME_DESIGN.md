@@ -134,6 +134,12 @@ A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cub
 
 Swimmers in the water lose energy every second, moving or not (3 a second, times the route's drain factor: 0.4 for binoculars-and-swim, so a solo swimmer at 100 ends a 60 s crossing with 28); at 0 energy they drown at 10 health a second. Falling in costs 10 energy.
 
+**Playing the crossing** (`crossing-gameplay`, decided 2026-11-15). Every beat is warned before it lands and can be answered by one rider, so a solo crossing is played, not watched:
+
+- **Paddling.** A rider aboard holds interact at the paddle on the deck's west or east edge (on a board, beside it) to slide the vessel that way: 1.5 tiles/s, 2.25 with two or more on one side, the two sides subtracting, never more than 6 tiles from the line. When nobody paddles, the current pulls it back to the line at 0.5 tiles/s, so a rider who does nothing sits on the line and meets every beat in it. Paddling is not drift: coast drift stays 0 and the Gulf Stream rule above is untouched.
+- **Rocks and debris** come down a lane from the sea's north edge, 5 s before they reach the deck, and hit only where their lane overlaps the vessel (a rock is 2 tiles wide, debris 1, the raft and the car 4, boards the whole row): a rock −40, debris −5. A row of boards takes each hit on the next board in turn, as above. A swimmer a rock passes over is cut (−15 health and bleeding, so the shark's first choice); debris takes 5.
+- **Pacing.** The host rolls no beat in the first 6 s, puts the first between 6 and 9 s and then one every 3 to 9 s (the 9 s ×0.9 for each rider past the first), with rocks, debris and flotsam weighted 0.12, 0.20 and 0.68 on the coast. The squall's blow (the 15 s after its hit, when paddling runs at half speed) holds no rolled beat, and a rock or debris falls in the 10 s before a hit, so tying down early costs a dodge. Every crossing ends with the reef line: two rocks 10 tiles apart, 4 s before the end, with the gap within 3 tiles of the line.
+
 ## 9. Threats
 
 Full lore and behavior specs in `BESTIARY.md`. Summary:
