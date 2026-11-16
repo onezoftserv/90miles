@@ -126,6 +126,8 @@ None.
 - `game/scenes/ui/run_hud.gd` and `.tscn`: one `ChangeFloats` node beside `Marks`.
 - `game/scenes/ui/inventory_strip.gd`: the effect line in the notice row, and the new refusal.
 - `game/scripts/crafting/item_user.gd`: a `NOTHING_TO_DO` reason in `check`, shared by the host and the HUD. This is the one simulation edit, and it is a rule: a refused use spends nothing.
+- `game/scripts/crafting/use_outcome.gd` (`UseOutcome`, new): the dry run on scratch meters behind `NOTHING_TO_DO` and the effect line's useful part.
+- `game/scripts/crafting/effect_applier.gd`: an `INTERPRETED` list of the kinds it applies (the effect line's drift test reads it) and its meter rule shared as `add_meter_to`. What it does is unchanged.
 - `game/scripts/ui/hud_text.gd` and `game/resources/hud_text.tres`: meter and status words for floats and the effect line, and the refusal lines.
 - `game/scripts/ui/game_settings.gd` and the settings screen.
 - `game/scripts/autoload/audio_manager.gd`: one no-op method. No new autoload.
@@ -140,6 +142,6 @@ None.
 **Not touched:**
 - `player.tscn`'s synchronizer;
 - `survival_meters.gd`;
-- `effect_applier.gd` and every item's effects;
+- every item's effects (`.tres`);
 - `crossing.gd` and `creature_world.gd`;
 - networking and saves.

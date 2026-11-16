@@ -166,7 +166,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - a forged wasted use from the client changes nothing on the host.
 
   Write the late-joiner case first. If it fails because spawn state lands late, add the `synchronized` baseline from design's Risks. Verify: it passes, and the GUT total stays under CI's 300 s.
-- [ ] 7.3 Two processes: write `game/tests/manual/damage_feedback_run.gd` (host and client on UDP 7793, as `dead_spectate_run.gd`). The run:
+- [x] 7.3 Two processes: write `game/tests/manual/damage_feedback_run.gd` (host and client on UDP 7793, as `dead_spectate_run.gd`). The run:
   1. the host pinches the client;
   2. the client's player drowns;
   3. the host drinks a coconut.
@@ -176,8 +176,8 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 8. Docs
 
-- [ ] 8.1 Update `docs/GAME_DESIGN.md` (the HUD and health part, and item use) with the hit, drain and use cues, the wasted-use rule and the setting. Tick the task in `TASKS.md`. Verify: the docs name only behaviour in the specs.
-- [ ] 8.2 Run `openspec validate damage-feedback --strict`. Verify: it is valid.
+- [x] 8.1 Update `docs/GAME_DESIGN.md` (the HUD and health part, and item use) with the hit, drain and use cues, the wasted-use rule and the setting. Tick the task in `TASKS.md`. Verify: the docs name only behaviour in the specs.
+- [x] 8.2 Run `openspec validate damage-feedback --strict`. Verify: it is valid.
 
 ## Workflow follow-up
 
