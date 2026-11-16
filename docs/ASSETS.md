@@ -33,7 +33,7 @@ The installed Kenney packs (all CC0) may fill gaps, but their flat or outline-fr
 - Tiny, Tiny Heroes – Animals: the seagull (`creatures/seagull.png`).
 - Kyrise: the driftwood (redrawn over its log) and rain-cup icons (`items/`).
 - DawnLike: the knife icon, redrawn over its dagger (`items/`); its sharks are the shape and colour reference for the own-work shark, none of their pixels copied.
-- Kenney: the Pixel UI Pack's 9-slices (`ui/`); Tiny Dungeon's crab as the shape reference for the own-work land crab, none copied.
+- Kenney: Tiny Dungeon's crab as the shape reference for the own-work land crab, none copied. The Pixel UI Pack's 9-slices were replaced on 2026-11-15 by the own-work window kit (`ui/`, built by `tools/art/ui.py`; `hud-window-kit`).
 - Not used by `art-pass`: Scallywag – Ships and Shikashi's icons (both "later" above), and the other Kenney packs.
 
 Everything else under `game/assets/art/` is own work (the crab, the shark, eleven item icons, the palm, fire, lean-to and other structure parts, the dive ripple, the tide pool, the smaller shadows and the added palette ramps), made by the tracked tools in `tools/art/` from hand sources in `tools/art/fixes/`.
@@ -97,7 +97,7 @@ python -I -m unittest discover -s tools -p 'test_fetch_assets.py'
 | Check | What it holds |
 | --- | --- |
 | `test_downloaded_asset_refs.gd` | no tracked file under `game/` names `res://assets/kenney/`, `oga/`, `itch/` or `audio/ambience/` |
-| `test_art_tracked.gd` | every file under `res://assets/art/`: licence blocks with their own source, every PNG referred to, lossless import, palette and whole alpha (not `ui/`), outlines on creature, item and structure frames, frame budgets |
+| `test_art_tracked.gd` | every file under `res://assets/art/`: licence blocks with their own source, every PNG referred to, lossless import, palette and whole alpha (the `ui/` kit included), outlines on creature, item and structure frames, frame budgets |
 | `test_art_palette.gd` | the master palette (at most 64 colours, all of DB32), the key, skin and slot ramps, the outline set at 3:1 on every land ground, the four slots telling apart |
 | `test_art_credits.gd` | `credits.tres`, `CREDITS.md` and every `License.txt` agree: each CC-BY pack credited with its author, "CC BY 4.0", the licence's address and its source page, and every tracked pack listed |
 | `test_art_checks.gd` | each rule above fails on its fixture in `game/tests/fixtures/art/` and names the file: a copy without its licence, a licence deed as source, an off-palette pixel, partial alpha outside shadows, an icon without its rim, a lossy import, an outline colour or fin that blends in, water in land tiles, too many frames, two items with one silhouette |
@@ -112,7 +112,7 @@ python -I -m unittest discover -s tools -p 'test_fetch_assets.py'
 | Shark, crab, gull sprites | Hand-made shark (DawnLike as its colour reference) and crab, Tiny, Tiny Heroes gull | CC BY 4.0 / own | `assets/art/creatures/` | manual download, copied when used |
 | Items: rope, jug, coconut, knife, tarp, cup, driftwood, dry grass, inner tube, binoculars, nails, mirror, aloe, lighter | Kyrise and DawnLike icons, hand-made for the rest | CC BY 4.0 / own | `assets/art/items/` | manual download, copied when used |
 | Palm, lean-to, workbench, fire, rain catcher, sign post, raft | Hand-made, kitbashed from Scallywag fronds and logs and Zelda-like props | CC0 / own | `assets/art/structures/` | — |
-| UI: panels, bars, buttons, cursor | Kenney "Pixel UI Pack" (tracked 9-slices in `assets/art/ui/`) | CC0 | `assets/kenney/ui/` | auto |
+| UI: windows, panels, buttons, slot wells, meter ramps, digits | Own work, built pixel by pixel from the master palette by `tools/art/ui.py` (`tools/art/ui_kit.json`) into `assets/art/ui/` | Own work | `tools/art/` | recipe |
 | Pixel font (Spanish accents and ñ required) | Google Fonts "Press Start 2P" (Latin) or "Pixelify Sans" | OFL | `assets/fonts/` | auto |
 | Sea ambience, waves, wind, rain | freesound.org (CC0 filter) / Kenney "Audio" packs | CC0 | `assets/audio/ambience/` | manual |
 | UI and impact SFX | Kenney "Interface Sounds", "Impact Sounds" | CC0 | `assets/audio/sfx/` | auto |

@@ -21,6 +21,7 @@
 [ext_resource type="Texture2D" path="res://assets/art/ui/scroll_grabber.png" id="k_scroll_grabber"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/radio_off.png" id="k_radio_off"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/radio_on.png" id="k_radio_on"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/digits_3x5.png" id="k_digits_3x5"]
 
 [sub_resource type="StyleBoxTexture" id="hud_panel"]
 content_margin_left = 4.0
@@ -367,6 +368,7 @@ HudCount/base_type = &"Label"
 HudCount/colors/font_outline_color = Color(0.13333333, 0.1254902, 0.20392157, 1)
 HudCount/colors/font_shadow_color = Color(0, 0, 0, 0)
 HudCount/constants/outline_size = 1
+HudDigits/icons/atlas = ExtResource("k_digits_3x5")
 HudNote/base_type = &"PanelContainer"
 HudNote/styles/panel = SubResource("hud_note")
 HudNoteText/base_type = &"Label"

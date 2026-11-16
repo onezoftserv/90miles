@@ -45,7 +45,7 @@ class RealKit(UiBase):
             "scroll_track": (6, 6), "scroll_grabber": (6, 8), "check_off": (9, 9), "check_on": (9, 9),
             "arrow_down": (7, 4), "radio_off": (7, 7), "radio_on": (7, 7),
             "ramp_health": (1, 5), "ramp_thirst": (1, 5), "ramp_hunger": (1, 5), "ramp_heat": (1, 5),
-            "ramp_energy": (1, 5), "ramp_morale": (1, 5),
+            "ramp_energy": (1, 5), "ramp_morale": (1, 5), "digits_3x5": (60, 14),
         }
         self.assertEqual(set(sizes), set(self.images))
         for name, size in sizes.items():
@@ -53,7 +53,7 @@ class RealKit(UiBase):
 
     def test_outer_corners_transparent(self):
         for name, image in self.images.items():
-            if name == "arrow_down" or name.startswith("ramp_"):
+            if name in ("arrow_down", "digits_3x5") or name.startswith("ramp_"):
                 continue
             w, h = image.width, image.height
             corners = [(0, 0), (w - 1, 0)] + ([] if name == "tab_dark" else [(0, h - 1), (w - 1, h - 1)])
@@ -246,7 +246,7 @@ class Kinds(UiBase):
                 self.assertEqual(ui.main(["--out", str(out)]), 0)
             files = sorted(p.name for p in first.iterdir())
             self.assertEqual(files, sorted(p.name for p in second.iterdir()))
-            self.assertEqual(len(files), 25)
+            self.assertEqual(len(files), 26)
             for name in files:
                 self.assertEqual((first / name).read_bytes(), (second / name).read_bytes(), name)
 
