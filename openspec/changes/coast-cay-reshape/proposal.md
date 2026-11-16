@@ -28,7 +28,7 @@ A content change: it moves walkable, swimmable and hiding cells on the coast cay
 - **New requirements pin the shape** with measures that fail on today's map: no straight coast or rock seam longer than 10 cells, a rock point that narrows, driftwood and scrub in groups, nothing on an outer corner, and the places that do not move.
 - **Tests and docs.** The outline tests are written first. The counts that the shape moves (land cells, layer counts, shore cells, the patrol loop's length and sea distances) are re-pinned with reasons. `docs/ISLANDS.md` §2 drops "a C of two 12-wide strips and a rocky spur round shallow flats" and gives the new land count and walks.
 
-The sandbar is not in this change. Filling its four 2-cell notches is a new owner question (design.md, "Owner decisions"); a gated task group adds it only on a yes.
+The sandbar's only change: on 2026-11-15 the owner answered "Yes, fill them" to QC1, so its four 2-cell notches at the tips of the inner bay, (45, 20), (46, 20), (45, 51) and (46, 51), become beach (task group 5; land 991 → 995). Nothing else on the sandbar moves.
 
 ## Capabilities
 
@@ -38,7 +38,7 @@ None.
 
 ### Modified Capabilities
 
-- `island-generation` adds "Coast cay coastline", "Coast cay rocky point", "Coast cay driftwood and scrub", "Coast cay pick-ups off outer corners" and "Coast cay reshape keeps its places". "Handmade coast cay", "Coast cay landing", "Coast cay contents" (modified by the open coast-cay-bench change), "Coast cay reach" and the bench's three requirements keep their text, and their tests stay green on the new map.
+- `island-generation` adds "Coast cay coastline", "Coast cay rocky point", "Coast cay driftwood and scrub", "Coast cay pick-ups off outer corners", "Coast cay reshape keeps its places" and "Sandbar bay tips have no notch". "Handmade coast cay", "Coast cay landing", "Coast cay contents" (modified by the open coast-cay-bench change), "Coast cay reach" and the bench's three requirements keep their text, and their tests stay green on the new map.
 
 ## Impact
 

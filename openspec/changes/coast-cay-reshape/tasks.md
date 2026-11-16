@@ -35,7 +35,7 @@ Every group ends with the import twice (`godot --headless --path game --import`,
 
 - [ ] 4.1 Update `docs/ISLANDS.md` §2: the shape sentence, the land count and share, and the walks from the first landing cell as measured. Update `TASKS.md`.
 
-## 5. Sandbar notches (only if the owner answers QC1 (a))
+## 5. Sandbar notches (QC1 (a), the owner's "Yes, fill them", 2026-11-15)
 
 - [ ] 5.1 In `game/tests/unit/test_terrain_art.gd` or the sandbar's layout test, assert that cells (45, 20), (46, 20), (45, 51) and (46, 51) are beach. See it fail.
 - [ ] 5.2 Set those four cells of `game/resources/islands/sandbar.tres` to beach. Verify the sandbar's land band (940–1,100), share and 6-tile rule, its walk and reach tests, and re-pin its land (991 → 995), its Sand layer (994 → 998) and any shore, patrol or trigger count that moved, each with a reason. Update `docs/ISLANDS.md` §1 if it gives the land count.
