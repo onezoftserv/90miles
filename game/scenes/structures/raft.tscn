@@ -11,4 +11,8 @@ script = ExtResource("1_main")
 script = ExtResource("2_interactable")
 prompt_id = &"launch"
 
+[node name="WorkPoint" type="Node2D" parent="."]
+script = ExtResource("2_interactable")
+prompt_id = &"raft_work"
+
 [node name="Look" parent="." instance=ExtResource("3_look")]

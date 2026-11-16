@@ -251,7 +251,7 @@ In the crossing's hit resolution, a rock or debris that overlaps the vessel (cro
   - two refusal reasons, "La balsa está entera." and "La balsa ya lo tiene."
 - **The raft list** is the crafting-list panel with a raft source, at the same place (4,162 to 244,302), with the state line as its head.
 - **Drafts for the owner's voice pass:**
-  - Warning: "Con esa balsa no llegas ni a la esquina."
+  - Warning: "Así no llegas ni a la esquina." (30 glyphs, the prompt line's width)
   - Remiendo: "Un palo y una soga donde más hace falta."
   - Clavazón: "Cuatro clavos y la balsa deja de crujir."
   - Defensas: "Una cámara amarrada al borde, pa' que la piedra rebote."

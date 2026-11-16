@@ -9,51 +9,52 @@ The owner answered (a) on all eight questions on 2026-11-15 (design.md "Owner de
 
 ## 1. Vessel recipes as data
 
-- [ ] 1.1 Change the data scripts and the content check:
+- [x] 1.1 Change the data scripts and the content check:
   - add `vessel_modifiers: Array[ModifierData]` to `game/scripts/data/recipe_data.gd`;
   - append `VESSEL_HAZARD_DAMAGE` and `VESSEL_DECK_SHADE` to the end of `ModifierData.Stat`;
   - teach the content check that a `VESSEL_REPAIR` recipe needs `integrity_delta` > 0, that a `VESSEL_UPGRADE` recipe needs `integrity_delta` or a vessel-scoped modifier, and that both use `station = NONE` and `build_site = false`.
   Verify with a new `game/tests/unit/test_vessel_recipes.gd`: it accepts a valid repair recipe, refuses one with neither field, refuses one on the workbench station, and existing enum values keep their numbers.
-- [ ] 1.2 Add `game/resources/recipes/raft_mend.tres`: "Remiendo", 1 driftwood and 1 rope, 10 s, Building ×2, `integrity_delta` 20, `station = NONE`, with Spanish and English names and the D9 draft description. Verify that the content check reports no errors and that the workbench list on the sandbar still reads only "Fogata" and "Recogedor de lluvia".
-- [ ] 1.3 Update the crafting-inventory test for "A solo player crafts every recipe" so that a vessel recipe is crafted at a built raft. Verify that the test passes with `raft_mend` in the catalog.
+- [x] 1.2 Add `game/resources/recipes/raft_mend.tres`: "Remiendo", 1 driftwood and 1 rope, 10 s, Building ×2, `integrity_delta` 20, `station = NONE`, with Spanish and English names and the D9 draft description. Verify that the content check reports no errors and that the workbench list on the sandbar still reads only "Fogata" and "Recogedor de lluvia".
+- [x] 1.3 Update the crafting-inventory test for "A solo player crafts every recipe" so that a vessel recipe is crafted at a built raft. Verify that the test passes with `raft_mend` in the catalog.
 
 ## 2. The mend on the island (PR 1)
 
-- [ ] 2.1 Give `Raft` (`game/scenes/structures/raft.gd`) a maximum, a fittings list and at most one open job, reusing the build-site deposit and work logic. The mend gives +20 up to the maximum and is refused at the maximum.
+- [x] 2.1 Give `Raft` (`game/scenes/structures/raft.gd`) a maximum, a fittings list and at most one open job, reusing the build-site deposit and work logic. The mend gives +20 up to the maximum and is refused at the maximum.
   Verify with a 1-player, offline GUT test of each escape-routes "Mending a built raft" scenario:
   - 48 → 68 on the coast cay;
   - two mends to 88;
   - stopping at 100;
   - a whole raft refusing a mend;
   - a Mecánico in 5 s.
-- [ ] 2.2 Add the raft's work point on the land-side neighbour cell, picked by the host from the layout, and keep the launch Interactable and its 1 s hold unchanged. Verify with tests:
-  - from the sea side the picker offers "Zarpar en la balsa", and from the land side "Arreglar Balsa";
+  Built: `Crafter.recipe_time` divides by the recipe's `skill_speed_multiplier` when the player's background lists the recipe's skill, which also gives the raft build its promised 2×. No Mecánico background ships yet (only the Maestro and the Médico), so the test checks the rule with the Maestro and a Navigation recipe. The Mecánico's own 5 s mend is tested when the backgrounds change adds it.
+- [x] 2.2 Add the raft's work point on the land-side neighbour cell, picked by the host from the layout, and keep the launch Interactable and its 1 s hold unchanged. Verify with tests:
+  - from the sea side the picker offers "Zarpar en la balsa", and from the land side "Arreglar la balsa";
   - both peers place the point on the same cell;
   - the existing launch tests still pass.
-- [ ] 2.3 Build the raft's HUD:
+- [x] 2.3 Build the raft's HUD:
   - the raft list in the crafting-list panel, with its state head line;
   - the dimmed rows and the two refusal reasons;
   - the state line and warning line in the launch prompt;
   - the job prompt "[E] Trabajar en <recipe>" with build-site lines;
   - the new ids appended to `game/resources/hud_text.tres`.
-  Verify with 1-player tests of every inventory-hud scenario in this change ("Solo at a worn raft", "A fitted raft" with a fixture fitting, "Solo opens the raft's list on the coast cay", the two refusals, "Solo mend missing its rope").
-- [ ] 2.4 Route a client's start, deposit and work on a raft job through the host as interact intents. Verify with host-plus-client GUT tests:
+  Verify with 1-player tests of every inventory-hud scenario in this change ("Solo at a worn raft", "A fitted raft" as 90 of 120 with no warning (the fitting names come with PR 2), "Solo opens the raft's list on the coast cay", the two refusals, "Solo mend missing its rope").
+- [x] 2.4 Route a client's start, deposit and work on a raft job through the host as interact intents. Verify with host-plus-client GUT tests:
   - "Two players pool a mend";
   - "One job at a time" (a forged second start is refused);
-  - "Nobody working";
+  - "Nobody working" (a 1-player test);
   - "A client starts a mend".
-- [ ] 2.5 End an open job on launch: give each deposit back to its depositor, or drop it on the raft's cell when that inventory is full. Verify with a 1-player test of "Solo launches in the middle of a mend", and a 2-player test whose depositor's inventory is full.
-- [ ] 2.6 Replace the beached-integrity float with the beached-raft record `{integrity, max, fittings}` in:
-  - `IslandRoutes` (departure);
-  - `CrossingResult`;
-  - `IslandTravel` (`_beached_raft()`, `travel_to`, the join extras "raft");
-  - the island's beaching of the raft.
+  Built in `test_raft_job_net.gd`. A client's start goes through `CoopSession.craft` with the raft's path, and its deposit through `CoopSession.deposit`.
+- [x] 2.5 End an open job on launch: give each deposit back to its depositor, or drop it on the raft's cell when that inventory is full. Verify with a 1-player test of "Solo launches in the middle of a mend", a 1-player test whose depositor's inventory is full, and a 2-player test that gives a client's rope back.
+- [x] 2.6 Carry the raft's state to every peer:
+  - the host pushes the integrity, the maximum, the fittings and the open job on every change;
+  - a client's raft asks for them as it appears, and again when the world state arrives, as a level site does;
+  - a raft beached on the next island keeps its integrity, with the recipe's maximum.
   Verify with tests:
-  - a 1-player, offline sandbar → coast cay run beaches the raft with its integrity and maximum;
-  - "A joiner sees a fitted raft" with a fixture fitting and a half-done mend;
+  - "A joiner reads a half-done mend" (integrity 90 and the job at 50 %, no host error);
   - "Solo fits offline" (nothing sent);
   - the existing arrival and late-join tests stay green.
-- [ ] 2.7 Write the docs:
+  Changed from the plan: the record `{integrity, max, fittings}` through `travel_to` and the join extras moves to task 3.5. In PR 1 the maximum is always the recipe's 100, so the float `travel_to` already carries is enough, and `island_travel.gd` stays untouched while capture-build edits it.
+- [x] 2.7 Write the docs:
   - GAME_DESIGN §6 "Durability": the mend's numbers and "no gate: a raft can always sail on";
   - TASKS.md: tick the mend and add the follow-ups (`night-ashore`, the launch seen by the patrol with the cutter boss).
   Verify that the docs match the specs' numbers.
@@ -83,7 +84,7 @@ The owner answered (a) on all eight questions on 2026-11-15 (design.md "Owner de
   - "Solo midday crossing under the toldo" (11:00, calm, 75 s: heat 0, thirst 72.5);
   - "The same crossing without the toldo" (thirst 65, sunstroke).
   Set the clock after `solo_requested`, as in the crossing-gameplay notes.
-- [ ] 3.5 Carry fittings through the crossing:
+- [ ] 3.5 Carry fittings through the crossing, replacing the beached-integrity float with the record `{integrity, max, fittings}` in `IslandRoutes` (departure), `CrossingResult`, `IslandTravel` (`_beached_raft()`, `travel_to`, the join extras "raft") and the island's beaching (moved here from task 2.6):
   - the record's fittings go in the crossing result;
   - the beached raft keeps them;
   - a broken raft loses them;

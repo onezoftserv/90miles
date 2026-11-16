@@ -28,6 +28,10 @@ enum Stat {
 	TEXT_FIND_RATE,
 	NPC_TRUST_GAIN,
 	SONG_MORALE,
+	## A raft fitting (island-stop): multiplies the integrity a rock or a debris takes.
+	VESSEL_HAZARD_DAMAGE,
+	## A raft fitting (island-stop): SET 1 makes the deck shade for riders aboard.
+	VESSEL_DECK_SHADE,
 }
 
 enum Op {
