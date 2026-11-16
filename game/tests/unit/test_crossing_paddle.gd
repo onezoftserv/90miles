@@ -44,6 +44,19 @@ func test_solo_paddles_off_the_line_and_drifts_back() -> void:
 	assert_eq(crossing.steer.position, 0.0, "back on the line, and no further")
 
 
+func test_walking_off_the_paddle_stops_paddling() -> void:
+	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0)
+	var body := crossing.body_of(1)
+	_to_edge(crossing, body, CrossingSteer.EAST)
+	body.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	CrossingRig.run(crossing, 1.0)
+	var paddled: float = crossing.steer.position
+	assert_gt(paddled, 1.0)
+	body.global_position = crossing.deck_rect().get_center() + Vector2(-20.0, 0.0)
+	CrossingRig.run(crossing, 1.0)
+	assert_lt(crossing.steer.position, paddled, "the button still held, but away from the paddle: the current takes it back")
+
+
 func test_two_paddlers_on_one_side() -> void:
 	var crossing := CrossingRig.make(self, &"raft", 2, 100.0, 60.0)
 	var bodies: Array[PlayerBody] = [crossing.body_of(1), crossing.body_of(2)]

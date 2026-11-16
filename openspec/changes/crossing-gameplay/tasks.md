@@ -89,7 +89,7 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
   - the same seed gives the same plan.
 
   See it fail.
-- [x] 4.2 Rewrite `CrossingPlan.roll(route, band, sky, rng, tuning, riders)` as design.md D8. `GameShell._on_route_started` passes the rider count. Verify that `test_crossing_pacing.gd` passes and that `test_crossing_plan.gd`'s rolled-plan cases are updated to the new rule, and nothing else.
+- [x] 4.2 Rewrite `CrossingPlan.roll(route, band, sky, rng, tuning, riders)` as design.md D8. `Crossing.launch` passes the rider count (`peer_ids.size()`), so the shell is unchanged. Verify that `test_crossing_pacing.gd` passes and that `test_crossing_plan.gd`'s rolled-plan cases are updated to the new rule, and nothing else.
 - [ ] 4.3 (Run after groups 5–7, since the attentive rider plugs leaks and shoos the shark, so it ships in the third PR.) Add a statistics test, `test_crossing_balance.gd`, with an idle solo rider and a scripted attentive solo rider (it paddles out of each hazard's lane, plugs, shoos and ties down 2 s before the hit) over 500 rolled 75 s coast raft plans. Verify that the idle average left is 20–40 (the design's Monte Carlo predicts 33.5, with 27 % broken) and the attentive average is 70 or more. Tune only the `.tres` weights to get there, and record the measured numbers in design.md.
 - [x] 4.4 Update GAME_DESIGN.md §8 with the pacing budget and the reef line. Open the first PR (groups 1–4) after a solo windowed crossing from the sandbar runs clean through the Godot MCP.
 
