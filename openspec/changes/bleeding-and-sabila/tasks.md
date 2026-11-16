@@ -48,14 +48,14 @@ A group may run only its own scripts with `-gdir=res://tests/unit -gselect=<name
 
 ## 2. Sábila heals and goes to whoever needs it (crafting-inventory, inventory-hud)
 
-- [ ] 2.1 Write `test_sabila.gd`, failing first. It covers:
+- [x] 2.1 Write `test_sabila.gd`, failing first. It covers:
   - solo at 70 with sunburn and bleeding: both gone, 75, leaf gone (keep `test_coast_cay_solo`'s aloe test and add the health check there);
   - solo at 90 not bleeding: 95, leaf gone;
   - solo at full health not bleeding: refused with `NOTHING_TO_DO` and the leaf stays (#65's rule, kept true with the heal);
   - a use on a teammate within reach: their bleeding stops and they gain 5, and the user's meters are unchanged;
   - a teammate 3 tiles away: refused `OUT_OF_REACH` by `UsePlan.actor_reason`, and nothing changes.
-- [ ] 2.2 Add `METER_ADD` health +5 on the use target to `aloe.tres` after the cures, and the new Spanish and English descriptions (design D4). Verify that `test_sabila.gd`, `test_coast_cay_solo`, the content validator and `test_effect_line` (#65's effect words) pass.
-- [ ] 2.3 Write the `UsePlan` tests in `test_use_plan_cure.gd`, failing first:
+- [x] 2.2 Add `METER_ADD` health +5 on the use target to `aloe.tres` after the cures, and the new Spanish and English descriptions (design D4). Verify that `test_sabila.gd`, `test_coast_cay_solo`, the content validator and `test_effect_line` (#65's effect words) pass. Done. #65's tests that expected sábila to read as cures only now expect the heal: `test_effect_line` ("Cura quemadura y sangrado · Salud +5 (+0 útil)" at full health), `test_wasted_uses` and `test_damage_feedback_solo` (the reason is "'Tás entero."; "No hay na' que curar." stays covered by a two-cure use). No HUD code changed.
+- [x] 2.3 Write the `UsePlan` tests in `test_use_plan_cure.gd`, failing first:
   - a non-bleeding holder 0.5 tiles from a bleeding teammate aims at them, and `item_line_text` gives "Sábila · [F] Untar: <name>";
   - a bleeding holder aims at themself;
   - a teammate 3 tiles away is not aimed at;
@@ -63,8 +63,8 @@ A group may run only its own scripts with `-gdir=res://tests/unit -gselect=<name
   - a dead teammate or one waiting out of play is skipped;
   - a rain cup next to a standing thirsty teammate goes on the holder;
   - with no session (solo), the plan is always the holder.
-- [ ] 2.4 Add the cure step to `UsePlan.choose` after the revive branches (design D5). Verify that the 2.3 tests and the existing `test_use_plan*`, `test_inventory_strip*` and `test_use_button_solo` pass.
-- [ ] 2.5 Update the docs. Verify each by reading it back.
+- [x] 2.4 Add the cure step to `UsePlan.choose` after the revive branches (design D5). Verify that the 2.3 tests and the existing `test_use_plan*`, `test_inventory_strip*` and `test_use_button_solo` pass.
+- [x] 2.5 Update the docs. Verify each by reading it back.
   - `docs/ITEMS.md`: the Sábila row reads "Stops bleeding and heals 5; soothes sunburn once it exists".
   - `TASKS.md`: a line under the current milestone for sunburn (a source from heat, an effect on heat, a HUD tag; data stays in `aloe.tres`), and HUD follow-ups for the status time-left bar (Brogue's progress bars, DCSS's HP-bar preview, SPD's incoming-damage bar).
 
