@@ -100,6 +100,20 @@ func test_solo_swim_is_refused_while_bleeding() -> void:
 	assert_eq(started.size(), 0)
 
 
+func test_solo_swim_starts_once_the_bleeding_has_ended() -> void:
+	# The sandbar has no sábila: the lone swimmer waits the bleeding out (bleeding-and-sabila).
+	var body := _swimmer(&"calm", 100.0)
+	body.meters.set_status(DataEnums.Status.BLEEDING, true)
+	_use_binoculars(body)
+	assert_eq(started.size(), 0, "refused while bleeding")
+	for i: int in 240:
+		body.meters.tick(0.5, MeterContext.new())
+	assert_false(body.meters.has_status(DataEnums.Status.BLEEDING), "over after 120 s")
+	_use_binoculars(body)
+	assert_eq(started.size(), 1)
+	assert_eq(started[0][0], &"binoculars_swim")
+
+
 func test_solo_swim_starts_in_calm_at_energy_100_and_keeps_the_binoculars() -> void:
 	var body := _swimmer(&"calm", 100.0)
 	_use_binoculars(body)

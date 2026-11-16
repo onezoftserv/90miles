@@ -31,3 +31,6 @@ hallucinate_below = 20.0
 downed_s = 90.0
 revive_health = 30.0
 solo_last_stand_s = 0.0
+bleeding_health_per_s = 0.1
+bleeding_s = 120.0
+bleeding_floor = 1.0

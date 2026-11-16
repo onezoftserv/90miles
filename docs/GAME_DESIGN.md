@@ -55,7 +55,7 @@ Rates are per real minute (one in-game hour is 30 real seconds, see §5). The nu
 | Heat | 0 (cool) → 100 (rises; decided 2026-11-05) | Rises 45/min in direct sun between 10:00 and 16:00, ×2 in scorching calm | Falls 45/min in shade, in water or outside 10:00–16:00; 0 at night | At 100, sunstroke until heat drops below 60: blurred screen, speed −40% |
 | Energy | 100 | Swimming 3/s, building 1/s, running 0.5/s | Sleep (+50 per night in shelter), meals (+10); nothing else | Collapse: can only crawl |
 | Morale | 100 | Loss of ally −30, squall −10 (both hit every player), −5/min at night with no teammate and no lit fire within 5 tiles | Teammate within 5 tiles +2/min, fire +5, song +15, found text +10, keepsake | Below 20: hallucinations: fake islands, fake voices |
-| Health | 100 | Attacks, thirst, poison (−20 over 30 s) | Aloe, rest, noni | Downed (solo: last stand) |
+| Health | 100 | Attacks, thirst, poison (−20 over 30 s), bleeding (6/min until 120 s after the latest wound; never the last point, so it never downs or kills) | Sábila (+5, stops bleeding), rest, noni | Downed (solo: last stand) |
 
 What that means for one player starting full at dawn: thirst lasts 1.15 days (≈ 14 min) working in the sun all day, 1.4 days half in the shade, 1.75 days resting in the shade. Hunger lasts 2–2.8 days. Standing in the midday sun brings sunstroke after 133 s (67 s in scorching calm); half sun, half shade never does on a normal day. Heat never costs health (provisional).
 
@@ -120,10 +120,11 @@ Night is cooler (thirst ×0.5) but dark. Searchlights, crocodiles and crabs come
 **Using an item** (`damage-feedback`). The row above the selected item says what its use does, built from the item's own data:
 - "Sed +15 · Hambre +5 · Energía +10" for a coconut, which counts as a meal;
 - "Sed +15 (+6 útil)" when only part fits;
-- "Cura quemadura y sangrado" for sábila.
+- "Cura quemadura y sangrado · Salud +5" for sábila.
 
 A use that would change nothing is refused with a reason and spends nothing:
 - "No tienes sed.";
+- "'Tás entero." (sábila at full health);
 - "No hay na' que curar.";
 - "A Papo no le hace falta.".
 

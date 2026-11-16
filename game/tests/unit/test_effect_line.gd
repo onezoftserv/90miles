@@ -47,7 +47,8 @@ func test_waste_shows_what_is_useful() -> void:
 
 
 func test_sabila_reads_its_cures_in_order() -> void:
-	assert_eq(EffectLine.text(_use(&"aloe"), user, null, words), "Cura quemadura y sangrado")
+	# The cures, then its heal (bleeding-and-sabila), which a player at full health would waste.
+	assert_eq(EffectLine.text(_use(&"aloe"), user, null, words), "Cura quemadura y sangrado · Salud +5 (+0 útil)")
 
 
 func test_a_drain_over_time() -> void:

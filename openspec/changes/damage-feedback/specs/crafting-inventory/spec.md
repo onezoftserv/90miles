@@ -4,7 +4,7 @@
 The host SHALL refuse a use, changing and spending nothing, when none of its effects would change anything for its subject. That means each meter it adds to is already at its cap, or less than 1 point from it (energy's starving cap included), each status it cures is absent, there is no effect of another kind (a revive, an item given or taken, a route, a flag, a delay, a change over time or a loss), and the item leaves no remainder. Solo the same, offline.
 
 #### Scenario: Solo sábila with nothing to cure
-- **GIVEN** a solo player, offline, who is neither bleeding nor sunburnt and holds sábila
+- **GIVEN** a solo player, offline, at full health who is neither bleeding nor sunburnt and holds sábila
 - **WHEN** the use reaches the host
 - **THEN** nothing changes and the sábila stays
 
