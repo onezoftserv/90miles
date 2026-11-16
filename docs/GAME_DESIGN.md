@@ -67,6 +67,18 @@ What that means for one player starting full at dawn: thirst lasts 1.15 days (�
 
 **Drinking seawater** restores 10 thirst, then drains 30 over the next two minutes. Desperate players will do it anyway. That is the point.
 
+**Feeling a hit** (`damage-feedback`, owner 2026-11-14). Each player's game works out hits and drains from the health it already receives, so nothing new is sent.
+- **A hit** is health lost at once: a shark's 25, a crab's 5.
+  - The hurt body is drawn white for one frame, then blinks for 0.6 s, on every screen.
+  - On the screen showing that body's meters (your own, or the teammate you watch while dead):
+    - the screen edges flash red, stronger for a bigger hit, with a floor so a crab's 5 still shows, at most three times a second;
+    - the Salud bar shows the lost part in pale red, holds it 0.4 s, drains it over 0.5 s, and shakes by 1 px.
+  - No number floats for a hit.
+- **A drain** is health lost over time: thirst at 0, drowning, manzanillo. It only ticks the lost part down and glows the Salud frame dim red until 1 s after the last loss.
+- **A meter that jumps at once** floats its change over that body on every screen ("+15 Sed", in the meter's colour, or "+6 Sed" when only 6 fit), and its bar lights the gained part and flashes once.
+- **A status that clears** floats "Sin sangrado".
+- **"Reducir destellos"** in Ajustes turns every blink, flash and shake into a steady tint or nothing.
+
 ## 5. Weather and time
 
 A day is 12 real minutes: dawn (1), day (5), dusk (1), night (5). One in-game hour is 30 real seconds and the clock reads 06:00 when dawn starts, so the day phase runs 08:00–18:00, dusk 18:00–20:00 and night 20:00–06:00 (provisional, `survival-meters`). Midday, 10:00–16:00, is the middle 3 real minutes of the day phase.
@@ -104,6 +116,18 @@ Night is cooler (thirst ×0.5) but dark. Searchlights, crocodiles and crabs come
 **Crafting** happens at a workbench (any flat rock or wreck table). Recipes are data (`.tres`). Core recipes: raft (6 driftwood + 2 tubes + 3 rope), solar still (jug + tarp + rocks), spear (driftwood + knife), rain catcher (tarp + 4 sticks), sail (tarp + mast + rope), mirror signal (any mirror), fire (3 driftwood + dry grass + friction or lighter).
 
 **Identification.** Unknown fruit shows as "fruta roja" until someone eats it or an NPC names it. Manchineel looks like a small green apple and burns you from the inside. Once one player learns a plant, the party knows it.
+
+**Using an item** (`damage-feedback`). The row above the selected item says what its use does, built from the item's own data:
+- "Sed +15 · Hambre +5 · Energía +10" for a coconut, which counts as a meal;
+- "Sed +15 (+6 útil)" when only part fits;
+- "Cura quemadura y sangrado" for sábila.
+
+A use that would change nothing is refused with a reason and spends nothing:
+- "No tienes sed.";
+- "No hay na' que curar.";
+- "A Papo no le hace falta.".
+
+It counts as changing nothing only when every meter it raises is within 1 point of full, every status it cures is absent, and it has no other effect. A coconut is still drunk when you are hungry, and a conch still leaves its horn.
 
 **Durability.** Tools wear out. The raft loses 25% integrity per crossing and more in squalls; repair with driftwood and rope.
 

@@ -3,7 +3,9 @@ extends Node2D
 ## How a player is drawn (art-pass "Player frames and anchor", "Player poses", "Player facing",
 ## "Swimmers at the water line", "Clothing colours", "Player look slots"; design.md D1-D3, D6, D19,
 ## C1, C2): the composite of its look slot's look on `Sprite`, in the pose its body's states pick,
-## turned by its drawn motion; the dive ripple on `Ripple`; the shadow. Drawing only (`art_view`,
+## turned by its drawn motion; the dive ripple on `Ripple`; the shadow; and the hurt blink on a hit
+## (survival-meters "Hurt cue on the body"; damage-feedback design D4), from the health this peer
+## holds for the body. Drawing only (`art_view`,
 ## set in the scene): every frame it reads the body's states and position and writes nothing back.
 ## `step(delta)` is one frame; `_process` calls it and the tests drive it.
 
@@ -18,6 +20,9 @@ var facing: Facing = Facing.new()
 var _art: BodyArt = null
 var _slot: int = -1
 var _material: ShaderMaterial = null
+var _tuning: HurtCueTuning = HurtCues.tuning()
+var _health_watch: MeterWatch = MeterWatch.new(_tuning.change_margin, _tuning.steady_forget_s)
+var _blink: HurtBlink = HurtBlink.new(_tuning.blink_s, _tuning.blink_hz)
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var ripple: AnimatedSprite2D = $Ripple
@@ -49,6 +54,7 @@ func step(delta: float) -> void:
 	var dead: bool = meters != null and meters.dead
 	pose = PlayerPose.pick(body.movement_state, body.stealth_state, body.downed, dead, facing.moving())
 	_draw_pose()
+	_draw_hurt(meters, delta)
 
 
 # Composes (or takes from the cache) the slot's look and colours the clothing in the slot's row.
@@ -86,6 +92,23 @@ func _draw_pose() -> void:
 	sprite.speed_scale = fps / maxf(sprite.sprite_frames.get_animation_speed(animation), 0.001)
 	if not sprite.is_playing() or sprite.animation != animation:
 		sprite.play(animation)
+
+
+## The body's hurt blink (a hit starts it again).
+func hurt_blink() -> HurtBlink:
+	return _blink
+
+
+# A hit on this peer's copy of the body starts the blink; the frame is drawn, then the blink moves on.
+func _draw_hurt(meters: SurvivalMeters, delta: float) -> void:
+	if meters != null and _health_watch.observe(meters.health, meters.dead, delta) == MeterWatch.Change.HIT:
+		_blink.start()
+	if _material != null:
+		var reduce: bool = HurtCues.reduce_flashes
+		_material.set_shader_parameter(&"hurt_white", _blink.white(reduce))
+		_material.set_shader_parameter(&"hurt_hidden", _blink.hidden(reduce))
+		_material.set_shader_parameter(&"hurt_tint", _tuning.tint_color if _blink.tinted(reduce) else Color(0.0, 0.0, 0.0, 0.0))
+	_blink.advance(delta)
 
 
 func _show_ripple(shown: bool) -> void:

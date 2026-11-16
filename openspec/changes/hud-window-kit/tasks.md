@@ -1,6 +1,6 @@
 # Tasks
 
-Build only after `damage-feedback` is merged into main (design D13). Each numbered group is one PR, green before the next starts. The groups follow the owner's answers of 2026-11-14 (Q8 a, Q9 a, Q10 a, Q11 a, Q16 a), and the recommended option of each question still open in design.md "Owner decisions" (A to D). A different answer changes only the group that question names.
+Build only after `damage-feedback` is merged into main (design D13). Each numbered group is one PR, green before the next starts. The groups follow the owner's answers of 2026-11-14 (Q8 a, Q9 a, Q10 a, Q11 a, Q16 a), and the owner's answers of 2026-11-15 (A1, B1, C1, D1, E1), recorded in design.md "Owner decisions".
 
 The commands below run from the repo root, with the Godot 4.7.2 console binary:
 - "Import" is `godot --headless --path game --import`, run twice on a fresh checkout.
@@ -61,9 +61,9 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - `MeterBar.PULSE_COLOR` becomes `HudStyle.ALERT`;
   - the Bleeding label moves to `AlertLabel`;
   - `QuickChatWheel` shows its selection as a `HudStyle.SUN` font colour on a `HudPanel` backdrop;
-  - the name tag's strip goes to `#222034` and `#6abe30` (owner question C).
+  - the name tag's strip goes to `#222034` and `#6abe30` (owner answer C1).
 
-  Verify: `test_meters_hud.gd` (the bleeding red test still passes with `#d95763`), `test_quick_chat_wheel.gd`, the name tag tests and `test_inventory_strip.gd` pass.
+  Verify: `test_meters_hud.gd` (the bleeding red test still passes with `#d95763`), `test_quick_chat_wheel.gd`, the name tag tests and `test_inventory_strip.gd`, and crossing-gameplay's HUD tests if it is on main (its `CrossingHud` reads `HudStyle`), pass.
 - [ ] 2.4 Menus (D10):
   - delete the `#3b2a17` overrides in the shell scenes and the CheckBox overrides at `settings_screen.tscn:46-48`;
   - put headings on `PanelHeading`;
@@ -74,7 +74,7 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
 
   Then update `test_credits_screen.gd:172` to assert the menu font's `base_font`. Verify: 2.1's menu tests, `test_title_screen.gd`, `test_lobby_screen.gd`, `test_run_summary.gd`, `test_credits_screen.gd` and `test_display_settings.gd` pass.
 - [ ] 2.5 Pause and host-lost (D9): a centred `HudPanel` with a `tab_dark` title tab; the LabelSettings go. Verify: 2.1's pause and host-lost cases pass, and `test_pause.gd` and `test_hud_screens.gd` still pass.
-- [ ] 2.6 Credits (D11, owner question D): drop the Pixel UI Pack from `game/assets/CREDITS.md`, the credits data and `test_art_credits.gd:27`, and change `docs/ASSETS.md`'s UI row to the own-work kit. Verify: `test_art_credits.gd` and `test_credits_screen.gd` pass.
+- [ ] 2.6 Credits (D11, owner answer D1): drop the Pixel UI Pack from `game/assets/CREDITS.md`, the credits data and `test_art_credits.gd:27`, and change `docs/ASSETS.md`'s UI row to the own-work kit. Verify: `test_art_credits.gd` and `test_credits_screen.gd` pass.
 - [ ] 2.7 Capture the title, settings, join (failed), lobby (two players), credits and run summary at 2×, and the solo pause. Save them in `docs/ui-shell/` as `kit_*.png`, beside the before captures this change's docs PR added. Verify: the files exist and each shows the paper panel, palette buttons, the focus ring keeping its corner, and visible word gaps ("Fin del viaje").
 - [ ] 2.8 Import ×2, Smoke, GUT and Art tests pass.
 
@@ -97,8 +97,15 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
 
   Move `InteractPrompt`'s labels to y 1 per line. Verify: 3.1, `test_interact_prompt.gd`, `test_prompt_placement.gd`, `test_inventory_strip.gd`, `test_craft_list.gd` and `test_sign_note.gd` pass, with the sign note's 7:1 still met (13.91:1).
 - [ ] 3.3 Fit damage-feedback's effect line to the notice row's thin window (D5), and check its cut at 50 characters still fits 400 px. Verify: damage-feedback's effect-line tests pass unchanged.
-- [ ] 3.4 Capture the solo HUD at 2× and 3× on sand and over deep water, the prompt with the hold ring, the sign note and the craft list. Save them as `docs/inventory-hud/kit_*.png` and `docs/ui-shell/kit_hud_*.png`. Verify: no window is square-cornered and no panel covers the centre.
-- [ ] 3.5 Import ×2, Smoke, GUT and Art tests pass.
+- [ ] 3.4 The crossing HUD strip (design D14), if crossing-gameplay's `CrossingHud` is on main; otherwise skip it and note it for that later change. Tests first: in the crossing HUD's own test, or `test_hud_windows.gd` for a solo raft crossing with exactly 1 player, offline, check:
+  - its panel is a `HudPanel` and each line a `HudPanelThin`;
+  - the strip's track and marker are palette colours;
+  - the integrity steps cream, orange, alert at half and a quarter;
+  - its rect stays inside x 137 to 501 and clear of the meters and the teammate list.
+
+  Then restyle it, leaving its rect, texts and timing as they are. Verify: these checks and crossing-gameplay's HUD tests pass.
+- [ ] 3.5 Capture the solo HUD at 2× and 3× on sand and over deep water, the prompt with the hold ring, the sign note and the craft list. Save them as `docs/inventory-hud/kit_*.png` and `docs/ui-shell/kit_hud_*.png`. Verify: no window is square-cornered and no panel covers the centre.
+- [ ] 3.6 Import ×2, Smoke, GUT and Art tests pass.
 
 ## 4. Meters and teammates (survival-meters "HUD bars"; ui-shell "HUD layout", "Readable HUD and menu text"; design D4, D5, D7)
 
@@ -198,7 +205,7 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
 - [ ] 6.1 Update the docs:
   - `docs/GAME_DESIGN.md`, where it describes the HUD (meters order and look, the hotbar keys);
   - `docs/ASSETS.md` (the UI kit as own work, built by `tools/art/ui.py`);
-  - `TASKS.md`: tick this change and list the follow-ups (C29 prompt over the head, C31 craft window, C32 last stand, HU10 vessel phrases).
+  - `TASKS.md`: tick this change and list the follow-ups (C29 prompt over the head, C31 craft window, C32 last stand, HU10 vessel phrases, the meter rate arrows of owner answer E1).
 
   Verify: the docs name only behaviour in the specs.
 - [ ] 6.2 Run `openspec validate hud-window-kit --strict`, Import ×2, Smoke, GUT, Art tests and CI's headless game runs with 0 error lines. Verify: all pass.
@@ -206,4 +213,4 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
 ## Workflow follow-up
 
 - Archive with `/opsx:archive hud-window-kit` once the owner has seen the captures in play.
-- Propose the follow-ups as their own changes: `ui-prompt-placement` (C29), `ui-craft-window` (C31), `ui-last-stand` (C32), and the lash phrases (HU10, crossing).
+- Propose the follow-ups as their own changes: `ui-prompt-placement` (C29), `ui-craft-window` (C31), `ui-last-stand` (C32), the lash phrases (HU10, crossing), and `ui-meter-trends` (owner answer E1: rate arrows beside each meter, from damage-feedback's watches, with the bars at 34 px).
