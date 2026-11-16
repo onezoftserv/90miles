@@ -27,9 +27,9 @@ Rebuilds: `python -I tools/art/compose.py --packs C:/Users/liann/src/90miles/gam
 
 ## 3. Gull flight (C25; SP10)
 
-- [ ] 3.1 Write the tests and see them fail: the gull's frames have `swoop_*`, `flee_*` and `return_*` facings in cells wider than 16 px, with no opaque pixel in a frame's outer column; the flying lift is 14–16 px. Rename `test_a_flying_gulls_shadow_stays_on_the_ground_8_px_below_its_sprite` and its `AIR_LIFT_PX` to the new lift. Add the 1-player test: a solo sandbar gull that swoops plays a flight animation with its shadow on the ground.
-- [ ] 3.2 Draw `tools/art/fixes/creatures/seagull_flight.png` (24×16 cells; design D7), add it to `creature_sheets.json` (a second gull sheet or a wider one), add the flight animations to `seagull_frames.tres`, and set the gull's `air_lift_px` to 15 in `creature_art.tres`. Record the fixes licence block (kitbashed from the Tiny Tiny Heroes gull; credit unchanged). Verify `test_the_shipped_recipe_names_tracked_hand_sources_and_whole_cells`, the perched-gull tests and the frame budget.
-- [ ] 3.3 Windowed 1-player capture of a swoop: compare with `before/cr_gull_swoop_down_crop8.png`.
+- [x] 3.1 Write the tests and see them fail: the gull's frames have `swoop_*`, `flee_*` and `return_*` facings in cells wider than 16 px, with no opaque pixel in a frame's outer column; the flying lift is 14–16 px. Rename `test_a_flying_gulls_shadow_stays_on_the_ground_8_px_below_its_sprite` and its `AIR_LIFT_PX` to the new lift. Add the 1-player test: a solo sandbar gull that swoops plays a flight animation with its shadow on the ground.
+- [x] 3.2 Draw `tools/art/fixes/creatures/seagull_flight.png` (24×16 cells; design D7), add it to `creature_sheets.json` (a second gull sheet or a wider one), add the flight animations to `seagull_frames.tres`, and set the gull's `air_lift_px` to 15 in `creature_art.tres`. Record the fixes licence block (kitbashed from the Tiny Tiny Heroes gull; credit unchanged). Verify `test_the_shipped_recipe_names_tracked_hand_sources_and_whole_cells`, the perched-gull tests and the frame budget.
+- [x] 3.3 Windowed 1-player capture of a swoop: compare with `before/cr_gull_swoop_down_crop8.png`.
 
 ## 4. Lying pose (C25; SP9)
 
