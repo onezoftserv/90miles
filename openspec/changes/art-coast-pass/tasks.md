@@ -58,14 +58,14 @@ Every art rebuild runs `python -I tools/art/terrain.py --packs C:/Users/liann/sr
   - g ≤ r on every texel;
   - a deep cell beside shallows is graded, neither 0 nor 255.
   Add the 1-player test: a solo sandbar run's sea material holds the softened mask, and a shallows cell beside deep keeps the shallows row.
-- [x] 5.2 Implement `SeaMask.soft_channels` and its warp mirror (design D6). Use it in `TerrainView.setup_sea`, with the signature unchanged. Add the warp and the 0.06 sway to `world_sea.gdshader`. Verify that the guard, the crossing art test, the movement playground test and the 1500 ms build bound pass.
+- [x] 5.2 Implement `SeaMask.soft_channels` and its warp mirror (design D6). Use it in `TerrainView.setup_sea`, with the signature unchanged. Add the warp and the 0.05 sway to `world_sea.gdshader`. Verify that the guard, the crossing art test, the movement playground test and the 1500 ms build bound pass.
 - [x] 5.3 Pin the shader's warp constants against the GDScript mirror in `test_terrain_view.gd`, and update K47's sway number in this design's build notes.
 
 ## 6. Integration
 
-- [ ] 6.1 Rebuild to scratch and `cmp` every terrain sheet against the tracked ones, so the build is byte-for-byte reproducible. Run `check.py`, `python -m unittest` in `tools/art`, the import twice, smoke and GUT. All must be clean.
-- [ ] 6.2 Windowed 1-player check: capture the sandbar's west shore at x3 and compare it with `captures/sandbar_day_west_shore_mid_x3.png`. Re-shoot `docs/art-pass/sandbar_day.png`, `coast_cay_day.png` and `sandbar_night.png` with `tests/manual/capture_terrain.tscn`. Read the run logs for shader errors.
-- [ ] 6.3 Update `TASKS.md`, record the measured placements and numbers in this design's build notes, and run `openspec validate art-coast-pass --strict`.
+- [x] 6.1 Rebuild to scratch and `cmp` every terrain sheet against the tracked ones, so the build is byte-for-byte reproducible. Run `check.py`, `python -m unittest` in `tools/art`, the import twice, smoke and GUT. All must be clean.
+- [x] 6.2 Windowed 1-player check: capture the sandbar's west shore at x3 and compare it with `captures/sandbar_day_west_shore_mid_x3.png`. Re-shoot `docs/art-pass/sandbar_day.png`, `coast_cay_day.png` and `sandbar_night.png` with `tests/manual/capture_terrain.tscn`. Read the run logs for shader errors.
+- [x] 6.3 Update `TASKS.md`, record the measured placements and numbers in this design's build notes, and run `openspec validate art-coast-pass --strict`.
 
 ## Workflow follow-up
 

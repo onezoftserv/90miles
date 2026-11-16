@@ -127,6 +127,13 @@ Voice acting, cloned voices, runtime TTS, challenges, seeded and daily runs, and
 - [ ] Profanity toggle, English localization pass
 - [ ] Set pieces (Brogue machines): six from `docs/ISLANDS.md`
 - [x] A dead co-op player spectates a living teammate, a key cycling between them, instead of watching their own body (owner, 2026-11-08; `dead-spectate`, 2026-11-14)
+- [ ] `art-coast-pass` (wave 1 of the art and HUD design pass of 2026-11-14, `docs/art-pass/review-2026-11-14/`; owner: Q1 a, Q2 a, Q4 a). It fixes the owner's "things look too square" and "grass at the border of the beach looks cut", art only, with no layout or simulation change:
+  - whole bushes on the waterline, moved onto the sand by a placement search, with a hand-drawn tuft on convex tips (C1);
+  - picks mixed by an fmix32 avalanche so they no longer run in diagonal stripes (C2);
+  - rounded coast corners through the straight edges' border points, one 1 px lip on every side, a 4-adjacent rim, and lighter corner foam (C3);
+  - a soft deep-water edge: a blurred, clamped mask and a static ±4 px warp, with every water cell's centre kept on its step (C4).
+
+  Built test-first on `claude/art-wave-1-d6d1b2`. Next waves, each its own change: darker shallows (C7), rock, palms and scrub (C9 to C12), sprites, the HUD window kit below, night light and squall rain. The coast cay's rectangles are content (C6).
 - [ ] `hud-window-kit` (OpenSpec change written 2026-11-14, wave 4 of the art and HUD design pass; owner: Q8 a, Q9 a, Q10 a, Q11 a, Q16 a). One GBA window kit in the master palette, built by `tools/art/ui.py`:
   - dark rounded HUD windows at 94%, cream paper for notes, paper panels and palette buttons in menus, Kenney's UI files gone;
   - meters as a label column with thin pre-shaded bars, Salud first, in a 132 px window clear of the secret cay's note;

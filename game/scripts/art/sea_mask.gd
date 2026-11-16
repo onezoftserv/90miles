@@ -20,6 +20,10 @@ const WARP_PX: float = 4.0
 const WARP_PERIOD_PX: float = 48.0
 const MASK_32: int = 0xffffffff
 
+## Lattice values already worked out: each is a pure function of its key, so keeping them only
+## saves the hashing (a lattice point is shared by about nine cells' centres).
+static var _lattice_cache: Dictionary[Vector3i, float] = {}
+
 
 ## The depth step of every cell (deep, shallows or brackish from the art data). A land cell holds
 ## the commonest step among its water neighbours, the least step on a tie, so the sea that shows
@@ -143,8 +147,13 @@ static func warp_offset(px: Vector2) -> Vector2:
 ## The lattice value of `cell` for `channel`, from -1 to 1: murmur3's finaliser chained over the
 ## channel, the row and the column, all as 32-bit words. Mirrors `sea_lattice` in the shader.
 static func lattice(cell: Vector2i, channel: int) -> float:
+	var key: Vector3i = Vector3i(cell.x, cell.y, channel)
+	if _lattice_cache.has(key):
+		return _lattice_cache[key]
 	var mixed: int = TerrainArt.mix32((cell.x & MASK_32) ^ TerrainArt.mix32((cell.y & MASK_32) ^ TerrainArt.mix32(channel)))
-	return float(mixed & 0xffff) / 65535.0 * 2.0 - 1.0
+	var value: float = float(mixed & 0xffff) / 65535.0 * 2.0 - 1.0
+	_lattice_cache[key] = value
+	return value
 
 
 static func _value_noise(at: Vector2, channel: int) -> float:
