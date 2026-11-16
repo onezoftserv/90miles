@@ -1031,6 +1031,133 @@ func test_a_solo_sandbars_palms_stand_in_their_dune() -> void:
 	# them); the fixture test above pins the whole-dune rule itself.
 
 
+# --- art-terrain-polish D9: the dune's inland corners are rounded ("Dune corners are rounded") ---
+
+const DUNE_SHEET: String = "res://assets/art/terrain/dune.png"
+## The outer corners (one dune corner) by their dune corner, and the inner corners and saddles by
+## their water corners, as a corner of the tile (0 or 15 on each axis).
+const DUNE_OUTER: Dictionary[int, Vector2i] = {1: Vector2i(0, 0), 2: Vector2i(15, 0), 4: Vector2i(0, 15), 8: Vector2i(15, 15)}
+const DUNE_INNER: Dictionary[int, Array] = {
+	7: [Vector2i(15, 15)], 11: [Vector2i(0, 15)], 13: [Vector2i(15, 0)], 14: [Vector2i(0, 0)],
+	6: [Vector2i(0, 0), Vector2i(15, 15)], 9: [Vector2i(15, 0), Vector2i(0, 15)],
+}
+## Today's pack corners sat 19-38 px off the arc; a redrawn corner sits on it.
+const DUNE_ARC_SLACK: int = 4
+## The straight dune edges cross the cell border 3 px from a water corner, so a bite is 2 px deep
+## along the diagonal at most; the pack's mask 7 had 1.
+const DUNE_BITE_MIN: int = 2
+
+
+func _drawn(tile: Image, at: Vector2i) -> bool:
+	return tile.get_pixel(at.x, at.y).a > 0.0
+
+
+## How many pixels of the outer-corner `tile` lie off the quarter ellipse round its dune corner
+## `corner` whose semi-axes are the tile's own reach along its two border strips.
+func _arc_misfit(tile: Image, corner: Vector2i) -> int:
+	var step: Vector2i = Vector2i(1 if corner.x == 0 else -1, 1 if corner.y == 0 else -1)
+	var across: int = 0
+	while across < TILE and _drawn(tile, Vector2i(corner.x + step.x * across, corner.y)):
+		across += 1
+	var down: int = 0
+	while down < TILE and _drawn(tile, Vector2i(corner.x, corner.y + step.y * down)):
+		down += 1
+	if across == 0 or down == 0:
+		return TILE * TILE
+	var misfit: int = 0
+	for y: int in TILE:
+		for x: int in TILE:
+			var u: float = absf(x - corner.x) + 0.5
+			var v: float = absf(y - corner.y) + 0.5
+			var inside: bool = (u / across) * (u / across) + (v / down) * (v / down) <= 1.0
+			if inside != _drawn(tile, Vector2i(x, y)):
+				misfit += 1
+	return misfit
+
+
+## How many clear pixels run along the diagonal from the water corner `corner` of `tile`.
+func _bite_run(tile: Image, corner: Vector2i) -> int:
+	var step: Vector2i = Vector2i(1 if corner.x == 0 else -1, 1 if corner.y == 0 else -1)
+	var run: int = 0
+	var at: Vector2i = corner
+	while at.x >= 0 and at.y >= 0 and at.x < TILE and at.y < TILE and not _drawn(tile, at):
+		run += 1
+		at += step
+	return run
+
+
+func _dune_tile(sheet: Image, mask: int) -> Image:
+	return sheet.get_region(Rect2i(_mask_atlas(mask) * TILE, Vector2i(TILE, TILE)))
+
+
+func test_the_dune_corners_are_rounded() -> void:
+	var sheet: Image = _sheet(DUNE_SHEET)
+	if sheet == null:
+		return
+	for mask: int in DUNE_OUTER:
+		var misfit: int = _arc_misfit(_dune_tile(sheet, mask), DUNE_OUTER[mask])
+		assert_true(misfit <= DUNE_ARC_SLACK, "dune mask %d is a quarter arc (%d px off)" % [mask, misfit])
+	for mask: int in DUNE_INNER:
+		for corner: Vector2i in DUNE_INNER[mask]:
+			var run: int = _bite_run(_dune_tile(sheet, mask), corner)
+			assert_true(run >= DUNE_BITE_MIN, "dune mask %d bites %d px at %s" % [mask, run, corner])
+
+
+## Two tiles side by side share a border; neighbouring dune tiles meet on it without a jog.
+func test_neighbouring_dune_tiles_meet_without_a_jog() -> void:
+	var sheet: Image = _sheet(DUNE_SHEET)
+	if sheet == null:
+		return
+	var jogs: Array[String] = []
+	for left: int in 16:
+		for right: int in 16:
+			var beside: bool = bool(left & TerrainArt.NE) == bool(right & TerrainArt.NW) and bool(left & TerrainArt.SE) == bool(right & TerrainArt.SW)
+			var below: bool = bool(left & TerrainArt.SW) == bool(right & TerrainArt.NW) and bool(left & TerrainArt.SE) == bool(right & TerrainArt.NE)
+			var a: Image = _dune_tile(sheet, left)
+			var b: Image = _dune_tile(sheet, right)
+			var side: int = 0
+			var under: int = 0
+			for i: int in TILE:
+				if _drawn(a, Vector2i(TILE - 1, i)) != _drawn(b, Vector2i(0, i)):
+					side += 1
+				if _drawn(a, Vector2i(i, TILE - 1)) != _drawn(b, Vector2i(i, 0)):
+					under += 1
+			if beside and side > 2:
+				jogs.append("%d|%d" % [left, right])
+			if below and under > 2:
+				jogs.append("%d/%d" % [left, right])
+	assert_eq(jogs, [] as Array[String], "dune tiles that can sit side by side meet without a jog")
+
+
+## One player, offline: every inland dune cell of the sandbar (its tile from the dune's own sheet,
+## not the coast's cut dune shore) with a corner or a diagonal mask is drawn rounded, and its four
+## corner pixels still say which corners are dune.
+func test_a_solo_sandbars_dune_corners_are_rounded() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	var sheet: Image = _sheet(DUNE_SHEET)
+	if sheet == null:
+		return
+	var checked: int = 0
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.DUNE, built.terrain, built.tide_pools, built.palms):
+		var tile: Dictionary = TerrainArt.tile(TerrainArt.DUNE, cell, SANDBAR.id, built.terrain, built.tide_pools, built.palms)
+		var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+		if tile.get(&"source") != TerrainArt.data().source_of[TerrainArt.DUNE] or atlas.y >= PICK_ROW:
+			continue
+		var mask: int = atlas.y * SET_COLUMNS + atlas.x
+		var drawn: Image = _dune_tile(sheet, mask)
+		if DUNE_OUTER.has(mask):
+			assert_true(_arc_misfit(drawn, DUNE_OUTER[mask]) <= DUNE_ARC_SLACK, "dune corner at %s (mask %d) is rounded" % [cell, mask])
+			checked += 1
+		elif DUNE_INNER.has(mask):
+			for corner: Vector2i in DUNE_INNER[mask]:
+				assert_true(_bite_run(drawn, corner) >= DUNE_BITE_MIN, "dune bite at %s (mask %d)" % [cell, mask])
+			checked += 1
+		else:
+			continue
+		assert_eq(_corners(sheet, atlas), mask, "%s: the corner pixels of mask %d" % [cell, mask])
+	assert_gt(checked, 0, "the sandbar has inland dune corners")
+
+
 ## Every layer's tile of every cell of `layout`, by layer and cell.
 func _all_tiles(layout: IslandLayoutData) -> Dictionary:
 	var built: IslandLayout = IslandLayout.build(layout)

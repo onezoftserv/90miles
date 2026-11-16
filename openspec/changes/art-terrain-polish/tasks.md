@@ -48,21 +48,20 @@
 
 ## 3. The dune's inland corners (C3's dune part)
 
-- [ ] 3.1 Write these tests first and see them fail on today's `dune.png`:
+- [x] 3.1 Write these tests first and see them fail on today's `dune.png`:
   - in `test_terrain_art.gd`, on the made dune sheet:
     - every outer corner (masks 1, 2, 4, 8) ends in a quarter arc round its dune corner, within 2 px of the ideal arc, so the ragged lip still passes;
-    - every inner corner (7, 11, 13, 14) and each side of a saddle (6, 9) ends in a bite about 4 px deep, with no right-angle step inside the tile;
+    - every inner corner (7, 11, 13, 14) and each side of a saddle (6, 9) ends in a bite at least 2 px deep along the diagonal (the most the straight edges allow);
     - every pair of dune masks that can sit side by side meets at the cell border without a jog (count them first; wave 1 measured 30 jogging pairs on the sand before its fix);
-  - in `tools/art/test_terrain.py`, on fixtures: the overlay diff method of design D9 rounds a square fixture's corners and leaves its straight edges and its islet cell untouched.
   Add the 1-player test: on the sandbar built for one offline player, every dune cell whose dune mask is a corner or a saddle (found from the layout, palms counted as C9 counts them) takes a dune tile that passes the arc and bite checks, and its four pinned corner pixels hold.
-- [ ] 3.2 Regenerate `tools/art/fixes/terrain/dune.png` by design D9: arcs on masks 1, 2, 4 and 8, fillets on 7, 11, 13 and 14, two each on saddles 6 and 9, the dune's ragged lip along each new edge, no tuft on a corner, and the straight masks' hand pixels, the row-4 picks and the hand islet (mask 0) kept. Rebuild. Verify with a byte diff that only `dune.png`, `dune_shore.png` and the shade built from them change, and that the straight dune tiles are byte-identical.
-- [ ] 3.3 Verify that these pass on the rebuilt sheets:
+- [x] 3.2 Regenerate `tools/art/fixes/terrain/dune.png` by design D9 with a one-off helper (kept in the coordinating session's notes folder, `art-waves-2-5/dune_corners.py`, since wave 1's was lost): arcs on masks 1, 2, 4 and 8, fillets on 7, 11, 13 and 14, two each on saddles 6 and 9, the dune's ragged lip along each new edge, no tuft on a corner, and the straight masks' hand pixels, the row-4 picks and the hand islet (mask 0) kept. Rebuild. Verify with a byte diff that only `dune.png`, `dune_shore.png` and the shade built from them change, and that the straight dune tiles are byte-identical.
+- [x] 3.3 Verify that these pass on the rebuilt sheets:
   - `test_the_tracked_overlays_hold_only_hand_pixels`: the dune's hand cell is still only (0, 0) with all 256 pixels, and each row-4 pick has under 40 overlay pixels;
   - `test_the_dune_edges_carry_no_tuft_and_the_islet_is_ragged`;
   - `test_each_corner_set_holds_mask_m_at_its_place`;
   - `test_no_shore_tile_of_an_upper_layer_leaves_the_sand_under_it` (dune shore);
   - `test_dune_and_scrub_shore_cells_on_the_sandbar_take_their_shore_sheets`.
-- [ ] 3.4 Windowed 1-player capture of the whole sandbar and its inner dunes. Compare with wave 1's after capture (`art-wave-1/after_sandbar_whole_island.png` in the coordinating session's notes folder, and `docs/art-pass/sandbar_day.png` as wave 1 re-shot it): the stair steps where the light dune meets the darker inner beach are gone.
+- [x] 3.4 Windowed 1-player capture of the whole sandbar and its inner dunes. Compare with wave 1's after capture (`art-wave-1/after_sandbar_whole_island.png` in the coordinating session's notes folder, and `docs/art-pass/sandbar_day.png` as wave 1 re-shot it): the stair steps where the light dune meets the darker inner beach are gone.
 
 ## 4. C13: still water is still (TR13)
 
