@@ -50,6 +50,20 @@ axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 modulate_color = Color(1, 1, 1, 0.94)
 
+[sub_resource type="StyleBoxTexture" id="hud_panel_tight"]
+content_margin_left = 3.0
+content_margin_top = 3.0
+content_margin_right = 3.0
+content_margin_bottom = 3.0
+texture = ExtResource("k_window_dark")
+texture_margin_left = 3.0
+texture_margin_top = 3.0
+texture_margin_right = 3.0
+texture_margin_bottom = 3.0
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+modulate_color = Color(1, 1, 1, 0.94)
+
 [sub_resource type="StyleBoxTexture" id="hud_strip_back"]
 content_margin_left = 0.0
 content_margin_top = 0.0
@@ -361,6 +375,8 @@ HudNoteText/colors/font_shadow_color = Color(0, 0, 0, 0)
 HudNoteText/constants/outline_size = 0
 HudPanel/base_type = &"PanelContainer"
 HudPanel/styles/panel = SubResource("hud_panel")
+HudPanelTight/base_type = &"PanelContainer"
+HudPanelTight/styles/panel = SubResource("hud_panel_tight")
 HudPanelThin/base_type = &"PanelContainer"
 HudPanelThin/styles/panel = SubResource("hud_panel_thin")
 HudStripBack/base_type = &"PanelContainer"
