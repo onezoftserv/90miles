@@ -25,6 +25,7 @@ extends CanvasLayer
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
 const NAME_TAG_SCENE: PackedScene = preload("res://scenes/ui/name_tag.tscn")
+const TEAMMATE_SCENE: PackedScene = preload("res://scenes/ui/teammate_block.tscn")
 const PHASE_NAMES: Dictionary[DataEnums.DayPhase, String] = {
 	DataEnums.DayPhase.DAWN: "Amanecer",
 	DataEnums.DayPhase.DAY: "Día",
@@ -35,7 +36,7 @@ const TAG_NAME: StringName = &"NameTag"
 const HUD_PANEL: StringName = &"HudPanel"
 ## Every HUD window variation the prompt keeps clear of: the dark window, its thin rows and the
 ## strip's backdrop (hud-window-kit design D8).
-const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudStripBack"]
+const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudPanelTight", &"HudStripBack"]
 ## HUD pieces that are not HUD panels but that the interact prompt keeps clear of too (secret-cay's
 ## needle and note join it).
 const AVOID_GROUP: StringName = &"hud_avoid"
@@ -253,25 +254,34 @@ func refresh() -> void:
 	for peer_id: int in session.peer_ids():
 		if peer_id != local_peer:
 			others.append(peer_id)
+	# A host playing alone has no teammate yet: no empty window in the corner.
+	teammates_panel.visible = not others.is_empty()
 	while _teammates.get_child_count() > others.size():
 		var extra := _teammates.get_child(_teammates.get_child_count() - 1)
 		_teammates.remove_child(extra)
 		extra.queue_free()
 	while _teammates.get_child_count() < others.size():
-		var row := Label.new()
-		_teammates.add_child(row)
+		_teammates.add_child(TEAMMATE_SCENE.instantiate())
 	for i: int in others.size():
 		var player := session.body(others[i])
 		var state := state_word(player, session.is_dropped(others[i]))
-		(_teammates.get_child(i) as Label).text = ("%s %d %s" % [session.player_name(others[i]), roundi(player.meters.health), state]).strip_edges()
+		(_teammates.get_child(i) as TeammateBlock).show_teammate(session.player_name(others[i]), player.meters.health, state, player.look_slot)
 
 
-## The teammate rows, top to bottom ("Papo 0 Caído").
+## The teammate rows, top to bottom ("Papo 0 Caído"): each block's name, health and state word.
 func teammate_rows() -> Array[String]:
 	var texts: Array[String] = []
 	for child: Node in _teammates.get_children():
-		texts.append((child as Label).text)
+		texts.append((child as TeammateBlock).summary())
 	return texts
+
+
+## The teammate blocks, top to bottom (hud-window-kit design D7).
+func teammate_blocks() -> Array[TeammateBlock]:
+	var blocks: Array[TeammateBlock] = []
+	for child: Node in _teammates.get_children():
+		blocks.append(child as TeammateBlock)
+	return blocks
 
 
 ## Whom the local player watches, worked out again, and the HUD that goes with it: the line in the
