@@ -142,25 +142,29 @@ How the tests are written:
 
 ## 7. The soldier, captives and freeing
 
-- [ ] 7.1 Write `game/tests/unit/test_search_capture.gd` on the brain with a test world and verify it fails. It checks:
+- [x] 7.1 Write `game/tests/unit/test_search_capture.gd` on the brain with a test world and verify it fails. It checks:
   - the escort to the dinghy at 2 tiles/s;
   - the soldier going back to its plan;
   - the touch resetting when contact breaks;
   - downed and dropped bodies never targeted;
   - freeing on a 1 s hold with no soldier within 3 tiles;
   - the hold cancelled when a soldier comes within 3 tiles ("The guard comes back").
-- [ ] 7.2 Write `game/tests/unit/test_capture_solo.gd` with one offline player on the real sandbar, driven by the named input actions only. Verify it fails. It covers:
+  - Done: it failed to parse on the missing `PatrolRoute.Squad`, then passed (9 tests, with the landing, a captive standing still, a hauled captive and the squad leaving with its captive added).
+- [x] 7.2 Write `game/tests/unit/test_capture_solo.gd` with one offline player on the real sandbar, driven by the named input actions only. Verify it fails. It covers:
   - spotted at night, running 10 tiles, crouching in scrub away from the fire, and the squad leaving after 180 s with the boat resuming its lap;
   - hiding 1 tile from their own fire and being found;
   - outrunning a soldier;
   - being hauled aboard while swimming in deep water, and escaping into the shallows;
   - a day fire bringing the squad.
-- [ ] 7.3 Implement `game/scripts/ai/search_capture.gd`, the boat's `DOCKED` state, and the captive state on `PlayerBody` (design.md §5–§7). Verify the tests pass and that `test_creature_spawner.gd` and the stealth tests still pass. The exceptions are the land-alert cases in `test_patrol_route.gd` and `test_patrol_solo.gd` that expect the 20 s give-up, such as "Solo player spotted, hides and gets away" and "A smoke alert by day". Update those to expect the squad, as the modified Alert says, and list each one in design.md "Changes from the build plan". The work is:
+  - Done: it failed to parse on the missing squad state, then passed (6 tests, about 6 s; the haul and the shallows are two tests).
+- [x] 7.3 Implement `game/scripts/ai/search_capture.gd`, the boat's `DOCKED` state, and the captive state on `PlayerBody` (design.md §5–§7). Verify the tests pass and that `test_creature_spawner.gd` and the stealth tests still pass. The exceptions are the land-alert cases in `test_patrol_route.gd` and `test_patrol_solo.gd` that expect the 20 s give-up, such as "Solo player spotted, hides and gets away" and "A smoke alert by day". Update those to expect the squad, as the modified Alert says, and list each one in design.md "Changes from the build plan". The work is:
   - `_acting_body` refuses intents from a captive except quick chat;
   - the dragger is set to the soldier;
   - the captive is pinned in the dinghy;
   - the "Soltar" `Interactable` is added.
-- [ ] 7.4 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done. `test_creature_spawner.gd` and the stealth tests pass. The changed stealth cases are listed in design.md "Changes from the build plan" (group 7): `test_patrol_solo.gd`'s spotted-and-hides case follows the modified Alert, both loudhailer tests in `test_patrol_cues.gd` keep a squad-less boat, and `test_patrol_net.gd` expects `DOCKED`. `test_patrol_route.gd` needed none, because its bare world lands no squad.
+- [x] 7.4 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 263 scripts, 2401/2401.
 
 ## 8. Whole-party capture, taken captives and the router
 

@@ -16,6 +16,14 @@ extends CreatureBrain
 ## deep water (BoatChase); a haul makes the swimmer a captive aboard, and a dive, the shallows, a
 ## 10-tile gap or a landing break it into the plain search round where they were. While it searches
 ## after a chase the boat makes its way back to its loop, and it resumes its lap where it stopped.
+##
+## guardacostas-capture design.md §1, §4 and §6: an alert whose cause is on land (a player spotted on
+## land, smoke or noise), raised while no squad is ashore on the island, DOCKs the boat instead. It
+## stops where it is, its dinghy rows to the landing at `landing_speed_tiles_s`, and its squad of
+## `squad_size` soldiers steps ashore and searches by the boat's SquadPlan. While docked, the light
+## follows a player it sees and otherwise sweeps round the squad's last known position, and a spot
+## updates that position instead of starting a chase. The squad leaves when the plan says so: the
+## soldiers walk back, the dinghy rows out with its captives, and the boat resumes its lap.
 
 enum State {
 	AWAY,
@@ -26,6 +34,27 @@ enum State {
 	CHASE,
 	DOCKED,
 }
+
+## The squad's dinghy (Creature.squad_state, synced). Append-only.
+enum Squad {
+	NONE,
+	ROWING_IN,
+	ASHORE,
+	ROWING_OUT,
+}
+
+## Which of the squad's call lists a call comes from (Creature.squad_call, synced). Append-only.
+enum Call {
+	LAND,
+	SPOT,
+	LEAVE,
+}
+
+## Host: a player was captured by this boat or its squad (the session's capture rules listen).
+signal captured(body: PlayerBody)
+## Host: the squad rowed out with `captives` (the dinghy's, at that moment); the session's capture
+## rules take them, unless the capture ended the island first.
+signal rowed_out(captives: Array[PlayerBody])
 
 const EPSILON: float = 0.000001
 const TILE: float = 16.0
@@ -44,6 +73,12 @@ var locked: PlayerBody = null
 var chased: PlayerBody = null
 ## The swimmers hauled aboard (captives aboard), in the order they were hauled.
 var aboard: Array[PlayerBody] = []
+## The squad's plan while it is ashore, else null.
+var plan: SquadPlan = null
+## The squad's soldiers ashore, in squad order.
+var soldiers: Array[Creature] = []
+## The captives sitting in the dinghy on the landing beach.
+var seated: Array[PlayerBody] = []
 var member_index: int = 0
 var member_count: int = 1
 
@@ -64,6 +99,10 @@ var _search_s: float = 0.0
 var _smoke_s: float = 0.0
 var _aim_px: Vector2 = Vector2.ZERO
 var _chase: BoatChase = null
+var _leaving: bool = false
+var _row_s: float = 0.0
+var _row_total_s: float = 0.0
+var _pending_last_known: Vector2i = SquadPlan.NO_CELL
 
 
 func names() -> Array[StringName]:
@@ -132,7 +171,10 @@ func lights(point_px: Vector2) -> bool:
 ## next loudhailer line) but the lock, the clock and the timers stay as they are; the locked player is
 ## not reported again (the same player must not be reported every tick). Ignored out of sight.
 func spot(body: PlayerBody, cause: StringName) -> void:
-	if _creature == null or not in_sight() or aboard.has(body):
+	if _creature == null or not in_sight() or aboard.has(body) or body.captive:
+		return
+	if state == State.DOCKED:
+		_docked_spot(body, cause)
 		return
 	if state == State.ALERT_LOCK or state == State.CHASE:
 		if body != locked and body != chased:
@@ -158,6 +200,12 @@ func tick(creature: Creature, world: CreatureWorld, delta: float) -> void:
 	if not _build(creature, world):
 		return
 	var weather: WeatherData = world.weather()
+	_hold_aboard()
+	if weather.patrols_in_port and squad_ashore():
+		# A squall recalls the squad: the boat waits for it before it leaves sight.
+		_tick_docked(delta, weather, true)
+		_publish(weather)
+		return
 	if weather.patrols_in_port:
 		if not _in_port:
 			_in_port = true
@@ -235,6 +283,9 @@ func _tick_alert(delta: float, weather: WeatherData) -> void:
 	if state == State.CHASE:
 		_tick_chase(delta)
 		return
+	if state == State.DOCKED:
+		_tick_docked(delta, weather, false)
+		return
 	_search_s += delta
 	_return_to_loop(delta)
 	if _search_s >= _patrol.alert_s - EPSILON:
@@ -262,8 +313,16 @@ func _respond(cause: StringName, body: PlayerBody) -> void:
 
 
 # A new alert: stops the boat (its clock is not advanced while it alerts), calls the next line and
-# reports it. `target` is the locked player, null for smoke or noise.
+# reports it. `target` is the locked player, null for smoke or noise. An alert on land lands the squad
+# when this boat has one and none is ashore on the island; with another boat's squad ashore, a sighting
+# moves that squad's last known position.
 func _raise(cause: StringName, at_px: Vector2, target: PlayerBody) -> void:
+	if _lands_squad(cause, at_px):
+		_dock(cause, at_px, target)
+		return
+	var docked := _docked_boat()
+	if docked != null and docked != _creature and target != null:
+		(docked.brain as PatrolRoute).sighted(at_px)
 	_creature.alert_serial += 1
 	locked = target
 	_search_s = 0.0
@@ -287,7 +346,7 @@ func _watch_water(weather: WeatherData) -> void:
 
 
 func _watch_smoke(delta: float) -> void:
-	if state == State.ALERT_LOCK or state == State.CHASE:
+	if state == State.ALERT_LOCK or state == State.CHASE or state == State.DOCKED:
 		return
 	_smoke_s += delta
 	if _smoke_s < SMOKE_CHECK_S - EPSILON:
@@ -300,7 +359,7 @@ func _watch_smoke(delta: float) -> void:
 
 
 func _on_noise(position_px: Vector2, radius_tiles: float, _source: StringName) -> void:
-	if _creature == null or state == State.ALERT_LOCK or state == State.CHASE or not in_sight():
+	if _creature == null or state == State.ALERT_LOCK or state == State.CHASE or state == State.DOCKED or not in_sight():
 		return
 	if _triggers.noise_heard(_creature.position / TILE, position_px / TILE, radius_tiles, true):
 		_raise(&"noise", position_px, null)
@@ -351,16 +410,322 @@ func _tick_chase(delta: float) -> void:
 			_search_from(chased.global_position)
 
 
-# The swimmer is hauled aboard: a captive aboard, and the boat searches round where it took them.
+# The swimmer is hauled aboard: a captive aboard who cannot be freed, and the boat searches round where
+# it took them.
 func _haul(body: PlayerBody) -> void:
 	if not aboard.has(body):
 		aboard.append(body)
+	CaptureRules.capture(body, _creature, _patrol, true)
 	_search_from(body.global_position)
+	captured.emit(body)
 
 
-# The swimmer came ashore before the haul: the boat searches round the place they came ashore.
+# The swimmer came ashore before the haul: the place they came ashore is a land alert (the squad lands
+# there when it can), else the plain search round it.
 func _came_ashore(body: PlayerBody) -> void:
-	_search_from(body.global_position)
+	_drop_chase()
+	if _lands_squad(&"sight", body.global_position):
+		_dock(&"sight", body.global_position, body)
+	else:
+		_search_from(body.global_position)
+
+
+# Host: carries the captives aboard with the boat.
+func _hold_aboard() -> void:
+	for i: int in range(aboard.size() - 1, -1, -1):
+		var body: PlayerBody = aboard[i]
+		if not is_instance_valid(body) or not body.captive:
+			aboard.remove_at(i)
+			continue
+		body.global_position = _creature.position
+		body.velocity = Vector2.ZERO
+
+
+# --- the shore squad (guardacostas-capture) ------------------------------------------------------
+
+## True while this boat's squad is out: rowing in, ashore or rowing out.
+func squad_ashore() -> bool:
+	return _creature != null and state == State.DOCKED and _creature.squad_state != Squad.NONE
+
+
+## True once the squad has been told to leave (its soldiers walk back to the dinghy).
+func squad_leaving() -> bool:
+	return _leaving
+
+
+## The landing cell of the squad's dinghy.
+func landing_cell() -> Vector2i:
+	return _creature.landing if _creature != null else SquadPlan.NO_CELL
+
+
+## Host: `soldier` spotted a player: the squad's spot call.
+func soldier_spotted(_soldier: Creature) -> void:
+	_call(Call.SPOT)
+
+
+## Host: `soldier` lost the player it chased at `cell`: that is the last known position now, and the
+## soldier searches it itself.
+func soldier_lost(soldier: Creature, cell: Vector2i) -> void:
+	if plan == null:
+		return
+	var brain := soldier.brain as SearchCapture
+	plan.set_last_known(cell, {brain.index: soldier.position / TILE})
+
+
+## Host: another boat saw a player at `at_px` while this squad is ashore: the last known position moves
+## there, and the nearest free soldier goes.
+func sighted(at_px: Vector2) -> void:
+	_set_last_known(CreatureNav.cell_of(at_px))
+
+
+## Host: `soldier` captured `body`. Returns the captive it now leads to the dinghy.
+func capture(body: PlayerBody, soldier: Creature) -> PlayerBody:
+	CaptureRules.capture(body, soldier, _patrol)
+	if plan != null:
+		plan.note_capture()
+	captured.emit(body)
+	return body if body.captive else null
+
+
+## Host: the captive `body` reached the dinghy: they sit in it on the landing cell.
+func seat(body: PlayerBody) -> void:
+	if not is_instance_valid(body) or not body.captive:
+		return
+	body.seat_captive(IslandLayout.cell_center(landing_cell()))
+	if not seated.has(body):
+		seated.append(body)
+
+
+# The alert's cause is on land and this boat lands squads: smoke always, a sight, water or noise cause
+# when its cell is not water. A boat lands no squad while one is ashore on the island, or where no
+# creature can be spawned.
+func _lands_squad(cause: StringName, at_px: Vector2) -> bool:
+	if _patrol == null or not _patrol.has_squad() or not _world.can_spawn() or _docked_boat() != null:
+		return false
+	if cause == &"smoke":
+		return true
+	return not TerrainQuery.is_water(_world.terrain.terrain_at(CreatureNav.cell_of(at_px)))
+
+
+# The boat on this island whose squad is out, or null.
+func _docked_boat() -> Creature:
+	if _world.watch == null:
+		return _creature if squad_ashore() else null
+	for boat: Creature in _world.watch.boats:
+		if is_instance_valid(boat) and boat.brain is PatrolRoute and (boat.brain as PatrolRoute).squad_ashore():
+			return boat
+	return null
+
+
+func _dock(cause: StringName, at_px: Vector2, target: PlayerBody) -> void:
+	_creature.alert_serial += 1
+	_drop_chase()
+	locked = target
+	_aim_px = at_px
+	_search_s = 0.0
+	_leaving = false
+	plan = null
+	soldiers.clear()
+	seated.clear()
+	_pending_last_known = SquadPlan.NO_CELL if cause == &"smoke" else CreatureNav.cell_of(at_px)
+	var boat: Vector2 = _creature.position / TILE
+	_creature.landing = SquadPlan.landing_cell(boat, _world.terrain.cells)
+	_row_total_s = SquadPlan.row_time_s(boat, _creature.landing, _patrol.landing_speed_tiles_s)
+	_row_s = 0.0
+	_creature.dinghy_t = 0.0
+	_creature.squad_state = Squad.ROWING_IN
+	enter(State.DOCKED)
+	_creature.state_id = state
+	_creature.patrol_alerted.emit(cause, at_px)
+
+
+# While docked: the light follows a player it sees, else it sweeps round the last known position; the
+# dinghy rows in, the squad searches, and the squad leaves when the plan (or a squall) says so.
+func _tick_docked(delta: float, weather: WeatherData, squall: bool) -> void:
+	if locked != null:
+		if _lock_holds(weather):
+			_aim_px = locked.global_position
+		else:
+			var lost: Vector2 = _aim_px
+			locked = null
+			_search_s = 0.0
+			_set_last_known(CreatureNav.cell_of(lost))
+	else:
+		_search_s += delta
+	match _creature.squad_state:
+		Squad.ROWING_IN:
+			_row_s += delta
+			_creature.dinghy_t = clampf(_row_s / _row_total_s, 0.0, 1.0) if _row_total_s > 0.0 else 1.0
+			if _creature.dinghy_t >= 1.0 - EPSILON:
+				_beach()
+		Squad.ASHORE:
+			plan.advance(delta)
+			_drop_freed()
+			if not _leaving and plan.should_leave(free_on_island(), squall):
+				_leaving = true
+				_call(Call.LEAVE)
+			if _leaving and _squad_back():
+				_row_out()
+		Squad.ROWING_OUT:
+			_row_s -= delta
+			_creature.dinghy_t = clampf(_row_s / _row_total_s, 0.0, 1.0) if _row_total_s > 0.0 else 0.0
+			if _creature.dinghy_t <= EPSILON:
+				_squad_gone()
+
+
+# The dinghy beached: the plan is built and the soldiers step ashore on the landing's free cells.
+func _beach() -> void:
+	_creature.dinghy_t = 1.0
+	_creature.squad_state = Squad.ASHORE
+	var fires: Array[Vector2i] = []
+	var lit: Array[Node2D] = _world.events.smoke_sources() if _world.events != null else _world.lit_fires()
+	for fire: Node2D in lit:
+		fires.append(CreatureNav.cell_of(fire.global_position))
+	plan = SquadPlan.build(_patrol, _creature.landing, fires, _pending_last_known, _walk_cells(), _squad_seed())
+	_pending_last_known = SquadPlan.NO_CELL
+	var data := _squad_data()
+	var spots: Array[Vector2] = _landing_spots(_patrol.squad_size)
+	for i: int in spots.size():
+		var soldier: Creature = _world.spawn_creature(data, spots[i])
+		if soldier == null:
+			continue
+		soldier.world = _world
+		var brain := soldier.brain as SearchCapture
+		if brain != null:
+			brain.patrol = _patrol
+			brain.squad = self
+			brain.index = i
+		soldier.facing = (spots[i] - _creature.position).normalized()
+		soldiers.append(soldier)
+		if _world.watch != null:
+			_world.watch.soldiers.append(soldier)
+	_call(Call.LAND)
+
+
+# Every soldier stands at the dinghy (or is gone).
+func _squad_back() -> bool:
+	for soldier: Creature in soldiers:
+		if is_instance_valid(soldier) and not soldier.is_queued_for_deletion() and not (soldier.brain as SearchCapture).is_back(soldier):
+			return false
+	return true
+
+
+# The squad rows out: its soldiers go aboard, and its captives with them.
+func _row_out() -> void:
+	for soldier: Creature in soldiers:
+		if is_instance_valid(soldier):
+			if _world.watch != null:
+				_world.watch.soldiers.erase(soldier)
+			soldier.queue_free()
+	soldiers.clear()
+	_drop_freed()
+	rowed_out.emit(seated.duplicate())
+	_creature.squad_state = Squad.ROWING_OUT
+	_row_s = _row_total_s
+
+
+# The dinghy is back aboard: the boat resumes its lap where it stopped.
+func _squad_gone() -> void:
+	_creature.squad_state = Squad.NONE
+	_creature.dinghy_t = 0.0
+	plan = null
+	seated.clear()
+	locked = null
+	_leaving = false
+	_creature.alert_serial += 1
+	enter(State.LAP)
+	_creature.state_id = state
+
+
+# A spot while docked: the light follows them (and a new position is reported) instead of a chase.
+func _docked_spot(body: PlayerBody, cause: StringName) -> void:
+	if body == locked:
+		return
+	_creature.alert_serial += 1
+	_creature.patrol_alerted.emit(cause, body.global_position)
+	if locked == null:
+		locked = body
+		_aim_px = body.global_position
+
+
+func _set_last_known(cell: Vector2i) -> void:
+	if plan == null:
+		_pending_last_known = cell
+		return
+	var free: Dictionary = {}
+	for soldier: Creature in soldiers:
+		if is_instance_valid(soldier) and (soldier.brain as SearchCapture).is_free():
+			free[(soldier.brain as SearchCapture).index] = soldier.position / TILE
+	plan.set_last_known(cell, free)
+	_aim_px = IslandLayout.cell_center(cell)
+
+
+func _drop_freed() -> void:
+	for i: int in range(seated.size() - 1, -1, -1):
+		if not is_instance_valid(seated[i]) or not seated[i].captive:
+			seated.remove_at(i)
+
+
+## Host: the free players on this island now (alive, connected, standing, not captive, here).
+func free_on_island() -> int:
+	var count: int = 0
+	for body: PlayerBody in _world.players():
+		if SearchCapture.can_target(body):
+			count += 1
+	return count
+
+
+func _call(kind: Call) -> void:
+	_creature.squad_call = kind
+	_creature.squad_serial += 1
+
+
+func _squad_data() -> CreatureData:
+	return _world.creature_data(_patrol.squad_creature_id)
+
+
+# The land cells reachable on foot from the landing: the random walk's cells.
+func _walk_cells() -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var start: Vector2i = _creature.landing
+	var grid: AStarGrid2D = _world.nav.land
+	if not CreatureNav.is_open(grid, start):
+		return cells
+	var seen: Dictionary[Vector2i, bool] = {start: true}
+	var queue: Array[Vector2i] = [start]
+	var head: int = 0
+	while head < queue.size():
+		var cell: Vector2i = queue[head]
+		head += 1
+		if not TerrainQuery.is_water(_world.terrain.terrain_at(cell)):
+			cells.append(cell)
+		for step: Vector2i in CreatureNav.STEPS_4:
+			var next: Vector2i = cell + step
+			if not seen.has(next) and CreatureNav.is_open(grid, next):
+				seen[next] = true
+				queue.append(next)
+	return cells
+
+
+# The squad's random walk is seeded from the run seed, the island and this alert, on the host.
+func _squad_seed() -> int:
+	return hash([_world.run_seed(), _world.island_id, _creature.alert_serial])
+
+
+# The landing cell and its free land neighbours, nearest first, for `count` soldiers.
+func _landing_spots(count: int) -> Array[Vector2]:
+	var spots: Array[Vector2] = []
+	var landing: Vector2i = _creature.landing
+	for offset: Vector2i in [Vector2i.ZERO, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN,
+			Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(1, 1)]:
+		if spots.size() >= count:
+			break
+		var cell: Vector2i = landing + offset
+		if not TerrainQuery.is_water(_world.terrain.terrain_at(cell)) and CreatureNav.is_open(_world.nav.land, cell):
+			spots.append(IslandLayout.cell_center(cell))
+	while spots.size() < count and not spots.is_empty():
+		spots.append(spots[0])
+	return spots
 
 
 # The chase ends: the plain search round `at_px`, the boat making its way back to its loop.
@@ -410,6 +775,10 @@ func _beam_now() -> float:
 			return rad_to_deg((_aim_px / TILE - boat).angle())
 		State.ALERT_SEARCH:
 			return rad_to_deg((_aim_px / TILE - boat).angle()) + _search_light.offset_deg(_search_s)
+		State.DOCKED:
+			if locked != null:
+				return rad_to_deg((_aim_px / TILE - boat).angle())
+			return rad_to_deg((_aim_px / TILE - boat).angle()) + _search_light.offset_deg(_search_s)
 	return _light.beam_deg(boat, _loop.centroid, PatrolLoop.lap_time(clock_s, _patrol.horizon_warning_s))
 
 
@@ -445,6 +814,12 @@ func _build(creature: Creature, world: CreatureWorld) -> bool:
 func _release() -> void:
 	if _world != null and is_instance_valid(_world.events) and _world.events.noise_made.is_connected(_on_noise):
 		_world.events.noise_made.disconnect(_on_noise)
+	for soldier: Creature in soldiers:
+		if is_instance_valid(soldier):
+			soldier.queue_free()
+	soldiers.clear()
+	seated.clear()
+	plan = null
 	_creature = null
 	_world = null
 	locked = null

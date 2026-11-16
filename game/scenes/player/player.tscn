@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/art/player_look.tscn" id="4_look"]
 
 [ext_resource type="Script" path="res://scripts/interaction/drag_handle.gd" id="5_drag"]
+[ext_resource type="Script" path="res://scripts/interaction/free_handle.gd" id="10_free"]
 [ext_resource type="Script" path="res://scripts/net/player_net.gd" id="6_net"]
 [ext_resource type="Script" path="res://scripts/components/inventory.gd" id="7_inventory"]
 [ext_resource type="Script" path="res://scripts/crafting/crafter.gd" id="8_crafter"]
@@ -108,6 +109,9 @@ script = ExtResource("3_input")
 
 [node name="DragHandle" type="Node2D" parent="."]
 script = ExtResource("5_drag")
+
+[node name="FreeHandle" type="Node2D" parent="."]
+script = ExtResource("10_free")
 
 [node name="PlayerNet" type="Node" parent="."]
 script = ExtResource("6_net")

@@ -44,6 +44,12 @@ var downed: bool = false
 var left_island: bool = false
 ## A tied-down rider (crossing) cannot move but still interacts.
 var pinned: bool = false
+## Host (guardacostas-capture "Captives"): a captured player cannot move, use, craft or pick up; they
+## keep quick chat and their meters run. Their soldier leads them by the drag handle's dragger at drag
+## speed, or they sit in the dinghy, or ride aboard the boat that hauled them (`captive_aboard`, never
+## freed). CaptureRules sets it.
+var captive: bool = false
+var captive_aboard: bool = false
 ## A HUD panel holds the interact button (inventory-hud's crafting list, until interact is let go
 ## after it closes): the local intent carries no interact press meanwhile.
 var hud_holds_interact: bool = false
@@ -70,6 +76,7 @@ var _interact_was_held: bool = false
 @onready var net: PlayerNet = $PlayerNet
 @onready var inventory: Inventory = $Inventory
 @onready var crafter: Crafter = $Crafter
+@onready var free_handle: FreeHandle = $FreeHandle
 
 
 func _ready() -> void:
@@ -80,6 +87,7 @@ func _ready() -> void:
 	meters.last_stand_changed.connect(_on_last_stand_changed)
 	meters.died.connect(_on_died)
 	meters.effect_due.connect(_on_effect_due)
+	free_handle.interacted.connect(_on_free_handle_used)
 
 
 func _physics_process(delta: float) -> void:
@@ -108,7 +116,9 @@ func advance(delta: float, with_interaction: bool = true) -> void:
 	if left_island:
 		return
 	var result: MovementStep
-	if downed:
+	if captive:
+		free_handle.refresh()
+	if downed or captive:
 		if with_interaction:
 			_interact_was_held = false
 			interaction_hold.update(false, delta, self, null)
@@ -143,6 +153,45 @@ func refresh_local() -> void:
 func rebind(peer_id: int, net_role: PlayerNet.Role, send: Callable) -> void:
 	net.rebind(peer_id, net_role, send)
 	refresh_local()
+
+
+## Host (CaptureRules): makes the body a captive led by `by` (a soldier), or one aboard the boat that
+## hauled them (`aboard`), or frees it where it stands. Any press under way is dropped.
+func set_captive(value: bool, by: Node2D = null, aboard: bool = false) -> void:
+	captive = value
+	captive_aboard = value and aboard
+	model.reset()
+	interaction_hold.cancel(self)
+	_interact_was_held = false
+	velocity = Vector2.ZERO
+	if not downed:
+		drag_handle.dragger = by if value and not aboard else null
+	free_handle.refresh()
+
+
+## Host: the captive sits in the dinghy at `at` (nobody leads them now).
+func seat_captive(at: Vector2) -> void:
+	if not downed:
+		drag_handle.dragger = null
+	global_position = at
+	velocity = Vector2.ZERO
+	model.reset()
+
+
+## Whether this body is a captive a teammate may free: led to the dinghy or sitting in it, never one
+## aboard the boat or out of play.
+func can_be_freed() -> bool:
+	return captive and not captive_aboard and not left_island
+
+
+# Host: a teammate's hold on the "Soltar" handle completed. The host checks the rule again (no soldier
+# within the guard radius) and frees the captive where they stand.
+func _on_free_handle_used(by: Node) -> void:
+	if not is_inside_tree() or not multiplayer.is_server():
+		return
+	if not can_be_freed() or not free_handle.usable_by(by) or free_handle.guard_near():
+		return
+	CaptureRules.release(self)
 
 
 func set_downed(value: bool) -> void:

@@ -207,6 +207,9 @@ func test_the_loudhailer_calls_a_formal_spanish_alert_line_and_then_a_give_up_li
 	_clock(patrol.horizon_warning_s + 5.0)
 	_look().step(0.0)
 	assert_eq(_look().lines_shown, 0)
+	# guardacostas-capture: this boat lands no squad, so the plain alert's lines run as the stealth
+	# slice built them (a squad's alert ends when it is back aboard: test_capture_solo.gd).
+	boat.world.spawner = Callable()
 	brain.spot(body, &"sight")
 	assert_eq(boat.alert_serial, 1)
 	_look().step(0.0)
@@ -465,6 +468,8 @@ func test_both_peers_show_the_same_loudhailer_line_at_an_alerts_start_and_end() 
 	host_look.step(0.0)
 	client_look.step(0.0)
 	var player: PlayerBody = host.body(CoopSession.HOST_ID)
+	# This boat lands no squad: the plain alert's lines (guardacostas-capture).
+	made.world.spawner = Callable()
 	# On the sand (guardacostas-capture: a spotted swimmer in deep water is chased, not locked).
 	player.global_position = IslandLayout.cell_center(IslandLayout.build(LAYOUT).solo_spawn)
 	player.movement_state = MovementStep.Move.WALK

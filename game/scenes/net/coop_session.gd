@@ -904,10 +904,11 @@ func _sender() -> int:
 
 
 # `peer`'s body if it may act now: alive and on their feet (a downed player or one in a last
-# stand lies still, unless `allow_last_stand`); the host is trusted, a client is rate limited.
+# stand lies still, unless `allow_last_stand`), and not a captive (guardacostas-capture: a captive
+# keeps only quick chat, which does not ask here); the host is trusted, a client is rate limited.
 func _acting_body(peer: int, allow_last_stand: bool = false) -> PlayerBody:
 	var player := body(peer)
-	if player == null or player.meters.dead or player.meters.downed or has_left(peer):
+	if player == null or player.meters.dead or player.meters.downed or player.captive or has_left(peer):
 		return null
 	if player.meters.last_stand and not allow_last_stand:
 		return null

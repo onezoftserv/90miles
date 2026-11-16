@@ -519,3 +519,43 @@ Recorded while building. Each entry says what moved and why.
   - From each island's solo landing, the steps to cover more than 2 tiles away have a median of 3 and a maximum of 8 on the sandbar and 13 on the coast cay, exactly design.md's figures.
 
   It takes about 7 s, over the 2 s mark, because it steps 2 × 100 runs × 1,500 ticks × 3 soldiers.
+- **Group 7, the docked boat.**
+  - A land alert is a smoke cause, or a sight, water or noise cause whose cell is not water.
+  - Shallows are water, so a swimmer spotted there gets the stealth lock and no squad. A swimmer who comes ashore during a chase does bring the squad (`_came_ashore`).
+  - `_dock` stops the boat, picks the landing and starts the row (`Squad`: NONE, ROWING_IN, ASHORE, ROWING_OUT).
+  - `_beach` builds the plan from the lit fires and the alert's position, then spawns `squad_size` soldiers on the landing and its free land neighbours.
+  - When the plan says to leave, the soldiers walk back. `_row_out` despawns them and emits `rowed_out(captives)`, and the boat resumes its lap.
+  - While docked, the light follows a visible player within its range. When it loses them, that cell becomes the plan's last known position, held until the beaching if the dinghy is still rowing.
+  - A second boat's sighting moves the squad's last known position (`sighted`).
+  - A squall runs the leaving first and sends the boat out of sight only after that.
+- **Group 7, the creature's synced fields.** `Creature` gains `squad_state`, `landing`, `dinghy_t`, `squad_serial` and `squad_call` (`PatrolRoute.Call`: LAND, SPOT or LEAVE). Group 10 adds them to the sync. `PatrolRoute.captured(body)` and `rowed_out(captives)` are for group 8.
+- **Group 7, the world's spawner.** `CreatureWorld` gains `spawner` (a Callable), `can_spawn()`, `spawn_creature(data, at)`, `creature_data(id)`, `watch`, `island_id`, `island_run_seed` and `catalog`. `run_seed()` answers the island's seed off a crossing. `CreatureSpawner.setup` sets them, and its `_spawn_squad_member` goes through `session.spawn_creature`, so every client sees the soldiers. A world with no spawner, such as a bare test rig, lands no squad. A squad's random walk is seeded with `hash([run seed, island id, alert_serial])`.
+- **Group 7, the soldier.**
+  - `SearchCapture` walks at its data's speed (3 tiles/s), chases at `soldier_chase_tiles_s` and escorts at the drag speed (2 tiles/s). Its captive follows by the drag handle's dragger, and on arrival `PatrolRoute.seat` puts them on the landing cell.
+  - A broken chase gives `PatrolRoute.soldier_lost`, which makes the last-seen cell the plan's last known position, assigned to that soldier.
+  - A point search finds the first hidden target within 2 tiles when its 3 s end.
+  - When the squad leaves, every soldier turns to `RETURN`, and `is_back()` says it stands at the dinghy.
+- **Group 7, the captive body.**
+  - `PlayerBody` gains `captive` and `captive_aboard`, and `set_captive(value, by, aboard)`, `seat_captive(at)` and `can_be_freed()`.
+  - `advance` treats a captive like a downed body: no interaction, and the dragged step behind its soldier, or standing still with no dragger.
+  - `_acting_body` refuses a captive. Quick chat never asks `_acting_body`, so it still works.
+  - A hauled swimmer is `captive_aboard`, and the boat carries them at its position.
+  - `CaptureRules` (`game/scripts/stealth/capture_rules.gd`) starts here with `capture` and `release`. It is named `release` because `free` is `Object`'s. Group 8 adds the rest.
+- **Group 7, freeing.** `FreeHandle` (`game/scripts/interaction/free_handle.gd`) is a child of every player body in `player.tscn`. Its prompt, `free_captive`, reads "Soltar a" / "Free" and names the captive, as the drag prompt does.
+  - It is offered while its body can be freed and no soldier stands within the guard radius. A soldier is a member of the `shore_soldiers` group, which a `SEARCH_CAPTURE` creature joins in `Creature._ready`, so the handle never names the creature class.
+  - It is refreshed every physics frame on every peer, and from the captive's own step on the host. So a soldier coming back cancels a hold in the same tick: `InteractionHold` resets on a disabled target.
+  - The host frees the captive on use, after checking the rule again.
+  - The picker's reach of 1 tile is what keeps a hold from afar from freeing anyone.
+- **Group 7, tests changed in the stealth suite.**
+  - `test_patrol_route.gd` is unchanged: its bare world has no spawner, so its land alerts stay plain, which is the "patrol with no squad" case.
+  - `test_patrol_solo.gd`: `_frame` steps the soldiers too. "Spotted on open sand… resumes its lap" now follows the modified Alert's "Solo player spotted, hides and gets away":
+    - the scrub it picks belongs to a patch that runs on more than 2 tiles;
+    - the player crouch-walks through that patch, hidden;
+    - the boat docks, and the squad searches and leaves without finding them;
+    - the boat resumes its lap from where it stopped, at least 180 s later.
+
+    "A beach fire alerts once per lap" is unchanged; its squad now lands and leaves within the frames it already runs.
+  - `test_patrol_cues.gd`: both loudhailer tests clear the world's spawner, so their boats run the plain alert whose lines they check.
+  - `test_patrol_net.gd`: the client test expects `DOCKED`.
+  - `test_hud_text.gd`: the prompt ids include `free_captive`.
+  - The modified Alert's "A smoke alert by day" is `test_capture_solo.gd`'s day-fire test.

@@ -46,6 +46,14 @@ func setup(for_session: CoopSession, layout_data: IslandLayoutData, catalog: Con
 	if session.events != null:
 		session.events.world = world
 	world.rng.seed = WORLD_SEED
+	# guardacostas-capture: a docked boat lands its squad through the session, and its soldiers join
+	# this watch; their random walk is seeded from the run and the island.
+	world.spawner = _spawn_squad_member
+	world.watch = watch
+	world.catalog = _catalog
+	world.island_id = layout.id
+	var run_seed: Variant = session.world_state.get("run_seed", 0)
+	world.island_run_seed = run_seed if run_seed is int else 0
 
 
 ## Host: spawns the creatures that need no phase (the offshore shark).
@@ -241,6 +249,14 @@ func _is_fire_shy(data: CreatureData) -> bool:
 		if each.trigger == CreatureCounterData.Trigger.FIRE_LIGHT and each.response == CreatureCounterData.Response.DISPERSE:
 			return true
 	return counter != null and counter.response == CreatureCounterData.Response.DISPERSE
+
+
+# Host: a squad member steps ashore through the session's spawner, so every client sees it.
+func _spawn_squad_member(data: CreatureData, at: Vector2) -> Creature:
+	var made := session.spawn_creature(data, at)
+	if made != null:
+		made.world = world
+	return made
 
 
 func _remove(creature: Creature) -> void:

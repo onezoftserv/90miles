@@ -25,6 +25,16 @@ var record: RunRecord = RunRecord.new()
 var events: WorldEvents = null
 ## A test's weather: when set, `weather()` answers it instead of the sky's.
 var weather_override: WeatherData = null
+## guardacostas-capture: how a docked boat puts its squad ashore, `func(data: CreatureData, at: Vector2)
+## -> Creature` (the session's spawn_creature on an island; a test's own). Without one no squad lands.
+var spawner: Callable = Callable()
+## The island's spot-meter watch (the spawner's), so a landed soldier becomes a sight source.
+var watch: PatrolWatch = null
+## The island's layout id and the run's seed, which seed a squad's random walk.
+var island_id: StringName = &""
+var island_run_seed: int = 0
+## Where creature ids are read from (the session's catalog; the game's content by default).
+var catalog: ContentCatalog = null
 
 # The island's patrol loop and the rules' read-only sea distances, built once for every boat.
 var _patrol_loops: Dictionary[String, PatrolLoop] = {}
@@ -76,6 +86,24 @@ func patrol_triggers(patrol: PatrolData) -> PatrolTriggers:
 ## x2). 1 today: no handmade island has POIs yet, so this is the seam they fill.
 func noise_multiplier_at(_cell: Vector2i) -> float:
 	return 1.0
+
+
+## Whether a squad can be put ashore here.
+func can_spawn() -> bool:
+	return spawner.is_valid()
+
+
+## Puts a creature of `data` at `at` (pixels) through the spawner, or null.
+func spawn_creature(data: CreatureData, at: Vector2) -> Creature:
+	if not spawner.is_valid() or data == null:
+		return null
+	return spawner.call(data, at) as Creature
+
+
+## The creature data for `id`, from the world's catalog.
+func creature_data(id: StringName) -> CreatureData:
+	var source: ContentCatalog = catalog if catalog != null else GameState.content
+	return source.get_entry(&"creatures", id) as CreatureData
 
 
 func light_radius_px() -> float:
@@ -219,7 +247,9 @@ func deck_rect() -> Rect2:
 
 ## The run's seed (the session's world state), or 0 when there is none.
 func run_seed() -> int:
-	var session: CoopSession = crossing.session() if crossing != null else null
+	if crossing == null:
+		return island_run_seed
+	var session: CoopSession = crossing.session()
 	if session == null:
 		return 0
 	var value: Variant = session.world_state.get("run_seed", 0)
