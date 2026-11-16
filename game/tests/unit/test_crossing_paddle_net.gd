@@ -78,6 +78,14 @@ func _raft_for_both(host: CoopSession) -> Crossing:
 	return crossing
 
 
+# The host's rider stands on the paddle of `side` and holds interact.
+func _hold_paddle(crossing: Crossing, side: int) -> void:
+	var deck := crossing.deck_rect()
+	var x: float = deck.end.x - 4.0 if side == CrossingSteer.EAST else deck.position.x + 4.0
+	crossing.body_of(1).global_position = Vector2(x, deck.get_center().y)
+	crossing.body_of(1).intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+
+
 func _east_edge(crossing: Crossing) -> Vector2:
 	var deck := crossing.deck_rect()
 	return Vector2(deck.end.x - 4.0, deck.get_center().y)
@@ -110,10 +118,10 @@ func test_the_client_sees_the_host_paddle_and_drift_back() -> void:
 	if host_crossing == null or theirs == null:
 		fail_test("no crossing")
 		return
-	host_crossing.steer.start(1, CrossingSteer.WEST)
+	_hold_paddle(host_crossing, CrossingSteer.WEST)
 	var paddled := func() -> bool: return host_crossing.steer.position <= -3.0
 	assert_true(await wait_until(paddled, TIMEOUT_S))
-	host_crossing.stop_paddling(1)
+	host_crossing.body_of(1).intent = MoveIntent.new()
 	var seen := func() -> bool: return theirs.steer.position < -2.0
 	assert_true(await wait_until(seen, TIMEOUT_S), "the client shows the raft west of the line")
 	var back := func() -> bool: return absf(theirs.steer.position) < 0.01
@@ -126,7 +134,7 @@ func test_a_joiner_mid_paddle_shows_the_hosts_position() -> void:
 	if host_crossing == null:
 		fail_test("no crossing")
 		return
-	host_crossing.steer.start(1, CrossingSteer.EAST)
+	_hold_paddle(host_crossing, CrossingSteer.EAST)
 	var at_limit := func() -> bool: return host_crossing.steer.position >= host_crossing.tuning.max_offset_tiles
 	assert_true(await wait_until(at_limit, TIMEOUT_S), "the host holds the raft 6 tiles east")
 	var late := await net.join(_setup)
@@ -138,6 +146,25 @@ func test_a_joiner_mid_paddle_shows_the_hosts_position() -> void:
 	if theirs == null:
 		return
 	assert_almost_eq(theirs.steer.position, host_crossing.steer.position, 0.5, "the joiner shows the host's position")
+
+
+func test_a_client_dropped_mid_paddle_stops_paddling() -> void:
+	var pair := await _pair()
+	var client_id: int = net.peer_id(pair[1])
+	var host_crossing := _raft_for_both(pair[0])
+	var theirs := await _crossing_on(pair[1])
+	if host_crossing == null or theirs == null:
+		fail_test("no crossing")
+		return
+	host_crossing.body_of(client_id).global_position = _east_edge(host_crossing)
+	theirs.body_of(client_id).global_position = _east_edge(theirs)
+	await wait_physics_frames(10)
+	theirs.body_of(client_id).intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	var moving := func() -> bool: return host_crossing.steer.position >= 1.5
+	assert_true(await wait_until(moving, TIMEOUT_S), "the client paddles")
+	net.drop(pair[1])
+	var back := func() -> bool: return host_crossing.steer.position == 0.0
+	assert_true(await wait_until(back, 15.0), "with the client gone the current takes the raft back to the line")
 
 
 func test_a_snapshot_without_the_steer_is_refused() -> void:
