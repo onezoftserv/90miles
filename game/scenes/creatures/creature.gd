@@ -88,6 +88,8 @@ func attach_sync() -> void:
 	if is_patrol():
 		# guardacostas-stealth decision 10: the clock and the aim, from which a client derives the rest.
 		properties.append_array([".:route_t", ".:beam", ".:alert_serial", ".:light_on"])
+		# guardacostas-capture design.md §13: the squad's dinghy and its calls.
+		properties.append_array([".:squad_state", ".:landing", ".:dinghy_t", ".:squad_serial", ".:squad_call"])
 	for property: String in properties:
 		config.add_property(NodePath(property))
 		config.property_set_spawn(NodePath(property), true)

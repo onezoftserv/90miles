@@ -112,6 +112,7 @@ func on_rowed_out(captives: Array[PlayerBody], landing_px: Vector2) -> void:
 		for body: PlayerBody in captives:
 			if is_instance_valid(body) and body.captive:
 				CaptureRules.take(_session, body, landing_px)
+				take_out_of_play.rpc(_session.peer_of(body))
 	_session.capture_state_changed.emit()
 	queue_check()
 
@@ -305,6 +306,17 @@ func end_scene() -> void:
 	current_serial = 0
 	current_line_id = &""
 	scene_ended.emit()
+
+
+## Every peer, from the host: `peer_id`'s player was taken; it waits out of play here too.
+@rpc("authority", "call_remote", "reliable")
+func take_out_of_play(peer_id: int) -> void:
+	if not _from_host():
+		return
+	var body := _session.body(peer_id)
+	if body != null:
+		body.taken = true
+		IslandArrival.hold(body)
 
 
 ## The current line's text in `locale`, and its speaker's name (the NPC's, or the player's).

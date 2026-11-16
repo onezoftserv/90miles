@@ -205,7 +205,7 @@ How the tests are written:
 
 ## 10. Network
 
-- [ ] 10.1 Write `game/tests/unit/test_capture_net.gd` with host plus client and verify it fails. It covers the spec's "Capture on every peer", "Captives", "Whole-party capture" and "The capture scene" scenarios:
+- [x] 10.1 Write `game/tests/unit/test_capture_net.gd` with host plus client and verify it fails. It covers the spec's "Capture on every peer", "Captives", "Whole-party capture" and "The capture scene" scenarios:
   - a client frees a captive;
   - a client's interact hold from out of reach frees nobody;
   - a captive's intents are ignored while its quick chat goes through;
@@ -215,8 +215,11 @@ How the tests are written:
   - a downed teammate going along;
   - a captive client dropping and rejoining;
   - both peers' summaries counting the same islands reached.
-- [ ] 10.2 Implement the sync (design.md §13). Freeing uses the existing interact intent, so no new client message is added. Verify the test passes, and that `test_patrol_net.gd`, `test_creature_net.gd`, `test_coop_reconnect.gd` and `test_dead_spectate_net.gd` (if merged) still pass.
-- [ ] 10.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: 5 of its 8 tests failed before the sync, for the right reason (nothing synced), and all 8 pass after it. It covers freeing, freeing from afar, a captive's intents and quick chat, joining with the squad ashore, joining during the scene, the same lines with a downed teammate standing at 30 health, a captive's drop and rejoin, and the islands reached.
+- [x] 10.2 Implement the sync (design.md §13). Freeing uses the existing interact intent, so no new client message is added. Verify the test passes, and that `test_patrol_net.gd`, `test_creature_net.gd`, `test_coop_reconnect.gd` and `test_dead_spectate_net.gd` (if merged) still pass.
+  - Done: `net_capture` on the bodies, the squad's fields on the boats, and the taken hold by RPC (design.md "Changes from the build plan", group 10). No client message was added. `test_patrol_net.gd`, `test_creature_net.gd`, `test_coop_reconnect.gd` and `test_dead_spectate_net.gd` pass.
+- [x] 10.3 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 267 scripts, 2436/2436. The first run caught `test_player_state_sync.gd`'s property list and the stale taken hold, both fixed.
 
 ## 11. Fade with distance
 

@@ -85,6 +85,9 @@ properties/21/replication_mode = 1
 properties/22/path = NodePath("PlayerNet:net_spot")
 properties/22/spawn = true
 properties/22/replication_mode = 1
+properties/23/path = NodePath("PlayerNet:net_capture")
+properties/23/spawn = true
+properties/23/replication_mode = 1
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2

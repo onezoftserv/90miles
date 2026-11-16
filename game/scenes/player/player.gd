@@ -181,6 +181,24 @@ func seat_captive(at: Vector2) -> void:
 	model.reset()
 
 
+## The capture state PlayerNet sends: 0 none, 1 a captive, 2 a captive aboard the boat, 3 taken.
+func capture_code() -> int:
+	if taken:
+		return 3
+	if captive:
+		return 2 if captive_aboard else 1
+	return 0
+
+
+## Client: the host's capture state (the flags only: a taken player leaves play by the host's
+## CaptureScene.take_out_of_play call, ordered with the travel that lands them again, so a late sync
+## never holds a player who has landed).
+func apply_capture_code(code: int) -> void:
+	captive = code == 1 or code == 2
+	captive_aboard = code == 2
+	taken = code == 3
+
+
 ## Whether this body is a captive a teammate may free: led to the dinghy or sitting in it, never one
 ## aboard the boat or out of play.
 func can_be_freed() -> bool:
@@ -200,8 +218,9 @@ func _on_free_handle_used(by: Node) -> void:
 func set_downed(value: bool) -> void:
 	downed = value
 	model.reset()
-	drag_handle.enabled = value
-	if not value:
+	# A captive (dropped while led or sitting in the dinghy) is nobody's to drag away.
+	drag_handle.enabled = value and not captive
+	if not value and not captive:
 		drag_handle.dragger = null
 
 

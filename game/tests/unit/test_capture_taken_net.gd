@@ -115,6 +115,7 @@ func test_a_taken_client_lands_on_the_next_island_with_the_foto_only() -> void:
 	assert_eq(captive.inventory.count_id(&"rope"), 0)
 	assert_eq(captive.inventory.count_id(&"foto_test"), 1, "but the keepsake")
 	assert_eq(_island_id(host), SANDBAR, "the host's player is still free on the sandbar")
+	assert_true(await wait_until(func() -> bool: return client.body(id).left_island and not client.body(id).visible, TIMEOUT_S), "out of play on the client too")
 	await wait_frames(5)
 	assert_eq(_island_id(host), SANDBAR)
 	# The host's player crosses to the coast cay: both land there.
