@@ -30,6 +30,8 @@ prompt_verbs = Dictionary[StringName, PackedStringArray]({
 &"pick_up": PackedStringArray("Recoger", "Pick up"),
 &"pull": PackedStringArray("Jalar a", "Pull"),
 &"put_out": PackedStringArray("Apagar", "Put out"),
+&"raft_job": PackedStringArray("Trabajar en", "Work on"),
+&"raft_work": PackedStringArray("Arreglar", "Fix up"),
 &"shoo": PackedStringArray("Espantar", "Shoo"),
 &"take_water": PackedStringArray("Tomar", "Take"),
 &"tie_down": PackedStringArray("Amarrarse", "Tie down"),
@@ -42,6 +44,8 @@ prompt_labels = Dictionary[StringName, PackedStringArray]({
 &"launch": PackedStringArray("en la balsa", "on the raft"),
 &"open_chest": PackedStringArray("el cofre", "the chest"),
 &"put_out": PackedStringArray("Fogata", "Fire"),
+&"raft_job": PackedStringArray("la balsa", "the raft"),
+&"raft_work": PackedStringArray("la balsa", "the raft"),
 &"tie_down": PackedStringArray("a la balsa", "to the raft"),
 &"untie": PackedStringArray("de la balsa", "from the raft"),
 &"workbench": PackedStringArray("en el banco", "at the bench")
@@ -101,6 +105,8 @@ refusals = Dictionary[StringName, PackedStringArray]({
 &"missing_materials": PackedStringArray("Te faltan materiales.", "You're missing materials."),
 &"no_use": PackedStringArray("Eso no se usa así.", "That's not how it's used."),
 &"not_now": PackedStringArray("Ahora no se puede.", "Not now."),
+&"raft_has_it": PackedStringArray("La balsa ya lo tiene.", "The raft already has it."),
+&"raft_whole": PackedStringArray("La balsa está entera.", "The raft is whole."),
 &"wasted_cures": PackedStringArray("No hay na' que curar.", "There's nothing to cure."),
 &"wasted_other": PackedStringArray("A %s no le hace falta.", "%s doesn't need it.")
 })
@@ -125,6 +131,9 @@ lines = Dictionary[StringName, PackedStringArray]({
 &"missing": PackedStringArray("Falta:", "Needs:"),
 &"needs_tool": PackedStringArray("Con qué %s", "Something to %s"),
 &"percent": PackedStringArray("%d %%", "%d%%"),
+&"raft_fitting_sep": PackedStringArray(" · ", " · "),
+&"raft_state": PackedStringArray("Balsa %d/%d", "Raft %d/%d"),
+&"raft_warning": PackedStringArray("Así no llegas ni a la esquina.", "Won't even reach the corner."),
 &"watch_keys": PackedStringArray("[%s] [%s] Cambiar", "[%s] [%s] Switch"),
 &"watching": PackedStringArray("Mirando a: %s", "Watching: %s"),
 &"watching_dropped": PackedStringArray("Mirando a: %s (desconectado)", "Watching: %s (disconnected)"),

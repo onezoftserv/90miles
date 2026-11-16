@@ -58,6 +58,17 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] Arrival on a second handmade island (coast cay): `coast-cay` change, archived 2026-11-08
 - [x] `coast-cay-bench`: a workbench on the coast cay, so a fire or rain-catcher site can be placed there (owner, 2026-11-14: "Add a bench there", data only). A flat rock at (16, 39) on the bay side of the west arm, 2 s from the landing, out of the patrol's searchlight and more than 2 tiles from the sea (built 2026-11-14; not archived)
   - [x] Tinder on the coast cay: 2 dry grass on the dune beside the bench (owner, 2026-11-14: "Bench + 2 dry grass")
+- [ ] `island-stop` (owner's question of 2026-11-14, "can i go from island 2 to island 3 as soon as i get there if i sail on the raft?"; OpenSpec change written 2026-11-15; the owner chose option (a) on all eight questions on 2026-11-15, Q1 "Allowed; stopping pays"): sailing on stays legal, and stopping pays in mends and fittings.
+  - [x] PR 1, the mend:
+    - a raft's work point opens the raft's list;
+    - 1 driftwood + 1 rope gives +20 in 10 s (5 s for a Mecánico, through the crafter's background-skill rule), up to the maximum;
+    - one shared job at a time, and a launch gives its deposits back;
+    - the launch prompt shows "Balsa 48/100" and warns below half;
+    - every peer and every joiner sees the raft's state;
+    - 1-player, host-plus-client and two-process (UDP 7798, `tests/manual/island_stop_run.gd`) checks.
+  - [ ] PR 2, the fittings: clavazón (+20 maximum), defensas (rocks and debris ×0.75), toldo (the deck is shade), carried through the crossing to the next beach. It waits for `crossing-gameplay`'s three PRs.
+  - [ ] Follow-ups (owner Q8): `night-ashore` (sleep in a shelter at night, +50 energy, wiring `sleep_night()`), then the patrol spotting a launch, with the cutter boss.
+  - [ ] The Mecánico's 2× applies once a Mecánico background exists (the backgrounds change). Today the rule reads `BackgroundData.skills`, and only the Maestro and the Médico ship.
 - [x] `creatures-ai`: reef shark (patrol/circle/strike), crabs, gulls
 - [x] Death, run summary with the Cuban one-liner, restart: `run-end` change, archived 2026-11-08
   - [ ] Owner's voice pass on the 20 draft death one-liners (`game/resources/dialogue/death_one_liners.tres`, respect and Cuban voice)

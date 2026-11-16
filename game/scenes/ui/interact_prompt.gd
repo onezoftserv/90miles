@@ -22,10 +22,14 @@ extends Control
 ## frames, so in solo and on the host it runs on the same frames as the host's hold.
 ## A build site's prompt adds its state as this peer has it (inventory-hud "Build site prompt"):
 ## a line per missing input or tag, "Falta: Madera de la costa x4" first, or, once every input is
-## in, the shared progress as a bar with its percentage.
+## in, the shared progress as a bar with its percentage. A raft's launch prompt adds its state
+## (inventory-hud "The raft's prompt shows its state", island-stop): "Balsa 48/100", its fittings,
+## and a warning line below half its maximum; a raft job's prompt is a build site's.
 
 ## The local player's press landed on a workbench: the HUD opens the crafting list there.
 signal bench_pressed(bench: Workbench)
+## The local player's press landed on a raft's work point: the HUD opens the raft's list there.
+signal raft_pressed(raft: Raft)
 ## The local player's press landed on a flavour sign: the HUD opens the sign note on this peer only.
 signal sign_pressed(sign_node: IslandSign)
 
@@ -144,6 +148,37 @@ static func site_lines(site: BuildSite, words: HudText, locale: String) -> Packe
 	return shown
 
 
+## The raft's state as this peer has it: "Balsa 90/120" (its integrity and its maximum).
+static func raft_state_line(raft: Raft, words: HudText, locale: String) -> String:
+	return words.line(&"raft_state", locale) % [ceili(raft.integrity), roundi(raft.max_integrity)]
+
+
+## The raft's fittings' Spanish names on a line of their own, "Clavazón · Toldo" (all three fit the
+## 30-glyph line), or "" with none.
+static func raft_fittings_line(raft: Raft, words: HudText, locale: String) -> String:
+	var names: PackedStringArray = []
+	for id: StringName in raft.fittings:
+		var fitting := GameState.content.get_entry(&"recipes", id) as RecipeData
+		if fitting != null:
+			names.append(fitting.get_display_name(locale))
+	return words.line(&"raft_fitting_sep", locale).join(names)
+
+
+## The lines a raft's launch prompt adds: its state, its fittings when it has any, then the warning
+## while it has less than half its maximum left. The warning never stops the launch. A raft with no
+## recipe yet adds none.
+static func raft_lines(raft: Raft, words: HudText, locale: String) -> PackedStringArray:
+	if raft.max_integrity <= 0.0:
+		return PackedStringArray()
+	var shown := PackedStringArray([raft_state_line(raft, words, locale)])
+	var fitted: String = raft_fittings_line(raft, words, locale)
+	if not fitted.is_empty():
+		shown.append(fitted)
+	if raft.integrity < raft.max_integrity / 2.0:
+		shown.append(words.line(&"raft_warning", locale))
+	return shown
+
+
 static func _clamped(rect: Rect2) -> Rect2:
 	var x: float = clampf(rect.position.x, BOUNDS.position.x, BOUNDS.end.x - rect.size.x)
 	var y: float = clampf(rect.position.y, BOUNDS.position.y, BOUNDS.end.y - rect.size.y)
@@ -220,6 +255,9 @@ func tick(delta: float) -> void:
 			_bar_value = site.progress()
 			needs.append(text.line(&"percent", _locale()) % roundi(_bar_value * 100.0))
 		shown.append_array(needs)
+	var raft := target.get_parent() as Raft
+	if raft != null and target == raft.interactable:
+		shown.append_array(raft_lines(raft, text, _locale()))
 	_show(shown)
 
 
@@ -273,6 +311,9 @@ func _lock_pressed() -> void:
 		var bench := target.get_parent() as Workbench
 		if bench != null:
 			bench_pressed.emit(bench)
+		var raft := target.get_parent() as Raft
+		if raft != null and target == raft.work_point:
+			raft_pressed.emit(raft)
 		var sign_node := target as IslandSign
 		if sign_node != null:
 			sign_pressed.emit(sign_node)
