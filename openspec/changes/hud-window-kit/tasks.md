@@ -109,7 +109,7 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
 
 ## 4. Meters and teammates (survival-meters "HUD bars"; ui-shell "HUD layout", "Readable HUD and menu text"; design D4, D5, D7)
 
-- [ ] 4.1 Tests first. In `test_meters_hud.gd`:
+- [x] 4.1 Tests first. In `test_meters_hud.gd`:
   - ORDER becomes Salud, Sed, Hambre, Calor, Energía, Ánimo;
   - each label's rect lies left of its bar box, and the value lies right of it;
   - no label pixel overlaps a bar;
@@ -126,8 +126,8 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   Add the solo case: with exactly 1 player, offline, `NetManager.start_solo()`, the rows read Salud first, and thirst 40 with heat 60 turns only "Sed" and "Calor" orange.
 
   Verify: they fail first, then pass.
-- [ ] 4.2 Rebuild `meter_bar.tscn` and `meter_bar.gd` to D4: a label column with its colour steps (`WARN_LOW` and `WARN_HEAT` beside the critical constants), the `Bar` ProgressBar with ramp StyleBoxTextures and the `Edge` column, the value, the outline pulse, and `fill_color` kept as the ramp base. Move `Health` first in `meters_hud.tscn`, and set rows to 10 px with no separation. Re-fit damage-feedback's `Lost`, `Gain` and `Glow` and the shake to D5, and set `HurtCueTuning.meter_colors` to the six ramp bases. Verify: 4.1 and damage-feedback's `test_hurt_screen.gd`, its float and solo tests, and `test_run_hud.gd` pass.
-- [ ] 4.3 Tests first, for the teammate blocks:
+- [x] 4.2 Rebuild `meter_bar.tscn` and `meter_bar.gd` to D4: a label column with its colour steps (`WARN_LOW` and `WARN_HEAT` beside the critical constants), the `Bar` ProgressBar with ramp StyleBoxTextures and the `Edge` column, the value, the outline pulse, and `fill_color` kept as the ramp base. Move `Health` first in `meters_hud.tscn`, and set rows to 10 px with no separation. Re-fit damage-feedback's `Lost`, `Gain` and `Glow` and the shake to D5, and set `HurtCueTuning.meter_colors` to the six ramp bases. Verify: 4.1 and damage-feedback's `test_hurt_screen.gd`, its float and solo tests, and `test_run_hud.gd` pass.
+- [x] 4.3 Tests first, for the teammate blocks:
   - In `test_run_hud.gd`:
     - the panel is right-anchored, with its right edge at 636;
     - three teammates fit inside x 502 to 636 and y 4 to 90;
@@ -141,16 +141,16 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - In `test_compass_needle.gd`'s check: the needle clears the panel.
 
   Verify: they fail first, then pass.
-- [ ] 4.4 Write `scenes/ui/teammate_block.tscn` and its script (D7), and make `RunHud.refresh` keep one block per teammate. Verify: 4.3 passes.
-- [ ] 4.5 Host plus client, in-process with `NetHarness`: extend `test_dropped_teammate_net.gd`, or add `test_teammate_blocks_net.gd`. It checks:
+- [x] 4.4 Write `scenes/ui/teammate_block.tscn` and its script (D7), and make `RunHud.refresh` keep one block per teammate. Verify: 4.3 passes.
+- [x] 4.5 Host plus client, in-process with `NetHarness`: extend `test_dropped_teammate_net.gd`, or add `test_teammate_blocks_net.gd`. It checks:
   - the client's block for the host and the host's block for the client show the right name, chip colour, bar and state word;
   - a dropped client reads "Desconectado" on the host;
   - a late joiner sees the same.
 
   Verify: it passes, and the GUT total stays under CI's 300 s.
-- [ ] 4.6 Two processes: run host and client on one machine, as CLAUDE.md asks for any HUD change seen in co-op. Use the existing manual co-op runner, or a `tests/manual/teammate_blocks_run.gd` on a free UDP port. The client is named with 16 characters; it drops, then rejoins. Capture the host's top-right at 3× into `docs/ui-shell/kit_teammates_x3.png`. Verify: both processes report their checks and no engine errors, and the capture shows the whole name and "Desconectado".
-- [ ] 4.7 Capture the solo meters at 3×, with thirst at 20 (pulsing) and with health being hit (damage-feedback's chunk). Save them as `docs/ui-shell/kit_meters_*.png`. Verify: the labels are cream on the window and Salud is first.
-- [ ] 4.8 Import ×2, Smoke, GUT and Art tests pass.
+- [x] 4.6 Two processes: run host and client on one machine, as CLAUDE.md asks for any HUD change seen in co-op. Use the existing manual co-op runner, or a `tests/manual/teammate_blocks_run.gd` on a free UDP port. The client is named with 16 characters; it drops, then rejoins. Capture the host's top-right at 3× into `docs/ui-shell/kit_teammates_x3.png`. Verify: both processes report their checks and no engine errors, and the capture shows the whole name and "Desconectado".
+- [x] 4.7 Capture the solo meters at 3×, with thirst at 20 (pulsing) and with health being hit (damage-feedback's chunk). Save them as `docs/ui-shell/kit_meters_*.png`. Verify: the labels are cream on the window and Salud is first.
+- [x] 4.8 Import ×2, Smoke, GUT and Art tests pass.
 
 ## 5. Hotbar (inventory-hud "Slot contents"; design D6)
 
