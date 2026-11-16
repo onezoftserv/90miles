@@ -50,6 +50,8 @@ signal off_the_chain_requested
 ## Host: an effect asks the island keeper to release the party at the next island (`onward`) or to
 ## restart the previous one (guardacostas-capture TRAVEL_NEXT_ISLAND and TRAVEL_PREVIOUS_ISLAND).
 signal party_travel_requested(onward: bool)
+## Host: the capture keeper took captives or ended a scene; the island keeper checks the party again.
+signal capture_state_changed
 ## Host: a joiner or a rejoined player was sent the world state and its lobby reply; what it must
 ## hear once its island has loaded goes now (structure-state-sync design D6: the palms' counts).
 signal join_state_sent(peer_id: int)
@@ -151,6 +153,8 @@ var phrases: QuickChatPhrases
 var locale: String = DEFAULT_LOCALE
 ## The world event bus (guardacostas-stealth): a child node, added in _ready; acts on the host only.
 var events: WorldEvents = null
+## The capture keeper and scene runner (guardacostas-capture): a child node, added in _ready.
+var capture: CaptureScene = null
 var run_record: RunRecord = RunRecord.new()  # Host: this run's flags, creature counts and effect limits (never sent).
 ## Host, in a rematch (art-pass "Look slots in a rematch"): the look slot each peer kept from the
 ## run that ended, by peer id (nobody reconnects, so the ids stay). The shell sets it before
@@ -209,6 +213,9 @@ func _ready() -> void:
 	events = WorldEvents.new()
 	events.name = &"WorldEvents"
 	add_child(events)
+	capture = CaptureScene.new()
+	capture.name = CaptureScene.NODE_NAME
+	add_child(capture)
 	if phrases == null:
 		phrases = QuickChatPhrases.from_catalog(GameState.content)
 

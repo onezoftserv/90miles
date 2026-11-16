@@ -50,6 +50,9 @@ var pinned: bool = false
 ## freed). CaptureRules sets it.
 var captive: bool = false
 var captive_aboard: bool = false
+## Host (guardacostas-capture "Taken captives"): a captive the squad took while a teammate was free. Out
+## of play like a rider on the next shore (left_island) until the party next lands.
+var taken: bool = false
 ## A HUD panel holds the interact button (inventory-hud's crafting list, until interact is let go
 ## after it closes): the local intent carries no interact press meanwhile.
 var hud_holds_interact: bool = false

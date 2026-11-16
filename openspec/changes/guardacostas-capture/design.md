@@ -559,3 +559,15 @@ Recorded while building. Each entry says what moved and why.
   - `test_patrol_net.gd`: the client test expects `DOCKED`.
   - `test_hud_text.gd`: the prompt ids include `free_captive`.
   - The modified Alert's "A smoke alert by day" is `test_capture_solo.gd`'s day-fire test.
+- **Group 8, the rules.** `CaptureRules` is pure over `Member` snapshots. `is_free`, `free_count`, `is_whole_party`, `taken_on_leaving(captive_count, members)` and `members_of(session)` decide, and the host applies the results with `capture`, `release` and `take(session, body, landing_px)`.
+  - `take` first lays the body's secret items on the landing through `SecretRules.lay_down_for_leaver`, while the body is still on the island. It then empties every slot that is not a keepsake, sets `PlayerBody.taken`, and holds the body as a waiting rider.
+  - `IslandArrival.land` clears `taken`, so a taken captive lands with the party as a rider does.
+  - `CaptureOutcome.resolve(final_crossing)` is the router: SCENE or DEVUELTO. `checks_persuasion` is false for DEVUELTO.
+- **Group 8, the keeper.** `CaptureScene` (`game/scripts/stealth/capture_scene.gd`) is the session's capture keeper and, from group 9, the scene's runner. It is a child that `CoopSession._ready` adds as `capture`, one of `IslandTravel.SESSION_NODES`, so it survives a travel and its RPCs reach the same node on every peer.
+  - It checks for a whole-party capture, deferred, after every capture, death, downed, last-stand, removal and drop.
+  - `IslandTravel.check()` asks `holds_travel()` first: true while the scene plays, and on the host while the whole party is caught, before the scene begins. A taken captive is held, so `check()` already counts them as gone, as it counts a rider.
+  - The spawner connects each boat's `captured` and `rowed_out` to the keeper. `rowed_out` carries the landing in pixels.
+  - A boat that leaves sight (AWAY, or a squall) with captives aboard hands them to the keeper the same way. Their secret items go on the land nearest the boat. Until then they ride aboard, never freeable.
+  - After taking captives, the keeper emits the new `CoopSession.capture_state_changed`, and `IslandTravel` checks the party again. The keeper never names `IslandTravel`, because `creature_spawner.gd` names the keeper and the island scene loads the spawner, so a direct reference would close the load cycle that group 3 found.
+  - The final-crossing seam is `CaptureScene.in_final_crossing`, a Callable that answers false today. The DEVUELTO branch emits `run_devuelto`.
+- **Group 8, creatures ignore held bodies.** `CreatureWorld.players()` now leaves out bodies held out of play: a waiting rider, a taken captive, or a player in the scene. This is design.md's "The scene pauses the live island" risk.

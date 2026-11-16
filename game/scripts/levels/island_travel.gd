@@ -34,7 +34,7 @@ const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.ts
 ## boats listen to it.
 const SESSION_NODES: Array[StringName] = [
 	&"Players", &"PlayerSpawner", &"Entities", &"EntitySpawner", &"Pickups", &"PickupSpawner",
-	&"WorldEvents",
+	&"WorldEvents", &"CaptureScene",
 ]
 const RAFT_NAME: StringName = &"Raft"
 ## escape-routes "Split parties" (dropped-teammate-state): once dropped players still on the island
@@ -78,6 +78,7 @@ func setup(for_session: CoopSession, current: SandbarIsland) -> void:
 	session.island_travel_requested.connect(_load)
 	session.off_the_chain_requested.connect(end_off_the_chain)
 	session.party_travel_requested.connect(_on_party_travel)
+	session.capture_state_changed.connect(_on_changed)
 	session.player_spawned.connect(_on_player_spawned)
 	session.player_rebound.connect(_on_player_rebound)
 	session.removal_recorded.connect(_on_removal_recorded)
@@ -104,6 +105,11 @@ func crossing_ended(result: CrossingResult) -> void:
 ## waiting, not in a crossing) keeps it open until removed; once such players are all that keep
 ## riders waiting, the host cuts each one's time to DROPPED_HOLD_S. A drop never ends the run early.
 func check() -> Outcome:
+	# guardacostas-capture "Whole-party capture": checked before the island loads or the run ends. A
+	# taken captive is held like a rider, so it counts as gone below.
+	var keeper := CaptureScene.of(session)
+	if keeper != null and keeper.holds_travel():
+		return Outcome.PLAYING
 	var waiting: int = 0
 	var dropped_here: Array[int] = []
 	for peer_id: int in session.peer_ids():

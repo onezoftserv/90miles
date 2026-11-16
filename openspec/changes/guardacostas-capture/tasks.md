@@ -168,18 +168,22 @@ How the tests are written:
 
 ## 8. Whole-party capture, taken captives and the router
 
-- [ ] 8.1 Write `game/tests/unit/test_capture_rules.gd` (pure) and verify it fails. It checks:
+- [x] 8.1 Write `game/tests/unit/test_capture_rules.gd` (pure) and verify it fails. It checks:
   - who is free (downed, last stand, dropped, a waiting rider, a rider in a crossing);
   - the whole-party test;
   - "The last free player dies";
   - the taken rule;
   - the router: an island or a non-final crossing plays the scene, and a final-crossing capture skips both the scene and the check ("A final-crossing capture skips the scene").
-- [ ] 8.2 Write `game/tests/unit/test_capture_taken_net.gd` with host plus client and verify it fails. It covers the spec's "Taken captives" scenarios:
+  - Done: it failed to parse on the missing `CaptureRules.Member` and `CaptureOutcome`, then passed (12 tests).
+- [x] 8.2 Write `game/tests/unit/test_capture_taken_net.gd` with host plus client and verify it fails. It covers the spec's "Taken captives" scenarios:
   - the client's player is taken and lands on the coast cay with the Foto only;
   - the compass is laid on the landing beach and seen on both peers;
   - the island empties when the only other player waits on the next shore.
-- [ ] 8.3 Implement `capture_rules.gd` and `capture_outcome.gd`, the out-of-play taken state, and the `IslandTravel.check()` change. Verify the tests pass, and that `test_escape_routes_solo.gd`, `test_arrivals_cap.gd` and `test_dropped_teammate_net.gd` still pass.
-- [ ] 8.4 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: it failed to parse on the missing keeper (`CaptureScene`) and `PlayerBody.taken`, then passed (3 tests).
+- [x] 8.3 Implement `capture_rules.gd` and `capture_outcome.gd`, the out-of-play taken state, and the `IslandTravel.check()` change. Verify the tests pass, and that `test_escape_routes_solo.gd`, `test_arrivals_cap.gd` and `test_dropped_teammate_net.gd` still pass.
+  - Done: `CaptureScene` is the keeper (design.md "Changes from the build plan", group 8). `IslandTravel.check()` asks it first, and `CreatureWorld.players()` skips held bodies. `test_escape_routes_solo.gd`, `test_arrivals_cap.gd` and `test_dropped_teammate_net.gd` pass.
+- [x] 8.4 Run the import, smoke run and GUT commands, and verify all three pass.
+  - Done: import and smoke clean, GUT 265 scripts, 2416/2416.
 
 ## 9. The scene
 

@@ -110,7 +110,9 @@ func light_radius_px() -> float:
 	return light_radius_tiles * CreatureNav.TILE
 
 
-## Living player bodies; on a crossing, its riders that are not dead.
+## Living player bodies in play (a body held out of play, a rider waiting on the next shore, a taken
+## captive or a player in the capture scene, is nobody's target: guardacostas-capture design.md §7); on
+## a crossing, its riders that are not dead.
 func players() -> Array[PlayerBody]:
 	var found: Array[PlayerBody] = []
 	if crossing != null:
@@ -121,7 +123,7 @@ func players() -> Array[PlayerBody]:
 		return found
 	for node: Node in _tree().get_nodes_in_group(PlayerBody.GROUP):
 		var body := node as PlayerBody
-		if body != null and CoopSession.is_alive(body):
+		if body != null and CoopSession.is_alive(body) and not body.left_island:
 			found.append(body)
 	return found
 

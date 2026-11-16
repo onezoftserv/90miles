@@ -52,9 +52,9 @@ enum Call {
 
 ## Host: a player was captured by this boat or its squad (the session's capture rules listen).
 signal captured(body: PlayerBody)
-## Host: the squad rowed out with `captives` (the dinghy's, at that moment); the session's capture
-## rules take them, unless the capture ended the island first.
-signal rowed_out(captives: Array[PlayerBody])
+## Host: the squad rowed out (or the boat left sight) with `captives`, whose secret items go on
+## `landing_px`; the session's capture keeper takes them, unless the whole party is caught.
+signal rowed_out(captives: Array[PlayerBody], landing_px: Vector2)
 
 const EPSILON: float = 0.000001
 const TILE: float = 16.0
@@ -211,6 +211,7 @@ func tick(creature: Creature, world: CreatureWorld, delta: float) -> void:
 			_in_port = true
 			locked = null
 			_drop_chase()
+			_leave_with_aboard()
 			_restart_wait_s = 0.0
 		enter(State.AWAY)
 		_park()
@@ -251,6 +252,7 @@ func _follow_loop() -> void:
 			enter(State.HORIZON)
 			_park()
 		PatrolLoop.Phase.AWAY:
+			_leave_with_aboard()
 			enter(State.AWAY)
 			_park()
 		PatrolLoop.Phase.LAP:
@@ -428,6 +430,18 @@ func _came_ashore(body: PlayerBody) -> void:
 		_dock(&"sight", body.global_position, body)
 	else:
 		_search_from(body.global_position)
+
+
+# Host: the boat leaves sight with its captives aboard: the session's keeper takes them (their secret
+# items go on the land nearest the boat).
+func _leave_with_aboard() -> void:
+	_hold_aboard()
+	if aboard.is_empty():
+		return
+	var ashore: Vector2i = SquadPlan.landing_cell(_creature.position / TILE, _world.terrain.cells)
+	var leaving: Array[PlayerBody] = aboard.duplicate()
+	aboard.clear()
+	rowed_out.emit(leaving, IslandLayout.cell_center(ashore))
 
 
 # Host: carries the captives aboard with the boat.
@@ -619,7 +633,7 @@ func _row_out() -> void:
 			soldier.queue_free()
 	soldiers.clear()
 	_drop_freed()
-	rowed_out.emit(seated.duplicate())
+	rowed_out.emit(seated.duplicate(), IslandLayout.cell_center(_creature.landing))
 	_creature.squad_state = Squad.ROWING_OUT
 	_row_s = _row_total_s
 

@@ -33,6 +33,8 @@ static func land(body: PlayerBody, at: Vector2, ground: TerrainQuery) -> void:
 	body.left_island = false
 	body.visible = true
 	body.pinned = false
+	# guardacostas-capture: a taken captive lands with the party, no longer taken.
+	body.taken = false
 	body.swim_energy_factor = 1.0
 	body.terrain = ground
 	body.global_position = at

@@ -170,6 +170,12 @@ func _spawn_rule(data: CreatureData, rule: CreatureSpawnRuleData) -> Array:
 			# Evenly spread loops: boat `index` of the rule's boats; placed on the loop at once.
 			route.set_member(creature, index, spots.size())
 			watch.boats.append(creature)
+			# guardacostas-capture: the session's capture keeper hears of every capture and every squad
+			# that rows out with captives.
+			var keeper := CaptureScene.of(session)
+			if keeper != null:
+				route.captured.connect(keeper.on_captured.bind(creature))
+				route.rowed_out.connect(keeper.on_rowed_out)
 			creature.advance(0.0)
 	return spawned
 
