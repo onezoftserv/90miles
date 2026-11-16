@@ -70,12 +70,14 @@ A group may run only its own scripts with `-gdir=res://tests/unit -gselect=<name
 
 ## 3. Host and client
 
-- [ ] 3.1 Write `test_bleeding_net.gd`, host plus client in one process, as the other `_net` tests do:
+- [x] 3.1 Write `test_bleeding_net.gd`, host plus client in one process, as the other `_net` tests do:
   - the host's shark strikes the client's player, and the client sees the bleeding start and, 120 s later on the host, end;
   - the player's synchronizer lists the same property paths as before;
   - a late joiner sees an ongoing bleed;
   - the host's player treats the client's bleeding player with sábila from 0.5 tiles (the client sees bleeding end and +5);
   - a client's sábila use aimed at a far teammate changes nothing.
+
+  Done: 6 tests, passing twice in a row. The host body's bleeding is shortened to 1 s through a duplicated tuning so the end is seen in real time. The synchronizer's exact path list stays pinned by `test_player_state_sync`.
 - [ ] 3.2 Write `game/tests/manual/bleeding_run.gd`, a two-process run on UDP 7795 modelled on the other `*_run.gd` scripts. The host and the client each print pass or fail lines for:
   - the client sees itself bleed, then stop at 120 s;
   - the client treats the host's bleeding player;
@@ -85,12 +87,14 @@ A group may run only its own scripts with `-gdir=res://tests/unit -gselect=<name
 
 ## 4. Solo stays winnable
 
-- [ ] 4.1 Add a solo end-to-end test to `test_bleeding_solo.gd`:
+- [x] 4.1 Add a solo end-to-end test to `test_bleeding_solo.gd`:
   - a 1-player run, offline, at 30 health is struck in deep water (5 left);
   - the player swims to the shallows and waits;
   - the player is alive at 1 health or more when the bleeding ends, and is no longer a shark target.
 
   A second case: a solo player bleeding on the sandbar, with no aloe, can start binoculars-and-swim once the bleeding ends.
+
+  Done in `test_bleeding_solo` (the swimmer at 30 ends at 1 health, alive, and a shark circles them and leaves) and in `test_escape_routes_solo`. Both fail against the old meters.
 
 ## 5. Finish
 
