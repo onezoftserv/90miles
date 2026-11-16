@@ -2,13 +2,17 @@ class_name SummaryScreen
 extends Control
 ## ui-shell "Run summary", grown by endings-progression: the run's totals (islands reached, days,
 ## length, companions, texts) and one row per player with the fate, the cause of death and a Cuban
-## one-liner, like the end-of-run cards of DCSS and Brogue CE. Solo gets "Otra vez" beside "Volver
-## al inicio"; co-op gets only "Volver al inicio", and a client whose host left sees a note.
+## one-liner, like the end-of-run cards of DCSS and Brogue CE. Solo and a co-op host get "Otra vez"
+## beside "Volver al inicio"; a co-op client gets only "Volver al inicio" and a note that it waits
+## for the host (endings-progression "Rematch from a co-op summary"), and a client whose host left
+## sees that note instead.
 
 signal home_requested
 signal restart_requested
 
 const HOST_LEFT_NOTE: String = "El anfitrión cerró la partida."
+## A co-op client's note: only the host can start again. The same words as the client's lobby.
+const WAITING_NOTE: String = "Esperando al anfitrión…"
 
 ## The RunSummary on show, or null before show_summary.
 var summary: RunSummary
@@ -68,6 +72,12 @@ func show_summary(shown: RunSummary, restart_text: String = "") -> void:
 	restart_button.visible = not restart_text.is_empty()
 	restart_button.text = restart_text
 	(restart_button if restart_button.visible else home_button).grab_focus()
+
+
+## A co-op client's summary: only the host can pick "Otra vez", so the note says it waits for them.
+func show_waiting_for_host() -> void:
+	note.text = WAITING_NOTE
+	note.visible = true
 
 
 ## A client whose host left after the run: the summary stays, with a note and only the way home.

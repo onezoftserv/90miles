@@ -140,7 +140,13 @@ var clock: Callable
 var phrases: QuickChatPhrases
 ## Language of bubble and HUD text; Spanish first until a settings screen exists.
 var locale: String = DEFAULT_LOCALE
+## The world event bus (guardacostas-stealth): a child node, added in _ready; acts on the host only.
+var events: WorldEvents = null
 var run_record: RunRecord = RunRecord.new()  # Host: this run's flags, creature counts and effect limits (never sent).
+## Host, in a rematch (art-pass "Look slots in a rematch"): the look slot each peer kept from the
+## run that ended, by peer id (nobody reconnects, so the ids stay). The shell sets it before
+## start() from the old session's look_slots(); empty for any other run.
+var carried_looks: Dictionary[int, int] = {}
 
 var _bodies: Dictionary[int, PlayerBody] = {}
 ## Host: each peer's rate limits.
@@ -191,6 +197,9 @@ func _ready() -> void:
 	player_spawner.spawn_function = _spawn_player
 	pickup_spawner.spawn_function = _spawn_pickup
 	entity_spawner.spawn_function = _spawn_entity
+	events = WorldEvents.new()
+	events.name = &"WorldEvents"
+	add_child(events)
 	if phrases == null:
 		phrases = QuickChatPhrases.from_catalog(GameState.content)
 
@@ -999,7 +1008,7 @@ static func checked_arrivals(arrivals: Dictionary) -> Variant:
 
 
 ## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.
-func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> SpeechBubble:
+func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null, show_s: float = SpeechBubble.SHOW_S) -> SpeechBubble:
 	var old := speaker.get_node_or_null(NodePath(BUBBLE_NAME))
 	if old != null:
 		speaker.remove_child(old)
@@ -1008,6 +1017,7 @@ func show_bubble(speaker: Node2D, text: String, voice: AudioStream = null) -> Sp
 	bubble.name = BUBBLE_NAME
 	bubble.text = text
 	bubble.voice = voice
+	bubble.show_s = show_s
 	speaker.add_child(bubble)
 	return bubble
 
@@ -1171,16 +1181,49 @@ func _add_player(peer_id: int) -> void:
 		spot = spawn_points[_joined % spawn_points.size()]
 	_joined += 1
 	_limits[peer_id] = PeerLimits.new()
-	player_spawner.spawn({"peer": peer_id, "position": spot, "look": _free_look_slot()})
+	player_spawner.spawn({"peer": peer_id, "position": spot, "look": _look_slot_for(peer_id)})
 
 
-# art-pass "Player look slots" (design.md D5): the lowest slot no body holds; with every slot held
-# (four players, one of them dropped and waiting), the lowest slot a dropped body holds, shared until
-# that body is removed. Removing a body frees its slot.
+## Host: the look slot of the host and of every connected player with a body, by peer id: what a
+## rematch keeps (art-pass "Look slots in a rematch"). A dropped player is not connected and keeps
+## nothing. Empty on a client.
+func look_slots() -> Dictionary[int, int]:
+	var slots: Dictionary[int, int] = {}
+	if not multiplayer.is_server():
+		return slots
+	for peer_id: int in _bodies:
+		if is_instance_valid(_bodies[peer_id]) and _is_connected_peer(peer_id) and not _dropped.has(peer_id):
+			slots[peer_id] = _bodies[peer_id].look_slot
+	return slots
+
+
+# art-pass "Look slots in a rematch": the slot `peer_id` kept from the run that ended, unless a body
+# holds it; otherwise the lowest free slot.
+func _look_slot_for(peer_id: int) -> int:
+	var kept: int = carried_looks.get(peer_id, -1)
+	if kept >= 0 and kept < LOOK_SLOTS:
+		for other: int in _bodies:
+			if _bodies[other].look_slot == kept:
+				return _free_look_slot()
+		return kept
+	return _free_look_slot()
+
+
+# art-pass "Player look slots" (design.md D5): the lowest slot no body holds, skipping slots kept in
+# a rematch for connected peers not spawned yet; with every slot held (four players, one of them
+# dropped and waiting), the lowest slot a dropped body holds, shared until that body is removed.
+# Removing a body frees its slot.
 func _free_look_slot() -> int:
 	var held: Dictionary[int, bool] = {}
 	for peer_id: int in _bodies:
 		held[_bodies[peer_id].look_slot] = true
+	var kept: Dictionary[int, bool] = {}
+	for peer_id: int in carried_looks:
+		if not _bodies.has(peer_id) and _is_connected_peer(peer_id):
+			kept[carried_looks[peer_id]] = true
+	for slot: int in LOOK_SLOTS:
+		if not held.has(slot) and not kept.has(slot):
+			return slot
 	for slot: int in LOOK_SLOTS:
 		if not held.has(slot):
 			return slot
@@ -1189,6 +1232,11 @@ func _free_look_slot() -> int:
 			if _bodies.has(peer_id) and _bodies[peer_id].look_slot == slot:
 				return slot
 	return 0
+
+
+# This peer itself, or a peer with an open connection to it.
+func _is_connected_peer(peer_id: int) -> bool:
+	return peer_id == multiplayer.get_unique_id() or multiplayer.get_peers().has(peer_id)
 
 
 # Runs on every peer: on the host through spawn(), on clients when the host's spawn arrives.

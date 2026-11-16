@@ -2,16 +2,17 @@ class_name EffectApplier
 extends RefCounted
 ## Applies an EffectData to players. Interpreted: METER_ADD, CURE_STATUS, REVIVE, GIVE_ITEM, TAKE_ITEM,
 ## START_ROUTE, SET_FLAG and CLEAR_FLAG (the run flags in the session's RunRecord; nothing outside a
-## session); any other kind is skipped with one warning. Anything that restores hunger is a meal
+## session), NOISE and SMOKE (the world event bus); any other kind is skipped with one warning. Anything that restores hunger is a meal
 ## (survival-meters). An effect with delay_s waits in the subject's meters for that many seconds of
 ## their own time (frozen while they are out of play), then applies to them.
 
-## The kinds apply_now interprets; any other is skipped with one warning. The effect line
-## (EffectLine.HANDLED) knows exactly these, and a test keeps the two lists equal.
+## The kinds apply_now interprets, as its match lists them; any other is skipped with one warning. The
+## effect line (EffectLine.HANDLED) knows exactly these, and a test checks both lists against the
+## match in this file, so a kind added there without being listed here fails it.
 const INTERPRETED: Array[EffectData.Kind] = [
 	EffectData.Kind.METER_ADD, EffectData.Kind.CURE_STATUS, EffectData.Kind.REVIVE,
 	EffectData.Kind.GIVE_ITEM, EffectData.Kind.TAKE_ITEM, EffectData.Kind.START_ROUTE,
-	EffectData.Kind.SET_FLAG, EffectData.Kind.CLEAR_FLAG,
+	EffectData.Kind.SET_FLAG, EffectData.Kind.CLEAR_FLAG, EffectData.Kind.NOISE, EffectData.Kind.SMOKE,
 ]
 
 static var _warned: Dictionary[int, bool] = {}
@@ -29,9 +30,6 @@ static func apply(effect: EffectData, actor: PlayerBody, target: PlayerBody) -> 
 ## Applies `effect` at once, whatever its delay (the meters call it when the delay is up).
 static func apply_now(effect: EffectData, actor: PlayerBody, target: PlayerBody) -> void:
 	var subject: PlayerBody = _subject(effect, actor, target)
-	if not INTERPRETED.has(effect.kind):
-		_warn(effect.kind)
-		return
 	match effect.kind:
 		EffectData.Kind.METER_ADD:
 			_add_meter(effect, subject)
@@ -49,6 +47,10 @@ static func apply_now(effect: EffectData, actor: PlayerBody, target: PlayerBody)
 			_set_flag(effect, actor, true)
 		EffectData.Kind.CLEAR_FLAG:
 			_set_flag(effect, actor, false)
+		EffectData.Kind.NOISE:
+			_make_noise(effect, actor)
+		EffectData.Kind.SMOKE:
+			_raise_smoke(actor)
 		_:
 			_warn(effect.kind)
 
@@ -71,6 +73,20 @@ static func _warn(kind: EffectData.Kind) -> void:
 	if not _warned.has(kind):
 		_warned[kind] = true
 		push_warning("EffectApplier: kind %s is not built yet, skipped" % EffectData.Kind.keys()[kind])
+
+
+# NOISE and SMOKE go to the session's world event bus (guardacostas-stealth), at the actor. The bus
+# acts only on the host, which is where effects apply; a body in no session raises nothing.
+static func _make_noise(effect: EffectData, actor: PlayerBody) -> void:
+	var bus := WorldEvents.of(actor)
+	if bus != null:
+		bus.make_noise(actor.global_position, effect.radius_tiles, effect.ref_id if not effect.ref_id.is_empty() else &"effect")
+
+
+static func _raise_smoke(actor: PlayerBody) -> void:
+	var bus := WorldEvents.of(actor)
+	if bus != null:
+		bus.raise_smoke(actor.global_position, null)
 
 
 static func _subject(effect: EffectData, actor: PlayerBody, target: PlayerBody) -> PlayerBody:

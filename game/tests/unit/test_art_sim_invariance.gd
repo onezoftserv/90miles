@@ -12,6 +12,10 @@ extends GutTest
 ##   run names any art script that has one.
 ## - The player's synchronizer lists the same property paths both times, compared as lists, never as
 ##   a count (coop-networking and survival-meters own how many there are).
+## - guardacostas-stealth: a second pair of runs starts at night with a patrol boat in its lap and an alert
+##   raised, so the patrol look (its hull, its PointLight2D cone and the loudhailer's speech bubble) runs in
+##   the built run: the boat's clock, aim, light and serial are part of each frame's snapshot too, and
+##   both runs stay equal.
 ## - damage-feedback (survival-meters "Hurt cue on the body"): at PINCH_FRAME, in both runs, a land
 ##   crab pinches the player through the host's own CreatureWorld.pinch, so the look's hurt blink
 ##   runs in the built run and the comparison covers a hit.
@@ -35,6 +39,10 @@ const FRAMES: int = 600
 const SHORT_FRAMES: int = 30
 const RUN_SEED: int = 90
 const PICKUPS_ON_ROUTE: int = 3
+## Seconds since dawn at night (the patrol runs start there).
+const NIGHT_START_S: float = 430.0
+## The frame the night run's alert is raised on.
+const ALERT_FRAME: int = 5
 ## Close enough to a pick-up that it is the nearest one in reach.
 const AT_TARGET_PX: float = 3.0
 ## Axis dead band when steering, so the body does not jitter about a line.
@@ -61,12 +69,13 @@ var ticked: int = 0
 ## or added to the player on its own.
 var planted: Array[StringName] = []
 var planted_alone: Array[StringName] = []
+## The run starts at night with the patrol boat 5 s into its lap and an alert raised.
+var night_lap: bool = false
+var _frame_no: int = 0
 # The built run's route: where to walk, then whether to press E there.
 var _route: Array[Vector2] = []
 var _leg: int = 0
 var _pressing: int = 0
-# The frame _frame is stepping, from 0 in each run.
-var _frame_no: int = 0
 # Whether the built run's look was blinking on the frame after the pinch.
 var _blinked: bool = false
 
@@ -76,6 +85,7 @@ func before_each() -> void:
 	intents.clear()
 	planted.clear()
 	planted_alone.clear()
+	night_lap = false
 	stripped = 0
 	disarmed = 0
 	ticked = 0
@@ -125,6 +135,26 @@ func _build() -> void:
 	# begins now, as it would then. Its queued call is dropped with the freed run.
 	spawner._begin()
 	_frame_no = 0
+	if night_lap:
+		_start_night_lap()
+
+
+# The patrol boat 5 s into its lap at night.
+func _start_night_lap() -> void:
+	_frame_no = 0
+	WeatherManager.sky.start_at(NIGHT_START_S)
+	spawner.apply_phase(WeatherManager.phase())
+	for boat: Creature in spawner.creatures(&"patrol_boat"):
+		var route := boat.brain as PatrolRoute
+		route.set_clock(boat.data.patrol.horizon_warning_s + 5.0)
+		boat.advance(0.0)
+
+
+# Its spot of the player, a few frames in (the look has learned the boat's serial by then): an alert, a
+# lock and a loudhailer line, so the patrol look has all of its parts to draw.
+func _raise_alert() -> void:
+	for boat: Creature in spawner.creatures(&"patrol_boat"):
+		(boat.brain as PatrolRoute).spot(body, &"sight")
 
 
 func _free_run() -> void:
@@ -143,6 +173,9 @@ func _free_run() -> void:
 # One physics frame in the engine's order (the session, its creatures, the body and its net, the
 # spawner, lit fires, then the art's own callbacks), then the clock.
 func _frame(intent: MoveIntent) -> void:
+	if night_lap and _frame_no == ALERT_FRAME:
+		_raise_alert()
+	_frame_no += 1
 	body.intent = intent
 	if _frame_no == PINCH_FRAME:
 		spawner.world.pinch(body, GameState.content.get_entry(&"creatures", &"land_crab") as CreatureData)
@@ -160,7 +193,6 @@ func _frame(intent: MoveIntent) -> void:
 	if _frame_no == PINCH_FRAME:
 		var look := body.get_node_or_null(^"Look") as PlayerLook
 		_blinked = look != null and look.hurt_blink().active()
-	_frame_no += 1
 	WeatherManager.sky.advance(dt)
 
 
@@ -176,6 +208,25 @@ func _tick_art() -> void:
 		if node.is_processing() and node.has_method(&"_process"):
 			node.call(&"_process", dt)
 			ticked += 1
+
+
+# The patrol looks of the run that have made their light, and the loudhailer lines they have shown.
+func _patrol_looks() -> int:
+	var found: int = 0
+	for node: Node in _art_in_run():
+		var look := node as PatrolLook
+		if look != null and look.light != null:
+			found += 1
+	return found
+
+
+func _loudhailer_lines() -> int:
+	var lines: int = 0
+	for node: Node in _art_in_run():
+		var look := node as PatrolLook
+		if look != null:
+			lines += look.lines_shown
+	return lines
 
 
 # Every node of this run in or under the art_view group, each once, in tree order.
@@ -266,7 +317,7 @@ func _snapshot() -> Dictionary:
 	for node: Node in session.entities.get_children():
 		var creature := node as Creature
 		if creature != null:
-			creatures.append([String(creature.name), creature.data.id, creature.position, creature.facing, creature.state_id, creature.carried.duplicate()])
+			creatures.append([String(creature.name), creature.data.id, creature.position, creature.facing, creature.state_id, creature.carried.duplicate(), creature.route_t, creature.beam, creature.alert_serial, creature.light_on])
 	var pickups: PackedStringArray = []
 	for node: Node in session.pickups.get_children():
 		if not node.is_queued_for_deletion():
@@ -338,7 +389,7 @@ func _built_run(frames: int) -> Dictionary:
 		intents.append(intent)
 		_frame(intent)
 		snapshots.append(_snapshot())
-	var result := {"frames": snapshots, "paths": _sync_paths(), "creatures": spawner.creatures().size(), "art": _art_in_run().size(), "enter_tree": enter_tree, "blinked": _blinked}
+	var result := {"frames": snapshots, "paths": _sync_paths(), "creatures": spawner.creatures().size(), "art": _art_in_run().size(), "enter_tree": enter_tree, "patrol_looks": _patrol_looks(), "lines": _loudhailer_lines(), "blinked": _blinked}
 	_free_run()
 	return result
 
@@ -419,6 +470,29 @@ func test_a_solo_sandbar_runs_the_same_with_and_without_art() -> void:
 	assert_false(built_paths.is_empty())
 	assert_eq(bare_paths, built_paths, "the player's synchronizer lists the same property paths, art never having run in the stripped run")
 	gut.p("art nodes in the built run: %d; art callbacks run: %d; disarmed and freed in the stripped run: %d and %d; %d frames, %d creatures, inventory %s" % [built["art"], ticked, disarmed, stripped, FRAMES, built["creatures"], last_inventory])
+
+
+# A patrol boat in its lap at night with an alert on: its look (hull, cone, loudhailer) draws in the built
+# run and in the stripped run nothing of it exists, and every frame's snapshot, the boat's clock, beam,
+# light and serial included, is equal.
+func test_a_night_patrol_lap_runs_the_same_with_and_without_the_patrol_look() -> void:
+	night_lap = true
+	var built: Dictionary = _built_run(FRAMES)
+	night_lap = true
+	var bare: Dictionary = _stripped_run(FRAMES)
+	var built_frames: Array[Dictionary] = built["frames"]
+	var bare_frames: Array[Dictionary] = bare["frames"]
+	assert_gt(built["patrol_looks"], 0, "the built run drew a patrol look with its light")
+	assert_gt(built["lines"], 0, "and its loudhailer spoke")
+	assert_eq(bare["art"], 0, "nothing of the look is left in the stripped run")
+	var lit: bool = false
+	for creature: Array in built_frames[0]["creatures"]:
+		if creature[1] == &"patrol_boat" and creature[9]:
+			lit = true
+	assert_true(lit, "the boat's light was on in the run")
+	var first: int = _first_difference(built_frames, bare_frames)
+	assert_eq(first, -1, "every frame equal with and without the patrol look (first difference: %s)" % _detail(built_frames, bare_frames, first))
+	gut.p("patrol looks drawn: %d; loudhailer lines shown: %d; %d frames" % [built["patrol_looks"], built["lines"], FRAMES])
 
 
 # The guard itself: a bad look planted under the player in both runs makes them differ on the first

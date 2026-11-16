@@ -82,6 +82,33 @@ func test_the_line_knows_exactly_the_kinds_the_host_applies() -> void:
 		assert_eq(EffectLine.HANDLED.has(kind), EffectApplier.INTERPRETED.has(kind), "kind %s" % EffectData.Kind.keys()[kind])
 
 
+# The kinds EffectApplier.apply_now's match names, read from its source: a kind added there without
+# being listed in INTERPRETED (and so in the line) fails here.
+func test_the_applier_lists_exactly_the_kinds_its_match_applies() -> void:
+	var source: String = FileAccess.get_file_as_string("res://scripts/crafting/effect_applier.gd")
+	var body: String = source.get_slice("static func apply_now(", 1).get_slice("\n\n\n", 0)
+	var regex := RegEx.create_from_string("EffectData\\.Kind\\.([A-Z_]+):")
+	var matched: Array[String] = []
+	for found: RegExMatch in regex.search_all(body):
+		matched.append(found.get_string(1))
+	matched.sort()
+	var listed: Array[String] = []
+	for kind: EffectData.Kind in EffectApplier.INTERPRETED:
+		listed.append(EffectData.Kind.keys()[kind])
+	listed.sort()
+	assert_gt(matched.size(), 5, "read apply_now's match")
+	assert_eq(listed, matched, "INTERPRETED is apply_now's match")
+
+
+func test_noise_and_smoke_have_their_words() -> void:
+	var action := ItemUseData.new()
+	for kind: EffectData.Kind in [EffectData.Kind.NOISE, EffectData.Kind.SMOKE]:
+		var effect := EffectData.new()
+		effect.kind = kind
+		action.effects.append(effect)
+	assert_eq(EffectLine.text(action, user, null, words), "Hace ruido · Echa humo")
+
+
 func test_every_item_builds_its_lines() -> void:
 	var built: int = 0
 	for item_id: StringName in GameState.content.list_ids(&"items"):

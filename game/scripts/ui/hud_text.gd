@@ -25,9 +25,9 @@ const REFUSALS: Array[StringName] = [&"empty", &"no_use", &"down", &"at_sea", &"
 ## damage-feedback adds a cure's float ("Sin %s": the status word) and the effect line's parts
 ## (inventory-hud "Effect line"): statuses cured ("Cura %s"), the word joining them, a revive,
 ## a change over time ("%s en %d s": the change, the seconds), a delay ("%s a los %d s"), what is
-## useful of a gain ("%s (+%d útil)"), an item given or spent ("%s" its name) and a route
-## started ("%s" its name).
-const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point", &"close_note", &"watching", &"watching_dropped", &"watch_keys", &"cured", &"effect_cure", &"effect_and", &"effect_revive", &"effect_over", &"effect_delay", &"effect_useful", &"effect_give", &"effect_take", &"effect_route"]
+## useful of a gain ("%s (+%d útil)"), an item given or spent ("%s" its name), a route started
+## ("%s" its name), a noise and smoke (guardacostas-stealth's NOISE and SMOKE).
+const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point", &"close_note", &"watching", &"watching_dropped", &"watch_keys", &"cured", &"effect_cure", &"effect_and", &"effect_revive", &"effect_over", &"effect_delay", &"effect_useful", &"effect_give", &"effect_take", &"effect_route", &"effect_noise", &"effect_smoke"]
 
 ## Verb per ItemUseData.UseAction ("Beber").
 @export var use_verbs: Dictionary[ItemUseData.UseAction, PackedStringArray] = {}

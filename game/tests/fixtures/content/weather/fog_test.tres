@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="WeatherData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weather_data.gd" id="1_weather"]
+
+[resource]
+script = ExtResource("1_weather")
+id = &"fog_test"
+name_es = "Niebla de prueba"
+name_en = "Test fog"
+description_es = "Una niebla de prueba: tapa la vista de los guardafronteras."
+description_en = "A test fog: it blinds the border guards."
+kind = 0
+trigger = 3
+disabled_senses = Array[int]([0])

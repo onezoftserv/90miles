@@ -4,7 +4,7 @@ extends RefCounted
 ## built from that use's own effects by the rules the host applies, so the text never drifts from
 ## them: "Sed +15 · Hambre +5 · Energía +10" (a hunger gain at once is a meal), "Sed +15 (+6 útil)"
 ## when only part fits (Brogue's food check), "Salud -50 en 60 s", "Cura quemadura y sangrado",
-## "Levanta". It knows exactly the kinds EffectApplier interprets (HANDLED, kept equal by a test);
+## "Levanta", "Hace ruido". It knows exactly the kinds EffectApplier interprets (HANDLED, kept equal by a test);
 ## flags say nothing, and kinds the host skips are left out. Words come from hud_text.tres.
 
 ## The notice row's width in the 8 px pixel font (400 px).
@@ -16,7 +16,7 @@ const LIST_COMMA: String = ", "
 const HANDLED: Array[EffectData.Kind] = [
 	EffectData.Kind.METER_ADD, EffectData.Kind.CURE_STATUS, EffectData.Kind.REVIVE,
 	EffectData.Kind.GIVE_ITEM, EffectData.Kind.TAKE_ITEM, EffectData.Kind.START_ROUTE,
-	EffectData.Kind.SET_FLAG, EffectData.Kind.CLEAR_FLAG,
+	EffectData.Kind.SET_FLAG, EffectData.Kind.CLEAR_FLAG, EffectData.Kind.NOISE, EffectData.Kind.SMOKE,
 ]
 
 
@@ -52,6 +52,10 @@ static func text(action: ItemUseData, actor: PlayerBody, target: PlayerBody, wor
 				parts.append(words.line(&"effect_give", locale) % _item(effect, words, locale))
 			EffectData.Kind.TAKE_ITEM:
 				parts.append(words.line(&"effect_take", locale) % _item(effect, words, locale))
+			EffectData.Kind.NOISE:
+				parts.append(words.line(&"effect_noise", locale))
+			EffectData.Kind.SMOKE:
+				parts.append(words.line(&"effect_smoke", locale))
 			EffectData.Kind.START_ROUTE:
 				var route := GameState.content.get_entry(&"routes", effect.ref_id)
 				if route != null:
