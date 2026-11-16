@@ -78,12 +78,14 @@ A group may run only its own scripts with `-gdir=res://tests/unit -gselect=<name
   - a client's sábila use aimed at a far teammate changes nothing.
 
   Done: 6 tests, passing twice in a row. The host body's bleeding is shortened to 1 s through a duplicated tuning so the end is seen in real time. The synchronizer's exact path list stays pinned by `test_player_state_sync`.
-- [ ] 3.2 Write `game/tests/manual/bleeding_run.gd`, a two-process run on UDP 7795 modelled on the other `*_run.gd` scripts. The host and the client each print pass or fail lines for:
+- [x] 3.2 Write `game/tests/manual/bleeding_run.gd`, a two-process run on UDP 7795 modelled on the other `*_run.gd` scripts. The host and the client each print pass or fail lines for:
   - the client sees itself bleed, then stop at 120 s;
   - the client treats the host's bleeding player;
   - the client's own health falls by the drain.
 
   Run it 3 times, with 0 engine error lines.
+
+  Done: 3 runs, host 7/7 and client 7/7 each time, 0 engine error lines. Papo's bleeding is shortened to 8 s on the host so the end is seen; the client treats Yuni through the real F hold, and its line reads "Sábila · [F] Untar: Yuni".
 
 ## 4. Solo stays winnable
 
@@ -98,9 +100,9 @@ A group may run only its own scripts with `-gdir=res://tests/unit -gselect=<name
 
 ## 5. Finish
 
-- [ ] 5.1 Run the import twice (the second must print 0 error lines), the smoke run and the full GUT suite, all clean. Record the counts in the PR.
-- [ ] 5.2 Run `tests/manual/bleeding_run.gd` as two processes on UDP 7795, 3 times. Record the host and client pass counts in the PR.
-- [ ] 5.3 Run `openspec validate bleeding-and-sabila --strict`, and tick `TASKS.md`'s line for this change.
+- [x] 5.1 Run the import twice (the second must print 0 error lines), the smoke run and the full GUT suite, all clean. Record the counts in the PR. Done: second import 0 error lines, smoke 0 problems, GUT 2349/2349 in 391 s (258 scripts).
+- [x] 5.2 Run `tests/manual/bleeding_run.gd` as two processes on UDP 7795, 3 times. Record the host and client pass counts in the PR. Done (3.2): 3 runs, 7/7 on each side.
+- [x] 5.3 Run `openspec validate bleeding-and-sabila --strict`, and tick `TASKS.md`'s line for this change.
 
 ## Workflow follow-up
 
