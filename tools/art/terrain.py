@@ -448,24 +448,30 @@ def shore_sheet(rows, shape, inset=0, rims=None, fit=None):
     With `fit` ({"stamp", "pieces", "insets"}, for a one-row stamp set) a sand mask s from 1 to
     14 takes instead the first of the pieces that fits whole on its sand tile, at the first of the
     insets it fits at, under and over the tile's quarter stamps, never cut and never rimmed."""
-    sheet = png.blank(MASKS * TILE, len(rows) * MASKS * TILE)
+    variants = fit.get("variants", [fit["pieces"]]) if fit else [None]
+    blocks = len(variants) if fit else len(rows)
+    sheet = png.blank(MASKS * TILE, blocks * MASKS * TILE)
     for s in range(MASKS - 1):
         edge = sheet_tile(shape, s)
         field = shore_field(edge)
-        centre = None
-        if fit and s:
-            found = fitted(edge, field, fit["pieces"], fit["insets"])
-            if found is None:
-                raise TerrainError(f"nothing of the fit fits whole on the sand tile of mask {s}, at insets {fit['insets']}")
-            centre = found[2]
-        for r, tiles in enumerate(rows):
-            for d in range(MASKS):
-                if d & ~s == 0:
-                    if centre is not None:
-                        tile = fit_tile(fit["stamp"], d, edge, field, centre, fit.get("canopy"))
-                    else:
-                        tile = shore_cut(tiles[d], edge, field, inset, rims[r] if rims else None)
-                    sheet.paste(tile, s * TILE, (r * MASKS + d) * TILE)
+        for v, pieces in enumerate(variants):
+            centre = None
+            if fit and s:
+                found = fitted(edge, field, pieces, fit["insets"])
+                if found is None:
+                    what = "the fit" if v == 0 else f"the fit's variant {v}"
+                    raise TerrainError(f"nothing of {what} fits whole on the sand tile of mask {s}, at insets {fit['insets']}")
+                centre = found[2]
+            for r, tiles in enumerate(rows):
+                if fit and r:
+                    break
+                for d in range(MASKS):
+                    if d & ~s == 0:
+                        if centre is not None:
+                            tile = fit_tile(fit["stamp"], d, edge, field, centre, fit.get("canopy"))
+                        else:
+                            tile = shore_cut(tiles[d], edge, field, inset, rims[r] if rims else None)
+                        sheet.paste(tile, s * TILE, ((v if fit else r) * MASKS + d) * TILE)
     return sheet
 
 
@@ -493,14 +499,28 @@ def _fit_spec(entry, sheet, inset, fixes, where):
         raise TerrainError(f"{where} fit: pick {pick} is not drawn on the set's row {VARIANT_ROW}")
     fallback = whole(spec.get("fallback_inset", inset), f"{where} fit", "fallback_inset", low=0, high=inset)
     pieces = [piece]
+    tuft = None
     if "tuft" in spec:
-        tuft = read_image(hand_source(spec["tuft"], fixes))
-        if (tuft.width, tuft.height) != (TILE, TILE) or tuft.is_empty():
-            raise TerrainError(f"{spec['tuft']}: a tuft is a drawn {TILE}x{TILE} tile, not {tuft.width}x{tuft.height}{' and empty' if tuft.is_empty() else ''}")
+        tuft = _hand_piece(spec["tuft"], fixes, "a tuft")
         pieces.append(tuft)
+    # art-terrain-polish D5: more whole shore bushes, each placed by the same search and falling
+    # back to the tuft; the sheet holds one block of 16 rows per piece, the pick's first.
+    variants = [pieces]
+    for name in member(spec, "variants", list, f"{where} fit"):
+        variants.append([_hand_piece(name, fixes, "a shore variant")] + ([tuft] if tuft is not None else []))
+    if len(variants) > SET_COLUMNS - 1:
+        raise TerrainError(f"{where} fit: {len(variants) - 1} variants; at most {SET_COLUMNS - 2} beside the pick")
     insets = [inset] if fallback == inset else [inset, fallback]
     canopy = colour(entry["canopy"], f"{where} canopy") if "canopy" in entry else None
-    return {"stamp": sheet_tile(sheet, 0), "pieces": pieces, "insets": insets, "canopy": canopy}
+    return {"stamp": sheet_tile(sheet, 0), "pieces": pieces, "variants": variants, "insets": insets, "canopy": canopy}
+
+
+def _hand_piece(name, fixes, what):
+    """A hand-drawn whole piece of a shore fit: a drawn 16x16 tile of the fixes folder."""
+    piece = read_image(hand_source(name, fixes))
+    if (piece.width, piece.height) != (TILE, TILE) or piece.is_empty():
+        raise TerrainError(f"{name}: {what} is a drawn {TILE}x{TILE} tile, not {piece.width}x{piece.height}{' and empty' if piece.is_empty() else ''}")
+    return piece
 
 
 class Sources:
@@ -839,6 +859,8 @@ def _refuse_unread_fixes(recipe, fixes):
         fit = shore.get("fit") if isinstance(shore, dict) else None
         if isinstance(fit, dict) and isinstance(fit.get("tuft"), str):
             read.add(fit["tuft"])
+        if isinstance(fit, dict) and isinstance(fit.get("variants"), list):
+            read |= {name for name in fit["variants"] if isinstance(name, str)}
     read |= {"foam.png"} if "foam" in recipe else set()
     read |= {"plain.png"} if "plain" in recipe else set()
     read |= {recipe["shade"]["spots"]} if "spots" in recipe.get("shade", {}) else set()

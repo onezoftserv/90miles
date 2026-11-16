@@ -517,6 +517,30 @@ class BuildTests(unittest.TestCase):
         png.write_png(self.fixes / "brush.png", fix)
         return recipe
 
+    def test_fit_variants_take_a_block_of_16_rows_each_placed_by_the_same_search(self):
+        recipe = self.fit_recipe(variants=["bush.png"])
+        png.write_png(self.fixes / "bush.png", block(DEEP, 4, 3, 6, 6))
+        self.build(recipe)
+        brush = png.read_png(self.out / "terrain" / "brush_shore.png")
+        self.assertEqual((brush.width, brush.height), (256, 2 * 256), "one block of 16 rows per piece")
+        pick = png.read_png(self.out / "terrain" / "brush.png").crop(16, 64, 16, 16)
+        bush = png.read_png(self.fixes / "bush.png")
+        for s in range(1, 15):
+            first = brush.crop(s * 16, 0, 16, 16)
+            second = brush.crop(s * 16, 16 * 16, 16, 16)
+            self.assertEqual(sorted(drawn(first).values()), sorted(drawn(pick).values()), f"mask {s}: block 0 is the pick")
+            self.assertEqual(sorted(drawn(second).values()), sorted(drawn(bush).values()), f"mask {s}: block 1 is the variant, whole")
+        self.assertTrue(brush.crop(15 * 16, 16 * 16, 16, 16).is_empty(), "no shore on a whole sand tile")
+
+    def test_fit_variants_are_hand_drawn_tiles_the_recipe_reads(self):
+        recipe = self.fit_recipe(variants=["missing.png"])
+        with self.assertRaisesRegex(terrain.TerrainError, r"missing\.png: no such hand-drawn source"):
+            self.build(recipe)
+        recipe = self.fit_recipe()
+        png.write_png(self.fixes / "bush.png", block(DEEP, 4, 3, 6, 6))
+        with self.assertRaisesRegex(terrain.TerrainError, r"bush\.png: no step of the recipe reads it"):
+            self.build(recipe)
+
     def test_a_fitted_shore_draws_the_pick_whole_on_the_sand_with_no_rim(self):
         self.build(self.fit_recipe())
         brush = png.read_png(self.out / "terrain" / "brush_shore.png")
@@ -1082,7 +1106,7 @@ class BuildTests(unittest.TestCase):
 
     def test_the_tracked_brush_shore_fits_the_small_pick_or_the_tuft_whole(self):
         brush = terrain.load_recipe(terrain.DEFAULT_RECIPE)["sets"][2]
-        self.assertEqual(brush["shore"]["fit"], {"pick": 1, "fallback_inset": 0, "tuft": "shore_tuft.png"})
+        self.assertEqual({key: value for key, value in brush["shore"]["fit"].items() if key != "variants"}, {"pick": 1, "fallback_inset": 0, "tuft": "shore_tuft.png"}, "the variants are art-terrain-polish C10b's, below")
         tuft = png.read_png(terrain.DEFAULT_FIXES / "shore_tuft.png")
         rows, columns = opaque_rows(tuft), opaque_columns(tuft)
         self.assertLessEqual((len(columns), len(rows)), (8, 7), "an 8x7 sprig at most")
@@ -1245,6 +1269,38 @@ class CanopyTests(unittest.TestCase):
             self.assertTrue(all(3 <= x <= 12 and 3 <= y <= 12 for x, y in changed), f"pick {column} changes only its centre lobe")
             self.assertEqual(column > 0, bool(changed), f"pick {column}")
             self.assertEqual(enclosed_clear(pick), [], f"pick {column} has no hole")
+
+
+class ShoreVariantTests(unittest.TestCase):
+    """art-terrain-polish D5: two or three whole shore bushes, picked by hash."""
+
+    def test_the_tracked_brush_shore_has_three_whole_bushes_each_placed_on_the_sand(self):
+        brush = terrain.load_recipe(terrain.DEFAULT_RECIPE)["sets"][2]
+        names = brush["shore"]["fit"]["variants"]
+        self.assertEqual(names, ["shore_bush_a.png", "shore_bush_b.png"])
+        made = terrain.DEFAULT_OUT / "terrain"
+        shore = png.read_png(made / "brush_shore.png")
+        self.assertEqual((shore.width, shore.height), (256, 3 * 256))
+        tuft = drawn(png.read_png(terrain.DEFAULT_FIXES / "shore_tuft.png"))
+        pieces = [drawn(png.read_png(made / "brush.png").crop(16, 64, 16, 16))]
+        for name in names:
+            bush = png.read_png(terrain.DEFAULT_FIXES / name)
+            rows, columns = opaque_rows(bush), opaque_columns(bush)
+            self.assertLessEqual((len(columns), len(rows)), (11, 10), f"{name}: at most 11x10")
+            self.assertTrue(bush.colours() <= {png.parse_colour(c) for c in ("#4b692f", "#37946e", "#6abe30", "#99e550", "#323c39", "#76428a", "#45283c")}, f"{name}: brush greens, its outline and berries")
+            pieces.append(drawn(bush))
+
+        def moved(tile, piece):
+            if len(tile) != len(piece):
+                return False
+            dx = min(x for x, _y in tile) - min(x for x, _y in piece)
+            dy = min(y for _x, y in tile) - min(y for _x, y in piece)
+            return all(tile.get((x + dx, y + dy)) == colour for (x, y), colour in piece.items())
+
+        for v, piece in enumerate(pieces):
+            for s in range(1, 15):
+                tile = drawn(shore.crop(s * 16, v * 256, 16, 16))
+                self.assertTrue(moved(tile, piece) or moved(tile, tuft), f"block {v}, sand mask {s}: its bush or the tuft, whole")
 
 
 if __name__ == "__main__":

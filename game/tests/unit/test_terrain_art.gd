@@ -421,20 +421,18 @@ func test_a_solo_sandbar_shore_bush_is_whole() -> void:
 	assert_eq(built.terrain.terrain_at(cell), DataEnums.Terrain.SCRUB, "the owner's spot is scrub")
 	var tile: Dictionary = TerrainArt.tile(TerrainArt.BRUSH, cell, SANDBAR.id, built.terrain, built.tide_pools)
 	assert_eq(tile.get(&"source"), TerrainArt.data().shore_source_of[TerrainArt.BRUSH], "the brush shore source")
-	assert_eq(tile.get(&"atlas"), Vector2i(10, 0), "sand mask 10 (sea to the west), own mask 0")
+	# art-terrain-polish C10b: the piece's block of 16 rows is picked by the cell's hash
+	var block: int = TerrainArt.shore_row(TerrainArt.BRUSH, cell, SANDBAR.id)
+	assert_eq(tile.get(&"atlas"), Vector2i(10, 16 * block), "sand mask 10 (sea to the west), own mask 0, its piece's block")
 	var shore: Image = _sheet("res://assets/art/terrain/brush_shore.png")
 	var brush: Image = _sheet("res://assets/art/terrain/brush.png")
 	if shore == null or brush == null:
 		return
 	var drawn: Image = shore.get_region(Rect2i(Vector2i(tile[&"atlas"]) * TILE, Vector2i(TILE, TILE)))
-	var pick: Image = brush.get_region(Rect2i(1 * TILE, PICK_ROW * TILE, TILE, TILE))
-	var count: int = 0
-	for y: int in TILE:
-		for x: int in TILE:
-			if drawn.get_pixel(x, y).a > 0.0:
-				count += 1
-	assert_eq(count, 90, "every pixel of the small bush")
-	assert_true(_is_moved(drawn, pick), "and only the small bush, whole")
+	var pieces: Array[Image] = [brush.get_region(Rect2i(1 * TILE, PICK_ROW * TILE, TILE, TILE))]
+	for name: String in ["shore_bush_a", "shore_bush_b"]:
+		pieces.append(Image.load_from_file(ProjectSettings.globalize_path("res://").path_join("../tools/art/fixes/terrain/%s.png" % name)))
+	assert_true(_is_moved(drawn, pieces[block]), "the whole piece of block %d, uncut" % block)
 
 
 ## art-terrain-polish TR14: the clear pixels of `tile` that no 4-connected run of clear pixels
@@ -1244,6 +1242,25 @@ func test_a_solo_secret_cay_scrub_block_uses_more_than_one_pick() -> void:
 		if atlas.y == FULL_PICK_ROW:
 			picks[atlas.x] = picks.get(atlas.x, 0) + 1
 	assert_gt(picks.size(), 1, "the secret cay's whole scrub cells use %d picks" % picks.size())
+
+
+# --- art-terrain-polish C10b: shore bushes vary (design D5) ---
+
+## One player, offline: the solo sandbar's shore scrub cells use at least two of the whole shore
+## bushes, picked by the cell's hash the same way on every build.
+func test_a_solo_sandbars_shore_bushes_vary() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	var blocks: Dictionary[int, int] = {}
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.BRUSH, built.terrain, built.tide_pools, built.palms):
+		var tile: Dictionary = TerrainArt.tile(TerrainArt.BRUSH, cell, SANDBAR.id, built.terrain, built.tide_pools, built.palms)
+		if tile.get(&"source") != TerrainArt.data().shore_source_of[TerrainArt.BRUSH]:
+			continue
+		var block: int = TerrainArt.shore_row(TerrainArt.BRUSH, cell, SANDBAR.id)
+		@warning_ignore("integer_division")
+		assert_eq(Vector2i(tile[&"atlas"]).y / 16, block, "%s: its block" % cell)
+		blocks[block] = blocks.get(block, 0) + 1
+	assert_gt(blocks.size(), 1, "the sandbar's shore bushes use %d shapes" % blocks.size())
+	assert_eq(TerrainArt.shore_row(TerrainArt.DUNE, Vector2i(20, 35), SANDBAR.id), 0, "the dune has one shore block")
 
 
 ## Every layer's tile of every cell of `layout`, by layer and cell.

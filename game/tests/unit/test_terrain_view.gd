@@ -483,7 +483,8 @@ func test_dune_and_scrub_shore_cells_on_the_sandbar_take_their_shore_sheets() ->
 			continue
 		var sand: int = TerrainArt.corner_mask(TerrainArt.SAND, cell, terrain, pools)
 		var own: int = TerrainArt.corner_mask(layer, cell, terrain, pools)
-		assert_eq(_tile_at(island, layer, cell), [art.shore_source_of[layer], Vector2i(sand, own), 0], "%s shore %s" % [layer, cell])
+		var block: int = TerrainArt.shore_row(layer, cell, SANDBAR.id)
+		assert_eq(_tile_at(island, layer, cell), [art.shore_source_of[layer], Vector2i(sand, 16 * block + own), 0], "%s shore %s" % [layer, cell])
 		seen[layer] += 1
 	assert_gt(seen[TerrainArt.DUNE], 0, "the sandbar has dune shore cells")
 	assert_gt(seen[TerrainArt.BRUSH], 0, "the sandbar has scrub shore cells")

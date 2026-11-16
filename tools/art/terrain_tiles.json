@@ -39,7 +39,7 @@
       "canopy": "#4b692f",
       "variants": ["0", "0", "0", "0"],
       "full_variants": ["15", "15", "15", "15"],
-      "shore": {"shape": "sand", "inset": 1, "rim": "#323c39", "fit": {"pick": 1, "fallback_inset": 0, "tuft": "shore_tuft.png"}}
+      "shore": {"shape": "sand", "inset": 1, "rim": "#323c39", "fit": {"pick": 1, "fallback_inset": 0, "tuft": "shore_tuft.png", "variants": ["shore_bush_a.png", "shore_bush_b.png"]}}
     }
   ],
   "plain": {

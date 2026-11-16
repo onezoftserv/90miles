@@ -96,13 +96,13 @@
 
 ## 7. C10: scrub variety (TR10), in two PRs: C10a inland picks and the canopy, C10b shore variants
 
-- [ ] 7.1 Write these tests first and see them fail:
+- [x] 7.1 Write these tests first and see them fail:
   - in `tools/art/test_terrain.py`: three mask-15 brush picks whose corner quarters are byte-identical to mask 15's; and the fit's `"variants"` placing each piece by the search, falling back when one does not fit.
   - in `test_terrain_art.gd`: the per-mask picks in `TerrainArtData`.
   Add the 1-player test: the secret cay's scrub block (`cayo_sin_norte.tres`), built for one offline player, uses more than one mask-15 pick, and the sandbar's shore scrub cells use at least two shore pieces.
-- [ ] 7.2 Draw the mask-15 picks and 1–2 small shore bushes as hand pixels. Add the second pick row, the `"variants"` fit key and `TerrainArtData.variant_masks` (design D5). Rebuild.
-- [ ] 7.3 Update `test_terrain_tile_sets.gd`'s brush shore count, `test_no_shore_tile_of_an_upper_layer_leaves_the_sand_under_it`, `test_dune_and_scrub_shore_cells_on_the_sandbar_take_their_shore_sheets`, and wave 1's (20, 35) atlas test. Verify that the 1500 ms bound in `test_the_layer_build_of_both_islands_is_timed_and_bounded` holds.
-- [ ] 7.4 Windowed 1-player capture of the secret cay's scrub and the sandbar's west shore, compared with `before/secret_cay_decor.png` and `before/sandbar_day_west_shore_mid_x3.png`.
+- [x] 7.2 Draw the mask-15 picks and 1–2 small shore bushes as hand pixels. Add the second pick row, the `"variants"` fit key and `TerrainArtData.variant_masks` (design D5). Rebuild.
+- [x] 7.3 Update `test_terrain_tile_sets.gd`'s brush shore count, `test_no_shore_tile_of_an_upper_layer_leaves_the_sand_under_it`, `test_dune_and_scrub_shore_cells_on_the_sandbar_take_their_shore_sheets`, and wave 1's (20, 35) atlas test. Verify that the 1500 ms bound in `test_the_layer_build_of_both_islands_is_timed_and_bounded` holds.
+- [x] 7.4 Windowed 1-player capture of the secret cay's scrub and the sandbar's west shore, compared with `before/secret_cay_decor.png` and `before/sandbar_day_west_shore_mid_x3.png`.
 
 ## 8. C12: a rocky point with an edge (TR9)
 

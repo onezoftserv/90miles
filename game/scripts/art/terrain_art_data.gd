@@ -30,6 +30,9 @@ const STANDARD_PATH: String = "res://assets/art/terrain/terrain_art.tres"
 ## Per layer whose picks replace more than one mask (art-terrain-polish D5), the masks in pick-row
 ## order: the picks of mask masks[i] are on row 4 + i. A layer with none uses `variant_mask`.
 @export var variant_masks: Dictionary[StringName, PackedInt32Array]
+## Per layer whose shore sheet holds more than one whole shore piece (art-terrain-polish D5), how
+## many: a shore cell takes the block of 16 rows of one of them by its hash. A layer with none has one.
+@export var shore_variants: Dictionary[StringName, int]
 ## Per layer, a weight for each pick (art-terrain-polish D4): a cell takes pick i with weight i
 ## over their sum, by its hash. A layer with no entry picks evenly.
 @export var variant_weights: Dictionary[StringName, PackedInt32Array]
