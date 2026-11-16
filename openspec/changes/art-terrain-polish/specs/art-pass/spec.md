@@ -36,6 +36,20 @@ A palm cell SHALL be drawn on the dune layer when at least 3 of its 4 orthogonal
 - **WHEN** their dune tiles are picked
 - **THEN** each takes the full dune tile, mask 15
 
+### Requirement: Dune corners are rounded
+The dune layer's corner tiles SHALL be rounded like the beach's. An outer dune corner ends in a quarter arc round its dune corner. An inner corner, and each side of a diagonal, ends in a bite about 4 px deep. Each passes through the points where the straight dune edges meet the cell border, so neighbouring dune tiles join without a jog. The dune keeps its ragged lip, its straight edges carry no tuft, and its islet stays the hand-drawn tile. A solo player sees the same dune.
+
+#### Scenario: Dune corners have no stair step
+- **GIVEN** the dune tiles of the outer corners, the inner corners and the two diagonals
+- **WHEN** their pixels are read
+- **THEN** each outer corner's dune ends within 2 px of a quarter arc round its dune corner, and each inner corner and diagonal side ends in a bite about 4 px deep, with no right-angle step inside the tile
+- **AND** every pair of dune tiles that can sit side by side meets at the cell border without a jog, and the straight edges and the islet are unchanged
+
+#### Scenario: The sandbar's dunes, solo
+- **GIVEN** the sandbar built for one offline player
+- **WHEN** the dune tile of each dune cell with a corner or diagonal mask is read
+- **THEN** it is one of the rounded tiles, and its four corner pixels still say which of its corners are dune
+
 ### Requirement: Scrub varies
 Whole scrub cells SHALL show one of several bush picks chosen by the cell's hash, which share their four corner quarters with the plain full tile so neighbours join and differ only inside, with no sand showing between the lobes; shore scrub cells SHALL show one of two or three whole bushes chosen the same way, each placed on the sand as wave 1's fit places it. Every pick is on the master palette with a 1 px outline. A solo player sees the same picks every build.
 

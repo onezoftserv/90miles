@@ -31,6 +31,7 @@ Constraints:
 
 **Goals:**
 - Fix TR7 and TR9 to TR15 at their root: in the recipe, the overlays, the art data and the drawing scripts.
+- Round the dune's own inland corners, the part of C3 that wave 1 left out (D9).
 - Pin each fix with a test that fails on the sheets as wave 1 leaves them.
 - Keep every peer's drawing identical, with no new random number generator.
 - Keep every test that names a coast cay cell valid through coast-cay-reshape (C6). Expectations for the cay are derived from its layout at test time, and only sandbar tests pin exact cells.
@@ -111,7 +112,7 @@ Constraints:
   - C10 adds a `"variants"` list to the `"fit"` key: 2 or 3 pieces, the existing pick and 1 or 2 new hand-drawn small bushes of at most 11×10. Each piece is placed by the same search, and a piece that fits nowhere on a mask falls back to the next.
   - `brush_shore.png` gains rows: stride × piece. `tile()` picks the piece by hash on shore cells.
   - This amends K39 and K40's "variants only when the sand mask is 15".
-- **The hole (TR14).** The 6 px gap at (55–57, 68–70) of `fixes/terrain/brush.png`, erased on purpose by K39 (g), is painted #37946e with a #4b692f and #323c39 inner edge.
+- **The hole (TR14).** The 6 px gap at (55–57, 68–70) of `fixes/terrain/brush.png`, erased on purpose by K39 (g), is painted #37946e with a #4b692f and #323c39 inner edge. It ships first, as its own group, apart from the rest of C10. Wave 1's C2 re-rolled the picks, and the hole now shows on a bush beside the owner's spot on the west shore (the middle-right bush in wave 1's after capture, `docs/art-pass/review-2026-11-14/west_shore_bushes_x6_before_after.png`).
 - **No ±2 px islet shifts.** They clip the islet against the tile edge.
 - **Tests that change:**
   - `test_terrain_tile_sets.gd`'s brush shore tile count;
@@ -158,12 +159,39 @@ Constraints:
   - unchanged: the swimmer and fin contrast tests (art-pass "Actors stand out from the ground"; the review verified both bases).
 - **Rejected:** a lighter beach. It loses the bright tropical sand of art direction C and lowers the outline contrast of every actor on land.
 
+### D9. The dune's inland corners are rounded (C3's dune part)
+- **Why here.** Wave 1 rounded the sand's corners but left the dune's own corner set square. Its design listed this as a non-goal ("its pack corners are already ragged"). The re-shot `docs/art-pass/sandbar_day.png` still shows stair steps where the light dune meets the darker inner beach: the same "too square" look, inland. On 2026-11-15 the owner chose "Next PR" for it, so it belongs to this change.
+- **Method: wave 1's D3, on `fixes/terrain/dune.png`.** The overlay is regenerated as a diff against the pre-overlay dune set:
+  - an opaque pixel where the target differs;
+  - `#ff00ff` where the target is clear and the built pixel is not.
+  - The overlay's existing hand pixels are kept: the four straight masks' tuft removals, the row-4 picks and the hand islet.
+- **Where the borders are.** The dune's straight edge tiles cross the cell borders at their own points, which differ from the sand's. They are measured from the built straight tiles at the start of the task, not assumed.
+- **Shapes.**
+  - Outer masks 1, 2, 4 and 8: an ellipse quarter round the dune corner's outer point. Its semi-axes reach the far edges' border points.
+  - Inner masks 7, 11, 13 and 14: a bite that reaches the near edges' border points, about 4 px.
+  - Saddles 6 and 9: two bites each. They are assembled from quadrants before the overlay, so they need their own overlay pixels.
+  - Every shape passes through the straight edges' border points, so every pair of masks that can sit side by side meets without a jog.
+- **The edge stays ragged.** Along each new curve, the lip copies the straight dune edge's pattern: a broken #d9a066 outline with gaps and 1–2 px spikes. A smooth ruled arc would read as a different material from the straight edges. The tests allow 2 px from the ideal arc for that.
+- **What must not change.** These are the overlay tests that pin the tufts and the islet:
+  - the hand cell is still only the islet (0, 0), with all 256 pixels (`test_the_tracked_overlays_hold_only_hand_pixels`);
+  - each row-4 pick keeps under 40 overlay pixels;
+  - the straight edges carry no tuft, and the islet stays ragged with one small tuft (`test_the_dune_edges_carry_no_tuft_and_the_islet_is_ragged`);
+  - the four corner pixels of each mask (`test_each_corner_set_holds_mask_m_at_its_place`);
+  - no corner gets a tuft, because tufts come only from the full-tile picks and the islet (K39).
+- **What follows.** `dune_shore.png` is built from the dune tiles cut to the sand, so dune corners on the coast round too. Nothing else is built from the dune.
+- **With C9.** Counting palms as dune removes most pits and notches, so fewer corner tiles show. The corners that remain are the dune's real outline, and those are the ones rounded here.
+- **Rejected:**
+  - marking the dune's corner masks "hand", which breaks the overlay test;
+  - a smooth arc with a rim, which reads unlike the pack's ragged straight edges;
+  - the 47-tile blob, for the reason wave 1 gave: it cannot draw slopes.
+
 ### D8. Order and seams
-1. C9, then C13, then C14. They are independent of each other and need only wave 1 merged.
-2. C11 (after wave 1's C2).
-3. C10 (after C1 and C2).
-4. C12 (after C2 and C3).
-5. C7 (after C3, and after C11, whose sand mean it reads).
+1. TR14 (the hole), the smallest fix.
+2. C9; then the dune's corners (D9), which read the dune cells C9 adds; then C13 and C14. They need only wave 1 merged.
+3. C11 (after wave 1's C2, and after D9, because both edit the `dune.png` overlay: D9 the corner shapes, C11 the lip's tone).
+4. C10 (after C1 and C2).
+5. C12 (after C2 and C3).
+6. C7 (after C3, and after C11, whose sand mean it reads).
 
 Seams with other changes:
 - **Wave 3 (art-sprite-polish), C8** copies the Brush tile at a body's cell, so it lands after C10.
@@ -201,6 +229,10 @@ Ideas and structure only, never code, data or text.
 - **Q2 (a):** one fitted shore bush in wave 1, with shore variants in their own change. C10 is that change.
 - **Q3 (a):** darker shallows plus a visible wet-sand edge (C7).
 - **Q4 (a):** the deep edge is art only. Nothing here changes the shallows ring in the maps.
+
+**Added on 2026-11-15 by the coordinating session:**
+- **The dune's inland corners (D9).** When wave 1 merged, the owner chose "Next PR" for them, so they are in this change.
+- **TR14 first.** The bush hole shows in wave 1's after capture, so it ships as the first group.
 
 **New:**
 - **QT1. The wet-sand edge.** Wave 1 already replaced the review's two-row band (#d9a066 over #c08a5a) with one 1 px lip on every side.
