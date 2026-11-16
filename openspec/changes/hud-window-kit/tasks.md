@@ -1,6 +1,6 @@
 # Tasks
 
-Build only after `damage-feedback` is merged into main (design D13). Each numbered group is one PR, green before the next starts. The groups follow the owner's answers of 2026-11-14 (Q8 a, Q9 a, Q10 a, Q11 a, Q16 a), and the owner's answers of 2026-11-15 (A1, B1, C1, D1, E1), recorded in design.md "Owner decisions".
+Build only after `damage-feedback` is merged into main (design D13). Each numbered group is one PR, green before the next starts. Groups 1 and 2, with group 3's thin rows (3.1 and 3.2), ship as one PR, because the kit's 3 px dark frame would otherwise draw over the text of the 10 px rows on main. Groups 1 and 2 ship together because `test_art_tracked.gd` requires every tracked PNG to be named by a scene or resource, and the kit's PNGs are first named by group 2's theme. For the same reason, the ramp strips join `ui_kit.json` in group 4 and the digit atlas in group 5. The groups follow the owner's answers of 2026-11-14 (Q8 a, Q9 a, Q10 a, Q11 a, Q16 a), and the owner's answers of 2026-11-15 (A1, B1, C1, D1, E1), recorded in design.md "Owner decisions".
 
 The commands below run from the repo root, with the Godot 4.7.2 console binary:
 - "Import" is `godot --headless --path game --import`, run twice on a fresh checkout.
@@ -10,11 +10,11 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
 
 ## 0. Before building
 
-- [ ] 0.1 Rebase on main after `damage-feedback` merged. Read its merged `meter_bar.gd`/`.tscn`, `meters_hud.gd`/`.tscn`, `run_hud.gd` (`ChangeFloats`), `hud_notice.gd` (the effect line) and `HurtCueTuning.meter_colors`. Update design D5 if the node names or shapes differ from `dfa2a31`. Verify: D5 names only nodes that exist on main, and Import, Smoke and GUT pass before any edit.
+- [x] 0.1 Rebase on main after `damage-feedback` merged. Read its merged `meter_bar.gd`/`.tscn`, `meters_hud.gd`/`.tscn`, `run_hud.gd` (`ChangeFloats`), `hud_notice.gd` (the effect line) and `HurtCueTuning.meter_colors`. Update design D5 if the node names or shapes differ from `dfa2a31`. Verify: D5 names only nodes that exist on main, and Import, Smoke and GUT pass before any edit.
 
 ## 1. The window kit (art-pass "Master palette"; design D2, D11)
 
-- [ ] 1.1 Tests first in `tools/art/test_ui.py`, on a fixture JSON and on the real `tools/art/ui_kit.json`. They check every piece in design D2's table:
+- [x] 1.1 Tests first in `tools/art/test_ui.py`, on a fixture JSON and on the real `tools/art/ui_kit.json`. They check every piece in design D2's table:
   - its size and margin;
   - its outer corner pixel is transparent;
   - the inner diagonal of the stepped corner;
@@ -26,13 +26,13 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - two runs give byte-identical files.
 
   Verify: they fail first (no `ui.py`), then pass.
-- [ ] 1.2 Write `tools/art/ui.py` and `tools/art/ui_kit.json` (stdlib and `png.py` only, colours by palette name). Build into `game/assets/art/ui/`, and replace `License.txt` with an own-work block in the format the art tools use. Verify: 1.1 passes and `python -I tools/art/check.py game/assets/art` is clean.
-- [ ] 1.3 Grep `game/` for any tracked use of `button_blue`, `button_blue_pressed`, `panel_tan` or any other Kenney UI file (a cursor too). The theme keeps the old files until group 2, which deletes them (2.2). Verify: the grep's hits are listed in the PR, and `test_art_tracked.gd` still passes with the kit beside the old files (the `ui/` exemption stays until 2.2).
-- [ ] 1.4 Import ×2, Smoke, GUT and Art tests pass.
+- [x] 1.2 Write `tools/art/ui.py` and `tools/art/ui_kit.json` (stdlib and `png.py` only, colours by palette name). Build into `game/assets/art/ui/`, and replace `License.txt` with an own-work block in the format the art tools use. Verify: 1.1 passes and `python -I tools/art/check.py game/assets/art` is clean.
+- [x] 1.3 Grep `game/` for any tracked use of `button_blue`, `button_blue_pressed`, `panel_tan` or any other Kenney UI file (a cursor too). The theme keeps the old files until group 2, which deletes them (2.2). Verify: the grep's hits are listed in the PR, and `test_art_tracked.gd` still passes with the kit beside the old files (the `ui/` exemption stays until 2.2).
+- [x] 1.4 Import ×2, Smoke, GUT and Art tests pass.
 
 ## 2. Theme, colours, fonts, menus, pause and host-lost (ui-shell "Shared theme", "Readable HUD and menu text", "Pause and host-lost windows", "Menu windows"; design D3, D9, D10)
 
-- [ ] 2.1 Tests first:
+- [x] 2.1 Tests first:
   - `tests/unit/hud_contrast.gd` (`HudContrast`, WCAG luminance) and its unit test, against known pairs (`#ffedde`/`#222034` 13.91, `#d95763`/`#222034` 4.15, `#ffedde`/`#ac3232` 5.66).
   - Rewrite `test_theme.gd`:
     - HudPanel, HudPanelThin, HudNote, HudSlot, HudSlotSelected, Panel, Button (every state), LineEdit and focus are `StyleBoxTexture`s on kit files;
@@ -50,13 +50,13 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - A case in `test_hud_screens.gd` for host-lost in the same window.
 
   Verify: they fail first, then pass.
-- [ ] 2.2 Rewrite `game_theme.tres` to design D3 and point it at the kit. Then:
+- [x] 2.2 Rewrite `game_theme.tres` to design D3 and point it at the kit. Then:
   - delete Kenney's three UI files and their `.import` files;
   - remove the `UI_DIR` exemption from `test_art_tracked.gd` (art-pass "Master palette"), and add a case: a fixture UI piece with one off-palette pixel fails and is named;
   - add `menu_font.tres` and the `PanelHeading`, `ErrorLabel` and `AlertLabel` variations.
 
   Verify: 2.1's theme tests pass, `test_art_tracked.gd` passes on the kit, and its new case fails as it should.
-- [ ] 2.3 Move `HudStyle` to D3's values (`SUN`, `CREAM`, `OUTLINE`, `TRACK`, and the new `ALERT` and `ORANGE`). In the same commit:
+- [x] 2.3 Move `HudStyle` to D3's values (`SUN`, `CREAM`, `OUTLINE`, `TRACK`, and the new `ALERT` and `ORANGE`). In the same commit:
   - `test_inventory_strip.gd`'s `SUN_YELLOW` becomes `#fbf236`;
   - `MeterBar.PULSE_COLOR` becomes `HudStyle.ALERT`;
   - the Bleeding label moves to `AlertLabel`;
@@ -64,7 +64,7 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - the name tag's strip goes to `#222034` and `#6abe30` (owner answer C1).
 
   Verify: `test_meters_hud.gd` (the bleeding red test still passes with `#d95763`), `test_quick_chat_wheel.gd`, the name tag tests and `test_inventory_strip.gd`, and crossing-gameplay's HUD tests if it is on main (its `CrossingHud` reads `HudStyle`), pass.
-- [ ] 2.4 Menus (D10):
+- [x] 2.4 Menus (D10):
   - delete the `#3b2a17` overrides in the shell scenes and the CheckBox overrides at `settings_screen.tscn:46-48`;
   - put headings on `PanelHeading`;
   - use `CenterContainer`s and the bottom margin in join and lobby;
@@ -73,14 +73,14 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - move `sea.gdshader`'s sky, sea and sun to palette colours.
 
   Then update `test_credits_screen.gd:172` to assert the menu font's `base_font`. Verify: 2.1's menu tests, `test_title_screen.gd`, `test_lobby_screen.gd`, `test_run_summary.gd`, `test_credits_screen.gd` and `test_display_settings.gd` pass.
-- [ ] 2.5 Pause and host-lost (D9): a centred `HudPanel` with a `tab_dark` title tab; the LabelSettings go. Verify: 2.1's pause and host-lost cases pass, and `test_pause.gd` and `test_hud_screens.gd` still pass.
-- [ ] 2.6 Credits (D11, owner answer D1): drop the Pixel UI Pack from `game/assets/CREDITS.md`, the credits data and `test_art_credits.gd:27`, and change `docs/ASSETS.md`'s UI row to the own-work kit. Verify: `test_art_credits.gd` and `test_credits_screen.gd` pass.
-- [ ] 2.7 Capture the title, settings, join (failed), lobby (two players), credits and run summary at 2×, and the solo pause. Save them in `docs/ui-shell/` as `kit_*.png`, beside the before captures this change's docs PR added. Verify: the files exist and each shows the paper panel, palette buttons, the focus ring keeping its corner, and visible word gaps ("Fin del viaje").
-- [ ] 2.8 Import ×2, Smoke, GUT and Art tests pass.
+- [x] 2.5 Pause and host-lost (D9): a centred `HudPanel` with a `tab_dark` title tab; the LabelSettings go. Verify: 2.1's pause and host-lost cases pass, and `test_pause.gd` and `test_hud_screens.gd` still pass.
+- [x] 2.6 Credits (D11, owner answer D1): drop the Pixel UI Pack from `game/assets/CREDITS.md`, the credits data and `test_art_credits.gd:27`, and change `docs/ASSETS.md`'s UI row to the own-work kit. Verify: `test_art_credits.gd` and `test_credits_screen.gd` pass.
+- [x] 2.7 Capture the title, settings, join (failed), lobby (two players), credits and run summary at 2×, and the solo pause. Save them in `docs/ui-shell/` as `kit_*.png`, beside the before captures this change's docs PR added. Verify: the files exist and each shows the paper panel, palette buttons, the focus ring keeping its corner, and visible word gaps ("Fin del viaje").
+- [x] 2.8 Import ×2, Smoke, GUT and Art tests pass.
 
 ## 3. HUD windows and thin rows (ui-shell "Shared theme", "HUD layout"; inventory-hud "Inventory strip"; design D8)
 
-- [ ] 3.1 Tests first in a new `test_hud_windows.gd`. It uses a solo, offline `RunHud` on the sandbar with exactly 1 player, and checks:
+- [x] 3.1 Tests first in a new `test_hud_windows.gd`. It uses a solo, offline `RunHud` on the sandbar with exactly 1 player, and checks:
   - meters, phase and watching line are `HudPanel`s;
   - the prompt, item line, notice and weight are `HudPanelThin`s, and their rects are unchanged (notice (120,306,400,10), item line (153,318)–(487,328), weight (491,339)–(591,349));
   - the strip's backdrop draws inside y 329 to 358 and x 151 to 489;
@@ -91,7 +91,7 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - each text and fill pair passes D12.
 
   Verify: it fails first, then passes.
-- [ ] 3.2 Apply the variations:
+- [x] 3.2 Apply the variations:
   - `HudPanelThin` on `ItemLinePanel`, `WeightPanel`, `HudNotice`'s panel and the prompt's panel;
   - the strip `Panel` as a `HudPanelThin` with expand margins 2/1/2/2.
 

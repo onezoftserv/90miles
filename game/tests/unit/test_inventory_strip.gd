@@ -7,7 +7,9 @@ extends GutTest
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const STRIP_SCENE: PackedScene = preload("res://scenes/ui/inventory_strip.tscn")
-const SUN_YELLOW: Color = Color(1.0, 0.8, 0.0, 1.0)
+## The kit's sun yellow (#fbf236), the selected slot's outer ring (hud-window-kit design D2, D6).
+const SUN_YELLOW: Color = Color(0.98431373, 0.94901961, 0.21176471, 1.0)
+const SELECTED_PIECE: String = "res://assets/art/ui/slot_selected.png"
 const HERE: Vector2 = Vector2(100.0, 100.0)
 
 
@@ -85,7 +87,8 @@ func test_the_strip_and_its_lines_sit_on_hud_panels() -> void:
 		"weight": strip.weight_panel,
 	}
 	for piece: String in panels:
-		assert_eq(panels[piece].theme_type_variation, &"HudPanel", piece)
+		var expected: StringName = &"HudStripBack" if piece == "strip" else &"HudPanelThin"
+		assert_eq(panels[piece].theme_type_variation, expected, piece)
 		assert_eq(panels[piece].mouse_filter, Control.MOUSE_FILTER_IGNORE, piece)
 	assert_eq(strip.panel.get_global_rect(), strip.strip_rect())
 	assert_eq(strip.item_line_panel.get_global_rect(), Rect2(153.0, 318.0, 334.0, 10.0))
@@ -192,11 +195,15 @@ func test_the_selected_slot_has_the_sun_yellow_frame() -> void:
 	assert_false(strip.slot_view(0).selected)
 	assert_eq(strip.slot_view(1).theme_type_variation, &"HudSlotSelected")
 	assert_eq(strip.slot_view(0).theme_type_variation, &"HudSlot")
-	var frame := strip.slot_view(1).get_theme_stylebox(&"panel") as StyleBoxFlat
+	var frame := strip.slot_view(1).get_theme_stylebox(&"panel") as StyleBoxTexture
 	assert_not_null(frame)
 	if frame != null:
-		assert_eq(frame.border_color, SUN_YELLOW)
-		assert_eq(frame.border_width_left, 1)
+		assert_eq(frame.texture.resource_path, SELECTED_PIECE)
+	var piece: Image = ArtChecks.read_png(SELECTED_PIECE)
+	assert_not_null(piece)
+	if piece != null:
+		assert_true(piece.get_pixel(3, 0).is_equal_approx(SUN_YELLOW), "the ring's outer row is the sun yellow")
+		assert_true(HudStyle.SUN.is_equal_approx(SUN_YELLOW), "HudStyle.SUN is the same yellow")
 
 
 func test_slots_never_take_focus() -> void:

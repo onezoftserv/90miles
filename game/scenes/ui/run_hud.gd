@@ -33,6 +33,9 @@ const PHASE_NAMES: Dictionary[DataEnums.DayPhase, String] = {
 }
 const TAG_NAME: StringName = &"NameTag"
 const HUD_PANEL: StringName = &"HudPanel"
+## Every HUD window variation the prompt keeps clear of: the dark window, its thin rows and the
+## strip's backdrop (hud-window-kit design D8).
+const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudStripBack"]
 ## HUD pieces that are not HUD panels but that the interact prompt keeps clear of too (secret-cay's
 ## needle and note join it).
 const AVOID_GROUP: StringName = &"hud_avoid"
@@ -236,7 +239,7 @@ func _collect_panels(node: Node, into: Array[Rect2]) -> void:
 		if child == prompt or child == craft_list or child == sign_note:
 			continue
 		var box := child as PanelContainer
-		if box != null and box.theme_type_variation == HUD_PANEL and box.is_visible_in_tree():
+		if box != null and HUD_PANELS.has(box.theme_type_variation) and box.is_visible_in_tree():
 			into.append(box.get_global_rect())
 		_collect_panels(child, into)
 

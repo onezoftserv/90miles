@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ccv3p42lwmk1b"
-path="res://.godot/imported/button_blue.png-3710c1d269b20d6ac9b03f362abd0c2f.ctex"
+uid="uid://yw1itrayp2pj"
+path="res://.godot/imported/scroll_grabber.png-d80638755d86b81cab90a840b30143b1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/ui/button_blue.png"
-dest_files=["res://.godot/imported/button_blue.png-3710c1d269b20d6ac9b03f362abd0c2f.ctex"]
+source_file="res://assets/art/ui/scroll_grabber.png"
+dest_files=["res://.godot/imported/scroll_grabber.png-d80638755d86b81cab90a840b30143b1.ctex"]
 
 [params]
 

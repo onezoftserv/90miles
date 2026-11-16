@@ -14,14 +14,14 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_wheel")
 
-[node name="Backdrop" type="ColorRect" parent="."]
+[node name="Backdrop" type="Panel" parent="."]
 layout_mode = 0
 offset_left = -80.0
 offset_top = -72.0
 offset_right = 80.0
 offset_bottom = 72.0
 mouse_filter = 2
-color = Color(0, 0, 0, 0.55)
+theme_type_variation = &"HudPanel"
 
 [node name="Slots" type="Control" parent="."]
 anchors_preset = 0

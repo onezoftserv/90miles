@@ -15,7 +15,7 @@ extends HBoxContainer
 const CRITICAL_LOW: float = 25.0
 const CRITICAL_HEAT: float = 75.0
 const PULSE_HZ: float = 1.0
-const PULSE_COLOR: Color = Color(1.0, 0.45, 0.4)
+const PULSE_COLOR: Color = HudStyle.ALERT
 ## Value slack for float sums.
 const EPSILON: float = 0.001
 ## The shake moves the bar every this many seconds (2 frames at 60).

@@ -85,8 +85,10 @@ func test_the_card_is_light_with_dark_text() -> void:
 	note.open(sign_node)
 	assert_eq(note.card.theme_type_variation, &"HudNote")
 	assert_eq(note.text_label.theme_type_variation, &"HudNoteText")
-	var fill: Color = (note.card.get_theme_stylebox(&"panel") as StyleBoxFlat).bg_color
-	assert_eq(fill, HudStyle.CREAM)
+	var paper := note.card.get_theme_stylebox(&"panel") as StyleBoxTexture
+	assert_not_null(paper, "a cream paper window (hud-window-kit design D2)")
+	var fill: Color = HudContrast.centre_color(paper.texture.resource_path) if paper != null else Color.MAGENTA
+	assert_true(fill.is_equal_approx(HudStyle.CREAM), "the paper's fill is the HUD cream")
 	assert_eq(note.text_label.get_theme_color(&"font_color"), HudStyle.OUTLINE)
 	assert_eq(note.text_label.autowrap_mode, TextServer.AUTOWRAP_WORD_SMART)
 	assert_gte(_contrast(fill, HudStyle.OUTLINE), 7.0, "7:1 or more")

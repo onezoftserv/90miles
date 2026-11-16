@@ -123,3 +123,28 @@ func test_the_coop_playground_has_a_pause_menu_on_its_session() -> void:
 	var playground := (load("res://scenes/dev/coop_playground.tscn") as PackedScene).instantiate() as CoopPlayground
 	add_child_autofree(playground)
 	assert_eq(playground.pause_menu.session, playground.session)
+
+
+## ui-shell "Pause and host-lost windows" (hud-window-kit design D9): a solo pause shows one dark
+## window centred in the 640x360 view, its "Pausa" tab on the window's top edge, "Seguir" inside it
+## and focused. One player, offline.
+func test_the_solo_pause_shows_a_centred_window_with_its_tab() -> void:
+	var menu := _menu(_solo())
+	assert_true(menu.open())
+	await wait_process_frames(2)
+	var window := menu.get_node(^"%Window") as PanelContainer
+	var tab := menu.get_node(^"%Tab") as PanelContainer
+	assert_eq(window.theme_type_variation, &"HudPanel")
+	assert_eq(tab.theme_type_variation, &"HudTab")
+	var view := Rect2(Vector2.ZERO, Vector2(640.0, 360.0))
+	var frame := (menu.get_node(^"%Frame") as Control).get_global_rect()
+	assert_true(view.encloses(frame), "the window lies inside the view: %s" % frame)
+	var centre: Vector2 = frame.get_center()
+	assert_almost_eq(centre.x, 320.0, 1.0, "centred across")
+	assert_almost_eq(centre.y, 180.0, 1.0, "centred down")
+	var window_rect := window.get_global_rect()
+	var tab_rect := tab.get_global_rect()
+	assert_almost_eq(tab_rect.end.y, window_rect.position.y + 1.0, 0.01, "the tab sits on the window's top edge")
+	assert_true(window_rect.encloses(menu.resume_button.get_global_rect()), "Seguir inside the window")
+	assert_true(menu.resume_button.has_focus(), "Seguir has the focus")
+	assert_eq(menu.title.get_parent(), tab, "the title is on the tab")
