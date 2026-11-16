@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CreatureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_csg3e"]
+[ext_resource type="Script" path="res://scripts/data/creature_counter_data.gd" id="2_xcwyv"]
+[ext_resource type="Script" path="res://scripts/data/creature_data.gd" id="3_5de06"]
+[ext_resource type="Script" path="res://scripts/data/creature_spawn_rule_data.gd" id="4_p538l"]
+
+[resource]
+script = ExtResource("3_5de06")
+category = 2
+speed_tiles_s = 3.0
+domains = Array[int]([0])
+behavior = 11
+disposition = 3
+senses = Array[int]([0])
+party_rate_mult_per_extra_player = 1.0
+id = &"soldier_test"
+name_es = "Soldado de prueba"
+name_en = "Test soldier"

@@ -1,0 +1,93 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/teammate_block.gd" id="1_block"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/ramp_health.png" id="2_ramp"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_outline"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.13333333, 0.1254902, 0.20392157, 1)
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_empty"]
+bg_color = Color(0.19607843, 0.23529412, 0.22352941, 1)
+anti_aliasing = false
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_fill"]
+texture = ExtResource("2_ramp")
+
+[node name="TeammateBlock" type="VBoxContainer"]
+custom_minimum_size = Vector2(128, 20)
+mouse_filter = 2
+theme_override_constants/separation = 0
+script = ExtResource("1_block")
+
+[node name="Name" type="Label" parent="."]
+custom_minimum_size = Vector2(128, 10)
+layout_mode = 2
+mouse_filter = 2
+vertical_alignment = 1
+clip_text = true
+
+[node name="Row" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(128, 10)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="ChipCell" type="Control" parent="Row"]
+custom_minimum_size = Vector2(6, 10)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Ring" type="ColorRect" parent="Row/ChipCell"]
+layout_mode = 0
+offset_top = 2.0
+offset_right = 6.0
+offset_bottom = 8.0
+mouse_filter = 2
+color = Color(1, 0.92941176, 0.87058824, 1)
+
+[node name="Chip" type="ColorRect" parent="Row/ChipCell/Ring"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 5.0
+offset_bottom = 5.0
+mouse_filter = 2
+
+[node name="BarCell" type="Control" parent="Row"]
+custom_minimum_size = Vector2(22, 10)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Outline" type="Panel" parent="Row/BarCell"]
+layout_mode = 0
+offset_top = 2.0
+offset_right = 22.0
+offset_bottom = 8.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_outline")
+
+[node name="Bar" type="ProgressBar" parent="Row/BarCell"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 3.0
+offset_right = 21.0
+offset_bottom = 7.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_empty")
+theme_override_styles/fill = SubResource("StyleBoxTexture_fill")
+step = 0.0
+value = 100.0
+show_percentage = false
+
+[node name="State" type="Label" parent="Row"]
+custom_minimum_size = Vector2(96, 10)
+layout_mode = 2
+mouse_filter = 2
+vertical_alignment = 1
+clip_text = true

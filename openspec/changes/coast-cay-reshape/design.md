@@ -104,7 +104,7 @@ Ideas and structure only, never code, data or text. The three roguelikes were re
 
 - **Q5 (a), accepted 2026-11-14:** reshape the coast cay's rectangles after coast-cay-bench merges (#58 merged).
 - **Q4 (a), accepted 2026-11-14:** the deep edge is art only, so the shallows ring keeps its width here.
-- **New, QC1 (sent to the coordinating session):** the sandbar has four 2-cell notches at the tips of its inner bay, (45, 20), (46, 20), (45, 51) and (46, 51), all shallows today. Q5 covered only the cay, and the sandbar's shape was approved twice.
+- **QC1, answered on 2026-11-15: "Yes, fill them" (a).** Task group 5 is in scope: land goes 991 → 995. The question as it was asked: the sandbar has four 2-cell notches at the tips of its inner bay, (45, 20), (46, 20), (45, 51) and (46, 51), all shallows today. Q5 covered only the cay, and the sandbar's shape was approved twice.
   - (a) *Recommended:* fill the four cells as beach. Land goes 991 → 995 and the Sand layer 994 → 998, inside the sandbar's 940–1,100 band. It ships as task group 5, only on the owner's yes.
   - (b) Leave the sandbar as approved.
   - Not offered: tapering the horn tips or varying its shallows ring.
