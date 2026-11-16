@@ -19,11 +19,15 @@ func entry(creature_id: StringName) -> CreatureArtEntry:
 
 
 ## What is wrong with a creature's frames (art-pass "Facing variants count as idle", "A boss proxy
-## needs no frames"): a weather or crossing boss proxy needs none; any other creature needs frames
+## needs no frames"): a weather or crossing boss proxy needs none, and so does a patrol boat until its art exists; any other creature needs frames
 ## with `idle` or all three `idle_<facing>` variants. Each problem names the creature.
 static func frames_problems(data: CreatureData) -> PackedStringArray:
 	var problems: PackedStringArray = []
 	if data.boss_kind == CreatureData.BossKind.WEATHER or data.boss_kind == CreatureData.BossKind.CROSSING:
+		return problems
+	# guardacostas-stealth: the patrol boat is drawn by the patrol look (a placeholder hull until
+	# the art pass hand-pixels the boat), so it has no frames yet.
+	if data.behavior == CreatureData.Behavior.PATROL_ROUTE and data.sprite_frames == null:
 		return problems
 	if data.sprite_frames == null:
 		problems.append("%s has no sprite_frames" % data.id)

@@ -74,6 +74,32 @@ enum SearchTarget {
 ## NpcData id aboard (rodriguez); NpcSpawnRuleData WITH_PATROL reads this field.
 @export var commander_npc_id: StringName = &""
 
+@export_group("Loop and light (guardacostas-stealth)")
+## Seconds the boat spends on its visible lap (the period is route_period_s + 10 s per Experiencia level).
+@export var route_lap_s: float = 0.0
+## Tiles the loop keeps from the island's convex hull.
+@export var route_offshore_tiles: float = 4.0
+## Range in degrees over which the beam's centre swings (+/- half of it) round the island.
+@export var searchlight_arc_deg: float = 0.0
+## Spot meter seconds gained per second while lit and not hidden.
+@export var spot_fill_per_s: float = 1.0
+## Spot meter seconds lost per second otherwise.
+@export var spot_drain_per_s: float = 0.5
+
+@export_group("Alert (guardacostas-stealth)")
+## Seconds an alert lasts with nobody locked.
+@export var alert_s: float = 0.0
+## Degrees either side of the aim the beam swings while searching.
+@export var alert_sweep_deg: float = 0.0
+## Loudhailer lines at the start of an alert (formal Spanish, picked by alert_serial mod size).
+@export var alert_lines_es: PackedStringArray = PackedStringArray()
+## The same lines in English.
+@export var alert_lines_en: PackedStringArray = PackedStringArray()
+## Loudhailer lines when the boat gives up.
+@export var give_up_lines_es: PackedStringArray = PackedStringArray()
+## The same lines in English.
+@export var give_up_lines_en: PackedStringArray = PackedStringArray()
+
 
 func get_reference_fields() -> Dictionary[StringName, StringName]:
 	return {

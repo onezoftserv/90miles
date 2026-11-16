@@ -75,7 +75,7 @@ Generation: `IslandGenerator` builds a landmass from seeded integer steps (heigh
 
 **Lore.** A maze of red mangrove roots and black water. Tourist excursions from Varadero used to come here for "eco" tours until one boat sank. Its wreck is still here, with its menu board.
 
-**Biome.** 60% mangrove (slow movement, hidden from searchlights, no sun), channels (swim or wade), a sand spit, one dry hammock with hardwood.
+**Biome.** 60% mangrove (slow movement, hidden from searchlights standing or crouching, no sun), channels (swim or wade), a sand spit, one dry hammock with hardwood.
 
 **POIs.**
 | POI | Resources | Notes |

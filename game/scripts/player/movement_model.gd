@@ -30,12 +30,13 @@ var _dive_locked: bool = false
 
 
 ## `speed_factor` scales the player's own speed (sunstroke: 0.6), never the current or a drag.
-func step(terrain: DataEnums.Terrain, current: Vector2, energy: float, intent: MoveIntent, delta: float, speed_factor: float = 1.0) -> MovementStep:
+## `roofed` is true on a roofed cell (a hut or post); on land it hides in any posture
+## (HiddenRules, guardacostas-stealth).
+func step(terrain: DataEnums.Terrain, current: Vector2, energy: float, intent: MoveIntent, delta: float, speed_factor: float = 1.0, roofed: bool = false) -> MovementStep:
 	var result := MovementStep.new()
 	var direction: Vector2 = intent.direction.limit_length(1.0)
 	var moving: bool = direction.length_squared() > 0.0
 	var stride: Vector2 = direction * speed_factor
-	var brush: bool = TerrainQuery.is_brush(terrain)
 	var cost: float = 0.0
 
 	if TerrainQuery.is_water(terrain):
@@ -65,7 +66,7 @@ func step(terrain: DataEnums.Terrain, current: Vector2, energy: float, intent: M
 		else:
 			result.movement = MovementStep.Move.WALK
 			result.velocity = stride * WALK_SPEED
-		if intent.crouch and brush:
+		if HiddenRules.is_hidden_on_land(terrain, intent.crouch, roofed):
 			result.stealth = MovementStep.Stealth.HIDDEN
 
 	result.energy_spent = minf(cost, maxf(energy, 0.0))

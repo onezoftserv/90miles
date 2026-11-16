@@ -103,6 +103,80 @@ func test_crouching_still_in_brush_is_hidden() -> void:
 	assert_eq(_last(r).stealth, MovementStep.Stealth.HIDDEN)
 
 
+# --- hidden states (guardacostas-stealth "Hidden states") --------------------------------
+
+func _hidden_run(terrain: DataEnums.Terrain, intent: MoveIntent, roofed: bool) -> MovementStep.Stealth:
+	return _last(_run_roofed(terrain, 50.0, intent, 1.0, roofed)).stealth
+
+
+func _run_roofed(terrain: DataEnums.Terrain, energy: float, intent: MoveIntent, seconds: float, roofed: bool) -> Dictionary:
+	return MovementSim.run(model, terrain, energy, intent, seconds, CURRENT, roofed)
+
+
+func test_standing_on_a_roofed_cell_is_hidden_and_stepping_onto_sand_is_visible() -> void:
+	assert_eq(_hidden_run(T.BEACH, MoveIntent.create(Vector2.ZERO), true), MovementStep.Stealth.HIDDEN)
+	assert_eq(_hidden_run(T.BEACH, MoveIntent.create(Vector2.ZERO), false), MovementStep.Stealth.VISIBLE, "out from under the roof")
+
+
+func test_a_roof_hides_in_any_posture() -> void:
+	var intents: Array[MoveIntent] = [
+		MoveIntent.create(Vector2.ZERO), MoveIntent.create(EAST), MoveIntent.create(EAST, true),
+		MoveIntent.create(EAST, false, true), MoveIntent.create(Vector2.ZERO, false, true),
+	]
+	for intent: MoveIntent in intents:
+		assert_eq(_hidden_run(T.BEACH, intent, true), MovementStep.Stealth.HIDDEN)
+
+
+func test_a_roof_hides_a_crawler_at_zero_energy() -> void:
+	var r := _run_roofed(T.BEACH, 0.0, MoveIntent.create(EAST, true), 1.0, true)
+	assert_eq(_last(r).movement, MovementStep.Move.CRAWL)
+	assert_eq(_last(r).stealth, MovementStep.Stealth.HIDDEN)
+
+
+func test_walking_upright_on_mangrove_is_hidden() -> void:
+	assert_eq(_hidden_run(T.MANGROVE, MoveIntent.create(EAST), false), MovementStep.Stealth.HIDDEN)
+	assert_eq(_hidden_run(T.MANGROVE, MoveIntent.create(EAST, true), false), MovementStep.Stealth.HIDDEN, "running too")
+	assert_eq(_hidden_run(T.MANGROVE, MoveIntent.create(Vector2.ZERO), false), MovementStep.Stealth.HIDDEN, "standing still")
+
+
+func test_standing_upright_on_scrub_is_visible() -> void:
+	assert_eq(_hidden_run(T.SCRUB, MoveIntent.create(Vector2.ZERO), false), MovementStep.Stealth.VISIBLE)
+	assert_eq(_hidden_run(T.SCRUB, MoveIntent.create(EAST), false), MovementStep.Stealth.VISIBLE)
+
+
+func test_crouching_on_scrub_is_hidden() -> void:
+	assert_eq(_hidden_run(T.SCRUB, MoveIntent.create(EAST, false, true), false), MovementStep.Stealth.HIDDEN)
+
+
+func test_other_ground_does_not_hide() -> void:
+	for terrain: DataEnums.Terrain in [T.BEACH, T.DUNE, T.ROCK]:
+		assert_eq(_hidden_run(terrain, MoveIntent.create(EAST, false, true), false), MovementStep.Stealth.VISIBLE, str(terrain))
+
+
+func test_a_roof_changes_nothing_in_the_water() -> void:
+	# The swim and dive logic stays: a swimmer is visible, a diver submerged, roof or no roof.
+	assert_eq(_hidden_run(T.DEEP, MoveIntent.create(EAST), true), MovementStep.Stealth.VISIBLE)
+	assert_eq(_hidden_run(T.DEEP, MoveIntent.create(Vector2.ZERO, false, true), true), MovementStep.Stealth.SUBMERGED)
+
+
+func test_a_dive_is_submerged_for_at_most_5_s_roofed_or_not() -> void:
+	var intent := MoveIntent.create(Vector2.ZERO, false, true)
+	var last: MovementStep = null
+	for i: int in 10:
+		last = model.step(T.DEEP, CURRENT, 50.0, intent, 0.5, 1.0, true)
+	assert_eq(last.stealth, MovementStep.Stealth.SUBMERGED, "still under at exactly 5 s")
+	last = model.step(T.DEEP, CURRENT, 50.0, intent, 0.5, 1.0, true)
+	assert_eq(last.stealth, MovementStep.Stealth.VISIBLE, "visible after 5 s")
+
+
+func test_the_rules_alone() -> void:
+	assert_true(HiddenRules.is_hidden_on_land(T.BEACH, false, true))
+	assert_true(HiddenRules.is_hidden_on_land(T.MANGROVE, false, false))
+	assert_true(HiddenRules.is_hidden_on_land(T.SCRUB, true, false))
+	assert_false(HiddenRules.is_hidden_on_land(T.SCRUB, false, false))
+	assert_false(HiddenRules.is_hidden_on_land(T.BEACH, true, false))
+
+
 # --- crawl at zero energy ----------------------------------------------------------------
 
 func test_crawls_at_zero_energy_ignoring_run() -> void:
