@@ -18,7 +18,10 @@ game/assets/art/:
   tile of the layer's own corner mask d, kept only on the sand tile of the cell's sand mask s
   (and "inset" pixels inside its edge, with an optional rim colour on the cut), sits at column s,
   row d (plain: row 16 * terrain row + d). Only a d whose corners are all corners of s can
-  occur, and s 15 has no shore, so those cells are the only ones drawn.
+  occur, and s 15 has no shore, so those cells are the only ones drawn. A stamp set's shore may
+  "fit" instead of cut (art-coast-pass D1): on sand masks 1 to 14 the centre stamp gives way to
+  a whole piece, its row-4 "pick" or else a hand-drawn "tuft", moved by the smallest shift that
+  keeps it on the sand at the inset (or at "fallback_inset"), with no cut and no rim.
 - sea/water.png, a rect of a pack sheet through its map, and sea/water_ramps.png, one row of
   colours per depth.
 - sea/foam.png: frame f of the shoreline strip wrapped round the sand tile of mask m, at column
@@ -301,17 +304,85 @@ def shore_cut(tile, shape, field, inset=0, rim=None):
     return out
 
 
-def shore_sheet(rows, shape, inset=0, rims=None):
+def fit_shift(edge, field, piece, inset):
+    """The shift (dx, dy), each from -8 to 8, that puts every pixel of `piece` inside the tile, on
+    the drawn pixels of `edge` and at least `inset` steps inside its edge (`field` is the edge's
+    shore field); the smallest by (|dx| + |dy|, |dy|, dx, dy), or None when none does."""
+    depth = {(x, y): -steps for x, y, steps, _along in field}
+    pixels = [(x, y) for y in range(piece.height) for x in range(piece.width) if piece.alpha(x, y)]
+    best = None
+    for dx in range(-HALF, HALF + 1):
+        for dy in range(-HALF, HALF + 1):
+            key = (abs(dx) + abs(dy), abs(dy), dx, dy)
+            if best is not None and key >= best:
+                continue
+            if all(0 <= x + dx < TILE and 0 <= y + dy < TILE and edge.alpha(x + dx, y + dy)
+                   and depth.get((x + dx, y + dy), TILE) >= inset for x, y in pixels):
+                best = key
+    return None if best is None else best[2:]
+
+
+def shifted(piece, dx, dy):
+    """A blank tile with `piece` drawn on it moved by (dx, dy); pixels moved off the tile are lost."""
+    out = png.blank(TILE, TILE)
+    _stamp(out, piece, dx, dy)
+    return out
+
+
+def fitted(edge, field, pieces, insets):
+    """The first piece of `pieces` and inset of `insets` (pieces first, then insets) that fits on
+    `edge`, as (piece index, inset, the piece moved there); None when nothing fits."""
+    for index, piece in enumerate(pieces):
+        for inset in insets:
+            shift = fit_shift(edge, field, piece, inset)
+            if shift is not None:
+                return index, inset, shifted(piece, *shift)
+    return None
+
+
+def quarters(stamp, mask, bits):
+    """Only the quarter stamps of `stamped(stamp, mask)` whose corner is one of `bits`."""
+    out = png.blank(TILE, TILE)
+    for bit, offset in ((NW, (-HALF, -HALF)), (NE, (HALF, -HALF)), (SW, (-HALF, HALF)), (SE, (HALF, HALF))):
+        if mask & bits & bit:
+            _stamp(out, stamp, *offset)
+    return out
+
+
+def fit_tile(stamp, mask, edge, field, centre):
+    """A stamp set's shore tile with its centre stamp replaced by `centre` (a whole piece, already
+    fitted on the sand): the north quarter stamps of `mask`, the piece, then the south ones; the
+    quarters are kept on the sand with no rim (they lie on its land corners)."""
+    out = shore_cut(quarters(stamp, mask, NW | NE), edge, field)
+    _stamp(out, centre, 0, 0)
+    _stamp(out, shore_cut(quarters(stamp, mask, SW | SE), edge, field), 0, 0)
+    return out
+
+
+def shore_sheet(rows, shape, inset=0, rims=None, fit=None):
     """Column s, row 16 * r + d: tile d of `rows[r]` (16 tiles by own corner mask) cut by the
-    shape set's tile of mask s, for every d whose corners are all corners of s, s below 15."""
+    shape set's tile of mask s, for every d whose corners are all corners of s, s below 15.
+    With `fit` ({"stamp", "pieces", "insets"}, for a one-row stamp set) a sand mask s from 1 to
+    14 takes instead the first of the pieces that fits whole on its sand tile, at the first of the
+    insets it fits at, under and over the tile's quarter stamps, never cut and never rimmed."""
     sheet = png.blank(MASKS * TILE, len(rows) * MASKS * TILE)
     for s in range(MASKS - 1):
         edge = sheet_tile(shape, s)
         field = shore_field(edge)
+        centre = None
+        if fit and s:
+            found = fitted(edge, field, fit["pieces"], fit["insets"])
+            if found is None:
+                raise TerrainError(f"nothing of the fit fits whole on the sand tile of mask {s}, at insets {fit['insets']}")
+            centre = found[2]
         for r, tiles in enumerate(rows):
             for d in range(MASKS):
                 if d & ~s == 0:
-                    sheet.paste(shore_cut(tiles[d], edge, field, inset, rims[r] if rims else None), s * TILE, (r * MASKS + d) * TILE)
+                    if centre is not None:
+                        tile = fit_tile(fit["stamp"], d, edge, field, centre)
+                    else:
+                        tile = shore_cut(tiles[d], edge, field, inset, rims[r] if rims else None)
+                    sheet.paste(tile, s * TILE, (r * MASKS + d) * TILE)
     return sheet
 
 
@@ -322,6 +393,30 @@ def _shore_spec(spec, sets, where):
     if not isinstance(inset, int) or isinstance(inset, bool) or not 0 <= inset < HALF:
         raise TerrainError(f"{where}: \"inset\" is a whole number of pixels from 0 to {HALF - 1}")
     return _shape(spec, sets, where), inset
+
+
+def _fit_spec(entry, sheet, inset, fixes, where):
+    """The shore "fit" of a stamp set as shore_sheet's `fit`: its stamp (the set's islet tile, the
+    stamp itself), its pieces (the row-4 pick "pick", then the hand-drawn "tuft" when given) and
+    its insets (the shore's inset, then "fallback_inset")."""
+    spec = entry["shore"]["fit"]
+    if not isinstance(spec, dict):
+        raise TerrainError(f"{where}: \"fit\" is a table, not {spec!r}")
+    if "stamp" not in entry:
+        raise TerrainError(f"{where}: \"fit\" needs a stamp set, whose quarter stamps it keeps")
+    pick = whole(need(spec, "pick", f"{where} fit"), f"{where} fit", "pick", low=0, high=SET_COLUMNS - 1)
+    piece = sheet.crop(pick * TILE, VARIANT_ROW * TILE, TILE, TILE)
+    if piece.is_empty():
+        raise TerrainError(f"{where} fit: pick {pick} is not drawn on the set's row {VARIANT_ROW}")
+    fallback = whole(spec.get("fallback_inset", inset), f"{where} fit", "fallback_inset", low=0, high=inset)
+    pieces = [piece]
+    if "tuft" in spec:
+        tuft = read_image(hand_source(spec["tuft"], fixes))
+        if (tuft.width, tuft.height) != (TILE, TILE) or tuft.is_empty():
+            raise TerrainError(f"{spec['tuft']}: a tuft is a drawn {TILE}x{TILE} tile, not {tuft.width}x{tuft.height}{' and empty' if tuft.is_empty() else ''}")
+        pieces.append(tuft)
+    insets = [inset] if fallback == inset else [inset, fallback]
+    return {"stamp": sheet_tile(sheet, 0), "pieces": pieces, "insets": insets}
 
 
 class Sources:
@@ -623,9 +718,14 @@ def _out_folder(out, packs):
 
 def _refuse_unread_fixes(recipe, fixes):
     """Raises on a PNG of the fixes folder that no step reads: an overlay is read by a set, the plain
-    sheet and the foam, a hand source by a copy or the shade spots; shade, water and the shore
-    sheets take none."""
+    sheet and the foam, a hand source by a copy, the shade spots or a shore fit's tuft; shade,
+    water and the shore sheets take no overlay."""
     read = {f"{entry['id']}.png" for entry in recipe.get("sets", [])}
+    for entry in recipe.get("sets", []):
+        shore = entry.get("shore") if isinstance(entry, dict) else None
+        fit = shore.get("fit") if isinstance(shore, dict) else None
+        if isinstance(fit, dict) and isinstance(fit.get("tuft"), str):
+            read.add(fit["tuft"])
     read |= {"foam.png"} if "foam" in recipe else set()
     read |= {"plain.png"} if "plain" in recipe else set()
     read |= {recipe["shade"]["spots"]} if "spots" in recipe.get("shade", {}) else set()
@@ -671,7 +771,11 @@ def build(recipe, packs, fixes, out, palette_colours, log=print):
             shape, inset = _shore_spec(entry["shore"], sets, name)
             rim = colour(entry["shore"]["rim"], name) if "rim" in entry["shore"] else None
             tiles = [sheet_tile(sets[entry["id"]], mask) for mask in range(MASKS)]
-            add(f"terrain/{entry['id']}_shore.png", shore_sheet([tiles], shape, inset, [rim]))
+            fit = _fit_spec(entry, sets[entry["id"]], inset, fixes, name) if "fit" in entry["shore"] else None
+            try:
+                add(f"terrain/{entry['id']}_shore.png", shore_sheet([tiles], shape, inset, [rim], fit))
+            except TerrainError as error:
+                raise TerrainError(f"{name}: {error}") from error
     for key, kind in (("plain", dict), ("water", dict), ("foam", dict), ("shade", dict)):
         if key in recipe:
             section(recipe, key, kind)
