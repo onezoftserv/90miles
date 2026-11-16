@@ -16,6 +16,9 @@ var mate: PlayerBody
 func before_each() -> void:
 	user = _body()
 	mate = _body()
+	# Thirsty, so a drink has something to do (damage-feedback: a use that would change nothing is
+	# refused).
+	user.meters.thirst = 50.0
 
 
 func _body() -> PlayerBody:

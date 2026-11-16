@@ -143,6 +143,141 @@ func test_every_mask_with_a_shore_has_foam_in_every_frame_and_the_full_tile_none
 			assert_eq(empty, mask == 15, "mask %d frame %d" % [mask, frame])
 
 
+## The most white pixels in any 8x8 patch of a 16x16 foam piece.
+func _whitest_patch(piece: Image) -> int:
+	var best: int = 0
+	for y0: int in TILE - 7:
+		for x0: int in TILE - 7:
+			var count: int = 0
+			for y: int in range(y0, y0 + 8):
+				for x: int in range(x0, x0 + 8):
+					var pixel: Color = piece.get_pixel(x, y)
+					if pixel.a > 0.0 and pixel == Color.WHITE:
+						count += 1
+			best = maxi(best, count)
+	return best
+
+
+## art-pass "Corner foam is no heavier than a straight run" (art-coast-pass D5, review TR5): today
+## an outer corner is a thick white L and an inner corner a near-solid white block (41 to 55 of an
+## 8x8 patch's 64 pixels). The corners now wash only the sand's last two steps and fade from the
+## second water step where the shore turns, while the straight edges keep their foam.
+func test_corner_foam_is_no_heavier_than_a_straight_run() -> void:
+	var foam: Image = _sheet(FOAM_SHEET)
+	if foam == null:
+		return
+	var straight: int = 0
+	for mask: int in TURNS_TO_SOUTH:
+		for frame: int in FOAM_FRAMES:
+			straight = maxi(straight, _whitest_patch(foam.get_region(Rect2i(frame * TILE, mask * TILE, TILE, TILE))))
+	assert_gt(straight, 0, "the straight edges have white foam")
+	for mask: int in 15:
+		if TURNS_TO_SOUTH.has(mask):
+			continue
+		for frame: int in FOAM_FRAMES:
+			var patch: int = _whitest_patch(foam.get_region(Rect2i(frame * TILE, mask * TILE, TILE, TILE)))
+			assert_lte(patch, straight, "mask %d frame %d: no whiter than a straight edge (%d)" % [mask, frame, straight])
+			if mask in [6, 7, 9, 11, 13, 14]:
+				assert_lte(patch, 32, "inner corner %d frame %d: at most half white" % [mask, frame])
+			elif mask in [1, 2, 4, 8]:
+				assert_lte(patch, 36, "outer corner %d frame %d: about half white" % [mask, frame])
+
+
+## The land corner pixel of each outer corner mask.
+const OUTER_CORNER: Dictionary[int, Vector2i] = {1: Vector2i(0, 0), 2: Vector2i(15, 0), 4: Vector2i(0, 15), 8: Vector2i(15, 15)}
+
+
+## art-pass "Coast corners are rounded" (art-coast-pass D3, review TR2): an outer corner's sand is a
+## quarter arc round its land corner, so the pixel half way along the diagonal is sand and the one
+## four steps further out is sea (a square block reaches it); an inner corner's bite is rounded, so
+## the pixel three in from its water corner on the diagonal is sand (a square notch leaves it sea).
+func test_coast_corners_are_rounded() -> void:
+	var sand: Image = _sheet(SAND_SHEET)
+	if sand == null:
+		return
+	for mask: int in OUTER_CORNER:
+		var corner: Vector2i = OUTER_CORNER[mask]
+		var inward: Vector2i = Vector2i(1 if corner.x == 0 else -1, 1 if corner.y == 0 else -1)
+		var origin: Vector2i = _mask_atlas(mask) * TILE
+		assert_gt(sand.get_pixelv(origin + corner + inward * 7).a, 0.0, "outer corner %d: sand half way along the diagonal" % mask)
+		assert_eq(sand.get_pixelv(origin + corner + inward * 10).a, 0.0, "outer corner %d: sea where a square block would be" % mask)
+	var water_corner: Dictionary[int, Vector2i] = {14: Vector2i(0, 0), 13: Vector2i(15, 0), 11: Vector2i(0, 15), 7: Vector2i(15, 15)}
+	for mask: int in water_corner:
+		var corner: Vector2i = water_corner[mask]
+		var inward: Vector2i = Vector2i(1 if corner.x == 0 else -1, 1 if corner.y == 0 else -1)
+		var origin: Vector2i = _mask_atlas(mask) * TILE
+		assert_eq(sand.get_pixelv(origin + corner + inward * 2).a, 0.0, "inner corner %d: its bite" % mask)
+		assert_gt(sand.get_pixelv(origin + corner + inward * 3).a, 0.0, "inner corner %d: the bite is rounded, not a square notch" % mask)
+
+
+## art-pass "Coast corners are rounded": each tile's sand meets the cell's border where its
+## neighbour's does, for every pair of masks that can sit side by side (they share the two corners
+## on their common border), so no 1 px jog shows where a corner meets a straight edge.
+func test_neighbouring_sand_tiles_join_without_a_jog() -> void:
+	var sand: Image = _sheet(SAND_SHEET)
+	if sand == null:
+		return
+	for left: int in 16:
+		for right: int in 16:
+			var a: Vector2i = _mask_atlas(left) * TILE
+			var b: Vector2i = _mask_atlas(right) * TILE
+			if bool(left & 2) == bool(right & 1) and bool(left & 8) == bool(right & 4):
+				for y: int in TILE:
+					assert_eq(sand.get_pixel(a.x + 15, a.y + y).a > 0.0, sand.get_pixel(b.x, b.y + y).a > 0.0, "mask %d beside mask %d, row %d" % [left, right, y])
+			if bool(left & 4) == bool(right & 1) and bool(left & 8) == bool(right & 2):
+				for x: int in TILE:
+					assert_eq(sand.get_pixel(a.x + x, a.y + 15).a > 0.0, sand.get_pixel(b.x + x, b.y).a > 0.0, "mask %d above mask %d, column %d" % [left, right, x])
+
+
+## art-pass "The beach has the same lip on every side" (review TR6): no sand tile but the islet keeps
+## the pack's dark south ledge band, and the south edge and every corner end in the 1 px lip colour
+## on each sand pixel beside the sea.
+func test_the_beach_has_the_same_lip_on_every_side() -> void:
+	var sand: Image = _sheet(SAND_SHEET)
+	if sand == null:
+		return
+	var band := Color("#c08a5a")
+	var lip := Color("#d9a066")
+	for mask: int in range(1, 15):
+		var origin: Vector2i = _mask_atlas(mask) * TILE
+		for y: int in TILE:
+			for x: int in TILE:
+				var pixel: Color = sand.get_pixel(origin.x + x, origin.y + y)
+				if pixel.a == 0.0:
+					continue
+				assert_ne(pixel, band, "mask %d (%d, %d): no ledge band" % [mask, x, y])
+				if mask in [5, 10, 12]:
+					continue
+				var beside_sea: bool = false
+				for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+					var n: Vector2i = Vector2i(x, y) + d
+					if Rect2i(0, 0, TILE, TILE).has_point(n) and sand.get_pixelv(origin + n).a == 0.0:
+						beside_sea = true
+				if beside_sea:
+					assert_eq(pixel, lip, "mask %d (%d, %d): the lip beside the sea" % [mask, x, y])
+
+
+## art-pass "A walkable cell's middle is drawn as land", one player, offline: on the solo sandbar
+## every shore cell's sand tile draws, for each land corner of its mask, the centre pixel toward
+## that corner (a chamfered corner would leave a tip cell's middle in the sea).
+func test_a_solo_sandbar_shore_cell_keeps_its_middle_on_land() -> void:
+	var sand: Image = _sheet(SAND_SHEET)
+	if sand == null:
+		return
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	var toward: Dictionary[int, Vector2i] = {1: Vector2i(7, 7), 2: Vector2i(8, 7), 4: Vector2i(7, 8), 8: Vector2i(8, 8)}
+	var checked: int = 0
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.SAND, built.terrain, built.tide_pools):
+		var mask: int = TerrainArt.corner_mask(TerrainArt.SAND, cell, built.terrain, built.tide_pools)
+		if mask == 15:
+			continue
+		checked += 1
+		for bit: int in toward:
+			if mask & bit:
+				assert_gt(sand.get_pixelv(_mask_atlas(mask) * TILE + toward[bit]).a, 0.0, "%s (mask %d): its middle toward corner %d" % [cell, mask, bit])
+	assert_gt(checked, 200, "the sandbar has its shore cells")
+
+
 ## A corner pixel of the tile at `cell` is drawn.
 func _corner(sheet: Image, cell: Vector2i, corner: Vector2i) -> bool:
 	return sheet.get_pixel(cell.x * TILE + corner.x * (TILE - 1), cell.y * TILE + corner.y * (TILE - 1)).a > 0.0
@@ -226,6 +361,80 @@ func test_no_shore_tile_of_an_upper_layer_leaves_the_sand_under_it() -> void:
 				var expected: bool = shore != 15 and (own & ~shore) == 0
 				assert_eq(not tile.is_invisible(), expected, "%s: a tile at column %d, row %d" % [id, shore, row])
 				assert_eq(_off_the_sand(tile, sand, shore, false), 0, "%s column %d row %d: pixels off the sand" % [id, shore, row])
+
+
+## The drawn bounding box of `tile` (an empty rect when nothing is drawn).
+func _drawn_rect(tile: Image) -> Rect2i:
+	var found: Rect2i = Rect2i()
+	var any: bool = false
+	for y: int in tile.get_height():
+		for x: int in tile.get_width():
+			if tile.get_pixel(x, y).a > 0.0:
+				found = Rect2i(x, y, 1, 1) if not any else found.expand(Vector2i(x, y)).expand(Vector2i(x + 1, y + 1))
+				any = true
+	return found
+
+
+## Whether `tile` is `piece` moved whole: the same pixels, every one, with nothing cut or added.
+func _is_moved(tile: Image, piece: Image) -> bool:
+	var a: Rect2i = _drawn_rect(tile)
+	var b: Rect2i = _drawn_rect(piece)
+	if a.size != b.size or a.size == Vector2i.ZERO:
+		return false
+	for y: int in a.size.y:
+		for x: int in a.size.x:
+			var mine: Color = tile.get_pixel(a.position.x + x, a.position.y + y)
+			var theirs: Color = piece.get_pixel(b.position.x + x, b.position.y + y)
+			if (mine.a > 0.0) != (theirs.a > 0.0) or (mine.a > 0.0 and mine != theirs):
+				return false
+	return true
+
+
+## art-pass "A bush on a shore cell is drawn whole" (art-coast-pass D1, review TR1): a lone bush on
+## a shore cell (own mask 0, sand masks 1-14) is the small pick, or the one hand-drawn tuft where
+## the pick does not fit, moved whole onto the sand: no pixel cut, no rim. Today's cut bushes fail.
+func test_no_shore_bush_pixel_is_cut() -> void:
+	var brush: Image = _sheet("res://assets/art/terrain/brush.png")
+	var shore: Image = _sheet("res://assets/art/terrain/brush_shore.png")
+	if brush == null or shore == null:
+		return
+	var pick: Image = brush.get_region(Rect2i(1 * TILE, PICK_ROW * TILE, TILE, TILE))
+	var tuft: Image = null
+	for s: int in range(1, 15):
+		var tile: Image = shore.get_region(Rect2i(s * TILE, 0, TILE, TILE))
+		if _is_moved(tile, pick):
+			continue
+		var size: Vector2i = _drawn_rect(tile).size
+		assert_true(size.x <= 8 and size.y <= 7 and size != Vector2i.ZERO, "sand mask %d: the pick moved whole, or a tuft of at most 8x7 (drawn %s)" % [s, size])
+		if tuft == null:
+			tuft = tile
+		assert_true(_is_moved(tile, tuft), "sand mask %d: the same tuft as every other mask that needs one" % s)
+	var islet: Image = shore.get_region(Rect2i(0, 0, TILE, TILE))
+	assert_false(_is_moved(islet, pick), "a lone sand cell (mask 0) keeps the cut bush")
+
+
+## One player, offline: the owner's spot. Shore scrub cell (20, 35) of the solo sandbar is drawn
+## with the brush shore tile of its sand mask, and that tile is all 90 pixels of the small pick.
+func test_a_solo_sandbar_shore_bush_is_whole() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	var cell: Vector2i = Vector2i(20, 35)
+	assert_eq(built.terrain.terrain_at(cell), DataEnums.Terrain.SCRUB, "the owner's spot is scrub")
+	var tile: Dictionary = TerrainArt.tile(TerrainArt.BRUSH, cell, SANDBAR.id, built.terrain, built.tide_pools)
+	assert_eq(tile.get(&"source"), TerrainArt.data().shore_source_of[TerrainArt.BRUSH], "the brush shore source")
+	assert_eq(tile.get(&"atlas"), Vector2i(10, 0), "sand mask 10 (sea to the west), own mask 0")
+	var shore: Image = _sheet("res://assets/art/terrain/brush_shore.png")
+	var brush: Image = _sheet("res://assets/art/terrain/brush.png")
+	if shore == null or brush == null:
+		return
+	var drawn: Image = shore.get_region(Rect2i(Vector2i(tile[&"atlas"]) * TILE, Vector2i(TILE, TILE)))
+	var pick: Image = brush.get_region(Rect2i(1 * TILE, PICK_ROW * TILE, TILE, TILE))
+	var count: int = 0
+	for y: int in TILE:
+		for x: int in TILE:
+			if drawn.get_pixel(x, y).a > 0.0:
+				count += 1
+	assert_eq(count, 90, "every pixel of the small bush")
+	assert_true(_is_moved(drawn, pick), "and only the small bush, whole")
 
 
 ## art-pass "No water in land tiles": a recipe that mapped a baked water strip or foam rim to a
@@ -715,6 +924,43 @@ func test_variants_come_from_the_layout_and_the_cell_and_repeat_across_builds() 
 	assert_eq(TerrainArt.cell_hash(&"sandbar", Vector2i(3, 4)), TerrainArt.cell_hash(&"sandbar", Vector2i(3, 4)))
 	assert_ne(TerrainArt.cell_hash(&"sandbar", Vector2i(3, 4)), TerrainArt.cell_hash(&"coast_cay", Vector2i(3, 4)), "the layout is part of the seed")
 	assert_ne(TerrainArt.cell_hash(&"sandbar", Vector2i(3, 4)), TerrainArt.cell_hash(&"sandbar", Vector2i(4, 3)), "so is the cell")
+
+
+## art-pass "Neighbouring cells are not striped" (art-coast-pass D2, review TR8): the string hash
+## alone gave a pick among four equal to its north-east neighbour's 92% of the time and (x, y) always
+## equal to (y, x). Through the avalanche the picks of a 16x16 block look random.
+func test_neighbouring_picks_are_not_striped() -> void:
+	for layout_id: StringName in [&"sandbar", &"coast_cay", &"test"]:
+		var same_as_north_east: int = 0
+		var mirrored_same: int = 0
+		var mirrored_pairs: int = 0
+		for y: int in range(1, 17):
+			for x: int in 16:
+				var seed_value: int = TerrainArt.cell_hash(layout_id, Vector2i(x, y))
+				assert_true(seed_value >= 0 and seed_value < 1 << 32, "%s %d,%d: a 32-bit seed" % [layout_id, x, y])
+				var pick: int = (seed_value >> 1) % 4
+				if pick == (TerrainArt.cell_hash(layout_id, Vector2i(x + 1, y - 1)) >> 1) % 4:
+					same_as_north_east += 1
+				if x != y:
+					mirrored_pairs += 1
+					if pick == (TerrainArt.cell_hash(layout_id, Vector2i(y, x)) >> 1) % 4:
+						mirrored_same += 1
+		assert_lt(same_as_north_east, 256 * 40 / 100, "%s: picks equal to the north-east neighbour's" % layout_id)
+		assert_lt(mirrored_same, mirrored_pairs, "%s: (x, y) and (y, x) are not always the same pick" % layout_id)
+
+
+## One player, offline: the solo sandbar's arrival cells get the same picks on every build, and the
+## seed is the documented mix of the string hash, so every peer computes it the same way.
+func test_a_solo_sandbar_build_picks_the_same_tiles_twice() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	for cell: Vector2i in [built.solo_spawn, built.landing_cells()[0]]:
+		for layer: StringName in TerrainArt.layers_for(built.terrain.terrain_at(cell)):
+			var first: Dictionary = TerrainArt.tile(layer, cell, SANDBAR.id, built.terrain, built.tide_pools)
+			var again: IslandLayout = IslandLayout.build(SANDBAR)
+			assert_eq(TerrainArt.tile(layer, cell, SANDBAR.id, again.terrain, again.tide_pools), first, "%s on %s" % [cell, layer])
+	# murmur3's fmix32 of 0x12345678, worked by hand: pins the mix, not just its determinism.
+	assert_eq(TerrainArt.mix32(0x12345678), 0xe37cd1bc)
+	assert_eq(TerrainArt.mix32(0), 0)
 
 
 func test_building_the_art_leaves_the_spawners_next_roll_alone() -> void:

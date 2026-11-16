@@ -25,6 +25,8 @@ var ui_scale: int = 0:
 	set(value):
 		ui_scale = clampi(value, 0, MAX_SCALE)
 var pixel_filter: PixelFilter.Mode = PixelFilter.Mode.SHARP
+## "Reducir destellos" (damage-feedback): hit and change cues without flashes, blinks or shakes.
+var reduce_flashes: bool = false
 ## This install's player id and secret (coop-reconnect). Made fresh until the file has one.
 var identity: PlayerIdentity = PlayerIdentity.create()
 ## Whether `identity` came from the file or has been saved (false: made now, not kept yet).
@@ -59,6 +61,9 @@ static func load_from(file_path: String = DEFAULT_PATH) -> GameSettings:
 	var filter_value: Variant = config.get_value("display", "pixel_filter", PixelFilter.Mode.SHARP)
 	if filter_value is int and PixelFilter.Mode.values().has(filter_value):
 		settings.pixel_filter = filter_value as PixelFilter.Mode
+	var flashes_value: Variant = config.get_value("display", "reduce_flashes", false)
+	if flashes_value is bool:
+		settings.reduce_flashes = flashes_value
 	return settings
 
 
@@ -70,6 +75,7 @@ func save() -> Error:
 	config.set_value("display", "fullscreen", fullscreen)
 	config.set_value("display", "ui_scale", ui_scale)
 	config.set_value("display", "pixel_filter", pixel_filter)
+	config.set_value("display", "reduce_flashes", reduce_flashes)
 	var saved := config.save(path)
 	if saved == OK:
 		identity_stored = true
