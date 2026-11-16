@@ -20,8 +20,8 @@ const CREATURE_ART: String = "res://assets/art/creatures/creature_art.tres"
 const FIXTURE_ROOT: String = "res://tests/fixtures/art/creatures/content"
 const SETTINGS_PATH: String = "user://test_creature_art_settings.cfg"
 const TILE: float = 16.0
-## The gull's lift in flight (design.md D16).
-const AIR_LIFT_PX: float = 8.0
+## The gull's lift in flight (design.md D16, amended by art-sprite-polish D7: 8 -> 15 px).
+const AIR_LIFT_PX: float = 15.0
 ## SwoopSteal's and PatrolCircleStrike's states.
 const PERCH: int = 0
 const SWOOP: int = 1
@@ -300,7 +300,7 @@ func test_a_solo_crab_on_the_sand_has_its_shadow_under_it() -> void:
 	assert_eq(_feet_y(sprite), crab.global_position.y + entry.foot_px, "its feet on the creature art's foot line")
 
 
-func test_a_flying_gulls_shadow_stays_on_the_ground_8_px_below_its_sprite() -> void:
+func test_a_flying_gulls_shadow_stays_on_the_ground_15_px_below_its_sprite() -> void:
 	var rig := CreatureRig.make(self)
 	var gull := rig.creature(&"seagull", Vector2i(3, 10))
 	gull.state_id = SWOOP
@@ -310,10 +310,54 @@ func test_a_flying_gulls_shadow_stays_on_the_ground_8_px_below_its_sprite() -> v
 	var shadow := _shadow(gull)
 	assert_eq(entry.air_lift_px, AIR_LIFT_PX)
 	assert_true(shadow.visible, "a flying gull has a shadow")
-	assert_eq(_feet_y(sprite), gull.global_position.y + entry.foot_px - AIR_LIFT_PX, "the sprite lifted 8 px")
+	assert_between(entry.air_lift_px, 14.0, 16.0, "art-sprite-polish D7: a lift of 14-16 px")
+	assert_eq(_feet_y(sprite), gull.global_position.y + entry.foot_px - AIR_LIFT_PX, "the sprite lifted 15 px")
 	assert_eq(shadow.global_position.y, gull.global_position.y + entry.shadow_y_px, "the shadow where a standing gull's would be")
 	assert_between(entry.shadow_y_px, 0.0, entry.foot_px, "on the ground under the gull")
-	assert_true(sprite.animation.begins_with("move"), "flying")
+	assert_true(sprite.animation.begins_with("swoop"), "flying, on the flight frames")
+
+
+# --- art-sprite-polish D7 (C25, SP10): gull flight frames ------------------------------------------
+
+func test_the_gull_flies_on_wide_frames_whose_wings_clear_the_cell_walls() -> void:
+	var frames := _data(&"seagull").sprite_frames
+	var tuning := ArtTuning.standard()
+	for state: String in ["swoop", "flee", "return"]:
+		for facing: String in ["side", "down", "up"]:
+			var animation := StringName("%s_%s" % [state, facing])
+			assert_true(frames.has_animation(animation), String(animation))
+			if not frames.has_animation(animation):
+				continue
+			assert_lte(frames.get_animation_speed(animation), tuning.max_fps, String(animation))
+			for index: int in frames.get_frame_count(animation):
+				var atlas := frames.get_frame_texture(animation, index) as AtlasTexture
+				var cell: Image = ArtChecks.read_png(atlas.atlas.resource_path).get_region(Rect2i(atlas.region))
+				var label: String = "%s[%d]" % [animation, index]
+				assert_gt(cell.get_width(), 16, "%s: a cell wider than 16 px" % label)
+				var used: Rect2i = cell.get_used_rect()
+				assert_gte(used.position.x, 1, "%s: nothing in the left column" % label)
+				assert_lte(used.end.x, cell.get_width() - 1, "%s: nothing in the right column" % label)
+	assert_eq(ArtChecks.check_frame_budget("seagull", frames, tuning.max_creature_frames, tuning.max_fps), PackedStringArray())
+
+
+## One player, offline: a solo gull that swoops flies on its flight frames, lifted off the ground,
+## with its shadow on the ground below it.
+func test_a_solo_gull_swoops_on_its_flight_frames_with_its_shadow_below() -> void:
+	NetManager.start_solo()
+	var rig := CreatureRig.make(self)
+	var gull := rig.creature(&"seagull", Vector2i(3, 10))
+	gull.state_id = SWOOP
+	for frame: int in 6:
+		gull.position += Vector2(0.0, 1.0)
+		_step(gull)
+	var sprite := _sprite(gull)
+	var shadow := _shadow(gull)
+	assert_eq(sprite.animation, &"swoop_down", "a gull swooping south plays swoop_down")
+	assert_true(sprite.is_playing())
+	assert_true(shadow.visible, "its shadow shows")
+	var entry := _art().entry(&"seagull")
+	assert_eq(shadow.global_position.y, gull.global_position.y + entry.shadow_y_px, "on the ground under it")
+	assert_lt(_feet_y(sprite), shadow.global_position.y, "the gull above its shadow")
 
 
 # The palm as drawn: its look, after one step (design.md K64).

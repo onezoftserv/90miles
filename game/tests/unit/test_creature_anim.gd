@@ -58,15 +58,18 @@ func test_facing_variants_win_over_plain_names() -> void:
 	assert_eq(CreatureAnim.pick(names, &"flee", Vector2.DOWN, true), &"move", "then move")
 
 
-func test_a_test_gull_with_swoop_frames_plays_swoop_up_and_the_shipped_gull_move_up() -> void:
+func test_a_gull_with_swoop_frames_plays_swoop_up_and_one_without_plays_move_up() -> void:
 	var fixture := _names(_frames([&"idle_side", &"idle_down", &"idle_up", &"swoop_down", &"swoop_up", &"swoop_side"]))
 	var north := Vector2(0.4, -0.9)
 	assert_eq(CreatureAnim.pick(fixture, &"swoop", north, true), &"swoop_up")
+	var walking_only := _names(_frames([&"idle_side", &"idle_down", &"idle_up", &"move_side", &"move_down", &"move_up"]))
+	assert_eq(CreatureAnim.pick(walking_only, &"swoop", north, true), &"move_up", "no swoop frames: the moving ones")
 	var gull := GameState.content.get_entry(&"creatures", SEAGULL) as CreatureData
 	assert_not_null(gull.sprite_frames, "the shipped seagull has frames")
 	if gull.sprite_frames == null:
 		return
-	assert_eq(CreatureAnim.pick(_names(gull.sprite_frames), &"swoop", north, true), &"move_up")
+	# art-sprite-polish D7: the shipped gull has its own flight frames.
+	assert_eq(CreatureAnim.pick(_names(gull.sprite_frames), &"swoop", north, true), &"swoop_up")
 
 
 func test_a_diagonal_tie_faces_sideways() -> void:

@@ -8,7 +8,7 @@ Pack: Tiny, Tiny Heroes - Animals
 Author: Kacper Woźniak (thkaspar)
 Licence: CC BY 4.0
 Source: https://thkaspar.itch.io/tth-animals
-Files: seagull.png (animals/spritesheet.png: the seagull at columns 8-15 of rows 15-17, its side, front and back facings with 4 standing and 4 flying frames each, recoloured to the master palette; layout and shapes unchanged; modified: in the back facing (row 2, idle_up and move_up) a few navy pixels on the upper left are recoloured to the gull's own grey #847e87 as a wing highlight and the tail's middle pixels to white #ffffff, from tools/art/fixes/creatures/seagull_back.png)
+Files: seagull.png (animals/spritesheet.png: the seagull at columns 8-15 of rows 15-17, its side, front and back facings with 4 standing and 4 flying frames each, recoloured to the master palette; layout and shapes unchanged; modified: in the back facing (row 2, idle_up and move_up) a few navy pixels on the upper left are recoloured to the gull's own grey #847e87 as a wing highlight and the tail's middle pixels to white #ffffff, from tools/art/fixes/creatures/seagull_back.png); seagull_flight.png (the same gull's four flying frames per facing, set in 24x16 cells with the front and back facings' wing roots widened by 2 px a side, from tools/art/fixes/creatures/seagull_flight.png; played while it swoops, flees and returns)
 
 Pack: Tiny Dungeon
 Author: Kenney (kenney.nl)

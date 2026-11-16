@@ -25,7 +25,7 @@ foot_px = 5.0
 shadow_size = 2
 shadow_y_px = 4.0
 airborne_states = PackedStringArray("swoop", "flee", "return")
-air_lift_px = 8.0
+air_lift_px = 15.0
 perch_state = &"perch"
 perch_lift_px = 34.0
 
