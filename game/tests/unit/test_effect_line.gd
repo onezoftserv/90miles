@@ -54,9 +54,23 @@ func test_a_drain_over_time() -> void:
 	assert_eq(EffectLine.text(_use(&"manzanillo"), user, null, words), "Salud -50 en 60 s", "the thirst multiplier the host skips is left out")
 
 
-func test_a_revive_on_a_teammate() -> void:
+func test_a_revive_on_a_downed_teammate() -> void:
 	_meters_at(mate, 50.0, 50.0, 50.0)
+	mate.meters.solo = false
+	mate.meters.add(DataEnums.Meter.HEALTH, -mate.meters.health)
+	assert_true(mate.meters.downed)
 	assert_eq(EffectLine.text(_use(&"coco", 1), user, mate, words), "Levanta · Sed +15 · Hambre +5 · Energía +10")
+	assert_true(mate.meters.downed, "the line changed nothing on the real teammate")
+
+
+func test_a_revive_in_a_solo_last_stand() -> void:
+	_meters_at(user, 50.0, 50.0, 50.0)
+	user.meters.solo = true
+	user.meters.downed_bonus_s = 15.0
+	user.meters.add(DataEnums.Meter.HEALTH, -user.meters.health)
+	assert_true(user.meters.last_stand)
+	assert_eq(EffectLine.text(_use(&"coco", 1), user, user, words), "Levanta · Sed +15 · Hambre +5 · Energía +10")
+	assert_true(user.meters.last_stand, "still in the last stand")
 
 
 func test_nothing_to_use_reads_nothing() -> void:

@@ -46,6 +46,7 @@ var _flash_left_s: float = 0.0
 var _shake_left_s: float = 0.0
 var _shake_age_s: float = 0.0
 var _shake_home_x: float = 0.0
+var _shaken: bool = false
 var _glow_left_s: float = 0.0
 
 @onready var bar: ProgressBar = $Bar
@@ -108,8 +109,9 @@ func show_change(old: float, new: float, kind: MeterWatch.Change) -> void:
 				_lost_hold_s = _tuning.loss_hold_s
 				_lost_speed = 0.0
 			if kind == MeterWatch.Change.HIT and not HurtCues.reduce_flashes:
-				if _shake_left_s <= 0.0:
+				if not _shaken:
 					_shake_home_x = bar.position.x
+					_shaken = true
 				_shake_left_s = _tuning.shake_s
 				_shake_age_s = 0.0
 			if kind == MeterWatch.Change.DRAIN and glows_on_drain:
@@ -197,9 +199,11 @@ func _step_lost(delta: float) -> void:
 
 
 func _stop_shake() -> void:
-	if _shake_left_s > 0.0 or bar.position.x != _shake_home_x:
-		bar.position.x = _shake_home_x
 	_shake_left_s = 0.0
+	if not _shaken:
+		return
+	_shaken = false
+	bar.position.x = _shake_home_x
 	queue_sort()
 
 

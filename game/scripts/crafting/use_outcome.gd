@@ -41,6 +41,13 @@ static func useful_gains(action: ItemUseData, actor: PlayerBody, target: PlayerB
 		return gains
 	var runs := _Runs.new()
 	for effect: EffectData in action.effects:
+		# A revive stands the body up first, as the host does, so the drink after it lands on 30 health.
+		if effect.kind == EffectData.Kind.REVIVE and effect.delay_s <= 0.0:
+			var revived: SurvivalMeters = runs.scratch_for(EffectApplier.subject_of(effect, actor, target))
+			if revived != null:
+				revived.revive()
+			gains.append(Vector2.ZERO)
+			continue
 		if not tried(effect):
 			gains.append(Vector2.ZERO)
 			continue
@@ -96,6 +103,9 @@ class _Runs:
 		var real: SurvivalMeters = subject.meters
 		copy.tuning = real.tuning
 		copy.solo = real.solo
+		# The states first, so a body at 0 health is not taken down again on the copy.
+		copy.downed = real.downed
+		copy.last_stand = real.last_stand
 		copy.thirst = real.thirst
 		copy.hunger = real.hunger
 		copy.heat = real.heat

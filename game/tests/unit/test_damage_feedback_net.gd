@@ -72,7 +72,7 @@ func test_a_late_joiner_cues_nothing_old() -> void:
 	var hud := _hud_on(yuni.meters)
 	var floats := _floats_on(late)
 	await wait_process_frames(10)
-	assert_false(_look(yuni).hurt_blink().active(), "no old hit blinks on the late joiner")
+	assert_eq(_look(yuni).hurt_blink().starts, 0, "no old hit ever blinked on the late joiner")
 	assert_eq(hud.flashes_started(), 0, "nor flashes")
 	assert_eq(floats.texts_over(yuni), PackedStringArray(), "nor floats")
 

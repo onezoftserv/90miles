@@ -11,6 +11,8 @@ const EPSILON_S: float = 0.000001
 var duration_s: float = 0.6
 var hz: float = 10.0
 
+## How many blinks have started on this body (tests read it).
+var starts: int = 0
 var _active: bool = false
 var _elapsed_s: float = 0.0
 
@@ -22,6 +24,7 @@ func _init(blink_s: float = 0.6, blink_hz: float = 10.0) -> void:
 
 ## A hit: the blink starts again from its white frame.
 func start() -> void:
+	starts += 1
 	_active = true
 	_elapsed_s = 0.0
 

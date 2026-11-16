@@ -56,6 +56,7 @@ func test_reduce_flashes_tints_instead() -> void:
 
 
 func test_a_new_hit_restarts_the_blink() -> void:
+	assert_eq(blink.starts, 0)
 	blink.start()
 	for i: int in 30:
 		blink.advance(FRAME)
@@ -64,6 +65,7 @@ func test_a_new_hit_restarts_the_blink() -> void:
 	for i: int in 30:
 		blink.advance(FRAME)
 	assert_true(blink.active(), "0.6 s from the second hit")
+	assert_eq(blink.starts, 2)
 
 
 # --- on a solo body ------------------------------------------------------------------------------
