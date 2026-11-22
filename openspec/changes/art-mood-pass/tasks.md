@@ -25,7 +25,7 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
   - Re-read the merged `world_sea.gdshader`, `shore.gdshader`, `sea_mask.gd` and `SeaShaderChecks`.
   - Re-sync this change's MODIFIED "Scrolling sea" block with the archived art-pass spec. If art-coast-pass is not archived yet, sync with its delta.
 - [ ] 0.2 Groups 1 to 4 need only art-coast-pass. Group 5 waits until crossing-gameplay has merged. Before group 5, re-read its `crossing_hazards.gd`, `crossing.tscn` and how it exposes the vessel's lateral position.
-- [ ] 0.3 Before group 4, check whether hud-window-kit has landed.
+- [x] 0.3 Before group 4, check whether hud-window-kit has landed.
   - If it has, re-read its `run_hud.tscn` rects and its `HudPanel` and `HudPanelThin` sizes.
   - If not, build on today's.
   - Then confirm D5's rect against the real nodes.
@@ -96,12 +96,12 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
   - Extend `SeaShaderChecks` to read the new uniforms.
   - Verify that at pace 1 the art-coast-pass sea tests, `test_shoreline.gd`, `test_terrain_view.gd`, `test_crossing_art.gd` and the 1500 ms build bound pass.
 - [x] 4.4 Add `scenes/world/weather_vfx.gd` as a child of `day_night_tint.tscn`, and `scenes/art/weather/rain_overlay.tscn`: the tile scrolled over the camera's rect, the two stages and the hashed splashes. Verify the 4.1 tests, `test_day_night_tint.gd` and `test_art_sim_invariance.gd`.
-- [ ] 4.5 In `test_run_hud.gd`, write these first and see them fail:
+- [x] 4.5 In `test_run_hud.gd`, write these first and see them fail:
   - on a solo run in a squall, `WeatherPanel` is visible and reads "Turbonada", or "Squall" with an English session;
   - in calm it is hidden;
   - its rect is inside y 4–18 and intersects none of PhasePanel, TeammatesPanel, Needle, NoteLabel, Meters, `SignNote.card_rect()`, the kit's teammate column (x ≥ 502) or the crossing HUD's band (y 68–90).
   Then add `WeatherPanel` to `run_hud.tscn` (design D5) and fill it in `run_hud.gd` from the session's climate and the weather data. Verify every `test_run_hud.gd` case.
-- [ ] 4.6 Windowed 1-player capture: a solo sandbar squall by day and at night beside a fire. Compare with the review's `before/sandbar_squall_day.png` (against `before/sandbar_day_structures.png`), `before/sandbar_night_squall_fire.png` and artboard A12:
+- [x] 4.6 Windowed 1-player capture: a solo sandbar squall by day and at night beside a fire. Compare with the review's `before/sandbar_squall_day.png` (against `before/sandbar_day_structures.png`), `before/sandbar_night_squall_fire.png` and artboard A12:
   - streaks at most 25%;
   - the foam visibly faster with no jump at the start;
   - the label beside the phase;
