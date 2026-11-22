@@ -217,6 +217,11 @@ func _sky() -> Object:
 	return root.get_node(^"WeatherManager").get("sky")
 
 
+# The seconds a phase's tint takes to blend in (DayCycleTuning.blend_s).
+func _blend_s() -> float:
+	return float((_sky().get("tuning") as Object).get("blend_s"))
+
+
 func _rendering() -> bool:
 	return DisplayServer.get_name() != "headless"
 
@@ -905,7 +910,7 @@ func _foam_only(spawn: Vector2) -> void:
 	await _walk_to(spawn)
 	_sky().call("start_at", NIGHT_START_S - 2.0)
 	_hooked("day clock to 2 s before night")
-	await _seconds(3.0)
+	await _seconds(3.0 + _blend_s())
 	await _world_image("sandbar_night_view")
 	await _check_shore_view("spawn_night")
 	await _crescent_walk("night")
@@ -1420,7 +1425,8 @@ func _night(spawn: Vector2, day: Image) -> void:
 	await _seconds(0.5)
 	_sky().call("start_at", NIGHT_START_S - 2.0)
 	_hooked("day clock to 2 s before night (played into night from there)")
-	await _seconds(3.0)
+	# Past the dusk-to-night blend: art-mood-pass C33a's brighter dusk would still show a second in.
+	await _seconds(3.0 + _blend_s())
 	var night: Image = await _world_image("sandbar_night_view")
 	_check_no_magenta(night, "the sandbar at night")
 	if night != null and day != null:
