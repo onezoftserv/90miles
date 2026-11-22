@@ -1,6 +1,7 @@
 class_name ScriptedThreats
 extends CrossingThreats
-## The crossing's own scripted threats (crossing "Shark pass event"): a rock hits the vessel; a
+## The crossing's own scripted threats (crossing "Shark pass event"): a rock or debris hits the
+## vessel where its lane overlaps it; a
 ## shark pass takes a bleeding or tired swimmer first, then an intact vessel (a shark's hit, which
 ## may dump its riders), else nobody.
 
@@ -8,7 +9,11 @@ extends CrossingThreats
 func resolve(event: CrossingBeat, crossing: Crossing) -> void:
 	match event.kind:
 		CrossingBeat.Kind.ROCK:
-			crossing.hit_vessel(crossing.tuning.rock_hit)
+			if crossing.beat_hits_vessel(event):
+				crossing.hit_vessel(crossing.tuning.rock_hit)
+		CrossingBeat.Kind.DEBRIS:
+			if crossing.beat_hits_vessel(event):
+				crossing.hit_vessel(crossing.tuning.debris_hit)
 		CrossingBeat.Kind.SHARK_PASS:
 			_shark_pass(crossing)
 
