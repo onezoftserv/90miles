@@ -944,10 +944,13 @@ func test_the_three_water_kinds_have_their_own_depth_step() -> void:
 
 
 func test_layer_cell_counts_of_the_two_islands() -> void:
-	# design.md T12: about 1,800 and 2,000 cells. The sandbar's Sand is T12's 991 plus its 3 tide pools (T3)
+	# design.md T12: about 1,800 and 2,000 cells. The sandbar's Sand is T12's 991 plus its 3 tide pools (T3),
+	# plus the 4 bay tips coast-cay-reshape filled (QC1; was 994).
 	var expected: Dictionary[StringName, Array] = {
-		&"sandbar": [994, 422, 84, 0],
-		&"coast_cay": [1021, 393, 29, 256],
+		&"sandbar": [998, 422, 84, 0],
+		# coast-cay-reshape: the bight moves dune to the bay, scrub grows in 8 clumps and the rock tapers
+		# (was 1,021, 393, 29 and 256).
+		&"coast_cay": [1020, 368, 38, 229],
 	}
 	var layouts: Dictionary[StringName, IslandLayoutData] = {&"sandbar": SANDBAR, &"coast_cay": COAST_CAY}
 	for id: StringName in layouts:

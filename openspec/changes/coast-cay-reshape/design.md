@@ -125,3 +125,47 @@ Data only. To roll back, revert the commit: runs are not saved, and no network m
 ## Build notes
 
 The helper's settings, the final measures, the land count and the re-pinned numbers are recorded here as the tasks ship.
+
+**Gate and today's pins (0.1, 0.2; main 8c58c16, 2026-11-22).** art-coast-pass, coast-cay-bench and art-terrain-polish C9 have landed; the coordinating session said go. Every D2 cell is where the design says. Today's pins: 1,021 land cells (18.1%); Sand, Dune, Brush and Plain 1,021, 393, 29 and 256 (`test_terrain_art.gd`, C9 counted); 265 shore cells; a 195-tile lap; the farthest land 6.3 tiles from the sea, with 632, 436 and 2 cells beyond 2, 3 and 6 tiles; 34% spotted in a lap.
+
+**Tests first (1.1–1.3).** The outline tests failed on today's map as expected: a south run of 36 (the longest; the others 32, 26 and 19), a seam of 23, tip rows 11, 10 and 8 against a widest 11, 6 driftwood in row 26 and 29 lone scrub cells. The outer-corner test passed today. `test_patrol_coverage.gd` gains the bench rule (the bench and its 8 neighbours never lit in a lap); it passed on today's map. `test_a_lone_arrivals_walks` gains the workbench's 1–4 s walk.
+
+**The helper (2.1).** `c6_helper.py` measures every D1 rule, the land band, the 6-tile rule, the bench's sea margin and the walk bands (Dijkstra over the walk grid, diagonals only past two walkable sides, at 4 tiles/s), and `c6_build.py` applies hand-placed edits to today's rows. Both are kept in the build session's notes folder, not tracked. No cellular-automaton pass was needed: every edit is a placed jog, bulge, shoulder or clump. The shallows ring is then recomputed by the rule today's map already follows exactly: outside the bay, water within 2.5 tiles of land is shallows and deeper water is deep. The bay keeps its shallows.
+
+**The new outline (2.2).**
+- **The bight (D3).** The bay's north shore steps up from row 26 to 25 (columns 27–31), to 24 (columns 32–41, a 10-cell apex) and back down to 25 (columns 42–47). Shoulders of 4 and 3 cells round it into the west arm and the rock's beach strip.
+- **The rock (D4).** Full width round the post (rows 37–41, columns 62–68), then 9, 7, 5, 4 and 3 cells wide in rows 42–46. The seam jogs one column at rows 27–31 and 37–41. The east face steps in at rows 29–33. The beach strip breaks at rows 33–35, where the rock meets the bay.
+- **Jogs (D5).**
+  - North coast: out at columns 27–31 (row 14), 32–37 (row 13) and 38–47 (row 14); in at columns 49–52 (row 16).
+  - West coast: out at rows 21–25 (column 8). At rows 31–35 the whole west arm steps one cell east: the west coast moves in, the bay shore moves out, and the arm stays 12 cells wide, so the 6-tile rule holds. An outward-only bulge broke the rule (6.71) and was dropped.
+  - Clear of the landing and of the bench's sea margin.
+- **Land paid back** by the west arm's tip (rows 49–51), a smoother north-east corner into the rock's top, and the shoulders: 1,020 land cells (18.1%).
+- **Driftwood (D6).** 8 pieces in groups of 1–2: (24,25)+(25,26), (33,24)+(35,24), (45,25), (51,25), and the west arm's (10,30) and (10,38). At most 3 in a row.
+- **Scrub (D6).** 38 cells in 8 clumps of 4–5, each with a 2×2 core: two on the west arm's dune, four in the north band, one at the band's north-east end and one on the beach south of the landing.
+  - **Departure from D6:** 8 clumps, not 6–8 dune-only. Guardacostas-capture's rule "cover more than 2 tiles away is at most 13 steps from any cell" (`test_squad_search_coverage.gd`, landed after this design) failed at 17 steps, from the arm's longer tip and the rock's top. The beach clump and the north-east clump bring it back to 13, today's figure; the north-coast clump was dropped to stay at 8.
+- **Flotsam.** The two pieces on the stepped-out stretch moved one cell onto its new edge: (21,32) and (21,34). Each stands on a straight edge with two land corners.
+
+**Measures (2.2–2.4).**
+- Every coast run is at most 10 (north 10, south 10, east 10, west 8), and every rock seam run at most 6. The rock's southmost rows are 5, 4 and 3 against a widest 11.
+- No pick-up, palm or sign stands on an outer corner. The farthest land is 6.0 tiles from water. The bench's sea margin is 3.0.
+- Walks from the first landing, unchanged: bench 1.8 s, raft site 2.6 s, flotsam 3.1–4.3 s, lagoon 6.5 s, aloe 8.1–8.7 s, rope cache 11.6–11.9 s, post 13.8–14.3 s.
+- **Patrol (D8, not re-pinned):** 32.0% spotted (34% ± 3), the raft site still lit, the bench and its neighbours never lit. Squad search coverage: 13 steps to cover at most, both islands.
+
+**Re-pins (3.1), each with its reason in the test:**
+- `test_coast_cay_bench.gd` `LAND_CELLS`: 1,021 → 1,020.
+- `test_terrain_art.gd`: coast cay Sand, Dune, Brush and Plain 1,021/393/29/256 → 1,020/368/38/229. Sandbar Sand 994 → 998.
+- `test_shoreline.gd`: cay 265 → 291, sandbar 268 → 264.
+- `test_patrol_loop.gd`: cay lap 195 → 196.8.
+- `test_patrol_triggers.gd`:
+  - cay farthest land 6.3 → 7.07 (the west shoulder moves the bay's water away from (15, 25), south of the lagoon), and beyond 2, 3 and 6 tiles 632/436/2 → 636/439/8;
+  - sandbar farthest land 5.7 → 5.83, and beyond 2 and 3 tiles 617/413 → 621/417.
+- **One test made robust, not re-pinned:** `test_patrol_solo.gd`'s "spotted on open sand … the boat resumes its lap". With the sandbar's tips filled, the seeded night spawn puts a land crab beside the test's hiding spot. It pinches the crouched player to death, and the squad leaves at 51 s with nobody left to search. The test now clears the crabs first, because it is about the patrol and its squad. Main's sandbar passes it either way.
+- **3.2:** every other listed suite passes unedited.
+
+**Sandbar tips (5.1, 5.2; QC1 (a)).** `test_the_inner_bay_tips_have_no_notches` failed on all four cells, then passed. Land is 991 → 995, inside the 940–1,100 band, and the 6-tile rule holds. The patrol spots 45.4% (45% ± 3).
+
+**Integration (6.1, 6.2).**
+- Import twice and smoke are clean.
+- Full GUT: 2,679 of 2,680 pass. The one failure is main's `test_user_tmp`, which flags five suites that are not from this change.
+- No networking file changed. `test_coast_cay_net.gd`, `test_coast_cay_bench_net.gd` and `test_arrival_scatter_net.gd` pass.
+- Captures: `docs/art-pass/coast_cay_day.png` and `sandbar_day.png` are re-shot. `docs/art-pass/coast-cay-reshape/coast_cay_before_after.png` puts main's layout (left) beside the new one (right), both with today's art. `sandbar_bay_tips_before_after_x2.png` shows the two tips before (left) and after (right).
