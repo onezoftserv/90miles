@@ -3,3 +3,9 @@ Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
 Files: dive_ripple.png (2 frames of 16x8, drawn by hand in two palette colours; played by dive_ripple.tres)
+
+Work: 90 Millas swim ring
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: swim_ring.png (3 frames of 20x5: a dashed 1 px oval, #ffffff on its front half and #cbdbfc on its back, the dashes moving one pixel a frame; drawn by tools/art/fx.py from fx.json; played at 4 fps by swim_ring.tres round a swimmer at the water line)

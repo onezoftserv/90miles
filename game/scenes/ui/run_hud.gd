@@ -25,6 +25,7 @@ extends CanvasLayer
 const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn")
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
 const NAME_TAG_SCENE: PackedScene = preload("res://scenes/ui/name_tag.tscn")
+const TEAMMATE_SCENE: PackedScene = preload("res://scenes/ui/teammate_block.tscn")
 const PHASE_NAMES: Dictionary[DataEnums.DayPhase, String] = {
 	DataEnums.DayPhase.DAWN: "Amanecer",
 	DataEnums.DayPhase.DAY: "Día",
@@ -35,7 +36,7 @@ const TAG_NAME: StringName = &"NameTag"
 const HUD_PANEL: StringName = &"HudPanel"
 ## Every HUD window variation the prompt keeps clear of: the dark window, its thin rows and the
 ## strip's backdrop (hud-window-kit design D8).
-const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudStripBack"]
+const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudPanelTight", &"HudStripBack"]
 ## HUD pieces that are not HUD panels but that the interact prompt keeps clear of too (secret-cay's
 ## needle and note join it).
 const AVOID_GROUP: StringName = &"hud_avoid"
@@ -82,6 +83,9 @@ var _text: HudText = HudText.load_default()
 ## damage-feedback: the change floats over every player (survival-meters "Change floats over the
 ## body"), made here beside the marks.
 var floats: ChangeFloats = ChangeFloats.new()
+## guardacostas-capture: the scene panel (la_captura's speaker and line), made here and bound to the
+## session's capture scene.
+var scene_panel: ScenePanel = null
 @onready var phase_label: Label = %Phase
 @onready var teammates_panel: Control = %TeammatesPanel
 @onready var watching_panel: PanelContainer = %WatchingPanel
@@ -129,6 +133,9 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	patrol_horizon.bind(session, local_peer_id)
 	floats.locale = CoopSession.locale_of(session)
 	floats.bind(session)
+	scene_panel = ScenePanel.new()
+	add_child(scene_panel)
+	scene_panel.bind(session)
 	for peer_id: int in session.peer_ids():
 		_follow(peer_id)
 	refresh()
@@ -148,6 +155,7 @@ func _ready() -> void:
 	craft_list.opened.connect(func() -> void: list_open = true)
 	craft_list.closed.connect(func() -> void: list_open = false)
 	prompt.bench_pressed.connect(craft_list.open)
+	prompt.raft_pressed.connect(craft_list.open_raft)
 	sign_note.input_open = input_open
 	sign_note.opened.connect(func() -> void: list_open = true)
 	sign_note.closed.connect(func() -> void: list_open = false)
@@ -212,6 +220,8 @@ func set_screen_shown(value: bool) -> void:
 	marks.screen_shown = value
 	patrol_horizon.screen_shown = value
 	floats.screen_shown = value
+	if scene_panel != null:
+		scene_panel.screen_shown = value
 	refresh_watching()
 
 
@@ -253,25 +263,34 @@ func refresh() -> void:
 	for peer_id: int in session.peer_ids():
 		if peer_id != local_peer:
 			others.append(peer_id)
+	# A host playing alone has no teammate yet: no empty window in the corner.
+	teammates_panel.visible = not others.is_empty()
 	while _teammates.get_child_count() > others.size():
 		var extra := _teammates.get_child(_teammates.get_child_count() - 1)
 		_teammates.remove_child(extra)
 		extra.queue_free()
 	while _teammates.get_child_count() < others.size():
-		var row := Label.new()
-		_teammates.add_child(row)
+		_teammates.add_child(TEAMMATE_SCENE.instantiate())
 	for i: int in others.size():
 		var player := session.body(others[i])
 		var state := state_word(player, session.is_dropped(others[i]))
-		(_teammates.get_child(i) as Label).text = ("%s %d %s" % [session.player_name(others[i]), roundi(player.meters.health), state]).strip_edges()
+		(_teammates.get_child(i) as TeammateBlock).show_teammate(session.player_name(others[i]), player.meters.health, state, player.look_slot)
 
 
-## The teammate rows, top to bottom ("Papo 0 Caído").
+## The teammate rows, top to bottom ("Papo 0 Caído"): each block's name, health and state word.
 func teammate_rows() -> Array[String]:
 	var texts: Array[String] = []
 	for child: Node in _teammates.get_children():
-		texts.append((child as Label).text)
+		texts.append((child as TeammateBlock).summary())
 	return texts
+
+
+## The teammate blocks, top to bottom (hud-window-kit design D7).
+func teammate_blocks() -> Array[TeammateBlock]:
+	var blocks: Array[TeammateBlock] = []
+	for child: Node in _teammates.get_children():
+		blocks.append(child as TeammateBlock)
+	return blocks
 
 
 ## Whom the local player watches, worked out again, and the HUD that goes with it: the line in the

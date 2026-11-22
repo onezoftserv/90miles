@@ -36,6 +36,14 @@ The crossing SHALL draw the same sea in its deep-water step, scrolling with the 
 - **WHEN** the crossing is drawn
 - **THEN** the player is drawn after the sea and before the deck, and once they swim to 1 px east of the deck, or climb aboard, they are drawn after it again
 
+### Requirement: Facing variants for creatures
+When a creature's frames have facing variants of an animation (`<name>_down`, `<name>_up`, `<name>_side`), the variant for its synced facing SHALL play, the larger of the horizontal and vertical facing winning; side variants are mirrored while it faces left. Frames without variants play as they are.
+
+#### Scenario: A gull flying north
+- **GIVEN** a test creature with the seagull's behaviour whose frames have `swoop_down`, `swoop_up` and `swoop_side`
+- **WHEN** it swoops facing mostly up
+- **THEN** it plays `swoop_up`, and so does the shipped seagull, whose flight frames have `swoop_*`, `flee_*` and `return_*` facings, while frames with only `idle_*` and `move_*` play `move_up`
+
 ## ADDED Requirements
 
 ### Requirement: Cover over a crouched body
@@ -99,7 +107,7 @@ A flying gull SHALL be drawn from flight frames wider than its 16 px standing ce
 - **THEN** it plays a flight animation for its facing, its frame has no opaque pixel in its outer columns, and its feet are 14–16 px above its shadow on the ground
 
 ### Requirement: Lying pose
-A downed, dragged or dead player SHALL be drawn lying along the ground with the face upright, the eyes side by side, made by a pose rule from the walk frame so every look part follows with no hand pixels, and with a lying shadow about 22–24×5 px in place of the standing one. The downed pose keeps its breath frame and dead keeps none. A solo player sees their own lying pose.
+A downed, dragged or dead player SHALL be drawn lying along the ground with the face upright, the eyes side by side, made by a pose rule from the walk frame so every look part follows with no hand-drawn lying cell, and with a lying shadow about 22–24×5 px in place of the standing one. The downed pose keeps its breath frame and its eyes open; dead keeps no breath frame and shuts its eyes. A solo player sees their own lying pose.
 
 #### Scenario: A solo player is downed
 - **GIVEN** a sandbar built for one offline player

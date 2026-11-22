@@ -37,12 +37,12 @@ A palm cell SHALL be drawn on the dune layer when at least 3 of its 4 orthogonal
 - **THEN** each takes the full dune tile, mask 15
 
 ### Requirement: Dune corners are rounded
-The dune layer's corner tiles SHALL be rounded like the beach's. An outer dune corner ends in a quarter arc round its dune corner. An inner corner, and each side of a diagonal, ends in a bite about 4 px deep. Each passes through the points where the straight dune edges meet the cell border, so neighbouring dune tiles join without a jog. The dune keeps its ragged lip, its straight edges carry no tuft, and its islet stays the hand-drawn tile. A solo player sees the same dune.
+The dune layer's corner tiles SHALL be rounded like the beach's. An outer dune corner ends in a quarter arc round its dune corner; an inner corner, and each side of a diagonal, ends in a rounded bite as deep as the straight edges allow. Neighbouring dune tiles join without a jog. The straight edges, their tufts and the hand-drawn islet stay as they are. A solo player sees the same dune.
 
 #### Scenario: Dune corners have no stair step
 - **GIVEN** the dune tiles of the outer corners, the inner corners and the two diagonals
 - **WHEN** their pixels are read
-- **THEN** each outer corner's dune ends within 2 px of a quarter arc round its dune corner, and each inner corner and diagonal side ends in a bite about 4 px deep, with no right-angle step inside the tile
+- **THEN** each outer corner's dune lies on a quarter ellipse round its dune corner, reaching along the two border strips as far as today's straight edges do, at most 4 px off it; and each inner corner and diagonal side ends in a bite at least 2 px deep along the diagonal
 - **AND** every pair of dune tiles that can sit side by side meets at the cell border without a jog, and the straight edges and the islet are unchanged
 
 #### Scenario: The sandbar's dunes, solo

@@ -4,42 +4,42 @@ Rebuilds: `python -I tools/art/compose.py --packs C:/Users/liann/src/90miles/gam
 
 ## 0. Gate
 
-- [ ] 0.1 Start only after art-coast-pass (art wave 1) has merged into `main` and the coordinator says go. Branch from `main`. Re-read the merged `player_look.gd`, `player_pose.gd`, `creature_look.gd`, `crossing.gd` and `creature_threats.gd`, and update this design where they moved.
-- [ ] 0.2 Check that the before captures this change compares against are in `docs/art-pass/review-2026-11-14/before/` (tracked with the proposal; `before/README.md` names each source): `sandbar_day_swimming_west.png`, `cr_swim_deep_left_crop8.png`, `cr_lineup_day_crop6.png`, `cr_gull_swoop_down_crop8.png`, `cr_player_downed_crop8.png`, `hud_downed_solo.png`, `scrub_three.png`, `cr_water_day_crop5.png`, `crossing_shark.png` and `crossing_raft_squall.png`.
+- [x] 0.1 Start only after art-coast-pass (art wave 1) has merged into `main` and the coordinator says go. Branch from `main`. Re-read the merged `player_look.gd`, `player_pose.gd`, `creature_look.gd`, `crossing.gd` and `creature_threats.gd`, and update this design where they moved.
+- [x] 0.2 Check that the before captures this change compares against are in `docs/art-pass/review-2026-11-14/before/` (tracked with the proposal; `before/README.md` names each source): `sandbar_day_swimming_west.png`, `cr_swim_deep_left_crop8.png`, `cr_lineup_day_crop6.png`, `cr_gull_swoop_down_crop8.png`, `cr_player_downed_crop8.png`, `hud_downed_solo.png`, `scrub_three.png`, `cr_water_day_crop5.png`, `crossing_shark.png` and `crossing_raft_squall.png`.
 - Groups 1–4 need only 0.1. Group 5 also waits for art-terrain-polish C10 (scrub variants). Groups 6 and 7 also wait for crossing-gameplay (its shark tell, group 7 there) to merge.
 
 ## 1. Swim bob and ripple ring (C19, C20; SP3, SP2)
 
-- [ ] 1.1 Write the tests and see them fail:
+- [x] 1.1 Write the tests and see them fail:
   - `test_poses.py`: the swim cells come from walk frames 1 and 3, and the two swim cells of each facing differ above the water row;
   - `test_fx.py`: `fx.py` draws 3 ring frames of about 20×5 in #ffffff and #cbdbfc only, whole alpha, the same bytes on a second run, and nothing outside its out folder;
   - `test_player_art.gd`: a solo swimmer shows `Look/SwimRing`, ordered after Shadow and before Sprite, playing; a standing, diving or downed player hides it;
   - `test_palette_swap.gd`: `player_look.gdshader` no longer reads `art_on_ripple` or `art_water_alpha`, still cuts on the node-local y, and `art_common.gdshaderinc` is unchanged.
-- [ ] 1.2 Set `SWIM_FROM = (1, 3)` and rebuild the player parts. Verify that `test_the_head_anchors_of_the_default_look` still reads swim −16, and that only the swim cells changed in each part sheet.
-- [ ] 1.3 Add `tools/art/fx.py`, `fx.json` and the ring; add `game/assets/art/fx/swim_ring.tres` (4 fps) and its licence block; add `Look/SwimRing` and `PlayerPose.shows_swim_ring`; make the shader's cut hard (design D1). Verify `test_a_slot_0_swimmer_is_cut_at_the_feet_line_with_no_shadow` (updated to the hard cut), `test_swimmers_stand_out_on_shallows_and_deep` (counting the ring), `test_the_composed_look_keeps_the_frame_budget_with_the_ripple` and the `Look/Ripple` tests.
-- [ ] 1.4 Windowed 1-player capture with `tests/manual/capture_looks.tscn` and a solo sandbar swim west: compare with `before/sandbar_day_swimming_west.png` and `before/cr_swim_deep_left_crop8.png`. Record the ring's size and the bob in the build notes.
+- [x] 1.2 Set `SWIM_FROM = (1, 3)` and rebuild the player parts. Verify that `test_the_head_anchors_of_the_default_look` still reads swim −16, and that only the swim cells changed in each part sheet.
+- [x] 1.3 Add `tools/art/fx.py`, `fx.json` and the ring; add `game/assets/art/fx/swim_ring.tres` (4 fps) and its licence block; add `Look/SwimRing` and `PlayerPose.shows_swim_ring`; make the shader's cut hard (design D1). Verify `test_a_slot_0_swimmer_is_cut_at_the_feet_line_with_no_shadow` (updated to the hard cut), `test_swimmers_stand_out_on_shallows_and_deep` (counting the ring), `test_the_composed_look_keeps_the_frame_budget_with_the_ripple` and the `Look/Ripple` tests.
+- [x] 1.4 Windowed 1-player capture with `tests/manual/capture_looks.tscn` and a solo sandbar swim west: compare with `before/sandbar_day_swimming_west.png` and `before/cr_swim_deep_left_crop8.png`. Record the ring's size and the bob in the build notes.
 
 ## 2. Crab (C25; SP8)
 
-- [ ] 2.1 Write the tests and see them fail: in `test_creature_art.gd`, the crab's `idle` has 3 unique frames in the order 0, 1, 0, 2 at 4–5 fps, `move` 4 frames at no more than 12 fps, no opaque pixel in a frame's two outer columns, the feet on row 15. Add the 1-player test: on the solo sandbar a still crab plays `idle` and a walking one `move`.
-- [ ] 2.2 Redraw `tools/art/fixes/creatures/land_crab.png` (design D6), update its sheet size in `creature_sheets.json` and its frames in `land_crab_frames.tres`. Verify `test_every_creature_has_frames_with_an_idle_within_the_budget`, `test_a_solo_crab_on_the_sand_has_its_shadow_under_it`, `test_a_client_crab_fed_positions_at_10_hz_plays_move_every_frame_then_idle`, the outline contrast check and `tools/art/test_creatures.py`.
-- [ ] 2.3 Windowed 1-player capture of the crab lineup by day and at night: compare with `before/cr_lineup_day_crop6.png`.
+- [x] 2.1 Write the tests and see them fail: in `test_creature_art.gd`, the crab's `idle` has 3 unique frames in the order 0, 1, 0, 2 at 4–5 fps, `move` 4 frames at no more than 12 fps, no opaque pixel in a frame's two outer columns, the feet on row 15. Add the 1-player test: on the solo sandbar a still crab plays `idle` and a walking one `move`.
+- [x] 2.2 Redraw `tools/art/fixes/creatures/land_crab.png` (design D6), update its sheet size in `creature_sheets.json` and its frames in `land_crab_frames.tres`. Verify `test_every_creature_has_frames_with_an_idle_within_the_budget`, `test_a_solo_crab_on_the_sand_has_its_shadow_under_it`, `test_a_client_crab_fed_positions_at_10_hz_plays_move_every_frame_then_idle`, the outline contrast check and `tools/art/test_creatures.py`.
+- [x] 2.3 Windowed 1-player capture of the crab lineup by day and at night: compare with `before/cr_lineup_day_crop6.png`.
 
 ## 3. Gull flight (C25; SP10)
 
-- [ ] 3.1 Write the tests and see them fail: the gull's frames have `swoop_*`, `flee_*` and `return_*` facings in cells wider than 16 px, with no opaque pixel in a frame's outer column; the flying lift is 14–16 px. Rename `test_a_flying_gulls_shadow_stays_on_the_ground_8_px_below_its_sprite` and its `AIR_LIFT_PX` to the new lift. Add the 1-player test: a solo sandbar gull that swoops plays a flight animation with its shadow on the ground.
-- [ ] 3.2 Draw `tools/art/fixes/creatures/seagull_flight.png` (24×16 cells; design D7), add it to `creature_sheets.json` (a second gull sheet or a wider one), add the flight animations to `seagull_frames.tres`, and set the gull's `air_lift_px` to 15 in `creature_art.tres`. Record the fixes licence block (kitbashed from the Tiny Tiny Heroes gull; credit unchanged). Verify `test_the_shipped_recipe_names_tracked_hand_sources_and_whole_cells`, the perched-gull tests and the frame budget.
-- [ ] 3.3 Windowed 1-player capture of a swoop: compare with `before/cr_gull_swoop_down_crop8.png`.
+- [x] 3.1 Write the tests and see them fail: the gull's frames have `swoop_*`, `flee_*` and `return_*` facings in cells wider than 16 px, with no opaque pixel in a frame's outer column; the flying lift is 14–16 px. Rename `test_a_flying_gulls_shadow_stays_on_the_ground_8_px_below_its_sprite` and its `AIR_LIFT_PX` to the new lift. Add the 1-player test: a solo sandbar gull that swoops plays a flight animation with its shadow on the ground.
+- [x] 3.2 Draw `tools/art/fixes/creatures/seagull_flight.png` (24×16 cells; design D7), add it to `creature_sheets.json` (a second gull sheet or a wider one), add the flight animations to `seagull_frames.tres`, and set the gull's `air_lift_px` to 15 in `creature_art.tres`. Record the fixes licence block (kitbashed from the Tiny Tiny Heroes gull; credit unchanged). Verify `test_the_shipped_recipe_names_tracked_hand_sources_and_whole_cells`, the perched-gull tests and the frame budget.
+- [x] 3.3 Windowed 1-player capture of a swoop: compare with `before/cr_gull_swoop_down_crop8.png`.
 
 ## 4. Lying pose (C25; SP9)
 
-- [ ] 4.1 Write the tests and see them fail:
+- [x] 4.1 Write the tests and see them fail:
   - `test_poses.py`: the lying rule turns the rows below the neck and moves the head block unturned (the eye row stays one row); the lying figure is wider than tall; the per-layer invariant holds for every part;
   - replace `test_downed_is_the_down_frame_turned_clockwise_and_moved_down_with_a_chest_lift` with the lying rule and its chest lift;
   - `test_drop_shadow.gd`: the LYING size is a 22–24×5 ellipse in the darkest colour, and the existing sizes keep their enum values;
   - `test_player_art.gd`, 1-player: a solo downed player shows the lying frames over the LYING shadow, and a standing one the 12×7.
-- [ ] 4.2 Add the `LIE` rule in `poses.py` and use it for downed, the breath frame and dead (design D8). Rebuild the parts. Add the lying ellipse to `fx.py` and LYING to `DropShadow.Size`, appended; `PlayerLook` picks it for lying poses. Verify that `BALSERO_ANCHORS` downed and dead are re-measured and recorded, `test_a_solo_player_who_walks_crouches_swims_and_is_downed_is_drawn_from_those_cells` and the dead-is-not-downed tests pass.
-- [ ] 4.3 Windowed 1-player capture of a solo downed body and a dead one: compare with `before/cr_player_downed_crop8.png` and `before/hud_downed_solo.png`. If the remap still reads as a turned standing frame, stop and record it; a hand lying cell is a new task, not a silent switch.
+- [x] 4.2 Add the `LIE` rule in `poses.py` and use it for downed, the breath frame and dead (design D8). Rebuild the parts. Add the lying ellipse to `fx.py` and LYING to `DropShadow.Size`, appended; `PlayerLook` picks it for lying poses. Verify that `BALSERO_ANCHORS` downed and dead are re-measured and recorded, `test_a_solo_player_who_walks_crouches_swims_and_is_downed_is_drawn_from_those_cells` and the dead-is-not-downed tests pass.
+- [x] 4.3 Windowed 1-player capture of a solo downed body and a dead one: compare with `before/cr_player_downed_crop8.png` and `before/hud_downed_solo.png`. If the remap still reads as a turned standing frame, stop and record it; a hand lying cell is a new task, not a silent switch.
 
 ## 5. Bush in front (C8; PR1) — after art-terrain-polish C10
 

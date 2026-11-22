@@ -20,7 +20,7 @@ outline_colors = PackedColorArray(0, 0, 0, 1, 0.13333334, 0.1254902, 0.20392157,
 land_grounds = Dictionary[StringName, Color]({
 &"brush": Color(0.3310059, 0.5959509, 0.263319, 1),
 &"dune": Color(0.9589576, 0.8549288, 0.6958563, 1),
-&"sand": Color(0.9202704, 0.7458601, 0.5811121, 1)
+&"sand": Color(0.8934972, 0.7052941, 0.5327405, 1)
 })
 water_grounds = Dictionary[StringName, Color]({
 &"brackish": Color(0.2842615, 0.5992659, 0.5051482, 1),

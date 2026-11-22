@@ -8,7 +8,7 @@ extends GutTest
 
 const COAST_PATH: String = "res://resources/islands/coast_cay.tres"
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_coast_cay_bench_settings.cfg"
+var settings_path: String = UserTmp.path("test_coast_cay_bench_settings.cfg")
 const COAST: StringName = &"coast_cay"
 const BENCH_NAME: StringName = &"HutWorkbench"
 ## The coast cay's land cells before the bench (island-generation "Handmade coast cay").
@@ -36,8 +36,8 @@ func before_each() -> void:
 func after_each() -> void:
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 # --- the layout ---------------------------------------------------------------------------------------
@@ -196,7 +196,7 @@ func _shell() -> GameShell:
 	WeatherManager.stop()
 	WeatherManager.sky.start_at(0.0)
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	shell.session.body(1).player_input.enabled = false

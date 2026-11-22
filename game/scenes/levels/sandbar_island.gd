@@ -220,11 +220,14 @@ func _place_raft_site() -> void:
 	_session.add_child(site)
 
 
-# A launched raft is used up and a fresh site takes its place, so whoever stays can build again.
+# A launched raft is used up and a fresh site takes its place, so whoever stays can build again. An
+# unfinished mend or fitting on it ends first, giving its deposits back (island-stop).
 func _on_route_started(route_id: StringName, _peer_ids: Array[int]) -> void:
 	if route_id != RAFT_RECIPE_ID:
 		return
 	var raft := _session.get_node_or_null(NodePath(RAFT_NAME))
+	if raft is Raft:
+		(raft as Raft).end_job()
 	if raft != null:
 		_session.remove_child(raft)
 		raft.queue_free()

@@ -142,3 +142,80 @@ func test_a_solo_player_on_the_sandbar_has_a_shore_to_walk() -> void:
 	var built: IslandLayout = IslandLayout.build(SANDBAR)
 	assert_false(TerrainQuery.is_water(built.terrain.terrain_at(built.solo_spawn)))
 	assert_gt(ShoreRule.shore_cells(built.terrain, built.tide_pools).size(), 0)
+
+
+# --- art-terrain-polish C13, TR13: still water is still (design D2) ---
+
+const POND: PackedStringArray = [
+	".........",
+	".sssssss.",
+	".sssssss.",
+	".ss,,,ss.",
+	".ss,,,ss.",
+	".sssssss.",
+	".sssssss.",
+	".........",
+]
+
+
+func test_a_pond_with_no_deep_cell_is_still_and_a_bay_joined_to_deep_is_not() -> void:
+	var still: Dictionary[Vector2i, bool] = ShoreRule.still_water(TerrainRows.build(POND))
+	assert_eq(still.size(), 6, "the pond's six cells")
+	for cell: Vector2i in still:
+		assert_eq(TerrainRows.build(POND).terrain_at(cell), DataEnums.Terrain.BRACKISH, "%s is the pond" % cell)
+	var bay := PackedStringArray([".........", ".sssssss.", ".ss~~~ss.", ".ss~~~...", ".sssssss.", "........."])
+	assert_true(ShoreRule.still_water(TerrainRows.build(bay)).is_empty(), "a bay that reaches deep water is open")
+	var pool := PackedStringArray(["....", ".sp.", ".ss.", "...."])
+	assert_true(ShoreRule.still_water(TerrainRows.build(pool), TerrainRows.pools(pool)).is_empty(), "a tide pool is land, never a still body")
+
+
+func test_a_shore_cell_on_still_water_takes_the_still_piece() -> void:
+	var terrain: GridTerrain = TerrainRows.build(POND)
+	var still: Dictionary[Vector2i, bool] = ShoreRule.still_water(terrain)
+	var inner: Dictionary = ShoreRule.foam_tile(Vector2i(3, 2), terrain, [], still)
+	assert_eq(inner.get(&"source"), ShoreRule.STILL_SOURCE, "the pond's rim is still")
+	assert_eq(inner.get(&"atlas"), Vector2i(0, 3), "with the same piece of its mask")
+	assert_eq(ShoreRule.foam_tile(Vector2i(1, 1), terrain, [], still).get(&"source"), ShoreRule.FOAM_SOURCE, "the outer coast keeps its surf")
+	assert_eq(ShoreRule.foam_tile(Vector2i(3, 2), terrain, []).get(&"source"), ShoreRule.FOAM_SOURCE, "with no still water given, today's surf")
+	var thin := PackedStringArray([".......", ".sssss.", ".s,,,s.", ".sssss.", "......."])
+	var thin_terrain: GridTerrain = TerrainRows.build(thin)
+	var thin_still: Dictionary[Vector2i, bool] = ShoreRule.still_water(thin_terrain)
+	assert_eq(ShoreRule.foam_tile(Vector2i(2, 1), thin_terrain, [], thin_still).get(&"source"), ShoreRule.FOAM_SOURCE, "a cell touching the sea and the pond keeps the surf")
+	assert_true(ShoreRule.shore_cells(terrain, []).has(Vector2i(3, 2)), "a still cell is still a shore cell")
+
+
+## One player, offline: the coast cay's lagoon is found from the layout (the water body with no
+## deep cell: the brackish water and the shallows ring round it), its rim takes the still piece and every shore cell on open water keeps the surf.
+func test_a_solo_coast_cay_lagoon_has_a_still_edge() -> void:
+	var cay: IslandLayout = IslandLayout.build(COAST_CAY)
+	var still: Dictionary[Vector2i, bool] = ShoreRule.still_water(cay.terrain, cay.tide_pools)
+	assert_false(still.is_empty(), "the cay has a lagoon")
+	for cell: Vector2i in cay.terrain.cells:
+		if cay.terrain.terrain_at(cell) == DataEnums.Terrain.BRACKISH:
+			assert_true(still.has(cell), "%s: the brackish lagoon is still water" % cell)
+	for cell: Vector2i in still:
+		assert_true(cay.terrain.terrain_at(cell) in [DataEnums.Terrain.BRACKISH, DataEnums.Terrain.SHALLOWS], "%s: the lagoon and its shallow ring" % cell)
+	var rim: int = 0
+	var open: int = 0
+	for cell: Vector2i in ShoreRule.shore_cells(cay.terrain, cay.tide_pools):
+		var wet_still: bool = false
+		var wet_open: bool = false
+		for y: int in range(-1, 2):
+			for x: int in range(-1, 2):
+				var next: Vector2i = cell + Vector2i(x, y)
+				if TerrainQuery.is_water(cay.terrain.terrain_at(next)) and not cay.tide_pools.has(next):
+					if still.has(next):
+						wet_still = true
+					else:
+						wet_open = true
+		var source: int = ShoreRule.foam_tile(cell, cay.terrain, cay.tide_pools, still).get(&"source", -1)
+		if wet_still and not wet_open:
+			rim += 1
+			assert_eq(source, ShoreRule.STILL_SOURCE, "lagoon rim %s is still" % cell)
+		else:
+			open += 1
+			assert_eq(source, ShoreRule.FOAM_SOURCE, "open shore %s keeps its surf" % cell)
+	assert_gt(rim, 0, "the lagoon has a rim")
+	assert_eq(rim + open, 265, "every shore cell is one or the other")
+	var sandbar: IslandLayout = IslandLayout.build(SANDBAR)
+	assert_true(ShoreRule.still_water(sandbar.terrain, sandbar.tide_pools).is_empty(), "the sandbar has no still water")

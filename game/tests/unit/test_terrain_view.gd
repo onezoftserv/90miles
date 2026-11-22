@@ -10,7 +10,7 @@ const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.ts
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SANDBAR: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
 const COAST_CAY: IslandLayoutData = preload("res://resources/islands/coast_cay.tres")
-const SETTINGS_PATH: String = "user://test_terrain_view_settings.cfg"
+var settings_path: String = UserTmp.path("test_terrain_view_settings.cfg")
 const VIEW_NAME: NodePath = ^"Terrain"
 const TILE: float = 16.0
 ## design.md D15: every layer the view builds and its z_index.
@@ -47,8 +47,8 @@ func after_each() -> void:
 		net = null
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _island(layout: IslandLayoutData) -> SandbarIsland:
@@ -353,6 +353,7 @@ func test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule() -> void:
 	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
 		var island := _island(layout)
 		var pools: Array[Vector2i] = island.built.tide_pools
+		var palms: Array[Vector2i] = island.built.palms
 		var terrain: GridTerrain = island.terrain
 		var sand: Dictionary = _cells(island, &"Sand")
 		var empty: int = 0
@@ -362,19 +363,20 @@ func test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule() -> void:
 		assert_eq(empty, 0, "%s: no land cell without a sand tile" % layout.id)
 		for layer: StringName in LAND_LAYERS:
 			var drawn: Dictionary = _cells(island, layer)
-			var expected: Array[Vector2i] = TerrainArt.layer_cells(layer, terrain, pools)
+			var expected: Array[Vector2i] = TerrainArt.layer_cells(layer, terrain, pools, palms)
 			assert_eq(drawn.size(), expected.size(), "%s %s: one tile per member cell" % [layout.id, layer])
 			var wrong: int = 0
 			for cell: Vector2i in expected:
-				if drawn.get(cell, []) != _as_list(TerrainArt.tile(layer, cell, layout.id, terrain, pools)):
+				if drawn.get(cell, []) != _as_list(TerrainArt.tile(layer, cell, layout.id, terrain, pools, palms)):
 					wrong += 1
 			assert_eq(wrong, 0, "%s %s: every cell is TerrainArt's tile" % [layout.id, layer])
 		var shore: Dictionary = _cells(island, &"Shore")
 		var foam_cells: Array[Vector2i] = ShoreRule.shore_cells(terrain, pools)
+		var still: Dictionary[Vector2i, bool] = ShoreRule.still_water(terrain, pools)
 		assert_eq(shore.size(), foam_cells.size(), "%s: one foam tile per shore cell" % layout.id)
 		var wrong_foam: int = 0
 		for cell: Vector2i in foam_cells:
-			if shore.get(cell, []) != _as_list(ShoreRule.foam_tile(cell, terrain, pools)):
+			if shore.get(cell, []) != _as_list(ShoreRule.foam_tile(cell, terrain, pools, still)):
 				wrong_foam += 1
 		assert_eq(wrong_foam, 0, "%s: every shore cell has its foam piece" % layout.id)
 		var size: Vector2i = island.built.size
@@ -481,7 +483,8 @@ func test_dune_and_scrub_shore_cells_on_the_sandbar_take_their_shore_sheets() ->
 			continue
 		var sand: int = TerrainArt.corner_mask(TerrainArt.SAND, cell, terrain, pools)
 		var own: int = TerrainArt.corner_mask(layer, cell, terrain, pools)
-		assert_eq(_tile_at(island, layer, cell), [art.shore_source_of[layer], Vector2i(sand, own), 0], "%s shore %s" % [layer, cell])
+		var block: int = TerrainArt.shore_row(layer, cell, SANDBAR.id)
+		assert_eq(_tile_at(island, layer, cell), [art.shore_source_of[layer], Vector2i(sand, 16 * block + own), 0], "%s shore %s" % [layer, cell])
 		seen[layer] += 1
 	assert_gt(seen[TerrainArt.DUNE], 0, "the sandbar has dune shore cells")
 	assert_gt(seen[TerrainArt.BRUSH], 0, "the sandbar has scrub shore cells")
@@ -508,7 +511,7 @@ func test_the_layer_build_of_both_islands_is_timed_and_bounded() -> void:
 func _shell() -> GameShell:
 	NetManager.start_solo()
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	shell.session.body(CoopSession.HOST_ID).player_input.enabled = false
@@ -547,3 +550,61 @@ func test_a_solo_player_walks_across_a_tile_edge_on_the_sandbar() -> void:
 	body.intent = MoveIntent.new()
 	assert_gte(body.global_position.x, edge_x + TILE * 0.5, "walked over the sand-to-dune edge in %d frames" % frames)
 	assert_eq(floori(body.global_position.y / TILE), cell.y, "kept its row: nothing pushed it aside")
+
+# --- art-terrain-polish C12, TR9: pebbles at the foot of the rock (design D6) ---
+
+## The pebble decal tile for a straight rock seam's own mask: the sand strip faces the beach.
+const PEBBLE_SOURCE: int = 2
+const PEBBLE_SIDE: Dictionary[int, Vector2i] = {10: Vector2i(0, 0), 5: Vector2i(1, 0), 12: Vector2i(2, 0), 3: Vector2i(3, 0)}
+
+
+func test_pebbles_lie_only_at_the_foot_of_straight_inland_rock_seams() -> void:
+	for layout: IslandLayoutData in [COAST_CAY]:
+		var island := _island(layout)
+		var terrain: GridTerrain = island.terrain
+		var pools: Array[Vector2i] = island.built.tide_pools
+		var decals := _layer(island, &"Decals")
+		var placed: int = 0
+		var eligible: int = 0
+		for cell: Vector2i in terrain.cells:
+			var source: int = decals.get_cell_source_id(cell)
+			var straight: bool = false
+			if terrain.terrain_at(cell) == DataEnums.Terrain.ROCK and TerrainArt.corner_mask(TerrainArt.SAND, cell, terrain, pools) == TerrainArt.FULL:
+				straight = PEBBLE_SIDE.has(TerrainArt.corner_mask(TerrainArt.PLAIN, cell, terrain, pools))
+			if straight:
+				eligible += 1
+			if source != PEBBLE_SOURCE:
+				continue
+			placed += 1
+			assert_true(straight, "%s: pebbles only on a straight inland rock seam" % cell)
+			assert_eq(decals.get_cell_atlas_coords(cell), PEBBLE_SIDE[TerrainArt.corner_mask(TerrainArt.PLAIN, cell, terrain, pools)], "%s: the side facing the beach" % cell)
+			assert_eq(TerrainView.has_pebbles(layout.id, cell), true, "%s: chosen by the cell's hash" % cell)
+		assert_gt(placed, 0, "%s has pebbles" % layout.id)
+		assert_lt(placed, eligible, "%s: not every seam cell" % layout.id)
+
+
+## One player, offline: on the coast cay, a rock cell with the sea to its south (found from the
+## layout) draws the plain shore tile whose bottom rows hold the face over the water.
+func test_a_solo_coast_cay_rock_shore_cell_draws_its_face() -> void:
+	var island := _island(COAST_CAY)
+	var terrain: GridTerrain = island.terrain
+	var pools: Array[Vector2i] = island.built.tide_pools
+	var shore: Image = Image.load_from_file(ProjectSettings.globalize_path("res://assets/art/terrain/plain_shore.png"))
+	var face: Color = Color("#595652")
+	var found: int = 0
+	for cell: Vector2i in terrain.cells:
+		if terrain.terrain_at(cell) != DataEnums.Terrain.ROCK or not TerrainQuery.is_water(terrain.terrain_at(cell + Vector2i.DOWN)):
+			continue
+		var tile: Array = _tile_at(island, &"Plain", cell)
+		if tile.is_empty() or tile[0] != TerrainArt.data().shore_source_of[TerrainArt.PLAIN]:
+			continue
+		var atlas: Vector2i = tile[1]
+		var region: Image = shore.get_region(Rect2i(atlas * 16, Vector2i(16, 16)))
+		var has_face: bool = false
+		for x: int in 16:
+			for y: int in 16:
+				if region.get_pixel(x, y).is_equal_approx(face):
+					has_face = true
+		assert_true(has_face, "rock shore %s (atlas %s) shows its face" % [cell, atlas])
+		found += 1
+	assert_gt(found, 0, "the cay has rock over the sea to its south")

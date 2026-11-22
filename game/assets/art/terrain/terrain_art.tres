@@ -53,6 +53,15 @@ variant_count = Dictionary[StringName, int]({
 &"Dune": 4,
 &"Brush": 4
 })
+variant_masks = Dictionary[StringName, PackedInt32Array]({
+&"Brush": PackedInt32Array(0, 15)
+})
+shore_variants = Dictionary[StringName, int]({
+&"Brush": 3
+})
+variant_weights = Dictionary[StringName, PackedInt32Array]({
+&"Sand": PackedInt32Array(70, 10, 10, 10)
+})
 plain_variants = Dictionary[int, int]({
 0: 3
 })

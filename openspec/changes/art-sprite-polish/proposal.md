@@ -37,6 +37,7 @@ None.
 - `art-pass`:
   - "Swimmers at the water line": the hard cut, the ripple ring and the swim bob replace the 1 px white ripple row and the fade.
   - "Crossing look": a swimmer north of the deck is drawn under it.
+  - "Facing variants for creatures": its scenario said the shipped gull, having only `idle_*` and `move_*`, plays `move_up` when it swoops; with its flight frames (D7) it plays `swoop_up`. Added during the build (group 3); no open change modifies this requirement.
   - New requirements: "Cover over a crouched body", "The fin stays off the deck", "The shark reads from every side", "Crab frames", "Gull flight frames" and "Lying pose".
 
 ## Impact

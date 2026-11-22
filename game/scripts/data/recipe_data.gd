@@ -74,8 +74,12 @@ enum Availability {
 @export var output_count: int = 1
 ## VESSEL: max and starting integrity (raft 100); overrides RouteData.vessel_integrity.
 @export var vessel_integrity: float = 0.0
-## VESSEL_UPGRADE: bonus to max integrity. VESSEL_REPAIR: integrity restored.
+## VESSEL_UPGRADE: bonus to max integrity, also added to the vessel's integrity when it is fitted
+## (island-stop D3). VESSEL_REPAIR: integrity restored, never above the maximum.
 @export var integrity_delta: float = 0.0
+## VESSEL_UPGRADE: what the fitting does at sea beyond the maximum (scope VESSEL), such as the
+## defensas' VESSEL_HAZARD_DAMAGE or the toldo's VESSEL_DECK_SHADE (island-stop D3).
+@export var vessel_modifiers: Array[ModifierData] = []
 
 @export_group("Structure Yield")
 ## Item id a STRUCTURE yields (solar still: still_cup).

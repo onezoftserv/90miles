@@ -47,6 +47,30 @@ static func _validate_type(catalog: ContentCatalog, type: StringName) -> PackedS
 		errors.append_array(_check_secret(where, data))
 		errors.append_array(_check_patrol(where, data))
 		errors.append_array(_check_squad(catalog, where, data))
+		errors.append_array(_check_vessel_recipe(where, data))
+	return errors
+
+
+# island-stop "Mending a built raft", "Raft fittings": a mend restores integrity and a fitting
+# raises the maximum or changes the vessel at sea; both are worked on the raft itself, never at a
+# bench or as a placed site.
+static func _check_vessel_recipe(where: String, data: ContentData) -> PackedStringArray:
+	var errors: PackedStringArray = []
+	var recipe := data as RecipeData
+	if recipe == null:
+		return errors
+	var kind := recipe.output_kind
+	if kind != RecipeData.OutputKind.VESSEL_REPAIR and kind != RecipeData.OutputKind.VESSEL_UPGRADE:
+		return errors
+	if recipe.station != RecipeData.Station.NONE or recipe.build_site:
+		errors.append("%s: a vessel recipe is worked on the raft: station NONE and no build site" % where)
+	if kind == RecipeData.OutputKind.VESSEL_REPAIR and recipe.integrity_delta <= 0.0:
+		errors.append("%s: a mend restores no integrity (integrity_delta must be above 0)" % where)
+	if kind == RecipeData.OutputKind.VESSEL_UPGRADE and recipe.integrity_delta <= 0.0 and recipe.vessel_modifiers.is_empty():
+		errors.append("%s: a fitting does nothing (no integrity_delta and no vessel modifier)" % where)
+	for modifier: ModifierData in recipe.vessel_modifiers:
+		if modifier == null or modifier.scope != ModifierData.Scope.VESSEL:
+			errors.append("%s: a fitting's modifiers apply to the vessel (scope VESSEL)" % where)
 	return errors
 
 

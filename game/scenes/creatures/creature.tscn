@@ -6,6 +6,7 @@
 [ext_resource type="Resource" path="res://assets/art/creatures/creature_art.tres" id="4_art"]
 [ext_resource type="PackedScene" path="res://scenes/art/shadow.tscn" id="5_shadow"]
 [ext_resource type="Script" path="res://scenes/creatures/patrol_look.gd" id="6_patrol_look"]
+[ext_resource type="Script" path="res://scenes/creatures/squad_look.gd" id="7_squad_look"]
 
 [node name="Creature" type="Node2D"]
 y_sort_enabled = true
@@ -29,3 +30,6 @@ visible = false
 
 [node name="PatrolLook" type="Node2D" parent="." groups=["art_view"]]
 script = ExtResource("6_patrol_look")
+
+[node name="SquadLook" type="Node2D" parent="." groups=["art_view"]]
+script = ExtResource("7_squad_look")

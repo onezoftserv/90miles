@@ -2,12 +2,12 @@ extends GutTest
 ## ui-shell "Display scaling" and "Settings": the whole-number window fit, the fullscreen
 ## toggle and the settings each install keeps.
 
-const PATH: String = "user://test_ui_shell_settings.cfg"
+var settings_path: String = UserTmp.path("test_ui_shell_settings.cfg")
 
 
 func after_each() -> void:
-	if FileAccess.file_exists(PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func test_a_1080p_desktop_fits_2x_windowed() -> void:
@@ -33,26 +33,26 @@ func test_a_fixed_scale_wins_but_never_outgrows_the_screen() -> void:
 
 
 func test_settings_defaults() -> void:
-	var settings := GameSettings.new(PATH)
+	var settings := GameSettings.new(settings_path)
 	assert_eq(settings.player_name, "Balsero")
 	assert_false(settings.fullscreen)
 	assert_eq(settings.ui_scale, 0)
 
 
 func test_saved_settings_load_again() -> void:
-	var settings := GameSettings.new(PATH)
+	var settings := GameSettings.new(settings_path)
 	settings.player_name = "Dayana"
 	settings.fullscreen = true
 	settings.ui_scale = 3
 	assert_eq(settings.save(), OK)
-	var again := GameSettings.load_from(PATH)
+	var again := GameSettings.load_from(settings_path)
 	assert_eq(again.player_name, "Dayana")
 	assert_true(again.fullscreen)
 	assert_eq(again.ui_scale, 3)
 
 
 func test_a_missing_file_gives_the_defaults() -> void:
-	var settings := GameSettings.load_from("user://does_not_exist_ui_shell.cfg")
+	var settings := GameSettings.load_from(UserTmp.path("does_not_exist_ui_shell.cfg"))
 	assert_eq(settings.player_name, "Balsero")
 
 
@@ -61,8 +61,8 @@ func test_bad_values_in_the_file_fall_back() -> void:
 	config.set_value("player", "name", 5)
 	config.set_value("display", "fullscreen", "yes")
 	config.set_value("display", "ui_scale", 9)
-	config.save(PATH)
-	var settings := GameSettings.load_from(PATH)
+	config.save(settings_path)
+	var settings := GameSettings.load_from(settings_path)
 	assert_eq(settings.player_name, "Balsero")
 	assert_false(settings.fullscreen)
 	assert_eq(settings.ui_scale, 0)
@@ -78,13 +78,13 @@ func test_names_are_cleaned() -> void:
 
 
 func test_setting_a_name_cleans_it() -> void:
-	var settings := GameSettings.new(PATH)
+	var settings := GameSettings.new(settings_path)
 	settings.player_name = "\tEl Chino\u0007 de la Habana Vieja"
 	assert_eq(settings.player_name, "El Chino de la H")
 
 
 func test_scale_setting_is_clamped() -> void:
-	var settings := GameSettings.new(PATH)
+	var settings := GameSettings.new(settings_path)
 	settings.ui_scale = 7
 	assert_eq(settings.ui_scale, GameSettings.MAX_SCALE)
 	settings.ui_scale = -2
@@ -115,28 +115,28 @@ func test_names_lose_direction_and_invisible_marks() -> void:
 
 
 func test_the_pixel_filter_is_sharp_by_default() -> void:
-	assert_eq(GameSettings.new(PATH).pixel_filter, PixelFilter.Mode.SHARP)
-	assert_eq(GameSettings.load_from("user://does_not_exist_ui_shell.cfg").pixel_filter, PixelFilter.Mode.SHARP)
+	assert_eq(GameSettings.new(settings_path).pixel_filter, PixelFilter.Mode.SHARP)
+	assert_eq(GameSettings.load_from(UserTmp.path("does_not_exist_ui_shell.cfg")).pixel_filter, PixelFilter.Mode.SHARP)
 
 
 func test_the_pixel_filter_is_kept() -> void:
-	var settings := GameSettings.new(PATH)
+	var settings := GameSettings.new(settings_path)
 	settings.pixel_filter = PixelFilter.Mode.SMOOTH
 	assert_eq(settings.save(), OK)
-	assert_eq(GameSettings.load_from(PATH).pixel_filter, PixelFilter.Mode.SMOOTH)
+	assert_eq(GameSettings.load_from(settings_path).pixel_filter, PixelFilter.Mode.SMOOTH)
 	var config := ConfigFile.new()
-	config.load(PATH)
+	config.load(settings_path)
 	assert_eq(config.get_value("display", "pixel_filter"), 1, "stored with the display settings")
 
 
 func test_a_bad_pixel_filter_falls_back_to_sharp() -> void:
 	var config := ConfigFile.new()
 	config.set_value("display", "pixel_filter", "suave")
-	config.save(PATH)
-	assert_eq(GameSettings.load_from(PATH).pixel_filter, PixelFilter.Mode.SHARP)
+	config.save(settings_path)
+	assert_eq(GameSettings.load_from(settings_path).pixel_filter, PixelFilter.Mode.SHARP)
 	config.set_value("display", "pixel_filter", 7)
-	config.save(PATH)
-	assert_eq(GameSettings.load_from(PATH).pixel_filter, PixelFilter.Mode.SHARP)
+	config.save(settings_path)
+	assert_eq(GameSettings.load_from(settings_path).pixel_filter, PixelFilter.Mode.SHARP)
 
 
 func test_each_pixel_filter_mode_picks_its_presentation() -> void:
@@ -155,25 +155,25 @@ func test_each_pixel_filter_mode_picks_its_presentation() -> void:
 # --- damage-feedback: "Reducir destellos" (ui-shell "Settings") ----------------------------------
 
 func test_reduce_flashes_is_off_by_default() -> void:
-	assert_false(GameSettings.new(PATH).reduce_flashes)
-	assert_false(GameSettings.load_from("user://does_not_exist_ui_shell.cfg").reduce_flashes)
+	assert_false(GameSettings.new(settings_path).reduce_flashes)
+	assert_false(GameSettings.load_from(UserTmp.path("does_not_exist_ui_shell.cfg")).reduce_flashes)
 
 
 func test_reduce_flashes_is_kept() -> void:
-	var settings := GameSettings.new(PATH)
+	var settings := GameSettings.new(settings_path)
 	settings.reduce_flashes = true
 	assert_eq(settings.save(), OK)
-	assert_true(GameSettings.load_from(PATH).reduce_flashes)
+	assert_true(GameSettings.load_from(settings_path).reduce_flashes)
 	var config := ConfigFile.new()
-	config.load(PATH)
+	config.load(settings_path)
 	assert_eq(config.get_value("display", "reduce_flashes"), true, "stored with the display settings")
 
 
 func test_an_old_file_or_a_bad_value_reads_off() -> void:
 	var config := ConfigFile.new()
 	config.set_value("display", "fullscreen", true)
-	config.save(PATH)
-	assert_false(GameSettings.load_from(PATH).reduce_flashes, "a file from before the setting")
+	config.save(settings_path)
+	assert_false(GameSettings.load_from(settings_path).reduce_flashes, "a file from before the setting")
 	config.set_value("display", "reduce_flashes", "sí")
-	config.save(PATH)
-	assert_false(GameSettings.load_from(PATH).reduce_flashes)
+	config.save(settings_path)
+	assert_false(GameSettings.load_from(settings_path).reduce_flashes)

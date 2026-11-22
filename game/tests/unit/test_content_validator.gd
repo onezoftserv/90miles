@@ -1,19 +1,19 @@
 extends GutTest
 ## content-data: folder type, id = file name, Spanish names, and references are checked.
 
-const ROOT := "user://test_content_validator"
+var root: String = UserTmp.path("test_content_validator")
 
 
 func before_each() -> void:
-	FsHelpers.remove_tree(ROOT)
+	FsHelpers.remove_tree(root)
 
 
 func after_all() -> void:
-	FsHelpers.remove_tree(ROOT)
+	FsHelpers.remove_tree(root)
 
 
 func _catalog() -> ContentCatalog:
-	return ContentCatalog.new(ROOT, {&"things": FixtureItemData, &"recipes": FixtureRecipeData})
+	return ContentCatalog.new(root, {&"things": FixtureItemData, &"recipes": FixtureRecipeData})
 
 
 func _item(id: StringName, name_es: String = "Cosa") -> FixtureItemData:
@@ -31,7 +31,7 @@ func _recipe(id: StringName) -> FixtureRecipeData:
 
 
 func _save(folder: String, file_id: String, res: Resource) -> void:
-	assert_eq(FsHelpers.save_content(ROOT, folder, file_id, res), OK, "saved %s/%s" % [folder, file_id])
+	assert_eq(FsHelpers.save_content(root, folder, file_id, res), OK, "saved %s/%s" % [folder, file_id])
 
 
 func _errors() -> PackedStringArray:
@@ -103,8 +103,8 @@ func test_empty_single_reference_is_allowed() -> void:
 
 
 func test_unloadable_file_is_reported() -> void:
-	DirAccess.make_dir_recursive_absolute(ROOT.path_join("things"))
-	var bad := FileAccess.open(ROOT.path_join("things/broken.tres"), FileAccess.WRITE)
+	DirAccess.make_dir_recursive_absolute(root.path_join("things"))
+	var bad := FileAccess.open(root.path_join("things/broken.tres"), FileAccess.WRITE)
 	bad.store_string("this is not a resource")
 	bad.close()
 	var errors := _errors()
@@ -134,7 +134,7 @@ func test_unregistered_content_folder_is_reported() -> void:
 
 func test_duplicate_id_across_tres_and_res_is_reported() -> void:
 	_save("things", "rope", _item(&"rope"))
-	assert_eq(ResourceSaver.save(_item(&"rope"), ROOT.path_join("things/rope.res")), OK)
+	assert_eq(ResourceSaver.save(_item(&"rope"), root.path_join("things/rope.res")), OK)
 	_assert_one_error_containing(["things/rope", "duplicate id"])
 
 
@@ -142,7 +142,7 @@ func test_type_that_is_not_content_is_reported_not_crashed() -> void:
 	var plain := FixturePlainResource.new()
 	plain.id = &"a"
 	_save("plains", "a", plain)
-	var errors := ContentValidator.validate(ContentCatalog.new(ROOT, {&"plains": FixturePlainResource}))
+	var errors := ContentValidator.validate(ContentCatalog.new(root, {&"plains": FixturePlainResource}))
 	assert_eq(errors.size(), 1, "one error: %s" % [errors])
 	if errors.size() == 1:
 		assert_string_contains(errors[0], "FixturePlainResource")
@@ -154,7 +154,7 @@ func test_broken_reference_declarations_are_reported() -> void:
 	broken.id = &"b"
 	broken.name_es = "Roto"
 	_save("broken", "b", broken)
-	var errors := ContentValidator.validate(ContentCatalog.new(ROOT, {&"broken": FixtureBrokenRefsData, &"things": FixtureItemData}))
+	var errors := ContentValidator.validate(ContentCatalog.new(root, {&"broken": FixtureBrokenRefsData, &"things": FixtureItemData}))
 	var joined := "\n".join(errors)
 	assert_eq(errors.size(), 3, "three errors: %s" % [errors])
 	assert_string_contains(joined, "count holds unsupported type int")
@@ -185,7 +185,7 @@ func test_a_secret_item_with_a_spawn_weight_is_reported() -> void:
 	hidden.spawn_weight = 0.0
 	_save("items", "secret_thing", drawn)
 	_save("items", "hidden_thing", hidden)
-	var errors := ContentValidator.validate(ContentCatalog.new(ROOT))
+	var errors := ContentValidator.validate(ContentCatalog.new(root))
 	assert_eq(errors.size(), 1, "exactly one error: %s" % [errors])
 	if errors.size() == 1:
 		assert_string_contains(errors[0], "items/secret_thing")

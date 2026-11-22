@@ -83,6 +83,16 @@ static func shows_ripple(pose: Pose) -> bool:
 	return _under(pose)
 
 
+## art-sprite-polish D8: a downed, dragged or dead body lies along the ground, on the lying shadow.
+static func lies(pose: Pose) -> bool:
+	return _lying(pose)
+
+
+## art-sprite-polish D1: the ripple ring round a swimmer or a floater, at the water line.
+static func shows_swim_ring(pose: Pose) -> bool:
+	return _wet(pose)
+
+
 ## The pose's speed in frames per second; 0 holds `still_frame(pose)`.
 static func fps(pose: Pose, moving: bool) -> float:
 	match pose:

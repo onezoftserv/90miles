@@ -85,7 +85,9 @@ func test_the_states_are_in_order_and_named() -> void:
 	assert_eq(PatrolRoute.State.LAP, 2)
 	assert_eq(PatrolRoute.State.ALERT_LOCK, 3)
 	assert_eq(PatrolRoute.State.ALERT_SEARCH, 4)
-	assert_eq(brain.names(), [&"AWAY", &"HORIZON", &"LAP", &"ALERT_LOCK", &"ALERT_SEARCH"] as Array[StringName])
+	assert_eq(PatrolRoute.State.CHASE, 5, "guardacostas-capture appends its states")
+	assert_eq(PatrolRoute.State.DOCKED, 6)
+	assert_eq(brain.names(), [&"AWAY", &"HORIZON", &"LAP", &"ALERT_LOCK", &"ALERT_SEARCH", &"CHASE", &"DOCKED"] as Array[StringName])
 
 
 func test_the_clock_gives_horizon_lap_and_away_and_the_boat_is_dark_off_its_lap() -> void:
@@ -347,25 +349,117 @@ func test_noises_the_boat_does_not_hear_are_ignored_and_so_are_noises_off_its_la
 	assert_signal_not_emitted(boat, "patrol_alerted")
 
 
-func test_a_swimmer_5_tiles_away_is_spotted_at_once_and_a_diver_3_tiles_away_is_not() -> void:
+# guardacostas-capture (the modified Alert): a spotted swimmer is chased, not locked.
+func test_a_swimmer_5_tiles_away_is_spotted_at_once_and_chased_and_a_diver_3_tiles_away_is_not() -> void:
 	world.phase = DAY
 	_lap_at(5.0)
+	var out: Vector2 = _seaward()
 	var diver := _player(Vector2.ZERO)
-	diver.global_position = boat.position + Vector2(3.0 * TILE, 0.0)
+	diver.global_position = boat.position + out * 3.0 * TILE
 	diver.movement_state = MovementStep.Move.DIVE
 	diver.stealth_state = MovementStep.Stealth.SUBMERGED
 	watch_signals(boat)
 	_run(1.0)
 	assert_signal_not_emitted(boat, "patrol_alerted")
 	var swimmer := _player(Vector2.ZERO)
-	swimmer.global_position = boat.position + Vector2(5.0 * TILE, 0.0)
+	swimmer.global_position = boat.position + out * 5.0 * TILE
 	swimmer.movement_state = MovementStep.Move.SWIM
 	boat.advance(STEP_S)
-	assert_eq(boat.state_name(), &"ALERT_LOCK")
-	assert_eq(brain.locked, swimmer)
+	assert_eq(boat.state_name(), &"CHASE", "a spotted swimmer in deep water is chased")
+	assert_eq(brain.chased, swimmer)
+	assert_null(brain.locked)
 	var params: Array = get_signal_parameters(boat, "patrol_alerted", 0)
 	assert_eq(params[0], &"water")
 	assert_signal_emit_count(boat, "patrol_alerted", 1, "once, not every tick")
+
+
+# The unit direction from the boat out to sea (away from the island's centre), for a swimmer in deep
+# water beside it.
+func _seaward() -> Vector2:
+	var centre: Vector2 = Vector2(island.size) * TILE / 2.0
+	return (boat.position - centre).normalized()
+
+
+# --- the chase at sea (guardacostas-capture group 4) -----------------------------------------------
+
+# A swimmer standing still in deep water `tiles` out from the boat, spotted by the water rule.
+func _chase_swimmer(tiles: float) -> PlayerBody:
+	world.phase = DAY
+	_lap_at(5.0)
+	var swimmer := _player(Vector2.ZERO)
+	swimmer.global_position = boat.position + _seaward() * tiles * TILE
+	swimmer.movement_state = MovementStep.Move.SWIM
+	boat.advance(STEP_S)
+	assert_eq(boat.state_name(), &"CHASE")
+	return swimmer
+
+
+func test_the_chase_hauls_a_still_swimmer_aboard_after_2_s_within_a_tile() -> void:
+	var swimmer := _chase_swimmer(5.0)
+	var clock_at: float = brain.clock_s
+	var hauled_after: float = -1.0
+	for i: int in 100:
+		boat.advance(STEP_S)
+		if brain.aboard.has(swimmer):
+			hauled_after = (i + 1) * STEP_S
+			break
+	assert_true(brain.aboard.has(swimmer), "hauled aboard")
+	# 4 tiles to close at 6 tiles/s (0.67 s), then 2 s within a tile.
+	assert_almost_eq(hauled_after, 4.0 / 6.0 + 2.0, 0.25)
+	assert_eq(boat.state_name(), &"ALERT_SEARCH", "the boat searches after the haul")
+	assert_eq(brain.clock_s, clock_at, "the lap waits for the chase")
+
+
+func test_a_dive_breaks_the_chase_into_the_search_round_where_they_dived() -> void:
+	var swimmer := _chase_swimmer(5.0)
+	boat.advance(STEP_S)
+	swimmer.movement_state = MovementStep.Move.DIVE
+	swimmer.stealth_state = MovementStep.Stealth.SUBMERGED
+	boat.advance(STEP_S)
+	assert_eq(boat.state_name(), &"ALERT_SEARCH")
+	assert_null(brain.chased)
+	assert_false(brain.aboard.has(swimmer))
+
+
+func test_the_shallows_break_the_chase() -> void:
+	var swimmer := _chase_swimmer(5.0)
+	# The swimmer reaches shallow water beside the beach.
+	island.terrain.set_cell(Vector2i(22, 19), DataEnums.Terrain.SHALLOWS)
+	swimmer.global_position = Vector2(22.5, 19.5) * TILE
+	boat.advance(STEP_S)
+	assert_ne(boat.state_name(), &"CHASE", "the chase broke")
+	assert_null(brain.chased)
+	assert_false(brain.aboard.has(swimmer), "nobody hauled aboard")
+	# A swimmer in the shallows is still seen by the water rule: the stealth slice's lock, no chase.
+	_run(1.0)
+	assert_null(brain.chased, "the boat never chases into the shallows")
+	assert_eq(island.terrain.terrain_at(CreatureNav.cell_of(boat.position)), DataEnums.Terrain.DEEP, "the boat stays in deep water")
+
+
+func test_after_the_chase_the_boat_makes_its_way_back_and_resumes_its_lap() -> void:
+	var swimmer := _chase_swimmer(5.0)
+	for i: int in 10:
+		boat.advance(STEP_S)
+	swimmer.movement_state = MovementStep.Move.DIVE
+	swimmer.stealth_state = MovementStep.Stealth.SUBMERGED
+	boat.advance(STEP_S)
+	var home: Vector2 = brain.lap_pose_px()
+	assert_gt(boat.position.distance_to(home), TILE, "the chase took the boat off its loop")
+	_run(patrol.alert_s)
+	assert_eq(boat.state_name(), &"LAP", "the search ends after 20 s")
+	assert_lt(boat.position.distance_to(brain.lap_pose_px()), TILE, "back on its loop")
+
+
+func test_a_patrol_with_no_chase_speed_locks_a_swimmer() -> void:
+	patrol.chase_speed_mult = 0.0
+	world.phase = DAY
+	_lap_at(5.0)
+	var swimmer := _player(Vector2.ZERO)
+	swimmer.global_position = boat.position + _seaward() * 5.0 * TILE
+	swimmer.movement_state = MovementStep.Move.SWIM
+	boat.advance(STEP_S)
+	patrol.chase_speed_mult = 2.0
+	assert_eq(boat.state_name(), &"ALERT_LOCK", "the stealth slice's lock")
 
 
 # --- fog and the squall -----------------------------------------------------------------------

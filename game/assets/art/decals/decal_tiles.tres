@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" path="res://assets/art/terrain/tide_pool.png" id="1_8shng"]
 [ext_resource type="Texture2D" path="res://assets/art/decals/shade.png" id="2_h40pp"]
+[ext_resource type="Texture2D" path="res://assets/art/decals/pebbles.png" id="3_pebbl"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_gs6rn"]
 texture = ExtResource("1_8shng")
@@ -29,6 +30,14 @@ texture = ExtResource("2_h40pp")
 1:4/0 = 0
 2:4/0 = 0
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pebbl"]
+texture = ExtResource("3_pebbl")
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+
 [resource]
 sources/0 = SubResource("TileSetAtlasSource_gs6rn")
 sources/1 = SubResource("TileSetAtlasSource_et6d0")
+sources/2 = SubResource("TileSetAtlasSource_pebbl")

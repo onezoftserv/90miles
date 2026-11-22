@@ -3,7 +3,7 @@ extends GutTest
 ## the game's one sky: the clock, the tint over the world and the horizon line in the HUD.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_shell_sky_settings.cfg"
+var settings_path: String = UserTmp.path("test_shell_sky_settings.cfg")
 ## A run's first morning: the clock reads 06:00, dawn (docs/GAME_DESIGN.md §5).
 const FIRST_MORNING_S: float = 0.0
 ## A time of day the host's resync could have sent: well after dawn.
@@ -18,13 +18,13 @@ func before_each() -> void:
 func after_each() -> void:
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _shell() -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	shell.port = 0
 	add_child_autofree(shell)
 	return shell

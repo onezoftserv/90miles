@@ -284,6 +284,21 @@ func test_the_water_line_cuts_on_a_node_local_y_never_on_uv() -> void:
 		assert_eq(uv_uses, samples, "%s: UV only samples the texture" % path)
 
 
+## art-sprite-polish D1 (C20): the swimmer's line is a hard cut and the ring draws the water, so
+## the look shader no longer paints a foam row or fades; the shark and the deck keep both through
+## art_common, which is unchanged.
+func test_the_look_shader_cuts_hard_and_the_shark_and_deck_keep_the_fade() -> void:
+	var fragment: String = _body(_source(PLAYER_LOOK_SHADER), "fragment")
+	assert_false(fragment.contains("art_on_ripple"), "no foam row on the swimmer")
+	assert_false(fragment.contains("art_water_alpha"), "no fade below the swimmer's line")
+	assert_false(_text(PLAYER_LOOK_SHADER).contains("foam_color"), "no foam colour on the look")
+	var common: String = _text("res://scenes/art/art_common.gdshaderinc")
+	assert_true(_holds(common, "float art_water_alpha(float local_y, float line_y)"), "the shared fade stays")
+	assert_true(_holds(common, "bool art_on_ripple(float local_y, float line_y)"), "the shared ripple row stays")
+	var waterline: String = _body(_source(WATERLINE_SHADER), "fragment")
+	assert_true(waterline.contains("art_water_alpha") and waterline.contains("art_on_ripple"), "the shark and the deck keep their line")
+
+
 func test_art_shaders_multiply_by_the_vertex_colour_in_a_varying() -> void:
 	for path: String in MODULATE_SHADERS:
 		var source: String = _source(path)

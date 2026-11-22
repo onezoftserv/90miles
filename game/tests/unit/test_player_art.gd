@@ -10,6 +10,7 @@ const PLAYER_PATH: String = "res://scenes/player/player.tscn"
 const FRAMES_PATH: String = "res://assets/art/characters/balsero_frames.tres"
 const ART_PATH: String = "res://assets/art/characters/balsero_art.tres"
 const RIPPLE_PATH: String = "res://assets/art/fx/dive_ripple.tres"
+const RING_PATH: String = "res://assets/art/fx/swim_ring.tres"
 const ATLAS_PATH: String = "res://assets/art/characters/parts/body_man.png"
 const M := MovementStep.Move
 const CELL: int = 32
@@ -61,6 +62,10 @@ func _sprite(body: PlayerBody) -> AnimatedSprite2D:
 
 func _ripple(body: PlayerBody) -> AnimatedSprite2D:
 	return body.get_node(^"Look/Ripple") as AnimatedSprite2D
+
+
+func _ring(body: PlayerBody) -> AnimatedSprite2D:
+	return body.get_node(^"Look/SwimRing") as AnimatedSprite2D
 
 
 func _shadow(body: PlayerBody) -> DropShadow:
@@ -212,6 +217,43 @@ func test_a_slot_0_swimmer_is_cut_at_the_feet_line_with_no_shadow() -> void:
 	assert_false(_ripple(body).visible, "the ripple is the dive's")
 
 
+## art-sprite-polish D1 (C20): one player, offline, swimming shows the ripple ring round the body at
+## the water line, drawn after the shadow and before the body; nobody else shows it.
+func test_a_solo_swimmer_shows_the_swim_ring_at_the_water_line() -> void:
+	var body: PlayerBody = _spawn()
+	var ring: AnimatedSprite2D = _ring(body)
+	assert_not_null(ring, "Look/SwimRing")
+	if ring == null:
+		return
+	assert_lt(ring.get_index(), _sprite(body).get_index(), "before the body")
+	assert_gt(ring.get_index(), _shadow(body).get_index(), "after the shadow")
+	assert_eq(ring.sprite_frames.resource_path, RING_PATH)
+	assert_eq(ring.texture_filter, CanvasItem.TEXTURE_FILTER_NEAREST)
+	assert_false(ring.visible, "a standing player shows no ring")
+	body.movement_state = M.SWIM
+	_walk(body, Vector2(0.5, 0.0), 12)
+	assert_true(ring.visible, "a swimmer shows the ring")
+	assert_true(ring.is_playing(), "and it plays")
+	assert_eq(ring.sprite_frames.get_frame_count(ring.animation), 3)
+	assert_eq(ring.sprite_frames.get_animation_speed(ring.animation), 4.0)
+	var frame: Texture2D = ring.sprite_frames.get_frame_texture(ring.animation, 0)
+	var top: float = ring.position.y + ring.offset.y
+	var line: float = float((_sprite(body).material as ShaderMaterial).get_shader_parameter(&"water_line_y"))
+	assert_eq(top + floorf(frame.get_size().y / 2.0), line, "the ring's middle row lies on the water line")
+	assert_eq(ring.position.x + ring.offset.x + frame.get_size().x / 2.0, 0.0, "centred on the body")
+	body.movement_state = M.FLOAT
+	_step(body, 2)
+	assert_true(ring.visible, "a floater shows it too")
+	body.movement_state = M.DIVE
+	_step(body, 2)
+	assert_false(ring.visible, "a diver shows only the dive ripple")
+	body.movement_state = M.SWIM
+	_step(body, 2)
+	body.downed = true
+	_step(body, 2)
+	assert_false(ring.visible, "a downed body shows none")
+
+
 func test_a_diver_shows_only_the_ripple() -> void:
 	var body: PlayerBody = _spawn()
 	body.movement_state = M.DIVE
@@ -243,6 +285,31 @@ func test_a_standing_solo_player_has_the_12x7_shadow_at_its_feet() -> void:
 	assert_almost_eq(rect.get_center().x, AT.x, 1.0, "centred under the body")
 	assert_true(rect.position.y < FEET_Y and rect.end.y >= FEET_Y, "across the feet line: %s" % rect)
 	assert_lt(shadow.z_index, 0, "under the body")
+
+
+## art-sprite-polish D8 (C25): one player, offline, downed lies on the lying frames over the lying
+## shadow; dead too; standing up again brings back the 12x7.
+func test_a_solo_downed_player_lies_over_the_lying_shadow() -> void:
+	var body: PlayerBody = _spawn()
+	assert_eq(_shadow(body).texture.get_size(), Vector2(12.0, 7.0), "standing: the 12x7")
+	body.downed = true
+	_step(body, 2)
+	assert_eq(String(_sprite(body).animation), "downed")
+	var shadow: DropShadow = _shadow(body)
+	assert_true(shadow.visible, "a lying body has a shadow")
+	assert_eq(shadow.size, DropShadow.Size.LYING)
+	assert_eq(shadow.texture.get_size(), Vector2(23.0, 5.0), "the lying 23x5")
+	var image: Image = (_frame(body).atlas as Texture2D).get_image().get_region(Rect2i(_frame(body).region))
+	var used: Rect2i = image.get_used_rect()
+	assert_gt(used.size.x, used.size.y, "the body lies wider than tall")
+	body.meters.dead = true
+	_step(body, 2)
+	assert_eq(String(_sprite(body).animation), "dead")
+	assert_eq(_shadow(body).size, DropShadow.Size.LYING, "dead lies too")
+	body.meters.dead = false
+	body.downed = false
+	_step(body, 2)
+	assert_eq(_shadow(body).size, DropShadow.Size.LARGE, "standing again: the 12x7")
 
 
 func test_a_slot_0_swimmers_clothing_maps_the_key_ramp_to_azul() -> void:

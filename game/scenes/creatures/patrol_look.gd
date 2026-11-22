@@ -7,7 +7,7 @@ extends Node2D
 ## CanvasModulate a light brightens the sand it covers, which reads as a searchlight. It also speaks the
 ## loudhailer: when the boat's `alert_serial` changes, a speech bubble over the boat shows for BUBBLE_S
 ## with a line of its PatrolData in the session's language: `alert_lines_<locale>` when the boat is
-## alerting after the change (ALERT_LOCK or ALERT_SEARCH), else `give_up_lines_<locale>`, picked by
+## alerting after the change (PatrolRoute.is_alert_state: a lock, a search, a chase or a docked boat), else `give_up_lines_<locale>`, picked by
 ## `alert_serial` mod the line count so every peer shows the same line. It reads the creature's synced
 ## position, facing, state, clock, beam, light and serial and never writes any of them. A creature that
 ## is not a patrol boat draws nothing. CreatureRig processes no frames, so tests drive `step` themselves.
@@ -54,7 +54,7 @@ func step(_delta: float) -> void:
 		_hide()
 		return
 	var state: int = creature.state_id
-	var in_sight: bool = state == PatrolRoute.State.LAP or state == PatrolRoute.State.ALERT_LOCK or state == PatrolRoute.State.ALERT_SEARCH
+	var in_sight: bool = PatrolRoute.is_in_sight_state(state)
 	if in_sight != hull_visible or not is_equal_approx(_facing, creature.facing.angle()):
 		hull_visible = in_sight
 		_facing = creature.facing.angle()
@@ -104,7 +104,7 @@ func _speak(creature: Creature, state: int) -> void:
 	var session: CoopSession = CoopSession.of(creature)
 	if session == null:
 		return
-	var alerting: bool = state == PatrolRoute.State.ALERT_LOCK or state == PatrolRoute.State.ALERT_SEARCH
+	var alerting: bool = PatrolRoute.is_alert_state(state)
 	var text: String = line_for(creature.data.patrol, CoopSession.locale_of(session), alerting, serial)
 	if text.is_empty():
 		return

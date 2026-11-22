@@ -12,7 +12,7 @@ const NAME_TAG_SCENE: PackedScene = preload("res://scenes/ui/name_tag.tscn")
 const SPEECH_BUBBLE_SCENE: PackedScene = preload("res://scenes/ui/speech_bubble.tscn")
 const MOVEMENT_PLAYGROUND: PackedScene = preload("res://scenes/dev/movement_playground.tscn")
 const COOP_PLAYGROUND: PackedScene = preload("res://scenes/dev/coop_playground.tscn")
-const SETTINGS_PATH: String = "user://test_draw_order_settings.cfg"
+var settings_path: String = UserTmp.path("test_draw_order_settings.cfg")
 const TILE: float = 16.0
 const COAST: StringName = &"coast_cay"
 const CROSSING_SEA_Z: int = -40
@@ -33,13 +33,13 @@ func before_each() -> void:
 func after_each() -> void:
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _shell() -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	shell.session.body(CoopSession.HOST_ID).player_input.enabled = false

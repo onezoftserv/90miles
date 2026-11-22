@@ -50,9 +50,10 @@ func test_the_patrol_boat_loads_with_its_creature_fields() -> void:
 		assert_false(text.is_empty())
 
 
-func test_the_patrol_boat_has_two_spawn_rules() -> void:
+# guardacostas-capture "Fade with distance" adds the third, for the mid chains (test_patrol_fade.gd).
+func test_the_patrol_boat_has_its_sandbar_and_coast_spawn_rules() -> void:
 	var rules := _boat().spawn_rules
-	assert_eq(rules.size(), 2)
+	assert_eq(rules.size(), 3)
 	assert_eq(rules[0].chain_families, [DataEnums.ChainFamily.SANDBAR])
 	assert_eq(rules[0].count, Vector2i(1, 1))
 	assert_eq(rules[0].terrain, [DataEnums.Terrain.DEEP])

@@ -44,6 +44,14 @@ var alert_serial: int = 0
 var light_on: bool = false
 ## Every peer, patrol boats: the loop and light the boat is drawn from (built on first use).
 var patrol_view: PatrolView = null
+## Host, patrol boats (guardacostas-capture): the squad's dinghy (PatrolRoute.Squad), its landing cell
+## and how far it has rowed (0 at the boat, 1 on the beach), and the squad's calls (how many, and the
+## list the latest is from: PatrolRoute.Call). Written by PatrolRoute; the network group syncs them.
+var squad_state: int = 0
+var landing: Vector2i = Vector2i(-1, -1)
+var dinghy_t: float = 0.0
+var squad_serial: int = 0
+var squad_call: int = 0
 
 @onready var interactable: Interactable = $Interactable
 
@@ -62,6 +70,9 @@ func _ready() -> void:
 	if brain != null:
 		interactable.priority = brain.interact_priority()
 	interactable.interacted.connect(_on_interacted)
+	# guardacostas-capture: every peer's soldiers, which a captive's "Soltar" handle keeps away from.
+	if data != null and data.behavior == CreatureData.Behavior.SEARCH_CAPTURE:
+		add_to_group(FreeHandle.SOLDIER_GROUP)
 	# A client's first drawn frame: the synced clock and state (a mid-lap joiner's spawn state) put the
 	# boat on its loop before anything is drawn.
 	if is_patrol() and not multiplayer.is_server():
@@ -77,6 +88,8 @@ func attach_sync() -> void:
 	if is_patrol():
 		# guardacostas-stealth decision 10: the clock and the aim, from which a client derives the rest.
 		properties.append_array([".:route_t", ".:beam", ".:alert_serial", ".:light_on"])
+		# guardacostas-capture design.md §13: the squad's dinghy and its calls.
+		properties.append_array([".:squad_state", ".:landing", ".:dinghy_t", ".:squad_serial", ".:squad_call"])
 	for property: String in properties:
 		config.add_property(NodePath(property))
 		config.property_set_spawn(NodePath(property), true)

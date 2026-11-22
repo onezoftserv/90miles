@@ -1,19 +1,19 @@
 extends GutTest
 ## content-data: content is discovered by folder, so new files need no code change.
 
-const ROOT := "user://test_content_catalog"
+var root: String = UserTmp.path("test_content_catalog")
 
 
 func before_each() -> void:
-	FsHelpers.remove_tree(ROOT)
+	FsHelpers.remove_tree(root)
 
 
 func after_all() -> void:
-	FsHelpers.remove_tree(ROOT)
+	FsHelpers.remove_tree(root)
 
 
 func _catalog() -> ContentCatalog:
-	return ContentCatalog.new(ROOT, {&"things": FixtureItemData})
+	return ContentCatalog.new(root, {&"things": FixtureItemData})
 
 
 func _item(id: StringName, name_es: String = "Cosa") -> FixtureItemData:
@@ -24,7 +24,7 @@ func _item(id: StringName, name_es: String = "Cosa") -> FixtureItemData:
 
 
 func _save(id: StringName) -> void:
-	assert_eq(FsHelpers.save_content(ROOT, "things", String(id), _item(id)), OK, "saved fixture %s" % id)
+	assert_eq(FsHelpers.save_content(root, "things", String(id), _item(id)), OK, "saved fixture %s" % id)
 
 
 func test_lists_ids_from_file_names_sorted() -> void:
@@ -72,15 +72,15 @@ func test_unknown_id_returns_null() -> void:
 
 func test_ignores_non_resource_files_and_subfolders() -> void:
 	_save(&"coconut")
-	DirAccess.make_dir_recursive_absolute(ROOT.path_join("things/nested"))
-	var note := FileAccess.open(ROOT.path_join("things/README.md"), FileAccess.WRITE)
+	DirAccess.make_dir_recursive_absolute(root.path_join("things/nested"))
+	var note := FileAccess.open(root.path_join("things/README.md"), FileAccess.WRITE)
 	note.store_string("not content")
 	note.close()
 	assert_eq(_catalog().list_ids(&"things"), [&"coconut"] as Array[StringName])
 
 
 func test_folder_path_joins_root_and_type() -> void:
-	assert_eq(_catalog().folder_path(&"things"), ROOT.path_join("things"))
+	assert_eq(_catalog().folder_path(&"things"), root.path_join("things"))
 
 
 # Windows file systems ignore case but Linux CI and exported builds do not, so ids must match
@@ -95,5 +95,5 @@ func test_lookup_is_case_sensitive() -> void:
 
 func test_lists_folders_that_are_not_registered_types() -> void:
 	_save(&"rope")
-	DirAccess.make_dir_recursive_absolute(ROOT.path_join("stuff"))
+	DirAccess.make_dir_recursive_absolute(root.path_join("stuff"))
 	assert_eq(_catalog().unregistered_folders(), PackedStringArray(["stuff"]))
