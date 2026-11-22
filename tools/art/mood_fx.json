@@ -1,0 +1,6 @@
+{
+  "pieces": [
+    {"source": "rain.png", "to": "fx/rain.png", "frame": [64, 64], "frames": 2, "colours": ["#cbdbfc", "#9badb7"], "cover": [0.12, 0.25], "seamless": true},
+    {"source": "splash.png", "to": "fx/splash.png", "frame": [5, 3], "frames": 3, "colours": ["#cbdbfc"]}
+  ]
+}

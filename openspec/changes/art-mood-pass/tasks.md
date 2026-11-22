@@ -62,7 +62,7 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
 
 ## 3. Art for the squall and the sea (recipe)
 
-- [ ] 3.1 In `tools/art/test_mood.py`, write the recipe tests on fixtures and see them fail:
+- [x] 3.1 In `tools/art/test_mood.py`, write the recipe tests on fixtures and see them fail:
   - a source with an off-palette pixel or a partial alpha is refused;
   - a rain tile that is not seamless, or that covers more than 12% (light) or 25% (heavy), is refused;
   - a crest with #ffffff or #cbdbfc is refused;
@@ -70,13 +70,14 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
   - a re-run gives the same bytes;
   - nothing is written when a source is refused;
   - no pack folder is read.
-- [ ] 3.2 Write `tools/art/mood.py` and `mood_fx.json` (design D9). Draw the hand sources in `tools/art/fixes/mood/`:
+- [x] 3.2 Write `tools/art/mood.py` and `mood_fx.json` (design D9). Draw the hand sources in `tools/art/fixes/mood/`:
   - `rain.png` (64 × 64, 2 frames);
   - `splash.png` (3 frames of 5 × 3);
   - `crests.png` (3 frames of 8 × 3);
   - `wake.png` (bow 2 frames, stern 3 frames);
   - `plank.png` (16 × 5).
   Build into `game/assets/art/fx/` and `game/assets/art/sea/`. Add the own-work blocks to both `License.txt` files. Verify `check.py`, `test_art_palette.gd`, `test_art_tracked` and a byte-for-byte re-run.
+  - Built (2026-11-22): `rain.png` and `splash.png` into `fx/`, with the own-work blocks. `crests.png`, `wake.png` and `plank.png` move to group 5 (5.2), because `check.py` refuses tracked art that no scene names and only the crossing's nodes would name them.
 
 ## 4. C34: a squall you can see
 
