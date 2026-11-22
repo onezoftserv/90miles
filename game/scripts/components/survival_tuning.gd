@@ -60,3 +60,11 @@ extends Resource
 @export var revive_health: float
 ## Seconds a solo player's last stand lasts before downed-timer bonuses (0: death at once).
 @export var solo_last_stand_s: float
+
+@export_group("Statuses")
+## Health lost per second while bleeding (bleeding-and-sabila).
+@export var bleeding_health_per_s: float
+## Seconds bleeding lasts after the latest wound; a new wound starts the count again.
+@export var bleeding_s: float
+## Bleeding never takes health below this, so it never downs or kills by itself.
+@export var bleeding_floor: float

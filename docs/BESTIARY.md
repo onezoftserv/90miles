@@ -16,6 +16,7 @@ Difficulty scales by **distance** (islands 1–2: coast, 3–5: mid, 6–8: far)
 - Patrols deep water (≥2 tiles from shore). Investigates splashes within 8 tiles.
 - Circles a swimmer for 6–10 s. Strikes only if the target is **bleeding** (coral cut, crab wound, raw fish on them) or if energy < 20 (slow swimmer). Otherwise loses interest.
 - After a strike (25 damage + bleeding) it retreats 4 s, then circles again.
+- Bleeding drains 0.1 health/s and ends 120 s after the latest wound, never taking the last point (GAME_DESIGN §4); sábila stops it at once. A swimmer who waits it out in the shallows is no longer a target.
 - Groups of 2–3 on reef chains; the tiger shark boss replaces them once per run.
 
 **Counters.** Bandage cuts before swimming. Stay in shallows (≤1 tile). Throw raw fish away from you (decoy, 10 s). Spear hits in the nose cause a 15 s retreat.

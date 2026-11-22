@@ -404,6 +404,7 @@ func test_a_waiting_rider_is_no_teammate_for_the_last_player() -> void:
 func test_solo_uses_aloe_on_sunburn_and_bleeding() -> void:
 	var body := PLAYER_SCENE.instantiate() as PlayerBody
 	add_child_autofree(body)
+	body.meters.health = 70.0
 	body.meters.set_status(DataEnums.Status.SUNBURN, true)
 	body.meters.set_status(DataEnums.Status.BLEEDING, true)
 	body.inventory.add(&"aloe", 1)
@@ -412,6 +413,7 @@ func test_solo_uses_aloe_on_sunburn_and_bleeding() -> void:
 	assert_true(ItemUser.use(body, 0, 0))
 	assert_false(body.meters.has_status(DataEnums.Status.SUNBURN))
 	assert_false(body.meters.has_status(DataEnums.Status.BLEEDING))
+	assert_eq(body.meters.health, 75.0, "and it heals 5")
 	assert_eq(body.inventory.count_id(&"aloe"), 0, "the leaf is used up")
 
 
