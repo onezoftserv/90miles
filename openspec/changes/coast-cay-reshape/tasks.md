@@ -43,8 +43,8 @@ Every group ends with the import twice (`godot --headless --path game --import`,
 ## 6. Integration
 
 - [x] 6.1 Run the import twice, smoke and GUT. All must be clean. No networking file changed, so no host-plus-client run is needed beyond the net tests in GUT; if one did change, run host and client locally before merging.
-- [ ] 6.2 Windowed 1-player check: with `game/tests/manual/capture_terrain.tscn`, capture the coast cay by day and compare it with the review's before captures in `docs/art-pass/review-2026-11-14/before/` (`before/cay_day_inner_water.png`, `before/cay_day_rocky_point.png`, `before/coast_cay_day.png`, under `C:/Users/liann/AppData/Local/Temp/claude/3e391225d1d53c33/033b02a6-abc6-4589-bc32-d2c7f6771443/scratchpad/art_review/`). Re-shoot `docs/art-pass/coast_cay_day.png`. Walk a solo run from the landing to the post and back, and read the run log for errors.
-- [ ] 6.3 Record the final measures, land count and re-pins in this design's build notes, and run `openspec validate coast-cay-reshape --strict`.
+- [x] 6.2 Windowed 1-player check: with `game/tests/manual/capture_terrain.tscn`, capture the coast cay by day and compare it with the review's before captures in `docs/art-pass/review-2026-11-14/before/` (`before/cay_day_inner_water.png`, `before/cay_day_rocky_point.png`, `before/coast_cay_day.png`, under `C:/Users/liann/AppData/Local/Temp/claude/3e391225d1d53c33/033b02a6-abc6-4589-bc32-d2c7f6771443/scratchpad/art_review/`). Re-shoot `docs/art-pass/coast_cay_day.png`. Walk a solo run from the landing to the post and back, and read the run log for errors.
+- [x] 6.3 Record the final measures, land count and re-pins in this design's build notes, and run `openspec validate coast-cay-reshape --strict`.
 
 ## Workflow follow-up
 

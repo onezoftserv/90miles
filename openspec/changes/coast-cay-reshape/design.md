@@ -166,6 +166,7 @@ The helper's settings, the final measures, the land count and the re-pinned numb
 
 **Integration (6.1, 6.2).**
 - Import twice and smoke are clean.
-- Full GUT: 2,679 of 2,680 pass. The one failure is main's `test_user_tmp`, which flags five suites that are not from this change.
+- Full GUT (on the final rows): 2,679 of 2,680 pass. The one failure is main's `test_user_tmp`, which flags five suites that are not from this change.
 - No networking file changed. `test_coast_cay_net.gd`, `test_coast_cay_bench_net.gd` and `test_arrival_scatter_net.gd` pass.
+- Windowed solo run, `art_pass_run.gd --mode=solo --only=cay`: 29 of 29 pass. A lone arrival walked from the landing to every one of the 22 pick-ups (the post's nails and mirror and the rope cache included) and picked each up, with no engine or script error logged.
 - Captures: `docs/art-pass/coast_cay_day.png` and `sandbar_day.png` are re-shot. `docs/art-pass/coast-cay-reshape/coast_cay_before_after.png` puts main's layout (left) beside the new one (right), both with today's art. `sandbar_bay_tips_before_after_x2.png` shows the two tips before (left) and after (right).
