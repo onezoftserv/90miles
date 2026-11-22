@@ -21,7 +21,7 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
 
 ## 0. Gate
 
-- [ ] 0.1 Wait until art-coast-pass (art wave 1) has merged into `main` and the coordinating session says go. Branch from `main`.
+- [x] 0.1 Wait until art-coast-pass (art wave 1) has merged into `main` and the coordinating session says go. Branch from `main`.
   - Re-read the merged `world_sea.gdshader`, `shore.gdshader`, `sea_mask.gd` and `SeaShaderChecks`.
   - Re-sync this change's MODIFIED "Scrolling sea" block with the archived art-pass spec. If art-coast-pass is not archived yet, sync with its delta.
 - [ ] 0.2 Groups 1 to 4 need only art-coast-pass. Group 5 waits until crossing-gameplay has merged. Before group 5, re-read its `crossing_hazards.gd`, `crossing.tscn` and how it exposes the vessel's lateral position.
@@ -32,12 +32,12 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
 
 ## 1. C33a: a readable night and dusk (data)
 
-- [ ] 1.1 In `test_day_night_tint.gd`, write the property tests and see them fail on today's `day_cycle.tres`:
+- [x] 1.1 In `test_day_night_tint.gd`, write the property tests and see them fail on today's `day_cycle.tres`:
   - the dusk tint times the deep and the shallows ramp bases, read from `ArtTuning.sea_ramps`, gives blue above green;
   - the night tint's `get_luminance()` is between 0.44 and 0.52.
   The existing `test_the_tint_node_takes_night_times_calm` is the 1-player case and must stay green.
-- [ ] 1.2 Set `day_cycle.tres` phase 2 to about (0.95, 0.78, 0.74) and phase 3 to about (0.42, 0.47, 0.72). Verify that the new tests, `test_world_sky.gd`, `test_weather_content.gd` and `test_searchlight.gd` pass.
-- [ ] 1.3 Windowed 1-player capture: the solo sandbar at dusk and at night with the patrol beam. Compare with the review's `before/sandbar_dusk_west_shore.png` and `docs/guardacostas-stealth/sandbar_night_beam.png`. Tune the two tints if needed and record the values in design.md Build notes.
+- [x] 1.2 Set `day_cycle.tres` phase 2 to about (0.95, 0.78, 0.74) and phase 3 to about (0.42, 0.47, 0.72). Verify that the new tests, `test_world_sky.gd`, `test_weather_content.gd` and `test_searchlight.gd` pass.
+- [x] 1.3 Windowed 1-player capture: the solo sandbar at dusk and at night with the patrol beam. Compare with the review's `before/sandbar_dusk_west_shore.png` and `docs/guardacostas-stealth/sandbar_night_beam.png`. Tune the two tints if needed and record the values in design.md Build notes.
 
 ## 2. C33b: firelight
 
