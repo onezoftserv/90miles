@@ -4,7 +4,12 @@ layer of a look (body, outfit, hair, item).
 The frame layout is a 320x128 sheet of 10x4 cells of 32x32. Rows 0-2 are the down, side (facing
 right) and up facings, with walk in columns 0-5 (idle is column 0), crouch in 6-7 and swim in 8-9;
 row 3 holds downed in columns 0-1 and dead in column 2. Every rule is a pure pixel remap, so
-applying it per layer and compositing equals compositing and applying it.
+applying it per layer and compositing equals compositing and applying it. Downed, its breath frame
+and dead lie along the ground (art-sprite-polish D8): the rows below the shoulders turn clockwise
+as the old TURN_DOWN did, the head block (the head and its neck row) moves to their end unturned,
+so the face stays upright with the eyes side by side and the neck, not the eye row, is its outlined
+bottom edge, and the shoulder rows between are left out (long hair hanging there would otherwise
+turn with the body, away from the head).
 """
 from dataclasses import dataclass
 from typing import Callable
@@ -19,11 +24,20 @@ WALK_FRAMES = 6
 ## The MetroCity columns of each facing's first walk frame; the left facing (18-23) is a mirror.
 SOURCE_COLUMNS = {"down": 0, "side": 6, "up": 12}
 CROUCH_FROM, CROUCH_COLUMNS = (0, 1), (6, 7)
-SWIM_FROM, SWIM_COLUMNS = (1, 4), (8, 9)
+SWIM_FROM, SWIM_COLUMNS = (1, 3), (8, 9)
 DOWNED_ROW, DOWNED_COLUMNS, DEAD_COLUMN = 3, (0, 1), 2
 CROUCH_DELETED_ROWS = frozenset({21, 22, 23, 27, 28, 29})
 DOWNED_DROP = 8
-CHEST_COLUMNS = range(8, 15)
+## The first row below the head block on a MetroCity walk frame: rows 0 to NECK_ROW - 1 are the
+## head and its neck row (17), which lie upright.
+NECK_ROW = 18
+## The shoulders' top, left out when lying.
+LIE_DELETED_ROWS = frozenset({18, 19})
+## Where the head block moves when lying: against the turned body (whose columns end at
+## 31 - 20 = 11), its bottom on the feet row 30.
+HEAD_SHIFT = (5, 13)
+## The lying body's chest (its shirt), which the breath frame lifts 1 px.
+CHEST_COLUMNS = range(7, 12)
 NEIGHBOURS = ((1, 0), (-1, 0), (0, 1), (0, -1))
 
 
@@ -52,6 +66,17 @@ def _crouch(x, y):
 
 CROUCH = Rule("crouch", _crouch, CROUCH_DELETED_ROWS)
 TURN_DOWN = Rule("downed", lambda x, y: (CELL - 1 - y, x + DOWNED_DROP))
+
+
+def _lie(x, y):
+    if y in LIE_DELETED_ROWS:
+        return None
+    if y < NECK_ROW:
+        return (x + HEAD_SHIFT[0], y + HEAD_SHIFT[1])
+    return (CELL - 1 - y, x + DOWNED_DROP)
+
+
+LIE = Rule("lying", _lie, LIE_DELETED_ROWS)
 CHEST_LIFT = Rule("chest lift", lambda x, y: (x, y - 1) if x in CHEST_COLUMNS else (x, y))
 
 
@@ -73,9 +98,9 @@ def _made_cells():
             cells.append(MadeCell(column, row, source, row, (CROUCH,)))
         for column, source in zip(SWIM_COLUMNS, SWIM_FROM):
             cells.append(MadeCell(column, row, source, row, ()))
-    cells.append(MadeCell(DOWNED_COLUMNS[0], DOWNED_ROW, 0, 0, (TURN_DOWN,)))
-    cells.append(MadeCell(DOWNED_COLUMNS[1], DOWNED_ROW, 0, 0, (TURN_DOWN, CHEST_LIFT)))
-    cells.append(MadeCell(DEAD_COLUMN, DOWNED_ROW, 0, 0, (TURN_DOWN,)))
+    cells.append(MadeCell(DOWNED_COLUMNS[0], DOWNED_ROW, 0, 0, (LIE,)))
+    cells.append(MadeCell(DOWNED_COLUMNS[1], DOWNED_ROW, 0, 0, (LIE, CHEST_LIFT)))
+    cells.append(MadeCell(DEAD_COLUMN, DOWNED_ROW, 0, 0, (LIE,)))
     return tuple(cells)
 
 

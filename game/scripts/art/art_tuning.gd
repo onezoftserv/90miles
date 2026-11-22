@@ -23,7 +23,8 @@ const STANDARD_PATH: String = "res://resources/art_tuning.tres"
 @export var outline_colors: PackedColorArray
 ## Mean colour of each land ground (sand, dune, brush) and each water ground (shallows, deep,
 ## brackish), measured from the made art in task 4.5 (design.md K47): sand and dune the mean of
-## the full-tile picks every whole cell draws, brush its full tile, and each sea step the mean
+## the full-tile picks every whole cell draws, weighted as `TerrainArtData.variant_weights` picks
+## them (art-terrain-polish D4), brush its full tile, and each sea step the mean
 ## world_sea.gdshader draws (the lighter of two water samples, in that step's ramp).
 @export var land_grounds: Dictionary[StringName, Color]
 @export var water_grounds: Dictionary[StringName, Color]

@@ -3,7 +3,7 @@ extends GutTest
 ## shell's screens without a network (solo is the offline peer).
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_game_shell_settings.cfg"
+var settings_path: String = UserTmp.path("test_game_shell_settings.cfg")
 
 var now_s: float = 0.0
 
@@ -15,13 +15,13 @@ func before_each() -> void:
 
 func after_each() -> void:
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _shell() -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	shell.clock = func() -> float: return now_s
 	add_child_autofree(shell)
 	return shell
@@ -67,8 +67,8 @@ func test_settings_are_kept() -> void:
 	screen.name_field.text_submitted.emit("Dayana")
 	screen.scale_picker.select(2)
 	screen.scale_picker.item_selected.emit(2)
-	assert_eq(GameSettings.load_from(SETTINGS_PATH).player_name, "Dayana")
-	assert_eq(GameSettings.load_from(SETTINGS_PATH).ui_scale, 2)
+	assert_eq(GameSettings.load_from(settings_path).player_name, "Dayana")
+	assert_eq(GameSettings.load_from(settings_path).ui_scale, 2)
 	screen.back_requested.emit()
 	assert_eq(shell.flow, GameShell.Flow.TITLE)
 
@@ -285,7 +285,7 @@ func test_the_reduce_flashes_box_saves_and_applies() -> void:
 	assert_eq(screen.reduce_flashes_box.text, "Reducir destellos")
 	assert_false(screen.reduce_flashes_box.button_pressed, "off by default")
 	screen.reduce_flashes_box.button_pressed = true
-	assert_true(GameSettings.load_from(SETTINGS_PATH).reduce_flashes, "saved at once")
+	assert_true(GameSettings.load_from(settings_path).reduce_flashes, "saved at once")
 	assert_true(HurtCues.reduce_flashes, "every cue reads it from now on")
 	screen.reduce_flashes_box.button_pressed = false
 	assert_false(HurtCues.reduce_flashes)
@@ -294,7 +294,7 @@ func test_the_reduce_flashes_box_saves_and_applies() -> void:
 
 func test_the_shell_applies_reduce_flashes_from_the_saved_settings() -> void:
 	HurtCues.reduce_flashes = false
-	var saved := GameSettings.new(SETTINGS_PATH)
+	var saved := GameSettings.new(settings_path)
 	saved.reduce_flashes = true
 	saved.save()
 	var shell := _shell()

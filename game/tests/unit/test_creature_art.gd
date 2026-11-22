@@ -18,10 +18,10 @@ const PALM_SCENE: PackedScene = preload("res://scenes/levels/palm.tscn")
 const WATERLINE_SHADER: String = "res://scenes/art/waterline.gdshader"
 const CREATURE_ART: String = "res://assets/art/creatures/creature_art.tres"
 const FIXTURE_ROOT: String = "res://tests/fixtures/art/creatures/content"
-const SETTINGS_PATH: String = "user://test_creature_art_settings.cfg"
+var settings_path: String = UserTmp.path("test_creature_art_settings.cfg")
 const TILE: float = 16.0
-## The gull's lift in flight (design.md D16).
-const AIR_LIFT_PX: float = 8.0
+## The gull's lift in flight (design.md D16, amended by art-sprite-polish D7: 8 -> 15 px).
+const AIR_LIFT_PX: float = 15.0
 ## SwoopSteal's and PatrolCircleStrike's states.
 const PERCH: int = 0
 const SWOOP: int = 1
@@ -39,8 +39,8 @@ func after_each() -> void:
 	net.teardown()
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _data(id: StringName) -> CreatureData:
@@ -182,6 +182,69 @@ func test_a_client_crab_fed_positions_at_10_hz_plays_move_every_frame_then_idle(
 	assert_eq(sprite.animation, &"idle", "idle 0.15 s after the last change")
 
 
+# --- art-sprite-polish D6 (C25, SP8): a smaller, livelier crab --------------------------------------
+
+## The atlas regions an animation plays, in order.
+func _regions(frames: SpriteFrames, animation: StringName) -> Array[Rect2]:
+	var found: Array[Rect2] = []
+	for index: int in frames.get_frame_count(animation):
+		found.append((frames.get_frame_texture(animation, index) as AtlasTexture).region)
+	return found
+
+
+func _cell(frames: SpriteFrames, animation: StringName, index: int) -> Image:
+	var atlas := frames.get_frame_texture(animation, index) as AtlasTexture
+	return ArtChecks.read_png(atlas.atlas.resource_path).get_region(Rect2i(atlas.region))
+
+
+func test_the_crab_idles_on_frames_0_1_0_2_and_scuttles_on_four() -> void:
+	var frames := _data(&"land_crab").sprite_frames
+	var idle: Array[Rect2] = _regions(frames, &"idle")
+	assert_eq(idle.size(), 4, "idle plays four frames")
+	if idle.size() == 4:
+		assert_eq(idle[2], idle[0], "frames 0, 1, 0, 2")
+		assert_ne(idle[1], idle[0])
+		assert_ne(idle[3], idle[0])
+		assert_ne(idle[3], idle[1])
+	assert_between(frames.get_animation_speed(&"idle"), 4.0, 5.0, "idle at 4-5 fps")
+	var move: Array[Rect2] = _regions(frames, &"move")
+	assert_eq(move.size(), 4, "move plays four frames")
+	var unique: Dictionary[Rect2, bool] = {}
+	for region: Rect2 in move:
+		unique[region] = true
+	assert_eq(unique.size(), 4, "four different move frames")
+	assert_lte(frames.get_animation_speed(&"move"), 12.0, "move at no more than 12 fps")
+
+
+func test_every_crab_frame_is_narrow_with_its_feet_on_row_15() -> void:
+	var frames := _data(&"land_crab").sprite_frames
+	for animation: StringName in frames.get_animation_names():
+		for index: int in frames.get_frame_count(animation):
+			var cell: Image = _cell(frames, animation, index)
+			var used: Rect2i = cell.get_used_rect()
+			var label: String = "%s[%d]" % [animation, index]
+			assert_eq(cell.get_size(), Vector2i(16, 16), label)
+			assert_gte(used.position.x, 2, "%s: nothing in the two left columns" % label)
+			assert_lte(used.end.x, 14, "%s: nothing in the two right columns" % label)
+			assert_eq(used.end.y, 16, "%s: the feet end on row 15" % label)
+
+
+## One player, offline: a solo sandbar-style crab that stands still plays idle, and one that walks
+## plays move.
+func test_a_solo_crab_idles_when_still_and_scuttles_when_it_walks() -> void:
+	NetManager.start_solo()
+	var rig := CreatureRig.make(self)
+	var crab := rig.creature(&"land_crab", Vector2i(3, 10))
+	_step(crab, 12)
+	var sprite := _sprite(crab)
+	assert_eq(sprite.animation, &"idle", "a still crab idles")
+	assert_true(sprite.is_playing(), "and its idle plays")
+	for frame: int in 12:
+		crab.position += Vector2(0.5, 0.0)
+		_step(crab)
+	assert_eq(sprite.animation, &"move", "a walking crab scuttles")
+
+
 # --- the sandbar's creatures ---------------------------------------------------------------------
 
 func test_the_shark_draws_at_the_water_line_with_no_shadow() -> void:
@@ -237,7 +300,7 @@ func test_a_solo_crab_on_the_sand_has_its_shadow_under_it() -> void:
 	assert_eq(_feet_y(sprite), crab.global_position.y + entry.foot_px, "its feet on the creature art's foot line")
 
 
-func test_a_flying_gulls_shadow_stays_on_the_ground_8_px_below_its_sprite() -> void:
+func test_a_flying_gulls_shadow_stays_on_the_ground_15_px_below_its_sprite() -> void:
 	var rig := CreatureRig.make(self)
 	var gull := rig.creature(&"seagull", Vector2i(3, 10))
 	gull.state_id = SWOOP
@@ -247,10 +310,54 @@ func test_a_flying_gulls_shadow_stays_on_the_ground_8_px_below_its_sprite() -> v
 	var shadow := _shadow(gull)
 	assert_eq(entry.air_lift_px, AIR_LIFT_PX)
 	assert_true(shadow.visible, "a flying gull has a shadow")
-	assert_eq(_feet_y(sprite), gull.global_position.y + entry.foot_px - AIR_LIFT_PX, "the sprite lifted 8 px")
+	assert_between(entry.air_lift_px, 14.0, 16.0, "art-sprite-polish D7: a lift of 14-16 px")
+	assert_eq(_feet_y(sprite), gull.global_position.y + entry.foot_px - AIR_LIFT_PX, "the sprite lifted 15 px")
 	assert_eq(shadow.global_position.y, gull.global_position.y + entry.shadow_y_px, "the shadow where a standing gull's would be")
 	assert_between(entry.shadow_y_px, 0.0, entry.foot_px, "on the ground under the gull")
-	assert_true(sprite.animation.begins_with("move"), "flying")
+	assert_true(sprite.animation.begins_with("swoop"), "flying, on the flight frames")
+
+
+# --- art-sprite-polish D7 (C25, SP10): gull flight frames ------------------------------------------
+
+func test_the_gull_flies_on_wide_frames_whose_wings_clear_the_cell_walls() -> void:
+	var frames := _data(&"seagull").sprite_frames
+	var tuning := ArtTuning.standard()
+	for state: String in ["swoop", "flee", "return"]:
+		for facing: String in ["side", "down", "up"]:
+			var animation := StringName("%s_%s" % [state, facing])
+			assert_true(frames.has_animation(animation), String(animation))
+			if not frames.has_animation(animation):
+				continue
+			assert_lte(frames.get_animation_speed(animation), tuning.max_fps, String(animation))
+			for index: int in frames.get_frame_count(animation):
+				var atlas := frames.get_frame_texture(animation, index) as AtlasTexture
+				var cell: Image = ArtChecks.read_png(atlas.atlas.resource_path).get_region(Rect2i(atlas.region))
+				var label: String = "%s[%d]" % [animation, index]
+				assert_gt(cell.get_width(), 16, "%s: a cell wider than 16 px" % label)
+				var used: Rect2i = cell.get_used_rect()
+				assert_gte(used.position.x, 1, "%s: nothing in the left column" % label)
+				assert_lte(used.end.x, cell.get_width() - 1, "%s: nothing in the right column" % label)
+	assert_eq(ArtChecks.check_frame_budget("seagull", frames, tuning.max_creature_frames, tuning.max_fps), PackedStringArray())
+
+
+## One player, offline: a solo gull that swoops flies on its flight frames, lifted off the ground,
+## with its shadow on the ground below it.
+func test_a_solo_gull_swoops_on_its_flight_frames_with_its_shadow_below() -> void:
+	NetManager.start_solo()
+	var rig := CreatureRig.make(self)
+	var gull := rig.creature(&"seagull", Vector2i(3, 10))
+	gull.state_id = SWOOP
+	for frame: int in 6:
+		gull.position += Vector2(0.0, 1.0)
+		_step(gull)
+	var sprite := _sprite(gull)
+	var shadow := _shadow(gull)
+	assert_eq(sprite.animation, &"swoop_down", "a gull swooping south plays swoop_down")
+	assert_true(sprite.is_playing())
+	assert_true(shadow.visible, "its shadow shows")
+	var entry := _art().entry(&"seagull")
+	assert_eq(shadow.global_position.y, gull.global_position.y + entry.shadow_y_px, "on the ground under it")
+	assert_lt(_feet_y(sprite), shadow.global_position.y, "the gull above its shadow")
 
 
 # The palm as drawn: its look, after one step (design.md K64).
@@ -302,7 +409,7 @@ func test_a_solo_players_perched_gull_sorts_over_its_palm_and_behind_a_player_so
 	WeatherManager.stop()
 	WeatherManager.sky.start_at(0.0)
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	var body := shell.session.body(CoopSession.HOST_ID)

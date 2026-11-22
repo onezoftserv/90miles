@@ -46,6 +46,14 @@ func setup(for_session: CoopSession, layout_data: IslandLayoutData, catalog: Con
 	if session.events != null:
 		session.events.world = world
 	world.rng.seed = WORLD_SEED
+	# guardacostas-capture: a docked boat lands its squad through the session, and its soldiers join
+	# this watch; their random walk is seeded from the run and the island.
+	world.spawner = _spawn_squad_member
+	world.watch = watch
+	world.catalog = _catalog
+	world.island_id = layout.id
+	var run_seed: Variant = session.world_state.get("run_seed", 0)
+	world.island_run_seed = run_seed if run_seed is int else 0
 
 
 ## Host: spawns the creatures that need no phase (the offshore shark).
@@ -128,7 +136,10 @@ func _spawn_rules(phase: Variant) -> void:
 			var key := "%s:%d" % [id, index]
 			if not _matches(rule, phase) or _has_live(key):
 				continue
-			if rule.chance < 1.0 and world.rng.randf() > rule.chance:
+			# guardacostas-capture "Fade with distance": a patrol's chance is rolled from its own stream
+			# (the run seed and the island), so a restarted island rolls the same.
+			var dice: RandomNumberGenerator = _patrol_dice() if data.creature_tags.has(DataEnums.CreatureTag.PATROL) else world.rng
+			if rule.chance < 1.0 and dice.randf() > rule.chance:
 				continue
 			_live[key] = _spawn_rule(data, rule)
 
@@ -162,6 +173,12 @@ func _spawn_rule(data: CreatureData, rule: CreatureSpawnRuleData) -> Array:
 			# Evenly spread loops: boat `index` of the rule's boats; placed on the loop at once.
 			route.set_member(creature, index, spots.size())
 			watch.boats.append(creature)
+			# guardacostas-capture: the session's capture keeper hears of every capture and every squad
+			# that rows out with captives.
+			var keeper := CaptureScene.of(session)
+			if keeper != null:
+				route.captured.connect(keeper.on_captured.bind(creature))
+				route.rowed_out.connect(keeper.on_rowed_out)
 			creature.advance(0.0)
 	return spawned
 
@@ -208,11 +225,31 @@ func _offshore_spots(data: CreatureData, rule: CreatureSpawnRuleData, count: int
 # boats on an island and different runs differ. Host only, so no peer needs to agree.
 func _patrol_dice() -> RandomNumberGenerator:
 	if _patrol_stream == null:
-		_patrol_stream = RandomNumberGenerator.new()
 		var run_seed: Variant = session.world_state.get("run_seed", 0)
-		var text: String = "%d|%s" % [run_seed if run_seed is int else 0, layout.id]
-		_patrol_stream.seed = text.sha256_text().substr(0, 15).hex_to_int()
+		_patrol_stream = patrol_stream(run_seed if run_seed is int else 0, layout.id)
 	return _patrol_stream
+
+
+## The patrol boats' dice for `run_seed` on the island `layout_id`: seeded with the first 15 hex digits
+## of sha256("<run seed>|<layout id>").
+static func patrol_stream(run_seed: int, layout_id: StringName) -> RandomNumberGenerator:
+	var stream := RandomNumberGenerator.new()
+	stream.seed = ("%d|%s" % [run_seed, layout_id]).sha256_text().substr(0, 15).hex_to_int()
+	return stream
+
+
+## How many boats of `data` one island-wide `rule` (no phases, no anchor) puts on an island for
+## `players`, drawn from `dice` as the spawner draws: the chance first (0 when it fails), then the
+## count, scaled for the party. The fade-with-distance test rolls islands with it.
+static func roll_patrol(data: CreatureData, rule: CreatureSpawnRuleData, dice: RandomNumberGenerator, players: int) -> int:
+	if rule.chance < 1.0 and dice.randf() > rule.chance:
+		return 0
+	var count: int = dice.randi_range(rule.count.x, rule.count.y)
+	if data.party_extra_count_every_n_players > 0:
+		count += floori(float(maxi(players, 1)) / data.party_extra_count_every_n_players)
+	if rule.anchor == CreatureSpawnRuleData.Anchor.NONE:
+		count = floori(count * pow(data.party_rate_mult_per_extra_player, maxi(players, 1) - 1))
+	return count
 
 
 # The rule fits this island (its layout's chain family) and, for a phased rule, the phase.
@@ -241,6 +278,14 @@ func _is_fire_shy(data: CreatureData) -> bool:
 		if each.trigger == CreatureCounterData.Trigger.FIRE_LIGHT and each.response == CreatureCounterData.Response.DISPERSE:
 			return true
 	return counter != null and counter.response == CreatureCounterData.Response.DISPERSE
+
+
+# Host: a squad member steps ashore through the session's spawner, so every client sees it.
+func _spawn_squad_member(data: CreatureData, at: Vector2) -> Creature:
+	var made := session.spawn_creature(data, at)
+	if made != null:
+		made.world = world
+	return made
 
 
 func _remove(creature: Creature) -> void:

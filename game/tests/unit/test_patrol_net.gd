@@ -288,7 +288,8 @@ func test_the_client_runs_no_trigger_and_no_spot_and_never_reports() -> void:
 		_hold_tick(boat, lap_s)
 	assert_signal_emit_count(boat, "patrol_alerted", 1, "the host spotted the player and reported once")
 	await wait_seconds(0.4)
-	assert_eq(theirs.state_name(), &"ALERT_LOCK", "the client shows the host's alert")
+	# guardacostas-capture: a player spotted on land docks the boat for its squad.
+	assert_eq(theirs.state_name(), &"DOCKED", "the client shows the host's alert")
 	assert_signal_not_emitted(theirs, "patrol_alerted")
 	assert_null(theirs.world, "a client's boat has no world to read")
 	var brain: PatrolRoute = theirs.brain as PatrolRoute

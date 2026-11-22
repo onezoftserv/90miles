@@ -10,13 +10,13 @@ const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.ts
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const HUNT_PATH: String = "res://scenes/dev/secret_hunt_layout.tres"
 const CAY_PATH: String = "res://resources/islands/cayo_sin_norte.tres"
-const ROOT: String = "user://test_handmade_layouts"
+var root: String = UserTmp.path("test_handmade_layouts")
 
 
 func before_each() -> void:
 	NetManager.start_solo()
 	WeatherManager.stop()
-	FsHelpers.remove_tree(ROOT)
+	FsHelpers.remove_tree(root)
 
 
 func after_each() -> void:
@@ -25,7 +25,7 @@ func after_each() -> void:
 
 
 func after_all() -> void:
-	FsHelpers.remove_tree(ROOT)
+	FsHelpers.remove_tree(root)
 
 
 # The island scene with `layout` set before it enters the tree, furnished into a solo session.
@@ -122,9 +122,9 @@ func test_an_off_graph_layout_is_never_numbered() -> void:
 	hidden.id = &"hidden"
 	hidden.name_es = "Escondido"
 	hidden.off_graph = true
-	assert_eq(FsHelpers.save_content(ROOT, "islands", "listed", listed), OK)
-	assert_eq(FsHelpers.save_content(ROOT, "islands", "hidden", hidden), OK)
-	var catalog := ContentCatalog.new(ROOT, {&"islands": IslandLayoutData})
+	assert_eq(FsHelpers.save_content(root, "islands", "listed", listed), OK)
+	assert_eq(FsHelpers.save_content(root, "islands", "hidden", hidden), OK)
+	var catalog := ContentCatalog.new(root, {&"islands": IslandLayoutData})
 	var ids: Array[StringName] = []
 	for layout: IslandLayoutData in IslandLayouts.numbered(catalog):
 		ids.append(layout.id)

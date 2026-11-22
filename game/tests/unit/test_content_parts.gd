@@ -2,19 +2,19 @@ extends GutTest
 ## content-data: "every referenced id SHALL exist" also holds for ids inside embedded parts
 ## (conditions, effects, spawn rules...), at any depth.
 
-const ROOT := "user://test_content_parts"
+var root: String = UserTmp.path("test_content_parts")
 
 
 func before_each() -> void:
-	FsHelpers.remove_tree(ROOT)
+	FsHelpers.remove_tree(root)
 
 
 func after_all() -> void:
-	FsHelpers.remove_tree(ROOT)
+	FsHelpers.remove_tree(root)
 
 
 func _catalog() -> ContentCatalog:
-	return ContentCatalog.new(ROOT, {&"things": FixtureItemData, &"holders": FixtureHolderData})
+	return ContentCatalog.new(root, {&"things": FixtureItemData, &"holders": FixtureHolderData})
 
 
 func _part(item: StringName) -> FixturePartData:
@@ -34,11 +34,11 @@ func _save_rope() -> void:
 	var rope := FixtureItemData.new()
 	rope.id = &"rope"
 	rope.name_es = "Soga"
-	assert_eq(FsHelpers.save_content(ROOT, "things", "rope", rope), OK)
+	assert_eq(FsHelpers.save_content(root, "things", "rope", rope), OK)
 
 
 func _validate(holder: FixtureHolderData) -> PackedStringArray:
-	assert_eq(FsHelpers.save_content(ROOT, "holders", "h", holder), OK)
+	assert_eq(FsHelpers.save_content(root, "holders", "h", holder), OK)
 	return ContentValidator.validate(_catalog())
 
 

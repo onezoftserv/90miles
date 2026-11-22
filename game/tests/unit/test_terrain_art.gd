@@ -421,20 +421,77 @@ func test_a_solo_sandbar_shore_bush_is_whole() -> void:
 	assert_eq(built.terrain.terrain_at(cell), DataEnums.Terrain.SCRUB, "the owner's spot is scrub")
 	var tile: Dictionary = TerrainArt.tile(TerrainArt.BRUSH, cell, SANDBAR.id, built.terrain, built.tide_pools)
 	assert_eq(tile.get(&"source"), TerrainArt.data().shore_source_of[TerrainArt.BRUSH], "the brush shore source")
-	assert_eq(tile.get(&"atlas"), Vector2i(10, 0), "sand mask 10 (sea to the west), own mask 0")
+	# art-terrain-polish C10b: the piece's block of 16 rows is picked by the cell's hash
+	var block: int = TerrainArt.shore_row(TerrainArt.BRUSH, cell, SANDBAR.id)
+	assert_eq(tile.get(&"atlas"), Vector2i(10, 16 * block), "sand mask 10 (sea to the west), own mask 0, its piece's block")
 	var shore: Image = _sheet("res://assets/art/terrain/brush_shore.png")
 	var brush: Image = _sheet("res://assets/art/terrain/brush.png")
 	if shore == null or brush == null:
 		return
 	var drawn: Image = shore.get_region(Rect2i(Vector2i(tile[&"atlas"]) * TILE, Vector2i(TILE, TILE)))
-	var pick: Image = brush.get_region(Rect2i(1 * TILE, PICK_ROW * TILE, TILE, TILE))
-	var count: int = 0
-	for y: int in TILE:
-		for x: int in TILE:
-			if drawn.get_pixel(x, y).a > 0.0:
-				count += 1
-	assert_eq(count, 90, "every pixel of the small bush")
-	assert_true(_is_moved(drawn, pick), "and only the small bush, whole")
+	var pieces: Array[Image] = [brush.get_region(Rect2i(1 * TILE, PICK_ROW * TILE, TILE, TILE))]
+	for name: String in ["shore_bush_a", "shore_bush_b"]:
+		pieces.append(Image.load_from_file(ProjectSettings.globalize_path("res://").path_join("../tools/art/fixes/terrain/%s.png" % name)))
+	assert_true(_is_moved(drawn, pieces[block]), "the whole piece of block %d, uncut" % block)
+
+
+## art-terrain-polish TR14: the clear pixels of `tile` that no 4-connected run of clear pixels
+## joins to the tile's border, so the ground shows through inside the drawing.
+func _enclosed_clear(tile: Image) -> int:
+	var size: Vector2i = tile.get_size()
+	var seen: Dictionary[Vector2i, bool] = {}
+	var todo: Array[Vector2i] = []
+	for y: int in size.y:
+		for x: int in size.x:
+			var edge: bool = x == 0 or y == 0 or x == size.x - 1 or y == size.y - 1
+			if edge and tile.get_pixel(x, y).a == 0.0:
+				todo.append(Vector2i(x, y))
+	while not todo.is_empty():
+		var at: Vector2i = todo.pop_back()
+		if seen.has(at):
+			continue
+		seen[at] = true
+		for step: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			var next: Vector2i = at + step
+			var inside: bool = next.x >= 0 and next.y >= 0 and next.x < size.x and next.y < size.y
+			if inside and not seen.has(next) and tile.get_pixel(next.x, next.y).a == 0.0:
+				todo.append(next)
+	var holes: int = 0
+	for y: int in size.y:
+		for x: int in size.x:
+			if tile.get_pixel(x, y).a == 0.0 and not seen.has(Vector2i(x, y)):
+				holes += 1
+	return holes
+
+
+## art-terrain-polish TR14 ("Scrub varies", "No hole in a bush"): every lone-bush pick on row 4 of
+## the brush sheet is solid inside its outline.
+func test_no_brush_pick_has_a_hole_inside_its_outline() -> void:
+	var brush: Image = _sheet("res://assets/art/terrain/brush.png")
+	if brush == null:
+		return
+	for column: int in SET_COLUMNS:
+		var pick: Image = brush.get_region(Rect2i(column * TILE, PICK_ROW * TILE, TILE, TILE))
+		assert_eq(_enclosed_clear(pick), 0, "brush pick %d has no hole inside its outline" % column)
+
+
+## One player, offline: every lone bush on the solo sandbar (a brush pick on row 4) is drawn with
+## no sand showing through inside it. Reads the sheet's bytes, not a render.
+func test_a_solo_sandbar_lone_bush_has_no_hole() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	var brush: Image = _sheet("res://assets/art/terrain/brush.png")
+	if brush == null:
+		return
+	var lone: int = 0
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.BRUSH, built.terrain, built.tide_pools):
+		var tile: Dictionary = TerrainArt.tile(TerrainArt.BRUSH, cell, SANDBAR.id, built.terrain, built.tide_pools)
+		var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+		if tile.get(&"source") != TerrainArt.data().source_of[TerrainArt.BRUSH] or atlas.y != PICK_ROW:
+			continue
+		lone += 1
+		var drawn: Image = brush.get_region(Rect2i(atlas * TILE, Vector2i(TILE, TILE)))
+		assert_eq(_enclosed_clear(drawn), 0, "the lone bush at %s (pick %d) has no hole" % [cell, atlas.x])
+	assert_gt(lone, 0, "the sandbar has lone bushes")
 
 
 ## art-pass "No water in land tiles": a recipe that mapped a baked water strip or foam rim to a
@@ -898,6 +955,312 @@ func test_layer_cell_counts_of_the_two_islands() -> void:
 		var layers: Array[StringName] = [TerrainArt.SAND, TerrainArt.DUNE, TerrainArt.BRUSH, TerrainArt.PLAIN]
 		for index: int in layers.size():
 			assert_eq(TerrainArt.layer_cells(layers[index], built.terrain, built.tide_pools).size(), expected[id][index], "%s: %s" % [id, layers[index]])
+		# art-terrain-polish C9: with the palms, the dune gains each palm with 3 or 4 dune sides.
+		var joined: int = 0
+		for palm: Vector2i in built.palms:
+			if TerrainArt.is_member(TerrainArt.DUNE, palm, built.terrain, built.tide_pools, built.palms) and not TerrainArt.is_member(TerrainArt.DUNE, palm, built.terrain, built.tide_pools):
+				joined += 1
+		var dune: int = TerrainArt.layer_cells(TerrainArt.DUNE, built.terrain, built.tide_pools, built.palms).size()
+		assert_eq(dune, int(expected[id][1]) + joined, "%s: the dune with its palms" % id)
+		if id == &"sandbar":
+			assert_eq(dune, 425, "the sandbar's dune with its three palms")
+		assert_eq(TerrainArt.layer_cells(TerrainArt.BRUSH, built.terrain, built.tide_pools, built.palms).size(), expected[id][2], "%s: no palm on the brush" % id)
+
+
+# --- art-terrain-polish C9, TR11: a palm counts for the dune by its neighbours (design D1) ---
+
+## The tile `layer` gives cell `at` of `rows`, or {}, with `palms` as the palm cells (beach `s`).
+func _palm_pick(layer: StringName, rows: PackedStringArray, at: Vector2i, palms: Array[Vector2i]) -> Dictionary:
+	return TerrainArt.tile(layer, at, &"test", TerrainRows.build(rows), TerrainRows.pools(rows), palms)
+
+
+func test_a_palm_with_three_or_four_dune_sides_is_on_the_dune_and_never_the_brush() -> void:
+	# art-pass "A palm stands in its dune"
+	var rows := PackedStringArray([".......", ".ddddd.", ".ddsdd.", ".ddbdd.", ".ddddd.", "......."])
+	var palm: Vector2i = Vector2i(3, 2)
+	var palms: Array[Vector2i] = [palm]
+	var terrain: GridTerrain = TerrainRows.build(rows)
+	assert_true(TerrainArt.is_member(TerrainArt.DUNE, palm, terrain, [], palms), "four dune sides")
+	assert_false(TerrainArt.is_member(TerrainArt.BRUSH, palm, terrain, [], palms), "never the brush")
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, palm, terrain, [], palms), TerrainArt.FULL, "an enclosed palm is whole dune")
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, Vector2i(2, 2), terrain, [], palms), TerrainArt.FULL, "the dune beside it keeps its corners")
+	assert_false(TerrainArt.is_member(TerrainArt.DUNE, palm, terrain, []), "with no palms, today's rule")
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, Vector2i(2, 2), terrain, []), TerrainArt.NW | TerrainArt.SW, "and today's bite")
+
+
+func test_notch_palms_take_the_dune_edge_tiles() -> void:
+	var north := PackedStringArray([".....", ".ddd.", ".dsd.", ".sss.", "....."])
+	var west := PackedStringArray([".....", ".sdd.", ".ssd.", ".sdd.", "....."])
+	var palms: Array[Vector2i] = [Vector2i(2, 2)]
+	var terrain_n: GridTerrain = TerrainRows.build(north)
+	var terrain_w: GridTerrain = TerrainRows.build(west)
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, Vector2i(2, 2), terrain_n, [], palms), TerrainArt.NW | TerrainArt.NE, "dune to the north: mask 3")
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, Vector2i(2, 2), terrain_w, [], palms), TerrainArt.NE | TerrainArt.SE, "dune to the east: mask 10")
+	assert_eq(_palm_pick(TerrainArt.DUNE, north, Vector2i(2, 2), palms).get(&"atlas"), Vector2i(3, 0), "the north edge tile")
+
+
+func test_a_palm_out_on_the_beach_is_on_no_upper_layer() -> void:
+	var rows := PackedStringArray([".....", ".sss.", ".ssd.", ".sss.", "....."])
+	var palms: Array[Vector2i] = [Vector2i(2, 2)]
+	assert_eq(_palm_pick(TerrainArt.DUNE, rows, Vector2i(2, 2), palms), {}, "one dune side is not enough")
+	assert_eq(_palm_pick(TerrainArt.BRUSH, rows, Vector2i(2, 2), palms), {}, "nor the brush")
+	assert_eq(_palm_pick(TerrainArt.SAND, rows, Vector2i(2, 2), palms), _pick(TerrainArt.SAND, rows, Vector2i(2, 2)), "its sand tile is unchanged")
+
+
+## One player, offline: the sandbar's palms in the dune join it; the coast cay's palms with all
+## eight neighbours in the dune take its full tile (found from the layout, so a reshape keeps it).
+func test_a_solo_sandbars_palms_stand_in_their_dune() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	for palm: Vector2i in [Vector2i(23, 31), Vector2i(23, 36), Vector2i(24, 42)]:
+		assert_true(built.palms.has(palm), "%s is a palm" % palm)
+		assert_true(TerrainArt.is_member(TerrainArt.DUNE, palm, built.terrain, built.tide_pools, built.palms), "palm %s is on the dune" % palm)
+		assert_false(TerrainArt.is_member(TerrainArt.BRUSH, palm, built.terrain, built.tide_pools, built.palms), "palm %s is not on the brush" % palm)
+	assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, Vector2i(23, 31), built.terrain, built.tide_pools, built.palms), 7, "(23, 31): beach at its south-east diagonal")
+	var cay: IslandLayout = IslandLayout.build(COAST_CAY)
+	for palm: Vector2i in cay.palms:
+		var around: int = 0
+		for y: int in range(-1, 2):
+			for x: int in range(-1, 2):
+				if (x != 0 or y != 0) and TerrainArt.is_member(TerrainArt.DUNE, palm + Vector2i(x, y), cay.terrain, cay.tide_pools):
+					around += 1
+		if around == 8:
+			assert_eq(TerrainArt.corner_mask(TerrainArt.DUNE, palm, cay.terrain, cay.tide_pools, cay.palms), TerrainArt.FULL, "cay palm %s is whole dune" % palm)
+	# How many cay palms stand inside a dune is the layout's business (coast-cay-reshape may move
+	# them); the fixture test above pins the whole-dune rule itself.
+
+
+# --- art-terrain-polish D9: the dune's inland corners are rounded ("Dune corners are rounded") ---
+
+const DUNE_SHEET: String = "res://assets/art/terrain/dune.png"
+## The outer corners (one dune corner) by their dune corner, and the inner corners and saddles by
+## their water corners, as a corner of the tile (0 or 15 on each axis).
+const DUNE_OUTER: Dictionary[int, Vector2i] = {1: Vector2i(0, 0), 2: Vector2i(15, 0), 4: Vector2i(0, 15), 8: Vector2i(15, 15)}
+const DUNE_INNER: Dictionary[int, Array] = {
+	7: [Vector2i(15, 15)], 11: [Vector2i(0, 15)], 13: [Vector2i(15, 0)], 14: [Vector2i(0, 0)],
+	6: [Vector2i(0, 0), Vector2i(15, 15)], 9: [Vector2i(15, 0), Vector2i(0, 15)],
+}
+## Today's pack corners sat 19-38 px off the arc; a redrawn corner sits on it.
+const DUNE_ARC_SLACK: int = 4
+## The straight dune edges cross the cell border 3 px from a water corner, so a bite is 2 px deep
+## along the diagonal at most; the pack's mask 7 had 1.
+const DUNE_BITE_MIN: int = 2
+
+
+func _drawn(tile: Image, at: Vector2i) -> bool:
+	return tile.get_pixel(at.x, at.y).a > 0.0
+
+
+## How many pixels of the outer-corner `tile` lie off the quarter ellipse round its dune corner
+## `corner` whose semi-axes are the tile's own reach along its two border strips.
+func _arc_misfit(tile: Image, corner: Vector2i) -> int:
+	var step: Vector2i = Vector2i(1 if corner.x == 0 else -1, 1 if corner.y == 0 else -1)
+	var across: int = 0
+	while across < TILE and _drawn(tile, Vector2i(corner.x + step.x * across, corner.y)):
+		across += 1
+	var down: int = 0
+	while down < TILE and _drawn(tile, Vector2i(corner.x, corner.y + step.y * down)):
+		down += 1
+	if across == 0 or down == 0:
+		return TILE * TILE
+	var misfit: int = 0
+	for y: int in TILE:
+		for x: int in TILE:
+			var u: float = absf(x - corner.x) + 0.5
+			var v: float = absf(y - corner.y) + 0.5
+			var inside: bool = (u / across) * (u / across) + (v / down) * (v / down) <= 1.0
+			if inside != _drawn(tile, Vector2i(x, y)):
+				misfit += 1
+	return misfit
+
+
+## How many clear pixels run along the diagonal from the water corner `corner` of `tile`.
+func _bite_run(tile: Image, corner: Vector2i) -> int:
+	var step: Vector2i = Vector2i(1 if corner.x == 0 else -1, 1 if corner.y == 0 else -1)
+	var run: int = 0
+	var at: Vector2i = corner
+	while at.x >= 0 and at.y >= 0 and at.x < TILE and at.y < TILE and not _drawn(tile, at):
+		run += 1
+		at += step
+	return run
+
+
+func _dune_tile(sheet: Image, mask: int) -> Image:
+	return sheet.get_region(Rect2i(_mask_atlas(mask) * TILE, Vector2i(TILE, TILE)))
+
+
+func test_the_dune_corners_are_rounded() -> void:
+	var sheet: Image = _sheet(DUNE_SHEET)
+	if sheet == null:
+		return
+	for mask: int in DUNE_OUTER:
+		var misfit: int = _arc_misfit(_dune_tile(sheet, mask), DUNE_OUTER[mask])
+		assert_true(misfit <= DUNE_ARC_SLACK, "dune mask %d is a quarter arc (%d px off)" % [mask, misfit])
+	for mask: int in DUNE_INNER:
+		for corner: Vector2i in DUNE_INNER[mask]:
+			var run: int = _bite_run(_dune_tile(sheet, mask), corner)
+			assert_true(run >= DUNE_BITE_MIN, "dune mask %d bites %d px at %s" % [mask, run, corner])
+
+
+## Two tiles side by side share a border; neighbouring dune tiles meet on it without a jog.
+func test_neighbouring_dune_tiles_meet_without_a_jog() -> void:
+	var sheet: Image = _sheet(DUNE_SHEET)
+	if sheet == null:
+		return
+	var jogs: Array[String] = []
+	for left: int in 16:
+		for right: int in 16:
+			var beside: bool = bool(left & TerrainArt.NE) == bool(right & TerrainArt.NW) and bool(left & TerrainArt.SE) == bool(right & TerrainArt.SW)
+			var below: bool = bool(left & TerrainArt.SW) == bool(right & TerrainArt.NW) and bool(left & TerrainArt.SE) == bool(right & TerrainArt.NE)
+			var a: Image = _dune_tile(sheet, left)
+			var b: Image = _dune_tile(sheet, right)
+			var side: int = 0
+			var under: int = 0
+			for i: int in TILE:
+				if _drawn(a, Vector2i(TILE - 1, i)) != _drawn(b, Vector2i(0, i)):
+					side += 1
+				if _drawn(a, Vector2i(i, TILE - 1)) != _drawn(b, Vector2i(i, 0)):
+					under += 1
+			if beside and side > 2:
+				jogs.append("%d|%d" % [left, right])
+			if below and under > 2:
+				jogs.append("%d/%d" % [left, right])
+	assert_eq(jogs, [] as Array[String], "dune tiles that can sit side by side meet without a jog")
+
+
+## One player, offline: every inland dune cell of the sandbar (its tile from the dune's own sheet,
+## not the coast's cut dune shore) with a corner or a diagonal mask is drawn rounded, and its four
+## corner pixels still say which corners are dune.
+func test_a_solo_sandbars_dune_corners_are_rounded() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	var sheet: Image = _sheet(DUNE_SHEET)
+	if sheet == null:
+		return
+	var checked: int = 0
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.DUNE, built.terrain, built.tide_pools, built.palms):
+		var tile: Dictionary = TerrainArt.tile(TerrainArt.DUNE, cell, SANDBAR.id, built.terrain, built.tide_pools, built.palms)
+		var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+		if tile.get(&"source") != TerrainArt.data().source_of[TerrainArt.DUNE] or atlas.y >= PICK_ROW:
+			continue
+		var mask: int = atlas.y * SET_COLUMNS + atlas.x
+		var drawn: Image = _dune_tile(sheet, mask)
+		if DUNE_OUTER.has(mask):
+			assert_true(_arc_misfit(drawn, DUNE_OUTER[mask]) <= DUNE_ARC_SLACK, "dune corner at %s (mask %d) is rounded" % [cell, mask])
+			checked += 1
+		elif DUNE_INNER.has(mask):
+			for corner: Vector2i in DUNE_INNER[mask]:
+				assert_true(_bite_run(drawn, corner) >= DUNE_BITE_MIN, "dune bite at %s (mask %d)" % [cell, mask])
+			checked += 1
+		else:
+			continue
+		assert_eq(_corners(sheet, atlas), mask, "%s: the corner pixels of mask %d" % [cell, mask])
+	assert_gt(checked, 0, "the sandbar has inland dune corners")
+
+
+# --- art-terrain-polish C11, TR12: weighted sand picks (design D4) ---
+
+## The share of whole cells of `rows` that take sand pick 0, the clean one.
+func _clean_share(terrain: GridTerrain, pools: Array[Vector2i], layout_id: StringName) -> float:
+	var whole: int = 0
+	var clean: int = 0
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.SAND, terrain, pools):
+		var tile: Dictionary = TerrainArt.tile(TerrainArt.SAND, cell, layout_id, terrain, pools)
+		var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+		if atlas.y != PICK_ROW:
+			continue
+		whole += 1
+		if atlas.x == 0:
+			clean += 1
+	return float(clean) / float(maxi(whole, 1))
+
+
+func test_the_sand_picks_are_weighted_toward_the_clean_one() -> void:
+	# art-pass "The beach shows no grid": about 70% clean, by art data
+	var weights: PackedInt32Array = TerrainArt.data().variant_weights.get(TerrainArt.SAND, PackedInt32Array())
+	assert_eq(weights.size(), int(TerrainArt.data().variant_count[TerrainArt.SAND]), "one weight per sand pick")
+	var rows: PackedStringArray = []
+	for y: int in 34:
+		rows.append("s".repeat(34))
+	var share: float = _clean_share(TerrainRows.build(rows), [], &"weights")
+	assert_between(share, 0.6, 0.8, "a 32x32 block of whole sand: %.2f clean" % share)
+	assert_true(TerrainArt.data().variant_weights.get(TerrainArt.DUNE, PackedInt32Array()).is_empty(), "the dune keeps its even pick")
+
+
+## One player, offline: the solo sandbar's whole sand cells take the clean pick 60-80% of the
+## time, the same on every build.
+func test_a_solo_sandbars_beach_is_mostly_clean_sand() -> void:
+	var first: IslandLayout = IslandLayout.build(SANDBAR)
+	var share: float = _clean_share(first.terrain, first.tide_pools, SANDBAR.id)
+	assert_between(share, 0.6, 0.8, "the sandbar's whole sand cells: %.2f clean" % share)
+	var again: IslandLayout = IslandLayout.build(SANDBAR)
+	assert_eq(_clean_share(again.terrain, again.tide_pools, SANDBAR.id), share, "every build picks the same")
+
+
+# --- art-terrain-polish C10a, TR10: whole scrub cells vary (design D5) ---
+
+const BRUSH_SHEET: String = "res://assets/art/terrain/brush.png"
+## The brush's whole-cell picks are on the row after the islet picks.
+const FULL_PICK_ROW: int = PICK_ROW + 1
+
+
+func test_a_whole_scrub_cell_takes_a_full_pick_and_a_lone_bush_an_islet_pick() -> void:
+	assert_eq(TerrainArt.data().variant_masks.get(TerrainArt.BRUSH, PackedInt32Array()), PackedInt32Array([0, 15]), "the brush picks its islet and its full tile")
+	var rows := PackedStringArray(["..........", ".ssssssss.", ".sbbbbsss.", ".sbbbbsss.", ".sbbbbsbs.", ".sbbbbsss.", ".ssssssss.", ".........."])
+	var whole: Dictionary = _pick(TerrainArt.BRUSH, rows, Vector2i(3, 3))
+	assert_eq(whole.get(&"source"), TerrainArt.data().source_of[TerrainArt.BRUSH])
+	assert_eq(Vector2i(whole.get(&"atlas", Vector2i(-1, -1))).y, FULL_PICK_ROW, "a whole scrub cell: a full-tile pick")
+	var lone: Dictionary = _pick(TerrainArt.BRUSH, rows, Vector2i(7, 4))
+	assert_eq(Vector2i(lone.get(&"atlas", Vector2i(-1, -1))).y, PICK_ROW, "a lone bush: an islet pick")
+	var edge: Dictionary = _pick(TerrainArt.BRUSH, rows, Vector2i(2, 2))
+	assert_eq(edge.get(&"atlas"), _mask_atlas(TerrainArt.SE), "an outer corner keeps its own mask's tile")
+
+
+func test_the_brush_full_picks_keep_the_full_tiles_corner_quarters() -> void:
+	var sheet: Image = _sheet(BRUSH_SHEET)
+	if sheet == null:
+		return
+	var full: Image = sheet.get_region(Rect2i(_mask_atlas(15) * TILE, Vector2i(TILE, TILE)))
+	for column: int in SET_COLUMNS:
+		var pick: Image = sheet.get_region(Rect2i(column * TILE, FULL_PICK_ROW * TILE, TILE, TILE))
+		var outside: int = 0
+		for y: int in TILE:
+			for x: int in TILE:
+				var centre: bool = x >= 3 and x <= 12 and y >= 3 and y <= 12
+				if not centre and pick.get_pixel(x, y) != full.get_pixel(x, y):
+					outside += 1
+		assert_eq(outside, 0, "full pick %d keeps the corner quarters, so neighbours join" % column)
+		assert_eq(_enclosed_clear(pick), 0, "full pick %d has no hole" % column)
+
+
+## One player, offline: the secret cay's scrub block (cayo_sin_norte) is not one wallpaper bush.
+func test_a_solo_secret_cay_scrub_block_uses_more_than_one_pick() -> void:
+	var layout: IslandLayoutData = load("res://resources/islands/cayo_sin_norte.tres") as IslandLayoutData
+	var built: IslandLayout = IslandLayout.build(layout)
+	var picks: Dictionary[int, int] = {}
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.BRUSH, built.terrain, built.tide_pools, built.palms):
+		var tile: Dictionary = TerrainArt.tile(TerrainArt.BRUSH, cell, layout.id, built.terrain, built.tide_pools, built.palms)
+		var atlas: Vector2i = tile.get(&"atlas", Vector2i(-1, -1))
+		if atlas.y == FULL_PICK_ROW:
+			picks[atlas.x] = picks.get(atlas.x, 0) + 1
+	assert_gt(picks.size(), 1, "the secret cay's whole scrub cells use %d picks" % picks.size())
+
+
+# --- art-terrain-polish C10b: shore bushes vary (design D5) ---
+
+## One player, offline: the solo sandbar's shore scrub cells use at least two of the whole shore
+## bushes, picked by the cell's hash the same way on every build.
+func test_a_solo_sandbars_shore_bushes_vary() -> void:
+	var built: IslandLayout = IslandLayout.build(SANDBAR)
+	var blocks: Dictionary[int, int] = {}
+	for cell: Vector2i in TerrainArt.layer_cells(TerrainArt.BRUSH, built.terrain, built.tide_pools, built.palms):
+		var tile: Dictionary = TerrainArt.tile(TerrainArt.BRUSH, cell, SANDBAR.id, built.terrain, built.tide_pools, built.palms)
+		if tile.get(&"source") != TerrainArt.data().shore_source_of[TerrainArt.BRUSH]:
+			continue
+		var block: int = TerrainArt.shore_row(TerrainArt.BRUSH, cell, SANDBAR.id)
+		@warning_ignore("integer_division")
+		assert_eq(Vector2i(tile[&"atlas"]).y / 16, block, "%s: its block" % cell)
+		blocks[block] = blocks.get(block, 0) + 1
+	assert_gt(blocks.size(), 1, "the sandbar's shore bushes use %d shapes" % blocks.size())
+	assert_eq(TerrainArt.shore_row(TerrainArt.DUNE, Vector2i(20, 35), SANDBAR.id), 0, "the dune has one shore block")
 
 
 ## Every layer's tile of every cell of `layout`, by layer and cell.

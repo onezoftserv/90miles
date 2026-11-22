@@ -494,3 +494,133 @@ Recorded while building. Each entry says what moved and why.
 - **Group 3, a party for conditions.** `ConditionCheck.holds`, `all_hold` and `first_failing` take an optional `party: Array[PlayerBody]`. A node scoped `ANY_PLAYER` holds when some standing member of the party passes it as the ACTOR. "Standing" means not downed, in a last stand or dead (`can_speak`), after §9's "a captured, standing player". `passing_players(condition, party)` lists those members, which is how the scene picks the plea's speaker. With no party, `ANY_PLAYER` reads the actor's session. `PLAYERS_AT_LEAST` counts the party when there is one, and the tree otherwise, as before.
 - **Group 3, two more kinds.** `BACKGROUND_PRESENT` reads `PlayerBody.background_id`; scoped `PARTY`, with a party, it looks through the party. `FLAG_SET` reads the session's `RunRecord` and is false outside a session. §9 needs it for "again" and the car gate, and nothing interpreted it.
 - **Group 3, the effects.** `Inventory.take_capability(capability, keep_tag)` removes every item with the capability except those with the tag. `TAKE_ITEMS_WITH_CAPABILITY` keeps KEEPSAKE items, and with target `PARTY` or `ALL_PLAYERS` it takes from every player in the session. The two travels emit `CoopSession.party_travel_requested(onward)` on the host, and `IslandTravel` connects to it. Calling `IslandTravel` from `effect_applier.gd` made a load cycle: the class preloads the island scene, whose scenes use the effects. That broke every island scene's load, so the signal stands between them. `IslandTravel.of(session)` finds a session's keeper for code that may name the class.
+- **Group 4, the chase's API.** `BoatChase` (`game/scripts/stealth/boat_chase.gd`) is pure. `step(boat, target, target_terrain, submerged, delta, is_deep)` returns the boat's next position in tiles and an `Outcome`: CHASING, HAULED, DIVED, SHALLOWS, LANDED or LOST. `move_toward` is the deep-water-only step, which the brain also uses to head back. A patrol chases when `can_chase`: a chase speed above 0 (`chase_speed_tiles_s`) and a haul time above 0. The shipped boat chases at 6 tiles/s.
+- **Group 4, the brain.** `CHASE` (5) and `DOCKED` (6) are appended to the states. `PatrolView` and `PatrolLook` now read `PatrolRoute.is_alert_state` and `is_in_sight_state`, so a client draws a chasing or docked boat from its synced position, and the loudhailer calls an alert line.
+  - A spot by sight or by the water rule of a swimmer standing in deep water starts the chase (`_respond`); anyone else is locked as before.
+  - Shallows are water, so a swimmer there is locked by the stealth rules and never chased.
+  - In `CHASE` the boat ignores smoke, noise and other water spots. It reports a second player's spot once, as a lock does, and aims its light at the swimmer.
+  - A haul puts the swimmer in `aboard`; group 7 makes them a captive, and the water rule and the boat skip them. Until group 7's squad, a landing is the plain search, and every other break is the plain search round where the swimmer was.
+  - While it searches, the boat heads back to its loop pose at 3 tiles/s (`RETURN_SPEED_TILES_S`) through deep water, so it resumes its lap where it stopped instead of jumping there.
+- **Group 4, tests changed in the stealth suite.**
+  - `test_patrol_route.gd`: the states test lists `CHASE` and `DOCKED`. "A swimmer 5 tiles away is spotted at once" now expects a chase instead of a lock, with the swimmer placed seaward of the boat so they stand in deep water. New tests there cover the haul after closing in, a dive and the shallows breaking the chase, the boat back on its loop after the search, and a patrol with no chase speed that still locks.
+  - `test_patrol_solo.gd`'s water case is unchanged: it checks only the one `water` alert, which the chase still reports.
+  - `test_patrol_cues.gd`'s loudhailer test spotted the host's player where it spawned, at (0, 0), which is deep water. It now puts that player on the sandbar's solo spawn first, so the spot is a lock as the test means.
+- **Group 5, the sight source.** `SightCone` (`game/scripts/stealth/sight_cone.gd`, beside `searchlight.gd`) is pure. `for_soldier(patrol, phase)` gives the day cone, or the flashlight in the phases the patrol's searchlight is on (night), so the dark phases follow the same data as the light. `sees(point, eye, facing)` and `chase_holds(point, eye, hidden, disabled_senses)` take tiles; a chase ignores the cone's width, because the soldier runs facing the player. `PatrolWatch` gained `soldiers`, beside `boats`. A soldier's cone counts as a lit cone unless the weather disables sight. The meter takes the nearest source's numbers (a soldier reads its boat's `PatrolData`), and a spot goes to the nearest source that saw the player: `PatrolRoute.spot` or `SearchCapture.spot`.
+- **Group 5, the soldier's brain starts here.** `game/scripts/ai/search_capture.gd` (`SearchCapture`) appears in group 5 with its sight (`sees`), its spot (`can_target` refuses downed, dropped and dead bodies) and the chase and its break. Where the soldier last saw the player becomes `lost_at`. Group 7 fills in the rest. Its states are `SEARCH`, `POINT_SEARCH`, `WALK`, `CHASE`, `ESCORT` and `RETURN`, append-only because `state_id` is synced.
+- **Group 6, the plan's API.** `SquadPlan` (`game/scripts/stealth/squad_plan.gd`) is pure, and cells are island cells.
+  - Building: `build(patrol, landing, fires, last_known, walk_cells, seed)`.
+  - The landing and the row: `landing_cell(boat, cells)` and `row_time_s(boat, landing, speed)`.
+  - Points: `take_point(soldier)`, `point_of`, `searched`, `drop_point`, `set_last_known(cell, free_soldiers)` (which returns the soldier sent) and `last_known()`. Two fires as far from the landing go in reading order.
+  - The search and the walk: `finds(cell, player)` and `next_walk_cell()`.
+  - Leaving: `advance`, `note_capture`, `time_is_up()` and `should_leave(free_on_island, squall)`.
+  - The landing keeps to a beach unless the nearest land is more than 6 tiles nearer (`BEACH_DETOUR_TILES`), which reads design §4's "if the island has no beach on that side".
+- **Group 6, the coverage, measured with the real plan.** `test_squad_search_coverage.gd` runs the built plan, the soldiers' day cone and the shared spot meter over 100 seeded runs per island. Three soldiers land at the beach nearest the boat's east-most loop pose, take the last known position and walk the land grid's paths at 3 tiles/s for 150 s. A still player in the open is spotted in **50%** of runs on the sandbar and **52%** on the coast cay. The throwaway model said 66% and 54%; it walked 8-connected paths from a fixed east landing, while the real soldiers walk the 4-connected land grid. The test pins 50% and 52% within ±10 points. By rule, it also checks two things:
+  - A hidden player more than 2 tiles from the last known position is never found.
+  - From each island's solo landing, the steps to cover more than 2 tiles away have a median of 3 and a maximum of 8 on the sandbar and 13 on the coast cay, exactly design.md's figures.
+
+  It takes about 7 s, over the 2 s mark, because it steps 2 × 100 runs × 1,500 ticks × 3 soldiers.
+- **Group 7, the docked boat.**
+  - A land alert is a smoke cause, or a sight, water or noise cause whose cell is not water.
+  - Shallows are water, so a swimmer spotted there gets the stealth lock and no squad. A swimmer who comes ashore during a chase does bring the squad (`_came_ashore`).
+  - `_dock` stops the boat, picks the landing and starts the row (`Squad`: NONE, ROWING_IN, ASHORE, ROWING_OUT).
+  - `_beach` builds the plan from the lit fires and the alert's position, then spawns `squad_size` soldiers on the landing and its free land neighbours.
+  - When the plan says to leave, the soldiers walk back. `_row_out` despawns them and emits `rowed_out(captives)`, and the boat resumes its lap.
+  - While docked, the light follows a visible player within its range. When it loses them, that cell becomes the plan's last known position, held until the beaching if the dinghy is still rowing.
+  - A second boat's sighting moves the squad's last known position (`sighted`).
+  - A squall runs the leaving first and sends the boat out of sight only after that.
+- **Group 7, the creature's synced fields.** `Creature` gains `squad_state`, `landing`, `dinghy_t`, `squad_serial` and `squad_call` (`PatrolRoute.Call`: LAND, SPOT or LEAVE). Group 10 adds them to the sync. `PatrolRoute.captured(body)` and `rowed_out(captives)` are for group 8.
+- **Group 7, the world's spawner.** `CreatureWorld` gains `spawner` (a Callable), `can_spawn()`, `spawn_creature(data, at)`, `creature_data(id)`, `watch`, `island_id`, `island_run_seed` and `catalog`. `run_seed()` answers the island's seed off a crossing. `CreatureSpawner.setup` sets them, and its `_spawn_squad_member` goes through `session.spawn_creature`, so every client sees the soldiers. A world with no spawner, such as a bare test rig, lands no squad. A squad's random walk is seeded with `hash([run seed, island id, alert_serial])`.
+- **Group 7, the soldier.**
+  - `SearchCapture` walks at its data's speed (3 tiles/s), chases at `soldier_chase_tiles_s` and escorts at the drag speed (2 tiles/s). Its captive follows by the drag handle's dragger, and on arrival `PatrolRoute.seat` puts them on the landing cell.
+  - A broken chase gives `PatrolRoute.soldier_lost`, which makes the last-seen cell the plan's last known position, assigned to that soldier.
+  - A point search finds the first hidden target within 2 tiles when its 3 s end.
+  - When the squad leaves, every soldier turns to `RETURN`, and `is_back()` says it stands at the dinghy.
+- **Group 7, the captive body.**
+  - `PlayerBody` gains `captive` and `captive_aboard`, and `set_captive(value, by, aboard)`, `seat_captive(at)` and `can_be_freed()`.
+  - `advance` treats a captive like a downed body: no interaction, and the dragged step behind its soldier, or standing still with no dragger.
+  - `_acting_body` refuses a captive. Quick chat never asks `_acting_body`, so it still works.
+  - A hauled swimmer is `captive_aboard`, and the boat carries them at its position.
+  - `CaptureRules` (`game/scripts/stealth/capture_rules.gd`) starts here with `capture` and `release`. It is named `release` because `free` is `Object`'s. Group 8 adds the rest.
+- **Group 7, freeing.** `FreeHandle` (`game/scripts/interaction/free_handle.gd`) is a child of every player body in `player.tscn`. Its prompt, `free_captive`, reads "Soltar a" / "Free" and names the captive, as the drag prompt does.
+  - It is offered while its body can be freed and no soldier stands within the guard radius. A soldier is a member of the `shore_soldiers` group, which a `SEARCH_CAPTURE` creature joins in `Creature._ready`, so the handle never names the creature class.
+  - It is refreshed every physics frame on every peer, and from the captive's own step on the host. So a soldier coming back cancels a hold in the same tick: `InteractionHold` resets on a disabled target.
+  - The host frees the captive on use, after checking the rule again.
+  - The picker's reach of 1 tile is what keeps a hold from afar from freeing anyone.
+- **Group 7, tests changed in the stealth suite.**
+  - `test_patrol_route.gd` is unchanged: its bare world has no spawner, so its land alerts stay plain, which is the "patrol with no squad" case.
+  - `test_patrol_solo.gd`: `_frame` steps the soldiers too. "Spotted on open sand… resumes its lap" now follows the modified Alert's "Solo player spotted, hides and gets away":
+    - the scrub it picks belongs to a patch that runs on more than 2 tiles;
+    - the player crouch-walks through that patch, hidden;
+    - the boat docks, and the squad searches and leaves without finding them;
+    - the boat resumes its lap from where it stopped, at least 180 s later.
+
+    "A beach fire alerts once per lap" is unchanged; its squad now lands and leaves within the frames it already runs.
+  - `test_patrol_cues.gd`: both loudhailer tests clear the world's spawner, so their boats run the plain alert whose lines they check.
+  - `test_patrol_net.gd`: the client test expects `DOCKED`.
+  - `test_hud_text.gd`: the prompt ids include `free_captive`.
+  - The modified Alert's "A smoke alert by day" is `test_capture_solo.gd`'s day-fire test.
+- **Group 8, the rules.** `CaptureRules` is pure over `Member` snapshots. `is_free`, `free_count`, `is_whole_party`, `taken_on_leaving(captive_count, members)` and `members_of(session)` decide, and the host applies the results with `capture`, `release` and `take(session, body, landing_px)`.
+  - `take` first lays the body's secret items on the landing through `SecretRules.lay_down_for_leaver`, while the body is still on the island. It then empties every slot that is not a keepsake, sets `PlayerBody.taken`, and holds the body as a waiting rider.
+  - `IslandArrival.land` clears `taken`, so a taken captive lands with the party as a rider does.
+  - `CaptureOutcome.resolve(final_crossing)` is the router: SCENE or DEVUELTO. `checks_persuasion` is false for DEVUELTO.
+- **Group 8, the keeper.** `CaptureScene` (`game/scripts/stealth/capture_scene.gd`) is the session's capture keeper and, from group 9, the scene's runner. It is a child that `CoopSession._ready` adds as `capture`, one of `IslandTravel.SESSION_NODES`, so it survives a travel and its RPCs reach the same node on every peer.
+  - It checks for a whole-party capture, deferred, after every capture, death, downed, last-stand, removal and drop.
+  - `IslandTravel.check()` asks `holds_travel()` first: true while the scene plays, and on the host while the whole party is caught, before the scene begins. A taken captive is held, so `check()` already counts them as gone, as it counts a rider.
+  - The spawner connects each boat's `captured` and `rowed_out` to the keeper. `rowed_out` carries the landing in pixels.
+  - A boat that leaves sight (AWAY, or a squall) with captives aboard hands them to the keeper the same way. Their secret items go on the land nearest the boat. Until then they ride aboard, never freeable.
+  - After taking captives, the keeper emits the new `CoopSession.capture_state_changed`, and `IslandTravel` checks the party again. The keeper never names `IslandTravel`, because `creature_spawner.gd` names the keeper and the island scene loads the spawner, so a direct reference would close the load cycle that group 3 found.
+  - The final-crossing seam is `CaptureScene.in_final_crossing`, a Callable that answers false today. The DEVUELTO branch emits `run_devuelto`.
+- **Group 8, creatures ignore held bodies.** `CreatureWorld.players()` now leaves out bodies held out of play: a waiting rider, a taken captive, or a player in the scene. This is design.md's "The scene pauses the live island" risk.
+- **Group 9, the scene runner.** `CaptureScene` runs `la_captura` on the host.
+  - `_resolve` walks open → act → plea → outcome. Each state takes its highest-priority entry whose conditions hold for the scene's party (`ConditionCheck` with the party), and each line is filtered by its own conditions, so the singular and plural forms are line conditions.
+  - The plea's speaker is `pick_speaker(passing_players(...))`: the higher morale, then the earlier in peer order (the host first). A player's line has the speaker id `player`, and the panel names that peer's player.
+  - The party is every living player of the run, in peer order: the captive, the taken, the downed and the dropped.
+  - Three RPCs on the node itself, `begin_scene`, `show_line(serial, scene_id, line_id, speaker_id, speaker_peer)` and `end_scene`, keep `coop_session.gd` out of it.
+  - `begin_scene` holds every living body on every peer. While the scene plays, `IslandTravel.check()` answers PLAYING on every peer.
+  - Each line is held for `hold_s(text)`: its length at 40 chars/s, plus 2 s, on its Spanish text. The host may `skip()`; on the host the panel maps the interact press to it. A client cannot skip.
+  - `_finish` ends the scene everywhere, frees the party and stands a downed, connected player at 30 health (`meters.revive()`, the tuning's `revive_health`). A dropped body keeps its hold. Then it applies the outcome's effects with the first party member as the actor: the flags, the fire sources from every player, then the release or the restart through group 3's travel signal.
+  - A joiner during the scene is sent `begin_scene` and the current line when its join state goes out (`join_state_sent`), so the join extras stay `IslandTravel`'s.
+- **Group 9, the panel.** `ScenePanel` (`game/scenes/ui/scene_panel.gd`) is made in code by `RunHud.bind`, as the change floats are, and hidden while a screen shows. It is a light card 400 px wide at (120, 262), styled `HudNote` and `HudNoteText` like the sign note. It shows the speaker's name over the line, revealed at 40 chars/s, and fits its height to the wrapped text, up to 7 lines. A test holds every line of `la_captura`, in both languages, to 7 lines.
+  - The by-hand check (task 9.2) used the new windowed tool `tests/manual/capture_la_captura.tscn`, which plays a solo capture for 300 frames on the scene's longest line and saves the window. It found the card staying one text line tall while the text wrapped below it: the label's own line count is not laid out in the frame its text changes. The card now measures with the same font probe as the sign note, and the test checks that every line's wrapped height sits inside the card and the card inside 640×360.
+  - `RunHud` makes the panel in `bind`, not in its field's initializer: an unbound HUD, which some tests make, would otherwise leak it.
+- **Group 10, the sync.**
+  - Bodies: one property, `PlayerNet.net_capture` (`StateSync` property 23, spawn and always; `test_player_state_sync.gd`'s list gained it). It holds `PlayerBody.capture_code()`: 0 for none, 1 for a captive, 2 for a captive aboard, 3 for taken. It replaces design §13's `net_captive` and `net_taken`, because the aboard state, which the client's prompt reads, is the third.
+    - A client applies the flags with `apply_capture_code`. A taken player leaves play on every peer through `CaptureScene.take_out_of_play`, a reliable RPC ordered with the travel that lands them. The first try held them from the synced code, and a sync sent before the landing re-held a player who had already landed on the client, which `test_capture_taken_net.gd` caught. A joiner learns who is taken from the waiting list in the island's join extras, as it learns about riders.
+    - A captive is never predicted: its owner draws it as the host has it, as for a downed body. The host acks a captive's intents without applying them, and it still steps the body, so it is led and its handle refreshed.
+  - Boats: `squad_state`, `landing`, `dinghy_t`, `squad_serial` and `squad_call` join the patrol's synced properties. `dinghy_t` is synced at the creatures' 10 Hz, not advanced between syncs by each peer. The dinghy is drawn from it, so a step every 0.1 s is enough.
+  - Soldiers are ordinary creatures, so a joiner gets them in the entity spawner's spawn state. The scene's lines are `CaptureScene`'s RPCs. A joiner during the scene is sent the begin and the current line (group 9). Freeing uses the ordinary interact intent, so no client message was added.
+  - A dropped captive keeps the flag. `set_downed` no longer enables the drag handle for a captive or clears its soldier's lead, so nobody can drag a dropped captive away. On a rejoin, the identity takes the captive body back, still a captive.
+- **Group 11, fade with distance.** `patrol_boat.tres` gains a third spawn rule: the families MANGROVE, REEF, ROCK and LIGHTHOUSE, DEEP water, count (1, 2), chance 0.3.
+  - A patrol's chance is now rolled from its own stream: the run seed and the island, the same stream its count and spots use. Before, every chance was rolled from the world's constant stream, which would give every run the same mid-chain roll. Every other creature still rolls from the world's stream, and the sandbar and coast rules (chance 1) draw nothing more, so no other spawn changed.
+  - `CreatureSpawner.patrol_stream(run_seed, layout_id)` and `roll_patrol(data, rule, dice, players)` are statics the spawner uses and the test shares.
+  - Over 1,000 run seeds the REEF fixture has boats in **31.6%** of them, each with one or two. The real spawner set up twice from the same seed gives the same boats.
+  - `test_patrol_data.gd`'s "two spawn rules" test now counts three.
+- **Group 12, the cues.**
+  - The rope mark: `BodyMarks` draws a 7×5 braid (`ROPE_PIXELS`, cream on the outline) over every captive on the island, the local player included. It wins over both eyes, and `has_marker` and `marker_rect` include it, so a bubble or the prompt stacks over it.
+  - The prompt: group 7's handle is disabled while a soldier is within 3 tiles, so the picker, and with it the HUD prompt, offers nothing until the soldier leaves. Its words, "Soltar a" and the captive's name, are in `hud_text.tres`, and the hold ring is the handle's 1 s.
+  - `SquadLook` (`game/scenes/creatures/squad_look.gd`, a new `art_view` child of `creature.tscn` beside `PatrolLook`) draws three things, reading the synced state only:
+    - the soldier, as a placeholder body (an olive uniform, a cap, a flashlight glint on its facing side) until the art pass;
+    - the boat's dinghy, as a 9×5 hull `dinghy_t` of the way from the boat to the landing;
+    - the squad's calls: a 3 s bubble over the soldier nearest the landing for the landing and leaving calls, and over the soldier giving chase for a spot call. A call waits up to 2 s for a soldier to show over, because on a client the call can arrive before the soldiers do.
+  - The open eye needed no new code: it reads `spot_shown`, which a soldier's sight fills.
+- **Group 12, the art invariance test.** `test_art_sim_invariance.gd`'s night lap now docks the boat, because its alert is on land. The built run draws the soldiers, the dinghy and a squad call, and every frame still matches the stripped run. The snapshot also holds each creature's squad fields.
+- **Group 12, the two-process run.** `game/tests/manual/guardacostas_capture_run.gd` on UDP 7796, both headless:
+  - the squad lands and both peers see it;
+  - the client is captured, seated and freed by the host's 1 s hold, with the soldiers held away by the hut;
+  - both players are caught, and `la_captura` plays the same five plural lines on both;
+  - the restart lands both on the sandbar.
+
+  Host 14/14, client 10/10, no engine errors. The first try failed only on the run script's own wait, which held the old island node across the restart. It now compares instance ids.
+- **Group 12, the stealth run.** `tests/manual/patrol_run.gd` (the stealth slice's two-process run) clears its world's spawner, so its boat runs the plain alert it checks. Re-run: host 22/22, client 18/18.
+- **Review fixes (before merge).**
+  - **A found player was never captured.** A soldier that found a hidden player by its point search started a chase, and the chase broke on the next tick, because the target was hidden. A player crouched by their own fire was therefore safe. A player found by a point search is now exposed: hiding does not break that chase while they stay within `point_search_tiles` of where they were found (`SearchCapture.is_exposed`). A player spotted by sight who then hides still shakes the soldier, so the rejected Bush Hat rule stays rejected. `test_capture_solo.gd`'s fire case now plays on to the capture and to the scene, through the boat's `captured` signal and the spawner's connection to the keeper; no other test had exercised that path. `test_search_capture.gd` gained the found-and-captured and the seen-then-hides cases.
+  - **A hauled captive trailed the boat by one tick.** The boat now carries its captives aboard after its move (in `_publish`).
+  - **Spec scenarios that had no test now have one** (`test_search_capture.gd`): "One squad at a time" with "A second boat while the squad is ashore" (no second squad, and the squad's last known position moves to the sighting); "A squall recalls the squad" (the soldiers walk back, the dinghy rows out with its captive, then the boat leaves sight); and a hauled captive handed to the keeper when the boat leaves sight.
+- **Rules this build chose where the spec is silent**, for the owner to see:
+  - Shallows are water. A swimmer spotted in the shallows gets the stealth lock, not a chase (the boat cannot follow) and not a squad (not on land).
+  - In co-op, a swimmer hauled aboard rides with the boat and is taken when the boat leaves sight, with their secret items laid on the land nearest the boat.
+  - On a plea tie (the same morale), the speaker is the earlier in peer order: the host first, then the clients by peer id, which is not always their join order.
+- **References checked (task brief).**
+  - Every function design.md cites was found by grep in `reference/` on 2026-11-16, in the file it names. The line numbers differ by up to about 30 lines (design.md calls them approximate): SPD `Mob.java` `Hunting` is at 1358 and `handleUnreachableTarget` at 1397; DCSS `foe_memory` is at `mon-behv.cc` 665, `struggle_against_net` at `traps.cc` 1102, `attempt_escape` at `player.cc` 8704 and `set_random_target` at `mon-movetarget.cc` 697; Brogue's `freeCaptive` is in `Movement.c` and `Items.c`, and `MB_CAPTIVE` in `Architect.c` and `Combat.c`.
+  - Don't Starve Together is in `docs/REFERENCE_DST.md`, under "Leashing and aggro" (the visible give-up), "At sea: pirate raids", "Lore in fragments" and the Drowning entry. Ghost Characters is linked there, and Bush Hat is cited by its wiki page name only.
+- **The windowed captures** are in `docs/guardacostas-capture/`. `la_captura_panel.png` comes from `tests/manual/capture_la_captura.tscn`: the scene panel on its longest line, after the card fix. `squad_ashore.png` comes from `tests/manual/capture_squad.tscn`: a solo run by day with the squad landed, showing the three placeholder soldiers, the dinghy on the landing and the landing call in formal Spanish. Both were taken at scale 2 and confirm that the looks draw.

@@ -2,4 +2,4 @@ Work: 90 Millas HUD window kit
 Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
-Files: every PNG in this folder, built pixel by pixel from master palette colours by tools/art/ui.py from tools/art/ui_kit.json (windows, buttons, slot wells, focus ring, widgets)
+Files: every PNG in this folder, built pixel by pixel from master palette colours by tools/art/ui.py from tools/art/ui_kit.json (windows, buttons, slot wells, focus ring, widgets, meter ramps, the 3x5 digit atlas)

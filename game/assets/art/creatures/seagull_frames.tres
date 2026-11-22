@@ -1,6 +1,7 @@
 [gd_resource type="SpriteFrames" format=3]
 
 [ext_resource type="Texture2D" path="res://assets/art/creatures/seagull.png" id="1_sheet"]
+[ext_resource type="Texture2D" path="res://assets/art/creatures/seagull_flight.png" id="2_flight"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_0_0"]
 atlas = ExtResource("1_sheet")
@@ -97,6 +98,54 @@ region = Rect2(96, 32, 16, 16)
 [sub_resource type="AtlasTexture" id="AtlasTexture_7_2"]
 atlas = ExtResource("1_sheet")
 region = Rect2(112, 32, 16, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_0_0"]
+atlas = ExtResource("2_flight")
+region = Rect2(0, 0, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_1_0"]
+atlas = ExtResource("2_flight")
+region = Rect2(24, 0, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_2_0"]
+atlas = ExtResource("2_flight")
+region = Rect2(48, 0, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_3_0"]
+atlas = ExtResource("2_flight")
+region = Rect2(72, 0, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_0_1"]
+atlas = ExtResource("2_flight")
+region = Rect2(0, 16, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_1_1"]
+atlas = ExtResource("2_flight")
+region = Rect2(24, 16, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_2_1"]
+atlas = ExtResource("2_flight")
+region = Rect2(48, 16, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_3_1"]
+atlas = ExtResource("2_flight")
+region = Rect2(72, 16, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_0_2"]
+atlas = ExtResource("2_flight")
+region = Rect2(0, 32, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_1_2"]
+atlas = ExtResource("2_flight")
+region = Rect2(24, 32, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_2_2"]
+atlas = ExtResource("2_flight")
+region = Rect2(48, 32, 24, 16)
+
+[sub_resource type="AtlasTexture" id="Flight_3_2"]
+atlas = ExtResource("2_flight")
+region = Rect2(72, 32, 24, 16)
 
 [resource]
 animations = [{
@@ -200,5 +249,158 @@ animations = [{
 }],
 "loop": true,
 "name": &"move_up",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Flight_0_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_1_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_2_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_3_0")
+}],
+"loop": true,
+"name": &"swoop_side",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Flight_0_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_1_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_2_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_3_1")
+}],
+"loop": true,
+"name": &"swoop_down",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Flight_0_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_1_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_2_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_3_2")
+}],
+"loop": true,
+"name": &"swoop_up",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Flight_0_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_1_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_2_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_3_0")
+}],
+"loop": true,
+"name": &"flee_side",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Flight_0_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_1_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_2_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_3_1")
+}],
+"loop": true,
+"name": &"flee_down",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Flight_0_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_1_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_2_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_3_2")
+}],
+"loop": true,
+"name": &"flee_up",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Flight_0_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_1_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_2_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_3_0")
+}],
+"loop": true,
+"name": &"return_side",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Flight_0_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_1_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_2_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_3_1")
+}],
+"loop": true,
+"name": &"return_down",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Flight_0_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_1_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_2_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Flight_3_2")
+}],
+"loop": true,
+"name": &"return_up",
 "speed": 10.0
 }]

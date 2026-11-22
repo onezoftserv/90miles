@@ -19,6 +19,10 @@ extends Control
 ## or pause is pressed, which it takes before the pause menu can. While it is open, and until
 ## interact is let go after it closes, the player's intent carries no interact press
 ## (`PlayerBody.hud_holds_interact`), so the host never sees a press meant for the list.
+## Opened at a raft's work point instead (inventory-hud "Raft work list", island-stop), it is the
+## raft's list: a head line with the raft's state, then every known mend and fitting recipe; a row
+## the raft cannot take now is dimmed and refused with its reason, and a choice asks the host to
+## open that job on the raft (`CoopSession.craft` with the raft's path).
 
 ## A craft request went to the host: the recipe and the bench's path in the session.
 signal craft_sent(recipe_id: StringName, station_path: NodePath)
@@ -57,9 +61,13 @@ var input_open: Callable = func() -> bool: return true
 var screen_shown: bool = false
 ## The bench the list is open at, or null.
 var bench: Workbench = null
+## The raft the list is open at (the raft's list), or null.
+var raft: Raft = null
 var highlighted: int = 0
 var _open: bool = false
 var _recipes: Array[RecipeData] = []
+# The raft's state line and its fittings' line, over the rows in the raft's list.
+var _heads: Array[Label] = []
 # One label per row on show: row label k shows recipe _first_row + k.
 var _rows: Array[Label] = []
 var _first_row: int = 0
@@ -79,6 +87,11 @@ static func offers(recipe: RecipeData) -> bool:
 	if recipe.build_site:
 		return SitePlacer.places(recipe)
 	return recipe.station == RecipeData.Station.WORKBENCH and recipe.output_kind == RecipeData.OutputKind.ITEM
+
+
+## Whether the raft's list offers `recipe`: a known mend or fitting.
+static func offers_on_raft(recipe: RecipeData) -> bool:
+	return recipe != null and recipe.availability == RecipeData.Availability.KNOWN and Raft.is_job_recipe(recipe)
 
 
 func _ready() -> void:
@@ -113,7 +126,22 @@ func open(at: Workbench) -> void:
 	if not is_instance_valid(body) or not is_instance_valid(at) or screen_shown or not input_open.call():
 		return
 	bench = at
+	raft = null
 	_recipes = _offered()
+	_start()
+
+
+## Opens the raft's list at `at` (its work point was pressed) for the bound player.
+func open_raft(at: Raft) -> void:
+	if not is_instance_valid(body) or not is_instance_valid(at) or screen_shown or not input_open.call():
+		return
+	bench = null
+	raft = at
+	_recipes = _offered_on_raft()
+	_start()
+
+
+func _start() -> void:
 	highlighted = 0
 	_first_row = 0
 	_hold()
@@ -129,7 +157,17 @@ func close() -> void:
 	_open = false
 	visible = false
 	bench = null
+	raft = null
 	closed.emit()
+
+
+## The raft's list's head lines (its state, then its fittings when it has any); none outside it.
+func head_texts() -> PackedStringArray:
+	var texts: PackedStringArray = []
+	for label: Label in _heads:
+		if label.visible:
+			texts.append(label.text)
+	return texts
 
 
 ## Whether a list input counts now: the list is open, the HUD takes input, and no text field is
@@ -161,7 +199,9 @@ func choose(index: int) -> bool:
 		return false
 	var recipe := _recipes[index]
 	var refusal: StringName = &""
-	if not recipe.build_site and not body.crafter.can_craft(recipe):
+	if is_instance_valid(raft):
+		refusal = raft.refusal(recipe)
+	elif not recipe.build_site and not body.crafter.can_craft(recipe):
 		refusal = &"missing_materials"
 	elif recipe.build_site and has_unfinished_site(recipe.id):
 		refusal = &"in_progress"
@@ -169,7 +209,10 @@ func choose(index: int) -> bool:
 		if notice != null:
 			notice.show_line(text.refusal(refusal, _locale()))
 		return false
-	var station_path: NodePath = session.get_path_to(bench) if is_instance_valid(session) else NodePath()
+	var station: Node = bench
+	if is_instance_valid(raft):
+		station = raft
+	var station_path: NodePath = session.get_path_to(station) if is_instance_valid(session) else NodePath()
 	if is_instance_valid(session):
 		session.craft(recipe.id, station_path)
 	craft_sent.emit(recipe.id, station_path)
@@ -251,11 +294,19 @@ func _process(_delta: float) -> void:
 
 
 func _may_stay_open() -> bool:
-	if not is_instance_valid(body) or not is_instance_valid(bench) or screen_shown or not input_open.call():
+	var anchor := _anchor()
+	if not is_instance_valid(body) or anchor == null or screen_shown or not input_open.call():
 		return false
 	if body.downed or body.left_island:
 		return false
-	return body.global_position.distance_to(bench.global_position) <= PlayerBody.HOLD_REACH_PX
+	return body.global_position.distance_to(anchor.global_position) <= PlayerBody.HOLD_REACH_PX
+
+
+# What the list is open at: the bench, or the raft's work point; null once it is gone.
+func _anchor() -> Node2D:
+	if is_instance_valid(raft):
+		return raft.work_point if not raft.is_queued_for_deletion() else null
+	return bench if is_instance_valid(bench) else null
 
 
 func _hold() -> void:
@@ -280,15 +331,26 @@ func _offered() -> Array[RecipeData]:
 	return found
 
 
-# Rows, then the highlighted recipe's lines, from the bound player's inventory as this peer has it.
-# The rows on show are the window of them that fits beside those lines and holds the highlight.
+func _offered_on_raft() -> Array[RecipeData]:
+	var found: Array[RecipeData] = []
+	for recipe: RecipeData in body.crafter.known_recipes():
+		if offers_on_raft(recipe):
+			found.append(recipe)
+	found.sort_custom(func(a: RecipeData, b: RecipeData) -> bool: return a.name_es < b.name_es)
+	return found
+
+
+# The raft's head line, then the rows, then the highlighted recipe's lines, from the bound player's
+# inventory as this peer has it. The rows on show are the window of them that fits beside those
+# lines and holds the highlight.
 func _show() -> void:
 	var locale := _locale()
+	var head_lines: int = _show_head(locale)
 	var lines: Array[Array] = []
 	if not _recipes.is_empty():
 		lines = _detail_lines(_recipes[highlighted])
-		lines.resize(mini(lines.size(), PANEL_LINES - 1))
-	var shown: int = mini(_recipes.size(), PANEL_LINES - lines.size())
+		lines.resize(mini(lines.size(), PANEL_LINES - 1 - head_lines))
+	var shown: int = mini(_recipes.size(), PANEL_LINES - lines.size() - head_lines)
 	_first_row = clampi(_first_row, highlighted - shown + 1, highlighted)
 	_first_row = clampi(_first_row, 0, _recipes.size() - shown)
 	_rows = _pool(_rows, shown, true)
@@ -297,14 +359,14 @@ func _show() -> void:
 		var recipe := _recipes[index]
 		var row := _rows[slot]
 		row.text = InventoryStrip.cut(recipe.get_display_name(locale), ROW_MAX_CHARS)
-		row.position = RECT.position + PADDING + Vector2(0.0, slot * LINE_HEIGHT)
+		row.position = RECT.position + PADDING + Vector2(0.0, (slot + head_lines) * LINE_HEIGHT)
 		row.modulate = DIM if _is_dimmed(recipe) else FULL
 		if index == highlighted:
 			row.add_theme_color_override(&"font_color", HIGHLIGHT)
 		else:
 			row.remove_theme_color_override(&"font_color")
 	_details = _pool(_details, lines.size(), false)
-	var top: float = RECT.position.y + PADDING.y + shown * LINE_HEIGHT + DETAIL_GAP
+	var top: float = RECT.position.y + PADDING.y + (shown + head_lines) * LINE_HEIGHT + DETAIL_GAP
 	for i: int in lines.size():
 		var label := _details[i]
 		label.text = InventoryStrip.cut(lines[i][0], ROW_MAX_CHARS - 1)
@@ -312,8 +374,37 @@ func _show() -> void:
 		label.modulate = DIM if lines[i][1] else FULL
 
 
-# A workbench recipe missing an input or a tool; a build-site row never is.
+# The raft's state line over the rows, and its fittings' line when it has any, in the raft's list
+# only; returns the lines they take.
+func _show_head(locale: String) -> int:
+	var texts: PackedStringArray = []
+	if is_instance_valid(raft):
+		texts.append(InteractPrompt.raft_state_line(raft, text, locale))
+		var fitted: String = InteractPrompt.raft_fittings_line(raft, text, locale)
+		if not fitted.is_empty():
+			texts.append(fitted)
+	while _heads.size() < texts.size():
+		var label := Label.new()
+		label.size = Vector2(RECT.size.x - 2.0 * PADDING.x, LINE_HEIGHT)
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.clip_text = true
+		label.focus_mode = Control.FOCUS_NONE
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(label)
+		_heads.append(label)
+	for i: int in _heads.size():
+		_heads[i].visible = i < texts.size()
+		if _heads[i].visible:
+			_heads[i].text = InventoryStrip.cut(texts[i], ROW_MAX_CHARS)
+			_heads[i].position = RECT.position + PADDING + Vector2(0.0, i * LINE_HEIGHT)
+	return texts.size()
+
+
+# A workbench recipe missing an input or a tool, or a row the raft cannot take now; a build-site
+# row never is.
 func _is_dimmed(recipe: RecipeData) -> bool:
+	if is_instance_valid(raft):
+		return not raft.refusal(recipe).is_empty()
 	return not recipe.build_site and not body.crafter.can_craft(recipe)
 
 

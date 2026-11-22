@@ -13,7 +13,7 @@
     },
     {
       "id": "land_crab",
-      "size": [96, 16],
+      "size": [160, 16],
       "cell": [16, 16],
       "layers": [
         {"hand": "land_crab.png"}
@@ -33,6 +33,14 @@
         {"hand": "seagull_back.png"}
       ],
       "rim": true
+    },
+    {
+      "id": "seagull_flight",
+      "size": [96, 48],
+      "cell": [24, 16],
+      "layers": [
+        {"hand": "seagull_flight.png"}
+      ]
     }
   ]
 }

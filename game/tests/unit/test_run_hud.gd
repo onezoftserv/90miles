@@ -47,7 +47,9 @@ func test_critical_thirst() -> void:
 	session.body(1).meters.thirst = 20.0
 	assert_true(thirst.pulsing)
 	assert_eq(thirst.value_label.text, "20")
-	assert_eq(thirst.label.get_parent(), thirst.bar, "the label sits inside the bar")
+	await wait_process_frames(2)
+	assert_lt(thirst.label.get_global_rect().end.x, thirst.box.get_global_rect().position.x + 0.5, "the label sits left of the bar")
+	assert_true(thirst.label_color().is_equal_approx(HudStyle.ALERT), "a steady alert red")
 	session.body(1).meters.thirst = 30.0
 	assert_false(thirst.pulsing)
 
@@ -166,3 +168,91 @@ func test_a_reclaimed_body_becomes_the_local_player() -> void:
 	session._rebind_body(7, 9)
 	assert_null(reclaimed.get_node_or_null(^"NameTag"), "no tag over your own player")
 	assert_eq(hud.meters.shown(), reclaimed.meters, "its meters fill the meters panel")
+
+
+# --- hud-window-kit: the teammate blocks (design D7, owner answer B1) -----------------------------
+
+const LIST_BOUNDS: Rect2 = Rect2(502.0, 4.0, 134.0, 86.0)
+
+
+func _crew() -> Array:
+	var session := _session([5, 6, 7] as Array[int])
+	session.roster[5] = "Dayana"
+	session.roster[6] = "Maximiliano Pérez"
+	session.roster[7] = "Papo"
+	return [session, _hud(session, false)]
+
+
+func test_the_list_is_right_anchored_inside_x_502_to_636() -> void:
+	var pair := _crew()
+	var session: CoopSession = pair[0]
+	var hud: RunHud = pair[1]
+	session.roster[6] = "Ñico de la Loma1"
+	assert_eq(session.roster[6].length(), 16, "the longest name a player may have")
+	session._dropped[6] = CoopSession.DISCONNECT_DOWNED_S
+	session.body(7).meters.health = 0.0
+	session.body(7).set_downed(true)
+	hud.refresh()
+	await wait_process_frames(2)
+	var panel := hud.teammates_panel.get_global_rect()
+	assert_eq(panel.end.x, 636.0, "its right edge on 636")
+	assert_true(LIST_BOUNDS.encloses(panel), "three teammates inside x 502-636 and y 4-90: %s" % panel)
+	var phase := (hud.get_node(^"PhasePanel") as Control).get_global_rect()
+	assert_false(panel.intersects(phase), "clear of the day phase")
+	assert_false(panel.intersects(Rect2(SignNote.POSITION, Vector2(SignNote.WIDTH, 200.0))), "clear of the sign note's place")
+	var blocks := hud.teammate_blocks()
+	assert_eq(blocks.size(), 3)
+	var long := blocks[1]
+	assert_eq(long.name_label.text, "Ñico de la Loma1", "the whole name")
+	assert_true(panel.encloses(long.name_label.get_global_rect()), "the 16-glyph name fits")
+	assert_eq(long.state_label.text, "Desconectado")
+	assert_true(panel.encloses(long.state_label.get_global_rect()), "Desconectado fits")
+
+
+func test_state_words_take_their_colours() -> void:
+	var pair := _crew()
+	var session: CoopSession = pair[0]
+	var hud: RunHud = pair[1]
+	session._dropped[6] = CoopSession.DISCONNECT_DOWNED_S
+	session.body(7).meters.health = 0.0
+	session.body(7).set_downed(true)
+	session.body(5).meters.dead = true
+	hud.refresh()
+	var blocks := hud.teammate_blocks()
+	assert_eq(blocks[0].state_label.text, "Muerto")
+	assert_eq(blocks[0].state_label.theme_type_variation, &"AlertLabel")
+	assert_eq(blocks[1].state_label.text, "Desconectado")
+	assert_true(blocks[1].state_label.get_theme_color(&"font_color").is_equal_approx(TeammateBlock.DROPPED_COLOR))
+	assert_eq(blocks[2].state_label.text, "Caído")
+	assert_eq(blocks[2].state_label.theme_type_variation, &"AlertLabel")
+	assert_eq(hud.teammate_rows(), ["Dayana 100 Muerto", "Maximiliano Pérez 100 Desconectado", "Papo 0 Caído"] as Array[String])
+
+
+func test_each_block_shows_its_chip_and_health() -> void:
+	var pair := _crew()
+	var session: CoopSession = pair[0]
+	var hud: RunHud = pair[1]
+	session.body(5).meters.health = 40.0
+	session.body(7).meters.health = 1.0
+	hud.refresh()
+	var blocks := hud.teammate_blocks()
+	var others: Array[int] = [5, 6, 7]
+	for i: int in blocks.size():
+		var slot: int = session.body(others[i]).look_slot
+		assert_true(blocks[i].chip.color.is_equal_approx(TeammateBlock.chip_color(slot)), "block %d's chip is look slot %d's base" % [i, slot])
+	assert_eq(blocks[0].bar.value, 40.0)
+	assert_gte(roundi(blocks[2].bar.value / 100.0 * blocks[2].bar.size.x), 1, "1 health still fills a pixel")
+	assert_true(TeammateBlock.chip_color(0).is_equal_approx(Color("#5b6ee1")), "slot 0's base shade")
+
+
+func test_solo_has_no_teammate_block() -> void:
+	var hud := _hud(_session(), true)
+	hud.refresh()
+	assert_false(hud.teammates_panel.visible)
+	assert_eq(hud.teammate_blocks().size(), 0, "one player, offline: no block")
+
+
+func test_a_host_alone_shows_no_empty_list() -> void:
+	var hud := _hud(_session(), false)
+	hud.refresh()
+	assert_false(hud.teammates_panel.visible, "no teammate yet: no empty window in the corner")

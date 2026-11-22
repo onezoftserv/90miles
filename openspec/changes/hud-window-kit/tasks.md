@@ -96,20 +96,20 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - the strip `Panel` as a `HudPanelThin` with expand margins 2/1/2/2.
 
   Move `InteractPrompt`'s labels to y 1 per line. Verify: 3.1, `test_interact_prompt.gd`, `test_prompt_placement.gd`, `test_inventory_strip.gd`, `test_craft_list.gd` and `test_sign_note.gd` pass, with the sign note's 7:1 still met (13.91:1).
-- [ ] 3.3 Fit damage-feedback's effect line to the notice row's thin window (D5), and check its cut at 50 characters still fits 400 px. Verify: damage-feedback's effect-line tests pass unchanged.
-- [ ] 3.4 The crossing HUD strip (design D14), if crossing-gameplay's `CrossingHud` is on main; otherwise skip it and note it for that later change. Tests first: in the crossing HUD's own test, or `test_hud_windows.gd` for a solo raft crossing with exactly 1 player, offline, check:
+- [x] 3.3 Fit damage-feedback's effect line to the notice row's thin window (D5), and check its cut at 50 characters still fits 400 px. Verify: damage-feedback's effect-line tests pass unchanged.
+- [x] 3.4 The crossing HUD strip (design D14), if crossing-gameplay's `CrossingHud` is on main; otherwise skip it and note it for that later change. (Skipped on 2026-11-15: `CrossingHud` was not on main; its stage-2 colours follow `HudStyle` by themselves, and the restyle is noted in `TASKS.md` for crossing-gameplay.) Tests first: in the crossing HUD's own test, or `test_hud_windows.gd` for a solo raft crossing with exactly 1 player, offline, check:
   - its panel is a `HudPanel` and each line a `HudPanelThin`;
   - the strip's track and marker are palette colours;
   - the integrity steps cream, orange, alert at half and a quarter;
   - its rect stays inside x 137 to 501 and clear of the meters and the teammate list.
 
   Then restyle it, leaving its rect, texts and timing as they are. Verify: these checks and crossing-gameplay's HUD tests pass.
-- [ ] 3.5 Capture the solo HUD at 2× and 3× on sand and over deep water, the prompt with the hold ring, the sign note and the craft list. Save them as `docs/inventory-hud/kit_*.png` and `docs/ui-shell/kit_hud_*.png`. Verify: no window is square-cornered and no panel covers the centre.
-- [ ] 3.6 Import ×2, Smoke, GUT and Art tests pass.
+- [x] 3.5 Capture the solo HUD at 2× and 3× on sand and over deep water, the prompt with the hold ring, the sign note and the craft list. Save them as `docs/inventory-hud/kit_*.png` and `docs/ui-shell/kit_hud_*.png`. Verify: no window is square-cornered and no panel covers the centre.
+- [x] 3.6 Import ×2, Smoke, GUT and Art tests pass.
 
 ## 4. Meters and teammates (survival-meters "HUD bars"; ui-shell "HUD layout", "Readable HUD and menu text"; design D4, D5, D7)
 
-- [ ] 4.1 Tests first. In `test_meters_hud.gd`:
+- [x] 4.1 Tests first. In `test_meters_hud.gd`:
   - ORDER becomes Salud, Sed, Hambre, Calor, Energía, Ánimo;
   - each label's rect lies left of its bar box, and the value lies right of it;
   - no label pixel overlaps a bar;
@@ -126,8 +126,8 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   Add the solo case: with exactly 1 player, offline, `NetManager.start_solo()`, the rows read Salud first, and thirst 40 with heat 60 turns only "Sed" and "Calor" orange.
 
   Verify: they fail first, then pass.
-- [ ] 4.2 Rebuild `meter_bar.tscn` and `meter_bar.gd` to D4: a label column with its colour steps (`WARN_LOW` and `WARN_HEAT` beside the critical constants), the `Bar` ProgressBar with ramp StyleBoxTextures and the `Edge` column, the value, the outline pulse, and `fill_color` kept as the ramp base. Move `Health` first in `meters_hud.tscn`, and set rows to 10 px with no separation. Re-fit damage-feedback's `Lost`, `Gain` and `Glow` and the shake to D5, and set `HurtCueTuning.meter_colors` to the six ramp bases. Verify: 4.1 and damage-feedback's `test_hurt_screen.gd`, its float and solo tests, and `test_run_hud.gd` pass.
-- [ ] 4.3 Tests first, for the teammate blocks:
+- [x] 4.2 Rebuild `meter_bar.tscn` and `meter_bar.gd` to D4: a label column with its colour steps (`WARN_LOW` and `WARN_HEAT` beside the critical constants), the `Bar` ProgressBar with ramp StyleBoxTextures and the `Edge` column, the value, the outline pulse, and `fill_color` kept as the ramp base. Move `Health` first in `meters_hud.tscn`, and set rows to 10 px with no separation. Re-fit damage-feedback's `Lost`, `Gain` and `Glow` and the shake to D5, and set `HurtCueTuning.meter_colors` to the six ramp bases. Verify: 4.1 and damage-feedback's `test_hurt_screen.gd`, its float and solo tests, and `test_run_hud.gd` pass.
+- [x] 4.3 Tests first, for the teammate blocks:
   - In `test_run_hud.gd`:
     - the panel is right-anchored, with its right edge at 636;
     - three teammates fit inside x 502 to 636 and y 4 to 90;
@@ -141,20 +141,20 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - In `test_compass_needle.gd`'s check: the needle clears the panel.
 
   Verify: they fail first, then pass.
-- [ ] 4.4 Write `scenes/ui/teammate_block.tscn` and its script (D7), and make `RunHud.refresh` keep one block per teammate. Verify: 4.3 passes.
-- [ ] 4.5 Host plus client, in-process with `NetHarness`: extend `test_dropped_teammate_net.gd`, or add `test_teammate_blocks_net.gd`. It checks:
+- [x] 4.4 Write `scenes/ui/teammate_block.tscn` and its script (D7), and make `RunHud.refresh` keep one block per teammate. Verify: 4.3 passes.
+- [x] 4.5 Host plus client, in-process with `NetHarness`: extend `test_dropped_teammate_net.gd`, or add `test_teammate_blocks_net.gd`. It checks:
   - the client's block for the host and the host's block for the client show the right name, chip colour, bar and state word;
   - a dropped client reads "Desconectado" on the host;
   - a late joiner sees the same.
 
   Verify: it passes, and the GUT total stays under CI's 300 s.
-- [ ] 4.6 Two processes: run host and client on one machine, as CLAUDE.md asks for any HUD change seen in co-op. Use the existing manual co-op runner, or a `tests/manual/teammate_blocks_run.gd` on a free UDP port. The client is named with 16 characters; it drops, then rejoins. Capture the host's top-right at 3× into `docs/ui-shell/kit_teammates_x3.png`. Verify: both processes report their checks and no engine errors, and the capture shows the whole name and "Desconectado".
-- [ ] 4.7 Capture the solo meters at 3×, with thirst at 20 (pulsing) and with health being hit (damage-feedback's chunk). Save them as `docs/ui-shell/kit_meters_*.png`. Verify: the labels are cream on the window and Salud is first.
-- [ ] 4.8 Import ×2, Smoke, GUT and Art tests pass.
+- [x] 4.6 Two processes: run host and client on one machine, as CLAUDE.md asks for any HUD change seen in co-op. Use the existing manual co-op runner, or a `tests/manual/teammate_blocks_run.gd` on a free UDP port. The client is named with 16 characters; it drops, then rejoins. Capture the host's top-right at 3× into `docs/ui-shell/kit_teammates_x3.png`. Verify: both processes report their checks and no engine errors, and the capture shows the whole name and "Desconectado".
+- [x] 4.7 Capture the solo meters at 3×, with thirst at 20 (pulsing) and with health being hit (damage-feedback's chunk). Save them as `docs/ui-shell/kit_meters_*.png`. Verify: the labels are cream on the window and Salud is first.
+- [x] 4.8 Import ×2, Smoke, GUT and Art tests pass.
 
 ## 5. Hotbar (inventory-hud "Slot contents"; design D6)
 
-- [ ] 5.1 Tests first. In `test_inventory_strip.gd`:
+- [x] 5.1 Tests first. In `test_inventory_strip.gd`:
   - the slot draw order;
   - the icon at (5,4);
   - the count's glyph pixels never inside (5,4)–(20,19), for 1-, 2- and 3-digit counts;
@@ -168,7 +168,7 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   Replace the old three-row test at lines 133-150. A new `test_hud_digits.gd` covers `HudDigits` alignment and pitch. Keep the solo case (exactly 1 player, offline): a strip holding seven items.
 
   Verify: they fail first, then pass.
-- [ ] 5.2 Tests first, in a new `test_strip_dimming.gd`, solo and offline with exactly 1 player:
+- [x] 5.2 Tests first, in a new `test_strip_dimming.gd`, solo and offline with exactly 1 player:
   - a knife with 1 use left draws its "1" from the orange row, and a lighter with 20 draws from the cream row;
   - on the raft crossing a rain cup's slot is dimmed with its icon visible, and driftwood (no use) is not;
   - a coconut with no blade is dimmed, and stops being dimmed after a knife pickup, with thirst at 50;
@@ -177,7 +177,7 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - `tooltip_text` reads "Coco · Beber" for a coconut, the name alone for driftwood, and "" for an empty slot, while selecting nothing and taking no focus.
 
   Verify: they fail first, then pass.
-- [ ] 5.3 Write `scripts/ui/hud_digits.gd`, then change `StripSlot`:
+- [x] 5.3 Write `scripts/ui/hud_digits.gd`, then change `StripSlot`:
   - the icon at (5,4);
   - `HudDigits` for the count and the key, with the Labels kept as hidden text holders;
   - the orange row for the last use;
@@ -189,7 +189,7 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - recompute dimming from `UsePlan.choose`, `UsePlan.actor_reason` and `ItemUser.check` on the change signals.
 
   Verify: 5.1, 5.2, `test_inventory_strip_net.gd` and `test_inventory_hud_solo_run.gd` pass.
-- [ ] 5.4 Capture the solo strip at 3×:
+- [x] 5.4 Capture the solo strip at 3×:
   - seven items;
   - the selected slot with its key;
   - a 40-stack;
@@ -198,17 +198,17 @@ The commands below run from the repo root, with the Godot 4.7.2 console binary:
   - a tooltip.
 
   Save it as `docs/inventory-hud/kit_strip_x3.png`. Verify: no digit covers an icon, the black rims read on the wells, and the dimmed icon is still recognisable.
-- [ ] 5.5 Import ×2, Smoke, GUT and Art tests pass.
+- [x] 5.5 Import ×2, Smoke, GUT and Art tests pass.
 
 ## 6. Docs and the whole run
 
-- [ ] 6.1 Update the docs:
+- [x] 6.1 Update the docs:
   - `docs/GAME_DESIGN.md`, where it describes the HUD (meters order and look, the hotbar keys);
   - `docs/ASSETS.md` (the UI kit as own work, built by `tools/art/ui.py`);
   - `TASKS.md`: tick this change and list the follow-ups (C29 prompt over the head, C31 craft window, C32 last stand, HU10 vessel phrases, the meter rate arrows of owner answer E1).
 
   Verify: the docs name only behaviour in the specs.
-- [ ] 6.2 Run `openspec validate hud-window-kit --strict`, Import ×2, Smoke, GUT, Art tests and CI's headless game runs with 0 error lines. Verify: all pass.
+- [x] 6.2 Run `openspec validate hud-window-kit --strict`, Import ×2, Smoke, GUT, Art tests and CI's headless game runs with 0 error lines. Verify: all pass.
 
 ## Workflow follow-up
 

@@ -19,6 +19,9 @@ extends Control
 ## request goes to the host through `CoopSession.use_item`. Letting go, changing the selection,
 ## the slot's item or the use it would make, or losing the input cancels; one press makes at most
 ## one use. The use button does nothing while the crafting list is open (`list_open`).
+## hud-window-kit design D6: a slot whose item has a use the button would refuse now is dimmed,
+## worked out again only when what the check reads changes (`dimming_passes` counts the passes);
+## an empty slot and an item with no use never are. Each slot's tooltip names its item and verb.
 
 ## A use request went to the host: the slot, the item's use and the teammate's peer (0: the
 ## player themself).
@@ -87,6 +90,10 @@ var _use_latched: bool = false
 var _use_plan: UsePlan = null
 var _use_slot: int = -1
 var _use_item_id: StringName = &""
+## How many times the dimming was worked out (a test reads it: never every frame).
+var dimming_passes: int = 0
+# What the dimming last read: a change in it works the dimming out again.
+var _dim_inputs: Array = []
 
 @onready var panel: PanelContainer = $Panel
 @onready var item_line_panel: PanelContainer = $ItemLinePanel
@@ -262,6 +269,7 @@ func refresh() -> void:
 	_show_selection()
 	_show_weight()
 	_show_line()
+	_show_dimming(true)
 
 
 func _process(delta: float) -> void:
@@ -275,6 +283,7 @@ func _process(delta: float) -> void:
 	_update_use(delta)
 	# A downed teammate may have come into reach, which changes the use the line names.
 	_show_line()
+	_show_dimming(false)
 
 
 ## Whether the use button may start a use now: what lets a slot input through, and no crafting
@@ -465,7 +474,9 @@ func _show_slots() -> void:
 	for i: int in _views.size():
 		var held := body.inventory.slots[i]
 		var item: ItemData = body.inventory.item_for(held.item_id) if not held.is_empty() else null
-		(_views[i] as StripSlot).show_item(item, held, _slot_key(i, locale), locale)
+		var view := _views[i] as StripSlot
+		view.show_item(item, held, _slot_key(i, locale), locale)
+		view.tooltip_text = _tooltip(i, item, locale)
 
 
 func _slot_key(index: int, locale: String) -> String:
@@ -508,3 +519,47 @@ func _show_line() -> void:
 	item_line.visible = not line.is_empty()
 	item_line_panel.visible = item_line.visible
 	notice.show_rest(effects)
+
+
+## Whether slot `index` holds an item with a use the use button would refuse now (dimmed).
+func refused_now(index: int) -> bool:
+	if not _has_body() or ItemUser.item_at(body, index) == null:
+		return false
+	var plan := UsePlan.choose(body, index, session)
+	if plan.use_index < 0:
+		return false
+	var reason: ItemUser.Reason = use_reason(plan, index)
+	return reason != ItemUser.Reason.OK and reason != ItemUser.Reason.EMPTY and reason != ItemUser.Reason.NO_USE
+
+
+# Dims every slot whose use would be refused now; with `force` false only when what the check reads
+# changed since the last pass (the inventory change already forces it through `refresh`).
+func _show_dimming(force: bool) -> void:
+	if not _has_body():
+		return
+	var inputs: Array = _dimming_inputs()
+	if not force and inputs == _dim_inputs:
+		return
+	_dim_inputs = inputs
+	dimming_passes += 1
+	for i: int in _views.size():
+		(_views[i] as StripSlot).set_dimmed(refused_now(i))
+
+
+# What the refusal check reads besides the inventory: being at sea, being down, the meters (whole
+# points: a use is wasted only within a point of full) and the statuses.
+func _dimming_inputs() -> Array:
+	var inputs: Array = [at_sea(), body.downed, body.meters.status_flags]
+	for meter: DataEnums.Meter in [DataEnums.Meter.THIRST, DataEnums.Meter.HUNGER, DataEnums.Meter.HEAT, DataEnums.Meter.ENERGY, DataEnums.Meter.MORALE, DataEnums.Meter.HEALTH]:
+		inputs.append(roundi(body.meters.value(meter)))
+	return inputs
+
+
+# "<name> · <verb>" for the mouse's tooltip: the name alone with no use, "" for an empty slot.
+func _tooltip(index: int, item: ItemData, locale: String) -> String:
+	if item == null:
+		return ""
+	var plan := UsePlan.choose(body, index, session)
+	if plan.use_index < 0:
+		return item.get_display_name(locale)
+	return "%s%s%s" % [item.get_display_name(locale), SEPARATOR, text.use_verb(item.uses[plan.use_index].action, locale)]

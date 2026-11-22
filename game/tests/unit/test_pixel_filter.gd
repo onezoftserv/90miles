@@ -5,7 +5,7 @@ extends GutTest
 ## root canvas. Solo, offline.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_pixel_filter_settings.cfg"
+var settings_path: String = UserTmp.path("test_pixel_filter_settings.cfg")
 
 
 func before_each() -> void:
@@ -16,16 +16,16 @@ func after_each() -> void:
 	NetManager.leave()
 	get_tree().root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
 	get_tree().root.oversampling = true
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _shell(filter: PixelFilter.Mode = PixelFilter.Mode.SHARP) -> GameShell:
-	var settings := GameSettings.new(SETTINGS_PATH)
+	var settings := GameSettings.new(settings_path)
 	settings.pixel_filter = filter
 	settings.save()
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	return shell
 
@@ -75,7 +75,7 @@ func test_the_settings_screen_switches_the_filter() -> void:
 	screen.filter_picker.item_selected.emit(1)
 	assert_not_null(shell.world_view.material)
 	assert_eq(get_tree().root.content_scale_mode, Window.CONTENT_SCALE_MODE_CANVAS_ITEMS)
-	assert_eq(GameSettings.load_from(SETTINGS_PATH).pixel_filter, PixelFilter.Mode.SMOOTH, "saved at once")
+	assert_eq(GameSettings.load_from(settings_path).pixel_filter, PixelFilter.Mode.SMOOTH, "saved at once")
 	screen.filter_picker.select(0)
 	screen.filter_picker.item_selected.emit(0)
 	assert_null(shell.world_view.material)

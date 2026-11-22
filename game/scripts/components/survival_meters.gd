@@ -163,6 +163,9 @@ var _timed: Array[MeterOverTime] = []
 ## Effects waiting out their delay, and the seconds each has left (parallel arrays), advanced by tick.
 var _delayed_effects: Array[EffectData] = []
 var _delayed_left_s: Array[float] = []
+## Seconds left of each timed status that is on (bleeding-and-sabila D1), keyed by DataEnums.Status.
+## Host only: every peer reads the synced bit, never the time, so a status set by the sync has none.
+var _status_left_s: Dictionary[int, float] = {}
 
 
 ## One host step: timed changes, then drains and restores from `context`, then the states.
@@ -184,7 +187,9 @@ func tick(delta: float, context: MeterContext) -> void:
 	if thirst <= 0.0:
 		_last_harm = DeathCause.THIRST
 		health -= tuning.dry_health_per_s * delta
+	_bleed(delta)
 	_update_states()
+	_advance_statuses(delta)
 
 
 ## Takes `amount` of health now and remembers `cause` (a DeathCause id) for the death it may lead
@@ -267,12 +272,31 @@ func has_status(status: DataEnums.Status) -> bool:
 	return _is_real_status(status) and (status_flags & (1 << status)) != 0
 
 
-## Host: starts or ends `status`. NONE and values outside DataEnums.Status change nothing.
+## Host: starts or ends `status`. NONE and values outside DataEnums.Status change nothing. Starting a
+## timed status (bleeding) starts its count again, even when it is already on: a new wound restarts
+## the time and never adds a second drain. Ending one drops its time.
 func set_status(status: DataEnums.Status, active: bool) -> void:
 	if not _is_real_status(status):
 		return
 	var bit: int = 1 << status
 	status_flags = (status_flags | bit) if active else (status_flags & ~bit)
+	var duration_s: float = status_duration_s(status)
+	if active and duration_s > 0.0:
+		_status_left_s[status] = duration_s
+	else:
+		_status_left_s.erase(status)
+
+
+## Seconds `status` lasts once started, from the tuning; 0 means until cured.
+func status_duration_s(status: DataEnums.Status) -> float:
+	if status == DataEnums.Status.BLEEDING:
+		return tuning.bleeding_s
+	return 0.0
+
+
+## Host: seconds left before `status` ends on its own; 0 when it is off or lasts until cured.
+func status_time_left(status: DataEnums.Status) -> float:
+	return _status_left_s.get(status, 0.0)
 
 
 static func _is_real_status(status: int) -> bool:
@@ -356,6 +380,24 @@ func _advance_delayed(delta: float) -> void:
 			index += 1
 	for effect: EffectData in due:
 		effect_due.emit(effect)
+
+
+# Bleeding's steady drain (D3): never below the floor, so it never downs or kills, and it names no
+# cause. It sets health directly, as the thirst drain does, so it reads as a drain and not a hit.
+func _bleed(delta: float) -> void:
+	if not has_status(DataEnums.Status.BLEEDING) or health <= tuning.bleeding_floor:
+		return
+	health = maxf(health - tuning.bleeding_health_per_s * delta, tuning.bleeding_floor)
+
+
+# Counts the timed statuses down, after this tick's drain, and ends each one whose time is up.
+func _advance_statuses(delta: float) -> void:
+	for status: int in _status_left_s.keys():
+		var left_s: float = _status_left_s[status] - delta
+		if left_s <= EMPTY_EPSILON:
+			set_status(status as DataEnums.Status, false)
+		else:
+			_status_left_s[status] = left_s
 
 
 func _advance_timed(delta: float) -> void:

@@ -4,8 +4,8 @@ extends GutTest
 ## field pointing at a registered folder (for every kind), every typed container survives a
 ## .tres round trip, and ContentValidator checks real content down to ids inside parts.
 
-const ROOT := "user://test_data_classes"
-const ROUND_TRIP_ROOT := "user://test_data_classes_round_trip"
+var root: String = UserTmp.path("test_data_classes")
+var round_trip_root: String = UserTmp.path("test_data_classes_round_trip")
 const DATA_DIR := "res://scripts/data"
 ## Folder -> the class its files use (data model manifest).
 const FOLDER_CLASSES: Dictionary[StringName, StringName] = {
@@ -60,13 +60,13 @@ func before_all() -> void:
 
 
 func before_each() -> void:
-	FsHelpers.remove_tree(ROOT)
-	FsHelpers.remove_tree(ROUND_TRIP_ROOT)
+	FsHelpers.remove_tree(root)
+	FsHelpers.remove_tree(round_trip_root)
 
 
 func after_all() -> void:
-	FsHelpers.remove_tree(ROOT)
-	FsHelpers.remove_tree(ROUND_TRIP_ROOT)
+	FsHelpers.remove_tree(root)
+	FsHelpers.remove_tree(round_trip_root)
 
 
 # --- registration and class shape -------------------------------------------------------
@@ -76,7 +76,7 @@ func test_default_types_register_exactly_the_twelve_folders() -> void:
 	var expected: Array[StringName] = []
 	expected.assign(FOLDER_CLASSES.keys())
 	expected.sort_custom(_by_text)
-	assert_eq(ContentCatalog.new(ROOT).types(), expected)
+	assert_eq(ContentCatalog.new(root).types(), expected)
 	assert_eq(ContentCatalog.DEFAULT_TYPES.size(), 12)
 	for folder: StringName in FOLDER_CLASSES:
 		var script: Script = ContentCatalog.DEFAULT_TYPES.get(folder)
@@ -540,8 +540,8 @@ func _sample_resource(class_id: String, depth: int, problems: PackedStringArray,
 
 ## Saves `res` as a .tres and loads it back from disk (bypassing the resource cache).
 func _round_trip(res: Resource, file_id: String) -> Resource:
-	var path := ROUND_TRIP_ROOT.path_join(file_id + ".tres")
-	DirAccess.make_dir_recursive_absolute(ROUND_TRIP_ROOT)
+	var path := round_trip_root.path_join(file_id + ".tres")
+	DirAccess.make_dir_recursive_absolute(round_trip_root)
 	var err := ResourceSaver.save(res, path)
 	assert_eq(err, OK, "saved %s" % path)
 	if err != OK:
@@ -613,11 +613,11 @@ func _diff_dictionaries(before: Dictionary, after: Dictionary, where: String, pr
 
 
 func _catalog() -> ContentCatalog:
-	return ContentCatalog.new(ROOT, ContentCatalog.DEFAULT_TYPES)
+	return ContentCatalog.new(root, ContentCatalog.DEFAULT_TYPES)
 
 
 func _save(folder: String, entry: ContentData) -> void:
-	var saved := FsHelpers.save_content(ROOT, folder, String(entry.id), entry)
+	var saved := FsHelpers.save_content(root, folder, String(entry.id), entry)
 	assert_eq(saved, OK, "saved %s/%s" % [folder, entry.id])
 
 

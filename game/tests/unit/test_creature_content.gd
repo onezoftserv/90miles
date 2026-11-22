@@ -1,11 +1,11 @@
 extends GutTest
 ## creatures-ai "First creatures": the three files load, pass the content check and are read as data.
 
-const TEMP_ROOT: String = "user://test_creature_content"
+var temp_root: String = UserTmp.path("test_creature_content")
 
 
 func after_each() -> void:
-	FsHelpers.remove_tree(TEMP_ROOT)
+	FsHelpers.remove_tree(temp_root)
 
 
 func _creature(id: StringName) -> CreatureData:
@@ -62,8 +62,8 @@ func test_the_sandbar_names_two_valid_nest_palms() -> void:
 func test_a_new_shark_from_data_only_runs_the_shark_brain() -> void:
 	var data := (_creature(&"reef_shark")).duplicate() as CreatureData
 	data.id = &"tiburon_prueba"
-	FsHelpers.save_content(TEMP_ROOT, "creatures", "tiburon_prueba", data)
-	var catalog := ContentCatalog.new(TEMP_ROOT)
+	FsHelpers.save_content(temp_root, "creatures", "tiburon_prueba", data)
+	var catalog := ContentCatalog.new(temp_root)
 	var made := Creature.make(catalog.get_entry(&"creatures", &"tiburon_prueba") as CreatureData)
 	add_child_autofree(made)
 	assert_true(made.brain is PatrolCircleStrike)

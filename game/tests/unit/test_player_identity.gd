@@ -2,14 +2,14 @@ extends GutTest
 ## coop-reconnect "Player identity": each install keeps a random player id and a separate
 ## secret across launches; malformed ones are replaced; loading never writes a file. Offline.
 
-const PATH: String = "user://test_player_identity_settings.cfg"
+var settings_path: String = UserTmp.path("test_player_identity_settings.cfg")
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 
 
 func after_each() -> void:
 	NetManager.leave()
-	if FileAccess.file_exists(PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func test_a_new_identity_is_random_hex() -> void:
@@ -41,12 +41,12 @@ func test_the_secret_is_compared_as_a_hash() -> void:
 
 
 func test_an_install_keeps_its_player_id() -> void:
-	var first := GameSettings.load_from(PATH)
+	var first := GameSettings.load_from(settings_path)
 	assert_true(first.identity.is_valid(), "made on first launch")
 	assert_false(first.identity_stored, "not saved yet")
 	assert_eq(first.save(), OK)
 	assert_true(first.identity_stored)
-	var again := GameSettings.load_from(PATH)
+	var again := GameSettings.load_from(settings_path)
 	assert_eq(again.identity.id, first.identity.id, "the same id on the next launch")
 	assert_eq(again.identity.secret, first.identity.secret)
 	assert_true(again.identity_stored)
@@ -56,22 +56,22 @@ func test_a_malformed_identity_is_replaced() -> void:
 	var config := ConfigFile.new()
 	config.set_value("player", "id", "not-an-id")
 	config.set_value("player", "secret", 42)
-	config.save(PATH)
-	var settings := GameSettings.load_from(PATH)
+	config.save(settings_path)
+	var settings := GameSettings.load_from(settings_path)
 	assert_true(settings.identity.is_valid())
 	assert_ne(settings.identity.id, "not-an-id")
 	assert_false(settings.identity_stored)
 
 
 func test_loading_writes_nothing() -> void:
-	GameSettings.load_from(PATH)
-	assert_false(FileAccess.file_exists(PATH), "load_from never creates the file")
+	GameSettings.load_from(settings_path)
+	assert_false(FileAccess.file_exists(settings_path), "load_from never creates the file")
 
 
 func test_the_shell_saves_a_new_identity_at_once() -> void:
 	NetManager.start_solo()
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
-	assert_true(FileAccess.file_exists(PATH), "saved on the first launch")
-	assert_eq(GameSettings.load_from(PATH).identity.id, shell.settings.identity.id)
+	assert_true(FileAccess.file_exists(settings_path), "saved on the first launch")
+	assert_eq(GameSettings.load_from(settings_path).identity.id, shell.settings.identity.id)

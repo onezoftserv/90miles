@@ -21,3 +21,9 @@ Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
 Files: water_ramps.png (rows deep, shallows and brackish, four colours each, dark to light)
+
+Work: 90 Millas still foam
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: foam_still.png (art-terrain-polish D2: a 1 px #8fe0f0 line on the first water pixel round each of the 16 sand shapes of ../terrain/sand.png, the same in all 8 frames, for the rim of still water such as the coast cay's lagoon)

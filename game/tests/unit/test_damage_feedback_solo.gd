@@ -109,5 +109,5 @@ func test_solo_sabila_with_nothing_to_cure_is_refused_and_stays() -> void:
 	Input.action_press(InventoryStrip.USE_ACTION)
 	hud.strip._process(0.1)
 	Input.action_release(InventoryStrip.USE_ACTION)
-	assert_eq(hud.notice.shown_text(), "No hay na' que curar.")
+	assert_eq(hud.notice.shown_text(), "'Tás entero.")
 	assert_true(_slot_of(&"aloe") >= 0, "the sábila stays")

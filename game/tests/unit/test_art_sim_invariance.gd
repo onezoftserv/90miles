@@ -210,6 +210,24 @@ func _tick_art() -> void:
 			ticked += 1
 
 
+# guardacostas-capture: the squad looks of the run that drew a soldier, and whether one drew the dinghy
+# (a squad lands for the night lap's alert on land) and how many squad calls showed.
+func _squad_art() -> Dictionary:
+	var soldiers: int = 0
+	var dinghy: bool = false
+	var calls: int = 0
+	for node: Node in get_tree().get_nodes_in_group(&"art_view"):
+		var look := node as SquadLook
+		if look == null or not _in_run(look):
+			continue
+		var creature := look.get_parent() as Creature
+		if creature != null and creature.data.behavior == CreatureData.Behavior.SEARCH_CAPTURE:
+			soldiers += 1
+		dinghy = dinghy or look.dinghy_visible
+		calls += look.calls_shown
+	return {"soldiers": soldiers, "dinghy": dinghy, "calls": calls}
+
+
 # The patrol looks of the run that have made their light, and the loudhailer lines they have shown.
 func _patrol_looks() -> int:
 	var found: int = 0
@@ -317,7 +335,8 @@ func _snapshot() -> Dictionary:
 	for node: Node in session.entities.get_children():
 		var creature := node as Creature
 		if creature != null:
-			creatures.append([String(creature.name), creature.data.id, creature.position, creature.facing, creature.state_id, creature.carried.duplicate(), creature.route_t, creature.beam, creature.alert_serial, creature.light_on])
+			creatures.append([String(creature.name), creature.data.id, creature.position, creature.facing, creature.state_id, creature.carried.duplicate(), creature.route_t, creature.beam, creature.alert_serial, creature.light_on,
+				creature.squad_state, creature.landing, creature.dinghy_t, creature.squad_serial, creature.squad_call])
 	var pickups: PackedStringArray = []
 	for node: Node in session.pickups.get_children():
 		if not node.is_queued_for_deletion():
@@ -389,7 +408,7 @@ func _built_run(frames: int) -> Dictionary:
 		intents.append(intent)
 		_frame(intent)
 		snapshots.append(_snapshot())
-	var result := {"frames": snapshots, "paths": _sync_paths(), "creatures": spawner.creatures().size(), "art": _art_in_run().size(), "enter_tree": enter_tree, "patrol_looks": _patrol_looks(), "lines": _loudhailer_lines(), "blinked": _blinked}
+	var result := {"frames": snapshots, "paths": _sync_paths(), "creatures": spawner.creatures().size(), "art": _art_in_run().size(), "enter_tree": enter_tree, "patrol_looks": _patrol_looks(), "lines": _loudhailer_lines(), "blinked": _blinked, "squad": _squad_art()}
 	_free_run()
 	return result
 
@@ -490,6 +509,12 @@ func test_a_night_patrol_lap_runs_the_same_with_and_without_the_patrol_look() ->
 		if creature[1] == &"patrol_boat" and creature[9]:
 			lit = true
 	assert_true(lit, "the boat's light was on in the run")
+	# guardacostas-capture: the alert on land landed a squad, so the soldiers and the dinghy were drawn
+	# in the built run, and the stripped run, with none of their looks, stayed equal frame for frame.
+	var squad: Dictionary = built["squad"]
+	assert_gt(squad["soldiers"], 0, "the built run drew the shore soldiers")
+	assert_true(squad["dinghy"], "and the dinghy")
+	assert_gt(squad["calls"], 0, "and showed a squad call")
 	var first: int = _first_difference(built_frames, bare_frames)
 	assert_eq(first, -1, "every frame equal with and without the patrol look (first difference: %s)" % _detail(built_frames, bare_frames, first))
 	gut.p("patrol looks drawn: %d; loudhailer lines shown: %d; %d frames" % [built["patrol_looks"], built["lines"], FRAMES])

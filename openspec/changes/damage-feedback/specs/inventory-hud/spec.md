@@ -21,9 +21,9 @@ Kinds the host does not apply are left out. A refusal replaces the row for 2 s. 
 - **THEN** the row reads "Sed +15 (+6 útil) · Hambre +5 · Energía +10"
 
 #### Scenario: Sábila's line
-- **GIVEN** a solo player with sábila selected
+- **GIVEN** a solo player at 90 health with sábila selected
 - **WHEN** the strip is drawn
-- **THEN** the row reads "Cura quemadura y sangrado", in the order of sábila's effects
+- **THEN** the row reads "Cura quemadura y sangrado · Salud +5", in the order of sábila's effects (its heal added by `bleeding-and-sabila`)
 
 #### Scenario: A drain over time
 - **GIVEN** a solo player with manzanillo selected
@@ -59,9 +59,9 @@ Before sending, the HUD SHALL refuse a use that would change nothing for whoever
 - **THEN** it is the line of the first meter it raises ("No tienes sed."), or of the one status it cures ("No 'tás sangrando."), or "No hay na' que curar." for several statuses, and "A Papo no le hace falta." when it goes on Papo
 
 #### Scenario: Sábila with nothing to cure, solo
-- **GIVEN** a solo player, offline, who is neither bleeding nor sunburnt, with sábila selected
+- **GIVEN** a solo player, offline, at full health who is neither bleeding nor sunburnt, with sábila selected
 - **WHEN** they press F
-- **THEN** "No hay na' que curar." shows (sábila cures two statuses), nothing is sent and the sábila stays
+- **THEN** "'Tás entero." shows (sábila's heal is the first meter it raises, since `bleeding-and-sabila`), nothing is sent and the sábila stays
 
 #### Scenario: A coconut at full thirst and hunger
 - **GIVEN** a solo player with thirst, hunger and energy all full, holding a knife and a coconut

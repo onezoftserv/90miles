@@ -8,4 +8,4 @@ Work: 90 Millas smaller shadows
 Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
-Files: shadow_8x4.png and shadow_6x3.png (drawn after MetroCity's ellipse, in its colour and alpha)
+Files: shadow_8x4.png and shadow_6x3.png (drawn after MetroCity's ellipse, in its colour and alpha); shadow_23x5.png (a lying body's shadow, the same colour and alpha, drawn by tools/art/fx.py from fx.json; art-sprite-polish D8)

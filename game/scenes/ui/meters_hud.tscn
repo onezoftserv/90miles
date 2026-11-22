@@ -3,6 +3,12 @@
 [ext_resource type="Script" path="res://scenes/ui/meters_hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/meter_bar.tscn" id="2_bar"]
 [ext_resource type="Shader" path="res://scenes/ui/sunstroke_blur.gdshader" id="4_blur"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/ramp_health.png" id="r_health"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/ramp_thirst.png" id="r_thirst"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/ramp_hunger.png" id="r_hunger"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/ramp_heat.png" id="r_heat"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/ramp_energy.png" id="r_energy"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/ramp_morale.png" id="r_morale"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_blur"]
 shader = ExtResource("4_blur")
@@ -40,45 +46,57 @@ theme_type_variation = &"HudPanel"
 [node name="Bars" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 2
-
-[node name="Thirst" parent="Panel/Bars" instance=ExtResource("2_bar")]
-layout_mode = 2
-meter = 1
-label_text = "Sed"
-fill_color = Color(0.29, 0.64, 0.87, 1)
-
-[node name="Hunger" parent="Panel/Bars" instance=ExtResource("2_bar")]
-layout_mode = 2
-meter = 2
-label_text = "Hambre"
-fill_color = Color(0.79, 0.54, 0.29, 1)
-
-[node name="Heat" parent="Panel/Bars" instance=ExtResource("2_bar")]
-layout_mode = 2
-meter = 3
-label_text = "Calor"
-fill_color = Color(1, 0.42, 0.24, 1)
-
-[node name="Energy" parent="Panel/Bars" instance=ExtResource("2_bar")]
-layout_mode = 2
-meter = 4
-label_text = "Energía"
-fill_color = Color(0.91, 0.77, 0.28, 1)
-
-[node name="Morale" parent="Panel/Bars" instance=ExtResource("2_bar")]
-layout_mode = 2
-meter = 5
-label_text = "Ánimo"
-fill_color = Color(0.65, 0.49, 0.88, 1)
+theme_override_constants/separation = 0
 
 [node name="Health" parent="Panel/Bars" instance=ExtResource("2_bar")]
 layout_mode = 2
 meter = 6
 label_text = "Salud"
-fill_color = Color(0.36, 0.75, 0.36, 1)
+fill_color = Color(0.41568627, 0.74509804, 0.18823529, 1)
+ramp = ExtResource("r_health")
+empty_color = Color(0.19607843, 0.23529412, 0.22352941, 1)
 shows_losses = true
 glows_on_drain = true
+
+[node name="Thirst" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 1
+label_text = "Sed"
+fill_color = Color(0.38823529, 0.60784314, 1, 1)
+ramp = ExtResource("r_thirst")
+empty_color = Color(0.24705882, 0.24705882, 0.45490196, 1)
+
+[node name="Hunger" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 2
+label_text = "Hambre"
+fill_color = Color(0.85098039, 0.62745098, 0.4, 1)
+ramp = ExtResource("r_hunger")
+empty_color = Color(0.27058824, 0.15686275, 0.23529412, 1)
+
+[node name="Heat" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 3
+label_text = "Calor"
+fill_color = Color(0.8745098, 0.44313725, 0.14901961, 1)
+ramp = ExtResource("r_heat")
+empty_color = Color(0.27058824, 0.15686275, 0.23529412, 1)
+
+[node name="Energy" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 4
+label_text = "Energía"
+fill_color = Color(0.98431373, 0.94901961, 0.21176471, 1)
+ramp = ExtResource("r_energy")
+empty_color = Color(0.32156863, 0.29411765, 0.14117647, 1)
+
+[node name="Morale" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 5
+label_text = "Ánimo"
+fill_color = Color(0.84313725, 0.48235294, 0.72941176, 1)
+ramp = ExtResource("r_morale")
+empty_color = Color(0.27058824, 0.15686275, 0.23529412, 1)
 
 [node name="Bleeding" type="Label" parent="Panel/Bars"]
 visible = false

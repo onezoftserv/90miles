@@ -5,7 +5,7 @@ extends GutTest
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
-const SETTINGS_PATH: String = "user://test_coast_cay_settings.cfg"
+var settings_path: String = UserTmp.path("test_coast_cay_settings.cfg")
 const COAST: StringName = &"coast_cay"
 
 
@@ -18,13 +18,13 @@ func before_each() -> void:
 func after_each() -> void:
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _shell() -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	shell.session.body(1).player_input.enabled = false
@@ -404,6 +404,7 @@ func test_a_waiting_rider_is_no_teammate_for_the_last_player() -> void:
 func test_solo_uses_aloe_on_sunburn_and_bleeding() -> void:
 	var body := PLAYER_SCENE.instantiate() as PlayerBody
 	add_child_autofree(body)
+	body.meters.health = 70.0
 	body.meters.set_status(DataEnums.Status.SUNBURN, true)
 	body.meters.set_status(DataEnums.Status.BLEEDING, true)
 	body.inventory.add(&"aloe", 1)
@@ -412,6 +413,7 @@ func test_solo_uses_aloe_on_sunburn_and_bleeding() -> void:
 	assert_true(ItemUser.use(body, 0, 0))
 	assert_false(body.meters.has_status(DataEnums.Status.SUNBURN))
 	assert_false(body.meters.has_status(DataEnums.Status.BLEEDING))
+	assert_eq(body.meters.health, 75.0, "and it heals 5")
 	assert_eq(body.inventory.count_id(&"aloe"), 0, "the leaf is used up")
 
 

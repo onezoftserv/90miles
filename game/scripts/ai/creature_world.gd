@@ -25,6 +25,16 @@ var record: RunRecord = RunRecord.new()
 var events: WorldEvents = null
 ## A test's weather: when set, `weather()` answers it instead of the sky's.
 var weather_override: WeatherData = null
+## guardacostas-capture: how a docked boat puts its squad ashore, `func(data: CreatureData, at: Vector2)
+## -> Creature` (the session's spawn_creature on an island; a test's own). Without one no squad lands.
+var spawner: Callable = Callable()
+## The island's spot-meter watch (the spawner's), so a landed soldier becomes a sight source.
+var watch: PatrolWatch = null
+## The island's layout id and the run's seed, which seed a squad's random walk.
+var island_id: StringName = &""
+var island_run_seed: int = 0
+## Where creature ids are read from (the session's catalog; the game's content by default).
+var catalog: ContentCatalog = null
 
 # The island's patrol loop and the rules' read-only sea distances, built once for every boat.
 var _patrol_loops: Dictionary[String, PatrolLoop] = {}
@@ -78,11 +88,31 @@ func noise_multiplier_at(_cell: Vector2i) -> float:
 	return 1.0
 
 
+## Whether a squad can be put ashore here.
+func can_spawn() -> bool:
+	return spawner.is_valid()
+
+
+## Puts a creature of `data` at `at` (pixels) through the spawner, or null.
+func spawn_creature(data: CreatureData, at: Vector2) -> Creature:
+	if not spawner.is_valid() or data == null:
+		return null
+	return spawner.call(data, at) as Creature
+
+
+## The creature data for `id`, from the world's catalog.
+func creature_data(id: StringName) -> CreatureData:
+	var source: ContentCatalog = catalog if catalog != null else GameState.content
+	return source.get_entry(&"creatures", id) as CreatureData
+
+
 func light_radius_px() -> float:
 	return light_radius_tiles * CreatureNav.TILE
 
 
-## Living player bodies; on a crossing, its riders that are not dead.
+## Living player bodies in play (a body held out of play, a rider waiting on the next shore, a taken
+## captive or a player in the capture scene, is nobody's target: guardacostas-capture design.md §7); on
+## a crossing, its riders that are not dead.
 func players() -> Array[PlayerBody]:
 	var found: Array[PlayerBody] = []
 	if crossing != null:
@@ -93,7 +123,7 @@ func players() -> Array[PlayerBody]:
 		return found
 	for node: Node in _tree().get_nodes_in_group(PlayerBody.GROUP):
 		var body := node as PlayerBody
-		if body != null and CoopSession.is_alive(body):
+		if body != null and CoopSession.is_alive(body) and not body.left_island:
 			found.append(body)
 	return found
 
@@ -219,7 +249,9 @@ func deck_rect() -> Rect2:
 
 ## The run's seed (the session's world state), or 0 when there is none.
 func run_seed() -> int:
-	var session: CoopSession = crossing.session() if crossing != null else null
+	if crossing == null:
+		return island_run_seed
+	var session: CoopSession = crossing.session()
 	if session == null:
 		return 0
 	var value: Variant = session.world_state.get("run_seed", 0)

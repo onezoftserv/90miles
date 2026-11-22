@@ -22,6 +22,10 @@ const MASK_32: int = 0xffffffff
 ## A corner set's tile of mask m is at column m % COLUMNS, row m / COLUMNS; its picks are on PICK_ROW.
 const COLUMNS: int = 4
 const PICK_ROW: int = 4
+## A palm cell counts for the dune when at least this many of its four orthogonal neighbours do
+## (art-terrain-polish D1), so a palm in the dune keeps the dune whole round it and a palm out on
+## the beach never becomes a lone dune blob.
+const PALM_DUNE_SIDES: int = 3
 ## The four cells that share each corner, as offsets from the cell.
 const CORNER_CELLS: Dictionary[int, Array] = {
 	NW: [Vector2i(-1, -1), Vector2i(0, -1), Vector2i(-1, 0), Vector2i(0, 0)],
@@ -87,16 +91,19 @@ static func layers_for(kind: DataEnums.Terrain) -> Array[StringName]:
 	return layers
 
 
-## True when `cell` belongs to `layer`.
-static func is_member(layer: StringName, cell: Vector2i, terrain: GridTerrain, pools: Array[Vector2i]) -> bool:
-	return _counts(layer, cell, terrain.terrain_at(cell), terrain, pools)
+## True when `cell` belongs to `layer`. `palms` are the layout's palm cells: on the dune layer a
+## palm cell counts when at least PALM_DUNE_SIDES of its four orthogonal neighbours count by the
+## terrain alone, so the dune round it keeps its corners (art-terrain-polish D1). Callers that pass
+## no palms get the terrain-only rule.
+static func is_member(layer: StringName, cell: Vector2i, terrain: GridTerrain, pools: Array[Vector2i], palms: Array[Vector2i] = []) -> bool:
+	return _counts(layer, cell, terrain.terrain_at(cell), terrain, pools, palms)
 
 
 ## Every cell of `layer`, in the grid's order.
-static func layer_cells(layer: StringName, terrain: GridTerrain, pools: Array[Vector2i]) -> Array[Vector2i]:
+static func layer_cells(layer: StringName, terrain: GridTerrain, pools: Array[Vector2i], palms: Array[Vector2i] = []) -> Array[Vector2i]:
 	var found: Array[Vector2i] = []
 	for cell: Vector2i in terrain.cells:
-		if is_member(layer, cell, terrain, pools):
+		if is_member(layer, cell, terrain, pools, palms):
 			found.append(cell)
 	if layer == SAND:
 		for pool: Vector2i in pools:
@@ -107,13 +114,13 @@ static func layer_cells(layer: StringName, terrain: GridTerrain, pools: Array[Ve
 
 ## The corner mask of `cell` on `layer` (NW 1, NE 2, SW 4, SE 8). On the plain layer a corner
 ## counts when the four cells are all the cell's own terrain, not merely plain (design.md K39).
-static func corner_mask(layer: StringName, cell: Vector2i, terrain: GridTerrain, pools: Array[Vector2i]) -> int:
+static func corner_mask(layer: StringName, cell: Vector2i, terrain: GridTerrain, pools: Array[Vector2i], palms: Array[Vector2i] = []) -> int:
 	var own: DataEnums.Terrain = terrain.terrain_at(cell)
 	var mask: int = 0
 	for corner: int in CORNER_CELLS:
 		var land: bool = true
 		for offset: Vector2i in CORNER_CELLS[corner]:
-			if not _counts(layer, cell + offset, own, terrain, pools):
+			if not _counts(layer, cell + offset, own, terrain, pools, palms):
 				land = false
 				break
 		if land:
@@ -126,20 +133,22 @@ static func corner_mask(layer: StringName, cell: Vector2i, terrain: GridTerrain,
 ## own sheet when the sand under it is whole, and atlas (sand mask, own mask) of the layer's shore
 ## source otherwise (K39). A full tile, and the brush's islet, take one of the layer's picks by
 ## the cell's hash; an inland whole plain tile takes its full tile or one of its row's variants.
-static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terrain: GridTerrain, pools: Array[Vector2i]) -> Dictionary:
-	if not is_member(layer, cell, terrain, pools):
+static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terrain: GridTerrain, pools: Array[Vector2i], palms: Array[Vector2i] = []) -> Dictionary:
+	if not is_member(layer, cell, terrain, pools, palms):
 		return {}
 	var art: TerrainArtData = data()
-	var own: int = corner_mask(layer, cell, terrain, pools)
+	var own: int = corner_mask(layer, cell, terrain, pools, palms)
 	var sand: int = own if layer == SAND else corner_mask(SAND, cell, terrain, pools)
 	var row: int = art.plain_row.get(terrain.terrain_at(cell), 0) if layer == PLAIN else 0
 	var source: int = art.source_of[layer]
 	var atlas: Vector2i
 	if sand != FULL and layer != SAND:
 		source = art.shore_source_of[layer]
-		atlas = Vector2i(sand, art.shore_row_stride * row + own)
-	elif sand == FULL and own == art.variant_mask.get(layer, -1):
-		atlas = Vector2i(_variant(layer, cell, layout_id), PICK_ROW)
+		# A lone sand cell (mask 0) keeps the cut piece: the fit, and so its variants, start at mask 1.
+		var block: int = row if layer == PLAIN else (shore_row(layer, cell, layout_id) if sand != 0 else 0)
+		atlas = Vector2i(sand, art.shore_row_stride * block + own)
+	elif sand == FULL and _pick_row(layer, own) >= 0:
+		atlas = Vector2i(_variant(layer, cell, layout_id), PICK_ROW + _pick_row(layer, own))
 	elif layer == PLAIN and own == FULL:
 		atlas = Vector2i(FULL + _plain_variant(row, cell, layout_id), row)
 	elif layer == PLAIN:
@@ -150,8 +159,38 @@ static func tile(layer: StringName, cell: Vector2i, layout_id: StringName, terra
 	return {&"source": source, &"atlas": atlas, &"alternative": 0}
 
 
+## The block of 16 rows of `layer`'s shore sheet that `cell` takes: one block per whole shore piece
+## (art-terrain-polish D5), picked by the cell's hash; 0 for a layer with one piece. Plain rows
+## are blocks by terrain instead (`plain_row`).
+static func shore_row(layer: StringName, cell: Vector2i, layout_id: StringName) -> int:
+	var count: int = int(data().shore_variants.get(layer, 1))
+	if count <= 1:
+		return 0
+	return (cell_hash(layout_id, cell) >> 1) % count
+
+
+## The pick row (0 for row 4) whose picks replace the tile of `own` on `layer`, or -1.
+static func _pick_row(layer: StringName, own: int) -> int:
+	var masks: PackedInt32Array = data().variant_masks.get(layer, PackedInt32Array())
+	if not masks.is_empty():
+		return masks.find(own)
+	return 0 if own == data().variant_mask.get(layer, -1) else -1
+
+
 static func _variant(layer: StringName, cell: Vector2i, layout_id: StringName) -> int:
-	return (cell_hash(layout_id, cell) >> 1) % int(data().variant_count[layer])
+	var roll: int = cell_hash(layout_id, cell) >> 1
+	var weights: PackedInt32Array = data().variant_weights.get(layer, PackedInt32Array())
+	if weights.is_empty():
+		return roll % int(data().variant_count[layer])
+	var total: int = 0
+	for weight: int in weights:
+		total += weight
+	var at: int = roll % total
+	for pick: int in weights.size():
+		if at < weights[pick]:
+			return pick
+		at -= weights[pick]
+	return weights.size() - 1
 
 
 ## 0 for the full tile, n for the row's n-th variant after it.
@@ -160,8 +199,8 @@ static func _plain_variant(row: int, cell: Vector2i, layout_id: StringName) -> i
 
 
 # Whether `at` counts as land for `layer`; `own` is the terrain of the cell whose corners are asked,
-# which only the plain layer reads.
-static func _counts(layer: StringName, at: Vector2i, own: DataEnums.Terrain, terrain: GridTerrain, pools: Array[Vector2i]) -> bool:
+# which only the plain layer reads. A palm in `palms` counts for the dune by its neighbours.
+static func _counts(layer: StringName, at: Vector2i, own: DataEnums.Terrain, terrain: GridTerrain, pools: Array[Vector2i], palms: Array[Vector2i] = []) -> bool:
 	var kind: DataEnums.Terrain = terrain.terrain_at(at)
 	if layer == SAND:
 		return not TerrainQuery.is_water(kind) or pools.has(at)
@@ -171,4 +210,15 @@ static func _counts(layer: StringName, at: Vector2i, own: DataEnums.Terrain, ter
 	if layer == PLAIN:
 		return kind == own and art.layer_of.get(kind, SAND) == PLAIN
 	var rank: int = art.set_layers.find(art.layer_of.get(kind, SAND))
-	return rank >= 0 and rank >= art.set_layers.find(layer)
+	if rank >= 0 and rank >= art.set_layers.find(layer):
+		return true
+	return layer == DUNE and palms.has(at) and _dune_sides(at, terrain, pools) >= PALM_DUNE_SIDES
+
+
+# How many of `at`'s four orthogonal neighbours count for the dune by their terrain alone.
+static func _dune_sides(at: Vector2i, terrain: GridTerrain, pools: Array[Vector2i]) -> int:
+	var sides: int = 0
+	for step: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if _counts(DUNE, at + step, DataEnums.Terrain.DUNE, terrain, pools):
+			sides += 1
+	return sides

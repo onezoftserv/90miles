@@ -21,6 +21,13 @@
   {"name": "radio_off", "kind": "icon", "size": [7, 7], "layers": [{"colour": "#ffedde", "rows": ["..###..", ".#...#.", "#.....#", "#.....#", "#.....#", ".#...#.", "..###.."]}]},
   {"name": "radio_on", "kind": "icon", "size": [7, 7], "layers": [
    {"colour": "#ffedde", "rows": ["..###..", ".#...#.", "#.....#", "#.....#", "#.....#", ".#...#.", "..###.."]},
-   {"colour": "#fbf236", "rows": ["", "", "..###..", "..###..", "..###.."]}]}
+   {"colour": "#fbf236", "rows": ["", "", "..###..", "..###..", "..###.."]}]},
+  {"name": "ramp_health", "kind": "ramp", "highlight": "#99e550", "base": "#6abe30", "shade": "#4b692f"},
+  {"name": "ramp_thirst", "kind": "ramp", "highlight": "#cbdbfc", "base": "#639bff", "shade": "#5b6ee1"},
+  {"name": "ramp_hunger", "kind": "ramp", "highlight": "#eec39a", "base": "#d9a066", "shade": "#8f563b"},
+  {"name": "ramp_heat", "kind": "ramp", "highlight": "#fbf236", "base": "#df7126", "shade": "#ac3232"},
+  {"name": "ramp_energy", "kind": "ramp", "highlight": "#ffffff", "base": "#fbf236", "shade": "#8a6f30"},
+  {"name": "ramp_morale", "kind": "ramp", "highlight": "#ffedde", "base": "#d77bba", "shade": "#76428a"},
+  {"name": "digits_3x5", "kind": "digits", "colours": ["#ffedde", "#df7126"], "outline": "#222034"}
  ]
 }

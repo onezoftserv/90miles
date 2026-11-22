@@ -11,6 +11,9 @@ extends Control
 ## (`PlayerBody.spot_shown`, the host's net_spot) is above 0 and who is not hidden (the closed eye
 ## wins), placed the same way. Its iris fills with the fraction: IRIS_PIXELS cells, `iris_pixels` of
 ## them dark, from the bottom row up and left to right.
+## guardacostas-capture "Capture cues": a 7×5 px rope mark over every captive (`PlayerBody.captive`, the
+## host's net_capture), the local player included, placed the same way; it wins over both eyes. A taken
+## captive is out of play and gets none.
 
 const MARK_SIZE: Vector2 = Vector2(7.0, 5.0)
 ## Space between the mark's bottom edge and the head or the name tag.
@@ -34,6 +37,13 @@ const OPEN_EYE_PIXELS: Array[Vector2i] = [
 ## The iris: the middle 3×3 of the open eye's inside, filled from its bottom row up as the meter fills.
 const IRIS_PIXELS: int = 9
 const IRIS_COLOR: Color = HudStyle.OUTLINE
+## The rope in the 5×3 inside the outline: a braid, by pixel.
+const ROPE_PIXELS: Array[Vector2i] = [
+	Vector2i(0, 0), Vector2i(2, 0), Vector2i(4, 0),
+	Vector2i(1, 1), Vector2i(3, 1),
+	Vector2i(0, 2), Vector2i(2, 2), Vector2i(4, 2),
+]
+const ROPE_COLOR: Color = HudStyle.CREAM
 const TAG_NAME: StringName = &"NameTag"
 ## Every mark layer, so a speech bubble over a player can sit above its mark (design.md P11).
 const GROUP: StringName = &"body_marks"
@@ -50,6 +60,9 @@ var _rects: Array[Rect2] = []
 # The same for the open eyes.
 var _eyed: Array[Node] = []
 var _eye_rects: Array[Rect2] = []
+# The same for the rope marks.
+var _roped: Array[Node] = []
+var _rope_rects: Array[Rect2] = []
 
 
 func _ready() -> void:
@@ -74,10 +87,15 @@ func tick() -> void:
 	_rects.clear()
 	_eyed.clear()
 	_eye_rects.clear()
+	_roped.clear()
+	_rope_rects.clear()
 	if not screen_shown and is_instance_valid(session):
 		for peer_id: int in session.peer_ids():
 			var player := session.body(peer_id)
-			if _hidden(player):
+			if _captive(player):
+				_roped.append(player)
+				_rope_rects.append(_place(player))
+			elif _hidden(player):
 				_marked.append(player)
 				_rects.append(_place(player))
 			elif _spotted(player):
@@ -88,6 +106,17 @@ func tick() -> void:
 
 func has_mark(player: PlayerBody) -> bool:
 	return _marked.has(player)
+
+
+## True when the rope mark shows over `player` (a captive).
+func has_rope(player: PlayerBody) -> bool:
+	return _roped.has(player)
+
+
+## The rope mark's rect over `player` in HUD pixels, or an empty rect without one.
+func rope_rect(player: PlayerBody) -> Rect2:
+	var index: int = _roped.find(player)
+	return _rope_rects[index] if index >= 0 else Rect2()
 
 
 ## True when an open eye shows over `player`: a spot fraction above 0 and not hidden.
@@ -115,11 +144,13 @@ static func iris_pixels(fraction: float) -> int:
 ## True when anything is marked over `player`: the closed eye or the open one (what a speech bubble or
 ## the interact prompt stacks over).
 func has_marker(player: PlayerBody) -> bool:
-	return has_mark(player) or has_open_eye(player)
+	return has_mark(player) or has_open_eye(player) or has_rope(player)
 
 
 ## The rect of whichever mark shows over `player` (an empty rect without one).
 func marker_rect(player: PlayerBody) -> Rect2:
+	if has_rope(player):
+		return rope_rect(player)
 	return mark_rect(player) if has_mark(player) else eye_rect(player)
 
 
@@ -144,6 +175,13 @@ func _spotted(player: PlayerBody) -> bool:
 	if not is_instance_valid(player) or not player.is_inside_tree() or player.left_island:
 		return false
 	return player.spot_shown > 0.0 and player.stealth_state != MovementStep.Stealth.HIDDEN
+
+
+# A captive still on the island (led, in the dinghy or aboard the boat).
+func _captive(player: PlayerBody) -> bool:
+	if not is_instance_valid(player) or not player.is_inside_tree() or player.left_island:
+		return false
+	return player.captive
 
 
 func _hidden(player: PlayerBody) -> bool:
@@ -180,6 +218,11 @@ func _draw() -> void:
 			draw_rect(Rect2(inside + Vector2(pixel), Vector2.ONE), EYE_COLOR)
 	for i: int in _eye_rects.size():
 		_draw_open_eye(_eye_rects[i], clampf((_eyed[i] as PlayerBody).spot_shown, 0.0, 1.0))
+	for rect: Rect2 in _rope_rects:
+		draw_rect(rect, OUTLINE_COLOR)
+		var inside: Vector2 = rect.position + Vector2.ONE
+		for pixel: Vector2i in ROPE_PIXELS:
+			draw_rect(Rect2(inside + Vector2(pixel), Vector2.ONE), ROPE_COLOR)
 
 
 # The outline, the almond in cream and the iris's dark pixels from the bottom row up.
