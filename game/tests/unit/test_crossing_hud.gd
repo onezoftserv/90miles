@@ -5,6 +5,7 @@ extends GutTest
 ## clear of the sign note's place, and only the crossing's riders see it.
 
 const K := CrossingBeat.Kind
+const SETTINGS_NAME: String = "test_crossing_hud_settings.cfg"
 
 
 func _hud(crossing: Crossing) -> CrossingHud:
@@ -137,7 +138,7 @@ func test_solo_run_hud_counts_the_crossing_strip() -> void:
 	WeatherManager.stop()
 	WeatherManager.sky.start_at(0.0)
 	var shell := (preload("res://scenes/shell/game_shell.tscn") as PackedScene).instantiate() as GameShell
-	shell.settings_path = "user://test_crossing_hud_settings.cfg"
+	shell.settings_path = UserTmp.path(SETTINGS_NAME)
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	var body := shell.session.body(1)
@@ -161,8 +162,8 @@ func test_solo_run_hud_counts_the_crossing_strip() -> void:
 		assert_eq(strip_rect, CrossingHud.STRIP_RECT, "the strip keeps its rect in the kit's window")
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists("user://test_crossing_hud_settings.cfg"):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path("user://test_crossing_hud_settings.cfg"))
+	if FileAccess.file_exists(UserTmp.path(SETTINGS_NAME)):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UserTmp.path(SETTINGS_NAME)))
 
 
 func test_the_integrity_text_is_never_cut() -> void:

@@ -79,7 +79,7 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
 
 ## 4. The director (crossing "Threat plan", "Crossing pacing")
 
-- [x] 4.1 Write `test_crossing_pacing.gd` first. Over 2,000 seeds each for 1 and 4 riders:
+- [x] 4.1 Write `test_crossing_pacing.gd` first. Over 600 seeds each for 1 and 4 riders (2,000 at first; cut to keep CI's GUT step short):
   - the first beat falls between 6 and 9 s;
   - the reef line is at L − 4;
   - gaps are between 3 and 9·0.9^(n−1) s, except across a squall's blow;
