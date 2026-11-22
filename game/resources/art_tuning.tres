@@ -23,9 +23,9 @@ land_grounds = Dictionary[StringName, Color]({
 &"sand": Color(0.8934972, 0.7052941, 0.5327405, 1)
 })
 water_grounds = Dictionary[StringName, Color]({
-&"brackish": Color(0.2842615, 0.5992659, 0.5051482, 1),
+&"brackish": Color(0.2092157, 0.4894510, 0.4131765, 1),
 &"deep": Color(0.2011814, 0.3947628, 0.5304272, 1),
-&"shallows": Color(0.4292789, 0.8268132, 0.9081233, 1)
+&"shallows": Color(0.2585490, 0.6127059, 0.7391373, 1)
 })
 master_palette = ExtResource("1_vjeit")
 player_ramps = ExtResource("2_gbhx4")
