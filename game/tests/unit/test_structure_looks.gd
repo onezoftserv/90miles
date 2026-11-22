@@ -148,6 +148,34 @@ func test_a_solo_fire_look_flickers_while_lit_and_shows_embers_once_out() -> voi
 	assert_eq(_drawn(fire).frame(), StructureArt.FIRE_OUT)
 
 
+# The image of the frame `look` shows now.
+func _frame_image(look: StructureLook) -> Image:
+	var sprite := look.sprite as AnimatedSprite2D
+	return sprite.sprite_frames.get_frame_texture(sprite.animation, sprite.frame).get_image()
+
+
+## art-prop-polish D3 (PR8), with exactly 1 player, offline: the rain catcher wears a tarp funnel in the
+## tarp's blues tied over its barrel, its mouth dark while empty and showing water at one cup.
+func test_the_rain_catcher_wears_a_tarp_funnel_whose_mouth_shows_the_water() -> void:
+	var catcher := CATCHER_SCENE.instantiate() as RainCatcher
+	arena.add_child(catcher)
+	var empty: Image = _frame_image(_drawn(catcher))
+	catcher.cups = 1
+	var water: Image = _frame_image(_drawn(catcher))
+	for image: Image in [empty, water]:
+		var tarp: Dictionary[String, int] = {"5b6ee1": 0, "3f3f74": 0}
+		for y: int in range(2, 14):
+			for x: int in image.get_width():
+				var colour: Color = image.get_pixel(x, y)
+				var hex: String = colour.to_html(false)
+				if colour.a > 0.5 and tarp.has(hex):
+					tarp[hex] += 1
+		assert_gt(tarp["5b6ee1"], 8, "the tarp's blue over the barrel's rim")
+		assert_gt(tarp["3f3f74"], 4, "and its shade, where it dips into the mouth")
+	assert_eq(empty.get_pixel(8, 7).to_html(false), "222034", "an empty funnel's mouth is dark")
+	assert_eq(water.get_pixel(8, 7).to_html(false), "5fcde4", "at one cup, water shows in its mouth")
+
+
 func test_a_rain_catcher_look_shows_water_while_it_holds_a_cup() -> void:
 	var catcher := CATCHER_SCENE.instantiate() as RainCatcher
 	arena.add_child(catcher)

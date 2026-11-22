@@ -17,7 +17,7 @@
 
 ## 0. Gate
 
-- [ ] 0.1 Wait for the coordinating session's go. Branch from main. Re-read `structure_sheets.json`, `item_icons.json`, `structure_art.tres`, `shelter_art.tres`, `decor_view.gd`, `island_sign.gd`, `palm.gd` and `TerrainView._build_decals` as they are then, since art-terrain-polish may have changed the decals.
+- [x] 0.1 Wait for the coordinating session's go. Branch from main. Re-read `structure_sheets.json`, `item_icons.json`, `structure_art.tres`, `shelter_art.tres`, `decor_view.gd`, `island_sign.gd`, `palm.gd` and `TerrainView._build_decals` as they are then, since art-terrain-polish may have changed the decals.
 - [ ] 0.2 Group 4 waits for the owner's answer to QP1. Group 7 waits for coast-cay-reshape to merge.
 
 ## 1. The outline rule (D1; PR8, Q15 (a))
@@ -37,8 +37,8 @@
 
 ## 3. The rain catcher's tarp (D3; PR8)
 
-- [ ] 3.1 In `test_rain_catcher.gd` or `test_structure_looks.gd`, write the test and see it fail: every catcher frame holds the tarp's colours over the barrel. Add the 1-player test: a solo player's catcher shows the funnel empty and with water in its mouth at one cup.
-- [ ] 3.2 Draw the funnel as a hand layer in `tools/art/fixes/structures/` and add it to the catcher's recipe. Rebuild. Verify the frame size is unchanged and the existing catcher tests pass.
+- [x] 3.1 In `test_rain_catcher.gd` or `test_structure_looks.gd`, write the test and see it fail: every catcher frame holds the tarp's colours over the barrel. Add the 1-player test: a solo player's catcher shows the funnel empty and with water in its mouth at one cup.
+- [x] 3.2 Draw the funnel as a hand layer in `tools/art/fixes/structures/` and add it to the catcher's recipe. Rebuild. Verify the frame size is unchanged and the existing catcher tests pass.
 
 ## 4. Palm looks (D4; PR7) — after QP1
 
