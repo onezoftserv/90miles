@@ -10,7 +10,7 @@ const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.ts
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SANDBAR: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
 const COAST_CAY: IslandLayoutData = preload("res://resources/islands/coast_cay.tres")
-const SETTINGS_PATH: String = "user://test_terrain_view_settings.cfg"
+var settings_path: String = UserTmp.path("test_terrain_view_settings.cfg")
 const VIEW_NAME: NodePath = ^"Terrain"
 const TILE: float = 16.0
 ## design.md D15: every layer the view builds and its z_index.
@@ -47,8 +47,8 @@ func after_each() -> void:
 		net = null
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _island(layout: IslandLayoutData) -> SandbarIsland:
@@ -511,7 +511,7 @@ func test_the_layer_build_of_both_islands_is_timed_and_bounded() -> void:
 func _shell() -> GameShell:
 	NetManager.start_solo()
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	shell.session.body(CoopSession.HOST_ID).player_input.enabled = false

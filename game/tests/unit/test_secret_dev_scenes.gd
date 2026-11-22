@@ -7,7 +7,7 @@ extends GutTest
 const HUNT_SCENE: PackedScene = preload("res://scenes/dev/secret_hunt_playground.tscn")
 const CAY_SCENE: PackedScene = preload("res://scenes/dev/secret_cay_playground.tscn")
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_secret_dev_scenes_settings.cfg"
+var settings_path: String = UserTmp.path("test_secret_dev_scenes_settings.cfg")
 
 
 func before_each() -> void:
@@ -17,8 +17,8 @@ func before_each() -> void:
 func after_each() -> void:
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _secret_items_lying(session: CoopSession) -> Array[StringName]:
@@ -80,7 +80,7 @@ func test_with_pieces_gives_the_first_player_both() -> void:
 
 func test_real_runs_are_unchanged() -> void:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	assert_not_null(shell.island, "a solo run started")

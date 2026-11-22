@@ -5,7 +5,7 @@ extends GutTest
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SUMMARY_SCENE: PackedScene = preload("res://scenes/shell/summary_screen.tscn")
-const SETTINGS_PATH: String = "user://test_run_summary_settings.cfg"
+var settings_path: String = UserTmp.path("test_run_summary_settings.cfg")
 
 var now_s: float = 0.0
 var _lines: DeathLines
@@ -22,14 +22,14 @@ func before_each() -> void:
 func after_each() -> void:
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 # A solo run with run seed 0 and a clock the test sets.
 func _shell() -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	shell.clock = func() -> float: return now_s
 	shell.seed_source = func() -> int: return 0
 	add_child_autofree(shell)
