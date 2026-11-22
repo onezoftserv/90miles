@@ -83,6 +83,7 @@ Ideas and structure only, never code, data or text. The three roguelikes were re
 
 **Brogue CE**
 - *Borrowed:* `createBlobOnGrid` (src/brogue/Grid.c, line 417) grows a random fill and smooths it with rounds of `cellularAutomataRound` (Grid.c, line 362), a birth and survival rule on each cell's eight neighbours. D7's helper rounds the cay's land mask the same way, with the fixed cells pinned, before the hand jogs.
+  - *As built (2026-11-22):* not used after all. Every edit was placed by hand, so no automaton pass ran; the idea stays noted for a generated island.
 - *Rejected:* letting the blob decide the island. The cay is handmade; the automaton only suggests a smoother outline.
 
 **Shattered Pixel Dungeon**
@@ -139,26 +140,25 @@ The helper's settings, the final measures, the land count and the re-pinned numb
   - North coast: out at columns 27–31 (row 14), 32–37 (row 13) and 38–47 (row 14); in at columns 49–52 (row 16).
   - West coast: out at rows 21–25 (column 8). At rows 31–35 the whole west arm steps one cell east: the west coast moves in, the bay shore moves out, and the arm stays 12 cells wide, so the 6-tile rule holds. An outward-only bulge broke the rule (6.71) and was dropped.
   - Clear of the landing and of the bench's sea margin.
-- **Land paid back** by the west arm's tip (rows 49–51), a smoother north-east corner into the rock's top, and the shoulders: 1,020 land cells (18.1%).
+- **Land paid back** by the west arm's tip (rows 49–50), a smoother north-east corner into the rock's top, and the shoulders: 1,018 land cells (18.1%).
 - **Driftwood (D6).** 8 pieces in groups of 1–2: (24,25)+(25,26), (33,24)+(35,24), (45,25), (51,25), and the west arm's (10,30) and (10,38). At most 3 in a row.
-- **Scrub (D6).** 38 cells in 8 clumps of 4–5, each with a 2×2 core: two on the west arm's dune, four in the north band, one at the band's north-east end and one on the beach south of the landing.
-  - **Departure from D6:** 8 clumps, not 6–8 dune-only. Guardacostas-capture's rule "cover more than 2 tiles away is at most 13 steps from any cell" (`test_squad_search_coverage.gd`, landed after this design) failed at 17 steps, from the arm's longer tip and the rock's top. The beach clump and the north-east clump bring it back to 13, today's figure; the north-coast clump was dropped to stay at 8.
+- **Scrub (D6).** 33 cells in 7 clumps of 4–5, each with a 2×2 core, all on dune: two on the west arm's dune (the southern one 2–3 tiles from the bench, 6 from the landing), four in the north band and one at the band's north-east end. Guardacostas-capture's rule "cover more than 2 tiles away is at most 13 steps from any cell" (`test_squad_search_coverage.gd`, landed after this design) holds at 13, today's figure. A first draft broke it (17 steps from the arm's longer tip and the rock's top); moving the arm's clump south, adding the north-east one and stopping the tip at row 50 fixed it without any scrub on the beach.
 - **Flotsam.** The two pieces on the stepped-out stretch moved one cell onto its new edge: (21,32) and (21,34). Each stands on a straight edge with two land corners.
 
 **Measures (2.2–2.4).**
 - Every coast run is at most 10 (north 10, south 10, east 10, west 8), and every rock seam run at most 6. The rock's southmost rows are 5, 4 and 3 against a widest 11.
 - No pick-up, palm or sign stands on an outer corner. The farthest land is 6.0 tiles from water. The bench's sea margin is 3.0.
 - Walks from the first landing, unchanged: bench 1.8 s, raft site 2.6 s, flotsam 3.1–4.3 s, lagoon 6.5 s, aloe 8.1–8.7 s, rope cache 11.6–11.9 s, post 13.8–14.3 s.
-- **Patrol (D8, not re-pinned):** 32.0% spotted (34% ± 3), the raft site still lit, the bench and its neighbours never lit. Squad search coverage: 13 steps to cover at most, both islands.
+- **Patrol (D8, not re-pinned):** 32.3% spotted (34% ± 3), the raft site still lit, the bench and its neighbours never lit. Squad search coverage: 13 steps to cover at most, both islands.
 
 **Re-pins (3.1), each with its reason in the test:**
-- `test_coast_cay_bench.gd` `LAND_CELLS`: 1,021 → 1,020.
-- `test_terrain_art.gd`: coast cay Sand, Dune, Brush and Plain 1,021/393/29/256 → 1,020/368/38/229. Sandbar Sand 994 → 998.
-- `test_shoreline.gd`: cay 265 → 291, sandbar 268 → 264.
+- `test_coast_cay_bench.gd` `LAND_CELLS`: 1,021 → 1,018.
+- `test_terrain_art.gd`: coast cay Sand, Dune, Brush and Plain 1,021/393/29/256 → 1,018/363/33/229. Sandbar Sand 994 → 998.
+- `test_shoreline.gd`: cay 265 → 289, sandbar 268 → 264.
 - `test_patrol_loop.gd`: cay lap 195 → 196.8.
 - `test_patrol_triggers.gd`:
   - cay farthest land 6.3 → 7.07 (the west shoulder moves the bay's water away from (15, 25), south of the lagoon), and beyond 2, 3 and 6 tiles 632/436/2 → 636/439/8;
-  - sandbar farthest land 5.7 → 5.83, and beyond 2 and 3 tiles 617/413 → 621/417.
+  - sandbar farthest land 5.7 → 5.83, and beyond 2 and 3 tiles 617/413 → 621/417 (the filled tips are land; the cause of each moved number was not traced cell by cell).
 - **One test made robust, not re-pinned:** `test_patrol_solo.gd`'s "spotted on open sand … the boat resumes its lap". With the sandbar's tips filled, the seeded night spawn puts a land crab beside the test's hiding spot. It pinches the crouched player to death, and the squad leaves at 51 s with nobody left to search. The test now clears the crabs first, because it is about the patrol and its squad. Main's sandbar passes it either way.
 - **3.2:** every other listed suite passes unedited.
 

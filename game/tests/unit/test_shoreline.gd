@@ -82,7 +82,7 @@ func test_the_shore_cell_counts_of_the_two_islands() -> void:
 	assert_eq(ShoreRule.shore_cells(sandbar.terrain, sandbar.tide_pools).size(), 264, "T12's 292 counts the 24 cells round the pools, which T3 takes away; 4 fewer since the tips were filled")
 	var cay: IslandLayout = IslandLayout.build(COAST_CAY)
 	# coast-cay-reshape: the jogs, the bight and the rock's taper lengthen the coast (was 265).
-	assert_eq(ShoreRule.shore_cells(cay.terrain, cay.tide_pools).size(), 291)
+	assert_eq(ShoreRule.shore_cells(cay.terrain, cay.tide_pools).size(), 289)
 
 
 func test_phase_offsets_are_0_to_7_and_equal_across_builds() -> void:
@@ -218,6 +218,6 @@ func test_a_solo_coast_cay_lagoon_has_a_still_edge() -> void:
 			open += 1
 			assert_eq(source, ShoreRule.FOAM_SOURCE, "open shore %s keeps its surf" % cell)
 	assert_gt(rim, 0, "the lagoon has a rim")
-	assert_eq(rim + open, 291, "every shore cell is one or the other (291 since coast-cay-reshape)")
+	assert_eq(rim + open, 289, "every shore cell is one or the other (289 since coast-cay-reshape)")
 	var sandbar: IslandLayout = IslandLayout.build(SANDBAR)
 	assert_true(ShoreRule.still_water(sandbar.terrain, sandbar.tide_pools).is_empty(), "the sandbar has no still water")

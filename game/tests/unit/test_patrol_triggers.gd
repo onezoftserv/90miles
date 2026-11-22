@@ -58,8 +58,7 @@ func _fire(x: int, shaded: bool = false, y: int = 20) -> Node2D:
 
 func test_the_sandbar_matches_the_measured_distances() -> void:
 	var sandbar := _real(SANDBAR)
-	# coast-cay-reshape QC1: the filled bay tips keep the horns' roots farther from the sea (was 5.7,
-	# 617 and 413).
+	# coast-cay-reshape QC1: the four filled bay tips move these measured distances (was 5.7, 617 and 413).
 	assert_almost_eq(sandbar.farthest_land_tiles(), 5.83, 0.05)
 	assert_eq(sandbar.land_beyond(2.0), 621)
 	assert_eq(sandbar.land_beyond(3.0), 417)

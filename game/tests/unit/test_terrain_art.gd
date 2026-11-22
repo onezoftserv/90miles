@@ -948,9 +948,9 @@ func test_layer_cell_counts_of_the_two_islands() -> void:
 	# plus the 4 bay tips coast-cay-reshape filled (QC1; was 994).
 	var expected: Dictionary[StringName, Array] = {
 		&"sandbar": [998, 422, 84, 0],
-		# coast-cay-reshape: the bight moves dune to the bay, scrub grows in 8 clumps and the rock tapers
+		# coast-cay-reshape: the bight moves dune to the bay, scrub grows in 7 clumps and the rock tapers
 		# (was 1,021, 393, 29 and 256).
-		&"coast_cay": [1020, 368, 38, 229],
+		&"coast_cay": [1018, 363, 33, 229],
 	}
 	var layouts: Dictionary[StringName, IslandLayoutData] = {&"sandbar": SANDBAR, &"coast_cay": COAST_CAY}
 	for id: StringName in layouts:

@@ -11,9 +11,9 @@ const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 var settings_path: String = UserTmp.path("test_coast_cay_bench_settings.cfg")
 const COAST: StringName = &"coast_cay"
 const BENCH_NAME: StringName = &"HutWorkbench"
-## The coast cay's land cells before the bench (island-generation "Handmade coast cay"). 1,020 since
+## The coast cay's land cells before the bench (island-generation "Handmade coast cay"). 1,018 since
 ## coast-cay-reshape: the bight, the rock's taper and the jogs, paid back by the arms' ends (was 1,021).
-const LAND_CELLS: int = 1020
+const LAND_CELLS: int = 1018
 ## guardacostas-stealth smoke rule: a lit fire within this many tiles of the sea is seen at night.
 const NIGHT_SMOKE_TILES: float = 2.0
 ## A fire placed at the bench lands on the player's cell or the nearest free one within 1 tile, and
