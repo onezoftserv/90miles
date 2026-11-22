@@ -41,7 +41,7 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
 
 ## 2. C33b: firelight
 
-- [ ] 2.1 In `test_structure_looks.gd`, write these first and see them fail:
+- [x] 2.1 In `test_structure_looks.gd`, write these first and see them fail:
   - a solo lit fire at night has a `FireLight` `PointLight2D` under its `Look` that is visible, in ADD mode, with `texture_scale` 1, its texture `2r + 1` px wide for r = company radius × 16 (80), and energy in (0, 1);
   - by day the light is hidden; when the fire is out it is hidden;
   - a palm, a workbench and a rain catcher have no light;
@@ -49,12 +49,12 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
   - "Reducir destellos" on: the energy is equal on every flame frame; off: it follows `ArtTuning.fire_flicker`;
   - the flicker table's length equals the lit flame animation's frame count.
   Also, `FireGlow.texture` has exactly `steps` distinct non-zero values, and nothing beyond r.
-- [ ] 2.2 Add `scripts/art/fire_glow.gd` (pure static, cached by radius), modelled on `PatrolCone`. Add the `ArtTuning` fields and their data in `art_tuning.tres`:
+- [x] 2.2 Add `scripts/art/fire_glow.gd` (pure static, cached by radius), modelled on `PatrolCone`. Add the `ArtTuning` fields and their data in `art_tuning.tres`:
   - `fire_light_energy`, `fire_light_color` and `fire_light_steps`;
   - `fire_ring_values` and `fire_flicker`.
-- [ ] 2.3 Make the light in `StructureLook` for `KIND_FIRE` only, as design D2. Verify the 2.1 tests, `test_art_sim_invariance.gd`, `test_patrol_cues.gd` and the fire's existing look test.
-- [ ] 2.4 Optional: the unshaded flame overlay. First check in a 4.7.2 Compatibility windowed run that it escapes the `CanvasModulate`. Keep it only if it does, and record the finding in Build notes.
-- [ ] 2.5 Windowed 1-player capture: the solo sandbar at night by a lit fire, at x3. Compare with the review's `before/sandbar_night_fire_x3.png` and artboard A11:
+- [x] 2.3 Make the light in `StructureLook` for `KIND_FIRE` only, as design D2. Verify the 2.1 tests, `test_art_sim_invariance.gd`, `test_patrol_cues.gd` and the fire's existing look test.
+- [x] 2.4 Optional: the unshaded flame overlay. First check in a 4.7.2 Compatibility windowed run that it escapes the `CanvasModulate`. Keep it only if it does, and record the finding in Build notes.
+- [x] 2.5 Windowed 1-player capture: the solo sandbar at night by a lit fire, at x3. Compare with the review's `before/sandbar_night_fire_x3.png` and artboard A11:
   - four hard rings out to 80 px;
   - the flame not olive;
   - sand and player lit inside the pool.

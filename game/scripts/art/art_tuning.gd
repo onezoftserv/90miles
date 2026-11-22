@@ -28,6 +28,14 @@ const STANDARD_PATH: String = "res://resources/art_tuning.tres"
 ## world_sea.gdshader draws (the lighter of two water samples, in that step's ramp).
 @export var land_grounds: Dictionary[StringName, Color]
 @export var water_grounds: Dictionary[StringName, Color]
+## art-mood-pass D2: the fire's light. Its energy at full darkness (below 1), its colour (a palette
+## warm tone), its number of hard rings and their values from the centre out, and one flicker factor
+## per frame of the lit flame, so the light moves with the flame and nothing is random.
+@export var fire_light_energy: float
+@export var fire_light_color: Color
+@export var fire_light_steps: int
+@export var fire_ring_values: PackedFloat32Array
+@export var fire_flicker: PackedFloat32Array
 ## One pixel per colour: DawnBringer's 32 and the added colours (at most 64 in all).
 @export var master_palette: Texture2D
 ## Row 0 the clothing key ramp, rows 1-4 the look slots azul, rojo, amarillo and verde; columns

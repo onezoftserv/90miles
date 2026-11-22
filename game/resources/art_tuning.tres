@@ -27,6 +27,11 @@ water_grounds = Dictionary[StringName, Color]({
 &"deep": Color(0.2011814, 0.3947628, 0.5304272, 1),
 &"shallows": Color(0.4292789, 0.8268132, 0.9081233, 1)
 })
+fire_light_energy = 0.6
+fire_light_color = Color(0.8745098, 0.44313726, 0.14901961, 1)
+fire_light_steps = 4
+fire_ring_values = PackedFloat32Array(1, 0.7, 0.45, 0.22)
+fire_flicker = PackedFloat32Array(1, 0.88, 0.95, 0.82)
 master_palette = ExtResource("1_vjeit")
 player_ramps = ExtResource("2_gbhx4")
 skin_ramps = ExtResource("4_rth0l")
