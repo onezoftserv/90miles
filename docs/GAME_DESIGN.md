@@ -137,6 +137,12 @@ It counts as changing nothing only when every meter it raises is within 1 point 
 
 **Durability.** Tools wear out. The raft loses 25% integrity per crossing and more in squalls; repair with driftwood and rope.
 
+**Mending the raft** (`island-stop`). Any built raft still on the island can be mended at its work point, on its land side. A mend costs 1 driftwood and 1 rope and 10 s of work (5 s for a Mecánico), gives +20 integrity, never goes above the raft's maximum, and can be repeated.
+- There is one job on a raft at a time. Anyone deposits into it and anyone works it.
+- A launch ends an unfinished job and gives the deposits back.
+- An intact raft can always sail on at once: there is no gate. Its prompt shows its integrity and warns below half.
+- Stopping pays in mends now. The fittings (clavazón, defensas, toldo) follow in the change's second PR.
+
 ## 7. Escape routes
 
 Each island rolls two or three. Routes are the "stairs".

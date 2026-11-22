@@ -218,7 +218,7 @@ Choosing a mend or a fitting opens one job on the raft. It reuses the build-site
 
 ### D5. Two points on the raft
 - The launch stays where it is: a 1 s hold, the prompt "Zarpar en la balsa", and every existing launch test unchanged.
-- A second interactable, the work point, sits on the raft's land-side neighbour cell. The host picks it from the layout as the neighbour with the most land around it, the same on every peer.
+- A second interactable, the work point, sits on the raft's land-side neighbour cell: the neighbour that is land and has the most land in its 3×3 (south, east, west, north on a tie). Every peer computes it from the same terrain, so it lands on the same cell everywhere with nothing sent (built in PR 1, `Raft.work_offset`).
   - With no job open, a press opens the raft list.
   - With a job open, it works like a build site.
 - The picker takes the nearest point, as with any two interactables.
@@ -244,14 +244,15 @@ In the crossing's hit resolution, a rock or debris that overlaps the vessel (cro
 
 ### D9. HUD and text
 - **Prompt ids**, appended to `hud_text.tres`:
-  - `raft_work`: "Arreglar", target "Balsa";
-  - `raft_job`: "Trabajar en", target the recipe's name;
-  - the state line;
+  - `raft_work`: "Arreglar", label "la balsa" ("[E] Arreglar la balsa");
+  - `raft_job`: "Trabajar en", target the recipe's name ("[E] Trabajar en Remiendo");
+  - the state line "Balsa %d/%d";
+  - the fittings' names on a line of their own, joined by " · ", because the prompt's line holds 30 glyphs and "Balsa 90/120 · Clavazón · Toldo" would not fit;
   - the warning line;
   - two refusal reasons, "La balsa está entera." and "La balsa ya lo tiene."
-- **The raft list** is the crafting-list panel with a raft source, at the same place (4,162 to 244,302), with the state line as its head.
+- **The raft list** is the crafting-list panel with a raft source, at the same place (4,162 to 244,302), with the state line, and the fittings' line when there are fittings, as its head.
 - **Drafts for the owner's voice pass:**
-  - Warning: "Con esa balsa no llegas ni a la esquina."
+  - Warning: "Así no llegas ni a la esquina." (30 glyphs, the prompt line's width)
   - Remiendo: "Un palo y una soga donde más hace falta."
   - Clavazón: "Cuatro clavos y la balsa deja de crujir."
   - Defensas: "Una cámara amarrada al borde, pa' que la piedra rebote."
@@ -259,9 +260,16 @@ In the crossing's hit resolution, a rock or debris that overlaps the vessel (cro
 - The refusal reasons are menu text, so they stay in standard Spanish.
 
 ### D10. Build order
-1. **PR 1, the mend:** the recipe, the raft's work point, the raft list and prompts, the job, the beached-raft record carried to the coast cay (integrity and maximum), joiners. It does not depend on crossing-gameplay.
-2. **PR 2, the fittings:** the three recipes, the modifiers, the crossing effects (maximum, defensas, toldo), the record's fittings and the snapshot key. It goes after crossing-gameplay's three PRs.
+1. **PR 1, the mend** (built 2026-11-15): the recipe, the raft's work point, the raft list and prompts, the job, the raft's state pushed to clients and asked for by joiners, and a raft beached on the coast cay with its integrity. It does not depend on crossing-gameplay.
+   - The record of D6 moved to PR 2. In PR 1 the maximum is always the recipe's 100, so the float `travel_to` already carries is enough, and `island_travel.gd` stays untouched while capture-build edits it.
+2. **PR 2, the fittings:** the three recipes, the modifiers, the crossing effects (maximum, defensas, toldo), the record `{integrity, max, fittings}` of D6 and the snapshot key. It goes after crossing-gameplay's three PRs.
 3. **PR 3, the docs:** GAME_DESIGN §6 and §8, ITEMS.md, TASKS.md.
+
+### D11. The crafter's background-skill rule (a decision made in PR 1)
+The mend's "twice as fast for a Mecánico" needed a rule nothing had built: the raft recipe already carried `skill_speed_multiplier` 2.0 and escape-routes "Shared crafting" promised the Mecánico's 2×, but no code read either.
+- **The rule:** `Crafter.recipe_time` divides the recipe's time by its `skill_speed_multiplier` when the player's background (`BackgroundData.skills`) has the recipe's skill.
+- **Its reach:** this is outside the proposal's Impact list. It also applies to the raft build. It is dormant today: no player is given a background yet, and only the Maestro and the Médico ship.
+- **Stacking it decides:** a carried fast tool replaces the time outright and the skill does not divide it further. How the pliers' ×1.5 stacks with the Mecánico stays data-model question 32, for the equipment change.
 
 ## Reference games
 

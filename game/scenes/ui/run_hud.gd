@@ -155,6 +155,7 @@ func _ready() -> void:
 	craft_list.opened.connect(func() -> void: list_open = true)
 	craft_list.closed.connect(func() -> void: list_open = false)
 	prompt.bench_pressed.connect(craft_list.open)
+	prompt.raft_pressed.connect(craft_list.open_raft)
 	sign_note.input_open = input_open
 	sign_note.opened.connect(func() -> void: list_open = true)
 	sign_note.closed.connect(func() -> void: list_open = false)
