@@ -81,7 +81,7 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
 
 ## 4. C34: a squall you can see
 
-- [ ] 4.1 In a new `game/tests/unit/test_mood_fx.gd` and in `test_weather_content.gd`, write these first and see them fail:
+- [x] 4.1 In a new `game/tests/unit/test_mood_fx.gd` and in `test_weather_content.gd`, write these first and see them fail:
   - `SeaPace` eases from pace 1 to the squall's `sea_pace` and `foam_pace` over `pace_ease_s`, and in no 1/60 s step does a clock advance more than the larger pace times the step;
   - back in calm it eases to 1;
   - the `SeaPaceDriver` writes `sea_time` to the sea material and `foam_time` to the Shore layer's material on a solo sandbar run;
@@ -90,12 +90,12 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
   - splash placements for two equal (slot, view) inputs are equal, and use no random generator;
   - every weather that is not `is_clear` has `name_es` and `name_en` of 9 glyphs or fewer;
   - calm has `sea_pace` and `foam_pace` 1.
-- [ ] 4.2 Add `sea_pace` and `foam_pace` (Presentation group, default 1.0) to `WeatherData`. Add `pace_ease_s`, `rain_light_s` and `rain_splashes` to `ArtTuning` and its data. Set the squall's paces (1.8 and 1.6 to start) and its `vfx_scene`.
-- [ ] 4.3 Add `scripts/art/sea_pace.gd` and `scenes/art/sea_pace_driver.gd`. In `world_sea.gdshader`, replace `TIME` with `sea_time` in the two drift terms only; in `shore.gdshader`, use `foam_time` in place of `TIME`.
+- [x] 4.2 Add `sea_pace` and `foam_pace` (Presentation group, default 1.0) to `WeatherData`. Add `pace_ease_s`, `rain_light_s` and `rain_splashes` to `ArtTuning` and its data. Set the squall's paces (1.8 and 1.6 to start) and its `vfx_scene`.
+- [x] 4.3 Add `scripts/art/sea_pace.gd` and `scenes/art/sea_pace_driver.gd`. In `world_sea.gdshader`, replace `TIME` with `sea_time` in the two drift terms only; in `shore.gdshader`, use `foam_time` in place of `TIME`.
   - Add a driver under `TerrainView` and under `CrossingSea`.
   - Extend `SeaShaderChecks` to read the new uniforms.
   - Verify that at pace 1 the art-coast-pass sea tests, `test_shoreline.gd`, `test_terrain_view.gd`, `test_crossing_art.gd` and the 1500 ms build bound pass.
-- [ ] 4.4 Add `scenes/world/weather_vfx.gd` as a child of `day_night_tint.tscn`, and `scenes/art/weather/rain_overlay.tscn`: the tile scrolled over the camera's rect, the two stages and the hashed splashes. Verify the 4.1 tests, `test_day_night_tint.gd` and `test_art_sim_invariance.gd`.
+- [x] 4.4 Add `scenes/world/weather_vfx.gd` as a child of `day_night_tint.tscn`, and `scenes/art/weather/rain_overlay.tscn`: the tile scrolled over the camera's rect, the two stages and the hashed splashes. Verify the 4.1 tests, `test_day_night_tint.gd` and `test_art_sim_invariance.gd`.
 - [ ] 4.5 In `test_run_hud.gd`, write these first and see them fail:
   - on a solo run in a squall, `WeatherPanel` is visible and reads "Turbonada", or "Squall" with an English session;
   - in calm it is hidden;
