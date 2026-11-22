@@ -76,3 +76,21 @@ func test_a_solo_player_sees_each_icon_in_the_strip() -> void:
 		assert_true(slot.icon.visible, "%s's icon is visible" % item.id)
 		shown += 1
 	assert_gte(shown, 14, "every item went through the strip")
+
+
+## art-prop-polish D2: a part under 3 px thick turns to solid outline once rimmed, so in the five
+## redrawn icons the black outline is at most half of the icon's opaque pixels.
+func test_the_five_redrawn_icons_keep_their_fill() -> void:
+	for id: String in ["nails", "tarp", "crab_cooked", "hutia_cooked", "iguana_cooked"]:
+		var image := (load("res://assets/art/items/%s.png" % id) as Texture2D).get_image()
+		var opaque: int = 0
+		var black: int = 0
+		for y: int in image.get_height():
+			for x: int in image.get_width():
+				var colour: Color = image.get_pixel(x, y)
+				if colour.a > 0.5:
+					opaque += 1
+					if colour.to_html(false) == "000000":
+						black += 1
+		assert_lte(black * 2, opaque, "%s: %d outline pixels of %d" % [id, black, opaque])
+

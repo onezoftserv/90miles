@@ -16,6 +16,8 @@ BROWN = (0x9B, 0x67, 0x42)  # off-palette pack colours
 DARK = (0x0D, 0x0D, 0x0D)
 GREY = (0x9B, 0xAD, 0xB7)
 SAND = (0xD9, 0xA0, 0x66)
+# art-prop-polish D2: the five icons redrawn so they keep fill pixels once rimmed.
+REDRAWN = ("nails", "tarp", "crab_cooked", "hutia_cooked", "iguana_cooked")
 BLACK = (0, 0, 0)
 WHITE = (0xFF, 0xFF, 0xFF)
 PALETTE = [BLACK, GREY, SAND, WHITE]
@@ -158,6 +160,15 @@ class TrackedRecipeTests(unittest.TestCase):
                 self.assertTrue((items.DEFAULT_FIXES / entry["hand"]).is_file(), entry["hand"])
         game_items = pathlib.Path(items.palette.GAME) / "resources" / "items"
         self.assertEqual(sorted(ids), sorted(path.stem for path in game_items.glob("*.tres")))
+
+    def test_the_five_redrawn_icons_keep_their_fill(self):
+        # art-prop-polish D2: a part under 3 px thick turns to solid outline once rimmed, so in these
+        # five the black outline is at most half of the icon's opaque pixels.
+        for name in REDRAWN:
+            image = png.read_png(items.DEFAULT_OUT / f"{name}.png")
+            opaque = [image.get(x, y) for y in range(16) for x in range(16) if image.get(x, y)[3]]
+            black = sum(1 for pixel in opaque if pixel[:3] == BLACK)
+            self.assertLessEqual(black * 2, len(opaque), f"{name}: {black} outline pixels of {len(opaque)}")
 
     def test_the_hand_sources_are_whole_icons_in_the_palette(self):
         colours = items.palette.load_palette()

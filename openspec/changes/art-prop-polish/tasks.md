@@ -31,9 +31,9 @@
 
 ## 2. Five icons (D2; PR6)
 
-- [ ] 2.1 In `tools/art/test_items.py` and `test_item_icons.gd`, write the thickness test and see it fail on today's five: outline pixels at most half of each icon's opaque pixels. Add the 1-player test: a solo player picks up the nails on the coast cay and the redrawn icon shows on the ground and in the strip.
-- [ ] 2.2 Draw `nails`, `tarp`, `crab_cooked`, `hutia_cooked` and `iguana_cooked` as hand sources in `tools/art/fixes/items/` and point `item_icons.json` at them. Rebuild. Verify `test_no_two_items_share_a_silhouette`, `test_every_item_has_a_16x16_icon_inside_the_box_with_its_outline` and that `dry_grass` is byte-identical.
-- [ ] 2.3 Windowed 1-player capture of the strip holding the five, compared with `before/items_sheet.png` and `before/p17_icons_x3.png`.
+- [x] 2.1 In `tools/art/test_items.py` and `test_item_icons.gd`, write the thickness test and see it fail on today's five: outline pixels at most half of each icon's opaque pixels. Add the 1-player test: a solo player picks up the nails on the coast cay and the redrawn icon shows on the ground and in the strip.
+- [x] 2.2 Draw `nails`, `tarp`, `crab_cooked`, `hutia_cooked` and `iguana_cooked` as hand sources in `tools/art/fixes/items/` and point `item_icons.json` at them. Rebuild. Verify `test_no_two_items_share_a_silhouette`, `test_every_item_has_a_16x16_icon_inside_the_box_with_its_outline` and that `dry_grass` is byte-identical.
+- [x] 2.3 Windowed 1-player capture of the strip holding the five, compared with `before/items_sheet.png` and `before/p17_icons_x3.png`.
 
 ## 3. The rain catcher's tarp (D3; PR8)
 
