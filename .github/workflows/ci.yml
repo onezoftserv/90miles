@@ -109,5 +109,7 @@ jobs:
             echo "::error::errors while running the game"; exit 1
           fi
 
+      # The suite took 245 s here at #94 (2026-11-16) and keeps growing, so 300 s cut real runs short
+      # (exit 124). 600 s leaves room; the job's own 20-minute cap still bounds a hung run.
       - name: Unit tests (GUT)
-        run: timeout 300 "$GODOT" --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit
+        run: timeout 600 "$GODOT" --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit

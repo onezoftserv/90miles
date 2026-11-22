@@ -6,14 +6,15 @@ extends GutTest
 
 const K := CrossingBeat.Kind
 const EPS: float = 0.25
+const SETTINGS_NAME: String = "test_crossing_paddle_settings.cfg"
 
 
 func after_each() -> void:
 	FixtureRoutes.take_out()
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists("user://test_crossing_paddle_settings.cfg"):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path("user://test_crossing_paddle_settings.cfg"))
+	if FileAccess.file_exists(UserTmp.path(SETTINGS_NAME)):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UserTmp.path(SETTINGS_NAME)))
 
 
 # `body` stands at the `side` edge of the shared deck, on its paddle.
@@ -173,7 +174,7 @@ func _shell_launch() -> Array:
 	WeatherManager.stop()
 	WeatherManager.sky.start_at(0.0)
 	var shell := (preload("res://scenes/shell/game_shell.tscn") as PackedScene).instantiate() as GameShell
-	shell.settings_path = "user://test_crossing_paddle_settings.cfg"
+	shell.settings_path = UserTmp.path(SETTINGS_NAME)
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	var body := shell.session.body(1)

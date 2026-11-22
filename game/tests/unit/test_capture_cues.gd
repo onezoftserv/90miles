@@ -8,7 +8,8 @@ extends GutTest
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
-const SETTINGS_PATH: String = "user://test_capture_cues_settings.cfg"
+## Per-process (UserTmp, test-user-folders), never a fixed path in the shared user folder.
+var settings_path: String = UserTmp.path("test_capture_cues_settings.cfg")
 const TIMEOUT_S: float = 6.0
 const TILE: float = 16.0
 
@@ -33,8 +34,8 @@ func after_each() -> void:
 		net = null
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _setup(session: CoopSession) -> void:
@@ -130,7 +131,7 @@ func test_the_soltar_prompt_shows_only_while_no_soldier_is_within_3_tiles() -> v
 func _solo() -> GameShell:
 	NetManager.start_solo()
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	shell.session.body(1).player_input.enabled = false

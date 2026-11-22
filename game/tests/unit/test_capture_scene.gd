@@ -9,7 +9,8 @@ extends GutTest
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const FOTO: ItemData = preload("res://tests/fixtures/content/items/foto_test.tres")
-const SETTINGS_PATH: String = "user://test_capture_scene_settings.cfg"
+## Per-process (UserTmp, test-user-folders), never a fixed path in the shared user folder.
+var settings_path: String = UserTmp.path("test_capture_scene_settings.cfg")
 const COAST: StringName = &"coast_cay"
 const SANDBAR: StringName = &"sandbar"
 const CONTRACTIONS: Array[String] = ["pa'", "'tá", "'toy", "na'", "to'", "saca'o", "pasa'o"]
@@ -39,13 +40,13 @@ func after_each() -> void:
 	FixtureIslands.take_out()
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _start() -> void:
 	shell = SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	session = shell.session
