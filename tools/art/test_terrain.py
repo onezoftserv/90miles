@@ -51,6 +51,31 @@ def opaque_columns(image):
     return [x for x in range(image.width) if any(image.alpha(x, y) for y in range(image.height))]
 
 
+def mirrored(image):
+    out = png.blank(image.width, image.height)
+    for y in range(image.height):
+        for x in range(image.width):
+            out.set(image.width - 1 - x, y, image.get(x, y))
+    return out
+
+
+def enclosed_clear(image):
+    """The clear pixels that no 4-connected run of clear pixels joins to the image's border: holes
+    the drawn pixels close in, where the ground shows through (design pass TR14)."""
+    seen = set()
+    todo = [(x, y) for y in range(image.height) for x in range(image.width)
+            if (x in (0, image.width - 1) or y in (0, image.height - 1)) and not image.alpha(x, y)]
+    while todo:
+        x, y = todo.pop()
+        if (x, y) in seen:
+            continue
+        seen.add((x, y))
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < image.width and 0 <= ny < image.height and not image.alpha(nx, ny) and (nx, ny) not in seen:
+                todo.append((nx, ny))
+    return [(x, y) for y in range(image.height) for x in range(image.width) if not image.alpha(x, y) and (x, y) not in seen]
+
+
 class PieceTests(unittest.TestCase):
     def test_cut_takes_one_16_px_tile_and_refuses_one_off_the_sheet(self):
         sheet = png.blank(32, 16)
@@ -198,6 +223,40 @@ class FoamTests(unittest.TestCase):
             for x, y in first_water:
                 self.assertEqual(piece.get(x, y), WHITE + (255,), name)
 
+    def test_a_straight_shore_never_turns_and_a_square_corner_turns_only_on_its_outer_diagonal(self):
+        self.assertEqual(terrain.turning(filled(SAND, rows=range(0, 12))), set())
+        self.assertEqual(terrain.turning(filled(SAND)), set(), "no shore at all")
+        corner = self.shapes()["outer corner"]  # land where x < 8 and y < 8
+        bends = terrain.turning(corner)
+        self.assertIn((8, 8), bends)
+        self.assertIn((10, 10), bends)
+        self.assertNotIn((7, 7), bends, "the sand's nearest water is straight beside it")
+        self.assertNotIn((12, 3), bends, "beside a straight run of the edge")
+
+    def test_with_corners_the_foam_is_lighter_where_the_shore_turns_but_keeps_its_first_water_step(self):
+        frame = filled(WHITE, rows=range(2, 10))  # white from three steps up the sand to four out
+        islet = self.shapes()["islet"]
+        field = terrain.shore_field(islet)
+        bends = terrain.turning(islet)
+        plain = terrain.foam_piece(field, frame, 6, WHITE, WHITE)
+        lighter = terrain.foam_piece(field, frame, 6, WHITE, WHITE, corners=(bends, 2, ROCK))
+        trimmed = faded = 0
+        for x, y, steps, _along in field:
+            if steps == 1:
+                self.assertEqual(lighter.get(x, y), WHITE + (255,), f"({x}, {y}): the first water step stays white")
+            elif (x, y) in bends and steps <= -2:
+                self.assertEqual(lighter.alpha(x, y), 0, f"({x}, {y}): the wash keeps only the last two sand steps")
+                trimmed += plain.alpha(x, y) > 0
+            elif (x, y) in bends and steps >= 2 and plain.alpha(x, y):
+                self.assertEqual(lighter.get(x, y)[:3], ROCK, f"({x}, {y}): the outer foam fades")
+                faded += 1
+            elif (x, y) not in bends:
+                self.assertEqual(lighter.get(x, y), plain.get(x, y), f"({x}, {y}): untouched where the shore runs straight")
+        self.assertGreater(trimmed, 0, "the fixture has wash to trim")
+        self.assertGreater(faded, 0, "and outer foam to fade")
+        straight = terrain.shore_field(filled(SAND, rows=range(0, 12)))
+        self.assertEqual(terrain.foam_piece(straight, frame, 6, WHITE, WHITE, corners=(set(), 2, ROCK)), terrain.foam_piece(straight, frame, 6, WHITE, WHITE))
+
     def test_the_fade_colours_the_foam_from_that_distance_on(self):
         frame = self.frame()
         for y in range(7, 10):
@@ -236,6 +295,16 @@ class ShoreCutTests(unittest.TestCase):
         self.assertEqual({cut.get(x, 10)[:3] for x in range(16)}, {BLACK})
         self.assertEqual({cut.get(x, 9)[:3] for x in range(16)}, {ROCK})
 
+    def test_the_rim_of_a_diagonal_is_one_pixel_per_row_not_a_stair(self):
+        diagonal = land_where(lambda x, y: x + y < 15)
+        line = {(x, 14 - x) for x in range(15)}
+        rimmed = terrain.rimmed(terrain.masked(filled(ROCK), diagonal), diagonal, BLACK)
+        cut = terrain.shore_cut(filled(ROCK), diagonal, terrain.shore_field(diagonal), 0, BLACK)
+        for name, tile in (("rimmed", rimmed), ("shore_cut", cut)):
+            rim = {(x, y) for y in range(16) for x in range(16) if tile.alpha(x, y) and tile.get(x, y)[:3] == BLACK}
+            self.assertEqual(rim, line, f"{name}: the rim is the pixels with a 4-neighbour in the sea")
+            self.assertEqual(tile.get(5, 8)[:3], ROCK, f"{name}: the pixel diagonal to the sea is not rim")
+
     def test_a_shore_cut_never_adds_a_pixel_the_tile_does_not_have(self):
         edge = self.edge()
         tile = filled(ROCK, rows=range(4, 16))
@@ -256,6 +325,70 @@ class ShoreCutTests(unittest.TestCase):
                 else:
                     self.assertEqual(opaque_rows(first), list(range(0, 12)), f"{s}, {d}")
                     self.assertEqual((first.colours(), second.colours()), ({ROCK}, {GRASS}))
+
+
+def block(colour, x0, y0, width, height):
+    """A blank tile with a block of one colour."""
+    return filled(colour, rows=range(y0, y0 + height), columns=range(x0, x0 + width))
+
+
+def drawn(image):
+    return {(x, y): image.get(x, y) for y in range(image.height) for x in range(image.width) if image.alpha(x, y)}
+
+
+class FitTests(unittest.TestCase):
+    """art-coast-pass D1: a shore bush is moved whole onto the sand, not cut by it."""
+
+    def edge(self):
+        return filled(SAND, rows=range(0, 12))  # sand on rows 0 to 11, the sea south of it
+
+    def test_the_search_takes_the_smallest_shift_that_keeps_the_piece_on_the_sand_at_the_inset(self):
+        edge = self.edge()
+        field = terrain.shore_field(edge)
+        piece = block(ROCK, 6, 10, 4, 3)  # rows 10 to 12: off the sand by one row
+        self.assertEqual(terrain.fit_shift(edge, field, piece, 0), (0, -1))
+        self.assertEqual(terrain.fit_shift(edge, field, piece, 1), (0, -2), "row 11 is the edge, so the inset keeps it bare")
+        self.assertEqual(terrain.fit_shift(edge, field, block(ROCK, 6, 4, 4, 3), 1), (0, 0), "a piece on the sand stays put")
+
+    def test_the_search_breaks_ties_by_the_smaller_upward_move_then_by_x(self):
+        notch = filled(SAND)
+        for y in range(0, 6):
+            for x in range(6, 10):
+                notch.set(x, y, terrain.CLEAR)  # a notch of sea in the top middle
+        field = terrain.shore_field(notch)
+        self.assertEqual(terrain.fit_shift(notch, field, block(ROCK, 7, 3, 2, 2), 0), (-3, 0), "three left, three right or three down: no move down first, then the lower dx")
+
+    def test_nothing_fits_a_piece_wider_than_the_sand(self):
+        edge = filled(SAND, columns=range(0, 6))
+        self.assertIsNone(terrain.fit_shift(edge, terrain.shore_field(edge), block(ROCK, 2, 2, 8, 3), 0))
+
+    def test_fitted_tries_each_piece_at_the_inset_then_the_fallback_then_the_next_piece(self):
+        edge = self.edge()
+        field = terrain.shore_field(edge)
+        big = block(ROCK, 0, 0, 16, 12)  # fits only at inset 0
+        small = block(DEEP, 5, 5, 3, 3)
+        index, inset, moved = terrain.fitted(edge, field, [big, small], [1, 0])
+        self.assertEqual((index, inset), (0, 0), "the pick at the fallback inset before the tuft")
+        self.assertEqual(drawn(moved), drawn(big))
+        index, inset, moved = terrain.fitted(edge, field, [big, small], [1])
+        self.assertEqual((index, inset), (1, 1), "the tuft when the pick does not fit")
+        self.assertEqual(drawn(moved), drawn(small))
+        self.assertIsNone(terrain.fitted(edge, field, [big], [1]))
+
+    def test_a_fitted_shore_tile_draws_the_quarters_on_the_sand_under_and_over_the_whole_piece(self):
+        edge = self.edge()
+        field = terrain.shore_field(edge)
+        stamp = numbered()
+        centre = terrain.shifted(block(ROCK, 4, 2, 6, 5), 0, 0)
+        tile = terrain.fit_tile(stamp, terrain.NW | terrain.NE, edge, field, centre)
+        self.assertEqual(tile.get(0, 0), stamp.get(8, 8), "the north-west quarter stamp")
+        self.assertEqual(tile.get(15, 0), stamp.get(7, 8), "the north-east one")
+        self.assertEqual(tile.get(5, 3), ROCK + (255,), "the piece is in front of the north quarters")
+        self.assertEqual(terrain.fit_tile(stamp, 0, edge, field, centre), centre, "own mask 0 is the piece alone")
+        low = terrain.shifted(block(ROCK, 2, 6, 6, 5), 0, 0)
+        south = terrain.fit_tile(stamp, terrain.SW, filled(SAND), terrain.shore_field(filled(SAND)), low)
+        self.assertEqual(south.get(5, 9), stamp.get(13, 1), "a south quarter is in front of the piece")
+        self.assertEqual(south.get(5, 7), ROCK + (255,))
 
 
 class BuildTests(unittest.TestCase):
@@ -364,6 +497,137 @@ class BuildTests(unittest.TestCase):
         plain = png.read_png(self.out / "terrain" / "plain_shore.png")
         self.assertEqual((plain.width, plain.height), (256, 256))
         self.assertEqual(opaque_rows(plain.crop(3 * 16, 3 * 16, 16, 16)), list(range(0, 12)))
+
+    def fit_recipe(self, **fit):
+        """The recipe with a brush pick 1 that is a 5x4 rock block and a fitted brush shore."""
+        recipe = self.recipe()
+        recipe["sets"][1]["variants"] = ["0", "0"]
+        recipe["sets"][1]["shore"] = {"shape": "sand", "inset": 1, "rim": "#000000", "fit": {"pick": 1, "fallback_inset": 0, **fit}}
+        pixels = []
+        for y in range(16):
+            for x in range(16):
+                inside = 5 <= x < 10 and 6 <= y < 10
+                if inside:
+                    pixels.append((16 + x, 64 + y, ROCK))
+                elif y < 12:
+                    pixels.append((16 + x, 64 + y, None))  # erase the rest of the stamp's copy
+        fix = png.blank(64, 80)
+        for x, y, rgb in pixels:
+            fix.set(x, y, (0xFF, 0x00, 0xFF, 255) if rgb is None else rgb + (255,))
+        png.write_png(self.fixes / "brush.png", fix)
+        return recipe
+
+    def test_fit_variants_take_a_block_of_16_rows_each_placed_by_the_same_search(self):
+        recipe = self.fit_recipe(variants=["bush.png"])
+        png.write_png(self.fixes / "bush.png", block(DEEP, 4, 3, 6, 6))
+        self.build(recipe)
+        brush = png.read_png(self.out / "terrain" / "brush_shore.png")
+        self.assertEqual((brush.width, brush.height), (256, 2 * 256), "one block of 16 rows per piece")
+        pick = png.read_png(self.out / "terrain" / "brush.png").crop(16, 64, 16, 16)
+        bush = png.read_png(self.fixes / "bush.png")
+        for s in range(1, 15):
+            first = brush.crop(s * 16, 0, 16, 16)
+            second = brush.crop(s * 16, 16 * 16, 16, 16)
+            self.assertEqual(sorted(drawn(first).values()), sorted(drawn(pick).values()), f"mask {s}: block 0 is the pick")
+            self.assertEqual(sorted(drawn(second).values()), sorted(drawn(bush).values()), f"mask {s}: block 1 is the variant, whole")
+        self.assertTrue(brush.crop(15 * 16, 16 * 16, 16, 16).is_empty(), "no shore on a whole sand tile")
+
+    def test_fit_variants_are_hand_drawn_tiles_the_recipe_reads(self):
+        recipe = self.fit_recipe(variants=["missing.png"])
+        with self.assertRaisesRegex(terrain.TerrainError, r"missing\.png: no such hand-drawn source"):
+            self.build(recipe)
+        recipe = self.fit_recipe()
+        png.write_png(self.fixes / "bush.png", block(DEEP, 4, 3, 6, 6))
+        with self.assertRaisesRegex(terrain.TerrainError, r"bush\.png: no step of the recipe reads it"):
+            self.build(recipe)
+
+    def test_a_fitted_shore_draws_the_pick_whole_on_the_sand_with_no_rim(self):
+        self.build(self.fit_recipe())
+        brush = png.read_png(self.out / "terrain" / "brush_shore.png")
+        pick = png.read_png(self.out / "terrain" / "brush.png").crop(16, 64, 16, 16)
+        for s in range(1, 15):
+            tile = brush.crop(s * 16, 0, 16, 16)
+            self.assertEqual(sorted(drawn(tile).values()), sorted(drawn(pick).values()), f"mask {s}: the whole pick")
+            self.assertEqual(tile.colours(), {ROCK}, f"mask {s}: no rim")
+            self.assertLessEqual(opaque_rows(tile)[-1], 10, f"mask {s}: one pixel inside the sand's edge")
+        self.assertEqual(drawn(brush.crop(3 * 16, 0, 16, 16)), drawn(pick), "already on the sand: not moved")
+        islet = brush.crop(0, 0, 16, 16)
+        self.assertEqual(opaque_rows(islet)[-1], 10, "sand mask 0 keeps the cut")
+        self.assertEqual({islet.get(x, 10)[:3] for x in range(16) if islet.alpha(x, 10)}, {BLACK}, "and its rim")
+        corner = brush.crop(3 * 16, 1 * 16, 16, 16)
+        self.assertEqual(corner.get(0, 0)[:3], SAND, "own mask 1 keeps its north-west quarter stamp")
+        self.assertEqual(corner.get(5, 6)[:3], ROCK, "in front of which stands the pick")
+
+    def test_a_fit_moves_the_pick_up_off_the_sea_and_falls_back_to_the_tuft(self):
+        recipe = self.fit_recipe()
+        low = png.read_png(self.fixes / "brush.png")
+        for y in range(64 + 6, 64 + 10):  # move the block down to rows 9 to 12, off the sand
+            for x in range(16 + 5, 16 + 10):
+                low.set(x, y + 3, ROCK + (255,))
+        for y in range(64 + 6, 64 + 9):
+            for x in range(16 + 5, 16 + 10):
+                low.set(x, y, (0xFF, 0x00, 0xFF, 255))
+        png.write_png(self.fixes / "brush.png", low)
+        self.build(recipe)
+        tile = png.read_png(self.out / "terrain" / "brush_shore.png").crop(3 * 16, 0, 16, 16)
+        self.assertEqual(opaque_rows(tile), [7, 8, 9, 10], "moved up three rows to stand one pixel in")
+        recipe["sets"][1]["shore"]["fit"] = {"pick": 0, "fallback_inset": 1, "tuft": "tuft.png"}
+        png.write_png(self.fixes / "tuft.png", block(DEEP, 6, 5, 3, 2))
+        self.build(recipe)
+        tile = png.read_png(self.out / "terrain" / "brush_shore.png").crop(3 * 16, 0, 16, 16)
+        self.assertEqual(tile.colours(), {DEEP}, "the stamp is too wide for the sand, so the tuft stands there")
+
+    def test_a_fit_where_nothing_fits_is_refused_naming_the_mask(self):
+        recipe = self.fit_recipe()
+        recipe["sets"][1]["shore"]["fit"] = {"pick": 0, "fallback_inset": 1}
+        with self.assertRaisesRegex(terrain.TerrainError, r"brush shore: nothing of the fit fits whole on the sand tile of mask 1"):
+            self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_a_malformed_fit_is_refused_by_key(self):
+        cases = [
+            ("not a table", r"brush shore: \"fit\" is a table"),
+            ({"fallback_inset": 0}, r"brush shore fit has no \"pick\""),
+            ({"pick": 4}, r"brush shore fit: \"pick\" is a whole number from 0 to 3"),
+            ({"pick": 3}, r"brush shore fit: pick 3 is not drawn"),
+            ({"pick": 1, "fallback_inset": 2}, r"brush shore fit: \"fallback_inset\" is a whole number from 0 to 1"),
+            ({"pick": 1, "tuft": "../tuft.png"}, r"a hand-drawn source is a lower-case name"),
+            ({"pick": 1, "tuft": "missing.png"}, r"missing\.png: no such hand-drawn source"),
+            ({"pick": 1, "tuft": "wide.png"}, r"wide\.png: a tuft is a drawn 16x16 tile, not 32x16"),
+        ]
+        png.write_png(self.fixes / "wide.png", filled(ROCK, 32, 16))
+        for fit, message in cases:
+            recipe = self.fit_recipe()
+            recipe["sets"][1]["shore"]["fit"] = fit
+            with self.subTest(fit=fit), self.assertRaisesRegex(terrain.TerrainError, message):
+                self.build(recipe)
+        recipe = self.fit_recipe()
+        recipe["sets"][0]["shore"] = {"shape": "sand", "fit": {"pick": 0}}
+        with self.assertRaisesRegex(terrain.TerrainError, r"sand shore: \"fit\" needs a stamp set"):
+            self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
+
+    def test_the_foams_corners_are_checked_and_leave_a_straight_shore_as_it_was(self):
+        self.build()
+        straight = png.read_png(self.out / "sea" / "foam.png")
+        recipe = self.recipe()
+        recipe["foam"]["corners"] = {"keep": 2, "colour": png.colour_hex(ROCK)}
+        self.build(recipe)
+        self.assertEqual(png.read_png(self.out / "sea" / "foam.png"), straight, "the fixture's sand is straight on every mask")
+        for corners, message in (("x", r"foam: \"corners\" is a table"), ({"colour": "#000000"}, r"foam corners has no \"keep\""),
+                                 ({"keep": 0, "colour": "#000000"}, r"foam corners: \"keep\" is a whole number from 1 to 8"),
+                                 ({"keep": 2, "colour": "black"}, r"foam corners: 'black' is not a #rrggbb colour")):
+            recipe["foam"]["corners"] = corners
+            with self.subTest(corners=corners), self.assertRaisesRegex(terrain.TerrainError, message):
+                self.build(recipe)
+
+    def test_a_fits_tuft_is_a_fix_the_recipe_reads(self):
+        recipe = self.fit_recipe(tuft="tuft.png")
+        png.write_png(self.fixes / "tuft.png", block(DEEP, 6, 5, 3, 2))
+        self.build(recipe)
+        del recipe["sets"][1]["shore"]["fit"]["tuft"]
+        with self.assertRaisesRegex(terrain.TerrainError, r"tuft\.png: no step of the recipe reads it"):
+            self.build(recipe)
 
     def test_a_shore_inset_is_a_small_whole_number(self):
         for bad in (-1, 8, "1", 1.5, True):
@@ -814,6 +1078,21 @@ class BuildTests(unittest.TestCase):
             self.assertGreater(sum(1 for alpha in cell.pixels[3::4] if alpha), 10, f"variant {column} is redrawn by hand")
         self.assertTrue(overlay.crop(0, 0, 64, 64).is_empty(), "the masks keep the pack's bush")
 
+    def test_no_tracked_brush_pick_has_a_hole_inside_its_outline(self):
+        """art-terrain-polish TR14: a lone bush is solid, so no sand shows through inside it."""
+        brush = png.read_png(terrain.DEFAULT_OUT / "terrain" / "brush.png")
+        for column in range(terrain.SET_COLUMNS):
+            cell = brush.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16)
+            self.assertEqual(enclosed_clear(cell), [], f"brush pick {column} has no hole inside its outline")
+
+    def test_a_hole_is_a_clear_pixel_closed_in_by_drawn_ones(self):
+        ring = filled(BLACK, rows=range(4, 9), columns=range(4, 9))
+        ring.set(6, 6, (0, 0, 0, 0))
+        self.assertEqual(enclosed_clear(ring), [(6, 6)])
+        notch = filled(BLACK, rows=range(4, 9), columns=range(4, 9))
+        notch.set(6, 4, (0, 0, 0, 0))
+        self.assertEqual(enclosed_clear(notch), [], "a bite open to the outside is not a hole")
+
     def test_the_tracked_rock_has_the_pack_variant_and_two_hand_ones_that_keep_its_border(self):
         rock = terrain.load_recipe(terrain.DEFAULT_RECIPE)["plain"]["rows"][0]
         self.assertEqual((rock["tile"], rock["variants"]), ([12, 13], [[12, 14], "15", "15"]))
@@ -824,6 +1103,28 @@ class BuildTests(unittest.TestCase):
             border = [(x, y) for y in range(16) for x in range(16) if x in (0, 15) or y in (0, 15)]
             self.assertEqual([at for at in border if cell.alpha(*at)], [], f"column {column} keeps the full tile's border, so any two join")
 
+
+    def test_the_tracked_brush_shore_fits_the_small_pick_or_the_tuft_whole(self):
+        brush = terrain.load_recipe(terrain.DEFAULT_RECIPE)["sets"][2]
+        self.assertEqual({key: value for key, value in brush["shore"]["fit"].items() if key != "variants"}, {"pick": 1, "fallback_inset": 0, "tuft": "shore_tuft.png"}, "the variants are art-terrain-polish C10b's, below")
+        tuft = png.read_png(terrain.DEFAULT_FIXES / "shore_tuft.png")
+        rows, columns = opaque_rows(tuft), opaque_columns(tuft)
+        self.assertLessEqual((len(columns), len(rows)), (8, 7), "an 8x7 sprig at most")
+        self.assertEqual(tuft.colours(), {png.parse_colour(c) for c in ("#4b692f", "#37946e", "#6abe30", "#99e550", "#323c39")}, "the brush greens and its outline")
+        made = terrain.DEFAULT_OUT / "terrain"
+        pick = drawn(png.read_png(made / "brush.png").crop(16, 64, 16, 16))
+        shore = png.read_png(made / "brush_shore.png")
+
+        def moved(tile, piece):
+            if len(tile) != len(piece):
+                return False
+            dx = min(x for x, _y in tile) - min(x for x, _y in piece)
+            dy = min(y for _x, y in tile) - min(y for _x, y in piece)
+            return all(tile.get((x + dx, y + dy)) == colour for (x, y), colour in piece.items())
+
+        for s in range(1, 15):
+            tile = drawn(shore.crop(s * 16, 0, 16, 16))
+            self.assertTrue(moved(tile, pick) or moved(tile, drawn(tuft)), f"sand mask {s}: the pick or the tuft, whole")
 
     def test_the_tracked_overlays_hold_only_hand_pixels(self):
         recipe = terrain.load_recipe(terrain.DEFAULT_RECIPE)
@@ -836,6 +1137,225 @@ class BuildTests(unittest.TestCase):
                 self.assertLess(opaque, 40, f"{entry['id']} variant {column} is mask 15 plus a few hand pixels")
             self.assertEqual(hand, {(0, 0)} if entry["id"] == "dune" else set(), entry["id"])
             self.assertEqual(sum(1 for alpha in overlay.crop(0, 0, 16, 16).pixels[3::4] if alpha), 256 if hand else 0)
+
+
+class StillFoamTests(unittest.TestCase):
+    """art-terrain-polish D2: the still piece of a lagoon's rim."""
+
+    def shapes(self):
+        sets = png.blank(64, 80)
+        sets.paste(filled(SAND, rows=range(0, 12)), 3 * 16, 0)  # mask 3: land north, sea south
+        sets.paste(filled(SAND), 3 * 16, 3 * 16)  # mask 15: whole
+        return sets
+
+    def test_the_still_piece_is_one_line_on_the_first_water_step_alike_in_every_frame(self):
+        sheet = terrain.build_foam_still({"colour": "#8fe0f0"}, self.shapes(), 8)
+        self.assertEqual((sheet.width, sheet.height), (8 * 16, 16 * 16))
+        piece = sheet.crop(0, 3 * 16, 16, 16)
+        self.assertEqual(opaque_rows(piece), [12], "one line, on the first water row")
+        self.assertEqual(piece.colours(), {png.parse_colour("#8fe0f0")}, "no white")
+        for frame in range(1, 8):
+            self.assertEqual(sheet.crop(frame * 16, 3 * 16, 16, 16).pixels, piece.pixels, f"frame {frame} is frame 0")
+        self.assertTrue(sheet.crop(0, 15 * 16, 8 * 16, 16).is_empty(), "a whole tile has no shore")
+
+    def test_still_is_a_table_with_a_colour(self):
+        with self.assertRaisesRegex(terrain.TerrainError, r'"still" is a table'):
+            terrain.build_foam_still("#8fe0f0", self.shapes(), 8)
+        with self.assertRaisesRegex(terrain.TerrainError, r"colour"):
+            terrain.build_foam_still({}, self.shapes(), 8)
+
+    def test_the_tracked_still_foam_is_the_foam_sheets_size_and_alike_in_every_frame(self):
+        made = terrain.DEFAULT_OUT / "sea"
+        still = png.read_png(made / "foam_still.png")
+        foam = png.read_png(made / "foam.png")
+        self.assertEqual((still.width, still.height), (foam.width, foam.height))
+        for mask in range(16):
+            first = still.crop(0, mask * 16, 16, 16)
+            for frame in range(1, 8):
+                self.assertEqual(still.crop(frame * 16, mask * 16, 16, 16).pixels, first.pixels, f"mask {mask} frame {frame}")
+        self.assertNotIn((0xFF, 0xFF, 0xFF), still.colours(), "no white")
+
+
+class SandTextureTests(unittest.TestCase):
+    """art-terrain-polish D4 (TR12): a beach with no grid."""
+
+    def test_the_tracked_sand_fill_is_one_tone_and_its_picks_are_distinct_and_not_mirrors(self):
+        made = png.read_png(terrain.DEFAULT_OUT / "terrain" / "sand.png")
+        full = made.crop(3 * 16, 3 * 16, 16, 16)
+        self.assertEqual(len(full.colours()), 1, "the whole tile is one tone, no stripes")
+        picks = [made.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16) for column in range(terrain.SET_COLUMNS)]
+        self.assertEqual(picks[0].pixels, full.pixels, "pick 0 is the clean tile")
+        seen = []
+        for column, pick in enumerate(picks):
+            self.assertNotIn(pick.pixels, seen, f"pick {column} repeats another")
+            self.assertNotIn(mirrored(pick).pixels, seen, f"pick {column} mirrors another")
+            seen.append(pick.pixels)
+        for column in range(1, terrain.SET_COLUMNS):
+            marks = [(x, y) for y in range(16) for x in range(16) if picks[column].get(x, y) != full.get(x, y)]
+            self.assertTrue(0 < len(marks) <= 16, f"pick {column} has a few sparse marks, not a field ({len(marks)})")
+
+    def test_the_sand_picks_marks_are_off_the_old_three_spot_lattice(self):
+        made = png.read_png(terrain.DEFAULT_OUT / "terrain" / "sand.png")
+        full = made.crop(3 * 16, 3 * 16, 16, 16)
+        marked = {}
+        for column in range(1, terrain.SET_COLUMNS):
+            pick = made.crop(column * 16, terrain.VARIANT_ROW * 16, 16, 16)
+            for at in ((x, y) for y in range(16) for x in range(16) if pick.get(x, y) != full.get(x, y)):
+                self.assertNotIn(at, marked, f"pick {column} marks {at}, as pick {marked.get(at)} does: a lattice")
+                marked[at] = column
+
+
+class CanopyTests(unittest.TestCase):
+    """art-terrain-polish D5 (TR10): no ground inside a thicket, and whole-bush picks."""
+
+    def stamp(self):
+        disc = png.blank(16, 16)
+        for y in range(16):
+            for x in range(16):
+                if (x - 7.5) ** 2 + (y - 7.5) ** 2 <= 36:
+                    disc.set(x, y, SAND + (255,))
+        return disc
+
+    def gaps(self, tile, corners):
+        band = dict(terrain.CANOPY_GAPS)[corners]
+        return [(x, y) for x, y in band if not tile.alpha(x, y)]
+
+    def test_the_canopy_fills_the_gaps_between_lobes_on_an_edge_whose_corners_are_land(self):
+        bare = terrain.stamped(self.stamp(), 15)
+        self.assertTrue(self.gaps(bare, terrain.NW | terrain.NE), "a round stamp leaves ground between its lobes")
+        full = terrain.stamped(self.stamp(), 15, DEEP)
+        for corners, _band in terrain.CANOPY_GAPS:
+            self.assertEqual(self.gaps(full, corners), [], f"edge {corners} is filled")
+        self.assertEqual({full.get(x, y)[:3] for x, y in self.gaps(bare, terrain.NW | terrain.NE)}, {DEEP}, "in the canopy colour")
+
+    def test_an_edge_with_one_land_corner_keeps_its_ground(self):
+        self.assertEqual(terrain.stamped(self.stamp(), terrain.NW, DEEP).pixels, terrain.stamped(self.stamp(), terrain.NW).pixels)
+
+    def test_a_fitted_shore_tile_fills_the_same_gaps_as_its_inland_tile(self):
+        edge = filled(SAND)  # a shore tile whose sand covers the gaps (the fit never cuts them)
+        field = terrain.shore_field(filled(SAND, rows=range(0, 15)))
+        centre = png.blank(16, 16)
+        inland = terrain.stamped(self.stamp(), 15, DEEP)
+        tile = terrain.fit_tile(self.stamp(), 15, edge, field, centre, DEEP)
+        for corners, _band in terrain.CANOPY_GAPS:
+            for x, y in self.gaps(terrain.stamped(self.stamp(), 15), corners):
+                self.assertEqual(tile.get(x, y), inland.get(x, y), f"({x}, {y}) as inland")
+        self.assertEqual(terrain.fit_tile(self.stamp(), 15, edge, field, centre).pixels, terrain.fit_tile(self.stamp(), 15, edge, field, centre, None).pixels)
+
+    def test_a_full_variant_row_makes_the_sheet_96_high(self):
+        tiles = {mask: filled(SAND) for mask in range(16)}
+        sheet = terrain.set_sheet(tiles, [filled(SAND)], [filled(ROCK), filled(DEEP)])
+        self.assertEqual((sheet.width, sheet.height), (64, 96))
+        self.assertEqual(sheet.crop(16, 80, 16, 16).colours(), {DEEP})
+        self.assertEqual((terrain.set_sheet(tiles, [filled(SAND)]).height), 80, "no full variants, no row 5")
+        with self.assertRaisesRegex(terrain.TerrainError, "full variants"):
+            terrain.set_sheet(tiles, [], [filled(SAND)] * 5)
+
+    def test_the_tracked_brush_has_a_canopy_and_three_full_picks_that_keep_the_corner_quarters(self):
+        brush = terrain.load_recipe(terrain.DEFAULT_RECIPE)["sets"][2]
+        self.assertEqual(brush["canopy"], "#4b692f")
+        made = png.read_png(terrain.DEFAULT_OUT / "terrain" / "brush.png")
+        self.assertEqual((made.width, made.height), (64, 96))
+        full = terrain.sheet_tile(made, 15)
+        self.assertEqual(sum(1 for alpha in full.pixels[3::4] if not alpha), 0, "a whole scrub cell shows no ground")
+        picks = [made.crop(column * 16, 80, 16, 16) for column in range(4)]
+        self.assertEqual(picks[0].pixels, full.pixels, "pick 0 is the full tile")
+        seen = []
+        for column, pick in enumerate(picks):
+            self.assertNotIn(pick.pixels, seen, f"pick {column} repeats another")
+            self.assertNotIn(mirrored(pick).pixels, seen, f"pick {column} mirrors another")
+            seen.append(pick.pixels)
+            changed = [(x, y) for y in range(16) for x in range(16) if pick.get(x, y) != full.get(x, y)]
+            self.assertTrue(all(3 <= x <= 12 and 3 <= y <= 12 for x, y in changed), f"pick {column} changes only its centre lobe")
+            self.assertEqual(column > 0, bool(changed), f"pick {column}")
+            self.assertEqual(enclosed_clear(pick), [], f"pick {column} has no hole")
+
+
+class ShoreVariantTests(unittest.TestCase):
+    """art-terrain-polish D5: two or three whole shore bushes, picked by hash."""
+
+    def test_the_tracked_brush_shore_has_three_whole_bushes_each_placed_on_the_sand(self):
+        brush = terrain.load_recipe(terrain.DEFAULT_RECIPE)["sets"][2]
+        names = brush["shore"]["fit"]["variants"]
+        self.assertEqual(names, ["shore_bush_a.png", "shore_bush_b.png"])
+        made = terrain.DEFAULT_OUT / "terrain"
+        shore = png.read_png(made / "brush_shore.png")
+        self.assertEqual((shore.width, shore.height), (256, 3 * 256))
+        tuft = drawn(png.read_png(terrain.DEFAULT_FIXES / "shore_tuft.png"))
+        pieces = [drawn(png.read_png(made / "brush.png").crop(16, 64, 16, 16))]
+        for name in names:
+            bush = png.read_png(terrain.DEFAULT_FIXES / name)
+            rows, columns = opaque_rows(bush), opaque_columns(bush)
+            self.assertLessEqual((len(columns), len(rows)), (11, 10), f"{name}: at most 11x10")
+            self.assertTrue(bush.colours() <= {png.parse_colour(c) for c in ("#4b692f", "#37946e", "#6abe30", "#99e550", "#323c39", "#76428a", "#45283c")}, f"{name}: brush greens, its outline and berries")
+            pieces.append(drawn(bush))
+
+        def moved(tile, piece):
+            if len(tile) != len(piece):
+                return False
+            dx = min(x for x, _y in tile) - min(x for x, _y in piece)
+            dy = min(y for _x, y in tile) - min(y for _x, y in piece)
+            return all(tile.get((x + dx, y + dy)) == colour for (x, y), colour in piece.items())
+
+        for v, piece in enumerate(pieces):
+            for s in range(1, 15):
+                tile = drawn(shore.crop(s * 16, v * 256, 16, 16))
+                self.assertTrue(moved(tile, piece) or moved(tile, tuft), f"block {v}, sand mask {s}: its bush or the tuft, whole")
+
+
+class RockEdgeTests(unittest.TestCase):
+    """art-terrain-polish D6 (TR9): a dark rim, a lit north lip, a low face on the water, pebbles."""
+
+    LIP = (0x9B, 0xAD, 0xB7)
+    FACE = [(0x69, 0x6A, 0x6A), (0x59, 0x56, 0x52)]
+
+    def test_a_lip_lights_the_row_under_a_north_facing_rim_only(self):
+        shape = filled(SAND, rows=range(4, 16), columns=range(0, 12))  # north edge on row 4, east edge at x 11
+        tile = terrain.rimmed(terrain.masked(filled(ROCK), shape), shape, BLACK)
+        lit = terrain.lipped(tile, BLACK, self.LIP)
+        self.assertEqual({lit.get(x, 5)[:3] for x in range(1, 11)}, {self.LIP}, "the row under the north rim")
+        self.assertEqual({lit.get(x, 4)[:3] for x in range(0, 12)}, {BLACK}, "the rim stays")
+        self.assertEqual(lit.get(10, 9)[:3], ROCK, "no lip on the east edge")
+        self.assertEqual(terrain.lipped(terrain.rimmed(terrain.masked(filled(ROCK), filled(SAND, rows=range(0, 12))), filled(SAND, rows=range(0, 12)), BLACK), BLACK, self.LIP).colours(), {ROCK, BLACK}, "a south edge gets none")
+
+    def test_a_face_shows_above_a_south_facing_rim_on_the_water_only(self):
+        sand = filled(SAND, rows=range(0, 12))  # the sea from row 12
+        tile = terrain.rimmed(terrain.masked(filled(ROCK), sand), sand, BLACK)
+        faced = terrain.faced(tile, sand, BLACK, self.FACE)
+        self.assertEqual(faced.get(5, 11)[:3], BLACK, "the rim stays at the water")
+        self.assertEqual(faced.get(5, 10)[:3], self.FACE[1], "the low face row just above it")
+        self.assertEqual(faced.get(5, 9)[:3], self.FACE[0])
+        self.assertEqual(faced.get(5, 8)[:3], ROCK, "two rows, no more")
+        seam = terrain.rimmed(terrain.masked(filled(ROCK), sand), sand, BLACK)
+        land = filled(SAND)  # the same edge against land, not water
+        self.assertEqual(terrain.faced(seam, land, BLACK, self.FACE).pixels, seam.pixels, "no face on a land seam")
+
+    def test_the_tracked_rock_has_a_dark_rim_a_lit_lip_and_a_low_face_on_the_water(self):
+        rock = terrain.load_recipe(terrain.DEFAULT_RECIPE)["plain"]["rows"][0]
+        self.assertEqual((rock["rim"], rock["lip"], rock["face"]), ("#323c39", "#9badb7", ["#696a6a", "#595652"]))
+        made = terrain.DEFAULT_OUT / "terrain"
+        plain = png.read_png(made / "plain.png")
+        north = plain.crop(12 * 16, 0, 16, 16)  # mask 12: rock to the south, a north-facing edge
+        rows = opaque_rows(north)
+        self.assertEqual({north.get(x, rows[0])[:3] for x in range(16) if north.alpha(x, rows[0])}, {png.parse_colour("#323c39")}, "the rim is #323c39")
+        self.assertIn(png.parse_colour("#9badb7"), {north.get(x, rows[0] + 1)[:3] for x in range(16)}, "a lit lip under it")
+        shore = png.read_png(made / "plain_shore.png")
+        faced = shore.crop(3 * 16, 3 * 16, 16, 16)  # sand mask 3 (the sea to the south), own mask 3
+        bottom = opaque_rows(faced)[-1]
+        self.assertEqual(faced.get(8, bottom - 1)[:3], png.parse_colour("#595652"), "the face over the water")
+        cliff = terrain.load_recipe(terrain.DEFAULT_RECIPE)["plain"]["rows"][2]
+        self.assertNotIn("face", cliff, "the cliff keeps its own deeper drop")
+
+    def test_the_tracked_pebbles_sit_in_the_sand_strip_of_each_straight_seam(self):
+        pebbles = png.read_png(terrain.DEFAULT_OUT / "decals" / "pebbles.png")
+        self.assertEqual((pebbles.width, pebbles.height), (64, 16))
+        strips = {0: (range(0, 4), range(0, 16)), 1: (range(12, 16), range(0, 16)), 2: (range(0, 16), range(0, 4)), 3: (range(0, 16), range(12, 16))}
+        for column, (xs, ys) in strips.items():
+            tile = pebbles.crop(column * 16, 0, 16, 16)
+            drawn_at = [(x, y) for y in range(16) for x in range(16) if tile.alpha(x, y)]
+            self.assertTrue(drawn_at, f"pebble tile {column} is drawn")
+            self.assertTrue(all(x in xs and y in ys for x, y in drawn_at), f"pebble tile {column} stays in its strip")
+            self.assertLessEqual((len({x for x, _ in drawn_at}), len({y for _, y in drawn_at})) if column < 2 else (len({y for _, y in drawn_at}), len({x for x, _ in drawn_at})), (6, 8), f"pebble tile {column}: at most 8x6")
 
 
 if __name__ == "__main__":

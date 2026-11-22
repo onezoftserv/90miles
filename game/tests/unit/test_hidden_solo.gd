@@ -6,7 +6,7 @@ extends GutTest
 ## hand in the engine's order at 30 Hz, so the run is exact and fast.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_hidden_solo_settings.cfg"
+var settings_path: String = UserTmp.path("test_hidden_solo_settings.cfg")
 const DT: float = 1.0 / 30.0
 const TILE: float = 16.0
 const AT_TARGET_PX: float = 3.0
@@ -38,8 +38,8 @@ func after_each() -> void:
 	WeatherManager.sky.weather.rolls_enabled = true
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 # One 30 Hz frame in the engine's order: the input to an intent, the host stepping the body, then
@@ -126,7 +126,7 @@ func _walk_to(goal_cell: Vector2i) -> bool:
 
 func _start() -> void:
 	shell = SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	session = shell.session

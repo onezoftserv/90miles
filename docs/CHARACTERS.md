@@ -76,7 +76,7 @@ Voice notes are for the Chatterbox clones and for the Haiku prompt. Satire targe
 
 **Encounters.**
 - *El aviso:* the loudhailer gives you one warning: go back and nothing happens. Nobody goes back.
-- *La captura:* if caught, he interrogates you on the deck. A persuasive player (high morale, *Maestro* or *Médico*) can talk him into "losing" you at the next cay. A low-morale party is returned to the previous island.
+- *La captura:* when the whole party is caught (a solo player always is), he reads the interception act in formal Spanish ("Acta de interceptación número cuatrocientos doce…") and speaks Baracoa Spanish in person, to one player in the singular and to a party in the plural; a party caught before in the run hears "¿Ustedes otra vez?". One check decides: a captured, standing *Maestro* or *Médico* with morale 60 or more pleads for everyone ("Capitán, con esta corriente usted sabe dónde termina un bote sin rumbo…"), and he "loses" the party at the next cay with everything they carry ("El acta dice 'sector sin novedad'"). Otherwise the party is returned to the previous island without its fire sources ("Las cifras son las cifras. Pa'trás, pa'l cayo de antes."). A party that crossed in the almendrón hears that the car was sunk. The lines are drafts for the voice pass; the scene is `game/resources/dialogue/beat_la_captura.tres`.
 - *El trato del capitán:* on a later island, if Caridad's letter is in your inventory, he recognizes the handwriting and lets you pass once.
 
 **Voice.** Official Spanish over the loudhailer, Baracoa Spanish in person. Slogans he does not believe, delivered flat. Haiku profile: `backend/prompts/npcs/rodriguez.md`.

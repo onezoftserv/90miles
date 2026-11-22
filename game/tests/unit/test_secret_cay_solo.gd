@@ -155,7 +155,7 @@ func test_nothing_respawns_on_the_cay() -> void:
 
 func test_the_detour_is_not_an_island_reached() -> void:
 	var shell := (load("res://scenes/shell/game_shell.tscn") as PackedScene).instantiate() as GameShell
-	shell.settings_path = "user://test_secret_cay_solo_settings.cfg"
+	shell.settings_path = UserTmp.path("test_secret_cay_solo_settings.cfg")
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	assert_eq(shell.travel.islands_reached, 1, "the sandbar")

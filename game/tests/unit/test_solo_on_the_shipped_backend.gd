@@ -4,7 +4,7 @@ extends GutTest
 ## host, join or leave call and no port opened. Exactly 1 player, offline. The smoke run boots the
 ## same scene but asserts nothing about the network, so the check lives here.
 
-const SETTINGS_PATH: String = "user://test_solo_on_the_shipped_backend_settings.cfg"
+var settings_path: String = UserTmp.path("test_solo_on_the_shipped_backend_settings.cfg")
 
 var _shells: Array[GameShell] = []
 
@@ -57,8 +57,8 @@ func after_each() -> void:
 	NetManager.leave()
 	NetManager.use_backend(null)
 	FakeNetBackend.reset()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _offline() -> bool:
@@ -87,7 +87,7 @@ func test_solo_on_the_shipped_backend_asks_it_for_nothing() -> void:
 	assert_not_null(shell, "the main scene is the shell")
 	if shell == null:
 		return
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child(shell)
 	_shells.append(shell)
 	assert_eq(shell.flow, GameShell.Flow.TITLE)

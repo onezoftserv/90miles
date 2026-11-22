@@ -4,7 +4,7 @@ extends GutTest
 
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const SHADOW_FIELDS: Array[String] = [
-	"PlayerNet:net_ack_seq",
+	"PlayerNet:net_ack_seq", "PlayerNet:net_capture",
 	"PlayerNet:net_downed",
 	# coop-networking "Disconnect handling": every peer knows a dropped player (dropped-teammate-state).
 	"PlayerNet:net_dropped",

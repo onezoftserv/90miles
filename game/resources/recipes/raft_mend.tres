@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+description_es = "Un palo y una soga donde más hace falta."
+description_en = "A piece of driftwood and a rope where they're needed most."
+inputs = Dictionary[StringName, int]({
+&"driftwood": 1,
+&"rope": 1
+})
+station = 0
+time_s = 10.0
+skill = 2
+skill_speed_multiplier = 2.0
+output_kind = 4
+integrity_delta = 20.0
+id = &"raft_mend"
+name_es = "Remiendo"
+name_en = "Mend"

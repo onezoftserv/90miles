@@ -7,7 +7,7 @@ extends GutTest
 ## order is read from the tree by Godot's 2D rules (DrawOrder; a headless run renders nothing).
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_lean_to_settings.cfg"
+var settings_path: String = UserTmp.path("test_lean_to_settings.cfg")
 const LEAN_TO_PATH: String = "res://scenes/art/lean_to.tscn"
 ## The node SandbarIsland places its shelter as.
 const SHELTER: NodePath = ^"Shelter"
@@ -25,13 +25,13 @@ func before_each() -> void:
 func after_each() -> void:
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _shell() -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	shell.session.body(CoopSession.HOST_ID).player_input.enabled = false

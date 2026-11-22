@@ -38,6 +38,15 @@ func _give_everything(body: PlayerBody, recipe: RecipeData) -> void:
 		body.inventory.add(_item_with(-1, capability), 1)
 
 
+func _raft() -> Raft:
+	var raft := (load("res://scenes/structures/raft.tscn") as PackedScene).instantiate() as Raft
+	raft.position = Vector2(64, 64)
+	arena.add_child(raft)
+	raft.on_built(GameState.content.get_entry(&"recipes", &"raft") as RecipeData)
+	raft.integrity = 50.0
+	return raft
+
+
 func test_a_solo_player_completes_every_recipe_alone() -> void:
 	var body := _body()
 	var bench := Workbench.new()
@@ -48,9 +57,17 @@ func test_a_solo_player_completes_every_recipe_alone() -> void:
 	for id: StringName in ids:
 		var recipe := GameState.content.get_entry(&"recipes", id) as RecipeData
 		body.inventory.from_net([])
+		body.global_position = Vector2.ZERO
 		_give_everything(body, recipe)
 		var done: bool = false
-		if recipe.build_site:
+		if Raft.is_job_recipe(recipe):
+			# island-stop: a mend or a fitting is worked on a raft, here one worn to 50.
+			var raft := _raft()
+			body.global_position = raft.work_point.global_position
+			if raft.open_job_for(body, recipe):
+				raft.job.deposit(body)
+				done = body.crafter.start_work(raft.job)
+		elif recipe.build_site:
 			var site := body.crafter.place_site(recipe, Vector2(8, 8), arena)
 			site.deposit(body)
 			done = body.crafter.start_work(site)

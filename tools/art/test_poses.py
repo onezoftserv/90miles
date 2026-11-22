@@ -4,6 +4,7 @@ Run: python -I -m unittest discover -s tools/art -p "test_*.py"
 """
 import unittest
 
+import palette
 import png
 import poses
 import rim
@@ -120,21 +121,83 @@ class LayoutTest(unittest.TestCase):
                 if (column, row) not in used:
                     self.assertTrue(poses.cell(sheet, column, row).is_empty(), f"unused cell ({column}, {row})")
 
-    def test_downed_is_the_down_frame_turned_clockwise_and_moved_down_with_a_chest_lift(self):
+    def test_downed_lies_the_body_down_and_keeps_the_head_upright_with_a_chest_lift(self):
+        # art-sprite-polish D8: the rows from the neck down turn clockwise and drop as before; the
+        # head block above the neck moves to their end unturned, so the face stays upright.
         walk = walk_set(lambda seed: figure(seed))
         sheet = poses.build_sheet(walk, "body")
         source = walk["down"][0]
         downed = poses.cell(sheet, 0, poses.DOWNED_ROW)
         lifted = poses.cell(sheet, 1, poses.DOWNED_ROW)
+        dx, dy = poses.HEAD_SHIFT
         for y in range(32):
             for x in range(32):
-                ty, tx = x + poses.DOWNED_DROP, 31 - y
-                if 0 <= ty < 32:
-                    self.assertEqual(downed.get(tx, ty), source.get(x, y))
+                if y in poses.LIE_DELETED_ROWS:
+                    continue
+                if y < poses.NECK_ROW:
+                    tx, ty = x + dx, y + dy
+                else:
+                    tx, ty = 31 - y, x + poses.DOWNED_DROP
+                # every drawn pixel lands where the rule sends it (the map is not one-to-one over
+                # the clear pixels: a clear head-row pixel can share a target with the turned body)
+                if source.alpha(x, y):
+                    self.assertEqual(downed.get(tx, ty), source.get(x, y), f"({x}, {y})")
         for y in range(31):
             for x in range(32):
                 expected = downed.get(x, y + 1) if x in poses.CHEST_COLUMNS else downed.get(x, y)
                 self.assertEqual(lifted.get(x, y), expected, f"({x}, {y})")
+
+
+## balsero_art.tres water_row: the rows above it are drawn while swimming.
+WATER_ROW = 19
+
+
+class SwimBobTest(unittest.TestCase):
+    """art-sprite-polish D1 (C19, SP3): the two swim frames bob above the water line."""
+
+    def test_the_swim_cells_come_from_walk_frames_1_and_3(self):
+        self.assertEqual(poses.SWIM_FROM, (1, 3), "walk 1 and 4 are both high steps; 1 and 3 bob")
+
+    def test_the_tracked_body_sheets_two_swim_cells_differ_above_the_water_row(self):
+        for name in ("body_man", "body_woman"):
+            sheet = png.read_png(palette.ART / "characters" / "parts" / f"{name}.png")
+            for row, facing in enumerate(poses.FACINGS):
+                first = poses.cell(sheet, poses.SWIM_COLUMNS[0], row).crop(0, 0, poses.CELL, WATER_ROW)
+                second = poses.cell(sheet, poses.SWIM_COLUMNS[1], row).crop(0, 0, poses.CELL, WATER_ROW)
+                self.assertNotEqual(first.pixels, second.pixels, f"{name} swim {facing}: the two frames differ above the line")
+
+
+class LyingPoseTest(unittest.TestCase):
+    """art-sprite-polish D8 (C25, SP9): a downed or dead body lies along the ground, face upright."""
+
+    def test_every_head_row_stays_one_row_so_the_eyes_stay_side_by_side(self):
+        for y in range(poses.NECK_ROW):
+            self.assertEqual(len({poses.LIE.mapping(x, y)[1] for x in range(poses.CELL)}), 1, f"head row {y}")
+            self.assertEqual([poses.LIE.mapping(x, y)[0] - x for x in range(poses.CELL)], [poses.HEAD_SHIFT[0]] * poses.CELL)
+
+    def test_the_neck_and_shoulder_rows_are_left_out_and_the_head_meets_the_body(self):
+        self.assertEqual(poses.LIE.deleted_rows, poses.LIE_DELETED_ROWS)
+        for y in poses.LIE_DELETED_ROWS:
+            self.assertTrue(all(poses.LIE.mapping(x, y) is None for x in range(poses.CELL)), f"row {y}")
+        body_end = poses.CELL - 1 - (max(poses.LIE_DELETED_ROWS) + 1)
+        figure_left = 7  # the widest head row's first pixel on a MetroCity walk frame
+        self.assertEqual(figure_left + poses.HEAD_SHIFT[0], body_end + 1, "the head starts on the column after the body")
+
+    def test_downed_breath_and_dead_are_made_by_the_lying_rule(self):
+        rules = {(m.column, m.row): m.rules for m in poses.MADE_CELLS}
+        self.assertEqual(rules[(poses.DOWNED_COLUMNS[0], poses.DOWNED_ROW)], (poses.LIE,))
+        self.assertEqual(rules[(poses.DOWNED_COLUMNS[1], poses.DOWNED_ROW)], (poses.LIE, poses.CHEST_LIFT))
+        self.assertEqual(rules[(poses.DEAD_COLUMN, poses.DOWNED_ROW)], (poses.LIE,))
+
+    def test_the_tracked_lying_figures_are_wider_than_tall_on_the_same_feet_line(self):
+        for name in ("body_man", "body_woman"):
+            sheet = png.read_png(palette.ART / "characters" / "parts" / f"{name}.png")
+            for column in (poses.DOWNED_COLUMNS[0], poses.DEAD_COLUMN):
+                cell = poses.cell(sheet, column, poses.DOWNED_ROW)
+                xs = [x for y in range(32) for x in range(32) if cell.alpha(x, y)]
+                ys = [y for y in range(32) for x in range(32) if cell.alpha(x, y)]
+                self.assertGreater(max(xs) - min(xs), max(ys) - min(ys), f"{name} column {column} lies wider than tall")
+                self.assertEqual(max(ys), 30, f"{name} column {column}: the feet line, row 30, is kept")
 
 
 class CompositeTest(unittest.TestCase):

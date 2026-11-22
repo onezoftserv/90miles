@@ -17,18 +17,24 @@ kind = 5
 target = 1
 status = 1
 
+[sub_resource type="Resource" id="Resource_heal"]
+script = ExtResource("1_effect")
+target = 1
+meter = 6
+amount = 5.0
+
 [sub_resource type="Resource" id="Resource_use"]
 script = ExtResource("2_use")
 action = 2
 time_s = 1.0
 can_target_others = true
-effects = Array[ExtResource("1_effect")]([SubResource("Resource_sunburn"), SubResource("Resource_bleeding")])
+effects = Array[ExtResource("1_effect")]([SubResource("Resource_sunburn"), SubResource("Resource_bleeding"), SubResource("Resource_heal")])
 
 [resource]
 script = ExtResource("3_item")
 sprite = ExtResource("icon_aloe")
-description_es = "La conoce cualquier cubano de más de cuarenta. Cura la quemadura y corta el sangrado."
-description_en = "Any Cuban over forty knows it. Soothes sunburn and stops bleeding."
+description_es = "La conoce cualquier cubano de más de cuarenta. Corta el sangrado y cierra la herida. Pa' la quemadura también sirve."
+description_en = "Any Cuban over forty knows it. Stops the bleeding and closes the wound. Good for sunburn too."
 category = 2
 tags = Array[int]([11])
 stack_size = 4

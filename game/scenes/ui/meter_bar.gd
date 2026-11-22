@@ -1,29 +1,47 @@
 class_name MeterBar
 extends HBoxContainer
-## One HUD row: a 0-100 bar for one survival meter with its Spanish name and value inside the
-## bar (Brogue's sidebar bars), pulsing red while the meter is critical (Shattered Pixel
-## Dungeon's low-health pulse). The meter, the label and the fill color are set per instance
-## in meters_hud.tscn, so changing them needs no code.
+## One HUD row on a strict grid (survival-meters "HUD bars", ui-shell "HUD layout"; hud-window-kit
+## design D4): the Spanish label in a 56 px column, a 40x7 bar box at a fixed x (a 1 px outline round
+## a 38x5 bar filled from the meter's own pre-shaded ramp, its empty part the ramp's darkest step),
+## and the value right-aligned. DCSS's `_print_stats_hp` grid and `hp_colour` steps: the label turns
+## a steady orange at the warning step and the alert red at the critical one, and never pulses; at the
+## critical step the bar's outline and the value pulse instead (SPD's low-health pulse, off the text).
+## Brogue's `printProgressBar` edge, in palette steps: a fill edge holding less than half a pixel is a
+## shade column, so a sliver never reads as empty. The meter, label, ramp and colours are set per
+## instance in meters_hud.tscn, so changing them needs no code.
 ## ui-shell "Changes show on the bars" and "Drain glow on the health bar" (damage-feedback design
 ## D5, D10): MetersHud tells it of each change it sorted (`show_change`) and steps it each frame.
-## A loss shows its lost part in pale red, held then shrunk (DCSS's changed-bar colour); a hit
-## also shakes a bar that `shakes_on_hit`; a drain lights the frame of a bar that `glows_on_drain`;
-## a jump shows its gained part in a light tint of the fill and flashes the bar once. The cue nodes
-## are made here, inside Bar, under the labels. Drawing only.
+## A loss shows its lost part in the alert red, held then shrunk (DCSS's changed-bar colour); a hit
+## also shakes the bar box of a bar that `shows_losses`; a drain lights the box's outline of a bar
+## that `glows_on_drain`; a jump shows its gained part in the ramp's highlight and flashes the bar
+## once. The cue nodes are made here, inside the bar and its box. Drawing only.
 
 ## At or below this a meter is critical; heat is the other way round.
 const CRITICAL_LOW: float = 25.0
 const CRITICAL_HEAT: float = 75.0
+## At or below this a meter is at its warning step; heat is the other way round.
+const WARN_LOW: float = 50.0
+const WARN_HEAT: float = 50.0
 const PULSE_HZ: float = 1.0
-const PULSE_COLOR: Color = Color(1.0, 0.45, 0.4)
+const PULSE_COLOR: Color = HudStyle.ALERT
 ## Value slack for float sums.
 const EPSILON: float = 0.001
 ## The shake moves the bar every this many seconds (2 frames at 60).
 const SHAKE_STEP_S: float = 1.0 / 30.0
+## The bar's fill area, inside the box's 1 px outline.
+const FILL_SIZE: Vector2 = Vector2(38.0, 5.0)
+
+## The label's steps (design D4).
+enum Step { CALM, WARNING, CRITICAL }
 
 @export var meter: DataEnums.Meter = DataEnums.Meter.NONE
 @export var label_text: String = ""
+## The ramp's base colour, kept equal to HurtCueTuning.meter_colors (a test checks both).
 @export var fill_color: Color = Color.WHITE
+## The meter's 1x5 ramp strip (tools/art/ui_kit.json): highlight, base x3, shade.
+@export var ramp: Texture2D = null
+## The empty part of the bar: the darkest step of the meter's ramp.
+@export var empty_color: Color = HudStyle.OUTLINE
 ## Losses show their lost part, and a hit shakes the bar (the health row).
 @export var shows_losses: bool = false
 ## A drain lights the bar's frame (the health row).
@@ -32,6 +50,8 @@ const SHAKE_STEP_S: float = 1.0 / 30.0
 ## True while the meter is critical.
 var pulsing: bool = false
 var _pulse_s: float = 0.0
+var _highlight: Color = Color.WHITE
+var _shade: Color = Color.BLACK
 
 var _tuning: HurtCueTuning = HurtCues.tuning()
 # The lost part runs from the fill up to _lost_top; below the fill it is gone.
@@ -48,13 +68,19 @@ var _shake_age_s: float = 0.0
 var _shake_home_x: float = 0.0
 var _shaken: bool = false
 var _glow_left_s: float = 0.0
+var _outline_style: StyleBoxFlat = null
 
-@onready var bar: ProgressBar = $Bar
-@onready var label: Label = $Bar/Label
-@onready var value_label: Label = $Bar/Value
+@onready var label: Label = $Label
+@onready var value_label: Label = $Value
+## The 40x7 box (outline and bar) that shakes.
+@onready var box: Control = $Cell/Box
+@onready var outline: Panel = $Cell/Box/Outline
+@onready var bar: ProgressBar = $Cell/Box/Bar
 var _lost: ColorRect = ColorRect.new()
 var _gain: ColorRect = ColorRect.new()
 var _flash: ColorRect = ColorRect.new()
+var _edge: ColorRect = ColorRect.new()
+var _tick: ColorRect = ColorRect.new()
 var _glow: Panel = Panel.new()
 
 
@@ -66,11 +92,30 @@ static func is_critical(which: DataEnums.Meter, value: float) -> bool:
 	return value <= CRITICAL_LOW
 
 
+## The label's step for `value` of `which`: critical, warning (50 or less, heat 50 or more) or calm.
+static func step_of(which: DataEnums.Meter, value: float) -> Step:
+	if is_critical(which, value):
+		return Step.CRITICAL
+	if which == DataEnums.Meter.HEAT:
+		return Step.WARNING if value >= WARN_HEAT else Step.CALM
+	return Step.WARNING if value <= WARN_LOW else Step.CALM
+
+
+## The label's steady colour on `step`.
+static func step_color(step: Step) -> Color:
+	match step:
+		Step.WARNING:
+			return HudStyle.ORANGE
+		Step.CRITICAL:
+			return HudStyle.ALERT
+	return HudStyle.CREAM
+
+
 func _ready() -> void:
 	label.text = label_text
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = fill_color
-	bar.add_theme_stylebox_override(&"fill", fill)
+	_outline_style = (outline.get_theme_stylebox(&"panel") as StyleBoxFlat).duplicate() as StyleBoxFlat
+	outline.add_theme_stylebox_override(&"panel", _outline_style)
+	_style_bar()
 	_make_cue_nodes()
 	show_value(bar.value)
 
@@ -79,22 +124,45 @@ func _process(delta: float) -> void:
 	if not pulsing:
 		return
 	_pulse_s += delta
-	bar.modulate = Color.WHITE.lerp(PULSE_COLOR, (sin(_pulse_s * TAU * PULSE_HZ) + 1.0) / 2.0)
+	_show_alert((sin(_pulse_s * TAU * PULSE_HZ) + 1.0) / 2.0)
 
 
 func show_value(new_value: float) -> void:
 	bar.value = new_value
 	value_label.text = "%d" % roundi(new_value)
+	label.add_theme_color_override(&"font_color", step_color(step_of(meter, new_value)))
 	pulsing = is_critical(meter, new_value)
 	if not pulsing:
 		_pulse_s = 0.0
-		bar.modulate = Color.WHITE
+		_show_alert(0.0)
 	_place_cues()
 
 
 ## How full the bar is, 0 to 1.
 func fill_ratio() -> float:
 	return (bar.value - bar.min_value) / (bar.max_value - bar.min_value)
+
+
+## The label's colour now.
+func label_color() -> Color:
+	return label.get_theme_color(&"font_color")
+
+
+## The box outline's colour now.
+func outline_color() -> Color:
+	return _outline_style.border_color if _outline_style != null else HudStyle.OUTLINE
+
+
+## The edge column as (x, colour) in the bar, or (-1, transparent) when the fill ends on a whole
+## column.
+func edge_column() -> Array:
+	return [_edge.position.x, _edge.color] if _edge.visible else [-1.0, Color.TRANSPARENT]
+
+
+## Full columns of the fill: the engine's own rounding (a remainder of half a pixel or more fills one
+## more column).
+func full_columns() -> int:
+	return roundi(fill_ratio() * bar.size.x)
 
 
 ## A change MetersHud sorted, from `old` (the value it saw the frame before) to `new`.
@@ -110,7 +178,7 @@ func show_change(old: float, new: float, kind: MeterWatch.Change) -> void:
 				_lost_speed = 0.0
 			if kind == MeterWatch.Change.HIT and not HurtCues.reduce_flashes:
 				if not _shaken:
-					_shake_home_x = bar.position.x
+					_shake_home_x = box.position.x
 					_shaken = true
 				_shake_left_s = _tuning.shake_s
 				_shake_age_s = 0.0
@@ -151,7 +219,7 @@ func step(delta: float) -> void:
 			_stop_shake()
 		else:
 			var side: float = 1.0 if int(floor(_shake_age_s / SHAKE_STEP_S)) % 2 == 0 else -1.0
-			bar.position.x = _shake_home_x + side * _tuning.shake_px
+			box.position.x = _shake_home_x + side * _tuning.shake_px
 	_place_cues()
 
 
@@ -181,6 +249,38 @@ func _losing() -> bool:
 	return _lost_top > bar.value + EPSILON
 
 
+# The fill from the ramp (each row keeps its colour when stretched across), the empty part flat.
+func _style_bar() -> void:
+	bar.custom_minimum_size = Vector2.ZERO
+	var empty := StyleBoxFlat.new()
+	empty.bg_color = empty_color
+	empty.anti_aliasing = false
+	bar.add_theme_stylebox_override(&"background", empty)
+	if ramp != null:
+		var fill := StyleBoxTexture.new()
+		fill.texture = ramp
+		bar.add_theme_stylebox_override(&"fill", fill)
+		var strip: Image = ramp.get_image()
+		if strip != null:
+			_highlight = strip.get_pixel(0, 0)
+			_shade = strip.get_pixel(0, strip.get_height() - 1)
+	else:
+		var flat := StyleBoxFlat.new()
+		flat.bg_color = fill_color
+		flat.anti_aliasing = false
+		bar.add_theme_stylebox_override(&"fill", flat)
+		_highlight = fill_color.lerp(Color.WHITE, _tuning.gain_lighten)
+		_shade = fill_color.darkened(0.4)
+
+
+# The pulse at `amount` (0: steady, 1: full alert) on the outline and the value, never the label.
+# A drain's glow shows in the outline's place when no pulse runs.
+func _show_alert(amount: float) -> void:
+	if _outline_style != null:
+		_outline_style.border_color = HudStyle.OUTLINE.lerp(PULSE_COLOR, amount)
+	value_label.add_theme_color_override(&"font_color", HudStyle.CREAM.lerp(PULSE_COLOR, amount))
+
+
 # The lost part holds, then shrinks: linearly over loss_drain_s from where it stood when the hold
 # ended, and never slower than its own gap over loss_drain_s, so a drain's part trails the fill.
 func _step_lost(delta: float) -> void:
@@ -203,37 +303,46 @@ func _stop_shake() -> void:
 	if not _shaken:
 		return
 	_shaken = false
-	bar.position.x = _shake_home_x
-	queue_sort()
+	box.position.x = _shake_home_x
 
 
 func _make_cue_nodes() -> void:
-	for node: Control in [_lost, _gain, _flash, _glow] as Array[Control]:
+	for node: Control in [_edge, _tick, _lost, _gain, _flash] as Array[Control]:
 		node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		node.visible = false
 		bar.add_child(node)
+	_edge.name = &"Edge"
+	_edge.color = _shade
+	_tick.name = &"Tick"
+	_tick.color = HudStyle.ALERT
 	_lost.name = &"Lost"
 	_lost.color = _tuning.loss_color
 	_gain.name = &"Gain"
-	_gain.color = fill_color.lerp(Color.WHITE, _tuning.gain_lighten)
+	_gain.color = _highlight
 	_flash.name = &"Flash"
 	_flash.color = Color(1.0, 1.0, 1.0, 0.5)
 	_glow.name = &"Glow"
+	_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_glow.visible = false
 	var frame := StyleBoxFlat.new()
 	frame.draw_center = false
 	frame.border_color = _tuning.glow_color
+	frame.anti_aliasing = false
 	frame.set_border_width_all(1)
 	_glow.add_theme_stylebox_override(&"panel", frame)
-	# Under the name and the value, which are the bar's first children.
-	for node: Control in [_glow, _flash, _gain, _lost] as Array[Control]:
-		bar.move_child(node, 0)
+	box.add_child(_glow)
 
 
 func _place_cues() -> void:
 	if not is_node_ready():
 		return
-	var width: float = bar.size.x
+	var width: float = FILL_SIZE.x
 	var span: float = bar.max_value - bar.min_value
+	_place_edge(width)
+	_tick.visible = meter == DataEnums.Meter.HEAT
+	if _tick.visible:
+		_tick.position = Vector2(floorf(CRITICAL_HEAT / span * width), 0.0)
+		_tick.size = Vector2(1.0, FILL_SIZE.y)
 	_lost.visible = _losing()
 	if _lost.visible:
 		_place(_lost, bar.value, _lost_top, width, span)
@@ -243,14 +352,26 @@ func _place_cues() -> void:
 		_gain.modulate.a = clampf(_gain_left_s / maxf(_tuning.gain_fade_s, EPSILON), 0.0, 1.0)
 	_flash.visible = _flash_left_s > 0.0
 	_flash.position = Vector2.ZERO
-	_flash.size = bar.size
-	_glow.visible = _glow_left_s > 0.0
+	_flash.size = FILL_SIZE
+	_glow.visible = _glow_left_s > 0.0 and not pulsing
 	_glow.position = Vector2.ZERO
-	_glow.size = bar.size
+	_glow.size = box.size
+
+
+# A remainder under half a pixel draws one shade column at the fill's end; from half a pixel up the
+# engine's rounding already fills that column.
+func _place_edge(width: float) -> void:
+	var exact: float = fill_ratio() * width
+	var whole: float = floorf(exact)
+	var remainder: float = exact - whole
+	_edge.visible = remainder > EPSILON and remainder < 0.5
+	if _edge.visible:
+		_edge.position = Vector2(whole, 0.0)
+		_edge.size = Vector2(1.0, FILL_SIZE.y)
 
 
 func _place(node: Control, from: float, to: float, width: float, span: float) -> void:
 	var left: float = (from - bar.min_value) / span * width
 	var right: float = (to - bar.min_value) / span * width
 	node.position = Vector2(left, 0.0)
-	node.size = Vector2(maxf(right - left, 0.0), bar.size.y)
+	node.size = Vector2(maxf(right - left, 0.0), FILL_SIZE.y)

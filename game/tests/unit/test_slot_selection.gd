@@ -8,7 +8,7 @@ extends GutTest
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_slot_selection_settings.cfg"
+var settings_path: String = UserTmp.path("test_slot_selection_settings.cfg")
 const NUMBER_ROW: Array[Key] = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_0, KEY_MINUS, KEY_EQUAL]
 ## GUT's own panel, drawn over the bottom band in the test runner; hidden while a test clicks.
 const GUT_LAYER: NodePath = ^"/root/GutRunner/GutLayer"
@@ -27,8 +27,8 @@ func after_each() -> void:
 		gut_layer.visible = true
 	_hid_gut_layer = false
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _session() -> CoopSession:
@@ -293,7 +293,7 @@ func test_a_screen_takes_input_first() -> void:
 
 func _shell() -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	return shell
 

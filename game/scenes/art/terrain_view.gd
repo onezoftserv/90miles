@@ -14,6 +14,10 @@ const LAND_LAYERS: Array[StringName] = [TerrainArt.SAND, TerrainArt.DUNE, Terrai
 ## foot shade (design.md K36, K39).
 const POOL_SOURCE: int = 0
 const SHADE_SOURCE: int = 1
+## The pebble decals at the foot of a straight rock seam (art-terrain-polish D6), by the rock
+## cell's own plain mask: the tile whose stones sit in the sand strip that seam leaves.
+const PEBBLE_SOURCE: int = 2
+const PEBBLE_SIDE: Dictionary[int, Vector2i] = {10: Vector2i(0, 0), 5: Vector2i(1, 0), 12: Vector2i(2, 0), 3: Vector2i(3, 0)}
 const PALM_SHADE: Vector2i = Vector2i(0, 4)
 ## The two halves of the wide shade under the raft site, on the two cells west of its own cell:
 ## the site's cell is a shore cell, and a decal there would lie over the foam and the water.
@@ -28,6 +32,8 @@ const SEA_MARGIN_PX: float = 640.0
 var layout_id: StringName = &""
 var grid_size: Vector2i = Vector2i.ZERO
 var depth_bytes: PackedByteArray = PackedByteArray()
+## The sea mask's RG bytes the last build set, two per cell (SeaMask.soft_channels).
+var sea_channels: PackedByteArray = PackedByteArray()
 var phase_bytes: PackedByteArray = PackedByteArray()
 ## How long the last build took, in microseconds (design.md T12).
 var build_usec: int = 0
@@ -81,12 +87,13 @@ func _build(source: Node, grid: GridTerrain) -> void:
 	for layer: StringName in LAND_LAYERS:
 		var tiles := get_node(NodePath(layer)) as TileMapLayer
 		tiles.clear()
-		for cell: Vector2i in TerrainArt.layer_cells(layer, grid, pools):
-			_put(tiles, cell, TerrainArt.tile(layer, cell, layout_id, grid, pools))
+		for cell: Vector2i in TerrainArt.layer_cells(layer, grid, pools, palms):
+			_put(tiles, cell, TerrainArt.tile(layer, cell, layout_id, grid, pools, palms))
 	_shore.clear()
 	var shore_cells: Array[Vector2i] = ShoreRule.shore_cells(grid, pools)
+	var still: Dictionary[Vector2i, bool] = ShoreRule.still_water(grid, pools)
 	for cell: Vector2i in shore_cells:
-		_put(_shore, cell, ShoreRule.foam_tile(cell, grid, pools))
+		_put(_shore, cell, ShoreRule.foam_tile(cell, grid, pools, still))
 	_build_decals(grid, pools, palms, spots, built.raft_site if built != null else Vector2i(-1, -1))
 	depth_bytes = SeaMask.depth_bytes(grid_size, grid)
 	phase_bytes = SeaMask.phase_bytes(layout_id, grid_size, grid, pools, shore_cells)
@@ -114,11 +121,31 @@ func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vecto
 	for foot: Vector2i in palms + spots:
 		if foot.x >= 0 and _decals.get_cell_source_id(foot) < 0:
 			_decals.set_cell(foot, SHADE_SOURCE, PALM_SHADE)
+	for cell: Vector2i in grid.cells:
+		var side: Vector2i = _pebble_side(cell, grid, pools)
+		if side.x >= 0 and has_pebbles(layout_id, cell) and _decals.get_cell_source_id(cell) < 0:
+			_decals.set_cell(cell, PEBBLE_SOURCE, side)
 	if raft_site.x >= 0:
 		for half: Dictionary in [{&"cell": raft_site + WIDE_WEST_OFFSET, &"atlas": WIDE_WEST}, {&"cell": raft_site + WIDE_EAST_OFFSET, &"atlas": WIDE_EAST}]:
 			var cell: Vector2i = half[&"cell"]
 			if TerrainArt.depth_step(grid.terrain_at(cell)) < 0 and _decals.get_cell_source_id(cell) < 0:
 				_decals.set_cell(cell, SHADE_SOURCE, half[&"atlas"])
+
+
+## Whether the rock cell `cell` of the layout `layout_id` shows pebbles at its foot: about one
+## seam cell in two, by its hash (art-terrain-polish D6), the same on every peer.
+static func has_pebbles(layout_id: StringName, cell: Vector2i) -> bool:
+	return (TerrainArt.cell_hash(layout_id, cell) >> 3) & 1 == 0
+
+
+# The pebble tile for a rock cell on a straight inland seam (its sand whole, its own plain mask
+# one straight edge): the one that sits in the sand strip the seam leaves; (-1, -1) otherwise.
+static func _pebble_side(cell: Vector2i, grid: GridTerrain, pools: Array[Vector2i]) -> Vector2i:
+	if grid.terrain_at(cell) != DataEnums.Terrain.ROCK:
+		return Vector2i(-1, -1)
+	if TerrainArt.corner_mask(TerrainArt.SAND, cell, grid, pools) != TerrainArt.FULL:
+		return Vector2i(-1, -1)
+	return PEBBLE_SIDE.get(TerrainArt.corner_mask(TerrainArt.PLAIN, cell, grid, pools), Vector2i(-1, -1))
 
 
 # A corner of a shaded cell counts when the four cells round it are shaded (design.md K39).
@@ -135,26 +162,24 @@ static func _shade_mask(cell: Vector2i, grid: GridTerrain) -> int:
 
 # The sea rect over the grid and its margin, and its material's textures: the water and ramps
 # from ArtTuning, and the depth mask with shallowness and brackishness in two channels, so linear
-# filtering between brackish and deep never passes through shallows.
+# filtering between brackish and deep never passes through shallows, softened (art-coast-pass D6).
 func _build_sea() -> void:
 	var tile: float = float(IslandLayout.TILE)
 	var area := Rect2(Vector2.ZERO, Vector2(grid_size) * tile).grow(SEA_MARGIN_PX)
 	_sea.polygon = PackedVector2Array([area.position, Vector2(area.end.x, area.position.y), area.end, Vector2(area.position.x, area.end.y)])
-	setup_sea(_sea.material as ShaderMaterial, depth_bytes, grid_size, tile)
+	sea_channels = setup_sea(_sea.material as ShaderMaterial, depth_bytes, grid_size, tile)
 
 
 ## Sets the sea shader's parameters on `material` for a grid of `cells` columns and rows of
 ## `cell_px` each, with `depth_bytes` as its depth steps: the one setup both the island's sea and the
-## crossing's (CrossingSea) use, so they cannot drift apart.
-static func setup_sea(material: ShaderMaterial, depth_bytes: PackedByteArray, cells: Vector2i, cell_px: float) -> void:
+## crossing's (CrossingSea) use, so they cannot drift apart. The mask is SeaMask.soft_channels'
+## softened one and the shader warps where it samples it by SeaMask's numbers (art-coast-pass D6).
+## Returns the mask's bytes.
+static func setup_sea(material: ShaderMaterial, depth_bytes: PackedByteArray, cells: Vector2i, cell_px: float) -> PackedByteArray:
 	var art: TerrainArtData = TerrainArt.data()
 	var deep: int = art.depth_steps[DataEnums.Terrain.DEEP]
 	var brackish: int = art.depth_steps[DataEnums.Terrain.BRACKISH]
-	var channels := PackedByteArray()
-	channels.resize(depth_bytes.size() * 2)
-	for index: int in depth_bytes.size():
-		channels[index * 2] = 0 if depth_bytes[index] == deep else 255
-		channels[index * 2 + 1] = 255 if depth_bytes[index] == brackish else 0
+	var channels: PackedByteArray = SeaMask.soft_channels(depth_bytes, cells, cell_px)
 	var mask := Image.create_from_data(cells.x, cells.y, false, Image.FORMAT_RG8, channels)
 	var tuning := load(ArtTuning.STANDARD_PATH) as ArtTuning
 	material.set_shader_parameter(&"water", tuning.sea_water)
@@ -165,6 +190,9 @@ static func setup_sea(material: ShaderMaterial, depth_bytes: PackedByteArray, ce
 	material.set_shader_parameter(&"deep_row", deep)
 	material.set_shader_parameter(&"shallows_row", art.depth_steps[DataEnums.Terrain.SHALLOWS])
 	material.set_shader_parameter(&"brackish_row", brackish)
+	material.set_shader_parameter(&"warp_px", SeaMask.WARP_PX)
+	material.set_shader_parameter(&"warp_period_px", SeaMask.WARP_PERIOD_PX)
+	return channels
 
 
 # Columns and rows of a grid with no layout: one past its largest cell.

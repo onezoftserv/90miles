@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BackgroundData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/background_data.gd" id="1_background"]
+
+[resource]
+script = ExtResource("1_background")
+description_es = "Daba clases de geografía en un preuniversitario de Pinar del Río. Sabe leer las estrellas y convence a cualquiera con dos datos y una pregunta."
+description_en = "Taught geography at a pre-university school in Pinar del Río. Reads the stars and can talk anyone round with two facts and a question."
+skill_summary_es = "Navegación: lee las estrellas, ve islas, encuentra textos"
+skill_summary_en = "Navigation: reads the stars, spots islands, finds texts"
+skills = Array[int]([4])
+id = &"maestro"
+name_es = "Maestro"
+name_en = "Maestro (teacher)"

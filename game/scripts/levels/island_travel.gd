@@ -23,11 +23,18 @@ enum Outcome {
 
 ## Every peer: the next island is built, furnished and the players are on it.
 signal island_loaded(loaded: SandbarIsland)
+## Every peer (guardacostas-capture "Release at the next island"): the party was released from an
+## island that names no next one, so every player has left it and the run is over, as leaving it by a
+## route is. The shell shows the run summary.
+signal left_the_chain
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
-## The session's own nodes, which stay when an island's furniture goes.
+## The session's own nodes, which stay when an island's furniture goes. The world event bus is the
+## session's (guardacostas-stealth decision 8), so it stays too: the next island's spawner and patrol
+## boats listen to it.
 const SESSION_NODES: Array[StringName] = [
 	&"Players", &"PlayerSpawner", &"Entities", &"EntitySpawner", &"Pickups", &"PickupSpawner",
+	&"WorldEvents", &"CaptureScene",
 ]
 const RAFT_NAME: StringName = &"Raft"
 ## escape-routes "Split parties" (dropped-teammate-state): once dropped players still on the island
@@ -37,8 +44,13 @@ const DROPPED_HOLD_S: float = 30.0
 ## The island the session is on (it sits beside the session, in the same parent).
 var island: SandbarIsland
 var session: CoopSession
-## How many islands the party has stood on this run, the sandbar being 1 (run summary totals).
+## How many islands the party has stood on this run, the sandbar being 1 (run summary totals): the
+## highest index in the history (guardacostas-capture "Island history"), so a restart or a second
+## arrival never counts an island twice. A joiner takes the host's number.
 var islands_reached: int = 1
+## The run's islands in order, with their index (guardacostas-capture design.md §8). Every peer
+## appends from the host's travel message, which carries the index; only the host asks previous().
+var history: IslandHistory = IslandHistory.new()
 
 # The results of the crossings that ended since the island loaded.
 var _results: Array[CrossingResult] = []
@@ -47,11 +59,26 @@ var _waiting_peers: Array[int] = []
 var _travel_queued: bool = false
 
 
+## The island keeper of `of_session` (its IslandTravel child, whatever its name), or null.
+static func of(of_session: CoopSession) -> IslandTravel:
+	if of_session == null:
+		return null
+	for child: Node in of_session.get_children():
+		if child is IslandTravel:
+			return child as IslandTravel
+	return null
+
+
 ## Starts keeping `current` for `for_session`. Call once the session is in the tree.
 func setup(for_session: CoopSession, current: SandbarIsland) -> void:
 	session = for_session
 	island = current
+	if history.entries.is_empty() and island.layout != null:
+		history.arrive(island.layout.id, 1, island.layout.off_graph)
 	session.island_travel_requested.connect(_load)
+	session.off_the_chain_requested.connect(end_off_the_chain)
+	session.party_travel_requested.connect(_on_party_travel)
+	session.capture_state_changed.connect(_on_changed)
 	session.player_spawned.connect(_on_player_spawned)
 	session.player_rebound.connect(_on_player_rebound)
 	session.removal_recorded.connect(_on_removal_recorded)
@@ -78,6 +105,11 @@ func crossing_ended(result: CrossingResult) -> void:
 ## waiting, not in a crossing) keeps it open until removed; once such players are all that keep
 ## riders waiting, the host cuts each one's time to DROPPED_HOLD_S. A drop never ends the run early.
 func check() -> Outcome:
+	# guardacostas-capture "Whole-party capture": checked before the island loads or the run ends. A
+	# taken captive is held like a rider, so it counts as gone below.
+	var keeper := CaptureScene.of(session)
+	if keeper != null and keeper.holds_travel():
+		return Outcome.PLAYING
 	var waiting: int = 0
 	var dropped_here: Array[int] = []
 	for peer_id: int in session.peer_ids():
@@ -119,7 +151,66 @@ func travel(next_id: StringName) -> void:
 		if cells.has(peer_id):
 			arrival["cell"] = cells[peer_id]
 		arrivals[peer_id] = arrival
-	session.travel_to.rpc(String(next_id), arrivals, _beached_integrity())
+	var off_graph: bool = next_layout != null and next_layout.off_graph
+	session.travel_to.rpc(String(next_id), arrivals, _beached_integrity(), history.next_index(off_graph))
+
+
+## Host: the previous island (guardacostas-capture "Island history"): the last on-graph island before
+## this one with a lower index; on island 1, island 1 itself; never the secret cay.
+func previous() -> StringName:
+	return history.previous()
+
+
+## Host (guardacostas-capture "Previous island after capture"): the party restarts the previous
+## island, rebuilt from its layout and the run seed, every player landing on its landing cells
+## (within 5 tiles) with the health and energy they have, and nothing beached.
+func restart() -> void:
+	if not session.multiplayer.is_server():
+		return
+	_relocate(previous(), history.previous_index())
+
+
+## Host (guardacostas-capture "Release at the next island"): the party lands on the next island this
+## one names, as a restart does, and it counts as reached. When this island names none, the run ends
+## as leaving it does (every peer: `end_off_the_chain`).
+func release() -> void:
+	if not session.multiplayer.is_server():
+		return
+	var next_id: StringName = island.layout.next_island
+	var next_layout := GameState.content.get_entry(&"islands", next_id) as IslandLayoutData if not next_id.is_empty() else null
+	if next_layout == null:
+		session.end_off_the_chain.rpc()
+		return
+	_relocate(next_id, history.next_index(next_layout.off_graph))
+
+
+## Every peer, from the host (CoopSession.end_off_the_chain): the party was released from an island
+## that names no next one. Every living player is held out of play as a rider on the next shore
+## would be, so the run is OVER, and the shell shows the summary.
+func end_off_the_chain() -> void:
+	for peer_id: int in session.peer_ids():
+		var player := session.body(peer_id)
+		if player != null and not player.meters.dead:
+			IslandArrival.hold(player)
+	left_the_chain.emit()
+
+
+# Host: a TRAVEL_NEXT_ISLAND or TRAVEL_PREVIOUS_ISLAND effect.
+func _on_party_travel(onward: bool) -> void:
+	if onward:
+		release()
+	else:
+		restart()
+
+
+# Host: every player in the session lands on `layout_id` at its landing cells in peer order (no
+# scatter), with their health and energy, as island number `index`, with no vessel beached.
+func _relocate(layout_id: StringName, index: int) -> void:
+	var arrivals: Dictionary = {}
+	for peer_id: int in session.peer_ids():
+		var meters := session.body(peer_id).meters
+		arrivals[peer_id] = {"health": meters.health, "energy": meters.energy}
+	session.travel_to.rpc(String(layout_id), arrivals, 0.0, index)
 
 
 ## Client: a joiner or rejoined player hears which island the host is on and who waits there. It
@@ -252,7 +343,7 @@ func _travel_when_idle() -> void:
 
 # Every peer, from the host's travel_to: the old level goes, the next one is built and the players
 # land on it.
-func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float) -> void:
+func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float, index: int = 0) -> void:
 	var next_layout := GameState.content.get_entry(&"islands", layout_id) as IslandLayoutData
 	if next_layout == null:
 		return
@@ -271,9 +362,11 @@ func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float) -
 	if session.multiplayer.is_server():
 		fresh.place_pickups(session)
 	_results.clear()
-	# An off-graph layout (the secret cay) is never an island reached (endings-progression).
-	if not next_layout.off_graph:
-		islands_reached += 1
+	# The host's message names the island's index (0 from an older caller: the next index). An
+	# off-graph layout (the secret cay) is never an island reached (endings-progression), and the
+	# islands reached are the highest index, so a restart counts nothing twice.
+	history.arrive(layout_id, index if index > 0 else history.next_index(next_layout.off_graph), next_layout.off_graph)
+	islands_reached = maxi(islands_reached, history.reached())
 	island_loaded.emit(fresh)
 
 

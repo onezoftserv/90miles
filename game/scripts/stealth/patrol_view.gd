@@ -5,8 +5,8 @@ extends RefCounted
 ## from the session's terrain on a client (the same terrain every peer built from the layout), so the
 ## loop is the same on every peer. A client calls `step_client` each physics frame: in HORIZON, LAP
 ## and AWAY the boat's clock runs on locally between syncs (the host's value snaps it back at each
-## sync) and the pose and beam come from PatrolLoop and Searchlight; in the alert states the synced
-## position and beam stand. Never runs a trigger, a spot or an alert, and never emits.
+## sync) and the pose and beam come from PatrolLoop and Searchlight; in the alert states (the chase and
+## the docked boat of guardacostas-capture included) the synced position and beam stand. Never runs a trigger, a spot or an alert, and never emits.
 
 var loop: PatrolLoop = null
 var light: Searchlight = null
@@ -82,7 +82,7 @@ func step_client(creature: Creature, delta: float) -> void:
 	if not valid:
 		return
 	var state: int = creature.state_id
-	if state == PatrolRoute.State.ALERT_LOCK or state == PatrolRoute.State.ALERT_SEARCH:
+	if PatrolRoute.is_alert_state(state):
 		return
 	creature.route_t = fposmod(creature.route_t + delta, period_s)
 	if state == PatrolRoute.State.LAP:

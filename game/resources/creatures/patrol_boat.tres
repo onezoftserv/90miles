@@ -15,6 +15,13 @@ chain_families = Array[int]([1])
 terrain = Array[int]([0])
 count = Vector2i(1, 2)
 
+[sub_resource type="Resource" id="Resource_mid"]
+script = ExtResource("2_rule")
+chain_families = Array[int]([2, 3, 4, 5])
+terrain = Array[int]([0])
+count = Vector2i(1, 2)
+chance = 0.3
+
 [sub_resource type="Resource" id="Resource_patrol"]
 script = ExtResource("3_patrol")
 route_period_s = 180.0
@@ -28,6 +35,16 @@ water_spot_radius_tiles = 6.0
 smoke_shore_tiles_night = 2.0
 smoke_shore_tiles_day = 6.0
 noise_alert_min_radius_tiles = 8.0
+chase_speed_mult = 2.0
+chase_speed_ref = 1
+squad_creature_id = &"shore_soldier"
+squad_size = 3
+search_duration_s = 180.0
+search_order = Array[int]([0, 1, 2])
+capture_touch_s = 2.0
+free_guard_radius_tiles = 3.0
+capture_dialogue_id = &"beat_la_captura"
+commander_npc_id = &"rodriguez"
 route_lap_s = 100.0
 route_offshore_tiles = 4.0
 searchlight_arc_deg = 120.0
@@ -39,6 +56,26 @@ alert_lines_es = PackedStringArray("¡Atención! Tropas Guardafronteras. Permane
 alert_lines_en = PackedStringArray("Attention! Border Guard troops. Stay where you are.", "Citizen, you are inside a surveillance zone. Do not move.")
 give_up_lines_es = PackedStringArray("Sector sin novedad. Continuamos el recorrido.")
 give_up_lines_en = PackedStringArray("Sector all clear. We continue the patrol.")
+haul_tiles = 1.0
+haul_s = 2.0
+chase_break_tiles = 10.0
+landing_speed_tiles_s = 2.0
+point_search_s = 3.0
+point_search_tiles = 2.0
+capture_grace_s = 60.0
+soldier_day_sight_deg = 120.0
+soldier_day_sight_tiles = 6.0
+soldier_night_sight_deg = 60.0
+soldier_night_sight_tiles = 5.0
+soldier_chase_tiles_s = 5.0
+capture_touch_tiles = 1.0
+free_hold_s = 1.0
+squad_land_lines_es = PackedStringArray("¡Tropas Guardafronteras! Todo el mundo quieto donde está.", "Se procede a la inspección del cayo. Colaboren con la autoridad.")
+squad_land_lines_en = PackedStringArray("Border Guard troops! Everyone stay where you are.", "The inspection of the cay is under way. Cooperate with the authorities.")
+squad_spot_lines_es = PackedStringArray("¡Alto! Ciudadano, deténgase.")
+squad_spot_lines_en = PackedStringArray("Halt! Citizen, stop right there.")
+squad_leave_lines_es = PackedStringArray("Sector sin novedad. Regresamos a la embarcación.")
+squad_leave_lines_en = PackedStringArray("Sector all clear. Returning to the vessel.")
 
 [resource]
 script = ExtResource("1_creature")
@@ -55,6 +92,6 @@ domains = Array[int]([2])
 behavior = 10
 senses = Array[int]([0, 1, 4])
 patrol = SubResource("Resource_patrol")
-spawn_rules = Array[ExtResource("2_rule")]([SubResource("Resource_sandbar"), SubResource("Resource_coast")])
+spawn_rules = Array[ExtResource("2_rule")]([SubResource("Resource_sandbar"), SubResource("Resource_coast"), SubResource("Resource_mid")])
 party_rate_mult_per_extra_player = 1.0
 party_extra_count_every_n_players = 2

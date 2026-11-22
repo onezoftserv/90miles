@@ -7,7 +7,7 @@ extends GutTest
 ## the title. Solo first-class: no network peer exists at any point (design.md D10, P8, K20).
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
-const SETTINGS_PATH: String = "user://test_credits_screen_settings.cfg"
+var settings_path: String = UserTmp.path("test_credits_screen_settings.cfg")
 const SCREEN_RECT: Rect2 = Rect2(0.0, 0.0, 640.0, 360.0)
 const CREDITS_INDEX: int = 4
 const CC_BY: String = "CC BY 4.0"
@@ -23,13 +23,13 @@ func before_each() -> void:
 
 func after_each() -> void:
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _shell() -> GameShell:
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	return shell
 
@@ -169,7 +169,10 @@ func test_the_list_is_in_pixelify_sans_inside_the_screen_and_scrolls() -> void:
 	assert_true(SCREEN_RECT.encloses(screen.scroll.get_global_rect()), "the view inside 640×360")
 	assert_true(SCREEN_RECT.encloses(screen.back_button.get_global_rect()), "Volver inside 640×360")
 	for label: Label in screen.entry_labels():
-		assert_eq(label.get_theme_font(&"font").resource_path, PIXELIFY_SANS, label.text)
+		var font := label.get_theme_font(&"font") as FontVariation
+		assert_not_null(font, "%s: the menu font (hud-window-kit design D3)" % label.text)
+		if font != null:
+			assert_eq(font.base_font.resource_path, PIXELIFY_SANS, label.text)
 		assert_eq(label.get_theme_font_size(&"font_size"), 16, label.text)
 		assert_lte(label.get_global_rect().end.x, SCREEN_RECT.end.x, "%s fits across" % label.text)
 	screen._unhandled_input(_down_event())

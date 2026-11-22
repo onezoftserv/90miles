@@ -41,8 +41,17 @@ signal removal_recorded(peer_id: int, player_name: String)
 ## A rejoined player took back its body: it now belongs to `new_peer` (on every peer).
 signal player_rebound(old_peer: int, new_peer: int, body: PlayerBody)
 ## Every peer: the host loads island `layout_id` with these arrivals (peer id -> {health, energy})
-## and a beached raft of `raft_integrity` (0: none). IslandTravel does it.
-signal island_travel_requested(layout_id: StringName, arrivals: Dictionary, raft_integrity: float)
+## and a beached raft of `raft_integrity` (0: none), as island number `index` of the run (0: the next
+## one; guardacostas-capture "Island history"). IslandTravel does it.
+signal island_travel_requested(layout_id: StringName, arrivals: Dictionary, raft_integrity: float, index: int)
+## Every peer: the host released the party from an island that names no next one (guardacostas-capture
+## "Release at the next island"); IslandTravel ends the run as leaving that island does.
+signal off_the_chain_requested
+## Host: an effect asks the island keeper to release the party at the next island (`onward`) or to
+## restart the previous one (guardacostas-capture TRAVEL_NEXT_ISLAND and TRAVEL_PREVIOUS_ISLAND).
+signal party_travel_requested(onward: bool)
+## Host: the capture keeper took captives or ended a scene; the island keeper checks the party again.
+signal capture_state_changed
 ## Host: a joiner or a rejoined player was sent the world state and its lobby reply; what it must
 ## hear once its island has loaded goes now (structure-state-sync design D6: the palms' counts).
 signal join_state_sent(peer_id: int)
@@ -107,6 +116,8 @@ const WORLD_STATE_TYPES: Dictionary[String, int] = {
 ## not the player cap. Dropped bodies hold no place in the cap, so four connected players and dropped
 ## ones waiting can arrive together (dropped-teammate-state D5).
 const MAX_ARRIVALS: int = 2 * MAX_PLAYERS
+## The highest island index a travel message may carry: a sanity bound on a host message.
+const MAX_ISLAND_INDEX: int = 999
 
 ## Where players appear, in join order (the host first). Set by the level.
 @export var spawn_points: Array[Vector2] = [Vector2.ZERO]
@@ -142,6 +153,8 @@ var phrases: QuickChatPhrases
 var locale: String = DEFAULT_LOCALE
 ## The world event bus (guardacostas-stealth): a child node, added in _ready; acts on the host only.
 var events: WorldEvents = null
+## The capture keeper and scene runner (guardacostas-capture): a child node, added in _ready.
+var capture: CaptureScene = null
 var run_record: RunRecord = RunRecord.new()  # Host: this run's flags, creature counts and effect limits (never sent).
 ## Host, in a rematch (art-pass "Look slots in a rematch"): the look slot each peer kept from the
 ## run that ended, by peer id (nobody reconnects, so the ids stay). The shell sets it before
@@ -200,6 +213,9 @@ func _ready() -> void:
 	events = WorldEvents.new()
 	events.name = &"WorldEvents"
 	add_child(events)
+	capture = CaptureScene.new()
+	capture.name = CaptureScene.NODE_NAME
+	add_child(capture)
 	if phrases == null:
 		phrases = QuickChatPhrases.from_catalog(GameState.content)
 
@@ -725,6 +741,11 @@ func craft_for(peer: int, recipe_id: StringName, station_path: NodePath) -> bool
 		return false
 	var recipe := player.crafter.recipe_for(recipe_id)
 	var station := get_node_or_null(station_path) as Node2D
+	# island-stop: a mend or a fitting chosen at a raft opens that raft's job.
+	if station is Raft and Raft.is_job_recipe(recipe):
+		return (station as Raft).open_job_for(player, recipe)
+	if Raft.is_job_recipe(recipe):
+		return false
 	if recipe != null and recipe.build_site:
 		return _place_site(player, recipe, station)
 	return player.crafter.start(recipe, station)
@@ -777,8 +798,9 @@ func record_site_built(site: BuildSite) -> void:
 		_built_sites[String(get_path_to(site))] = true
 
 
-## Client: asks the host for the live state of this peer's synced `site`.
-func ask_site_state(site: BuildSite) -> void:
+## Client: asks the host for the live state of this peer's synced `site`, or of a raft (island-stop:
+## its integrity, maximum, fittings and job).
+func ask_site_state(site: Node) -> void:
 	request_site_state.rpc_id(HOST_ID, get_path_to(site))
 
 
@@ -790,9 +812,13 @@ func request_site_state(site_path: NodePath) -> void:
 	var sender: int = multiplayer.get_remote_sender_id()
 	if not multiplayer.is_server() or not multiplayer.get_peers().has(sender) or not _allow_request(sender):
 		return
-	var site := get_node_or_null(site_path) as BuildSite
+	var node := get_node_or_null(site_path)
+	var site := node as BuildSite
+	var raft := node as Raft
 	if site != null and _is_own(site):
 		site.send_state_to(sender)
+	elif raft != null and _is_own(raft):
+		raft.send_state_to(sender)
 	elif _built_sites.has(String(site_path)):
 		receive_site_built.rpc_id(sender, site_path)
 
@@ -895,10 +921,11 @@ func _sender() -> int:
 
 
 # `peer`'s body if it may act now: alive and on their feet (a downed player or one in a last
-# stand lies still, unless `allow_last_stand`); the host is trusted, a client is rate limited.
+# stand lies still, unless `allow_last_stand`), and not a captive (guardacostas-capture: a captive
+# keeps only quick chat, which does not ask here); the host is trusted, a client is rate limited.
 func _acting_body(peer: int, allow_last_stand: bool = false) -> PlayerBody:
 	var player := body(peer)
-	if player == null or player.meters.dead or player.meters.downed or has_left(peer):
+	if player == null or player.meters.dead or player.meters.downed or player.captive or has_left(peer):
 		return null
 	if player.meters.last_stand and not allow_last_stand:
 		return null
@@ -961,17 +988,27 @@ func _is_unsafe_node_name(node_name: String) -> bool:
 
 ## Every peer: the host loads the island `layout_id` for everyone, with `arrivals` (peer id ->
 ## {health, energy}) landing on its landing cells in peer order and `raft_integrity` for the raft
-## beached at its build site (0: none). Anything not from the host, or not shaped like this, is
-## ignored: a client never loads an island on its own.
+## beached at its build site (0: none), as island number `index` of the run (0: the next one), so
+## every peer counts the same islands reached. Anything not from the host, or not shaped like this,
+## is ignored: a client never loads an island on its own.
 @rpc("authority", "call_local", "reliable")
-func travel_to(layout_id: String, arrivals: Dictionary, raft_integrity: float) -> void:
+func travel_to(layout_id: String, arrivals: Dictionary, raft_integrity: float, index: int = 0) -> void:
 	if not _is_from_host():
 		return
 	var id := StringName(layout_id)
 	var clean: Variant = checked_arrivals(arrivals)
-	if clean == null or not is_finite(raft_integrity) or not GameState.content.has_entry(&"islands", id):
+	# get_entry, not has_entry: a test's fixture island lives in the catalog's cache, not its folder.
+	if clean == null or not is_finite(raft_integrity) or not GameState.content.get_entry(&"islands", id) is IslandLayoutData:
 		return
-	island_travel_requested.emit(id, clean, maxf(raft_integrity, 0.0))
+	island_travel_requested.emit(id, clean, maxf(raft_integrity, 0.0), clampi(index, 0, MAX_ISLAND_INDEX))
+
+
+## Every peer, from the host (guardacostas-capture "Release at the next island"): the party was
+## released from an island that names no next one, so the run ends as leaving it does.
+@rpc("authority", "call_local", "reliable")
+func end_off_the_chain() -> void:
+	if _is_from_host():
+		off_the_chain_requested.emit()
 
 
 # The RPC being handled came from the host, or is the host calling itself (a local call has no sender).
@@ -1035,6 +1072,10 @@ func receive_world_state(state: Dictionary) -> void:
 	for node: Node in get_tree().get_nodes_in_group(BuildSite.GROUP):
 		if node is BuildSite and _is_own(node):
 			(node as BuildSite).ask_for_state()
+	# And every raft, for its integrity, maximum, fittings and job (island-stop).
+	for node: Node in get_tree().get_nodes_in_group(PlayerBody.STRUCTURE_GROUP):
+		if node is Raft and _is_own(node):
+			(node as Raft).ask_for_state()
 
 
 ## Host: sends the clock and weather to every client. Solo has no client, so nothing is sent.

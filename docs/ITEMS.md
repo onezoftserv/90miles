@@ -59,7 +59,7 @@ Nine are unknown; sábila is always known (it ships as `aloe`, and the Médico s
 | Hicaco (coco plum) | +8, thirst +3 | Safe; the dunes' coco plum |
 | Guanábana (rare) | +25, thirst +15, morale +10 | Grandmother's fruit |
 | Noni | +5 hunger, heals 10, cures poison | Smells like vomit, works |
-| Sábila (aloe) | Heals sunburn and bleeding | Known to any Cuban over 40, so always identified (`aloe`) |
+| Sábila (aloe) | Stops bleeding and heals 5 at once, on you or a bleeding teammate within 1 tile; refused at full health with nothing to cure. Its sunburn cure waits for a sunburn source (`bleeding-and-sabila`, owner 2026-11-15) | Known to any Cuban over 40, so always identified (`aloe`) |
 | Hongo de playa | 40% hallucinations for 2 min, 60% +10 hunger | A coin flip |
 | Hierba de tabaco silvestre | Morale +10 when smoked (needs fire) | Ex-militar identifies on sight |
 

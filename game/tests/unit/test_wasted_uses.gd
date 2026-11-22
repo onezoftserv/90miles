@@ -139,7 +139,9 @@ func test_the_reason_names_the_first_meter_or_the_one_status() -> void:
 	var bandage := _action([_effect(K.CURE_STATUS, M.NONE, 0.0, ST.BLEEDING)] as Array[EffectData])
 	assert_eq(InventoryStrip.wasted_line(bandage, me, null, "", words), "No 'tás sangrando.")
 	var sabila := (GameState.content.get_entry(&"items", &"aloe") as ItemData).uses[0]
-	assert_eq(InventoryStrip.wasted_line(sabila, me, null, "", words), "No hay na' que curar.", "two statuses")
+	assert_eq(InventoryStrip.wasted_line(sabila, me, null, "", words), "'Tás entero.", "its heal comes before its two cures")
+	var two_cures := _action([_effect(K.CURE_STATUS, M.NONE, 0.0, ST.BLEEDING), _effect(K.CURE_STATUS, M.NONE, 0.0, ST.SUNBURN)] as Array[EffectData])
+	assert_eq(InventoryStrip.wasted_line(two_cures, me, null, "", words), "No hay na' que curar.", "two statuses")
 	var mate := PLAYER_SCENE.instantiate() as PlayerBody
 	add_child_autofree(mate)
 	assert_eq(InventoryStrip.wasted_line(sabila, me, mate, "Papo", words), "A Papo no le hace falta.")
@@ -166,17 +168,17 @@ func test_solo_sabila_with_nothing_to_cure_is_refused_on_the_strip() -> void:
 	var hud := _hud()
 	hud.strip.select(_slot_of(&"aloe"))
 	hud.strip._process(0.1)
-	assert_eq(hud.notice.rest_text(), "Cura quemadura y sangrado", "the effect line before the press")
+	assert_eq(hud.notice.rest_text(), "Cura quemadura y sangrado · Salud +5 (+0 útil)", "the effect line before the press")
 	watch_signals(hud.strip)
 	_press_f(hud)
-	assert_eq(hud.notice.shown_text(), "No hay na' que curar.")
+	assert_eq(hud.notice.shown_text(), "'Tás entero.")
 	assert_signal_not_emitted(hud.strip, "use_sent", "nothing is sent")
 	assert_eq(_slot_of(&"aloe") >= 0, true, "the sábila stays")
 	for i: int in 21:
 		hud.strip._process(0.1)
 		hud.notice._process(0.1)
 	assert_eq(hud.notice.shown_text(), "", "the refusal goes after 2 s")
-	assert_eq(hud.notice.rest_text(), "Cura quemadura y sangrado", "and the effect line comes back")
+	assert_eq(hud.notice.rest_text(), "Cura quemadura y sangrado · Salud +5 (+0 útil)", "and the effect line comes back")
 
 
 func test_the_effect_line_follows_the_selection() -> void:

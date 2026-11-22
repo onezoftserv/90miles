@@ -24,9 +24,7 @@ theme_override_constants/separation = 6
 
 [node name="Heading" type="Label" parent="Panel/Rows"]
 layout_mode = 2
-theme_type_variation = &"HeadingLabel"
-theme_override_colors/font_color = Color(0.23, 0.16, 0.09, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+theme_type_variation = &"PanelHeading"
 text = "Ajustes"
 horizontal_alignment = 1
 
@@ -43,9 +41,6 @@ placeholder_text = "Balsero"
 [node name="Fullscreen" type="CheckBox" parent="Panel/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.23, 0.16, 0.09, 1)
-theme_override_colors/font_hover_color = Color(0.23, 0.16, 0.09, 1)
-theme_override_colors/font_pressed_color = Color(0.23, 0.16, 0.09, 1)
 text = "Pantalla completa (F11)"
 
 [node name="ScaleLabel" type="Label" parent="Panel/Rows"]
@@ -69,9 +64,6 @@ layout_mode = 2
 [node name="ReduceFlashes" type="CheckBox" parent="Panel/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.23, 0.16, 0.09, 1)
-theme_override_colors/font_hover_color = Color(0.23, 0.16, 0.09, 1)
-theme_override_colors/font_pressed_color = Color(0.23, 0.16, 0.09, 1)
 text = "Reducir destellos"
 
 [node name="Back" type="Button" parent="Panel/Rows"]

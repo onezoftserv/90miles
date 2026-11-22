@@ -64,12 +64,27 @@ func can_craft(recipe: RecipeData) -> bool:
 	return true
 
 
-## Seconds the craft takes this player: a carried fast tool replaces the recipe's own time.
+## Seconds the craft takes this player: a carried fast tool replaces the recipe's own time, and a
+## player whose background has the recipe's skill works it `skill_speed_multiplier` times as fast
+## (a Mecánico mends and builds the raft at 2×; escape-routes "Shared crafting", island-stop).
 func recipe_time(recipe: RecipeData) -> float:
 	var fast := _fast_item(recipe)
 	if fast != null and fast.tool_action_time_s >= 0.0:
 		return fast.tool_action_time_s
-	return recipe.time_s
+	return recipe.time_s / _skill_factor(recipe)
+
+
+# The recipe's speed-up for this player's background skill, 1 without one.
+func _skill_factor(recipe: RecipeData) -> float:
+	if recipe.skill == DataEnums.Skill.NONE or recipe.skill_speed_multiplier <= 0.0 or body == null:
+		return 1.0
+	var background_id: StringName = body.background_id
+	if background_id.is_empty():
+		return 1.0
+	var background := GameState.content.get_entry(&"backgrounds", background_id) as BackgroundData
+	if background != null and background.skills.has(recipe.skill):
+		return recipe.skill_speed_multiplier
+	return 1.0
 
 
 ## Starts a craft at `station` (a Workbench). False, changing nothing, when the recipe needs

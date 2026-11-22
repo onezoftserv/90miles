@@ -16,9 +16,12 @@ Difficulty scales by **distance** (islands 1–2: coast, 3–5: mid, 6–8: far)
 - Patrols deep water (≥2 tiles from shore). Investigates splashes within 8 tiles.
 - Circles a swimmer for 6–10 s. Strikes only if the target is **bleeding** (coral cut, crab wound, raw fish on them) or if energy < 20 (slow swimmer). Otherwise loses interest.
 - After a strike (25 damage + bleeding) it retreats 4 s, then circles again.
+- Bleeding drains 0.1 health/s and ends 120 s after the latest wound, never taking the last point (GAME_DESIGN §4); sábila stops it at once. A swimmer who waits it out in the shallows is no longer a target.
 - Groups of 2–3 on reef chains; the tiger shark boss replaces them once per run.
 
 **Counters.** Bandage cuts before swimming. Stay in shallows (≤1 tile). Throw raw fish away from you (decoy, 10 s). Spear hits in the nose cause a 15 s retreat.
+
+**At sea.** On a crossing a rock that passes over a swimmer is a coral cut: −15 health and bleeding, which makes that swimmer the shark's first choice. Swim out of the rock's lane, or stay aboard (`crossing-gameplay`).
 
 **Reference.** DCSS sharks frenzy when their target is wounded; Brogue's eels only attack from water.
 
@@ -162,7 +165,7 @@ The same species, the laughing gull Cubans call *galleguito*, and the same attit
 
 **Lore.** Twelve-meter patrol boats out of Mariel and Matanzas. The crews are kids doing service and one sergeant who has done this for years.
 
-**Behavior.** `route → spotlight → alert → chase → board` (built: route, spotlight and alert; chase and board come with `guardacostas-capture`)
+**Behavior.** `route → spotlight → alert → chase → board` (built: route, spotlight and alert by `guardacostas-stealth`; the chase and the squad by `guardacostas-capture`)
 - **The loop.** It runs round the whole island, 4 tiles outside its convex hull. Each 3-minute period has three parts:
   - 20 s as a light on the horizon;
   - a 100 s lap that starts and ends at the windward (east) end;
@@ -171,7 +174,8 @@ The same species, the laughing gull Cubans call *galleguito*, and the same attit
 - **Night: the searchlight.** A 60° cone, 10 tiles long, sweeps back and forth at 30°/s over a 120° arc facing the island.
 - **The spot meter.** A player lit and not hidden fills it 1 s per second; otherwise it drains 0.5 s per second. At 2 s the player is **spotted**, plus 1 s per Stealth level, up to +3.
 - **Spotted → alert.** The boat stops and the loudhailer calls out. The light locks on the player while they stay visible within 10 tiles. Once they hide or get away, it sweeps their last known position for 20 s, then the boat resumes its lap.
-- **Later, with capture:** the boat chases anything in the water (2× swimmer speed) and launches a **shore squad** if the party is on land.
+- **The chase.** A spotted swimmer in deep water is chased at 2× swim speed (6 tiles/s), through deep water only, and hauled aboard after 2 s within 1 tile (the count resets when they get away). A dive, the shallows, a 10-tile gap or reaching land breaks it; the boat then searches as usual and heads back to its loop. A swimmer who reaches land brings the shore squad. Nobody can free a swimmer hauled aboard.
+- **The landing.** An alert whose cause is on land (a player spotted ashore, smoke or noise) docks the boat where it is, if no squad is ashore on the island: its dinghy rows a **shore squad** to the beach nearest the boat at 2 tiles/s. While docked, its light follows a player it sees and otherwise sweeps round the squad's last known position. It resumes its lap once the squad is back aboard.
 - **Other triggers, while the boat is in sight:**
   - **Smoke:** a lit fire within 2 tiles of the sea at night, never one under a roof; or any lit fire within 6 tiles of the sea by day. Once per fire per lap.
   - **Noise:** radius 8 tiles or more, when the boat is within that radius.
@@ -190,9 +194,13 @@ Light night fires inland or in the hut, and put fires out while the horizon show
 
 ### Shore squad (*los guardias*)
 
-**Behavior.** Three soldiers land from the patrol boat and search for 3 minutes: they walk to the fire, then toward last known positions, then random. They do not fight; they **capture** (touch for 2 s). Captured players are walked to the boat; a teammate who touches the captive while no soldier is within 3 tiles frees them. The squad leaves when the timer ends or all players are caught.
+**Behavior.** Three soldiers land by dinghy from the patrol boat and search for 3 minutes. They do not fight.
+- **Points.** Every lit fire, nearest the landing first, then the last known position (where a player was last seen: where they hid, or left the light's 10 tiles or a soldier's sight), then a random walk between land cells. A soldier stands on a point for 3 s and finds any hidden player within 2 tiles of it. A newer last known position goes to the nearest free soldier.
+- **Sight.** A cone ahead of each soldier: 6 tiles and 120° by day, a 5-tile, 60° flashlight at night. It fills the same spot meter as the searchlight; hidden players are never seen, and fog blinds them. A spotted player is chased at 5 tiles/s (walking: 3) while they stay visible within the cone's length; running at 6 escapes. When it loses them, the soldier searches where it last saw them.
+- **Capture.** A 2 s touch within 1 tile captures a player; the count resets when contact breaks. Downed and dropped bodies are never targets. A captive cannot move or act (quick chat still works); the soldier leads them at walking pace (2 tiles/s) to the dinghy on the landing beach, where they sit. A free teammate who holds interact for 1 s on a captive, while no soldier is within 3 tiles, frees them; a soldier coming back cancels the hold.
+- **Leaving.** The squad leaves when its 3 minutes are up, but never sooner than 60 s after its latest capture; at once when no free player is left on the island, or when a squall comes. The soldiers walk back, call their give-up line, and row out with their captives.
 
-**On capture.** If everyone is caught (a solo player always is): *La captura* scene with Rodríguez (see `CHARACTERS.md` and `GAME_DESIGN.md` §9). Otherwise the captured player is held on the boat at the dock until freed or until the boat leaves (3 min), after which that player respawns on the previous island with no items.
+**On capture.** If everyone is caught (a solo player always is; downed and dropped teammates go along): *La captura* scene with Rodríguez (see `CHARACTERS.md` and `GAME_DESIGN.md` §9). If the squad leaves with captives while someone is still free, the captives are **taken**: out of play like a rider waiting on the next shore, with every item gone but their keepsakes (their secret items stay on the landing beach). They land with the party on the next island, and join a later whole-party capture.
 
 ---
 

@@ -124,3 +124,15 @@ func test_revive_stands_up_at_30_health() -> void:
 
 func test_solo_last_stand_is_0_s_before_downed_timer_bonuses() -> void:
 	assert_eq(tuning.solo_last_stand_s, 0.0)
+
+
+func test_bleeding_drains_6_health_per_min() -> void:
+	assert_almost_eq(tuning.bleeding_health_per_s, 6.0 * PER_MIN, 1e-6)
+
+
+func test_bleeding_ends_120_s_after_the_latest_wound() -> void:
+	assert_eq(tuning.bleeding_s, 120.0)
+
+
+func test_bleeding_never_takes_the_last_point() -> void:
+	assert_eq(tuning.bleeding_floor, 1.0)

@@ -55,7 +55,7 @@ Rates are per real minute (one in-game hour is 30 real seconds, see §5). The nu
 | Heat | 0 (cool) → 100 (rises; decided 2026-11-05) | Rises 45/min in direct sun between 10:00 and 16:00, ×2 in scorching calm | Falls 45/min in shade, in water or outside 10:00–16:00; 0 at night | At 100, sunstroke until heat drops below 60: blurred screen, speed −40% |
 | Energy | 100 | Swimming 3/s, building 1/s, running 0.5/s | Sleep (+50 per night in shelter), meals (+10); nothing else | Collapse: can only crawl |
 | Morale | 100 | Loss of ally −30, squall −10 (both hit every player), −5/min at night with no teammate and no lit fire within 5 tiles | Teammate within 5 tiles +2/min, fire +5, song +15, found text +10, keepsake | Below 20: hallucinations: fake islands, fake voices |
-| Health | 100 | Attacks, thirst, poison (−20 over 30 s) | Aloe, rest, noni | Downed (solo: last stand) |
+| Health | 100 | Attacks, thirst, poison (−20 over 30 s), bleeding (6/min until 120 s after the latest wound; never the last point, so it never downs or kills) | Sábila (+5, stops bleeding), rest, noni | Downed (solo: last stand) |
 
 What that means for one player starting full at dawn: thirst lasts 1.15 days (≈ 14 min) working in the sun all day, 1.4 days half in the shade, 1.75 days resting in the shade. Hunger lasts 2–2.8 days. Standing in the midday sun brings sunstroke after 133 s (67 s in scorching calm); half sun, half shade never does on a normal day. Heat never costs health (provisional).
 
@@ -78,6 +78,11 @@ What that means for one player starting full at dawn: thirst lasts 1.15 days (�
 - **A meter that jumps at once** floats its change over that body on every screen ("+15 Sed", in the meter's colour, or "+6 Sed" when only 6 fit), and its bar lights the gained part and flashes once.
 - **A status that clears** floats "Sin sangrado".
 - **"Reducir destellos"** in Ajustes turns every blink, flash and shake into a steady tint or nothing.
+
+**Reading the HUD** (`hud-window-kit`, owner 2026-11-14 and 2026-11-15). The HUD sits on dark rounded windows, cream paper for notes, all in the game palette (`ui-shell` "Shared theme").
+- **The meters** read Salud, Sed, Hambre, Calor, Energía, Ánimo from the top: a label, a thin bar in the meter's colour and the value. A label turns orange at 50 (heat at 50) and red at 25 (heat at 75), where the bar's frame and the value pulse.
+- **Teammates** sit top right, one block each: the name, a chip in their clothing colour, a small health bar and their state ("Caído", "Muerto", "Desconectado").
+- **The strip** keeps its slots. Small digits give a stack's count or a tool's uses (orange on the last use), the number key shows only on the selected slot, a slot whose use would be refused now is dimmed, and the mouse gets a tooltip with the item and its verb.
 
 ## 5. Weather and time
 
@@ -120,16 +125,23 @@ Night is cooler (thirst ×0.5) but dark. Searchlights, crocodiles and crabs come
 **Using an item** (`damage-feedback`). The row above the selected item says what its use does, built from the item's own data:
 - "Sed +15 · Hambre +5 · Energía +10" for a coconut, which counts as a meal;
 - "Sed +15 (+6 útil)" when only part fits;
-- "Cura quemadura y sangrado" for sábila.
+- "Cura quemadura y sangrado · Salud +5" for sábila.
 
 A use that would change nothing is refused with a reason and spends nothing:
 - "No tienes sed.";
+- "'Tás entero." (sábila at full health);
 - "No hay na' que curar.";
 - "A Papo no le hace falta.".
 
 It counts as changing nothing only when every meter it raises is within 1 point of full, every status it cures is absent, and it has no other effect. A coconut is still drunk when you are hungry, and a conch still leaves its horn.
 
 **Durability.** Tools wear out. The raft loses 25% integrity per crossing and more in squalls; repair with driftwood and rope.
+
+**Mending the raft** (`island-stop`). Any built raft still on the island can be mended at its work point, on its land side. A mend costs 1 driftwood and 1 rope and 10 s of work (5 s for a Mecánico), gives +20 integrity, never goes above the raft's maximum, and can be repeated.
+- There is one job on a raft at a time. Anyone deposits into it and anyone works it.
+- A launch ends an unfinished job and gives the deposits back.
+- An intact raft can always sail on at once: there is no gate. Its prompt shows its integrity and warns below half.
+- Stopping pays in mends now. The fittings (clavazón, defensas, toldo) follow in the change's second PR.
 
 ## 7. Escape routes
 
@@ -158,6 +170,12 @@ A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cub
 
 Swimmers in the water lose energy every second, moving or not (3 a second, times the route's drain factor: 0.4 for binoculars-and-swim, so a solo swimmer at 100 ends a 60 s crossing with 28); at 0 energy they drown at 10 health a second. Falling in costs 10 energy.
 
+**Playing the crossing** (`crossing-gameplay`, decided 2026-11-15). Every beat is warned before it lands and can be answered by one rider, so a solo crossing is played, not watched:
+
+- **Paddling.** A rider aboard holds interact at the paddle on the deck's west or east edge (on a board, beside it) to slide the vessel that way: 1.5 tiles/s, 2.25 with two or more on one side, the two sides subtracting, never more than 6 tiles from the line. When nobody paddles, the current pulls it back to the line at 0.5 tiles/s, so a rider who does nothing sits on the line and meets every beat in it. Paddling is not drift: coast drift stays 0 and the Gulf Stream rule above is untouched.
+- **Rocks and debris** come down a lane from the sea's north edge, 5 s before they reach the deck, and hit only where their lane overlaps the vessel (a rock is 2 tiles wide, debris 1, the raft and the car 4, boards the whole row): a rock −40, debris −5. A row of boards takes each hit on the next board in turn, as above. A swimmer a rock passes over is cut (−15 health and bleeding, so the shark's first choice); debris takes 5.
+- **Pacing.** The host rolls no beat in the first 6 s, puts the first between 6 and 9 s and then one every 3 to 9 s (the 9 s ×0.9 for each rider past the first), with rocks, debris and flotsam weighted 0.12, 0.20 and 0.68 on the coast. The squall's blow (the 15 s after its hit, when paddling runs at half speed) holds no rolled beat, and a rock or debris falls in the 10 s before a hit, so tying down early costs a dodge. Every crossing ends with the reef line: two rocks 10 tiles apart, 4 s before the end, with the gap within 3 tiles of the line.
+
 ## 9. Threats
 
 Full lore and behavior specs in `BESTIARY.md`. Summary:
@@ -179,7 +197,7 @@ Full lore and behavior specs in `BESTIARY.md`. Summary:
 
 ### Guardacostas and stealth
 
-The human threat on the first two or three islands, fading as you head north. Patrol boats run fixed routes; at night a searchlight cone sweeps beach and water. Smoke or fire draws a shore squad that searches the island for three minutes. A caught player is taken aboard: teammates can free them by sneaking onto the boat at the dock. When the last free player is caught (a solo player always is), *La captura* plays with Rodríguez: a persuasive party is released at the next cay; otherwise it restarts the previous island, regenerated from the run seed, keeping its items except fire sources (keepsakes always stay). On island 1 the party restarts island 1 the same way. The secret cay is never the previous island (a party caught after the detour restarts the island it left for the cay), and a regenerated island never places a secret piece the run has already spawned (`ISLANDS.md` "Secret: El cayo sin norte"). Caught on the final crossing, the run ends: *Devuelto*. Stealth is a skill: crouching in brush, diving, hiding in mangroves and putting out fires all count.
+The human threat on the first two or three islands, fading as you head north. Patrol boats run fixed routes; at night a searchlight cone sweeps beach and water. A spotted swimmer is chased (2× swim speed, deep water only) and hauled aboard after 2 s alongside; the shallows, land, a dive or a 10-tile gap break the chase. An alert on land (a player spotted ashore, smoke or noise) lands a shore squad of three by dinghy, which searches the island for three minutes: every lit fire first, then the last known position, then a random walk. A caught player is walked to the dinghy on the landing beach; a teammate frees them with a 1 s hold while no soldier is within 3 tiles. When the squad leaves while someone is still free, it takes its captives along: they wait out of play with only their keepsakes (their secret items stay on the beach) and land with the party on the next island. When the last free player is caught (a solo player always is; downed and dropped teammates go along), *La captura* plays with Rodríguez on every peer, in a minimal scene panel: a party with a standing Maestro or Médico at morale 60 or more is released at the next cay, keeping everything (released from the last island, the run ends); otherwise it restarts the previous island, regenerated from the run seed, keeping its items except fire sources (keepsakes always stay). Meters and the clock carry on, and the islands reached never count an island twice. On island 1 the party restarts island 1 the same way. The secret cay is never the previous island (a party caught after the detour restarts the island it left for the cay), and a regenerated island never places a secret piece the run has already spawned (`ISLANDS.md` "Secret: El cayo sin norte"). Caught on the final crossing, the run ends: *Devuelto*. Stealth is a skill: crouching in brush, diving, hiding in mangroves and putting out fires all count.
 
 ## 10. Characters and co-op
 

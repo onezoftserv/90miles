@@ -10,7 +10,7 @@ const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.ts
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SANDBAR: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
 const COAST_CAY: IslandLayoutData = preload("res://resources/islands/coast_cay.tres")
-const SETTINGS_PATH: String = "user://test_terrain_view_settings.cfg"
+var settings_path: String = UserTmp.path("test_terrain_view_settings.cfg")
 const VIEW_NAME: NodePath = ^"Terrain"
 const TILE: float = 16.0
 ## design.md D15: every layer the view builds and its z_index.
@@ -47,8 +47,8 @@ func after_each() -> void:
 		net = null
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(SETTINGS_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func _island(layout: IslandLayoutData) -> SandbarIsland:
@@ -205,6 +205,118 @@ func test_a_shallows_cell_picks_the_shallows_row_and_a_deep_cell_the_deep_row() 
 	assert_gt(_row_light(ramps, shallows_row), deep_light, "the shallows ramp is lighter than the deep one")
 
 
+## art-pass "The deep edge is soft and every cell keeps its step" (art-coast-pass D6, review TR3).
+## The guard reads the bytes SeaMask.soft_channels gives the shader, not the texture (the headless
+## dummy renderer keeps no image). On both islands every water cell's centre, sampled where the
+## shader samples it (moved by the static warp) and cut at 0.5 with the sway at rest, shows its own
+## step, a margin clear of the cut; g never rises above r; every texel is clamped to its own side;
+## and the deep cells beside shallows are graded, not a hard step at the cell border.
+func test_the_soft_deep_edge_keeps_every_water_cells_centre_on_its_step() -> void:
+	var art: TerrainArtData = TerrainArt.data()
+	var deep: int = art.depth_steps[DataEnums.Terrain.DEEP]
+	var shallows: int = art.depth_steps[DataEnums.Terrain.SHALLOWS]
+	var brackish: int = art.depth_steps[DataEnums.Terrain.BRACKISH]
+	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
+		var built: IslandLayout = IslandLayout.build(layout)
+		var size: Vector2i = built.size
+		var bytes: PackedByteArray = SeaMask.depth_bytes(size, built.terrain)
+		var soft: PackedByteArray = SeaMask.soft_channels(bytes, size, TILE)
+		assert_eq(soft.size(), bytes.size() * 2, "%s: two bytes a cell" % layout.id)
+		var wrong: int = 0
+		var thin: int = 0
+		var edges: int = 0
+		var graded: int = 0
+		for y: int in size.y:
+			for x: int in size.x:
+				var cell: Vector2i = Vector2i(x, y)
+				var index: int = y * size.x + x
+				var r: int = soft[index * 2]
+				var g: int = soft[index * 2 + 1]
+				assert_true(g <= r, "%s %s: brackishness %d above shallowness %d" % [layout.id, cell, g, r])
+				assert_true(r <= 114 if bytes[index] == deep else r >= 141, "%s %s: r %d on its own side" % [layout.id, cell, r])
+				assert_true(g >= 141 if bytes[index] == brackish else g <= 114, "%s %s: g %d on its own side" % [layout.id, cell, g])
+				var kind: int = built.terrain.terrain_at(cell)
+				if TerrainArt.depth_step(kind) < 0:
+					continue
+				var centre: Vector2 = (Vector2(cell) + Vector2(0.5, 0.5)) * TILE
+				var seen: Color = SeaShaderChecks.sample(soft, size, TILE, centre + SeaMask.warp_offset(centre))
+				if SeaShaderChecks.row_for(seen, deep, shallows, brackish) != TerrainArt.depth_step(kind):
+					wrong += 1
+					if wrong < 5:
+						fail_test("%s %s (terrain %d): its centre shows another step, r %.3f g %.3f" % [layout.id, cell, kind, seen.r, seen.g])
+				if absf(seen.r - 0.5) < 0.01 or absf(seen.g - 0.5) < 0.01:
+					thin += 1
+				if kind == DataEnums.Terrain.DEEP:
+					for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+						if built.terrain.terrain_at(cell + d) == DataEnums.Terrain.SHALLOWS:
+							edges += 1
+							graded += 1 if r > 0 else 0
+							break
+		assert_eq(wrong, 0, "%s: every water cell's centre keeps its step" % layout.id)
+		assert_eq(thin, 0, "%s: and stays clear of the cut" % layout.id)
+		assert_gt(edges, 20, "%s: has deep cells beside shallows" % layout.id)
+		assert_gt(graded, edges * 9 / 10, "%s: those are graded, so the line rounds the coast's corners" % layout.id)
+
+
+## The warp the shader applies and the one SeaMask mirrors are the same numbers and the same hash,
+## it stays within WARP_PX on each axis, and it bends gently (under half a pixel per pixel), so the
+## line never folds; it is static, a function of the position only.
+func test_the_sea_warp_is_static_gentle_and_mirrored_in_the_shader() -> void:
+	var source: String = SeaShaderChecks.source()
+	# The sway is 0.05 (0.14 before art-coast-pass): with the warp the line moves about 5 px at most.
+	for pair: Array in [["warp_px", SeaMask.WARP_PX], ["warp_period_px", SeaMask.WARP_PERIOD_PX], ["wobble", 0.05]]:
+		var found := RegEx.create_from_string("uniform\\s+float\\s+%s\\s*=\\s*([\\d.]+)" % pair[0]).search(source)
+		assert_not_null(found, "%s is a uniform" % pair[0])
+		if found != null:
+			assert_eq(float(found.get_string(1)), pair[1], "%s matches SeaMask" % pair[0])
+	for word: String in ["2246822507u", "3266489909u", "65535u", "sea_warp(px)"]:
+		assert_true(source.contains(word), "the shader's warp uses %s, as SeaMask does" % word)
+	assert_eq(TerrainArt.mix32(1), 0x514e28b7, "the mix both use")
+	var warp: String = source.substr(source.find("vec2 sea_warp"))
+	assert_false(warp.substr(0, warp.find("}")).contains("TIME"), "the warp is static")
+	var steepest: float = 0.0
+	for y: int in range(-64, 320, 5):
+		for x: int in range(-64, 320, 5):
+			var at: Vector2 = Vector2(x, y)
+			var here: Vector2 = SeaMask.warp_offset(at)
+			assert_true(absf(here.x) <= SeaMask.WARP_PX and absf(here.y) <= SeaMask.WARP_PX, "%s: within the warp" % at)
+			steepest = maxf(steepest, (SeaMask.warp_offset(at + Vector2(1, 0)) - here).length())
+			steepest = maxf(steepest, (SeaMask.warp_offset(at + Vector2(0, 1)) - here).length())
+	assert_lt(steepest, 0.5, "the warp bends less than half a pixel per pixel")
+	assert_gt(steepest, 0.0, "but it does bend")
+
+
+## A sea of one step (the crossing's, all deep) is not blurred: every texel stays deep.
+func test_a_sea_of_one_step_stays_as_it_is() -> void:
+	var deep: int = TerrainArt.data().depth_steps[DataEnums.Terrain.DEEP]
+	var bytes: PackedByteArray = PackedByteArray()
+	bytes.resize(24 * 22)
+	bytes.fill(deep)
+	var soft: PackedByteArray = SeaMask.soft_channels(bytes, Vector2i(24, 22), TILE)
+	assert_eq(soft.size(), bytes.size() * 2)
+	assert_eq(soft.count(0), soft.size(), "every texel is deep, both channels 0")
+
+
+## One player, offline: a solo sandbar's sea holds the softened mask, and a shallows cell beside a
+## deep one still shows the shallows row at its centre.
+func test_a_solo_sandbar_sea_holds_the_soft_mask() -> void:
+	var island := _island(SANDBAR)
+	var view := _view(island)
+	assert_eq(view.sea_channels, SeaMask.soft_channels(view.depth_bytes, view.grid_size, TILE), "the material's mask is the softened one")
+	var art: TerrainArtData = TerrainArt.data()
+	var shallows: int = art.depth_steps[DataEnums.Terrain.SHALLOWS]
+	var found: bool = false
+	for cell: Vector2i in island.terrain.cells:
+		if island.terrain.terrain_at(cell) != DataEnums.Terrain.SHALLOWS or island.terrain.terrain_at(cell + Vector2i.LEFT) != DataEnums.Terrain.DEEP:
+			continue
+		var centre: Vector2 = (Vector2(cell) + Vector2(0.5, 0.5)) * TILE
+		var seen: Color = SeaShaderChecks.sample(view.sea_channels, view.grid_size, TILE, centre + SeaMask.warp_offset(centre))
+		assert_eq(SeaShaderChecks.row_for(seen, art.depth_steps[DataEnums.Terrain.DEEP], shallows, art.depth_steps[DataEnums.Terrain.BRACKISH]), shallows, "%s keeps the shallows row" % cell)
+		found = true
+		break
+	assert_true(found, "the sandbar has a shallows cell with deep water to its west")
+
+
 func _row_light(ramps: Image, row: int) -> float:
 	var total: float = 0.0
 	for shade: int in ramps.get_width():
@@ -241,6 +353,7 @@ func test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule() -> void:
 	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
 		var island := _island(layout)
 		var pools: Array[Vector2i] = island.built.tide_pools
+		var palms: Array[Vector2i] = island.built.palms
 		var terrain: GridTerrain = island.terrain
 		var sand: Dictionary = _cells(island, &"Sand")
 		var empty: int = 0
@@ -250,19 +363,20 @@ func test_every_land_cell_has_a_sand_tile_and_every_layer_its_rule() -> void:
 		assert_eq(empty, 0, "%s: no land cell without a sand tile" % layout.id)
 		for layer: StringName in LAND_LAYERS:
 			var drawn: Dictionary = _cells(island, layer)
-			var expected: Array[Vector2i] = TerrainArt.layer_cells(layer, terrain, pools)
+			var expected: Array[Vector2i] = TerrainArt.layer_cells(layer, terrain, pools, palms)
 			assert_eq(drawn.size(), expected.size(), "%s %s: one tile per member cell" % [layout.id, layer])
 			var wrong: int = 0
 			for cell: Vector2i in expected:
-				if drawn.get(cell, []) != _as_list(TerrainArt.tile(layer, cell, layout.id, terrain, pools)):
+				if drawn.get(cell, []) != _as_list(TerrainArt.tile(layer, cell, layout.id, terrain, pools, palms)):
 					wrong += 1
 			assert_eq(wrong, 0, "%s %s: every cell is TerrainArt's tile" % [layout.id, layer])
 		var shore: Dictionary = _cells(island, &"Shore")
 		var foam_cells: Array[Vector2i] = ShoreRule.shore_cells(terrain, pools)
+		var still: Dictionary[Vector2i, bool] = ShoreRule.still_water(terrain, pools)
 		assert_eq(shore.size(), foam_cells.size(), "%s: one foam tile per shore cell" % layout.id)
 		var wrong_foam: int = 0
 		for cell: Vector2i in foam_cells:
-			if shore.get(cell, []) != _as_list(ShoreRule.foam_tile(cell, terrain, pools)):
+			if shore.get(cell, []) != _as_list(ShoreRule.foam_tile(cell, terrain, pools, still)):
 				wrong_foam += 1
 		assert_eq(wrong_foam, 0, "%s: every shore cell has its foam piece" % layout.id)
 		var size: Vector2i = island.built.size
@@ -369,7 +483,8 @@ func test_dune_and_scrub_shore_cells_on_the_sandbar_take_their_shore_sheets() ->
 			continue
 		var sand: int = TerrainArt.corner_mask(TerrainArt.SAND, cell, terrain, pools)
 		var own: int = TerrainArt.corner_mask(layer, cell, terrain, pools)
-		assert_eq(_tile_at(island, layer, cell), [art.shore_source_of[layer], Vector2i(sand, own), 0], "%s shore %s" % [layer, cell])
+		var block: int = TerrainArt.shore_row(layer, cell, SANDBAR.id)
+		assert_eq(_tile_at(island, layer, cell), [art.shore_source_of[layer], Vector2i(sand, 16 * block + own), 0], "%s shore %s" % [layer, cell])
 		seen[layer] += 1
 	assert_gt(seen[TerrainArt.DUNE], 0, "the sandbar has dune shore cells")
 	assert_gt(seen[TerrainArt.BRUSH], 0, "the sandbar has scrub shore cells")
@@ -396,7 +511,7 @@ func test_the_layer_build_of_both_islands_is_timed_and_bounded() -> void:
 func _shell() -> GameShell:
 	NetManager.start_solo()
 	var shell := SHELL_SCENE.instantiate() as GameShell
-	shell.settings_path = SETTINGS_PATH
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	shell.session.body(CoopSession.HOST_ID).player_input.enabled = false
@@ -435,3 +550,61 @@ func test_a_solo_player_walks_across_a_tile_edge_on_the_sandbar() -> void:
 	body.intent = MoveIntent.new()
 	assert_gte(body.global_position.x, edge_x + TILE * 0.5, "walked over the sand-to-dune edge in %d frames" % frames)
 	assert_eq(floori(body.global_position.y / TILE), cell.y, "kept its row: nothing pushed it aside")
+
+# --- art-terrain-polish C12, TR9: pebbles at the foot of the rock (design D6) ---
+
+## The pebble decal tile for a straight rock seam's own mask: the sand strip faces the beach.
+const PEBBLE_SOURCE: int = 2
+const PEBBLE_SIDE: Dictionary[int, Vector2i] = {10: Vector2i(0, 0), 5: Vector2i(1, 0), 12: Vector2i(2, 0), 3: Vector2i(3, 0)}
+
+
+func test_pebbles_lie_only_at_the_foot_of_straight_inland_rock_seams() -> void:
+	for layout: IslandLayoutData in [COAST_CAY]:
+		var island := _island(layout)
+		var terrain: GridTerrain = island.terrain
+		var pools: Array[Vector2i] = island.built.tide_pools
+		var decals := _layer(island, &"Decals")
+		var placed: int = 0
+		var eligible: int = 0
+		for cell: Vector2i in terrain.cells:
+			var source: int = decals.get_cell_source_id(cell)
+			var straight: bool = false
+			if terrain.terrain_at(cell) == DataEnums.Terrain.ROCK and TerrainArt.corner_mask(TerrainArt.SAND, cell, terrain, pools) == TerrainArt.FULL:
+				straight = PEBBLE_SIDE.has(TerrainArt.corner_mask(TerrainArt.PLAIN, cell, terrain, pools))
+			if straight:
+				eligible += 1
+			if source != PEBBLE_SOURCE:
+				continue
+			placed += 1
+			assert_true(straight, "%s: pebbles only on a straight inland rock seam" % cell)
+			assert_eq(decals.get_cell_atlas_coords(cell), PEBBLE_SIDE[TerrainArt.corner_mask(TerrainArt.PLAIN, cell, terrain, pools)], "%s: the side facing the beach" % cell)
+			assert_eq(TerrainView.has_pebbles(layout.id, cell), true, "%s: chosen by the cell's hash" % cell)
+		assert_gt(placed, 0, "%s has pebbles" % layout.id)
+		assert_lt(placed, eligible, "%s: not every seam cell" % layout.id)
+
+
+## One player, offline: on the coast cay, a rock cell with the sea to its south (found from the
+## layout) draws the plain shore tile whose bottom rows hold the face over the water.
+func test_a_solo_coast_cay_rock_shore_cell_draws_its_face() -> void:
+	var island := _island(COAST_CAY)
+	var terrain: GridTerrain = island.terrain
+	var pools: Array[Vector2i] = island.built.tide_pools
+	var shore: Image = Image.load_from_file(ProjectSettings.globalize_path("res://assets/art/terrain/plain_shore.png"))
+	var face: Color = Color("#595652")
+	var found: int = 0
+	for cell: Vector2i in terrain.cells:
+		if terrain.terrain_at(cell) != DataEnums.Terrain.ROCK or not TerrainQuery.is_water(terrain.terrain_at(cell + Vector2i.DOWN)):
+			continue
+		var tile: Array = _tile_at(island, &"Plain", cell)
+		if tile.is_empty() or tile[0] != TerrainArt.data().shore_source_of[TerrainArt.PLAIN]:
+			continue
+		var atlas: Vector2i = tile[1]
+		var region: Image = shore.get_region(Rect2i(atlas * 16, Vector2i(16, 16)))
+		var has_face: bool = false
+		for x: int in 16:
+			for y: int in 16:
+				if region.get_pixel(x, y).is_equal_approx(face):
+					has_face = true
+		assert_true(has_face, "rock shore %s (atlas %s) shows its face" % [cell, atlas])
+		found += 1
+	assert_gt(found, 0, "the cay has rock over the sea to its south")

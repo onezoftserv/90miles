@@ -2,12 +2,12 @@
 // 640x360 view (the window's integer scale keeps them square). Written for 90 Millas.
 shader_type canvas_item;
 
-uniform vec4 sky_top : source_color = vec4(0.09, 0.11, 0.26, 1.0);
-uniform vec4 sky_low : source_color = vec4(0.93, 0.50, 0.31, 1.0);
-uniform vec4 sun_color : source_color = vec4(1.0, 0.82, 0.36, 1.0);
-uniform vec4 sea_far : source_color = vec4(0.13, 0.35, 0.53, 1.0);
-uniform vec4 sea_near : source_color = vec4(0.03, 0.12, 0.24, 1.0);
-uniform vec4 foam : source_color = vec4(0.86, 0.93, 0.95, 1.0);
+uniform vec4 sky_top : source_color = vec4(0.133, 0.125, 0.204, 1.0);
+uniform vec4 sky_low : source_color = vec4(0.875, 0.443, 0.149, 1.0);
+uniform vec4 sun_color : source_color = vec4(0.984, 0.949, 0.212, 1.0);
+uniform vec4 sea_far : source_color = vec4(0.188, 0.376, 0.510, 1.0);
+uniform vec4 sea_near : source_color = vec4(0.133, 0.125, 0.204, 1.0);
+uniform vec4 foam : source_color = vec4(0.796, 0.859, 0.988, 1.0);
 uniform float horizon = 0.5;
 uniform float sun_x = 0.72;
 uniform vec2 view_size = vec2(640.0, 360.0);

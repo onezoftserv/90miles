@@ -339,6 +339,8 @@ func _host() -> void:
 	if not await _wait_for("both peers on the coast cay", func() -> bool: return _on_cay() and _body_of(client_peer) != null and not _boats().is_empty(), 60.0):
 		return
 	var spawner: Object = session.get_node(^"Creatures")
+	(spawner.get("world") as Object).set("spawner", Callable())
+	_hooked("the boat lands no squad: this run checks the plain alert (guardacostas_capture_run.gd plays the squad)")
 	_night("the patrol's light shows at night")
 	spawner.call("apply_phase", root.get_node(^"WeatherManager").call("phase"))
 	_hooked("the island's creatures told the phase (the spawner's apply_phase, as the clock's phase change does)")

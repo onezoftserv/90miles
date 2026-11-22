@@ -4,7 +4,7 @@ extends RefCounted
 ## peer that joins mid-crossing needs to build it. The host makes one with of() and sends
 ## to_dict(); a joiner checks what arrived with from_dict() and gives it to Crossing.restore().
 
-const KEYS: Array[String] = ["serial", "route", "riders", "plan", "elapsed_s", "maximum", "value", "broken", "states", "positions", "boards"]
+const KEYS: Array[String] = ["serial", "route", "riders", "plan", "elapsed_s", "maximum", "value", "broken", "states", "positions", "boards", "steer"]
 
 ## The crossing's number: its node name and where its sea lies.
 var serial: int = 0
@@ -23,6 +23,9 @@ var positions: Dictionary[int, Vector2] = {}
 ## Rider -> their board's integrity on a board route, 0 when it broke (vessel-car-board); empty
 ## otherwise.
 var boards: Dictionary[int, float] = {}
+## The crossing's play state (crossing-gameplay "Crossing play state on every peer"): "steer" is
+## [lateral position, velocity].
+var play: Dictionary = {}
 
 
 ## Host: `crossing` as it is now.
@@ -43,6 +46,7 @@ static func of(crossing: Crossing) -> CrossingSnapshot:
 			snapshot.positions[peer] = body.global_position
 		if crossing.boards.has(peer):
 			snapshot.boards[peer] = crossing.boards[peer].value
+	snapshot.play = crossing.play_state()
 	return snapshot
 
 
@@ -68,6 +72,7 @@ func to_dict() -> Dictionary:
 		"states": state_map,
 		"positions": position_map,
 		"boards": board_map,
+		"steer": play.get("steer", [0.0, 0.0]),
 	}
 
 
@@ -90,6 +95,8 @@ static func from_dict(data: Variant) -> CrossingSnapshot:
 	if not snapshot._read_states(raw.get("states")) or not snapshot._read_positions(raw.get("positions")):
 		return null
 	if not snapshot._read_boards(raw.get("boards")):
+		return null
+	if not snapshot._read_steer(raw.get("steer")):
 		return null
 	return snapshot
 
@@ -160,6 +167,17 @@ func _read_boards(raw_boards: Variant) -> bool:
 			return false
 		if riders.has(peer):
 			boards[peer] = clampf(float(number), 0.0, top)
+	return true
+
+
+# [position, velocity], both finite numbers.
+func _read_steer(raw_steer: Variant) -> bool:
+	if not raw_steer is Array or (raw_steer as Array).size() != 2:
+		return false
+	for number: Variant in raw_steer:
+		if not (number is float or number is int) or not is_finite(float(number)):
+			return false
+	play["steer"] = [float(raw_steer[0]), float(raw_steer[1])]
 	return true
 
 

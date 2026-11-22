@@ -10,6 +10,10 @@ signal back_requested
 
 const CONNECTING: String = "Conectando…"
 const FAILED: String = "No se pudo conectar."
+## The status line's looks: a failure in cream on a red band, anything else as panel text
+## (ui-shell "Menu windows"; hud-window-kit design D10).
+const ERROR_STYLE: StringName = &"ErrorLabel"
+const STATUS_STYLE: StringName = &"PanelLabel"
 
 @onready var address_field: LineEdit = %Address
 @onready var connect_button: Button = %Connect
@@ -50,7 +54,7 @@ func _unhandled_input(event: InputEvent) -> void:
 ## The join failed: `text` is the reason's line (FAILED when blank). The field can be edited again
 ## and "Conectar" tries again.
 func show_failed(text: String = FAILED) -> void:
-	status.text = text if not text.is_empty() else FAILED
+	_show_status(text if not text.is_empty() else FAILED, true)
 	address_field.editable = true
 	connect_button.disabled = false
 
@@ -61,7 +65,7 @@ func show_connecting(label: String) -> void:
 	address_field.text = label
 	address_field.editable = false
 	connect_button.disabled = true
-	status.text = CONNECTING
+	_show_status(CONNECTING, false)
 
 
 func _try() -> void:
@@ -69,8 +73,14 @@ func _try() -> void:
 		return
 	var parsed := parse_address(address_field.text)
 	if not String(parsed["error"]).is_empty():
-		status.text = parsed["error"]
+		_show_status(parsed["error"], true)
 		return
-	status.text = CONNECTING
+	_show_status(CONNECTING, false)
 	connect_button.disabled = true
 	connect_requested.emit(parsed["address"], parsed["port"])
+
+
+## Shows `text` on the status line, on the red band when it is an error.
+func _show_status(text: String, error: bool) -> void:
+	status.text = text
+	status.theme_type_variation = ERROR_STYLE if error else STATUS_STYLE
