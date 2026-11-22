@@ -235,7 +235,7 @@ As the task says, nothing was redrawn. The question went to the coordinating ses
   - **iguana_cooked:** a browned iguana, legs splayed and tail curled, on a pointed leaf, 29%.
 - Two nails drafts were rejected on the captures: an upright fan and a block of upright nails with T-heads. They passed the rule but read as a vase and a grate.
 - **Checks.** `items.py` rebuilt every icon. Only the five changed; `dry_grass` is byte-identical. No two icons share a silhouette.
-- **Noted, not redrawn.** Eleven other icons are over the half rule too, mostly thin tools: crab_raw, fins, fishing_line, flint_steel, guao, lobster, lure, military_belt, pliers, snare, spear, sunglasses and uva_caleta_unripe (16 with the five). D2 covers only the five, so the test names them alone.
+- **Noted, not redrawn.** Thirteen other icons are over the half rule too, mostly thin tools: crab_raw, fins, fishing_line, flint_steel, guao, lobster, lure, military_belt, pliers, snare, spear, sunglasses and uva_caleta_unripe (16 with today's nails, crab and iguana). D2 covers only the five, so the test names them alone.
 - **Images.**
   - `docs/art-pass/prop-polish/icons_before_after_x8.png`: before on top, after below.
   - `docs/art-pass/prop-polish/strip_five_x3.png`: the strip holding the five, from `capture_inventory_hud.tscn -- --only=icons --scale=3`, a step added for this task. The three cooked foods show dimmed there by the HUD kit's own slot dimming.
