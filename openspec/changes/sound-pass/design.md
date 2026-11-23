@@ -138,7 +138,7 @@ This keeps the service thin. The bank is content, and every rule about when to p
   - Crafted output counts, as the spec says. Spending a use, removing an item and transferring an item out never do.
 - **Low thirst.** `ThresholdCue` fires when the value is at or below `at` while armed, and re-arms above `rearm_above`. A seed at or below `at` (joining, already thirsty) does not fire, and the cue arms only once the value is seen above `rearm_above`.
 - **The compass.** `needle.rattled` plays `compass_rattle`.
-- **Ambience.** `RunAmbience.levels(on_island, riding, phase, weather_id, bank)` is pure and returns `{sea, wind, night}` levels in 0..1. "Riding" means the local peer is a rider of a live crossing (`Crossing.peers()`), and "on island" is the opposite.
+- **Ambience.** `RunAmbience.levels(riding, phase, squall, bank)` is pure and returns `{sea, wind, night}` levels in 0..1. "Riding" means the local peer is a rider of a live crossing (`Crossing.peers()`), and "on island" is the opposite.
   - Sea: the island level, or the crossing level.
   - Wind: the crossing level, or the squall level in a squall, whichever is higher; 0 otherwise.
   - Night: on an island at NIGHT only.
@@ -152,8 +152,8 @@ This keeps the service thin. The bank is content, and every rule about when to p
   - LAP, ALERT_LOCK, ALERT_SEARCH and CHASE: `motor_high_db` within `motor_near_tiles`, falling linearly in dB to `motor_far_db` at `motor_far_tiles`, and silent beyond twice that.
   - AWAY and DOCKED: silent.
   - The clock is `fposmod(route_t, PatrolView.period_s)`. The warning is `data.patrol.horizon_warning_s`, never a literal 20.
-  - `SerialWatch` keeps each boat's last `alert_serial` by instance id. A rise plays `loudhailer`, and a boat seen for the first time only seeds.
-- **Raft hit.** For the crossing the local peer rides, `DropWatch` follows `vessel_of(local_peer).value` by vessel identity. A fall of more than 0.01 plays `raft_hit`. A new vessel (a new crossing, or a board after a break) only seeds, and so does the first `receive_plan` or snapshot value.
+  - A `ChangeWatch` keeps each boat's last `alert_serial` by instance id. A rise plays `loudhailer`, and a boat seen for the first time only seeds.
+- **Raft hit.** For the crossing the local peer rides, a second `ChangeWatch` follows `vessel_of(local_peer).value` by vessel identity. A fall of more than 0.01 plays `raft_hit`. A new vessel (a new crossing, or a board after a break) only seeds, and so does the first `receive_plan` or snapshot value.
 - **Arrival.** It connects `Crossing.ended` for each crossing it sees. When the local peer is in `result.riders` and not `dead`, it plays `arrival`.
 
 `RunSounds` writes nothing to the session, bodies, creatures, crossings, the weather or any random generator the game uses. It adds no synchronizer, property or RPC.
@@ -188,7 +188,7 @@ This keeps the service thin. The bank is content, and every rule about when to p
 - `test_audio_cues.gd`:
   - `ThresholdCue`, including the seed and the re-arm;
   - `InventoryGain`;
-  - `DropWatch` and `SerialWatch`, including the first sight;
+  - `ChangeWatch`, including the first sight;
   - `PatrolSwell`: it rises through HORIZON, reaches its high level at the warning's end, follows distance in sight, and is silent AWAY and DOCKED;
   - `RunAmbience`.
 - `test_game_settings` additions: the volume default, its round trip, and a malformed value.

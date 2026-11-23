@@ -56,18 +56,17 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 4. Cue logic, pure (audio "Pick-up cue", "Low-thirst cue", "Ambience follows place, time and weather", "Raft hit and arrival", "The patrol motor swells over the horizon warning", "The patrol motor follows the boat in sight", "Loudhailer")
 
-- [ ] 4.1 Tests first: write `game/tests/unit/test_audio_cues.gd` (pure; 1 player, offline). It covers:
+- [x] 4.1 Tests first: write `game/tests/unit/test_audio_cues.gd` (pure; 1 player, offline). It covers:
   - `ThresholdCue`: it fires on the fall to 25, not again at 10, re-arms above 30, does not fire when seeded at 20, and arms after a rise;
   - `InventoryGain`: a rise fires; a fall, a use spent, an equal state and the first seed do not;
-  - `DropWatch`: a fall fires; a rise, an equal resync, a new vessel and the first seed do not;
-  - `SerialWatch`: a rise fires, and a new boat only seeds;
+  - `ChangeWatch` (one class for vessel integrity and alert serials, keyed by instance id): a fall reads negative and a rise positive; an equal resync, a new vessel or boat, and the first seed read 0; forgotten keys seed again;
   - `PatrolSwell`:
     - HORIZON at 5 s is quieter than at 15 s, and at the warning's end equals `motor_high_db`;
     - in sight it is loudest within the near distance and at `motor_far_db` at the far distance;
     - it is 0 beyond twice the far distance, and AWAY and DOCKED are 0;
     - the warning is read from the boat's data;
   - `RunAmbience`: island day, island night, a crossing, and a squall on an island and at sea.
-- [ ] 4.2 Write `game/scripts/audio/threshold_cue.gd`, `inventory_gain.gd`, `drop_watch.gd`, `serial_watch.gd`, `patrol_swell.gd` and `run_ambience.gd`. Verify: Import, Smoke and GUT pass.
+- [x] 4.2 Write `game/scripts/audio/threshold_cue.gd`, `inventory_gain.gd`, `change_watch.gd`, `patrol_swell.gd` and `run_ambience.gd`. Verify: Import, Smoke and GUT pass.
 
 ## 5. RunSounds in a solo run (audio, all cue requirements, "Audio never changes the simulation", "Loops end with the run")
 
