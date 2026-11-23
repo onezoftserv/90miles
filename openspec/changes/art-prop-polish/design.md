@@ -239,3 +239,33 @@ As the task says, nothing was redrawn. The question went to the coordinating ses
 - **Images.**
   - `docs/art-pass/prop-polish/icons_before_after_x8.png`: before on top, after below.
   - `docs/art-pass/prop-polish/strip_five_x3.png`: the strip holding the five, from `capture_inventory_hud.tscn -- --only=icons --scale=3`, a step added for this task. The three cooked foods show dimmed there by the HUD kit's own slot dimming.
+
+**Group 4, palm looks (D4, owner QP1 (a)).**
+- **Tests first.** They failed on today's single palm:
+  - in `test_structure_art.gd`, the pick (`StructureArt.palm_look`) is the cell's hash and gives the same look twice;
+  - every look keeps today's trunk base (rows 44 to 47 pixel for pixel, the foot centred on the palm's position), with the crown under the nest point and under each coconut's middle;
+  - the foot shade is centred under each look;
+  - every look is lit from the upper left, and no look is another's mirror.
+
+  The 1-player tests:
+  - `test_structure_looks.gd`: the sandbar, built twice for one offline player, draws the same look per palm both times, more than one look in all, each look its cell's;
+  - `test_creature_art.gd`: a solo player's perched gull stands on the nest point of a nest palm drawn in each look.
+- **Three looks.**
+  - Look 0 is today's palm.
+  - Look 1, `palm_bowed.png`: a trunk that bows 3 px to the left under a drooping fan of six fronds.
+  - Look 2, `palm_upright.png`: a trunk that bows 3 px to the right under upright fronds, with two front fronds hanging behind the coconuts.
+
+  Each is a hand-drawn trunk and crown (`tools/art/fixes/structures/palm_trunk_*.png`, `palm_crown_*.png`). Each frond is lit on its top in #99e550, #6abe30 through the middle and #4b692f underneath, with a serrated #323c39 underside. A frond reaching right shows less lit top. The bark uses today's colours and rings, lit on the left. The four base rows are today's, so the foot and its shade read the same.
+- **Departures.**
+  - **The bits of the hash.** The pick is `(TerrainArt.cell_hash(layout id, cell) >> 8) % 3`, not `>> 1`. From bit 1, five of the sandbar's six palms took the same look (2, 1, 2, 2, 2, 2), and with two looks every coast cay palm would. From bit 8, the sandbar draws [2, 0, 1, 1, 1, 2], the coast cay [2, 0, 0, 2, 1] (coast-cay-reshape keeps its palm cells, so this holds after it) and the hidden cay [1, 0, 2]. Starting from another bit than the terrain's also keeps a palm's look from following its ground tile's pick. It is one constant, `StructureArt.PALM_LOOK_SHIFT`.
+  - **Shared overlays.** Every look keeps its crown hub under (16, 14), so the looks share today's coconut and nest overlays instead of each carrying its own. Their heights hold by construction, and the tests check that the crown is under each overlay point. `StructureArtData.palm_looks` lists the redrawn frames; look 0 stays `palm`, so a palm on no island draws today's palm.
+  - **Where the pick is made.** It is made in `StructureLook`, the palm's art node, not in `palm.gd`, which is the host's climb script. The look picks once, from its island's layout id and the palm's cell, and keeps it.
+- **Checks.**
+  - `structures.py` built the two new sheets, and every other structure sheet rebuilt byte-identical.
+  - `check.py` is clean on the art and the fixes, and the Python art tests pass.
+  - The windowed solo run `art_pass_run.gd --mode=solo --only=palms` (a step added for task 4.3) passed 15 of 15: every palm draws its cell's look, and two gulls perch over the nest point of the bowed look.
+- **Images:**
+  - `docs/art-pass/prop-polish/sandbar_palms_before_after_x3.png`: before, left, from the 2026-11-14 review with its older sand; after, right, from `capture_terrain.tscn`, the same rect.
+  - `docs/art-pass/prop-polish/two_palms_col_before_after_x6.png`: `before/two_palms_col_x3.png` (×6 in fact), which shows palms 1 and 3 at (23, 31) and (23, 36), beside the same rect now: today's palm above the bowed look.
+  - `docs/art-pass/prop-polish/palm_looks_x6.png`: the three looks, bare and with 3 coconuts and the nest.
+  - `docs/art-pass/prop-polish/sandbar_palms_solo.png`: the solo run's view of the grove.
