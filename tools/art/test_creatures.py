@@ -129,6 +129,33 @@ class CreatureArtTest(unittest.TestCase):
         self.build(recipe)
         self.assertEqual((self.out / "creatures" / "bicho.png").read_bytes(), first)
 
+    def test_a_sheet_outline_rims_every_cell_edge_in_that_one_colour(self):
+        # art-prop-polish D1 (QO1 (a)): a creature is outlined in black, whatever dark tone the
+        # source's edge was drawn in.
+        navy_edged = block(4, 4, RED, NAVY, at=(1, 1), size=(16, 8))
+        png.write_png(self.fixes / "navy.png", navy_edged)
+        recipe = self.recipe([{"hand": "navy.png"}], rim=True)
+        recipe["sheets"][0]["outline"] = "#000000"
+        sheet = self.build(recipe)["creatures/bicho.png"]
+        for x, y in ((1, 1), (4, 1), (1, 4), (4, 4), (2, 1)):
+            self.assertEqual(sheet.get(x, y), BLACK + (255,), f"edge ({x}, {y}) black")
+        self.assertEqual(sheet.get(2, 2), RED + (255,), "the fill kept")
+        unforced = self.build(self.recipe([{"hand": "navy.png"}], rim=True))["creatures/bicho.png"]
+        self.assertEqual(unforced.get(1, 1), NAVY + (255,), "without it the rim keeps the nearest colour")
+
+    def test_a_sheet_outline_off_the_outline_set_is_refused(self):
+        recipe = self.recipe([{"hand": "hand.png"}], rim=True)
+        recipe["sheets"][0]["outline"] = "#ac3232"
+        with self.assertRaisesRegex(creatures.CreatureArtError, "#ac3232"):
+            self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing written")
+
+    def test_the_shipped_creatures_are_rimmed_in_black(self):
+        # art-prop-polish D1: every shipped creature sheet is rimmed, and in black.
+        for entry in creatures.load_recipe()["sheets"]:
+            self.assertTrue(entry.get("rim", False), entry["id"])
+            self.assertEqual(entry.get("outline"), "#000000", entry["id"])
+
     def test_the_shipped_recipe_names_tracked_hand_sources_and_whole_cells(self):
         recipe = creatures.load_recipe()
         ids = []

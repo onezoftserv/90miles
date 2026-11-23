@@ -1,0 +1,5 @@
+Work: 90 Millas art-check fixtures
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: every PNG in this folder (test fixtures for the art checks, never drawn in the game)

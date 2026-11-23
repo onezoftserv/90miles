@@ -19,11 +19,12 @@ FIXTURES = palette.GAME / "tests" / "fixtures" / "art"
 NAMED_FIXTURES = [
     "licence/no_licence", "licence/deed_only", "licence/vendor_only", "licence/no_source",
     "licence/own_work_url", "licence/missing_licence_line", "licence/missing_author", "refs/unreferred.png", "creatures/off_palette.png", "items/half_alpha.png",
-    "items/no_rim.png", "import/lossy.png", "import/mipmapped.png",
+    "items/no_rim.png", "import/lossy.png", "import/mipmapped.png", "creatures/plum_edge.png", "items/dark_rim.png",
 ]
 PASSING_FIXTURES = [
     "licence/good", "refs/referred.png", "items/rimmed.png", "items/twin_a.png", "shadows/half_alpha.png",
     "decals/shade.png", "creatures/fin_black.png", "creatures/strip5.png", "import/lossless.png",
+    "structures/plum_edge.png",
 ]
 OWN_WORK = "Work: fixture\nAuthor: 90 Millas\nLicence: All rights reserved (see LICENSE)\nSource: 90 Millas (own work)\nFiles: x\n"
 
@@ -80,6 +81,39 @@ class FixtureTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         for fixture in NAMED_FIXTURES:
             self.assertIn(fixture, result.stdout)
+
+
+class OutlineFamilyTest(unittest.TestCase):
+    """art-prop-polish D1 (owner Q15 (a), QO1 (a)): actors are outlined in black; structures in the
+    palette's dark tones. The family comes from the folder."""
+
+    def setUp(self):
+        self.problems = check.check_tree(FIXTURES)
+
+    def _naming(self, fixture):
+        return [problem for problem in self.problems if fixture + ":" in problem]
+
+    def test_a_creature_sheet_with_a_plum_edge_fails_naming_the_file_and_the_pixel(self):
+        named = self._naming("creatures/plum_edge.png")
+        self.assertEqual(len(named), 1, named)
+        self.assertIn("#45283c", named[0])
+        self.assertIn("pixel (1, 1)", named[0])
+        self.assertIn("black", named[0])
+
+    def test_the_same_edge_on_a_structure_passes(self):
+        self.assertEqual(self._naming("structures/plum_edge.png"), [])
+
+    def test_an_item_icon_with_a_dark_tone_rim_fails_naming_the_file(self):
+        named = self._naming("items/dark_rim.png")
+        self.assertEqual(len(named), 1, named)
+        self.assertIn("#222034", named[0])
+
+    def test_the_families_split_the_outline_set_black_for_actors_dark_tones_for_structures(self):
+        outline = palette.outline_set()
+        self.assertEqual(check.family_outline("creatures", outline), {(0, 0, 0)})
+        self.assertEqual(check.family_outline("items", outline), {(0, 0, 0)})
+        self.assertEqual(check.family_outline("structures", outline), set(outline) - {(0, 0, 0)})
+        self.assertIsNone(check.family_outline("terrain", outline))
 
 
 class LicenceTest(unittest.TestCase):

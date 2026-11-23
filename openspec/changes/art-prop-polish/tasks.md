@@ -22,12 +22,12 @@
 
 ## 1. The outline rule (D1; PR8, Q15 (a))
 
-- [ ] 1.1 In `tools/art/test_check.py`, write the family rule tests on fixtures and see them fail:
+- [x] 1.1 In `tools/art/test_check.py`, write the family rule tests on fixtures and see them fail:
   - a creature sheet with a plum edge fails and is named;
   - the same edge on a structure passes;
   - an item icon with a #222034 edge fails.
   Add the 1-player test in GUT: the composed frames of a solo player's look have only black outline pixels.
-- [ ] 1.2 Add the family rule to `check.py` (family from the folder) and write it into `docs/ASSETS.md`'s "Outlines" line. Run it on the tracked tree. If any tracked file breaks it, stop and record the file in the build notes, and send it to the coordinating session as a question; do not redraw it here.
+- [x] 1.2 Add the family rule to `check.py` (family from the folder) and write it into `docs/ASSETS.md`'s "Outlines" line. Run it on the tracked tree. If any tracked file breaks it, stop and record the file in the build notes, and send it to the coordinating session as a question; do not redraw it here.
 
 ## 2. Five icons (D2; PR6)
 

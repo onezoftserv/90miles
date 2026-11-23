@@ -16,6 +16,13 @@ const LICENCE_HOSTS: PackedStringArray = ["creativecommons.org", "opensource.org
 const REFERRER_EXTENSIONS: PackedStringArray = ["tscn", "tres"]
 ## How many offending pixels a check lists per file before it only counts them.
 const MAX_LISTED: int = 3
+## The outline families (art-prop-polish D1; owner Q15 (a), QO1 (a)), by the folder under art/:
+## actors are outlined in the outline set's darkest colour (black), structures in the others.
+const ACTOR_FOLDERS: PackedStringArray = ["characters", "creatures", "items", "decor"]
+const STRUCTURE_FOLDERS: PackedStringArray = ["structures"]
+const OUTLINE_RULE: String = "edge pixel(s) not in the outline set"
+const ACTOR_RULE: String = "edge pixel(s) not black (actors are outlined in black)"
+const STRUCTURE_RULE: String = "edge pixel(s) not a dark tone (structures are outlined in the dark tones)"
 const NEIGHBOURS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
 
@@ -267,8 +274,8 @@ static func _pixel_failure(path: String, rule: String, offenders: PackedStringAr
 # --- Outline -------------------------------------------------------------------------------------
 
 ## In every `cell`-sized frame cell, each opaque texel with a transparent 4-neighbour (or one
-## outside its cell) is an outline colour.
-static func check_outline(path: String, image: Image, outline: Dictionary, cell: Vector2i) -> PackedStringArray:
+## outside its cell) is an outline colour; a failure is named by `rule`.
+static func check_outline(path: String, image: Image, outline: Dictionary, cell: Vector2i, rule: String = OUTLINE_RULE) -> PackedStringArray:
 	var offenders: PackedStringArray = []
 	var count: int = 0
 	for cell_y: int in image.get_height() / cell.y:
@@ -281,7 +288,44 @@ static func check_outline(path: String, image: Image, outline: Dictionary, cell:
 				count += 1
 				if offenders.size() < MAX_LISTED:
 					offenders.append("cell (%d, %d) pixel (%d, %d) %s" % [cell_x, cell_y, pixel.x, pixel.y, hex(color)])
-	return _pixel_failure(path, "edge pixel(s) not in the outline set", offenders, count)
+	return _pixel_failure(path, rule, offenders, count)
+
+
+## The outline colours a sheet at `path` may use on its edge, from the outline set `colors`: the
+## set's darkest colour (black) for an actor, the others for a structure, and none (an empty
+## palette) for a folder with no family.
+static func family_outline(path: String, colors: PackedColorArray) -> Dictionary:
+	var family: String = _family(path)
+	if family.is_empty():
+		return {}
+	var black: Color = darkest(palette_from_colors(colors))
+	var picked: PackedColorArray = []
+	for color: Color in colors:
+		if (rgb_key(color) == rgb_key(black)) == (family == "actor"):
+			picked.append(color)
+	return palette_from_colors(picked)
+
+
+## How check_outline names a failure of the family of `path`.
+static func family_rule(path: String) -> String:
+	match _family(path):
+		"actor":
+			return ACTOR_RULE
+		"structure":
+			return STRUCTURE_RULE
+	return OUTLINE_RULE
+
+
+# The family of the folder right under the last art/ folder of `path`: "actor", "structure" or "".
+static func _family(path: String) -> String:
+	var parts: PackedStringArray = path.split("/")
+	var at: int = parts.rfind("art")
+	var folder: String = parts[at + 1] if at >= 0 and at + 1 < parts.size() else ""
+	if ACTOR_FOLDERS.has(folder):
+		return "actor"
+	if STRUCTURE_FOLDERS.has(folder):
+		return "structure"
+	return ""
 
 
 ## The opaque texels of `rect` with a transparent 4-neighbour or one outside `rect`.

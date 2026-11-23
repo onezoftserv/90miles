@@ -9,7 +9,9 @@
       "cell": [32, 16],
       "layers": [
         {"hand": "reef_shark.png"}
-      ]
+      ],
+      "rim": true,
+      "outline": "#000000"
     },
     {
       "id": "land_crab",
@@ -17,7 +19,9 @@
       "cell": [16, 16],
       "layers": [
         {"hand": "land_crab.png"}
-      ]
+      ],
+      "rim": true,
+      "outline": "#000000"
     },
     {
       "id": "seagull",
@@ -32,7 +36,8 @@
         },
         {"hand": "seagull_back.png"}
       ],
-      "rim": true
+      "rim": true,
+      "outline": "#000000"
     },
     {
       "id": "seagull_flight",
@@ -40,7 +45,9 @@
       "cell": [24, 16],
       "layers": [
         {"hand": "seagull_flight.png"}
-      ]
+      ],
+      "rim": true,
+      "outline": "#000000"
     }
   ]
 }
