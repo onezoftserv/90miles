@@ -199,9 +199,22 @@ func test_solo_crossing_raises_sea_and_wind_hits_and_arrives() -> void:
 	assert_eq(_count(&"raft_hit"), 1)
 	sounds.step(0.0)
 	assert_eq(_count(&"raft_hit"), 1, "one hit, one sound")
+	# The raft's materials going into the bag above were real gains: count from here on.
+	var pickups_before: int = _count(&"pickup")
 	CrossingRig.run(crossing, 60.0)
 	assert_true(crossing.finished)
 	assert_eq(_count(&"arrival"), 1, "alive at the end")
+	# Landing on the coast cay over the next frames: a new island under the same RunSounds.
+	await wait_frames(3)
+	WeatherManager.stop()
+	sounds.step(0.0)
+	assert_null(sounds.riding(), "ashore")
+	assert_eq(AudioManager.loop_target(&"sea"), bank.sea_island, "the sea back to its island level")
+	assert_eq(AudioManager.loop_target(&"wind"), 0.0, "no wind ashore on a calm day")
+	assert_eq(_count(&"pickup"), pickups_before, "landing with the bag is not a pick-up")
+	assert_eq(_count(&"thirst_low"), 0)
+	assert_eq(_count(&"raft_hit"), 1, "no more hits once the crossing is over")
+	assert_eq(_count(&"arrival"), 1)
 
 
 func test_solo_death_stops_every_loop() -> void:
@@ -216,3 +229,12 @@ func test_solo_death_stops_every_loop() -> void:
 	await wait_frames(1)
 	assert_null(shell.hud)
 	assert_eq(AudioManager.playing_loops(), [] as Array[StringName], "nothing plays over the summary")
+
+
+func test_quitting_the_run_to_the_title_stops_every_loop() -> void:
+	sounds.step(0.0)
+	AudioManager.step_loops(5.0)
+	assert_true(AudioManager.loop_playing(&"sea"))
+	shell.back_to_title()
+	assert_eq(shell.flow, GameShell.Flow.TITLE)
+	assert_eq(AudioManager.playing_loops(), [] as Array[StringName], "abandoning the run frees the HUD and its sounds at once")

@@ -96,7 +96,7 @@ Alternatives:
 - `thirst_low_at` and `thirst_rearm_above`;
 - `thunder_gap_min_s` and `thunder_gap_max_s`;
 - `thunder_far_db`;
-- the ambience levels: `sea_island_db`, `sea_crossing_db`, `wind_crossing_db`, `wind_squall_db` and `night_db`;
+- the ambience levels, linear from 0 to 1 on top of each loop's bank level: `sea_island`, `sea_crossing`, `wind_crossing`, `wind_squall` and `night_level`;
 - `squall_weathers`.
 
 The file is `res://resources/sound_bank.tres`. A content check fails if any entry has no stream or an id appears twice. A test also checks that the 15 spec ids are all there.
@@ -151,7 +151,7 @@ This keeps the service thin. The bank is content, and every rule about when to p
   - HORIZON: `clock_s / warning_s` maps from `motor_low_db` to `motor_high_db`, linear in dB, so the swell sounds steady.
   - LAP, ALERT_LOCK, ALERT_SEARCH and CHASE: `motor_high_db` within `motor_near_tiles`, falling linearly in dB to `motor_far_db` at `motor_far_tiles`, and silent beyond twice that.
   - AWAY and DOCKED: silent.
-  - The clock is `fposmod(route_t, PatrolView.period_s)`. The warning is `data.patrol.horizon_warning_s`, never a literal 20.
+  - The clock is the boat's synced `route_t`. The host keeps it inside the period (`PatrolRoute`: `fposmod(clock_s + delta, period)`), and so does a client's `PatrolView.step_client`, so every warning, not only the first, swells from its start. The warning is `data.patrol.horizon_warning_s`, never a literal 20.
   - A `ChangeWatch` keeps each boat's last `alert_serial` by instance id. A rise plays `loudhailer`, and a boat seen for the first time only seeds.
 - **Raft hit.** For the crossing the local peer rides, a second `ChangeWatch` follows `vessel_of(local_peer).value` by vessel identity. A fall of more than 0.01 plays `raft_hit`. A new vessel (a new crossing, or a board after a break) only seeds, and so does the first `receive_plan` or snapshot value.
 - **Arrival.** It connects `Crossing.ended` for each crossing it sees. When the local peer is in `result.riders` and not `dead`, it plays `arrival`.
@@ -198,7 +198,7 @@ This keeps the service thin. The bank is content, and every rule about when to p
   - `ChangeWatch`, including the first sight;
   - `PatrolSwell`: it rises through HORIZON, reaches its high level at the warning's end, follows distance in sight, and is silent AWAY and DOCKED;
   - `RunAmbience`.
-- `test_game_settings` additions: the volume default, its round trip, and a malformed value.
+- `test_volume_setting.gd`: the volume default, its round trip, its steps, malformed values, and the shell applying it at start.
 
 **Solo (1 player, offline):**
 - `test_sound_pass_solo.gd` runs a solo session with `RunSounds` and records `sfx_played` and `loop_level_set`:
@@ -212,7 +212,8 @@ This keeps the service thin. The bank is content, and every rule about when to p
   - a crossing hit plays `raft_hit`;
   - an alive end plays `arrival`;
   - freeing the HUD stops every loop.
-- `test_sound_sim_invariance.gd` runs the same solo run of 600 frames twice, with and without `RunSounds`, and compares the state hash, in the manner of `test_art_sim_invariance`.
+- `test_sound_sim_invariance.gd` runs the same solo run of 600 frames twice, with and without `RunSounds`, in the manner of `test_art_sim_invariance`, and compares the state on every frame. A meddling sound layer is caught, and the sound run heard its cues.
+- The solo test also lands on the coast cay after the crossing (no stray cue, the sea back to its island level) and quits a run to the title (every loop stops at once, through `_end_run`'s `hud.free()`).
 
 **Net (in-process host and client, the `test_damage_feedback_net` pattern):**
 - `test_sound_pass_net.gd`:

@@ -206,7 +206,7 @@ Every sound file this pass ships SHALL come from the repository's own sound gene
 
 #### Scenario: Rebuilding the sounds
 - **WHEN** the generator runs on the stored parameters
-- **THEN** it writes the same fifteen files byte for byte
+- **THEN** it writes the same fifteen files, byte for byte on the machine that wrote them and within one step of the last bit on another
 
 #### Scenario: Every file is credited
 - **WHEN** the verification checks run
