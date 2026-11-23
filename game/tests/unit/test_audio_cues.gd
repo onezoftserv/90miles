@@ -81,6 +81,17 @@ func test_a_change_watch_reports_changes_after_the_first_value() -> void:
 	assert_eq(watch.observe(8, 60.0), 0.0, "a new vessel (a board after a break) only seeds")
 
 
+func test_a_settling_change_watch_seeds_for_its_first_seconds() -> void:
+	var watch := ChangeWatch.new()
+	watch.settle_s = 1.5
+	assert_eq(watch.observe(7, 0.0, 10.0), 0.0, "first sight at 10 s")
+	assert_eq(watch.observe(7, 3.0, 10.5), 0.0, "the host's real value arriving after the join is no change")
+	assert_eq(watch.observe(7, 3.0, 11.4), 0.0)
+	assert_eq(watch.observe(7, 4.0, 11.6), 1.0, "settled: a rise counts")
+	assert_eq(watch.observe(8, 9.0, 11.6), 0.0, "another key settles on its own")
+	assert_eq(watch.observe(8, 2.0, 12.0), 0.0)
+
+
 func test_a_change_watch_forgets_keys_no_longer_seen() -> void:
 	var watch := ChangeWatch.new()
 	watch.observe(1, 3.0)

@@ -70,23 +70,24 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 5. RunSounds in a solo run (audio, all cue requirements, "Audio never changes the simulation", "Loops end with the run")
 
-- [ ] 5.1 Tests first: write `game/tests/unit/test_sound_pass_solo.gd` (exactly 1 player, offline, `UserTmp.path()` for any settings file). It records `sfx_played` and `loop_level_set` and covers every case in design D8 "Solo". Write `test_sound_sim_invariance.gd`: the same 600 frames with and without `RunSounds`, through a pick-up, a crab pinch and a patrol warning, end in the same state hash.
-- [ ] 5.2 Write `game/scripts/audio/run_sounds.gd` (design D5). In `game_shell._enter_run`, attach it to the HUD with the needle. Verify: the shell's existing run tests still pass. Import, Smoke and GUT pass.
+- [x] 5.1 Tests first: write `game/tests/unit/test_sound_pass_solo.gd` (exactly 1 player, offline, `UserTmp.path()` for any settings file). It records `sfx_played` and `loop_level_set` and covers every case in design D8 "Solo". Write `test_sound_sim_invariance.gd`: the same 600 frames with and without `RunSounds`, through a pick-up, a crab pinch, a fall in thirst, a patrol warning, a lap and an alert, are equal on every frame. A meddling sound layer that sips thirst is caught, and the sound run heard its cues.
+- [x] 5.2 Write `game/scripts/audio/run_sounds.gd` (design D5). In `game_shell._enter_run`, attach it to the HUD with the needle. Verify: the shell's existing run tests still pass. Import, Smoke and GUT pass.
 - [ ] 5.3 Run the game windowed through the Godot MCP and listen to a solo run: the sea at start, a pick-up, a crab, a patrol warning, a squall and a crossing to arrival. Read the errors: none new. Note any level to retune in `sound_bank.tres` or `sounds.json`.
 
 ## 6. Volume (audio "Volume level"; owner Q1)
 
-- [ ] 6.1 Tests first: extend the settings tests with the volume default (8), a round trip through a `UserTmp.path()` file, and malformed values (a string, -1, 11) falling back to 8. Write a shell test that the stored level reaches `AudioManager.volume()` at start.
-- [ ] 6.2 Add `GameSettings.volume` and apply it in `GameShell`. The Ajustes row is run-menu's (Q1 A): the coordinator passes it the key, the steps (0 to 10, shown as 0 to 100 %) and `AudioManager.set_volume(volume / 10.0)`. Verify: Import, Smoke and GUT pass.
+- [x] 6.1 Tests first: extend the settings tests with the volume default (8), a round trip through a `UserTmp.path()` file, and malformed values (a string, -1, 11) falling back to 8. Write a shell test that the stored level reaches `AudioManager.volume()` at start.
+- [x] 6.2 Add `GameSettings.volume` and apply it in `GameShell`. The Ajustes row is run-menu's (Q1 A): the coordinator passes it the key, the steps (0 to 10, shown as 0 to 100 %) and `AudioManager.set_volume(volume / 10.0)`. Verify: Import, Smoke and GUT pass.
 
 ## 7. Co-op (audio "Own events are heard only by their player", "World events are heard by every peer")
 
-- [ ] 7.1 Tests first: write `game/tests/unit/test_sound_pass_net.gd` (in-process host and client, the `test_damage_feedback_net` pattern). It covers:
+- [x] 7.1 Tests first: write `game/tests/unit/test_sound_pass_net.gd` (in-process host and client, the `test_damage_feedback_net` pattern). It covers:
   - the host's pick-up plays on the host only, and the client's on the client only;
   - a patrol HORIZON raises `patrol_motor` on both;
   - an alert plays `loudhailer` on both;
-  - a squall plays `thunder` on both;
-  - a rejoining client with a full bag hears no `pickup`.
+  - a joining client's bag, arriving from the host just after the join, plays no `pickup` (a client settles 1.5 s on a new body, vessel or boat; design D5).
+
+  The sky is one autoload shared by both branches in one process, so the squall is checked across two processes in 7.2.
 - [ ] 7.2 Write `game/tests/manual/sound_pass_run.gd`: two processes on UDP 7802, each logging the ids it played. It asserts:
   - each peer's own events;
   - the shared world events;

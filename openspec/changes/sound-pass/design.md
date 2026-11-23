@@ -143,7 +143,7 @@ This keeps the service thin. The bank is content, and every rule about when to p
   - Wind: the crossing level, or the squall level in a squall, whichever is higher; 0 otherwise.
   - Night: on an island at NIGHT only.
 - **Thunder.**
-  - On `WeatherManager.weather_warned` for a squall weather: `thunder`, far.
+  - When the sky's pending weather becomes a squall (the warning, read the same way on every peer): `thunder`, far.
   - When the polled weather changes into a squall: `thunder`.
   - While a squall lasts: again after `rng.randf_range(gap_min, gap_max)`, from RunSounds' own `RandomNumberGenerator`, which no simulation code sees.
   - The far thunder is the same `thunder` entry played `thunder_far_db` quieter, through `play_sfx(id, db_offset)`, so one file serves both.
@@ -156,7 +156,14 @@ This keeps the service thin. The bank is content, and every rule about when to p
 - **Raft hit.** For the crossing the local peer rides, a second `ChangeWatch` follows `vessel_of(local_peer).value` by vessel identity. A fall of more than 0.01 plays `raft_hit`. A new vessel (a new crossing, or a board after a break) only seeds, and so does the first `receive_plan` or snapshot value.
 - **Arrival.** It connects `Crossing.ended` for each crossing it sees. When the local peer is in `result.riders` and not `dead`, it plays `arrival`.
 
-`RunSounds` writes nothing to the session, bodies, creatures, crossings, the weather or any random generator the game uses. It adds no synchronizer, property or RPC.
+**Settling on a client.** A joining or rejoining client may see its body, its vessel or a boat with default values for a moment before the host's state lands. Without care, an empty bag that fills or full thirst that drops would play a false pick-up or warning.
+- `RunSounds.settle_s` covers this: for that long from first sight, a new body's bag and thirst, a new vessel and a new boat only seed.
+- It is `CLIENT_SETTLE_S` (1.5 s) on a client and 0 on the host and solo, whose state is the truth at once.
+- `ChangeWatch` keeps each key's first-sight time for this.
+
+**The weather warning is polled.** A client never gets `weather_warned`: `WeatherCycle.apply` only sets `pending`. So `RunSounds` polls `sky.weather.pending` on every peer, and a squall that appears there plays the far thunder.
+
+`RunSounds` writes nothing to the session, bodies, creatures, crossings, the weather or any random generator the game uses. It adds no synchronizer, property or RPC. Its cues go to `audio`, the AudioManager service unless a test gives each peer its own instance.
 
 ### D6. Own and world events
 - **Own events** (pick-up, thirst, compass, plus the existing MetersHud hooks) are read from the local body or the local HUD. A teammate's events are never heard.
