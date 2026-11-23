@@ -52,12 +52,12 @@
 
 ## 5. The lean-to (D5; PR2)
 
-- [ ] 5.1 Write these tests first and see them fail:
+- [x] 5.1 Write these tests first and see them fail:
   - in `test_lean_to.gd`: the frame stays 64×48 on its anchor; no transparent pixel lies inside the roof's outline; the eave's lowest row is not one straight run; each post has a contact shadow;
   - in `test_terrain_view.gd`: a shelter's shaded cells take the north-weighted shade row.
   Add the 1-player test: on the sandbar built for one offline player, all 12 shaded cells have a shade decal whose alpha is highest on its north rows.
-- [ ] 5.2 Redraw `lean_to_frame.png`, `lean_to_roof.png` and `lean_to_eave.png`, and add the post shadows to `lean_to.tscn`. Add the north-weighted shade row to the shade step in `terrain.py` and its pick in `TerrainView`, rebased on art-terrain-polish's C14 decal edits. Rebuild. Verify `test_the_lean_to_stands_on_the_hut_back_edge_with_its_roof_over_the_row_north`, `test_a_solo_player_in_the_hut_and_its_tarp_and_driftwood_sort_in_front_on_the_shade` and `test_a_solo_player_one_tile_north_of_the_hut_sorts_behind_the_roof`, and the tile-set counts.
-- [ ] 5.3 Windowed 1-player capture of the hut, compared with `before/sandbar_day_hut_crop4.png`, `before/hut_c3.png` and `before/s_lean_to.png`.
+- [x] 5.2 Redraw `lean_to_frame.png`, `lean_to_roof.png` and `lean_to_eave.png`, and add the post shadows to `lean_to.tscn`. Add the north-weighted shade row to the shade step in `terrain.py` and its pick in `TerrainView`, rebased on art-terrain-polish's C14 decal edits. Rebuild. Verify `test_the_lean_to_stands_on_the_hut_back_edge_with_its_roof_over_the_row_north`, `test_a_solo_player_in_the_hut_and_its_tarp_and_driftwood_sort_in_front_on_the_shade` and `test_a_solo_player_one_tile_north_of_the_hut_sorts_behind_the_roof`, and the tile-set counts.
+- [x] 5.3 Windowed 1-player capture of the hut, compared with `before/sandbar_day_hut_crop4.png`, `before/hut_c3.png` and `before/s_lean_to.png`.
 
 ## 6. The hidden cay's scenery (D6; PR4)
 
