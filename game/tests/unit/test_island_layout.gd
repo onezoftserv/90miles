@@ -161,6 +161,13 @@ func test_land_share_and_inland_distance() -> void:
 		assert_lte(nearest, 6.0, "%s is within 6 tiles of water" % cell)
 
 
+## coast-cay-reshape QC1 (a), the owner's "Yes, fill them" (2026-11-15): the four 2-cell notches at
+## the tips of the sandbar's inner bay are beach, so its horns end in one curve.
+func test_the_inner_bay_tips_have_no_notches() -> void:
+	for cell: Vector2i in [Vector2i(45, 20), Vector2i(46, 20), Vector2i(45, 51), Vector2i(46, 51)]:
+		assert_eq(built.terrain.terrain_at(cell), DataEnums.Terrain.BEACH, "%s is beach" % cell)
+
+
 func test_a_thousand_land_cells() -> void:
 	var land: int = 0
 	for cell: Vector2i in built.terrain.cells:
