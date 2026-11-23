@@ -92,6 +92,10 @@
   },
   "copies": [
     {"from": "tide_pool.png", "to": "terrain/tide_pool.png"},
+    {"from": "decor_cigar.png", "to": "fx/decor_cigar.png"},
+    {"from": "post_ripple.png", "to": "fx/post_ripple.png"},
+    {"from": "decor_rope.png", "to": "decals/decor_rope.png"},
+    {"from": "decor_drag.png", "to": "decals/decor_drag.png"},
     {"from": "pebbles.png", "to": "decals/pebbles.png"}
   ]
 }

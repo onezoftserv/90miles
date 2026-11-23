@@ -106,6 +106,7 @@ var capture_dir: String = ""
 ## and checks the palm looks round it (art-prop-polish D4); --only=hut walks into the lean-to and then
 ## south of it, to shoot the shelter and its shade (art-prop-polish D5).
 ## --only=squall runs art-mood-pass's squall steps (task 4.6): by day, then at night beside a fire.
+## --only=hidden travels straight to the hidden cay and shoots its scenery (art-prop-polish D6).
 var only: String = ""
 ## Host only: how many clients play (2: A rides, B leaves and joins; 1: one untagged client rides).
 var clients: int = 2
@@ -788,6 +789,9 @@ func _solo() -> void:
 	if only == "squall":
 		await _squall_only()
 		return
+	if only == "hidden":
+		await _hidden_only()
+		return
 	var day: Image = await _world_image("sandbar_day_view")
 	_check_no_magenta(day, "the sandbar by day")
 	await _check_shore_view("spawn_day")
@@ -972,6 +976,40 @@ func _hut_shade_view() -> void:
 		return
 	await _frames(10)
 	await _world_image("lean_to_shade")
+
+
+# --only=hidden (art-prop-polish D6, task 6.3): the run travels straight to the hidden cay (the
+# host's travel_to, as the shimmer's crossing ends), walks to the embers and shoots the scenery: every
+# decor cell draws its piece and none its colour square, and Platino stands beside the chest.
+func _hidden_only() -> void:
+	session.call("travel_to", "cayo_sin_norte", {1: {"health": 100.0, "energy": 100.0}}, 100.0)
+	_hooked("travelled to the hidden cay at once (CoopSession.travel_to)")
+	await _frames(30)
+	island = shell.get("island")
+	body = session.call("body", 1)
+	if not _check("on the hidden cay", island != null and (island.get("layout") as Object).get("id") == &"cayo_sin_norte"):
+		return
+	_build_land()
+	_set_day("hidden cay captures")
+	var view: Node = island.get_node_or_null(^"Decor")
+	var built: Object = island.get("built")
+	var squares: Array[String] = []
+	var embers: Vector2i = Vector2i(-1, -1)
+	var platino: Vector2i = Vector2i(-1, -1)
+	for entry: Dictionary in built.get("decor"):
+		var piece: Dictionary = view.call("piece_for", entry)
+		if piece["kind"] == &"square":
+			squares.append("%s at %s" % [entry["decor_id"], entry["cell"]])
+		if entry["decor_id"] == &"embers":
+			embers = entry["cell"]
+		elif entry["decor_id"] == &"platino":
+			platino = entry["cell"]
+	_check("every decor cell draws its piece, none its colour square", squares.is_empty(), ", ".join(squares))
+	var chest: Vector2i = built.get("chest")
+	_check("Platino stands beside the chest", platino.x >= 0 and Vector2(platino).distance_to(Vector2(chest)) <= 1.5, "Platino %s, chest %s" % [platino, chest])
+	if _check("walked to the embers", await _walk_to(_center(embers + Vector2i(0, 2)))):
+		await _frames(10)
+		await _world_image("hidden_cay_decor")
 
 
 # --only=foam: the shore views by day, then by night.
