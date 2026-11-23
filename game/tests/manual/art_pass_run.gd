@@ -103,7 +103,8 @@ var tag: String = ""
 var capture_dir: String = ""
 ## Solo only: --only=foam runs just the shore views by day and by night (a quick way to tune the foam check);
 ## --only=cay travels straight to the coast cay and runs its steps; --only=palms walks to a nest palm
-## and checks the palm looks round it (art-prop-polish D4).
+## and checks the palm looks round it (art-prop-polish D4); --only=hut walks into the lean-to and then
+## south of it, to shoot the shelter and its shade (art-prop-polish D5).
 var only: String = ""
 ## Host only: how many clients play (2: A rides, B leaves and joins; 1: one untagged client rides).
 var clients: int = 2
@@ -774,6 +775,10 @@ func _solo() -> void:
 	if only == "palms":
 		await _palms_only()
 		return
+	if only == "hut":
+		await _lean_to()
+		await _hut_shade_view()
+		return
 	var day: Image = await _world_image("sandbar_day_view")
 	_check_no_magenta(day, "the sandbar by day")
 	await _check_shore_view("spawn_day")
@@ -845,6 +850,24 @@ func _palms_only() -> void:
 		not perched.is_empty() and off.is_empty(), "%d perched; %s" % [perched.size(), ", ".join(off)])
 	_note("palm looks %s; the nest palm draws look %d" % [looks, int(nest_look.get("palm_look"))])
 	await _world_image("palms_solo")
+
+
+# --only=hut (art-prop-polish D5, task 5.3): after the lean-to step, steps 3 tiles south of the hut's
+# middle so the player does not stand on the shade, and shoots the shelter and its shade.
+func _hut_shade_view() -> void:
+	var hut: Array = (island.get("built") as Object).get("hut_cells")
+	var south: int = -1
+	var west: int = 1 << 30
+	var east: int = -1
+	for cell: Vector2i in hut:
+		south = maxi(south, cell.y)
+		west = mini(west, cell.x)
+		east = maxi(east, cell.x)
+	var spot := Vector2i((west + east) / 2, south + 3)
+	if not _check("walked south of the hut", await _walk_to(_center(spot))):
+		return
+	await _frames(10)
+	await _world_image("lean_to_shade")
 
 
 # --only=foam: the shore views by day, then by night.

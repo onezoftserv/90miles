@@ -432,7 +432,8 @@ class BuildTests(unittest.TestCase):
             "plain": {"source": "world", "shape": "sand", "rows": [{"id": "rock", "tile": [0, 0], "map": {png.colour_hex(GRASS): png.colour_hex(ROCK)}}]},
             "water": {"source": "world", "rect": [32, 0, 32, 32], "map": {png.colour_hex(BLUE): png.colour_hex(DEEP)}, "ramps": [["#306082"], ["#847e87"]]},
             "foam": {"source": "waves", "shape": "sand", "origin": [1, 9], "step": 17, "frames": 2, "land_rows": 6, "white": "#ffffff", "colour": "#ffffff"},
-            "shade": {"shape": "sand", "colour": "#000000", "alpha": 60, "edge": [20, 40], "spots": "spots.png"},
+            "shade": {"shape": "sand", "colour": "#000000", "alpha": 60, "edge": [20, 40], "spots": "spots.png",
+                      "hut": {"north": 60, "south": 13, "bands": 3}},
             "copies": [{"from": "pool.png", "to": "terrain/pool.png"}],
         }
 
@@ -454,7 +455,7 @@ class BuildTests(unittest.TestCase):
             image = png.read_png(path)
             sizes[path.relative_to(self.out).as_posix()] = (image.width, image.height)
         self.assertEqual(sizes, {
-            "decals/shade.png": (64, 80), "sea/foam.png": (32, 256), "sea/water.png": (32, 32), "sea/water_ramps.png": (1, 2),
+            "decals/shade.png": (64, 272), "sea/foam.png": (32, 256), "sea/water.png": (32, 32), "sea/water_ramps.png": (1, 2),
             "terrain/brush.png": (64, 80), "terrain/plain.png": (256, 16), "terrain/pool.png": (16, 16), "terrain/sand.png": (64, 80),
         })
 
@@ -780,6 +781,42 @@ class BuildTests(unittest.TestCase):
         self.assertEqual([edge.get(4, y) for y in (9, 10, 11, 12)], [BLACK + (60,), BLACK + (40,), BLACK + (20,), terrain.CLEAR])
         self.assertEqual(terrain.sheet_tile(shade, 15).get(8, 8), BLACK + (60,))
         self.assertEqual(shade.crop(0, 64, 64, 16), self.spots())
+
+    def test_the_hut_shade_is_darkest_on_the_hut_north_edge_and_never_darker_going_south(self):
+        # art-prop-polish D5: under a shelter, the shade is full on the hut's north edge, under the
+        # roof, and fades south. One corner set per depth band (from the hut's north edge) follows
+        # the spot row: mask m of band b at (m % 4, 5 + 4 * b + m // 4).
+        self.build()
+        shade = png.read_png(self.out / "decals" / "shade.png")
+
+        def hut_tile(band, mask):
+            return shade.crop((mask % 4) * 16, (5 + 4 * band + mask // 4) * 16, 16, 16)
+
+        column = []
+        for band in range(3):
+            tile = hut_tile(band, 15)
+            rows = [tile.get(8, y)[3] for y in range(16)]
+            self.assertEqual(max(rows), rows[0], f"band {band}: highest on its north row")
+            self.assertTrue(all(tile.get(8, y)[:3] == BLACK for y in range(16)), "in the shade colour")
+            column += rows
+        self.assertEqual(column[0], 60, "full on the hut's north edge")
+        self.assertEqual(column[-1], 13, "the south value on the last band's last row")
+        self.assertEqual(column, sorted(column, reverse=True), "never darker going south")
+        self.assertGreater(column[0], column[16], "band 1 starts lighter than band 0")
+        # A mask open on its south side still ends softly there, under the ramp.
+        south_open = hut_tile(0, 3)
+        self.assertEqual(south_open.get(4, 12), terrain.CLEAR, "the shape's open side is clear")
+        self.assertLess(south_open.get(4, 11)[3], south_open.get(4, 0)[3], "and fades into it")
+
+    def test_a_hut_ramp_out_of_order_or_range_is_refused(self):
+        for hut, pattern in (({"north": 20, "south": 60, "bands": 3}, r"shade hut: .*north.*south"),
+                             ({"north": 0, "south": 0, "bands": 3}, r'shade hut: "north"'),
+                             ({"north": 60, "south": 13, "bands": 0}, r'shade hut: "bands"')):
+            recipe = self.recipe()
+            recipe["shade"]["hut"] = hut
+            with self.assertRaisesRegex(terrain.TerrainError, pattern):
+                self.build(recipe)
+        self.assertFalse(self.out.exists(), "nothing is written")
 
     def test_a_spot_strip_of_another_size_or_colour_is_refused(self):
         with self.assertRaisesRegex(terrain.TerrainError, r"spots\.png.*64x16"):

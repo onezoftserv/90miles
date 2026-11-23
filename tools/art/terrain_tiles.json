@@ -86,7 +86,8 @@
     "colour": "#000000",
     "alpha": 46,
     "edge": [5, 10, 16, 22, 28, 34, 40],
-    "spots": "shade_spots.png"
+    "spots": "shade_spots.png",
+    "hut": {"north": 58, "south": 18, "bands": 3}
   },
   "copies": [
     {"from": "tide_pool.png", "to": "terrain/tide_pool.png"},

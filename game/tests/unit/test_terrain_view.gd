@@ -10,6 +10,7 @@ const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.ts
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SANDBAR: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
 const COAST_CAY: IslandLayoutData = preload("res://resources/islands/coast_cay.tres")
+const CAYO_SIN_NORTE: IslandLayoutData = preload("res://resources/islands/cayo_sin_norte.tres")
 var settings_path: String = UserTmp.path("test_terrain_view_settings.cfg")
 const VIEW_NAME: NodePath = ^"Terrain"
 const TILE: float = 16.0
@@ -442,6 +443,34 @@ func test_the_coast_cays_shaded_cells_get_the_corner_set() -> void:
 		@warning_ignore("integer_division")
 		var atlas := Vector2i(mask % TerrainArt.COLUMNS, mask / TerrainArt.COLUMNS)
 		assert_eq(_tile_at(island, &"Decals", cell), [SHADE_SOURCE, atlas, 0], "shaded cell %s" % cell)
+
+
+## art-prop-polish D5: the shaded cells of a layout ShelterArtData names (the sandbar, the hidden
+## cay) take the hut shade: the corner set of their depth band, counting the row north of the hut as
+## shaded, so the shade is whole under the roof. The tile is declared in the tile set.
+func test_a_shelters_shaded_cells_take_the_hut_shade_by_depth_from_its_north_edge() -> void:
+	for layout: IslandLayoutData in [SANDBAR, CAYO_SIN_NORTE]:
+		assert_not_null(ShelterArtData.standard().shelter_for(layout.id), "%s has a shelter" % layout.id)
+		var island := _island(layout)
+		var terrain: GridTerrain = island.terrain
+		var source := _layer(island, &"Decals").tile_set.get_source(SHADE_SOURCE) as TileSetAtlasSource
+		assert_gt(terrain.shaded.size(), 0)
+		for cell: Vector2i in terrain.shaded:
+			var depth: int = 0
+			while terrain.is_shaded(cell - Vector2i(0, depth + 1)):
+				depth += 1
+			var mask: int = 0
+			for corner: int in TerrainArt.CORNER_CELLS:
+				var whole: bool = true
+				for offset: Vector2i in TerrainArt.CORNER_CELLS[corner]:
+					var near: Vector2i = cell + offset
+					whole = whole and (terrain.is_shaded(near) or terrain.is_shaded(near + Vector2i.DOWN))
+				if whole:
+					mask |= corner
+			@warning_ignore("integer_division")
+			var atlas := Vector2i(mask % TerrainArt.COLUMNS, TerrainView.HUT_SHADE_ROW + mini(depth, TerrainView.HUT_SHADE_BANDS - 1) * 4 + mask / TerrainArt.COLUMNS)
+			assert_eq(_tile_at(island, &"Decals", cell), [SHADE_SOURCE, atlas, 0], "%s %s, depth %d" % [layout.id, cell, depth])
+			assert_true(source.has_tile(atlas), "%s: tile %s is declared" % [cell, atlas])
 
 
 func test_rock_on_the_coast_cay_takes_the_plain_tiles_of_its_own_mask() -> void:

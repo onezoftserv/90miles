@@ -285,3 +285,38 @@ As the task says, nothing was redrawn. The question went to the coordinating ses
   - `docs/art-pass/prop-polish/two_palms_col_before_after_x6.png`: `before/two_palms_col_x3.png` (×6 in fact), which shows palms 1 and 3 at (23, 31) and (23, 36), beside the same rect now: today's palm above the bowed look.
   - `docs/art-pass/prop-polish/palm_looks_x6.png`: the three looks, bare and with 3 coconuts and the nest.
   - `docs/art-pass/prop-polish/sandbar_palms_solo.png`: the solo run's view of the grove.
+
+**Group 5, the lean-to (D5).**
+- **Tests first.** They failed on today's lean-to and shade.
+  - **The frame** (`test_lean_to.gd`):
+    - **A closed roof.** Every column with a pixel in the top 16 rows is opaque from its top through those rows, and the tops differ by no more than the 2 px ridge sag. Today's stepped corners start 10 rows lower.
+    - **A ragged eave.** Between the posts, each column's lowest thatch pixel (the lowest that is not a dark tone) hangs 2 to 4 px below the eave line, in at least three separate tips. Today's eave varied by 1 px.
+    - **Post shadows.** A `DropShadow` under each post's foot, drawn behind the lean-to.
+  - **The pick** (`test_terrain_view.gd`). On the sandbar and the hidden cay, every shaded cell takes the hut shade of its depth band, and its tile is declared. The coast cay keeps today's corner set; its test is unchanged.
+  - **The tool** (`test_terrain.py`). The sheet grows by three corner sets. Each band's full tile is highest on its north row, a column never darkens going south from 58 down to the last band's last row, and a bad ramp is refused.
+  - **The 1-player test** (`test_lean_to.gd`, one solo shell). On the sandbar all 12 hut cells have a hut-shade decal. Each is highest on its north row, and walked down each hut column the shade never darkens going south, darkest on the hut's north edge.
+- **The art.** The three hand sources are redrawn by a helper; the structure rim adds the outline.
+  - `lean_to_roof.png`: a closed thatch slab, 62 px wide. Four courses of hanging frond strands, the upper course over the lower, lighter above and darker toward the eave, with fresh green fronds along the ridge. The ridge sags 1 px over its middle third, and the two top corners are rounded by 1 px.
+  - `lean_to_eave.png`: frond tips hanging 2 to 4 px at uneven spacing between the posts.
+  - `lean_to_frame.png`: the posts, and the back wall in the dark tones #45283c and #222034 down to the ground between the posts. It stays a 64×48 frame on the same anchor.
+- **Post shadows.** `lean_to.tscn` gains `ShadowWest` and `ShadowEast` (`shadow.tscn`, MEDIUM, `show_behind_parent`) at (±25, −1). The root stays a Sprite2D.
+- **The hut shade.**
+  - `terrain.py`'s shade step takes `"hut": {"north": 58, "south": 18, "bands": 3}` and adds one corner set per depth band after the spot row (rows 5 to 16), with a ramp from 58 on the hut's north edge to 18 at 48 px.
+  - `TerrainView.hut_shade_tile` picks a band by depth from the hut's north edge, and a mask that counts the cell north of any shaded cell as shaded, for the shaded cells of a layout `ShelterArtData` names.
+  - The 48 tiles are declared in `decal_tiles.tres`.
+- **Departures.**
+  - **Three bands, not one row.** D5 says "a second row" of the shade sheet. A single ramped tile restarts its ramp in every hut row and draws stripes, so the ramp spans the hut's depth in three bands. `shade.png` grows from 64×80 to 64×272.
+  - **Straight sides.** The hut shade takes the mask's straight quadrants, not the sand outline. The outline's wobble made a column's shade rise and fall along the hut's sides. A hut is a rectangle under a rectangular roof.
+  - **The back wall reaches the ground.** Today rows 38 to 47 between the posts were open sand, which would put a lit strip right above the full-strength shade. The wall now meets the hut's north edge.
+  - **Ahead of C14.** Task 5.2 asks to rebase on art-terrain-polish's C14 decal edits. C14 isn't built yet (it waits for crossing-gameplay #70 and #75), so this lands first, and C14 rebases on it. Both edit `TerrainView._build_decals`: the hut pick is in the shaded-cell loop, and C14 drops the raft's wide shade at the end.
+- **Checks.**
+  - `terrain.py` rebuilt only `decals/shade.png`. `structures.py` rebuilt only `lean_to.png`.
+  - `check.py` is clean on the art and the fixes.
+  - The windowed solo run `art_pass_run.gd --mode=solo --only=hut` (a step added for task 5.3) passed 16 of 16: the player in the back row on the shade and in front of the lean-to, and the tarp beside them.
+- **Images:**
+  - `docs/art-pass/prop-polish/hut_before_after_x4.png`: `before/sandbar_day_hut_crop4.png` and the same rect, (752, 192), 144×128.
+  - `docs/art-pass/prop-polish/hut_before_after_x6.png`: `before/hut_c3.png`, which is really at ×6, and the same rect, (767, 162), 110×120.
+  - `docs/art-pass/prop-polish/lean_to_sprite_before_after_x4.png`: `before/s_lean_to.png` and the new sprite.
+  - `docs/art-pass/prop-polish/hut_solo.png`: the solo player in the hut.
+
+  The after shots are of the island scene alone (`capture_terrain.tscn`), so the pick-ups and the bench are missing.
