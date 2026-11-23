@@ -28,7 +28,7 @@
       },
       "quadrants": {"6": [14, 15, 15, 7], "9": [15, 13, 11, 15]},
       "variants": ["15", "15", "15", "15"],
-      "shore": {"shape": "sand", "inset": 1}
+      "shore": {"shape": "sand", "inset": 2}
     },
     {
       "id": "brush",
@@ -64,8 +64,8 @@
     "map": {"#0061af": "#2a5578", "#1c85d9": "#306082", "#5abcde": "#35678a", "#a1e7ff": "#3a6f92"},
     "ramps": [
       ["#2a5578", "#306082", "#35678a", "#3a6f92"],
-      ["#54c3dc", "#5fcde4", "#70d5e9", "#8fe0f0"],
-      ["#35846c", "#3d8f77", "#4b9c84", "#62ae96"]
+      ["#3386a6", "#3a94b5", "#43a0c0", "#55aecd"],
+      ["#2b6c5a", "#307663", "#37806c", "#418b77"]
     ]
   },
   "foam": {
@@ -79,7 +79,8 @@
     "colour": "#ffffff",
     "fade": {"from": 3, "colour": "#8fe0f0"},
     "corners": {"keep": 2, "colour": "#8fe0f0"},
-    "still": {"colour": "#8fe0f0"}
+    "still": {"colour": "#8fe0f0"},
+    "bare": [5, 6]
   },
   "shade": {
     "shape": "sand",

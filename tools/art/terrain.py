@@ -785,6 +785,9 @@ def build_foam(spec, sources, sets):
             raise TerrainError(f"foam: \"corners\" is a table, not {table!r}")
         corners = (whole(need(table, "keep", "foam corners"), "foam corners", "keep", low=1, high=HALF),
                    colour(need(table, "colour", "foam corners"), "foam corners"))
+    bare = set()
+    for index in member(spec, "bare", list, "foam"):
+        bare.add(whole(index, "foam", "bare", low=0, high=count - 1))
     shape = _shape(spec, sets, "foam")
     sheet = png.blank(count * TILE, MASKS * TILE)
     for mask in range(MASKS):
@@ -793,6 +796,11 @@ def build_foam(spec, sources, sets):
         bends = (turning(edge),) + corners if corners and mask not in STRAIGHT else None
         for index, frame in enumerate(frames):
             piece = foam_piece(field, frame, land_rows, white, tint, fade, bends)
+            if index in bare:
+                # art-terrain-polish D7: the wave has drawn back, so the sand's wet lip shows
+                for x, y, steps, _along in field:
+                    if steps <= 0:
+                        piece.set(x, y, CLEAR)
             sheet.paste(piece, index * TILE, mask * TILE)
     return sheet
 

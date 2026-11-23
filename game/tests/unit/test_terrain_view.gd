@@ -637,3 +637,20 @@ func test_a_solo_coast_cay_rock_shore_cell_draws_its_face() -> void:
 		assert_true(has_face, "rock shore %s (atlas %s) shows its face" % [cell, atlas])
 		found += 1
 	assert_gt(found, 0, "the cay has rock over the sea to its south")
+
+
+## One player, offline: the solo sandbar's sea draws its shallows in the darkened ramp, every colour
+## on the master palette, and the beach stands apart from it by value (art-terrain-polish C7).
+func test_a_solo_sandbar_sea_draws_the_darker_shallows() -> void:
+	var island := _island(SANDBAR)
+	var material := (_view(island).get_node(^"Sea") as Polygon2D).material as ShaderMaterial
+	var texture := material.get_shader_parameter(&"ramps") as Texture2D
+	assert_eq(texture.resource_path, "res://assets/art/sea/water_ramps.png")
+	var ramps: Image = ArtChecks.read_png(texture.resource_path)
+	var palette: Dictionary = ArtChecks.palette_from_image(ArtChecks.read_png("res://assets/art/palette/master_palette.png"))
+	var tuning: ArtTuning = ArtTuning.standard()
+	var shallows_row: int = TerrainArt.data().depth_steps[DataEnums.Terrain.SHALLOWS]
+	for shade: int in ramps.get_width():
+		assert_true(palette.has(ArtChecks.rgb_key(ramps.get_pixel(shade, shallows_row))), "shallows shade %d is on the palette" % shade)
+	var base: Color = ramps.get_pixel(1, shallows_row)
+	assert_gte(ArtChecks.contrast_ratio(tuning.land_grounds[&"sand"], base), 1.6, "the shallows' base stands apart from the sand")

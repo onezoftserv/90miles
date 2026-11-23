@@ -6,6 +6,7 @@
 [ext_resource type="TileSet" path="res://assets/art/terrain/terrain_tiles.tres" id="4_terrain"]
 [ext_resource type="TileSet" path="res://assets/art/sea/shore_tiles.tres" id="5_foam"]
 [ext_resource type="TileSet" path="res://assets/art/decals/decal_tiles.tres" id="6_decals"]
+[ext_resource type="Script" path="res://scenes/art/sea_pace_driver.gd" id="7_pace"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sea"]
 resource_local_to_scene = true
@@ -46,3 +47,7 @@ tile_set = ExtResource("4_terrain")
 [node name="Decals" type="TileMapLayer" parent="."]
 z_index = -10
 tile_set = ExtResource("6_decals")
+
+[node name="SeaPace" type="Node" parent="."]
+process_mode = 3
+script = ExtResource("7_pace")

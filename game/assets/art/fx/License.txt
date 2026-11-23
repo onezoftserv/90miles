@@ -9,3 +9,10 @@ Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
 Files: swim_ring.png (3 frames of 20x5: a dashed 1 px oval, #ffffff on its front half and #cbdbfc on its back, the dashes moving one pixel a frame; drawn by tools/art/fx.py from fx.json; played at 4 fps by swim_ring.tres round a swimmer at the water line)
+
+Work: 90 Millas squall rain
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: rain.png (art-mood-pass D3: a 64x64 seamless tile of 1 px streaks running down and to the left, #cbdbfc with a #9badb7 head, in two frames: light, 7% of its pixels, and heavy, 15%; drawn by hand and checked by tools/art/mood.py); splash.png (3 frames of a 5x3 tick in #cbdbfc, a raindrop landing)
+
