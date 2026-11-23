@@ -38,3 +38,11 @@ Group 1 builds first, then run-menu, then groups 2 to 5. Every test with players
 - [ ] 5.3 Test first (`test_vessel_prompts.gd`, 1 player): a crossing built with a car route shows "[E] Amarrarse al almendrón", tied "[E] Soltarse del almendrón"; a raft "[E] Amarrarse a la balsa"; a board's climb point "[E] Subir a tu tabla"; a vessel with no words of its own reads the raft's.
 - [ ] 5.4 `InteractPrompt.vessel_key` and the label lookup; the `hud_text.tres` keys.
 - [ ] 5.5 Captures (summary win and death, lobby with seats and confirm, title with the error band, credits, car prompt); import, smoke run and GUT pass; `TASKS.md` updated.
+
+## 6. Volumen in Ajustes (sound-pass owner decision Q1 A, 2026-11-23)
+
+sound-pass owns the level: the `[audio] volume` settings key in `game_settings.gd` and `AudioManager.set_volume`. This group adds only the row. If this branch lands before sound-pass, the key name is agreed through the coordinator first, and the row ships with it.
+
+- [ ] 6.1 Test first (`test_display_settings.gd` or `test_settings_volume.gd`, 1 player, `UserTmp.path()`): a fresh settings screen shows "Volumen 80 %"; stepping down three times shows 50 %, saves it, and calls the volume setter each step; a second load of the same file reads 50 %; the row is in the dark in-run Ajustes too.
+- [ ] 6.2 The "Volumen" row in `settings_screen.gd/.tscn` (a left/right stepper or an `HSlider` with step 10, focusable by keyboard and gamepad), wired to the settings and `AudioManager.set_volume`.
+- [ ] 6.3 Import, smoke run and GUT pass.

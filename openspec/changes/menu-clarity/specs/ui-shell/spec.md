@@ -109,7 +109,7 @@ The lobby SHALL show four seats, the host first and marked, then the others in j
 - **THEN** the title shows with no question asked and the game is offline
 
 ### Requirement: Settings
-The settings screen SHALL hold the player name, fullscreen, the scale (automatic or 1× to 4×), the pixel filter and "Reducir destellos" (reduce flashes, off by default), and keep them per install across launches. Esc and the gamepad back button return to the previous screen from every menu screen, except the host's lobby: closing it ends the lobby for everyone, so only "Cerrar partida" does that, after a question while anyone else is aboard.
+The settings screen SHALL hold the player name, fullscreen, the scale (automatic or 1× to 4×), the pixel filter, "Reducir destellos" (reduce flashes, off by default) and "Volumen" (0 to 100 % in steps of 10, default 80 %; audio "Volume level"), and keep them per install across launches. A volume change is heard at once. Esc and the gamepad back button return to the previous screen from every menu screen, except the host's lobby: closing it ends the lobby for everyone, so only "Cerrar partida" does that, after a question while anyone else is aboard.
 
 #### Scenario: Name kept
 - **GIVEN** a player who sets the name "Dayana" and closes the game
@@ -125,3 +125,8 @@ The settings screen SHALL hold the player name, fullscreen, the scale (automatic
 - **GIVEN** a player who ticks "Reducir destellos" and closes the game
 - **WHEN** the game starts again
 - **THEN** the box is still ticked and hits and uses show without flashes
+
+#### Scenario: Volume kept
+- **GIVEN** a solo player, offline, on a fresh install, whose "Volumen" reads 80 %
+- **WHEN** they step it down three times to 50 % and close the game
+- **THEN** the game starts again at 50 %, and the level was applied to the sound as each step was taken

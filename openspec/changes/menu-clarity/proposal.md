@@ -46,7 +46,7 @@ None.
 - `ui-shell`:
   - "Shared theme", "Readable HUD and menu text" and "Menu windows" (all from hud-window-kit) get the fonts and the title's error band;
   - "Lobby" gets the seats, the count, the IP first, the rematch line and the host's confirm;
-  - "Settings" names "Cerrar partida" in its Esc rule.
+  - "Settings" gains the "Volumen" row and names "Cerrar partida" in its Esc rule.
 - `endings-progression`:
   - "Run summary", "Cause of death on the run summary" and "Run summary totals" get the survivor one-liner and the hidden empty totals;
   - adds "Run summary heading", "Survivor one-liners" and "No skipping the summary".
@@ -59,6 +59,7 @@ None.
 - **Summary:** `summary_screen.gd/.tscn` and `summary_row.gd`; `game/scripts/run/run_summary.gd`; `death_lines.gd`, made general enough to load another set; `game/scripts/data/dialogue_data.gd` gains one Kind, `SURVIVOR_LINES`, appended.
 - **New content:** `game/resources/dialogue/survivor_one_liners.tres`.
 - **Lobby and shell:** `lobby_screen.gd/.tscn`, `game_shell.gd` (host failure, rematch flag), `title_screen.gd`.
+- **Settings:** a "Volumen" row in `settings_screen.gd/.tscn` (sound-pass owner decision Q1 A, 2026-11-23). sound-pass owns the `[audio] volume` key and `AudioManager.set_volume`; this change adds only the row.
 - **Credits:** `credits_screen.gd/.tscn`.
 - **Crossing prompts:** `game/scenes/ui/interact_prompt.gd` (a vessel key read from a crossing's rescue point); `game/resources/hud_text.tres` (new `prompt_labels` keys such as `tie_down.car`). `rescue_point.gd` is not edited, because the crossing branch rewrites it.
 - **Tests:** 1-player tests for each piece. A host-plus-client ShellHarness test for the rematch lobby's seats and the host's confirm, and its two-process run on UDP 7801 (shared with run-menu's run, mode `lobby`).
