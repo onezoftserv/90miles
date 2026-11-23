@@ -1,6 +1,7 @@
 {
   "sources": {
-    "tth_animals": "itch/tth-animals/extracted/animals/spritesheet.png"
+    "tth_animals": "itch/tth-animals/extracted/animals/spritesheet.png",
+    "dawnlike_reptile": "oga/dawnlike/extracted/DawnLike_5/Characters/Reptile0.png"
   },
   "sheets": [
     {
@@ -45,6 +46,21 @@
       "cell": [24, 16],
       "layers": [
         {"hand": "seagull_flight.png"}
+      ],
+      "rim": true,
+      "outline": "#000000"
+    },
+    {
+      "id": "platino",
+      "size": [16, 16],
+      "cell": [16, 16],
+      "layers": [
+        {
+          "from": "dawnlike_reptile",
+          "rect": [48, 192, 16, 16],
+          "at": [0, 0],
+          "map": {"#140c1c": "#000000", "#452434": "#45283c", "#4d494d": "#595652", "#757161": "#847e87", "#8696a2": "#9badb7", "#dfefd7": "#cbdbfc", "#6dc3cb": "#5fcde4"}
+        }
       ],
       "rim": true,
       "outline": "#000000"

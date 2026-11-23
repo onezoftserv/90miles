@@ -61,12 +61,12 @@
 
 ## 6. The hidden cay's scenery (D6; PR4)
 
-- [ ] 6.1 Write these tests first and see them fail:
+- [x] 6.1 Write these tests first and see them fail:
   - in a new `test_decor_art.gd`: each decor id of `cayo_sin_norte.tres` draws its piece; upright pieces are children of the y-sorted `DecorPieces` and sort by foot position; the post in the shallows has its foot; an id with no art draws its colour square;
   - the stub's wisp has at most 4 unique frames at most 12 fps.
   Add the 1-player test: the hidden cay built for one offline player shows every piece and no colour square, and Platino stands on the chest's ledge.
-- [ ] 6.2 Draw the pieces as hand sources and cut Platino from DawnLike `Characters/Reptile0.png` through a `tools/art/` recipe. Add DawnLike's licence block and credit to the tracked folder, `CREDITS.md` and the credits data. Add `DecorArtData` and `decor_art.tres`, and draw from it in `DecorView`. Rebuild. Verify `test_he_left_minutes_ago`, `test_art_tracked` and the credits tests.
-- [ ] 6.3 Tick TASKS.md's Platino item and the decor-cell part of the secret-cay art item. Windowed 1-player capture of the hidden cay with `scenes/dev/secret_cay_playground.tscn`, compared with `before/secret_cay_decor.png`.
+- [x] 6.2 Draw the pieces as hand sources and cut Platino from DawnLike `Characters/Reptile0.png` through a `tools/art/` recipe. Add DawnLike's licence block and credit to the tracked folder, `CREDITS.md` and the credits data. Add `DecorArtData` and `decor_art.tres`, and draw from it in `DecorView`. Rebuild. Verify `test_he_left_minutes_ago`, `test_art_tracked` and the credits tests.
+- [x] 6.3 Tick TASKS.md's Platino item and the decor-cell part of the secret-cay art item. Windowed 1-player capture of the hidden cay with `scenes/dev/secret_cay_playground.tscn`, compared with `before/secret_cay_decor.png`.
 
 ## 7. The garita and the sign looks (D7; PR3, Q12 (a)) — after coast-cay-reshape
 

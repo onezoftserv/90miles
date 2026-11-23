@@ -1010,6 +1010,20 @@
           }
         ]
       ]
+    },
+    {
+      "out": "structures/decor_post.png",
+      "frame": [
+        16,
+        24
+      ],
+      "frames": [
+        [
+          {
+            "hand": "decor_post.png"
+          }
+        ]
+      ]
     }
   ]
 }

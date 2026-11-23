@@ -320,3 +320,50 @@ As the task says, nothing was redrawn. The question went to the coordinating ses
   - `docs/art-pass/prop-polish/hut_solo.png`: the solo player in the hut.
 
   The after shots are of the island scene alone (`capture_terrain.tscn`), so the pick-ups and the bench are missing.
+
+**Group 6, the hidden cay's scenery (D6).**
+- **Tests first.** The tests were written before any of the code, but first run after it: they could not parse without `DecorArtData`.
+  - **`test_decor_art.gd`**, new, 8 tests:
+    - each decor id of `cayo_sin_norte.tres` draws its piece and no colour square;
+    - upright pieces are children of the y-sorted `DecorPieces`, standing on their cell's centre at the actors' z;
+    - the post in the shallows has its ripple foot, and a post on sand has none;
+    - an id with no look draws its colour square;
+    - the stub's wisp has at most 4 unique frames at 12 fps or less;
+    - the drag mark covers its five sand cells and draws nothing in the shallows.
+  - **The 1-player test:** the hidden cay, reached by one offline player, shows every piece and no colour square, and Platino stands beside the chest. A player south of the post draws over it, and one north of it behind it. The player's drop shadow draws over the flat pieces.
+  - **The embers test**, added after the capture: most of the embers' pixels show clear of the palm crown beside them, whichever look the palm draws. It failed at offset 0, where 0 to 10 of 66 pixels showed.
+- **The data.**
+  - `DecorLook` holds one look: decor id, terrain (-1 for any), upright, texture or frames, foot, pair, offset.
+  - `DecorArtData` (`structures/decor_art.tres`) holds the looks. `look_for(id, terrain)` prefers the cell's terrain over any.
+  - A look with nothing to draw draws nothing, which is how the drag mark ends at the water. No look at all keeps the colour square.
+- **`DecorView`.**
+  - It draws flat pieces at z -9: over the terrain's decals (-10), under every drop shadow (-1).
+  - Upright pieces are children of a y-sorted `DecorPieces` at the actors' z, and `DecorView` itself is y-sorted.
+  - `piece_for(entry)` gives each cell's decision (flat, upright, square or none) for the tests, since GUT runs headless.
+- **The pieces.**
+  - **Embers:** the fire's out frame from `structures/fire.png`, flat, drawn 6 px up on its cell's north edge. The palm at (22, 17) spreads its crown over the cell's south half, and no layout cell moved.
+  - **Cigar stub:** `fx/decor_cigar.png`, 2 frames of 16x16 at 3 fps. The stub with its ember, and a 1 px wisp swaying.
+  - **Drag mark:** `decals/decor_drag.png`, 32x16. One trough down a slope of one row per two cells, as the run lies. A cell whose west neighbour is drag mark draws the east half, so the three pairs join up. In the shallows it draws nothing.
+  - **Post:** `structures/decor_post.png`, 16x24, rimmed in the dark tones: a stake with a cut rope loop. In the shallows its foot is `fx/post_ripple.png`, 12x5.
+  - **Cut line:** `decals/decor_rope.png`, the frayed end floating.
+  - **Platino:** `creatures/platino.png`, cut from DawnLike `Characters/Reptile0.png` at (48, 192) by `creatures.py`. Its seven DB16 colours are mapped to the master palette, and it is rimmed in black. It is one still frame (the layout calls it a figurine).
+- **Departures.**
+  - **Folders.** No `decor/` folder. D1 says decor takes the dark tones in one line and is an actor in the next.
+    - The post, a structure, is in `structures/`, in the dark tones.
+    - Platino, a creature sprite, is in `creatures/`, in black.
+    - The stub and wisp, the ripple, the rope end and the drag mark are thin. A rim would turn them to solid outline, so they live in `fx/` and `decals/`, which have no outline rule.
+  - **Sources.** Those four are hand sources in `tools/art/fixes/terrain/`, copied and checked by `terrain.py`'s existing "copies".
+  - **Capture.** It uses `art_pass_run.gd --only=hidden` (a step added here, travelling with `travel_to` as `--only=cay` does), not `secret_cay_playground.tscn`, which cannot save an image. `capture_terrain.tscn` gains the hidden cay for the before and after.
+- **Licences and credits.**
+  - `creatures/License.txt`: the DawnLike block names `platino.png`.
+  - `CREDITS.md` gains Platino's row. The in-game credits already carry DawnLike's CC BY 4.0 line (for the knife).
+  - Own-work blocks are added in `structures/`, `fx/`, `decals/` and the two fixes folders.
+- **Checks.**
+  - `terrain.py`, `structures.py` and `creatures.py` built only the six new files; everything else rebuilt byte-identical.
+  - `check.py` is clean on the art and the fixes.
+  - The windowed solo run `--only=hidden` passed 14 of 14.
+- **Images:**
+  - `docs/art-pass/prop-polish/hidden_cay_decor_before_after_x4.png`: `before/secret_cay_decor.png` and the same rect, (176, 16), 272x336.
+  - `docs/art-pass/prop-polish/hidden_cay_scenery_x6.png`: the drag mark, the post and the rope end.
+  - `docs/art-pass/prop-polish/hidden_cay_solo.png`: the solo player's view.
+

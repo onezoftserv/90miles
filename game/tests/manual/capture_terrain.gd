@@ -6,7 +6,7 @@ extends Node
 ## apart, enlarged ×4; the whole sandbar again under the night tint (task 4.6); then a solo run
 ## through the game shell at 2×, as the player sees it:
 ##   godot --path game res://tests/manual/capture_terrain.tscn -- --out=<dir>
-## Writes <dir>/sandbar_day.png, coast_cay_day.png, shore_0.png … shore_3.png, sandbar_night.png
+## Writes <dir>/sandbar_day.png, coast_cay_day.png, hidden_cay_day.png, shore_0.png … shore_3.png, sandbar_night.png
 ## and sandbar_game.png.
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
@@ -15,6 +15,7 @@ const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const LAYOUTS: Dictionary[String, String] = {
 	"sandbar_day": "res://resources/islands/sandbar.tres",
 	"coast_cay_day": "res://resources/islands/coast_cay.tres",
+	"hidden_cay_day": "res://resources/islands/cayo_sin_norte.tres",
 }
 const SETTINGS_PATH: String = "user://capture_terrain.cfg"
 const SETTLE_FRAMES: int = 30

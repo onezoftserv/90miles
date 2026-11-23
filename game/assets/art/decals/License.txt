@@ -15,3 +15,9 @@ Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
 Files: pebbles.png (art-terrain-polish C12: four pebble decals, two or three small stones in #9badb7, #847e87 and #595652, one tile per straight rock seam, each inside the sand strip the seam leaves: west, east, north and south)
+
+Work: 90 Millas hidden cay decor
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: decor_rope.png (art-prop-polish D6: the cut line's frayed end floating, with two ripples); decor_drag.png (the trough the raft left in the sand, one band down a slope of one row per two cells, 32x16, a pair of cells per copy); both drawn by hand in tools/art/fixes/terrain/ and copied by tools/art/terrain.py
