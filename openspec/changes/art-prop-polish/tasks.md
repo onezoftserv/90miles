@@ -42,13 +42,13 @@
 
 ## 4. Palm looks (D4; PR7) — after QP1
 
-- [ ] 4.1 Write these tests first and see them fail:
+- [x] 4.1 Write these tests first and see them fail:
   - in `test_structure_art.gd`, the look pick is `cell_hash` based and gives the same look twice;
   - every look keeps `nest_point` and the trunk base;
   - the foot shade is centred under each look.
   Add the 1-player test: the sandbar built for one offline player twice uses more than one look with the same look per palm both times, and a gull perches on the nest point of a nest palm of each look.
-- [ ] 4.2 Draw the looks as the owner chose in QP1, with their coconut and nest overlays, in `tools/art/fixes/structures/`. Add them to the recipe and a palm look table to `StructureArtData`, and pick the look in `palm.gd`. Rebuild. Verify `test_the_palm_stands_on_its_trunk_base_with_the_nest_in_its_crown`, the coconut and nest tests in `test_structure_art.gd` and `test_structure_looks.gd`, and `test_the_art_scripts_call_no_random_number_generator`.
-- [ ] 4.3 Windowed 1-player capture of the sandbar's palms, compared with `before/sandbar_day_palms_crop3.png` and `before/two_palms_col_x3.png`.
+- [x] 4.2 Draw the looks as the owner chose in QP1, with their coconut and nest overlays, in `tools/art/fixes/structures/`. Add them to the recipe and a palm look table to `StructureArtData`, and pick the look in `palm.gd`. Rebuild. Verify `test_the_palm_stands_on_its_trunk_base_with_the_nest_in_its_crown`, the coconut and nest tests in `test_structure_art.gd` and `test_structure_looks.gd`, and `test_the_art_scripts_call_no_random_number_generator`.
+- [x] 4.3 Windowed 1-player capture of the sandbar's palms, compared with `before/sandbar_day_palms_crop3.png` and `before/two_palms_col_x3.png`.
 
 ## 5. The lean-to (D5; PR2)
 
