@@ -441,3 +441,42 @@ func test_a_solo_players_perched_gull_sorts_over_its_palm_and_behind_a_player_so
 	assert_true(DrawOrder.drawn_after(body, _sprite(gull)), "behind a player one tile south of the palm")
 	body.global_position = palm.global_position + Vector2(0.0, -TILE)
 	assert_true(DrawOrder.drawn_after(_sprite(gull), body), "over a player one tile north of it")
+
+
+## art-prop-polish D4 (QP1 (a)), one player offline: whichever look a nest palm draws, its perched
+## gull stands on that look's nest point, inside the crown, over its nest.
+func test_a_solo_players_gull_perches_on_the_nest_point_of_a_nest_palm_of_each_look() -> void:
+	NetManager.start_solo()
+	WeatherManager.stop()
+	WeatherManager.sky.start_at(0.0)
+	var shell := SHELL_SCENE.instantiate() as GameShell
+	shell.settings_path = settings_path
+	add_child_autofree(shell)
+	(shell.screen as TitleScreen).solo_requested.emit()
+	shell.session.body(CoopSession.HOST_ID).player_input.enabled = false
+	await wait_physics_frames(2)
+	var gull: Creature = null
+	for each: Creature in (shell.session.get_node(^"Creatures") as CreatureSpawner).creatures(&"seagull"):
+		if each.state_id == PERCH:
+			gull = each
+	assert_not_null(gull, "a perched gull")
+	if gull == null:
+		return
+	var palm: Palm = null
+	for node: Node in shell.island.get_node(^"Palms").get_children():
+		if (node as Palm).global_position == gull.global_position:
+			palm = node as Palm
+	assert_not_null(palm, "the gull's palm")
+	if palm == null:
+		return
+	var look := _palm_look(palm)
+	var data := StructureArtData.standard()
+	assert_eq(data.palm_look_count(), 3, "QP1 (a): three looks")
+	for index: int in data.palm_look_count():
+		look.palm_look = index
+		_assert_perched(gull, gull.position, palm, "look %d" % index)
+		assert_eq(look.still.texture, data.palm_texture(index), "look %d drawn" % index)
+		assert_true(look.nest.visible, "look %d: its nest drawn" % index)
+		assert_true(DrawOrder.drawn_after(_sprite(gull), look.still), "look %d: the gull over the crown" % index)
+	WeatherManager.stop()
+	NetManager.leave()
