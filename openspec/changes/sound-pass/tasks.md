@@ -12,19 +12,19 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 1. The generator and the fifteen files (audio "Generated sounds are reproducible and credited")
 
-- [ ] 1.1 Tests first: write `tools/audio/test_sfx.py`. It covers:
+- [x] 1.1 Tests first: write `tools/audio/test_sfx.py`. It covers:
   - each voice (square with duty, triangle, sine, noise and brown noise) has the expected period or spectrum shape;
   - the envelope's stages;
   - a sweep moves the pitch the right way;
   - the low-pass lowers high-frequency energy;
   - a seeded part renders byte-identically twice;
   - a WAV round trip (22 050 Hz, 16-bit, mono) through the standard `wave` module;
-  - for every sound in `sounds.json`: it is not silent (RMS over a floor), never clips (peak under 0.99), has its length, and, for loops, the seam holds (the first and last samples close, and the RMS either side of the seam within 3 dB).
+  - for every sound in `sounds.json`: it is not silent (RMS over a floor), never clips (peak under 0.99), has its length, one-shots end in silence, and, for loops, the seam holds: the step from the last sample to the first is no bigger than the loop's own 99.9th-percentile step. The tracked WAVs match a fresh render, byte for byte on the machine that wrote them and within one step of the last bit elsewhere (another maths library).
 
   Verify: Audio tools fails first.
-- [ ] 1.2 Write `tools/audio/sfx.py` (standard library only) and `tools/audio/sounds.json` with the 15 sounds (design D1). Running `python -I tools/audio/sfx.py` writes `game/assets/audio/sfx/*.wav` and `game/assets/audio/loops/*.wav`. Verify: Audio tools passes, and a second run leaves `git status` clean.
-- [ ] 1.3 Add `License.txt` to both folders in the "Work:" block format (design D2). Add a `CREDITS.md` row and an `ASSETS.md` row naming the folders and the generator. Add the Audio tools line to `.github/workflows/ci.yml` beside `tools/art`.
-- [ ] 1.4 Import twice. Commit the `.import` files with `edit/loop_mode=2` for the four loops. Verify: Import, Smoke and GUT pass.
+- [x] 1.2 Write `tools/audio/sfx.py` (standard library only) and `tools/audio/sounds.json` with the 15 sounds (design D1). Running `python -I tools/audio/sfx.py` writes `game/assets/audio/sfx/*.wav` and `game/assets/audio/loops/*.wav`. Verify: Audio tools passes, and a second run leaves `git status` clean.
+- [x] 1.3 Add `License.txt` to both folders in the "Work:" block format (design D2). Add a `CREDITS.md` row and an `ASSETS.md` row naming the folders and the generator. Add the Audio tools line to `.github/workflows/ci.yml` beside `tools/art`.
+- [x] 1.4 Import twice. Commit the `.import` files with `edit/loop_mode=2` for the four loops. Verify: Import, Smoke and GUT pass.
 
 ## 2. The bank (audio "Sounds are data")
 
