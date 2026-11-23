@@ -18,7 +18,7 @@
 ## 0. Gate
 
 - [x] 0.1 Wait for the coordinating session's go. Branch from main. Re-read `structure_sheets.json`, `item_icons.json`, `structure_art.tres`, `shelter_art.tres`, `decor_view.gd`, `island_sign.gd`, `palm.gd` and `TerrainView._build_decals` as they are then, since art-terrain-polish may have changed the decals.
-- [ ] 0.2 Group 4 waits for the owner's answer to QP1. Group 7 waits for coast-cay-reshape to merge.
+- [x] 0.2 Group 4 waits for the owner's answer to QP1. Group 7 waits for coast-cay-reshape to merge.
 
 ## 1. The outline rule (D1; PR8, Q15 (a))
 
@@ -70,7 +70,7 @@
 
 ## 7. The garita and the sign looks (D7; PR3, Q12 (a)) — after coast-cay-reshape
 
-- [ ] 7.1 Write these tests first and see them fail:
+- [x] 7.1 Write these tests first and see them fail:
   - rewrite `test_lean_to.gd`'s `test_the_coast_cay_shaded_cells_get_no_lean_to` into "the coast cay's shaded cells get the garita", anchored on the post's back edge;
   - in `test_structure_art.gd`, a sign with no look draws `sign_post.png`, and a look draws its texture;
   - every post cell is as walkable with the garita as without it.
@@ -78,8 +78,8 @@
   - on the post's back row, the player, the nails, the mirror and the radio draw in front of the garita;
   - one tile north of the post, the roof draws over the player;
   - the four signs show their looks and reading each opens its note.
-- [ ] 7.2 Draw the garita and the three sign looks as hand sources, with no legible letters. Add `garita.tscn`, `coast_cay` in `shelter_art.tres`, `IslandSignData.look`, `StructureArtData.sign_looks` and the pick in `island_sign.gd`. Set `look` on the coast cay's four signs. Rebuild. Verify `test_island_layout.gd`, the coast cay tests, `test_structure_looks.gd` and `test_structure_art.gd` with the default key, and the content validator.
-- [ ] 7.3 Windowed 1-player capture of the post, compared with `before/cay_day_observation_post_crop4.png`, `before/cay_day_observation_post_x3.png` and `before/cay_day_rocky_point.png`.
+- [x] 7.2 Draw the garita and the three sign looks as hand sources, with no legible letters. Add `garita.tscn`, `coast_cay` in `shelter_art.tres`, `IslandSignData.look`, `StructureArtData.sign_looks` and the pick in `island_sign.gd`. Set `look` on the coast cay's four signs. Rebuild. Verify `test_island_layout.gd`, the coast cay tests, `test_structure_looks.gd` and `test_structure_art.gd` with the default key, and the content validator.
+- [x] 7.3 Windowed 1-player capture of the post, compared with `before/cay_day_observation_post_crop4.png`, `before/cay_day_observation_post_x3.png` and `before/cay_day_rocky_point.png`.
 
 ## 8. Integration
 

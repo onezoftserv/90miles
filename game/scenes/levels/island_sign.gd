@@ -11,6 +11,8 @@ const PROMPT_ID: StringName = &"look_sign"
 ## The two lines, set before it enters the tree.
 var line_es: String = ""
 var line_en: String = ""
+## Its look (IslandSignData.look): what StructureLook draws, the board when empty. Drawing only.
+var look: StringName = &""
 
 
 # The level makes signs with new(), so the sign post's look is added here (drawing only).

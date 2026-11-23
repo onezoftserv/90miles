@@ -71,8 +71,10 @@ func step() -> void:
 		StructureArt.KIND_STAKE:
 			if StructureArt.site_marker_shown(site.built):
 				_show_still(data.still_for(kind))
-		StructureArt.KIND_WORKBENCH, StructureArt.KIND_SIGN:
+		StructureArt.KIND_WORKBENCH:
 			_show_still(data.still_for(kind))
+		StructureArt.KIND_SIGN:
+			_show_still(data.sign_texture((structure as IslandSign).look))
 	_place_shadow(kind, still.visible or sprite.visible)
 
 

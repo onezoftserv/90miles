@@ -17,6 +17,9 @@
 [ext_resource type="SpriteFrames" path="res://assets/art/structures/board_frames.tres" id="15_board"]
 [ext_resource type="Texture2D" path="res://assets/art/structures/palm_bowed.png" id="16_palm_bowed"]
 [ext_resource type="Texture2D" path="res://assets/art/structures/palm_upright.png" id="17_palm_upright"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/sign_radio.png" id="18_sign_radio"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/sign_sticks.png" id="19_sign_sticks"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/sign_slogan.png" id="20_sign_slogan"]
 
 [resource]
 script = ExtResource("1_data")
@@ -34,6 +37,11 @@ stills = Dictionary[StringName, Texture2D]({
 &"island_sign": ExtResource("12_sign"),
 &"stake": ExtResource("11_stake"),
 &"workbench": ExtResource("10_bench")
+})
+sign_looks = Dictionary[StringName, Texture2D]({
+&"radio": ExtResource("18_sign_radio"),
+&"slogan": ExtResource("20_sign_slogan"),
+&"sticks": ExtResource("19_sign_sticks")
 })
 site_frames = Dictionary[StringName, SpriteFrames]({
 &"raft": ExtResource("13_site")

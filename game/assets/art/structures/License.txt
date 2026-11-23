@@ -21,3 +21,9 @@ Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
 Files: decor_post.png (art-prop-polish D6: the post the raft was tied to, a weathered stake with a cut rope loop and its frayed end, 16x24, drawn by hand in tools/art/fixes/structures/decor_post.png and rimmed in the dark tones by tools/art/structures.py); decor_art.tres (the hidden cay's decor looks, DecorArtData)
+
+Work: 90 Millas garita and sign looks
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: garita.png (art-prop-polish D7: the coast cay's ruined watch post, 80x48, an open-front concrete booth under a rusted tin roof on two pipe posts, a dark window hole and a faded red band where a slogan was, with no letters); sign_radio.png (a dead radio on a crate), sign_sticks.png (two crossed sticks in a sand mound) and sign_slogan.png (a concrete fragment with a faded red band), each 16x16; drawn by hand in tools/art/fixes/structures/ and rimmed in the dark tones by tools/art/structures.py

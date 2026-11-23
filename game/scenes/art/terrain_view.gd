@@ -118,7 +118,7 @@ func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vecto
 	_decals.clear()
 	for pool: Vector2i in pools:
 		_decals.set_cell(pool, POOL_SOURCE, Vector2i.ZERO)
-	var sheltered: bool = ShelterArtData.standard().shelter_for(layout_id) != null
+	var sheltered: bool = ShelterArtData.standard().hut_shade.get(layout_id, false)
 	for cell: Vector2i in grid.shaded:
 		if not pools.has(cell):
 			if sheltered:

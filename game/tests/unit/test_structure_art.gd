@@ -211,6 +211,30 @@ func test_every_palm_look_is_lit_from_the_upper_left_and_none_is_a_mirror() -> v
 			assert_ne(frames[a].get_data(), mirrored.get_data(), "look %d is not look %d mirrored (QP1)" % [a, b])
 
 
+## art-prop-polish D7: a sign with no look draws the board (sign_post.png); a sign with a look draws
+## that look's texture; a look the data does not know falls back to the board, so old layouts and new
+## looks are both data.
+func test_a_sign_draws_its_look_or_the_board() -> void:
+	var board: Texture2D = data.still_for(StructureArt.KIND_SIGN)
+	assert_eq(board.resource_path, "res://assets/art/structures/sign_post.png")
+	assert_same(data.sign_texture(&""), board, "no look: the board")
+	assert_same(data.sign_texture(&"no_such_look"), board, "an unknown look: the board")
+	for look: StringName in [&"radio", &"sticks", &"slogan"]:
+		var texture: Texture2D = data.sign_texture(look)
+		assert_not_null(texture, "%s has a texture" % look)
+		assert_ne(texture, board, "%s is not the board" % look)
+		assert_eq(texture.get_size(), Vector2(16, 16), "%s stands in a sign's 16x16 frame" % look)
+	var marker := IslandSign.new()
+	marker.look = &"radio"
+	add_child_autofree(marker)
+	var look_node := marker.get_node(NodePath(StructureLook.NODE_NAME)) as StructureLook
+	look_node.step()
+	assert_same(look_node.still.texture, data.sign_texture(&"radio"), "the sign node draws its look")
+	marker.look = &""
+	look_node.step()
+	assert_same(look_node.still.texture, board, "and the board without one")
+
+
 func test_a_solo_fire_flickers_while_lit_and_shows_embers_once_out() -> void:
 	var fire := FIRE_SCENE.instantiate() as Fire
 	add_child_autofree(fire)

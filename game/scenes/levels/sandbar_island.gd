@@ -154,6 +154,7 @@ func _place_water_and_signs() -> void:
 		marker.position = IslandLayout.cell_center(built.signs[index]["cell"])
 		marker.line_es = data.text_es
 		marker.line_en = data.text_en
+		marker.look = data.look
 		_session.add_child(marker)
 
 

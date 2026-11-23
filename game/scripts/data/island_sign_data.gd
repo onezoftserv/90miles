@@ -8,6 +8,9 @@ extends DataPart
 @export var glyph: String = ""
 @export_multiline var text_es: String = ""
 @export_multiline var text_en: String = ""
+## How the sign is drawn (art-prop-polish D7): a key of StructureArtData.sign_looks (radio, sticks,
+## slogan), or empty for the sign board. Drawing only.
+@export var look: StringName = &""
 
 
 ## The line in `locale` (Spanish unless it starts with "en" and an English line exists).
