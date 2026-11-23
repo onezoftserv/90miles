@@ -16,6 +16,8 @@ each edge, whole alpha, palette colours only and a closed outline. No two icons 
 silhouette. Nothing is written inside a download folder, and nothing at all when an icon is
 refused.
 
+Outline family (art-prop-polish D1): an item is an actor, outlined in black.
+
 Usage: python -I tools/art/items.py [--packs <dir>] [--recipe tools/art/item_icons.json]
        [--fixes tools/art/fixes/items] [--out game/assets/art/items]
 """

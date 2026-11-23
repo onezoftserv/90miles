@@ -38,7 +38,10 @@ game/assets/art/:
 - decals/shade.png, a 64x80 corner set of soft shadow in the sand set's outline, laid out like
   a set (a corner counts when the four cells round it are shaded), in the darkest colour at
   partial alpha and thinner on its edge pixels; row 4 holds the hand-drawn spot shades (a foot
-  shade, and the two halves of a wide one) of the "spots" strip in the fixes folder.
+  shade, and the two halves of a wide one) of the "spots" strip in the fixes folder. With "hut"
+  (art-prop-polish D5) the sheet grows by one corner set per depth band, from row 5: the shade
+  under a shelter, its alpha falling row by row from "north" on the hut's north edge to "south"
+  at the last band's last row, in the mask's straight quadrants, softened on their open sides.
 - "copies": hand-drawn sources of the fixes folder, checked and copied.
 
 Each set, the plain sheet and the foam take a hand-fix overlay <name>.png from --fixes, blended
@@ -858,7 +861,55 @@ def build_shade(spec, sets, fixes):
         if (spots.width, spots.height) != (SET_COLUMNS * TILE, TILE):
             raise TerrainError(f"{source} is {spots.width}x{spots.height}, and the spot row is {SET_COLUMNS * TILE}x{TILE}")
         sheet.paste(spots, 0, VARIANT_ROW * TILE)
+    if "hut" in spec:
+        sheet = with_hut_shade(sheet, member(spec, "hut", dict, "shade"), tint, edge)
     return sheet
+
+
+def hut_ramp(north, south, rows):
+    """The hut shade's alpha on each of `rows` pixel rows: `north` on the first, `south` on the last."""
+    return [round(north - (north - south) * row / (rows - 1)) for row in range(rows)]
+
+
+def with_hut_shade(sheet, hut, tint, edge):
+    """`sheet` with one corner set per depth band below it (art-prop-polish D5): mask m of band b at
+    (m % 4, 5 + 4 * b + m // 4), the alpha of the ramp's row, and no more than `edge` on the pixels
+    nearest an open side. A hut is a rectangle, so its shade takes the straight quadrants of the
+    mask, not the sand outline, and any column of it only fades going south."""
+    north = whole(need(hut, "north", "shade hut"), "shade hut", "north", low=1, high=255)
+    south = whole(need(hut, "south", "shade hut"), "shade hut", "south", low=1, high=255)
+    bands = whole(need(hut, "bands", "shade hut"), "shade hut", "bands", low=1, high=8)
+    if north <= south:
+        raise TerrainError(f"shade hut: \"north\" {north} must be darker than \"south\" {south}")
+    ramp = hut_ramp(north, south, bands * TILE)
+    grown = png.blank(sheet.width, sheet.height + bands * SET_COLUMNS * TILE)
+    grown.paste(sheet, 0, 0)
+    for band in range(bands):
+        for mask in range(MASKS):
+            tile = hut_shade_tile(mask, ramp[band * TILE:(band + 1) * TILE], tint, edge)
+            row = VARIANT_ROW + 1 + band * SET_COLUMNS + mask // SET_COLUMNS
+            grown.paste(tile, (mask % SET_COLUMNS) * TILE, row * TILE)
+    return grown
+
+
+def hut_shade_tile(mask, ramp, tint, edge):
+    """One hut-shade tile: the quadrants whose corner `mask` holds, at the ramp's alpha per row, and
+    at most `edge[d]` d pixels in from the nearest uncovered pixel of the tile."""
+    def covered(x, y):
+        return bool(mask & ((NW if x < HALF else NE) if y < HALF else (SW if x < HALF else SE)))
+    open_pixels = [(x, y) for y in range(TILE) for x in range(TILE) if not covered(x, y)]
+    tile = png.blank(TILE, TILE)
+    for y in range(TILE):
+        for x in range(TILE):
+            if not covered(x, y):
+                continue
+            alpha = ramp[y]
+            if open_pixels:
+                inside = min(max(abs(x - ox), abs(y - oy)) for ox, oy in open_pixels) - 1
+                if inside < len(edge):
+                    alpha = min(alpha, edge[inside])
+            tile.set(x, y, tint + (alpha,))
+    return tile
 
 
 def checked(image, name, palette_colours, partial_alpha=False):

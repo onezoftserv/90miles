@@ -21,6 +21,9 @@ Every pixel must be whole and in the master palette, and every frame's edge in t
 Nothing is written inside a download folder, and nothing at all when a sheet is refused. Run
 again on the same packs and sources it gives the same files byte for byte.
 
+Outline family (art-prop-polish D1): a structure is scenery, outlined in the dark tones (#222034,
+#45283c or #323c39), never black, so it stays a step behind the actors.
+
 Usage: python -I tools/art/structures.py [--packs <dir>] [--recipe tools/art/structure_sheets.json]
        [--fixes tools/art/fixes/structures] [--out game/assets/art]
 """

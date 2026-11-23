@@ -22,12 +22,12 @@
 
 ## 1. The outline rule (D1; PR8, Q15 (a))
 
-- [ ] 1.1 In `tools/art/test_check.py`, write the family rule tests on fixtures and see them fail:
+- [x] 1.1 In `tools/art/test_check.py`, write the family rule tests on fixtures and see them fail:
   - a creature sheet with a plum edge fails and is named;
   - the same edge on a structure passes;
   - an item icon with a #222034 edge fails.
   Add the 1-player test in GUT: the composed frames of a solo player's look have only black outline pixels.
-- [ ] 1.2 Add the family rule to `check.py` (family from the folder) and write it into `docs/ASSETS.md`'s "Outlines" line. Run it on the tracked tree. If any tracked file breaks it, stop and record the file in the build notes, and send it to the coordinating session as a question; do not redraw it here.
+- [x] 1.2 Add the family rule to `check.py` (family from the folder) and write it into `docs/ASSETS.md`'s "Outlines" line. Run it on the tracked tree. If any tracked file breaks it, stop and record the file in the build notes, and send it to the coordinating session as a question; do not redraw it here.
 
 ## 2. Five icons (D2; PR6)
 
@@ -52,21 +52,21 @@
 
 ## 5. The lean-to (D5; PR2)
 
-- [ ] 5.1 Write these tests first and see them fail:
+- [x] 5.1 Write these tests first and see them fail:
   - in `test_lean_to.gd`: the frame stays 64×48 on its anchor; no transparent pixel lies inside the roof's outline; the eave's lowest row is not one straight run; each post has a contact shadow;
   - in `test_terrain_view.gd`: a shelter's shaded cells take the north-weighted shade row.
   Add the 1-player test: on the sandbar built for one offline player, all 12 shaded cells have a shade decal whose alpha is highest on its north rows.
-- [ ] 5.2 Redraw `lean_to_frame.png`, `lean_to_roof.png` and `lean_to_eave.png`, and add the post shadows to `lean_to.tscn`. Add the north-weighted shade row to the shade step in `terrain.py` and its pick in `TerrainView`, rebased on art-terrain-polish's C14 decal edits. Rebuild. Verify `test_the_lean_to_stands_on_the_hut_back_edge_with_its_roof_over_the_row_north`, `test_a_solo_player_in_the_hut_and_its_tarp_and_driftwood_sort_in_front_on_the_shade` and `test_a_solo_player_one_tile_north_of_the_hut_sorts_behind_the_roof`, and the tile-set counts.
-- [ ] 5.3 Windowed 1-player capture of the hut, compared with `before/sandbar_day_hut_crop4.png`, `before/hut_c3.png` and `before/s_lean_to.png`.
+- [x] 5.2 Redraw `lean_to_frame.png`, `lean_to_roof.png` and `lean_to_eave.png`, and add the post shadows to `lean_to.tscn`. Add the north-weighted shade row to the shade step in `terrain.py` and its pick in `TerrainView`, rebased on art-terrain-polish's C14 decal edits. Rebuild. Verify `test_the_lean_to_stands_on_the_hut_back_edge_with_its_roof_over_the_row_north`, `test_a_solo_player_in_the_hut_and_its_tarp_and_driftwood_sort_in_front_on_the_shade` and `test_a_solo_player_one_tile_north_of_the_hut_sorts_behind_the_roof`, and the tile-set counts.
+- [x] 5.3 Windowed 1-player capture of the hut, compared with `before/sandbar_day_hut_crop4.png`, `before/hut_c3.png` and `before/s_lean_to.png`.
 
 ## 6. The hidden cay's scenery (D6; PR4)
 
-- [ ] 6.1 Write these tests first and see them fail:
+- [x] 6.1 Write these tests first and see them fail:
   - in a new `test_decor_art.gd`: each decor id of `cayo_sin_norte.tres` draws its piece; upright pieces are children of the y-sorted `DecorPieces` and sort by foot position; the post in the shallows has its foot; an id with no art draws its colour square;
   - the stub's wisp has at most 4 unique frames at most 12 fps.
   Add the 1-player test: the hidden cay built for one offline player shows every piece and no colour square, and Platino stands on the chest's ledge.
-- [ ] 6.2 Draw the pieces as hand sources and cut Platino from DawnLike `Characters/Reptile0.png` through a `tools/art/` recipe. Add DawnLike's licence block and credit to the tracked folder, `CREDITS.md` and the credits data. Add `DecorArtData` and `decor_art.tres`, and draw from it in `DecorView`. Rebuild. Verify `test_he_left_minutes_ago`, `test_art_tracked` and the credits tests.
-- [ ] 6.3 Tick TASKS.md's Platino item and the decor-cell part of the secret-cay art item. Windowed 1-player capture of the hidden cay with `scenes/dev/secret_cay_playground.tscn`, compared with `before/secret_cay_decor.png`.
+- [x] 6.2 Draw the pieces as hand sources and cut Platino from DawnLike `Characters/Reptile0.png` through a `tools/art/` recipe. Add DawnLike's licence block and credit to the tracked folder, `CREDITS.md` and the credits data. Add `DecorArtData` and `decor_art.tres`, and draw from it in `DecorView`. Rebuild. Verify `test_he_left_minutes_ago`, `test_art_tracked` and the credits tests.
+- [x] 6.3 Tick TASKS.md's Platino item and the decor-cell part of the secret-cay art item. Windowed 1-player capture of the hidden cay with `scenes/dev/secret_cay_playground.tscn`, compared with `before/secret_cay_decor.png`.
 
 ## 7. The garita and the sign looks (D7; PR3, Q12 (a)) — after coast-cay-reshape
 

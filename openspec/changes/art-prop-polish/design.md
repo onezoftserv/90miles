@@ -215,6 +215,22 @@ Measured values and departures are recorded here as the tasks ship.
 
 As the task says, nothing was redrawn. The question went to the coordinating session with three options: re-rim to black (recommended), keep today's practice, or exempt these files. Group 1 resumes on the answer.
 
+**Group 1 resumed on QO1 (a), "Re-rim to black" (owner, 2026-11-22).**
+- **Tests first.** They failed before the rule existed.
+  - **The rule, in Python and GDScript.** In `test_check.py` and `test_art_checks.gd`, on three new fixtures: a creature sheet with a #45283c edge fails, naming the file, the pixel and "black"; the same edge under `structures/` passes; an item icon rimmed in #222034 fails. A unit test checks the split itself: black for actors, the dark tones for structures, nothing for terrain.
+  - **The recipe.** `test_creatures.py` gains two tests: a sheet's `"outline"` rims every cell edge in that one colour, and an outline off the outline set is refused. A third test requires every shipped creature sheet to be rimmed in black.
+  - **The gate.** `test_art_tracked.gd` reads each sheet's family. It failed on `reef_shark` (213 edge pixels), `seagull` (53) and `seagull_flight` (13).
+  - **The 1-player test** (`test_look_composer.gd`): a solo player's look, as the run composes it, has only black edge pixels. The existing composition test now checks black too, for 2 bodies × 8 hairs.
+- **The rule.** `check.py` (`family_outline`, `family_rule`) and `ArtChecks` (`family_outline`, `family_rule`) take the family from the folder right under `art/`.
+  - `characters/`, `creatures/`, `items/` and `decor/` are actors, outlined in the outline set's darkest colour, black.
+  - `structures/` takes the other three colours.
+  - A failure names its rule: "not black (actors are outlined in black)" or "not a dark tone".
+  - The rule is written into `docs/ASSETS.md`'s Outlines line, with one line per tool in the docs of `creatures.py`, `items.py`, `structures.py` and `compose.py`.
+- **The re-rim.** `creatures.py` gains a sheet-level `"outline"`: the rim recolours each cell's edge ring to that one colour. Every sheet in `creature_sheets.json` now has `"rim": true` and `"outline": "#000000"`. The shark and both gull sheets changed, and `land_crab.png` rebuilt byte-identical, its edge being black already. No hand source was redrawn.
+- **The hair parts are unchanged.** The survey above was wrong that their dark-tone edges reach the composed head. Each part has dark-tone edge pixels: hair_0 384, hair_2 296, hair_3 176, hair_4 140, hair_5 130, hair_6 545, hair_7 330, and hair_1 none. They are all where the part lies over the body (`compose.py`'s `over` keeps those). Composed with either body and the outfit, every hair has 0 non-black edge pixels, which the 1-player test and the 2 × 8 composition test confirm. Re-rimming the part files would only blacken the line between hair and face inside the figure.
+- **Checks.** `check.py` reports 0 problems with the family rule on the tracked art, and the Python art tests pass.
+- Image: `docs/art-pass/prop-polish/outline_black_before_after_x4.png`. Each sheet is shown before, then after, over deep water #306082: the shark, `seagull` and `seagull_flight`.
+
 **Group 3, the rain catcher's tarp (D3).**
 - **Test first.** `test_the_rain_catcher_wears_a_tarp_funnel_whose_mouth_shows_the_water` (test_structure_looks.gd, one player offline) failed on today's sheet: no #5b6ee1 or #3f3f74 over the rim, the mouth #45283c, the water #639bff.
 - **The art.** A new hand layer, `tools/art/fixes/structures/catcher_funnel.png`: 2 frames of 16×12 laid at (0, 2) over each frame's barrel and top.
@@ -269,3 +285,85 @@ As the task says, nothing was redrawn. The question went to the coordinating ses
   - `docs/art-pass/prop-polish/two_palms_col_before_after_x6.png`: `before/two_palms_col_x3.png` (×6 in fact), which shows palms 1 and 3 at (23, 31) and (23, 36), beside the same rect now: today's palm above the bowed look.
   - `docs/art-pass/prop-polish/palm_looks_x6.png`: the three looks, bare and with 3 coconuts and the nest.
   - `docs/art-pass/prop-polish/sandbar_palms_solo.png`: the solo run's view of the grove.
+
+**Group 5, the lean-to (D5).**
+- **Tests first.** They failed on today's lean-to and shade.
+  - **The frame** (`test_lean_to.gd`):
+    - **A closed roof.** Every column with a pixel in the top 16 rows is opaque from its top through those rows, and the tops differ by no more than the 2 px ridge sag. Today's stepped corners start 10 rows lower.
+    - **A ragged eave.** Between the posts, each column's lowest thatch pixel (the lowest that is not a dark tone) hangs 2 to 4 px below the eave line, in at least three separate tips. Today's eave varied by 1 px.
+    - **Post shadows.** A `DropShadow` under each post's foot, drawn behind the lean-to.
+  - **The pick** (`test_terrain_view.gd`). On the sandbar and the hidden cay, every shaded cell takes the hut shade of its depth band, and its tile is declared. The coast cay keeps today's corner set; its test is unchanged.
+  - **The tool** (`test_terrain.py`). The sheet grows by three corner sets. Each band's full tile is highest on its north row, a column never darkens going south from 58 down to the last band's last row, and a bad ramp is refused.
+  - **The 1-player test** (`test_lean_to.gd`, one solo shell). On the sandbar all 12 hut cells have a hut-shade decal. Each is highest on its north row, and walked down each hut column the shade never darkens going south, darkest on the hut's north edge.
+- **The art.** The three hand sources are redrawn by a helper; the structure rim adds the outline.
+  - `lean_to_roof.png`: a closed thatch slab, 62 px wide. Four courses of hanging frond strands, the upper course over the lower, lighter above and darker toward the eave, with fresh green fronds along the ridge. The ridge sags 1 px over its middle third, and the two top corners are rounded by 1 px.
+  - `lean_to_eave.png`: frond tips hanging 2 to 4 px at uneven spacing between the posts.
+  - `lean_to_frame.png`: the posts, and the back wall in the dark tones #45283c and #222034 down to the ground between the posts. It stays a 64×48 frame on the same anchor.
+- **Post shadows.** `lean_to.tscn` gains `ShadowWest` and `ShadowEast` (`shadow.tscn`, MEDIUM, `show_behind_parent`) at (±25, −1). The root stays a Sprite2D.
+- **The hut shade.**
+  - `terrain.py`'s shade step takes `"hut": {"north": 58, "south": 18, "bands": 3}` and adds one corner set per depth band after the spot row (rows 5 to 16), with a ramp from 58 on the hut's north edge to 18 at 48 px.
+  - `TerrainView.hut_shade_tile` picks a band by depth from the hut's north edge, and a mask that counts the cell north of any shaded cell as shaded, for the shaded cells of a layout `ShelterArtData` names.
+  - The 45 hut tiles with art are declared in `decal_tiles.tres`. Mask 0 covers nothing and is not declared. `test_terrain_tile_sets.gd` re-pins `shade.png` from 19 tiles to 64.
+- **Departures.**
+  - **Three bands, not one row.** D5 says "a second row" of the shade sheet. A single ramped tile restarts its ramp in every hut row and draws stripes, so the ramp spans the hut's depth in three bands. `shade.png` grows from 64×80 to 64×272.
+  - **Straight sides.** The hut shade takes the mask's straight quadrants, not the sand outline. The outline's wobble made a column's shade rise and fall along the hut's sides. A hut is a rectangle under a rectangular roof.
+  - **The back wall reaches the ground.** Today rows 38 to 47 between the posts were open sand, which would put a lit strip right above the full-strength shade. The wall now meets the hut's north edge.
+  - **Ahead of C14.** Task 5.2 asks to rebase on art-terrain-polish's C14 decal edits. C14 isn't built yet (it waits for crossing-gameplay #70 and #75), so this lands first, and C14 rebases on it. Both edit `TerrainView._build_decals`: the hut pick is in the shaded-cell loop, and C14 drops the raft's wide shade at the end.
+- **Checks.**
+  - `terrain.py` rebuilt only `decals/shade.png`. `structures.py` rebuilt only `lean_to.png`.
+  - `check.py` is clean on the art and the fixes.
+  - The windowed solo run `art_pass_run.gd --mode=solo --only=hut` (a step added for task 5.3) passed 16 of 16: the player in the back row on the shade and in front of the lean-to, and the tarp beside them.
+- **Images:**
+  - `docs/art-pass/prop-polish/hut_before_after_x4.png`: `before/sandbar_day_hut_crop4.png` and the same rect, (752, 192), 144×128.
+  - `docs/art-pass/prop-polish/hut_before_after_x6.png`: `before/hut_c3.png`, which is really at ×6, and the same rect, (767, 162), 110×120.
+  - `docs/art-pass/prop-polish/lean_to_sprite_before_after_x4.png`: `before/s_lean_to.png` and the new sprite.
+  - `docs/art-pass/prop-polish/hut_solo.png`: the solo player in the hut.
+
+  The after shots are of the island scene alone (`capture_terrain.tscn`), so the pick-ups and the bench are missing.
+
+**Group 6, the hidden cay's scenery (D6).**
+- **Tests first.** The tests were written before any of the code, but first run after it: they could not parse without `DecorArtData`.
+  - **`test_decor_art.gd`**, new, 8 tests:
+    - each decor id of `cayo_sin_norte.tres` draws its piece and no colour square;
+    - upright pieces are children of the y-sorted `DecorPieces`, standing on their cell's centre at the actors' z;
+    - the post in the shallows has its ripple foot, and a post on sand has none;
+    - an id with no look draws its colour square;
+    - the stub's wisp has at most 4 unique frames at 12 fps or less;
+    - the drag mark covers its five sand cells and draws nothing in the shallows.
+  - **The 1-player test:** the hidden cay, reached by one offline player, shows every piece and no colour square, and Platino stands beside the chest. A player south of the post draws over it, and one north of it behind it. The player's drop shadow draws over the flat pieces.
+  - **The embers test**, added after the capture: most of the embers' pixels show clear of the palm crown beside them, whichever look the palm draws. It failed at offset 0, where 0 to 10 of 66 pixels showed.
+- **The data.**
+  - `DecorLook` holds one look: decor id, terrain (-1 for any), upright, texture or frames, foot, pair, offset.
+  - `DecorArtData` (`structures/decor_art.tres`) holds the looks. `look_for(id, terrain)` prefers the cell's terrain over any.
+  - A look with nothing to draw draws nothing, which is how the drag mark ends at the water. No look at all keeps the colour square.
+- **`DecorView`.**
+  - It draws flat pieces at z -9: over the terrain's decals (-10), under every drop shadow (-1).
+  - Upright pieces are children of a y-sorted `DecorPieces` at the actors' z, and `DecorView` itself is y-sorted.
+  - `piece_for(entry)` gives each cell's decision (flat, upright, square or none) for the tests, since GUT runs headless.
+- **The pieces.**
+  - **Embers:** the fire's out frame from `structures/fire.png`, flat, drawn 6 px up on its cell's north edge. The palm at (22, 17) spreads its crown over the cell's south half, and no layout cell moved.
+  - **Cigar stub:** `fx/decor_cigar.png`, 2 frames of 16x16 at 3 fps. The stub with its ember, and a 1 px wisp swaying.
+  - **Drag mark:** `decals/decor_drag.png`, 32x16. One trough down a slope of one row per two cells, as the run lies. A cell whose west neighbour is drag mark draws the east half, so the three pairs join up. In the shallows it draws nothing.
+  - **Post:** `structures/decor_post.png`, 16x24, rimmed in the dark tones: a stake with a cut rope loop. In the shallows its foot is `fx/post_ripple.png`, 12x5.
+  - **Cut line:** `decals/decor_rope.png`, the frayed end floating.
+  - **Platino:** `creatures/platino.png`, cut from DawnLike `Characters/Reptile0.png` at (48, 192) by `creatures.py`. Its seven DB16 colours are mapped to the master palette, and it is rimmed in black. It is one still frame (the layout calls it a figurine).
+- **Departures.**
+  - **Folders.** No `decor/` folder. D1 says decor takes the dark tones in one line and is an actor in the next.
+    - The post, a structure, is in `structures/`, in the dark tones.
+    - Platino, a creature sprite, is in `creatures/`, in black.
+    - The stub and wisp, the ripple, the rope end and the drag mark are thin. A rim would turn them to solid outline, so they live in `fx/` and `decals/`, which have no outline rule.
+  - **Sources.** Those four are hand sources in `tools/art/fixes/terrain/`, copied and checked by `terrain.py`'s existing "copies".
+  - **Capture.** It uses `art_pass_run.gd --only=hidden` (a step added here, travelling with `travel_to` as `--only=cay` does), not `secret_cay_playground.tscn`, which cannot save an image. `capture_terrain.tscn` gains the hidden cay for the before and after.
+- **Licences and credits.**
+  - `creatures/License.txt`: the DawnLike block names `platino.png`.
+  - `CREDITS.md` gains Platino's row. The in-game credits already carry DawnLike's CC BY 4.0 line (for the knife).
+  - Own-work blocks are added in `structures/`, `fx/`, `decals/` and the two fixes folders.
+- **Checks.**
+  - `terrain.py`, `structures.py` and `creatures.py` built only the six new files; everything else rebuilt byte-identical.
+  - `check.py` is clean on the art and the fixes.
+  - The windowed solo run `--only=hidden` passed 14 of 14.
+- **Images:**
+  - `docs/art-pass/prop-polish/hidden_cay_decor_before_after_x4.png`: `before/secret_cay_decor.png` and the same rect, (176, 16), 272x336.
+  - `docs/art-pass/prop-polish/hidden_cay_scenery_x6.png`: the drag mark, the post and the rope end.
+  - `docs/art-pass/prop-polish/hidden_cay_solo.png`: the solo player's view.
+

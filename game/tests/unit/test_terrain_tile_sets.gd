@@ -25,11 +25,12 @@ const SHEETS: Dictionary = {
 ## Tiles per sheet: a corner set has 16 masks and 4 variants; plain.png 16 shapes of
 ## 9 terrains and the rock's 3 full-tile variants; a shore sheet the 65 pairs of an own mask inside a sand mask that has a shore;
 ## foam.png 8 frames of the 15 masks that have a shore, and foam_still.png the same 8 alike
-## (art-terrain-polish D2); shade.png 16 masks and 3 spots.
+## (art-terrain-polish D2); shade.png 16 masks and 3 spots, then the hut shade's 3 depth bands of
+## 15 masks each (mask 0 covers nothing; art-prop-polish D5).
 const TILE_COUNTS: Dictionary = {
 	TERRAIN_TILES: [20, 20, 24, 147, 65, 195, 585],
 	SHORE_TILES: [120, 120],
-	DECAL_TILES: [1, 19, 4],
+	DECAL_TILES: [1, 64, 4],
 }
 
 

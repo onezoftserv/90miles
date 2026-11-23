@@ -2,7 +2,7 @@ Pack: DawnLike - 16x16 Universal Rogue-like tileset v1.81
 Author: DragonDePlatino; palette by DawnBringer
 Licence: CC BY 4.0
 Source: https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181
-Files: none copied since 2026-11-13; the shark's grey ramp follows the pack's sharks (Characters/Aquatic0.png) and its spray the water bursts of Objects/Effect0.png, both redrawn by hand in the master palette (reef_shark.png is own work, below)
+Files: platino.png (art-prop-polish D6: Platino, Characters/Reptile0.png at x 48, y 192, 16x16, cut by tools/art/creatures.py, its seven DB16 colours mapped to the master palette and its edge rimmed in black; shape unchanged; hidden on the hidden cay's chest ledge, as the pack's README asks); otherwise none copied since 2026-11-13: the shark's grey ramp follows the pack's sharks (Characters/Aquatic0.png) and its spray the water bursts of Objects/Effect0.png, both redrawn by hand in the master palette (reef_shark.png is own work, below)
 
 Pack: Tiny, Tiny Heroes - Animals
 Author: Kacper Woźniak (thkaspar)
