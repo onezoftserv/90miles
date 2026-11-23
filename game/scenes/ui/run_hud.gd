@@ -14,7 +14,8 @@ extends CanvasLayer
 ## each holds the input while open. A closed-eye
 ## mark shows over every hidden player (`marks`), placed like the prompt, and an open one over every lit
 ## player whose spot meter is above 0. While a patrol boat is on the horizon, a light or hull shows on
-## the horizon band (`patrol_horizon`). Under the day phase, the
+## the horizon band (`patrol_horizon`). Right of the day phase, a weather that is not clear names itself
+## in its own window (`weather_panel`, art-mood-pass D5). Under the day phase, the
 ## broken compass's needle (`needle`, secret-cay) shows while the local player carries it, and
 ## under it the note label (`note_label`) shows the chest's note and the map's text for a while.
 ## In co-op, a local player who is dead or waits on the shore watches a living teammate
@@ -90,6 +91,8 @@ var floats: ChangeFloats = ChangeFloats.new()
 ## session's capture scene.
 var scene_panel: ScenePanel = null
 @onready var phase_label: Label = %Phase
+@onready var weather_panel: PanelContainer = $WeatherPanel
+@onready var weather_label: Label = %Weather
 @onready var teammates_panel: Control = %TeammatesPanel
 @onready var watching_panel: PanelContainer = %WatchingPanel
 @onready var watching_label: Label = %Watching
@@ -264,6 +267,7 @@ func _collect_panels(node: Node, into: Array[Rect2]) -> void:
 
 func refresh() -> void:
 	phase_label.text = phase_name(session.climate)
+	refresh_weather()
 	refresh_watching()
 	if solo:
 		return
@@ -283,6 +287,22 @@ func refresh() -> void:
 		var player := session.body(others[i])
 		var state := state_word(player, session.is_dropped(others[i]))
 		(_teammates.get_child(i) as TeammateBlock).show_teammate(session.player_name(others[i]), player.meters.health, state, player.look_slot)
+
+
+## art-mood-pass D5: the current weather's own name in its window right of the phase, in the
+## session's language, while that weather is not clear (a squall: "Turbonada" or "Squall").
+func refresh_weather() -> void:
+	var shown: String = weather_name(session.climate.weather_id, CoopSession.locale_of(session))
+	weather_label.text = shown
+	weather_panel.visible = not shown.is_empty()
+
+
+## The name of weather `weather_id` in `locale`, or "" when it is clear or unknown.
+static func weather_name(weather_id: StringName, locale: String) -> String:
+	var weather := GameState.content.get_entry(&"weather", weather_id) as WeatherData if not weather_id.is_empty() else null
+	if weather == null or weather.is_clear:
+		return ""
+	return weather.name_en if locale == "en" else weather.name_es
 
 
 ## The teammate rows, top to bottom ("Papo 0 Caído"): each block's name, health and state word.

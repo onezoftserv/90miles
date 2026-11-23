@@ -12,6 +12,12 @@ extends Node2D
 
 const RIPPLE_ANIMATION: StringName = &"dive"
 const SWIM_RING_ANIMATION: StringName = &"swim"
+## art-sprite-polish D5 ("Cover over a crouched body"): the rows of a Brush tile that hold the bush's
+## front, drawn over the body so a crouched player is covered to about the chin and a standing one
+## to mid-thigh; the rows above stay behind it.
+const BUSH_FRONT_TOP: int = 4
+const BUSH_FRONT_ROWS: int = 11
+const TILE_PX: float = 16.0
 
 ## The pose drawn now.
 var pose: PlayerPose.Pose = PlayerPose.Pose.STANDING
@@ -25,11 +31,15 @@ var _material: ShaderMaterial = null
 var _tuning: HurtCueTuning = HurtCues.tuning()
 var _health_watch: MeterWatch = MeterWatch.new(_tuning.change_margin, _tuning.steady_forget_s)
 var _blink: HurtBlink = HurtBlink.new(_tuning.blink_s, _tuning.blink_hz)
+## The Brush tile the bush front copies now, [source, atlas coords, alternative]; [] while hidden.
+var bush_tile: Array = []
+var _brush: TileMapLayer = null
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var ripple: AnimatedSprite2D = $Ripple
 @onready var swim_ring: AnimatedSprite2D = $SwimRing
 @onready var shadow: DropShadow = $Shadow
+@onready var bush_front: Sprite2D = $BushFront
 
 
 func _ready() -> void:
@@ -60,6 +70,7 @@ func step(delta: float) -> void:
 	var dead: bool = meters != null and meters.dead
 	pose = PlayerPose.pick(body.movement_state, body.stealth_state, body.downed, dead, facing.moving())
 	_draw_pose()
+	_draw_bush_front(body)
 	_draw_hurt(meters, delta)
 
 
@@ -102,6 +113,45 @@ func _draw_pose() -> void:
 	sprite.speed_scale = fps / maxf(sprite.sprite_frames.get_animation_speed(animation), 0.001)
 	if not sprite.is_playing() or sprite.animation != animation:
 		sprite.play(animation)
+
+
+# The island Brush layer's tile at the body's cell, its front rows only, at the cell (not on the
+# body, so the bush does not walk with the player), while the body is drawn on land. The cell is
+# the layer's own cell under the body's drawn position: `body.cell()` on an island at the origin.
+func _draw_bush_front(body: PlayerBody) -> void:
+	bush_tile = []
+	var brush := _brush_layer(body)
+	if brush != null and PlayerPose.shows_body(pose) and not PlayerPose.shows_water_line(pose):
+		var cell: Vector2i = brush.local_to_map(brush.to_local(body.global_position))
+		var source: int = brush.get_cell_source_id(cell)
+		var atlas_source := brush.tile_set.get_source(source) as TileSetAtlasSource if source >= 0 else null
+		if atlas_source != null:
+			var atlas: Vector2i = brush.get_cell_atlas_coords(cell)
+			bush_tile = [source, atlas, brush.get_cell_alternative_tile(cell)]
+			bush_front.texture = atlas_source.texture
+			bush_front.region_rect = Rect2(Vector2(atlas) * TILE_PX + Vector2(0.0, BUSH_FRONT_TOP), Vector2(TILE_PX, BUSH_FRONT_ROWS))
+			var top_left: Vector2 = brush.to_global(brush.map_to_local(cell)) - Vector2(TILE_PX, TILE_PX) / 2.0
+			bush_front.global_position = top_left + Vector2(0.0, BUSH_FRONT_TOP)
+	bush_front.visible = not bush_tile.is_empty()
+
+
+# The Brush layer of the island this body is on: the `Terrain` view of a node beside one of the
+# body's ancestors (the island sits beside the session in the shell and the tests), found once.
+func _brush_layer(body: PlayerBody) -> TileMapLayer:
+	if is_instance_valid(_brush):
+		return _brush
+	_brush = null
+	var at: Node = body.get_parent()
+	while at != null and _brush == null:
+		for child: Node in at.get_children():
+			var view := child as TerrainView
+			if view == null:
+				view = child.get_node_or_null(^"Terrain") as TerrainView
+			if view != null:
+				_brush = view.get_node_or_null(^"Brush") as TileMapLayer
+				break
+		at = at.get_parent()
+	return _brush
 
 
 ## The body's hurt blink (a hit starts it again).

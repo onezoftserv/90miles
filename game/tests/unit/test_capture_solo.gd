@@ -15,7 +15,6 @@ extends GutTest
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const FIRE_SCENE: PackedScene = preload("res://scenes/structures/fire.tscn")
-## Per-process (UserTmp, test-user-folders), never a fixed path in the shared user folder.
 var settings_path: String = UserTmp.path("test_capture_solo_settings.cfg")
 const DT: float = 1.0 / 30.0
 const IDLE_DT: float = 0.1

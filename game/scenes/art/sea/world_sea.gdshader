@@ -5,7 +5,8 @@
 // point moved by a static noise warp so long straight runs bend, and cut at a slowly wobbling
 // level, so the steps meet in a soft curve instead of cell squares. A second sample at an offset that is not a multiple of 32 px,
 // with its own drift, hides the texture's period: the lighter of the two shades is drawn. Every
-// pixel is one of the ramps' colours. It runs on the shader clock, so it moves under solo pause.
+// pixel is one of the ramps' colours. The water drifts on `sea_time`, a clock SeaPaceDriver runs at
+// the weather's pace (art-mood-pass D4); the cut sways on the shader clock. Both move under solo pause.
 shader_type canvas_item;
 
 #include "res://scenes/art/art_common.gdshaderinc"
@@ -26,6 +27,8 @@ uniform float cell_px = 16.0;
 uniform vec2 drift = vec2(5.0, 0.0);
 uniform vec2 second_drift = vec2(-2.0, 3.0);
 uniform vec2 second_offset = vec2(13.0, 19.0);
+// The water's clock in seconds: SeaPace.sea_time, so a squall speeds the drift without a jump.
+uniform float sea_time = 0.0;
 // How far the cut moves from 0.5 (in mask units), and how fast it sways: about 2 px each way on a
 // softened straight edge, so with the warp the line stays within half a cell of where it rests.
 uniform float wobble = 0.05;
@@ -90,7 +93,7 @@ vec2 sea_warp(vec2 px) {
 
 void fragment() {
 	vec2 px = floor(sea_px) + 0.5;
-	int shade = max(sea_shade(px - drift * TIME), sea_shade(px + second_offset - second_drift * TIME));
+	int shade = max(sea_shade(px - drift * sea_time), sea_shade(px + second_offset - second_drift * sea_time));
 	vec2 mask = texture(depth_mask, (px + sea_warp(px)) / (grid_cells * cell_px)).rg;
 	// Two low sines of the position: a smooth, slowly moving cut, never per-pixel noise.
 	float sway = sin(px.x * 0.071 + px.y * 0.023 + TIME * wobble_speed)

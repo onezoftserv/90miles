@@ -204,3 +204,38 @@ Art and art data only. Rebuild with `python -I tools/art/structures.py`, `items.
 ## Build notes
 
 Measured values and departures are recorded here as the tasks ship.
+
+**Gate (0.1, 2026-11-22).** The coordinating session's "continue in your order" after C7, C8, the mood pass and C6 is the go. Branched from main 8c58c16.
+
+**Group 1, the outline rule: stopped at 1.2, asked as QO1.** A survey of today's tracked art against D1 found non-black edges on actors:
+- `creatures/reef_shark.png`: 213 edge pixels in #222034 and #323c39, the fin's rim among them.
+- `creatures/seagull.png`: 53. `seagull_flight.png`: 13.
+- The player hair parts (`characters/parts/hair_0`, `hair_2` to `hair_7`) carry dark-tone edges that form the top of the head once composed.
+- Every item icon is already all black, and every structure uses only the dark tones.
+
+As the task says, nothing was redrawn. The question went to the coordinating session with three options: re-rim to black (recommended), keep today's practice, or exempt these files. Group 1 resumes on the answer.
+
+**Group 3, the rain catcher's tarp (D3).**
+- **Test first.** `test_the_rain_catcher_wears_a_tarp_funnel_whose_mouth_shows_the_water` (test_structure_looks.gd, one player offline) failed on today's sheet: no #5b6ee1 or #3f3f74 over the rim, the mouth #45283c, the water #639bff.
+- **The art.** A new hand layer, `tools/art/fixes/structures/catcher_funnel.png`: 2 frames of 16×12 laid at (0, 2) over each frame's barrel and top.
+  - The tarp in the tarp icon's blues (#639bff lit, #5b6ee1, #3f3f74 where it dips into the mouth).
+  - Outlined in #222034, flaring a pixel past the rim.
+  - Tied with a #d9a066 cord with two #8f563b knots, its corners hanging below the cord.
+  - The mouth is #222034 when empty. At one cup it shows water in #5fcde4 with a #cbdbfc glint and a #639bff edge, so the water stays distinct from the tarp's own blue.
+- **The build.** The catcher's recipe gains the layer. The sheet stays 32×24 (2 frames of 16×24); every other structure sheet rebuilt byte-identical; `check.py` is clean.
+- Image: `docs/art-pass/prop-polish/rain_catcher_before_after_x8.png`.
+
+**Group 2, five icons that read (D2).**
+- **Tests first.** The rule is outline pixels at most half of the icon's opaque pixels, checked on the five in `test_items.py`, in `test_item_icons.gd`, and in a new 1-player test in `test_coast_cay_solo.gd`: the post's nails show the redrawn icon on the ground and in the strip once picked up. On today's icons it failed for nails (76 of 114), crab (39 of 72) and iguana (31 of 47). Tarp (29%) and hutía (45%) already passed but did not read as D2 describes.
+- **The new hand sources**, drawn as fill maps inside the 12×12 centre with a 4-neighbour #000000 ring, so the box and the closed outline hold:
+  - **nails:** three nails lying parallel at 45°, heads at the upper left, a one-pixel #222034 seam between the shanks, 32% outline;
+  - **tarp:** a sheet folded in three layers with a grey grommet, 27%;
+  - **crab_cooked:** an orange shell with folded claws and leg nubs, 32%;
+  - **hutia_cooked:** a browned body with ears and feet on a pale spit that sticks out both sides, 34%;
+  - **iguana_cooked:** a browned iguana, legs splayed and tail curled, on a pointed leaf, 29%.
+- Two nails drafts were rejected on the captures: an upright fan and a block of upright nails with T-heads. They passed the rule but read as a vase and a grate.
+- **Checks.** `items.py` rebuilt every icon. Only the five changed; `dry_grass` is byte-identical. No two icons share a silhouette.
+- **Noted, not redrawn.** Thirteen other icons are over the half rule too, mostly thin tools: crab_raw, fins, fishing_line, flint_steel, guao, lobster, lure, military_belt, pliers, snare, spear, sunglasses and uva_caleta_unripe (16 with today's nails, crab and iguana). D2 covers only the five, so the test names them alone.
+- **Images.**
+  - `docs/art-pass/prop-polish/icons_before_after_x8.png`: before on top, after below.
+  - `docs/art-pass/prop-polish/strip_five_x3.png`: the strip holding the five, from `capture_inventory_hud.tscn -- --only=icons --scale=3`, a step added for this task. The three cooked foods show dimmed there by the HUD kit's own slot dimming.

@@ -1,28 +1,27 @@
 extends GutTest
+
 ## crossing "Paddling", "Jobs aboard", "Coast drift", "Steering and current" (the blow) with 1 and 2
 ## riders, offline: holding a paddle slides the vessel toward its side, the current pulls it back to
 ## the line, two paddlers are faster, both sides cancel, it stops at 6 tiles, a tied rider and a
 ## swimmer cannot paddle, the squall's blow halves it, and it never counts as drift.
 
+var settings_path: String = UserTmp.path("test_crossing_paddle_settings.cfg")
+
 const K := CrossingBeat.Kind
 const EPS: float = 0.25
-const SETTINGS_NAME: String = "test_crossing_paddle_settings.cfg"
-
 
 func after_each() -> void:
 	FixtureRoutes.take_out()
 	WeatherManager.stop()
 	NetManager.leave()
-	if FileAccess.file_exists(UserTmp.path(SETTINGS_NAME)):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(UserTmp.path(SETTINGS_NAME)))
-
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 # `body` stands at the `side` edge of the shared deck, on its paddle.
 func _to_edge(crossing: Crossing, body: PlayerBody, side: int) -> void:
 	var deck := crossing.deck_rect()
 	var x: float = deck.end.x - 4.0 if side == CrossingSteer.EAST else deck.position.x + 4.0
 	body.global_position = Vector2(x, deck.get_center().y)
-
 
 func _paddle(crossing: Crossing, bodies: Array[PlayerBody], seconds: float) -> void:
 	for body: PlayerBody in bodies:
@@ -31,7 +30,6 @@ func _paddle(crossing: Crossing, bodies: Array[PlayerBody], seconds: float) -> v
 	CrossingRig.run(crossing, seconds + CrossingRig.STEP_S)
 	for body: PlayerBody in bodies:
 		body.intent = MoveIntent.new()
-
 
 func test_solo_paddles_off_the_line_and_drifts_back() -> void:
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0)
@@ -43,7 +41,6 @@ func test_solo_paddles_off_the_line_and_drifts_back() -> void:
 	assert_almost_eq(crossing.steer.position, 2.0, EPS, "2 tiles east 2 s later")
 	CrossingRig.run(crossing, 6.0)
 	assert_eq(crossing.steer.position, 0.0, "back on the line, and no further")
-
 
 func test_walking_off_the_paddle_stops_paddling() -> void:
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0)
@@ -57,7 +54,6 @@ func test_walking_off_the_paddle_stops_paddling() -> void:
 	CrossingRig.run(crossing, 1.0)
 	assert_lt(crossing.steer.position, paddled, "the button still held, but away from the paddle: the current takes it back")
 
-
 func test_two_paddlers_on_one_side() -> void:
 	var crossing := CrossingRig.make(self, &"raft", 2, 100.0, 60.0)
 	var bodies: Array[PlayerBody] = [crossing.body_of(1), crossing.body_of(2)]
@@ -66,7 +62,6 @@ func test_two_paddlers_on_one_side() -> void:
 	_paddle(crossing, bodies, 2.0)
 	assert_almost_eq(crossing.steer.position, -4.5, EPS)
 
-
 func test_paddles_on_both_sides_cancel() -> void:
 	var crossing := CrossingRig.make(self, &"raft", 2, 100.0, 60.0)
 	_to_edge(crossing, crossing.body_of(1), CrossingSteer.WEST)
@@ -74,13 +69,11 @@ func test_paddles_on_both_sides_cancel() -> void:
 	_paddle(crossing, [crossing.body_of(1), crossing.body_of(2)], 2.0)
 	assert_eq(crossing.steer.position, 0.0, "still on the line")
 
-
 func test_solo_paddles_to_the_limit() -> void:
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0)
 	_to_edge(crossing, crossing.body_of(1), CrossingSteer.EAST)
 	_paddle(crossing, [crossing.body_of(1)], 5.0)
 	assert_eq(crossing.steer.position, 6.0)
-
 
 func test_a_tied_rider_cannot_paddle() -> void:
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0)
@@ -92,7 +85,6 @@ func test_a_tied_rider_cannot_paddle() -> void:
 	_paddle(crossing, [body], 2.0)
 	assert_eq(crossing.steer.position, 0.0, "a tied rider keeps only untying")
 
-
 func test_a_swimmer_cannot_paddle() -> void:
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0)
 	var body := crossing.body_of(1)
@@ -100,7 +92,6 @@ func test_a_swimmer_cannot_paddle() -> void:
 	CrossingRig.put_beside_deck(crossing, body, 4.0)
 	_paddle(crossing, [body], 2.0)
 	assert_eq(crossing.steer.position, 0.0)
-
 
 func test_solo_paddles_slowly_in_the_blow() -> void:
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0, [CrossingRig.beat(40.0, K.SQUALL)])
@@ -116,7 +107,6 @@ func test_solo_paddles_slowly_in_the_blow() -> void:
 	_paddle(crossing, [body], 2.0)
 	assert_almost_eq(crossing.steer.position, 1.5, EPS, "half what calm water gives")
 
-
 func test_solo_paddling_records_no_drift() -> void:
 	var launched := _shell_launch()
 	var shell := launched[0] as GameShell
@@ -129,7 +119,6 @@ func test_solo_paddling_records_no_drift() -> void:
 	assert_eq(shell.crossing_results.size(), 1)
 	assert_eq((shell.crossing_results[0] as CrossingResult).drift_offset_tiles, 0.0, "paddling is not drift")
 
-
 func test_the_row_of_boards_paddles_as_one() -> void:
 	FixtureRoutes.put_in()
 	var crossing := CrossingRig.make(self, &"test_board", 2, 60.0, 60.0)
@@ -140,7 +129,6 @@ func test_the_row_of_boards_paddles_as_one() -> void:
 	_paddle(crossing, [first], 2.0)
 	assert_almost_eq(crossing.steer.position, 3.0, EPS, "both boards 3 tiles east of the line")
 	assert_eq(crossing.deck_rect_of(2).get_center().x - crossing.deck_rect_of(1).get_center().x, gap_before, "still 3 tiles apart")
-
 
 func test_a_board_rider_cannot_paddle_another_board() -> void:
 	FixtureRoutes.put_in()
@@ -157,7 +145,6 @@ func test_a_board_rider_cannot_paddle_another_board() -> void:
 		assert_true(paddle.usable_by(owner_body))
 		assert_false(paddle.usable_by(other), "another rider's board paddle")
 
-
 func test_a_press_on_the_deck_middle_still_ties_down() -> void:
 	# crossing "Which job a press takes": a rider on their spot reaches the lashing before a paddle.
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 60.0)
@@ -167,14 +154,13 @@ func test_a_press_on_the_deck_middle_still_ties_down() -> void:
 	assert_eq(crossing.rider_state(1), Crossing.Rider.TIED)
 	assert_eq(crossing.steer.position, 0.0)
 
-
 # A solo shell run with the sandbar's raft launched on a calm 60 s crossing with no beats.
 func _shell_launch() -> Array:
 	NetManager.start_solo()
 	WeatherManager.stop()
 	WeatherManager.sky.start_at(0.0)
 	var shell := (preload("res://scenes/shell/game_shell.tscn") as PackedScene).instantiate() as GameShell
-	shell.settings_path = UserTmp.path(SETTINGS_NAME)
+	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	var body := shell.session.body(1)

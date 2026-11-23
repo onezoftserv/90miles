@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="WeatherData" format=3]
 
 [ext_resource type="Script" path="res://scripts/data/weather_data.gd" id="1_weather"]
+[ext_resource type="PackedScene" path="res://scenes/art/weather/rain_overlay.tscn" id="2_rain"]
 
 [resource]
 script = ExtResource("1_weather")
@@ -21,6 +22,9 @@ followed_by_weather_id = &"calm"
 tell = 3
 warning_lead_s = 60.0
 canvas_tint = Color(0.7, 0.72, 0.8, 1)
+vfx_scene = ExtResource("2_rain")
+sea_pace = 1.8
+foam_pace = 1.6
 heat_gain_mult = 1.0
 direct_sun = false
 morale_on_start = -10.0
