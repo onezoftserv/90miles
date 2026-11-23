@@ -1139,6 +1139,38 @@ class BuildTests(unittest.TestCase):
             self.assertEqual(sum(1 for alpha in overlay.crop(0, 0, 16, 16).pixels[3::4] if alpha), 256 if hand else 0)
 
 
+class BareFoamTests(unittest.TestCase):
+    """art-terrain-polish D7: in the "bare" frames the foam leaves the sand, so its wet lip shows."""
+
+    def test_a_bare_frame_has_no_foam_on_the_sand_and_keeps_it_on_the_water(self):
+        recipe = BuildTests.recipe(BuildTests())
+        recipe["foam"]["bare"] = [1]
+        sand = png.blank(64, 80)
+        sand.paste(filled(SAND, rows=range(0, 12)), 3 * 16, 0)
+        strip = png.blank(1 + 17 * 2, 32)
+        frame = filled((0x9D, 0x51, 0x2D), rows=range(0, 6))
+        for x in range(16):
+            frame.set(x, 6, WHITE + (255,))
+        for x in range(0, 6):
+            frame.set(x, 5, WHITE + (255,))
+        strip.paste(frame, 1, 9)
+        strip.paste(frame, 18, 9)
+
+        class Sources:
+            def sheet(self, _key, _name):
+                return strip
+
+        foam = terrain.build_foam(recipe["foam"], Sources(), {"sand": sand})
+        washed = foam.crop(0, 3 * 16, 16, 16)
+        bare = foam.crop(16, 3 * 16, 16, 16)
+        self.assertTrue(any(washed.alpha(x, 11) for x in range(16)), "frame 0 washes up the lip")
+        self.assertFalse(any(bare.alpha(x, y) for y in range(12) for x in range(16)), "frame 1 leaves the sand")
+        self.assertEqual([x for x in range(16) if bare.alpha(x, 12)], list(range(16)), "and keeps its line on the water")
+        recipe["foam"]["bare"] = [2]
+        with self.assertRaisesRegex(terrain.TerrainError, r"bare"):
+            terrain.build_foam(recipe["foam"], Sources(), {"sand": sand})
+
+
 class StillFoamTests(unittest.TestCase):
     """art-terrain-polish D2: the still piece of a lagoon's rim."""
 
