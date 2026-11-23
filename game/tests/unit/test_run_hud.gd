@@ -256,3 +256,74 @@ func test_a_host_alone_shows_no_empty_list() -> void:
 	var hud := _hud(_session(), false)
 	hud.refresh()
 	assert_false(hud.teammates_panel.visible, "no teammate yet: no empty window in the corner")
+
+
+## art-mood-pass D5: the weather's own window right of the day phase, shown only while the weather
+## is not clear, on a solo run.
+const WEATHER_BAND_TOP: float = 4.0
+const WEATHER_BAND_BOTTOM: float = 18.0
+## hud-window-kit's teammate column and the crossing HUD's band (constants until they land).
+const KIT_TEAMMATE_LEFT: float = 502.0
+const CROSSING_BAND: Rect2 = Rect2(0.0, 68.0, 640.0, 22.0)
+
+
+func _solo_in(weather_id: StringName, locale: String = "es") -> RunHud:
+	WeatherManager.stop()
+	WeatherManager.sky.start_at(200.0)
+	var session := _session()
+	session.locale = locale
+	session.climate = WeatherManager.sky.climate
+	var hud := _hud(session, true)
+	WeatherManager.sky.weather.start_weather(weather_id)
+	hud.refresh()
+	return hud
+
+
+func after_each() -> void:
+	WeatherManager.stop()
+	WeatherManager.sky.start_at(200.0)
+
+
+func test_a_solo_squall_names_itself_beside_the_phase() -> void:
+	var hud := _solo_in(&"squall")
+	var panel := hud.get_node_or_null(^"WeatherPanel") as PanelContainer
+	assert_not_null(panel, "a WeatherPanel")
+	if panel == null:
+		return
+	assert_true(panel.visible, "shown in a squall")
+	assert_eq(hud.weather_label.text, "Turbonada")
+	assert_eq(panel.mouse_filter, Control.MOUSE_FILTER_IGNORE)
+
+
+func test_an_english_session_reads_squall() -> void:
+	var hud := _solo_in(&"squall", "en")
+	assert_eq(hud.weather_label.text, "Squall")
+
+
+func test_calm_shows_no_weather() -> void:
+	var hud := _solo_in(&"calm")
+	var panel := hud.get_node_or_null(^"WeatherPanel") as PanelContainer
+	assert_not_null(panel)
+	if panel != null:
+		assert_false(panel.visible, "calm is clear: nothing to name")
+
+
+func test_the_weather_window_fits_its_band_and_clears_every_other_window() -> void:
+	var hud := _solo_in(&"squall")
+	await wait_process_frames(2)
+	var panel := hud.get_node_or_null(^"WeatherPanel") as Control
+	assert_not_null(panel)
+	if panel == null:
+		return
+	var rect := panel.get_global_rect()
+	assert_true(rect.position.y >= WEATHER_BAND_TOP and rect.end.y <= WEATHER_BAND_BOTTOM, "inside y 4-18: %s" % rect)
+	assert_true(rect.encloses((hud.weather_label as Control).get_global_rect()), "Turbonada fits its window")
+	# The meters' root fills the screen; its window is its Panel.
+	for path: NodePath in [^"PhasePanel", ^"TeammatesPanel", ^"Needle", ^"NoteLabel", ^"Meters/Panel"]:
+		var other_rect := (hud.get_node(path) as Control).get_global_rect()
+		assert_false(rect.intersects(other_rect), "clear of %s %s" % [path, other_rect])
+	assert_false(rect.intersects(hud.sign_note.card_rect()), "clear of the sign note's card")
+	assert_false(rect.intersects(Rect2(SignNote.POSITION, Vector2(SignNote.WIDTH, 200.0))), "and of its place")
+	assert_lt(rect.end.x, KIT_TEAMMATE_LEFT, "left of the kit's teammate column")
+	assert_false(rect.intersects(CROSSING_BAND), "above the crossing HUD's band")
+

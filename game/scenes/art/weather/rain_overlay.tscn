@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/art/weather/rain_overlay.gd" id="1_rain"]
+[ext_resource type="Texture2D" path="res://assets/art/fx/rain.png" id="2_rain"]
+[ext_resource type="Texture2D" path="res://assets/art/fx/splash.png" id="3_splash"]
+
+[node name="RainOverlay" type="Node2D"]
+process_mode = 3
+z_index = 10
+texture_filter = 1
+script = ExtResource("1_rain")
+rain = ExtResource("2_rain")
+splash = ExtResource("3_splash")

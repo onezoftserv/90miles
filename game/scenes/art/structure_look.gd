@@ -11,12 +11,17 @@ extends Node2D
 
 const SCENE_PATH: String = "res://scenes/art/structure_look.tscn"
 const NODE_NAME: StringName = &"Look"
+## The fire's light reaches as far as its company (art-mood-pass D2).
+const SURVIVAL_TUNING: SurvivalTuning = preload("res://resources/survival_tuning.tres")
 
 ## Read once per look; every look shares the one resource.
 var data: StructureArtData = StructureArtData.standard()
 ## A palm's look (art-prop-polish D4): picked once from its island's layout id and its cell, and
 ## kept; -1 until it is drawn. A palm on no island draws today's palm, look 0.
 var palm_look: int = -1
+## art-mood-pass D2: a fire's light, made on its first step (other kinds never have one).
+var fire_light: PointLight2D = null
+var _art: ArtTuning = ArtTuning.standard()
 
 @onready var shadow: DropShadow = $Shadow
 ## Palms, the workbench, the stake marker and the sign post: one frame.
@@ -56,6 +61,7 @@ func step() -> void:
 			_show_palm(structure as Palm)
 		StructureArt.KIND_FIRE:
 			_play(data.fire, StructureArt.fire_frame((structure as Fire).lit))
+			_light_fire((structure as Fire).lit)
 		StructureArt.KIND_RAIN_CATCHER:
 			_play(data.rain_catcher, StructureArt.catcher_frame((structure as RainCatcher).cups))
 		StructureArt.KIND_RAFT_SITE:
@@ -138,6 +144,52 @@ func _play(frames: SpriteFrames, animation: StringName) -> void:
 		sprite.play(animation)
 	sprite.offset = StructureArt.frame_offset(frames.get_frame_texture(animation, 0).get_size())
 	sprite.visible = true
+
+
+# art-mood-pass D2 (owner Q13 (a)): a lit fire lights a pool of hard rings exactly as far as its
+# company reaches, scaled by how dark the sky's tint is (none by day) and flickering with the flame's
+# frame through the art tuning's table, held at the table's mean under "Reducir destellos". Embers
+# give no light. Drawing only.
+func _light_fire(lit: bool) -> void:
+	if fire_light == null:
+		fire_light = PointLight2D.new()
+		fire_light.name = "FireLight"
+		fire_light.blend_mode = Light2D.BLEND_MODE_ADD
+		fire_light.shadow_enabled = false
+		fire_light.texture_scale = 1.0
+		fire_light.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		fire_light.color = _art.fire_light_color
+		fire_light.texture = FireGlow.texture(FireGlow.radius_px(SURVIVAL_TUNING.company_radius_tiles), _art.fire_ring_values)
+		add_child(fire_light)
+	var dark: float = darkness(WeatherManager.sky)
+	fire_light.visible = lit and dark > 0.0
+	if not fire_light.visible:
+		return
+	fire_light.energy = _art.fire_light_energy * dark * _flicker()
+
+
+## How dark `sky`'s tint is now, from 0 (as bright as day) to 1 (as dark as a calm night).
+static func darkness(sky: WorldSky) -> float:
+	if sky == null:
+		return 0.0
+	var night: Color = sky.tuning.phase_tints[DataEnums.DayPhase.NIGHT]
+	var full: float = 1.0 - night.get_luminance()
+	if full <= 0.0:
+		return 0.0
+	return clampf((1.0 - sky.tint().get_luminance()) / full, 0.0, 1.0)
+
+
+# The flicker factor of the flame's current frame, or the table's mean held steady.
+func _flicker() -> float:
+	var table: PackedFloat32Array = _art.fire_flicker
+	if table.is_empty():
+		return 1.0
+	if HurtCues.reduce_flashes:
+		var total: float = 0.0
+		for factor: float in table:
+			total += factor
+		return total / table.size()
+	return table[posmod(sprite.frame, table.size())]
 
 
 func _place_shadow(kind: StringName, drawn: bool) -> void:

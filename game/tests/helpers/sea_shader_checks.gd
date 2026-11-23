@@ -24,6 +24,19 @@ static func drift_of(material: ShaderMaterial) -> Vector2:
 	return Vector2(float(found.get_string(1)), float(found.get_string(2)))
 
 
+## The water's drift in px per second of real time at `pace` (art-mood-pass D4): the shader moves
+## the water by drift × sea_time, and SeaPace runs sea_time at the weather's pace.
+static func drift_per_s(material: ShaderMaterial, pace: float) -> Vector2:
+	return drift_of(material) * pace
+
+
+## A clock uniform's value on `material` (`sea_time` on the sea's, `foam_time` on the Shore
+## layer's), or -1 when the material has never been given it.
+static func clock_of(material: ShaderMaterial, parameter: StringName) -> float:
+	var seconds: Variant = material.get_shader_parameter(parameter)
+	return float(seconds) if seconds is float else -1.0
+
+
 ## The mask's two channels at `px` of the sea, from 0 to 1, read the way a linear filter reads an
 ## RG8 texture of `size` texels of `cell_px` each (texel centres at the cells' centres, clamped at
 ## the edge): written apart from SeaMask.sample so each checks the other.
