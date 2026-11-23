@@ -28,7 +28,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 2. The bank (audio "Sounds are data")
 
-- [ ] 2.1 Tests first: write `game/tests/unit/test_sound_bank.gd` (pure). It covers:
+- [x] 2.1 Tests first: write `game/tests/unit/test_sound_bank.gd` (pure). It covers:
   - the 15 ids, unique;
   - every stream loads from `res://assets/audio/`;
   - the loops have `loop_mode` other than disabled, and the one-shots disabled;
@@ -37,11 +37,11 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - an entry without a stream is reported by id (a fixture bank).
 
   Also write `test_sound_credits.gd`: every WAV under both folders is named in its `License.txt` and in `CREDITS.md`, with a fixture folder that fails.
-- [ ] 2.2 Write `game/scripts/audio/sound_data.gd` (`SoundData`) and `sound_bank.gd` (`SoundBank`, with `entry(id)` and `problems()`), and `game/resources/sound_bank.tres` with every number in design D3. Verify: Import, Smoke and GUT pass.
+- [x] 2.2 Write `game/scripts/audio/sound_data.gd` (`SoundData`) and `sound_bank.gd` (`SoundBank`, with `entry(id)` and `problems()`), and `game/resources/sound_bank.tres` with every number in design D3. Verify: Import, Smoke and GUT pass.
 
 ## 3. AudioManager (audio "Playing a one-shot by id", "Loops are set by level")
 
-- [ ] 3.1 Tests first: write `game/tests/unit/test_audio_manager.gd` against a fresh AudioManager instance with a fixture bank and a fake clock. It covers:
+- [x] 3.1 Tests first: write `game/tests/unit/test_audio_manager.gd` against a fresh AudioManager instance with a fixture bank and a fake clock. It covers:
   - `&""` and an unknown id are silent and do not fail, and the unknown id warns once;
   - three requests inside the repeat interval emit `sfx_played` once;
   - pitch stays within the spread over 200 plays;
@@ -52,7 +52,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - the two buses exist once, after `_ready` runs twice.
 
   Change `test_core_services.gd:97` from "plays nothing yet" to "plays through the bank": `play_sfx(&"hurt_hit")` emits `sfx_played`, and `play_sfx(&"")` does not.
-- [ ] 3.2 Rewrite `audio_manager.gd` to design D4. Verify: Import, Smoke and GUT pass, and the smoke run's exit leak count is no higher than on main.
+- [x] 3.2 Rewrite `audio_manager.gd` to design D4. Verify: Import, Smoke and GUT pass, and the smoke run's exit leak count is no higher than on main.
 
 ## 4. Cue logic, pure (audio "Pick-up cue", "Low-thirst cue", "Ambience follows place, time and weather", "Raft hit and arrival", "The patrol motor swells over the horizon warning", "The patrol motor follows the boat in sight", "Loudhailer")
 

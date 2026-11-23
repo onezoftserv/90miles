@@ -106,7 +106,7 @@ Loops loop through their `.import` (`edit/loop_mode=2`, `loop_begin=0`, `loop_en
 `thirst_low_at` is 25, the Sed bar's `MeterBar.CRITICAL_LOW`. A test pins them together, so the warning and the pulse cannot drift apart.
 
 ### D4. AudioManager: the playback contract, nothing else
-- `_ready` adds two buses under Master, Efectos (`SFX`) and Ambiente (`AMBIENCE`), unless they exist.
+- `_ready` adds two buses under Master, Efectos (`SFX`) and Ambiente (`AMBIENCE`), unless they exist (`AudioBuses.ensure`). The bus names, the voice count and the silence floor are constants of `AudioBuses`, because core-services forbids a service from declaring constants. The patrol motor plays on Efectos: it is a warning, not a bed.
 - It loads the bank from its standard path. Callers do not load it, which avoids the static-typed loader leak, art-pass K26.
 - `play_sfx(id, db_offset = 0.0)` (the existing one-argument calls keep working):
   - Empty or unknown ids return at once; an unknown id warns once.
