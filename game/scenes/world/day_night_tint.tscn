@@ -1,6 +1,10 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/world/day_night_tint.gd" id="1_tint"]
+[ext_resource type="Script" path="res://scenes/world/weather_vfx.gd" id="2_vfx"]
 
 [node name="DayNightTint" type="CanvasModulate"]
 script = ExtResource("1_tint")
+
+[node name="WeatherVfx" type="Node2D" parent="."]
+script = ExtResource("2_vfx")

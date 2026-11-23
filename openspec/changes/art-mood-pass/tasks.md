@@ -25,7 +25,7 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
   - Re-read the merged `world_sea.gdshader`, `shore.gdshader`, `sea_mask.gd` and `SeaShaderChecks`.
   - Re-sync this change's MODIFIED "Scrolling sea" block with the archived art-pass spec. If art-coast-pass is not archived yet, sync with its delta.
 - [ ] 0.2 Groups 1 to 4 need only art-coast-pass. Group 5 waits until crossing-gameplay has merged. Before group 5, re-read its `crossing_hazards.gd`, `crossing.tscn` and how it exposes the vessel's lateral position.
-- [ ] 0.3 Before group 4, check whether hud-window-kit has landed.
+- [x] 0.3 Before group 4, check whether hud-window-kit has landed.
   - If it has, re-read its `run_hud.tscn` rects and its `HudPanel` and `HudPanelThin` sizes.
   - If not, build on today's.
   - Then confirm D5's rect against the real nodes.
@@ -62,7 +62,7 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
 
 ## 3. Art for the squall and the sea (recipe)
 
-- [ ] 3.1 In `tools/art/test_mood.py`, write the recipe tests on fixtures and see them fail:
+- [x] 3.1 In `tools/art/test_mood.py`, write the recipe tests on fixtures and see them fail:
   - a source with an off-palette pixel or a partial alpha is refused;
   - a rain tile that is not seamless, or that covers more than 12% (light) or 25% (heavy), is refused;
   - a crest with #ffffff or #cbdbfc is refused;
@@ -70,17 +70,18 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
   - a re-run gives the same bytes;
   - nothing is written when a source is refused;
   - no pack folder is read.
-- [ ] 3.2 Write `tools/art/mood.py` and `mood_fx.json` (design D9). Draw the hand sources in `tools/art/fixes/mood/`:
+- [x] 3.2 Write `tools/art/mood.py` and `mood_fx.json` (design D9). Draw the hand sources in `tools/art/fixes/mood/`:
   - `rain.png` (64 × 64, 2 frames);
   - `splash.png` (3 frames of 5 × 3);
   - `crests.png` (3 frames of 8 × 3);
   - `wake.png` (bow 2 frames, stern 3 frames);
   - `plank.png` (16 × 5).
   Build into `game/assets/art/fx/` and `game/assets/art/sea/`. Add the own-work blocks to both `License.txt` files. Verify `check.py`, `test_art_palette.gd`, `test_art_tracked` and a byte-for-byte re-run.
+  - Built (2026-11-22): `rain.png` and `splash.png` into `fx/`, with the own-work blocks. `crests.png`, `wake.png` and `plank.png` move to group 5 (5.2), because `check.py` refuses tracked art that no scene names and only the crossing's nodes would name them.
 
 ## 4. C34: a squall you can see
 
-- [ ] 4.1 In a new `game/tests/unit/test_mood_fx.gd` and in `test_weather_content.gd`, write these first and see them fail:
+- [x] 4.1 In a new `game/tests/unit/test_mood_fx.gd` and in `test_weather_content.gd`, write these first and see them fail:
   - `SeaPace` eases from pace 1 to the squall's `sea_pace` and `foam_pace` over `pace_ease_s`, and in no 1/60 s step does a clock advance more than the larger pace times the step;
   - back in calm it eases to 1;
   - the `SeaPaceDriver` writes `sea_time` to the sea material and `foam_time` to the Shore layer's material on a solo sandbar run;
@@ -89,18 +90,18 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
   - splash placements for two equal (slot, view) inputs are equal, and use no random generator;
   - every weather that is not `is_clear` has `name_es` and `name_en` of 9 glyphs or fewer;
   - calm has `sea_pace` and `foam_pace` 1.
-- [ ] 4.2 Add `sea_pace` and `foam_pace` (Presentation group, default 1.0) to `WeatherData`. Add `pace_ease_s`, `rain_light_s` and `rain_splashes` to `ArtTuning` and its data. Set the squall's paces (1.8 and 1.6 to start) and its `vfx_scene`.
-- [ ] 4.3 Add `scripts/art/sea_pace.gd` and `scenes/art/sea_pace_driver.gd`. In `world_sea.gdshader`, replace `TIME` with `sea_time` in the two drift terms only; in `shore.gdshader`, use `foam_time` in place of `TIME`.
+- [x] 4.2 Add `sea_pace` and `foam_pace` (Presentation group, default 1.0) to `WeatherData`. Add `pace_ease_s`, `rain_light_s` and `rain_splashes` to `ArtTuning` and its data. Set the squall's paces (1.8 and 1.6 to start) and its `vfx_scene`.
+- [x] 4.3 Add `scripts/art/sea_pace.gd` and `scenes/art/sea_pace_driver.gd`. In `world_sea.gdshader`, replace `TIME` with `sea_time` in the two drift terms only; in `shore.gdshader`, use `foam_time` in place of `TIME`.
   - Add a driver under `TerrainView` and under `CrossingSea`.
   - Extend `SeaShaderChecks` to read the new uniforms.
   - Verify that at pace 1 the art-coast-pass sea tests, `test_shoreline.gd`, `test_terrain_view.gd`, `test_crossing_art.gd` and the 1500 ms build bound pass.
-- [ ] 4.4 Add `scenes/world/weather_vfx.gd` as a child of `day_night_tint.tscn`, and `scenes/art/weather/rain_overlay.tscn`: the tile scrolled over the camera's rect, the two stages and the hashed splashes. Verify the 4.1 tests, `test_day_night_tint.gd` and `test_art_sim_invariance.gd`.
-- [ ] 4.5 In `test_run_hud.gd`, write these first and see them fail:
+- [x] 4.4 Add `scenes/world/weather_vfx.gd` as a child of `day_night_tint.tscn`, and `scenes/art/weather/rain_overlay.tscn`: the tile scrolled over the camera's rect, the two stages and the hashed splashes. Verify the 4.1 tests, `test_day_night_tint.gd` and `test_art_sim_invariance.gd`.
+- [x] 4.5 In `test_run_hud.gd`, write these first and see them fail:
   - on a solo run in a squall, `WeatherPanel` is visible and reads "Turbonada", or "Squall" with an English session;
   - in calm it is hidden;
   - its rect is inside y 4–18 and intersects none of PhasePanel, TeammatesPanel, Needle, NoteLabel, Meters, `SignNote.card_rect()`, the kit's teammate column (x ≥ 502) or the crossing HUD's band (y 68–90).
   Then add `WeatherPanel` to `run_hud.tscn` (design D5) and fill it in `run_hud.gd` from the session's climate and the weather data. Verify every `test_run_hud.gd` case.
-- [ ] 4.6 Windowed 1-player capture: a solo sandbar squall by day and at night beside a fire. Compare with the review's `before/sandbar_squall_day.png` (against `before/sandbar_day_structures.png`), `before/sandbar_night_squall_fire.png` and artboard A12:
+- [x] 4.6 Windowed 1-player capture: a solo sandbar squall by day and at night beside a fire. Compare with the review's `before/sandbar_squall_day.png` (against `before/sandbar_day_structures.png`), `before/sandbar_night_squall_fire.png` and artboard A12:
   - streaks at most 25%;
   - the foam visibly faster with no jump at the start;
   - the label beside the phase;
