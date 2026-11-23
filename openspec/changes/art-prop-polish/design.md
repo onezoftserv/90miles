@@ -204,3 +204,23 @@ Art and art data only. Rebuild with `python -I tools/art/structures.py`, `items.
 ## Build notes
 
 Measured values and departures are recorded here as the tasks ship.
+
+**Gate (0.1, 2026-11-22).** The coordinating session's "continue in your order" after C7, C8, the mood pass and C6 is the go. Branched from main 8c58c16.
+
+**Group 1, the outline rule: stopped at 1.2, asked as QO1.** A survey of today's tracked art against D1 found non-black edges on actors:
+- `creatures/reef_shark.png`: 213 edge pixels in #222034 and #323c39, the fin's rim among them.
+- `creatures/seagull.png`: 53. `seagull_flight.png`: 13.
+- The player hair parts (`characters/parts/hair_0`, `hair_2` to `hair_7`) carry dark-tone edges that form the top of the head once composed.
+- Every item icon is already all black, and every structure uses only the dark tones.
+
+As the task says, nothing was redrawn. The question went to the coordinating session with three options: re-rim to black (recommended), keep today's practice, or exempt these files. Group 1 resumes on the answer.
+
+**Group 3, the rain catcher's tarp (D3).**
+- **Test first.** `test_the_rain_catcher_wears_a_tarp_funnel_whose_mouth_shows_the_water` (test_structure_looks.gd, one player offline) failed on today's sheet: no #5b6ee1 or #3f3f74 over the rim, the mouth #45283c, the water #639bff.
+- **The art.** A new hand layer, `tools/art/fixes/structures/catcher_funnel.png`: 2 frames of 16×12 laid at (0, 2) over each frame's barrel and top.
+  - The tarp in the tarp icon's blues (#639bff lit, #5b6ee1, #3f3f74 where it dips into the mouth).
+  - Outlined in #222034, flaring a pixel past the rim.
+  - Tied with a #d9a066 cord with two #8f563b knots, its corners hanging below the cord.
+  - The mouth is #222034 when empty. At one cup it shows water in #5fcde4 with a #cbdbfc glint and a #639bff edge, so the water stays distinct from the tarp's own blue.
+- **The build.** The catcher's recipe gains the layer. The sheet stays 32×24 (2 frames of 16×24); every other structure sheet rebuilt byte-identical; `check.py` is clean.
+- Image: `docs/art-pass/prop-polish/rain_catcher_before_after_x8.png`.
