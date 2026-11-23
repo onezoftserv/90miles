@@ -102,7 +102,8 @@ var host_tiles: String = ""
 var tag: String = ""
 var capture_dir: String = ""
 ## Solo only: --only=foam runs just the shore views by day and by night (a quick way to tune the foam check);
-## --only=cay travels straight to the coast cay and runs its steps.
+## --only=cay travels straight to the coast cay and runs its steps; --only=palms walks to a nest palm
+## and checks the palm looks round it (art-prop-polish D4).
 var only: String = ""
 ## Host only: how many clients play (2: A rides, B leaves and joins; 1: one untagged client rides).
 var clients: int = 2
@@ -770,6 +771,9 @@ func _solo() -> void:
 	if only == "cay":
 		await _cay_only()
 		return
+	if only == "palms":
+		await _palms_only()
+		return
 	var day: Image = await _world_image("sandbar_day_view")
 	_check_no_magenta(day, "the sandbar by day")
 	await _check_shore_view("spawn_day")
@@ -796,6 +800,51 @@ func _cay_only() -> void:
 	_hooked("travelled to the coast cay at once (CoopSession.travel_to)")
 	await _frames(30)
 	await _coast_cay()
+
+
+# --only=palms (art-prop-polish D4, task 4.3): walks to the nearest nest palm and shoots the grove by
+# day. Every palm draws its cell's look, more than one look shows, and a gull perched in the nest
+# palm stands on the nest point of the look that palm draws.
+func _palms_only() -> void:
+	var nest_palm: Node2D = _nearest_nest_palm()
+	if not _check("a nest palm", nest_palm != null):
+		return
+	if not _check("walked south of the nest palm", await _walk_to(nest_palm.global_position + Vector2(0.0, 2.0 * TILE))):
+		return
+	await _frames(30)
+	# Loaded, not named: this script runs under -s, before the autoloads its class names would need.
+	var data: Resource = load("res://assets/art/structures/structure_art.tres")
+	var rules: GDScript = load("res://scripts/art/structure_art.gd")
+	var count: int = int(data.call("palm_look_count"))
+	var layout_id: StringName = (island.get("layout") as Object).get("id")
+	var cells: Array = (island.get("built") as Object).get("palms")
+	var palms: Array[Node] = island.get_node(^"Palms").get_children()
+	var looks: Array[int] = []
+	var wrong: Array[String] = []
+	for i: int in palms.size():
+		var look: Node = _look_of(palms[i])
+		var shown: int = int(look.get("palm_look"))
+		looks.append(shown)
+		var still: Sprite2D = look.get_node(^"Still")
+		if shown != int(rules.call("palm_look", layout_id, cells[i], count)) or still.texture != data.call("palm_texture", shown):
+			wrong.append("palm %d at %s draws look %d" % [i, cells[i], shown])
+	_check("every palm draws its cell's look", wrong.is_empty(), ", ".join(wrong))
+	var seen: Dictionary = {}
+	for shown: int in looks:
+		seen[shown] = true
+	_check("more than one palm look on the sandbar", seen.size() > 1, "looks %s" % [looks])
+	var perched: Array[Node2D] = _perched_at(nest_palm)
+	var nest_look: Node = _look_of(nest_palm)
+	var nest_point: Vector2 = nest_look.call("nest_point")
+	var off: Array[String] = []
+	for gull: Node2D in perched:
+		var sprite: Node2D = _look_of(gull).get_node(^"Sprite")
+		if absf(sprite.global_position.x - nest_point.x) > 0.5:
+			off.append("%s at x %.1f" % [gull.name, sprite.global_position.x])
+	_check("the nest palm's perched gulls stand over the nest point of look %d" % int(nest_look.get("palm_look")),
+		not perched.is_empty() and off.is_empty(), "%d perched; %s" % [perched.size(), ", ".join(off)])
+	_note("palm looks %s; the nest palm draws look %d" % [looks, int(nest_look.get("palm_look"))])
+	await _world_image("palms_solo")
 
 
 # --only=foam: the shore views by day, then by night.

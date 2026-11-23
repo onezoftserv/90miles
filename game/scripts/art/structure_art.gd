@@ -7,6 +7,10 @@ extends RefCounted
 
 ## A palm draws at most this many coconuts, however many it holds.
 const MAX_COCONUTS_SHOWN: int = 3
+## The bit of its cell's hash a palm's look starts from (art-prop-polish D4). The terrain's picks
+## start from bit 1; a palm starts from bit 8, so its look does not follow its ground tile's, and the
+## sandbar and the coast cay each get a mix of looks (design.md Build notes).
+const PALM_LOOK_SHIFT: int = 8
 
 const FIRE_LIT: StringName = &"lit"
 const FIRE_OUT: StringName = &"out"
@@ -42,6 +46,15 @@ const KINDS: Array[StringName] = [
 
 static func coconuts_shown(coconuts: int) -> int:
 	return clampi(coconuts, 0, MAX_COCONUTS_SHOWN)
+
+
+## The look a palm on `cell` of layout `layout_id` draws, of `count` looks (art-prop-polish D4): its
+## cell's hash, so every peer draws the same look, and no random number generator is called.
+## Today's palm (0) when there is one look or none.
+static func palm_look(layout_id: StringName, cell: Vector2i, count: int) -> int:
+	if count <= 1:
+		return 0
+	return (TerrainArt.cell_hash(layout_id, cell) >> PALM_LOOK_SHIFT) % count
 
 
 ## The nest is layout data, the same on every peer.

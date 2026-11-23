@@ -135,6 +135,72 @@ func test_on_the_sandbar_the_nest_shows_on_palms_4_and_5_and_a_solo_climb_leaves
 	NetManager.leave()
 
 
+# A solo run on the sandbar, its player still.
+func _solo_shell() -> GameShell:
+	NetManager.start_solo()
+	WeatherManager.stop()
+	WeatherManager.sky.start_at(0.0)
+	var shell := SHELL_SCENE.instantiate() as GameShell
+	shell.settings_path = settings_path
+	add_child_autofree(shell)
+	(shell.screen as TitleScreen).solo_requested.emit()
+	shell.session.body(CoopSession.HOST_ID).player_input.enabled = false
+	return shell
+
+
+# The look each palm of the island draws, in layout order.
+func _palm_looks(shell: GameShell) -> Array[int]:
+	var looks: Array[int] = []
+	for palm: Node in shell.island.get_node(^"Palms").get_children():
+		looks.append(_drawn(palm).palm_look)
+	return looks
+
+
+## art-prop-polish D4 (QP1 (a)): a palm off an island draws today's look; a look shown draws its own
+## frame with the coconut and nest overlays on it, every look keeping the nest point.
+func test_a_palm_look_draws_its_own_frame_under_the_coconuts() -> void:
+	var palm := PALM_SCENE.instantiate() as Palm
+	arena.add_child(palm)
+	var look := _drawn(palm)
+	assert_eq(look.palm_look, 0, "a palm off an island draws today's look")
+	assert_eq(data.palm_look_count(), 3, "QP1 (a): three looks")
+	for index: int in data.palm_look_count():
+		look.palm_look = index
+		for coconuts: int in [1, 2, 3]:
+			palm.coconuts = coconuts
+			look.step()
+			assert_eq(look.still.texture, data.palm_texture(index), "look %d: its own frame" % index)
+			assert_eq(look.coconuts_drawn(), coconuts, "look %d: %d coconuts drawn" % [index, coconuts])
+			assert_eq(look.coconuts.offset, look.still.offset, "look %d: the overlay on the frame" % index)
+		_assert_stands_on_origin(look, "palm look %d" % index)
+		assert_eq(look.nest_point(), palm.global_position + Vector2(0.0, -34.0), "look %d: the nest point holds" % index)
+
+
+## The 1-player test of art-prop-polish 4.1: the sandbar built twice for one offline player uses
+## more than one look, the same look per palm both times, each the cell's hash.
+func test_the_sandbar_built_twice_for_one_offline_player_draws_the_same_mixed_palm_looks() -> void:
+	var first := _solo_shell()
+	await wait_physics_frames(2)
+	var looks := _palm_looks(first)
+	first.queue_free()
+	WeatherManager.stop()
+	NetManager.leave()
+	await wait_process_frames(1)
+	var second := _solo_shell()
+	await wait_physics_frames(2)
+	assert_eq(_palm_looks(second), looks, "the same look per palm both times")
+	var built := IslandLayout.build(SANDBAR)
+	assert_eq(looks.size(), built.palms.size(), "a look per palm")
+	var seen: Dictionary[int, bool] = {}
+	for index: int in looks.size():
+		seen[looks[index]] = true
+		assert_eq(looks[index], StructureArt.palm_look(SANDBAR.id, built.palms[index], data.palm_look_count()),
+			"palm %d: its cell's look" % index)
+	assert_gt(seen.size(), 1, "more than one look on the sandbar: %s" % [looks])
+	WeatherManager.stop()
+	NetManager.leave()
+
+
 func test_a_solo_fire_look_flickers_while_lit_and_shows_embers_once_out() -> void:
 	var fire := FIRE_SCENE.instantiate() as Fire
 	arena.add_child(fire)

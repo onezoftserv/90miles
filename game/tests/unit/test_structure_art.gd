@@ -113,6 +113,99 @@ func test_the_palm_stands_on_its_trunk_base_with_the_nest_in_its_crown() -> void
 	assert_true(frame.has_point(data.nest_point))
 
 
+## art-prop-polish D4 (QP1 (a)): today's palm and two redrawn looks, lit from the upper left.
+const PALM_LOOKS: int = 3
+## The coconut overlays' middles on the palm's frame, for 1, 2 and 3 coconuts (structure_sheets.json).
+const COCONUT_MIDDLES: Array[Vector2i] = [Vector2i(12, 17), Vector2i(18, 17), Vector2i(15, 20)]
+
+
+# The frame of every palm look, in look order.
+func _palm_frames() -> Array[Image]:
+	var frames: Array[Image] = []
+	for look: int in data.palm_look_count():
+		frames.append(_frame_image(data.palm_texture(look)))
+	return frames
+
+
+# The middle, in frame x, of the opaque run on `row`; -1 when the row is empty.
+func _row_middle(image: Image, row: int) -> float:
+	var first: int = -1
+	var last: int = -1
+	for x: int in image.get_width():
+		if image.get_pixel(x, row).a > 0.0:
+			if first < 0:
+				first = x
+			last = x
+	return -1.0 if first < 0 else (first + last + 1) / 2.0
+
+
+func test_the_palm_look_pick_is_the_cells_hash_and_gives_the_same_look_twice() -> void:
+	assert_eq(data.palm_look_count(), PALM_LOOKS, "QP1 (a): today's palm and two redrawn looks")
+	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
+		for cell: Vector2i in IslandLayout.build(layout).palms:
+			var look: int = StructureArt.palm_look(layout.id, cell, PALM_LOOKS)
+			var hashed: int = (TerrainArt.cell_hash(layout.id, cell) >> StructureArt.PALM_LOOK_SHIFT) % PALM_LOOKS
+			assert_eq(look, hashed, "%s %s: the look is the cell's hash" % [layout.id, cell])
+			assert_eq(StructureArt.palm_look(layout.id, cell, PALM_LOOKS), look, "%s %s: the same look twice" % [layout.id, cell])
+	assert_eq(StructureArt.palm_look(SANDBAR.id, Vector2i(26, 28), 1), 0, "one look: today's palm")
+	assert_eq(StructureArt.palm_look(SANDBAR.id, Vector2i(26, 28), 0), 0, "no table: today's palm")
+
+
+func test_every_palm_look_keeps_the_trunk_base_and_holds_the_nest_and_the_coconuts() -> void:
+	assert_eq(data.palm_look_count(), PALM_LOOKS, "QP1 (a): three looks")
+	var nest_at := Vector2i(Vector2(16, 48) + data.nest_point)
+	var frames := _palm_frames()
+	for look: int in frames.size():
+		var image: Image = frames[look]
+		assert_eq(Vector2(image.get_size()), Vector2(32, 48), "look %d: 32x48, as the palm" % look)
+		# The trunk base is today's: the flare's four rows, pixel for pixel, its foot centred.
+		for row: int in range(44, 48):
+			var base := Rect2i(0, row, 32, 1)
+			assert_eq(image.get_region(base).get_data(), frames[0].get_region(base).get_data(),
+				"look %d: the trunk base's row %d is today's" % [look, row])
+		assert_eq(_row_middle(image, 47), 16.0, "look %d: the foot on the palm's position" % look)
+		assert_gt(image.get_pixelv(nest_at).a, 0.0, "look %d: the crown under the nest point %s" % [look, nest_at])
+		for middle: Vector2i in COCONUT_MIDDLES:
+			assert_gt(image.get_pixelv(middle).a, 0.0, "look %d: the crown under the coconut at %s" % [look, middle])
+
+
+func test_the_foot_shade_is_centred_under_each_look() -> void:
+	assert_eq(data.palm_look_count(), PALM_LOOKS, "three looks")
+	assert_eq(data.shadow_offsets.get(StructureArt.KIND_PALM, Vector2.ZERO).x, 0.0, "the palm's shadow sits on its position")
+	var frames := _palm_frames()
+	for look: int in frames.size():
+		# The trunk's foot is its last row; the shade (shadow and decal) is centred on the
+		# palm's position, which is the frame's bottom-centre.
+		assert_eq(_row_middle(frames[look], 47) - 16.0, 0.0, "look %d: the foot centred over the shade" % look)
+
+
+func test_every_palm_look_is_lit_from_the_upper_left_and_none_is_a_mirror() -> void:
+	var frames := _palm_frames()
+	assert_eq(frames.size(), PALM_LOOKS, "three looks")
+	for look: int in frames.size():
+		var image: Image = frames[look]
+		for row: int in range(30, 44):
+			var first: int = -1
+			var last: int = -1
+			for x: int in image.get_width():
+				if image.get_pixel(x, row).a > 0.0:
+					if first < 0:
+						first = x
+					last = x
+			# Inside the outline: the trunk's left side is the lit one.
+			var left: float = image.get_pixel(first + 1, row).get_luminance()
+			var right: float = image.get_pixel(last - 1, row).get_luminance()
+			assert_gt(left, right, "look %d, row %d: the trunk lit on its left" % [look, row])
+	for a: int in frames.size():
+		for b: int in frames.size():
+			if a == b:
+				continue
+			var mirrored: Image = frames[b].duplicate() as Image
+			mirrored.flip_x()
+			assert_ne(frames[a].get_data(), frames[b].get_data(), "looks %d and %d differ" % [a, b])
+			assert_ne(frames[a].get_data(), mirrored.get_data(), "look %d is not look %d mirrored (QP1)" % [a, b])
+
+
 func test_a_solo_fire_flickers_while_lit_and_shows_embers_once_out() -> void:
 	var fire := FIRE_SCENE.instantiate() as Fire
 	add_child_autofree(fire)
