@@ -4,7 +4,8 @@ extends Polygon2D
 ## on a rect round the crossing's sea, every cell the deep step, moved down by the crossing's
 ## `scroll_px()` so the open water passes under the vessel. The scroll wraps at two lengths of the
 ## water texture, so the wrap never shows. It only reads its parent, every frame, the same on every
-## peer; it is `Sea` in crossing.tscn, at z -40.
+## peer; it is `Sea` in crossing.tscn, at z -40. Its child SeaPace (a SeaPaceDriver) runs the water's
+## clock at the weather's pace (art-mood-pass D4).
 
 const SEA_SHADER: Shader = preload("res://scenes/art/sea/world_sea.gdshader")
 
@@ -16,6 +17,11 @@ var _built_for: Rect2 = Rect2()
 
 func _init() -> void:
 	add_to_group(&"art_view")
+	var driver := SeaPaceDriver.new()
+	driver.name = "SeaPace"
+	driver.sea_path = ^".."
+	driver.shore_path = ^""
+	add_child(driver)
 
 
 func _ready() -> void:

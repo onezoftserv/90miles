@@ -39,6 +39,12 @@ animation = &"idle_down"
 centered = false
 offset = Vector2(-16, -27)
 
+[node name="BushFront" type="Sprite2D" parent="."]
+visible = false
+texture_filter = 1
+centered = false
+region_enabled = true
+
 [node name="Ripple" type="AnimatedSprite2D" parent="."]
 visible = false
 texture_filter = 1

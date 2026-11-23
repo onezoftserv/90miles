@@ -43,14 +43,14 @@ Rebuilds: `python -I tools/art/compose.py --packs C:/Users/liann/src/90miles/gam
 
 ## 5. Bush in front (C8; PR1) — after art-terrain-polish C10
 
-- [ ] 5.1 Write the tests and see them fail, in `test_player_art.gd` (or a new `test_bush_front.gd`):
+- [x] 5.1 Write the tests and see them fail, in `test_player_art.gd` (or a new `test_bush_front.gd`):
   - 1-player: a solo sandbar player crouched on a scrub cell (read from the layout) shows `Look/BushFront` with the Brush layer's source, atlas coordinates and alternative at `body.cell()`, ordered after Sprite;
   - the same on a scrub variant cell (C10) and on a fitted shore bush;
   - off scrub, swimming and diving, it is hidden;
   - a palm one cell south is drawn after the body's subtree (the `test_draw_order.gd` reader);
   - host and client show the same tile for the client's player.
-- [ ] 5.2 Add `Look/BushFront` (design D5): it reads the island `TerrainView`'s Brush layer, shows the tile's front rows at the cell, and hides off scrub. Verify `test_art_sim_invariance`, `test_draw_order.gd`, `test_hidden_solo.gd` and the `test_terrain_view.gd` layer tests.
-- [ ] 5.3 Windowed 1-player capture of a crouched and a standing player in scrub: compare with `before/scrub_three.png`.
+- [x] 5.2 Add `Look/BushFront` (design D5): it reads the island `TerrainView`'s Brush layer, shows the tile's front rows at the cell, and hides off scrub. Verify `test_art_sim_invariance`, `test_draw_order.gd`, `test_hidden_solo.gd` and the `test_terrain_view.gd` layer tests.
+- [x] 5.3 Windowed 1-player capture of a crouched and a standing player in scrub: compare with `before/scrub_three.png`.
 
 ## 6. Shark redraw, facings and the fin off the deck (C24, SP4, SP1) — after crossing-gameplay merges
 

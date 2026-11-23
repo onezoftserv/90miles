@@ -369,6 +369,41 @@ func test_solo_takes_the_post_nails_and_builds_a_raft() -> void:
 	assert_eq(raft.integrity, 100.0)
 
 
+## art-prop-polish D2, with exactly 1 player, offline: the post's nails show their redrawn icon on the
+## ground, and in the strip once a solo player has picked them up.
+func test_solo_sees_the_redrawn_nails_on_the_ground_and_in_the_strip() -> void:
+	var shell := await _on_the_cay()
+	var body := shell.session.body(1)
+	var icon := load("res://assets/art/items/nails.png") as Texture2D
+	var on_ground: WorldItem = null
+	for node: Node in shell.session.pickups.get_children():
+		if (node as WorldItem).item_id == &"nails":
+			on_ground = node as WorldItem
+	assert_not_null(on_ground, "the post's nails lie on the cay")
+	if on_ground == null:
+		return
+	assert_eq((on_ground.look as WorldItemLook).icon.texture, icon, "on the ground, the nails' icon")
+	assert_gt(_take(shell, body, &"nails"), 0)
+	shell.hud.strip.refresh()
+	var slot: StripSlot = null
+	for i: int in body.inventory.slots.size():
+		if body.inventory.slots[i].item_id == &"nails":
+			slot = shell.hud.strip.slot_view(i)
+	assert_not_null(slot, "the nails went into a slot")
+	if slot != null:
+		assert_eq(slot.icon.texture, icon, "in the strip, the same icon")
+	var image := icon.get_image()
+	var opaque: int = 0
+	var black: int = 0
+	for y: int in image.get_height():
+		for x: int in image.get_width():
+			if image.get_pixel(x, y).a > 0.5:
+				opaque += 1
+				if image.get_pixel(x, y).to_html(false) == "000000":
+					black += 1
+	assert_lte(black * 2, opaque, "the redrawn nails keep their fill")
+
+
 func test_coast_cay_creatures_for_a_solo_arrival() -> void:
 	var shell := await _on_the_cay()
 	await wait_frames(3)

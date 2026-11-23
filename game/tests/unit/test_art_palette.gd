@@ -230,3 +230,23 @@ func test_the_four_slots_read_apart() -> void:
 			assert_gte(ratio, tuning.slot_contrast_min, "slots %d and %d contrast" % [a, b])
 			var hue: float = absf(mids[a].h - mids[b].h) * 360.0
 			assert_gte(minf(hue, 360.0 - hue), tuning.slot_hue_min_deg, "slots %d and %d hue" % [a, b])
+
+
+## art-terrain-polish C7 ("Land and water read apart by value", TR7): the coast reads in greyscale.
+## Sand and dune stand 1.6:1 or more from the shallows, the shallows 1.4:1 from brackish water, and
+## deep < brackish < shallows in value. Brush is apart by hue and value already.
+const LAND_WATER_MIN: float = 1.6
+const SHALLOWS_BRACKISH_MIN: float = 1.4
+
+
+func test_land_and_water_read_apart_by_value() -> void:
+	var tuning: ArtTuning = _tuning()
+	var shallows: Color = tuning.water_grounds[&"shallows"]
+	var brackish: Color = tuning.water_grounds[&"brackish"]
+	var deep: Color = tuning.water_grounds[&"deep"]
+	for land: StringName in [&"sand", &"dune"]:
+		var ratio: float = ArtChecks.contrast_ratio(tuning.land_grounds[land], shallows)
+		assert_gte(ratio, LAND_WATER_MIN, "%s against the shallows: %.2f:1" % [land, ratio])
+	assert_gte(ArtChecks.contrast_ratio(shallows, brackish), SHALLOWS_BRACKISH_MIN, "shallows against brackish water")
+	assert_lt(ArtChecks.luminance(deep), ArtChecks.luminance(brackish), "deep is darker than brackish")
+	assert_lt(ArtChecks.luminance(brackish), ArtChecks.luminance(shallows), "brackish is darker than the shallows")
