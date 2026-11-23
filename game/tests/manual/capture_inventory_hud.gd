@@ -7,6 +7,7 @@ extends Node
 ## Writes <dir>/strip_selection.png (the strip with the coconut selected), prompt_ring.png (a palm
 ## climb halfway, its ring half full), craft_list.png (the bench's list), hidden_day.png and
 ## hidden_night.png (a player crouching in the brush with the hidden mark, by day and at Noche).
+## --only=icons writes only strip_five.png: the strip holding art-prop-polish D2's five redrawn icons.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://capture_inventory_hud.cfg"
@@ -23,6 +24,7 @@ const AT_BENCH: Vector2 = Vector2(0.0, 10.0)
 
 var _out_dir: String = ""
 var _scale: int = DEFAULT_SCALE
+var _only: String = ""
 var _shell: GameShell
 var _body: PlayerBody
 
@@ -33,6 +35,8 @@ func _ready() -> void:
 			_out_dir = arg.trim_prefix("--out=")
 		elif arg.begins_with("--scale="):
 			_scale = arg.trim_prefix("--scale=").to_int()
+		elif arg.begins_with("--only="):
+			_only = arg.trim_prefix("--only=")
 	if _out_dir.is_empty() or DisplayServer.get_name() == "headless" or _scale < 1 or _scale > MAX_SCALE:
 		push_error("capture_inventory_hud: run windowed and pass --out=<dir> and optionally --scale=1..%d" % MAX_SCALE)
 		get_tree().quit(1)
@@ -47,6 +51,11 @@ func _ready() -> void:
 	WeatherManager.sky.start_at(DAY_S)
 	_body = _shell.session.body(CoopSession.HOST_ID)
 	_body.player_input.enabled = false
+	if _only == "icons":
+		await _capture_five()
+		_shell.back_to_title()
+		get_tree().quit()
+		return
 	await _capture_strip()
 	await _capture_ring()
 	await _capture_list()
@@ -101,6 +110,18 @@ func _capture_strip() -> void:
 	_shell.hud.strip.select(1)
 	await _place(IslandLayout.cell_center(_shell.island.built.solo_spawn))
 	await _save("strip_selection.png")
+
+
+# art-prop-polish D2: the strip holding the five redrawn icons, the nails selected.
+func _capture_five() -> void:
+	var inventory := _body.inventory
+	for slot: InventorySlot in inventory.slots:
+		slot.clear()
+	for id: StringName in [&"nails", &"tarp", &"crab_cooked", &"hutia_cooked", &"iguana_cooked"]:
+		inventory.add(id, 1)
+	_shell.hud.strip.select(0)
+	await _place(IslandLayout.cell_center(_shell.island.built.solo_spawn))
+	await _save("strip_five.png")
 
 
 # Halfway up the nearest palm: "[E] Trepar Mata de coco" with its ring half full.

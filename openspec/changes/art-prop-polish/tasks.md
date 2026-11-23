@@ -17,7 +17,7 @@
 
 ## 0. Gate
 
-- [ ] 0.1 Wait for the coordinating session's go. Branch from main. Re-read `structure_sheets.json`, `item_icons.json`, `structure_art.tres`, `shelter_art.tres`, `decor_view.gd`, `island_sign.gd`, `palm.gd` and `TerrainView._build_decals` as they are then, since art-terrain-polish may have changed the decals.
+- [x] 0.1 Wait for the coordinating session's go. Branch from main. Re-read `structure_sheets.json`, `item_icons.json`, `structure_art.tres`, `shelter_art.tres`, `decor_view.gd`, `island_sign.gd`, `palm.gd` and `TerrainView._build_decals` as they are then, since art-terrain-polish may have changed the decals.
 - [ ] 0.2 Group 4 waits for the owner's answer to QP1. Group 7 waits for coast-cay-reshape to merge.
 
 ## 1. The outline rule (D1; PR8, Q15 (a))
@@ -31,14 +31,14 @@
 
 ## 2. Five icons (D2; PR6)
 
-- [ ] 2.1 In `tools/art/test_items.py` and `test_item_icons.gd`, write the thickness test and see it fail on today's five: outline pixels at most half of each icon's opaque pixels. Add the 1-player test: a solo player picks up the nails on the coast cay and the redrawn icon shows on the ground and in the strip.
-- [ ] 2.2 Draw `nails`, `tarp`, `crab_cooked`, `hutia_cooked` and `iguana_cooked` as hand sources in `tools/art/fixes/items/` and point `item_icons.json` at them. Rebuild. Verify `test_no_two_items_share_a_silhouette`, `test_every_item_has_a_16x16_icon_inside_the_box_with_its_outline` and that `dry_grass` is byte-identical.
-- [ ] 2.3 Windowed 1-player capture of the strip holding the five, compared with `before/items_sheet.png` and `before/p17_icons_x3.png`.
+- [x] 2.1 In `tools/art/test_items.py` and `test_item_icons.gd`, write the thickness test and see it fail on today's five: outline pixels at most half of each icon's opaque pixels. Add the 1-player test: a solo player picks up the nails on the coast cay and the redrawn icon shows on the ground and in the strip.
+- [x] 2.2 Draw `nails`, `tarp`, `crab_cooked`, `hutia_cooked` and `iguana_cooked` as hand sources in `tools/art/fixes/items/` and point `item_icons.json` at them. Rebuild. Verify `test_no_two_items_share_a_silhouette`, `test_every_item_has_a_16x16_icon_inside_the_box_with_its_outline` and that `dry_grass` is byte-identical.
+- [x] 2.3 Windowed 1-player capture of the strip holding the five, compared with `before/items_sheet.png` and `before/p17_icons_x3.png`.
 
 ## 3. The rain catcher's tarp (D3; PR8)
 
-- [ ] 3.1 In `test_rain_catcher.gd` or `test_structure_looks.gd`, write the test and see it fail: every catcher frame holds the tarp's colours over the barrel. Add the 1-player test: a solo player's catcher shows the funnel empty and with water in its mouth at one cup.
-- [ ] 3.2 Draw the funnel as a hand layer in `tools/art/fixes/structures/` and add it to the catcher's recipe. Rebuild. Verify the frame size is unchanged and the existing catcher tests pass.
+- [x] 3.1 In `test_rain_catcher.gd` or `test_structure_looks.gd`, write the test and see it fail: every catcher frame holds the tarp's colours over the barrel. Add the 1-player test: a solo player's catcher shows the funnel empty and with water in its mouth at one cup.
+- [x] 3.2 Draw the funnel as a hand layer in `tools/art/fixes/structures/` and add it to the catcher's recipe. Rebuild. Verify the frame size is unchanged and the existing catcher tests pass.
 
 ## 4. Palm looks (D4; PR7) — after QP1
 
