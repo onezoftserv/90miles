@@ -268,3 +268,11 @@ Art and presentation data only. Rebuild the new sheets with `python -I tools/art
 ## Build notes
 
 Measured values (the final tints, light energy and flicker table, paces, the rain coverage, whether the unshaded flame overlay works in 4.7.2 Compatibility, the label's panel variation) are recorded here as the tasks ship.
+
+**Gate (0.1).** art-coast-pass merged into main (c0a1915, 2026-11-15); the coordinating session said go. It is not archived yet, and this change's MODIFIED "Scrolling sea" block was copied from its delta, which has not changed since; the block is re-synced when it archives.
+
+**C33a, a readable night and dusk (group 1, D1).**
+- `day_cycle.tres`: dusk (phase 2) (0.90, 0.70, 0.60) → (0.95, 0.78, 0.74); night (phase 3) (0.35, 0.40, 0.65) → (0.42, 0.47, 0.72). The design's values held on the captures, so no tuning was needed.
+- Tests (written first, failing on today's tints): `test_at_dusk_the_tinted_sea_stays_blue` (the deep and shallows ramp bases times dusk keep blue above green; today's shallows went teal, green 0.563 over blue 0.537) and `test_night_is_dark_but_readable` (the night tint's luminance 0.44–0.52; today 0.407, now 0.477). `test_the_tint_node_takes_night_times_calm` (1 player) and `test_world_sky`, `test_weather_content`, `test_searchlight` pass unchanged.
+- Captures: `docs/art-pass/mood/dusk_night_before_after_x2.png` (the sandbar's west shore from a windowed day capture times the dusk tint, top, and the night tint, bottom; before left, after right; the CanvasModulate is a plain multiply, so this is exact), and `docs/guardacostas-stealth/sandbar_night_beam.png` re-shot with `capture_patrol.tscn`: the searchlight still reads clearly against the brighter night. The day capture predates art-terrain-polish C7's darker shallows; with them, dusk stays blue too (the test reads whatever ramp is on main).
+
