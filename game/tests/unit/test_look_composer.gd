@@ -13,6 +13,7 @@ const ART_PATH: String = "res://assets/art/characters/balsero_art.tres"
 const RIPPLE_PATH: String = "res://assets/art/fx/dive_ripple.tres"
 const RING_PATH: String = "res://assets/art/fx/swim_ring.tres"
 const CELL: Vector2i = Vector2i(32, 32)
+const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const HAIRS: Array[StringName] = [&"hair_0", &"hair_1", &"hair_2", &"hair_3", &"hair_4", &"hair_5", &"hair_6", &"hair_7"]
 const BODIES: Array[StringName] = [&"body_man", &"body_woman"]
 const SKIN_ROWS: Array[int] = [0, 1, 2]
@@ -27,8 +28,16 @@ const BALSERO_ANCHORS: Dictionary = {&"walk": -28, &"crouch": -22, &"swim": -16,
 const WATER_ROW: int = 19
 
 
+var settings_path: String = UserTmp.path("test_look_composer_settings.cfg")
+
+
 func before_each() -> void:
 	LookComposer.clear_cache()
+
+
+func after_each() -> void:
+	if FileAccess.file_exists(settings_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_path))
 
 
 func after_all() -> void:
@@ -235,13 +244,40 @@ func test_a_slot_outside_0_to_3_gets_the_default_look() -> void:
 
 
 func test_every_shipped_body_outfit_and_hair_composes_with_closed_outlines() -> void:
-	# art-pass "A layered look is outlined as composed"; skin rows do not change masks.
-	var outline: Dictionary = ArtChecks.palette_from_colors(_tuning().outline_colors)
+	# art-pass "A layered look is outlined as composed"; skin rows do not change masks. A character
+	# is an actor, so its composed edge is black (art-prop-polish D1, owner QO1 (a)).
+	var outline: Dictionary = ArtChecks.family_outline(ROOT.path_join("look.png"), _tuning().outline_colors)
 	for body: StringName in BODIES:
 		for hair: StringName in HAIRS:
 			var image: Image = _image(LookComposer.compose(_look(body, 0, hair)))
 			var label: String = "%s + outfit_tee_shorts + %s" % [body, hair]
-			assert_eq(ArtChecks.check_outline(label, image, outline, CELL), PackedStringArray())
+			assert_eq(ArtChecks.check_outline(label, image, outline, CELL, ArtChecks.family_rule(ROOT.path_join("look.png"))), PackedStringArray())
+
+
+## The 1-player test of art-prop-polish 1.1: a solo player's look, as the run composes it, has
+## only black outline pixels in every frame.
+func test_a_solo_players_composed_look_is_outlined_in_black() -> void:
+	NetManager.start_solo()
+	WeatherManager.stop()
+	var shell := SHELL_SCENE.instantiate() as GameShell
+	shell.settings_path = settings_path
+	add_child_autofree(shell)
+	(shell.screen as TitleScreen).solo_requested.emit()
+	var body := shell.session.body(CoopSession.HOST_ID)
+	body.player_input.enabled = false
+	await wait_physics_frames(2)
+	var look := body.get_node(^"Look") as PlayerLook
+	assert_not_null(look, "the solo player's look")
+	if look == null:
+		return
+	assert_not_null(look.composed, "composed in the run")
+	if look.composed == null:
+		return
+	var black: Dictionary = ArtChecks.palette_from_colors(PackedColorArray([Color.BLACK]))
+	assert_eq(ArtChecks.family_outline(ROOT.path_join("look.png"), _tuning().outline_colors), black, "characters are black")
+	assert_eq(ArtChecks.check_outline("the solo look %s" % look.look_data.id, _image(look.composed), black, CELL), PackedStringArray())
+	WeatherManager.stop()
+	NetManager.leave()
 
 
 func test_the_composed_look_keeps_the_frame_budget_with_the_ripple() -> void:

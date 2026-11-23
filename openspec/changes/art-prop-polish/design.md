@@ -215,6 +215,22 @@ Measured values and departures are recorded here as the tasks ship.
 
 As the task says, nothing was redrawn. The question went to the coordinating session with three options: re-rim to black (recommended), keep today's practice, or exempt these files. Group 1 resumes on the answer.
 
+**Group 1 resumed on QO1 (a), "Re-rim to black" (owner, 2026-11-22).**
+- **Tests first.** They failed before the rule existed.
+  - **The rule, in Python and GDScript.** In `test_check.py` and `test_art_checks.gd`, on three new fixtures: a creature sheet with a #45283c edge fails, naming the file, the pixel and "black"; the same edge under `structures/` passes; an item icon rimmed in #222034 fails. A unit test checks the split itself: black for actors, the dark tones for structures, nothing for terrain.
+  - **The recipe.** `test_creatures.py` gains two tests: a sheet's `"outline"` rims every cell edge in that one colour, and an outline off the outline set is refused. A third test requires every shipped creature sheet to be rimmed in black.
+  - **The gate.** `test_art_tracked.gd` reads each sheet's family. It failed on `reef_shark` (213 edge pixels), `seagull` (53) and `seagull_flight` (13).
+  - **The 1-player test** (`test_look_composer.gd`): a solo player's look, as the run composes it, has only black edge pixels. The existing composition test now checks black too, for 2 bodies × 8 hairs.
+- **The rule.** `check.py` (`family_outline`, `family_rule`) and `ArtChecks` (`family_outline`, `family_rule`) take the family from the folder right under `art/`.
+  - `characters/`, `creatures/`, `items/` and `decor/` are actors, outlined in the outline set's darkest colour, black.
+  - `structures/` takes the other three colours.
+  - A failure names its rule: "not black (actors are outlined in black)" or "not a dark tone".
+  - The rule is written into `docs/ASSETS.md`'s Outlines line, with one line per tool in the docs of `creatures.py`, `items.py`, `structures.py` and `compose.py`.
+- **The re-rim.** `creatures.py` gains a sheet-level `"outline"`: the rim recolours each cell's edge ring to that one colour. Every sheet in `creature_sheets.json` now has `"rim": true` and `"outline": "#000000"`. The shark and both gull sheets changed, and `land_crab.png` rebuilt byte-identical, its edge being black already. No hand source was redrawn.
+- **The hair parts are unchanged.** The survey above was wrong that their dark-tone edges reach the composed head. Each part has dark-tone edge pixels: hair_0 384, hair_2 296, hair_3 176, hair_4 140, hair_5 130, hair_6 545, hair_7 330, and hair_1 none. They are all where the part lies over the body (`compose.py`'s `over` keeps those). Composed with either body and the outfit, every hair has 0 non-black edge pixels, which the 1-player test and the 2 × 8 composition test confirm. Re-rimming the part files would only blacken the line between hair and face inside the figure.
+- **Checks.** `check.py` reports 0 problems with the family rule on the tracked art, and the Python art tests pass.
+- Image: `docs/art-pass/prop-polish/outline_black_before_after_x4.png`. Each sheet is shown before, then after, over deep water #306082: the shark, `seagull` and `seagull_flight`.
+
 **Group 3, the rain catcher's tarp (D3).**
 - **Test first.** `test_the_rain_catcher_wears_a_tarp_funnel_whose_mouth_shows_the_water` (test_structure_looks.gd, one player offline) failed on today's sheet: no #5b6ee1 or #3f3f74 over the rim, the mouth #45283c, the water #639bff.
 - **The art.** A new hand layer, `tools/art/fixes/structures/catcher_funnel.png`: 2 frames of 16×12 laid at (0, 2) over each frame's barrel and top.

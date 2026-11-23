@@ -11,8 +11,10 @@ a frame cell and a list of layers pasted in order (an opaque pixel replaces):
   "drop_lone" removing pixels that touch no other, and "outline" recolouring the piece's own edge
   ring to one colour before it is pasted (the gull's frames).
 
-Then "rim" recolours each cell's edge ring to the nearest outline colour (rim.py), and every sheet
-must pass the palette, whole-alpha and outline rules cell by cell. Nothing is written inside a
+Then "rim" recolours each cell's edge ring to the nearest outline colour (rim.py), or to the sheet's
+one "outline" colour when it names one, and every sheet must pass the palette, whole-alpha and
+outline rules cell by cell. Outline family (art-prop-polish D1, owner QO1 (a)): a creature is an
+actor, so every shipped sheet is rimmed with "outline": "#000000". Nothing is written inside a
 download folder, and nothing at all when a sheet is refused. Run again on the same packs it gives
 the same PNGs byte for byte.
 
@@ -214,8 +216,13 @@ def build_sheet(entry, sources, fixes, allowed, outline):
             sheet = pasted(sheet, hand_layer(layer, fixes, size, where), (0, 0), where)
         else:
             sheet = pasted(sheet, pack_layer(layer, sources, allowed, where), pair(need(layer, "at", where), where), where)
+    forced = None
+    if "outline" in entry:
+        forced = colour(entry["outline"], sheet_id)
+        if forced not in outline:
+            raise CreatureArtError(f"{sheet_id}: its outline {png.colour_hex(forced)} is not an outline colour")
     if entry.get("rim", False):
-        sheet = rim.rim(sheet, sorted(outline), cell=tuple(cell))
+        sheet = rim.rim(sheet, sorted(outline), cell=tuple(cell), outline=forced)
     return f"{FOLDER}/{sheet_id}.png", checked(sheet, sheet_id, allowed, outline, cell)
 
 

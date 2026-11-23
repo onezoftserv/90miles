@@ -10,7 +10,9 @@ Rules by folder, relative to the root:
 - palette and alpha: every PNG (the UI kit under ui/ included; but EXEMPT) uses only master palette colours,
   fully opaque or fully transparent, except under shadows/ and decals/ (the darkest colour).
 - outline: every edge pixel under creatures/, items/ (16x16 cells) and structures/ is an outline
-  colour.
+  colour of its family (art-prop-polish D1): actors (creatures/, items/) in the outline set's
+  darkest colour, black; structures in its other colours, the dark tones. Characters are checked
+  as composed, by GUT.
 - import: inside a Godot project each PNG's .import is lossless (compress/mode=0), no mipmaps.
 A folder under tools/ (tools/art/fixes/, pipeline source never drawn) gets the licence rule only.
 
@@ -31,6 +33,12 @@ LICENCE_FILE = "License.txt"
 LICENCE_HOSTS = ("creativecommons.org", "opensource.org", "gnu.org", "spdx.org", "opendatacommons.org")
 PARTIAL_ALPHA_DIRS = ("shadows", "decals")
 OUTLINE_DIRS = ("creatures", "items", "structures")
+# The outline families (art-prop-polish D1; owner Q15 (a), QO1 (a)), by the folder under art/.
+ACTOR_DIRS = ("characters", "creatures", "items", "decor")
+STRUCTURE_DIRS = ("structures",)
+OUTLINE_RULE = "edge pixel(s) not in the outline set"
+ACTOR_RULE = "edge pixel(s) not black (actors are outlined in black)"
+STRUCTURE_RULE = "edge pixel(s) not a dark tone (structures are outlined in the dark tones)"
 ITEM_CELL = 16
 PALETTE_EXEMPT_DIRS = ()
 ## Temporary exemptions, relative to game/assets/art (and the list in test_art_tracked.gd). Task 5.7
@@ -141,7 +149,25 @@ def palette_problems(path, image, colours, partial_ok):
     return _listed(path, "pixel(s) not in the master palette", off) + _listed(path, rule, partial)
 
 
-def outline_problems(path, image, outline_colours, cell):
+def family_outline(folder, outline_colours):
+    """The outline colours a sheet in the art folder `folder` may use on its edge: the outline set's
+    darkest colour (black) for an actor, its other colours for a structure, None for a folder with
+    no family."""
+    outline = {tuple(colour[:3]) for colour in outline_colours}
+    black = palette.darkest(outline)
+    if folder in ACTOR_DIRS:
+        return {black}
+    if folder in STRUCTURE_DIRS:
+        return outline - {black}
+    return None
+
+
+def family_rule(folder):
+    """How outline_problems names a failure in the art folder `folder`."""
+    return ACTOR_RULE if folder in ACTOR_DIRS else STRUCTURE_RULE if folder in STRUCTURE_DIRS else OUTLINE_RULE
+
+
+def outline_problems(path, image, outline_colours, cell, rule=OUTLINE_RULE):
     outline = set(outline_colours)
     width, height = cell
     offenders = []
@@ -157,7 +183,7 @@ def outline_problems(path, image, outline_colours, cell):
                         if not (left <= nx < left + width and top <= ny < top + height) or image.alpha(nx, ny) == 0:
                             offenders.append(f"cell ({left // width}, {top // height}) pixel ({x}, {y}) {png.colour_hex(pixel)}")
                             break
-    return _listed(path, "edge pixel(s) not in the outline set", offenders)
+    return _listed(path, rule, offenders)
 
 
 def import_params(text):
@@ -226,7 +252,8 @@ def check_tree(root, palette_colours=None, outline_colours=None, licence_only=No
             problems.extend(palette_problems(shown, image, colours, partial_ok))
         if relative.parts[0] in OUTLINE_DIRS:
             cell = (ITEM_CELL, ITEM_CELL) if relative.parts[0] == "items" else (image.width, image.height)
-            problems.extend(outline_problems(shown, image, outline, cell))
+            family = relative.parts[0]
+            problems.extend(outline_problems(shown, image, family_outline(family, outline), cell, family_rule(family)))
     return problems
 
 
