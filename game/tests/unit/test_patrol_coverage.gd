@@ -35,6 +35,7 @@ func _lap(layout: IslandLayoutData) -> Dictionary:
 	for cell: Vector2i in reachable:
 		meters[cell] = SpotMeter.from_patrol(patrol)
 	var raft_lit: bool = false
+	var bench_lit: bool = false
 	var steps: int = roundi(patrol.route_lap_s / STEP_S)
 	for step: int in steps:
 		var t: float = step * STEP_S
@@ -45,9 +46,11 @@ func _lap(layout: IslandLayoutData) -> Dictionary:
 			var lit: bool = light.is_lit(centre, boat, beam)
 			if cell == built.raft_site and lit:
 				raft_lit = true
+			if lit and built.workbench.x >= 0 and maxi(absi(cell.x - built.workbench.x), absi(cell.y - built.workbench.y)) <= 1:
+				bench_lit = true
 			if meters[cell].step(lit, false, STEP_S):
 				spotted[cell] = true
-	return {"land": land.size(), "spotted": spotted.size(), "raft_lit": raft_lit, "raft_site": built.raft_site}
+	return {"land": land.size(), "spotted": spotted.size(), "raft_lit": raft_lit, "raft_site": built.raft_site, "bench": built.workbench, "bench_lit": bench_lit}
 
 
 func test_the_sandbar_spots_45_percent_of_its_land_in_one_lap() -> void:
@@ -71,3 +74,11 @@ func test_the_sandbar_raft_site_is_never_lit_and_the_coast_cays_is() -> void:
 	var coast := _lap(COAST_CAY)
 	assert_ne(coast["raft_site"], Vector2i(-1, -1), "the coast cay names a raft site")
 	assert_true(coast["raft_lit"], "island 2 has more teeth")
+
+
+## coast-cay-bench "Coast cay workbench out of the patrol's sight", pinned by coast-cay-reshape (task 1.2):
+## the bench and its 8 neighbours are never lit in one lap, so a reshaped coast cannot bring the beam to camp.
+func test_the_coast_cays_bench_and_its_neighbours_are_never_lit_in_one_lap() -> void:
+	var coast := _lap(COAST_CAY)
+	assert_ne(coast["bench"], Vector2i(-1, -1), "the coast cay names a workbench")
+	assert_false(coast["bench_lit"], "no cell within 1 tile of the bench at %s is lit in a lap" % coast["bench"])

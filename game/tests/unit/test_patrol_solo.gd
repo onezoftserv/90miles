@@ -313,6 +313,12 @@ func _through_scrub(start: Vector2i) -> Array[Vector2i]:
 # on through the scrub), and once the squad is back aboard the boat resumes its lap.
 func test_spotted_on_open_sand_at_2_s_then_scrub_and_crouch_and_the_boat_resumes_its_lap() -> void:
 	await _start(NIGHT_S)
+	# Night crabs roam the beach and pinch a crouched player. Since coast-cay-reshape filled the
+	# sandbar's inner bay tips (QC1), the seeded spawn puts one beside this hiding spot, and it kills
+	# the player before the squad's 180 s are up. This case is about the patrol and its squad.
+	for crab: Creature in spawner.creatures(&"land_crab"):
+		crab.get_parent().remove_child(crab)
+		crab.queue_free()
 	var spot := _find_spot()
 	assert_false(spot.is_empty(), "the sandbar has open sand the light dwells on, with scrub within 3 tiles")
 	if spot.is_empty():

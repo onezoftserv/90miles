@@ -58,18 +58,21 @@ func _fire(x: int, shaded: bool = false, y: int = 20) -> Node2D:
 
 func test_the_sandbar_matches_the_measured_distances() -> void:
 	var sandbar := _real(SANDBAR)
-	assert_almost_eq(sandbar.farthest_land_tiles(), 5.7, 0.05)
-	assert_eq(sandbar.land_beyond(2.0), 617)
-	assert_eq(sandbar.land_beyond(3.0), 413)
+	# coast-cay-reshape QC1: the four filled bay tips move these measured distances (was 5.7, 617 and 413).
+	assert_almost_eq(sandbar.farthest_land_tiles(), 5.83, 0.05)
+	assert_eq(sandbar.land_beyond(2.0), 621)
+	assert_eq(sandbar.land_beyond(3.0), 417)
 	assert_eq(sandbar.land_beyond(6.0), 0)
 
 
 func test_the_coast_cay_matches_the_measured_distances() -> void:
 	var cay := _real(COAST_CAY)
-	assert_almost_eq(cay.farthest_land_tiles(), 6.3, 0.05)
-	assert_eq(cay.land_beyond(2.0), 632)
-	assert_eq(cay.land_beyond(3.0), 436)
-	assert_eq(cay.land_beyond(6.0), 2)
+	# coast-cay-reshape: the west shoulder rounds the bay's corner, so (15, 25) south of the lagoon is
+	# now 7.07 tiles from the sea; the jogs move the rest (was 6.3, 632, 436 and 2).
+	assert_almost_eq(cay.farthest_land_tiles(), 7.07, 0.05)
+	assert_eq(cay.land_beyond(2.0), 636)
+	assert_eq(cay.land_beyond(3.0), 439)
+	assert_eq(cay.land_beyond(6.0), 8)
 
 
 func test_the_coast_cay_lagoon_is_not_sea() -> void:
