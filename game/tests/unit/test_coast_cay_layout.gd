@@ -173,6 +173,7 @@ func test_a_lone_arrivals_walks() -> void:
 	_band(astar, _cells_of(&"aloe"), 7.0, 13.0, "the aloe")
 	_band(astar, _cells_of(&"rope") + _cells_of(&"lighter"), 9.0, 15.0, "the rope cache")
 	_band(astar, _cells_of(&"nails") + _cells_of(&"mirror"), 13.0, 19.0, "the observation post")
+	_band(astar, [built.workbench], 1.0, 4.0, "the workbench (coast-cay-bench)")
 
 
 func test_the_island_scene_builds_the_layout_it_is_given() -> void:
@@ -230,3 +231,133 @@ func test_every_sign_speaks_spanish_and_english() -> void:
 	for sign_data: IslandSignData in layout.signs:
 		assert_false(sign_data.text_es.is_empty())
 		assert_false(sign_data.text_en.is_empty())
+
+
+# coast-cay-reshape D1: the outline reads as an island, not a set of rectangles (review TR4, C6).
+const LONGEST_RUN: int = 10
+const SIDES: Dictionary[String, Vector2i] = {"north": Vector2i.UP, "south": Vector2i.DOWN, "east": Vector2i.RIGHT, "west": Vector2i.LEFT}
+const SOFT_GROUND: Array[DataEnums.Terrain] = [DataEnums.Terrain.BEACH, DataEnums.Terrain.DUNE, DataEnums.Terrain.SCRUB]
+const WATER: Array[DataEnums.Terrain] = [DataEnums.Terrain.DEEP, DataEnums.Terrain.SHALLOWS, DataEnums.Terrain.BRACKISH]
+
+
+# The longest run of consecutive cells, along a row for north and south or a column for east and west,
+# that pass `edge` (a Callable of the cell and the side's step), and where it ends.
+func _longest_run(edge: Callable) -> Dictionary:
+	var best: Dictionary = {&"length": 0, &"side": "", &"at": Vector2i(-1, -1)}
+	for side: String in SIDES:
+		var step: Vector2i = SIDES[side]
+		var along_rows: bool = step.y != 0
+		var lines: int = built.size.y if along_rows else built.size.x
+		var span: int = built.size.x if along_rows else built.size.y
+		for line: int in lines:
+			var run: int = 0
+			for i: int in span:
+				var cell := Vector2i(i, line) if along_rows else Vector2i(line, i)
+				run = run + 1 if edge.call(cell, step) else 0
+				if run > best[&"length"]:
+					best = {&"length": run, &"side": side, &"at": cell}
+	return best
+
+
+func test_no_coast_runs_straight_for_more_than_10_cells() -> void:
+	var coast: Callable = func(cell: Vector2i, step: Vector2i) -> bool:
+		return _land(cell) and WATER.has(built.terrain.terrain_at(cell + step))
+	var longest: Dictionary = _longest_run(coast)
+	assert_lte(longest[&"length"], LONGEST_RUN, "the %s coast runs %d cells to %s" % [longest[&"side"], longest[&"length"], longest[&"at"]])
+
+
+func test_no_rock_seam_runs_straight_for_more_than_10_cells() -> void:
+	var seam: Callable = func(cell: Vector2i, step: Vector2i) -> bool:
+		return built.terrain.terrain_at(cell) == DataEnums.Terrain.ROCK and SOFT_GROUND.has(built.terrain.terrain_at(cell + step))
+	var longest: Dictionary = _longest_run(seam)
+	assert_lte(longest[&"length"], LONGEST_RUN, "the rock's %s seam runs %d cells to %s" % [longest[&"side"], longest[&"length"], longest[&"at"]])
+
+
+func test_the_rocky_point_narrows_to_its_tip_round_a_walled_post() -> void:
+	var widths: Dictionary[int, int] = {}
+	for cell: Vector2i in built.terrain.cells:
+		if built.terrain.terrain_at(cell) == DataEnums.Terrain.ROCK:
+			widths[cell.y] = widths.get(cell.y, 0) + 1
+	var rows: Array = widths.keys()
+	rows.sort()
+	var widest: int = 0
+	for row: int in rows:
+		widest = maxi(widest, widths[row])
+	for row: int in rows.slice(rows.size() - 3):
+		assert_lte(widths[row] * 2, widest, "rock row %d is %d wide, at most half of %d" % [row, widths[row], widest])
+	for cell: Vector2i in built.hut_cells:
+		for step: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			var next: Vector2i = cell + step
+			if not built.hut_cells.has(next):
+				assert_eq(built.terrain.terrain_at(next), DataEnums.Terrain.ROCK, "rock round the post at %s" % next)
+
+
+func test_driftwood_lies_in_small_groups() -> void:
+	var wood: Array[Vector2i] = _cells_of(&"driftwood")
+	var left: Array[Vector2i] = wood.duplicate()
+	while not left.is_empty():
+		var group: Array[Vector2i] = [left.pop_back()]
+		var i: int = 0
+		while i < group.size():
+			for other: Vector2i in left.duplicate():
+				var gap: Vector2i = (other - group[i]).abs()
+				if maxi(gap.x, gap.y) <= 2:
+					group.append(other)
+					left.erase(other)
+			i += 1
+		assert_between(group.size(), 1, 3, "a group of %d driftwood at %s" % [group.size(), group])
+	var per_line: Dictionary[String, int] = {}
+	for cell: Vector2i in wood:
+		per_line["row %d" % cell.y] = per_line.get("row %d" % cell.y, 0) + 1
+		per_line["column %d" % cell.x] = per_line.get("column %d" % cell.x, 0) + 1
+	for line: String in per_line:
+		assert_lte(per_line[line], 3, "%s holds %d driftwood" % [line, per_line[line]])
+
+
+func test_scrub_grows_in_clumps() -> void:
+	var scrub: Array[Vector2i] = []
+	for cell: Vector2i in built.terrain.cells:
+		if built.terrain.terrain_at(cell) == DataEnums.Terrain.SCRUB:
+			scrub.append(cell)
+	assert_between(scrub.size(), 25, 45, "scrub cells")
+	var left: Array[Vector2i] = scrub.duplicate()
+	while not left.is_empty():
+		var clump: Array[Vector2i] = [left.pop_back()]
+		var i: int = 0
+		while i < clump.size():
+			for dy: int in range(-1, 2):
+				for dx: int in range(-1, 2):
+					var next: Vector2i = clump[i] + Vector2i(dx, dy)
+					if left.has(next):
+						clump.append(next)
+						left.erase(next)
+			i += 1
+		var core: bool = false
+		for cell: Vector2i in clump:
+			if clump.has(cell + Vector2i(1, 0)) and clump.has(cell + Vector2i(0, 1)) and clump.has(cell + Vector2i(1, 1)):
+				core = true
+		assert_gte(clump.size(), 4, "a clump of %d scrub at %s" % [clump.size(), clump[0]])
+		assert_true(core, "the clump at %s has a 2×2 core" % clump[0])
+
+
+# A cell's corner is land when the four cells that share it are land (art-pass "Land edges").
+func _land_corners(cell: Vector2i) -> int:
+	var count: int = 0
+	for corner: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+		var whole: bool = true
+		for dy: int in 2:
+			for dx: int in 2:
+				whole = whole and _land(cell + corner - Vector2i.ONE + Vector2i(dx, dy))
+		if whole:
+			count += 1
+	return count
+
+
+func test_nothing_stands_on_an_outer_corner() -> void:
+	var stands: Array[Vector2i] = built.palms.duplicate()
+	for pickup: Dictionary in built.pickups:
+		stands.append(pickup["cell"])
+	for entry: Dictionary in built.signs:
+		stands.append(entry["cell"])
+	for cell: Vector2i in stands:
+		assert_gte(_land_corners(cell), 2, "%s stands on at least two land corners" % cell)

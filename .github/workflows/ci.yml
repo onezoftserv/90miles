@@ -110,4 +110,6 @@ jobs:
           fi
 
       - name: Unit tests (GUT)
-        run: timeout 300 "$GODOT" --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit
+        # The suite takes about 5 minutes on the runner (2,700+ tests by 2026-11-23); 600 s leaves room
+        # inside the job's 20-minute limit.
+        run: timeout 600 "$GODOT" --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit
