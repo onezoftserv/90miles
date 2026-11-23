@@ -151,6 +151,40 @@
       ]
     },
     {
+      "out": "structures/palm_bowed.png",
+      "frame": [
+        32,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "palm_trunk_bowed.png"
+          },
+          {
+            "hand": "palm_crown_bowed.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/palm_upright.png",
+      "frame": [
+        32,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "palm_trunk_upright.png"
+          },
+          {
+            "hand": "palm_crown_upright.png"
+          }
+        ]
+      ]
+    },
+    {
       "out": "structures/palm_coconuts_1.png",
       "frame": [
         32,

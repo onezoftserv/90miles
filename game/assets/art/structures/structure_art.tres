@@ -15,10 +15,13 @@
 [ext_resource type="SpriteFrames" path="res://assets/art/structures/raft_site_frames.tres" id="13_site"]
 [ext_resource type="SpriteFrames" path="res://assets/art/structures/car_frames.tres" id="14_car"]
 [ext_resource type="SpriteFrames" path="res://assets/art/structures/board_frames.tres" id="15_board"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/palm_bowed.png" id="16_palm_bowed"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/palm_upright.png" id="17_palm_upright"]
 
 [resource]
 script = ExtResource("1_data")
 palm = ExtResource("2_palm")
+palm_looks = Array[Texture2D]([ExtResource("16_palm_bowed"), ExtResource("17_palm_upright")])
 coconut_overlays = Array[Texture2D]([ExtResource("3_coco1"), ExtResource("4_coco2"), ExtResource("5_coco3")])
 nest = ExtResource("6_nest")
 nest_point = Vector2(0, -34)

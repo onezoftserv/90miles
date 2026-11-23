@@ -58,7 +58,8 @@ func test_both_islands_get_a_loop_of_deep_water_four_tiles_from_the_hull() -> vo
 
 func test_the_perimeter_matches_the_measured_loop() -> void:
 	assert_almost_eq(_loop_of(SANDBAR).perimeter, 180.0, 1.0)
-	assert_almost_eq(_loop_of(COAST_CAY).perimeter, 195.0, 1.0)
+	# coast-cay-reshape: the reshaped hull (the rock's point, the arms' ends) is 196.8 tiles (was 195).
+	assert_almost_eq(_loop_of(COAST_CAY).perimeter, 196.8, 1.0)
 
 
 func test_samples_are_every_half_tile() -> void:
