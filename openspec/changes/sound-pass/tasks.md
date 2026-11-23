@@ -72,7 +72,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 - [x] 5.1 Tests first: write `game/tests/unit/test_sound_pass_solo.gd` (exactly 1 player, offline, `UserTmp.path()` for any settings file). It records `sfx_played` and `loop_level_set` and covers every case in design D8 "Solo". Write `test_sound_sim_invariance.gd`: the same 600 frames with and without `RunSounds`, through a pick-up, a crab pinch, a fall in thirst, a patrol warning, a lap and an alert, are equal on every frame. A meddling sound layer that sips thirst is caught, and the sound run heard its cues.
 - [x] 5.2 Write `game/scripts/audio/run_sounds.gd` (design D5). In `game_shell._enter_run`, attach it to the HUD with the needle. Verify: the shell's existing run tests still pass. Import, Smoke and GUT pass.
-- [ ] 5.3 Run the game windowed through the Godot MCP and listen to a solo run: the sea at start, a pick-up, a crab, a patrol warning, a squall and a crossing to arrival. Read the errors: none new. Note any level to retune in `sound_bank.tres` or `sounds.json`.
+- [ ] 5.3 Run the game windowed through the Godot MCP and listen to a solo run: the sea at start, a pick-up, a crab, a patrol warning, a squall and a crossing to arrival. Read the errors: none new. Note any level to retune in `sound_bank.tres` or `sounds.json`. On 2026-11-23 the game ran windowed through the Godot MCP (real audio driver) with no new errors or warnings. The listening and any retuning are left for the owner, because this session cannot hear.
 
 ## 6. Volume (audio "Volume level"; owner Q1)
 
@@ -88,7 +88,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
   - a joining client's bag, arriving from the host just after the join, plays no `pickup` (a client settles 1.5 s on a new body, vessel or boat; design D5).
 
   The sky is one autoload shared by both branches in one process, so the squall is checked across two processes in 7.2.
-- [ ] 7.2 Write `game/tests/manual/sound_pass_run.gd`: two processes on UDP 7802, each logging the ids it played. It asserts:
+- [x] 7.2 Write `game/tests/manual/sound_pass_run.gd`: two processes on UDP 7802, each logging the ids it played. It asserts:
   - each peer's own events;
   - the shared world events;
   - that the client never logs the host's `pickup` or `hurt_hit`.
@@ -97,10 +97,10 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 
 ## 8. Docs
 
-- [ ] 8.1 Add a short "Sound" section to `docs/GAME_DESIGN.md`: the cue list, own against world events, and "sound never carries information alone". Tick the `sound-pass` line in `TASKS.md`. Record the owner's answers in design "Owner decisions". Verify: `openspec validate sound-pass --strict`, and Import, Smoke and GUT pass.
+- [x] 8.1 Add a short "Sound" section to `docs/GAME_DESIGN.md`: the cue list, own against world events, and "sound never carries information alone". Tick the `sound-pass` line in `TASKS.md`. Record the owner's answers in design "Owner decisions". Verify: `openspec validate sound-pass --strict`, and Import, Smoke and GUT pass.
 
 ## 9. CC0 recordings for the sea, wind and thunder (owner Q2 B)
 
-- [ ] 9.1 Send the coordinator exact CC0 candidates for `sea`, `wind` and `thunder`: file name, source page, author, licence (CC0 only), size and format, two per sound where possible. Download nothing until the owner approves a file.
-- [ ] 9.2 Give `SoundData` a `generated: bool` field (default true). The bank and credits tests skip the rebuild check for a recording and ask its `License.txt` block for author, licence and source instead. Keep the three generated placeholders until approved files arrive.
+- [x] 9.1 Send the coordinator exact CC0 candidates for `sea`, `wind` and `thunder`: file name, source page, author, licence (CC0 only), size and format, two per sound where possible. Download nothing until the owner approves a file.
+- [x] 9.2 Give `SoundData` a `generated: bool` field (default true). The bank and credits tests skip the rebuild check for a recording and ask its `License.txt` block for author, licence and source instead. Keep the three generated placeholders until approved files arrive.
 - [ ] 9.3 After approval, per file: copy it into the right folder, trim and loop it (seam crossfade, mono, 22 050 Hz), add its `.import` and its `License.txt` block, set its bank entry, and add its `CREDITS.md` row. Verify: Import, Smoke and GUT pass. This may land as its own small PR after the main one.
