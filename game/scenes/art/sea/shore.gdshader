@@ -1,7 +1,8 @@
 // The foam on the Shore layer (art-pass "Shoreline overlay"; design.md D13, K37, K39, K46): every
 // shore cell holds frame 0 of its mask, and this steps whole tiles along the sheet's row to frame
 // (clock frame + the cell's phase) mod 8, the phase read from a mask with one texel per cell. The
-// foam sheet's source has no texture padding, so frame f of a tile is f tiles to the right.
+// foam sheet's source has no texture padding, so frame f of a tile is f tiles to the right. The frame
+// clock is `foam_time`, which SeaPaceDriver runs at the weather's foam pace (art-mood-pass D4).
 shader_type canvas_item;
 
 #include "res://scenes/art/art_common.gdshaderinc"
@@ -14,6 +15,8 @@ uniform float cell_px = 16.0;
 uniform int frames = 8;
 // Calm: about six frames a second.
 uniform float frames_per_second = 6.0;
+// The foam's clock in seconds: SeaPace.foam_time.
+uniform float foam_time = 0.0;
 
 varying vec2 shore_px;
 
@@ -27,7 +30,7 @@ void fragment() {
 	ivec2 size = textureSize(phase_mask, 0);
 	ivec2 cell = clamp(ivec2(floor(shore_px / cell_px)), ivec2(0), size - 1);
 	int phase = int(round(texelFetch(phase_mask, cell, 0).r * float(frames - 1)));
-	int frame = (int(floor(TIME * frames_per_second)) + phase) % frames;
+	int frame = (int(floor(foam_time * frames_per_second)) + phase) % frames;
 	vec2 uv = UV + vec2(float(frame) * cell_px * TEXTURE_PIXEL_SIZE.x, 0.0);
 	COLOR = texture(TEXTURE, uv) * art_modulate;
 }

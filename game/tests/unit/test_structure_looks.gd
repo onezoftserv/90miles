@@ -323,3 +323,116 @@ func test_a_raft_look_follows_integrity_set_after_it_enters_the_tree_every_frame
 	await wait_process_frames(1)
 	assert_eq(_look(raft).frame(), StructureArt.NO_FRAME, "no deck at 0")
 	assert_false(_look(raft).sprite.visible)
+
+
+# --- art-mood-pass C33b: firelight (design D2; owner Q13 (a)) ---
+
+## Well into the night (past the 20 s blend) and the middle of the day.
+const NIGHT_AT_S: float = DayClock.NIGHT_START_S + 30.0
+const DAY_AT_S: float = 200.0
+const SURVIVAL_TUNING: SurvivalTuning = preload("res://resources/survival_tuning.tres")
+
+
+func _fire_light(structure: Node) -> PointLight2D:
+	return _look(structure).get_node_or_null(^"FireLight") as PointLight2D
+
+
+func _lit_fire() -> Fire:
+	var fire := FIRE_SCENE.instantiate() as Fire
+	arena.add_child(fire)
+	fire.light()
+	return fire
+
+
+## One player, offline: a lit fire at night lights a stepped pool exactly as far as its company reaches.
+func test_a_solo_lit_fire_at_night_lights_a_pool_as_far_as_its_company() -> void:
+	WeatherManager.sky.start_at(NIGHT_AT_S)
+	var fire := _lit_fire()
+	_drawn(fire)
+	var light := _fire_light(fire)
+	assert_not_null(light, "a FireLight under the fire's Look")
+	if light == null:
+		return
+	var radius: int = FireGlow.radius_px(SURVIVAL_TUNING.company_radius_tiles)
+	assert_eq(radius, 80, "5 tiles of company, 16 px each")
+	assert_true(light.visible, "on at night")
+	assert_eq(light.blend_mode, Light2D.BLEND_MODE_ADD)
+	assert_eq(light.texture_scale, 1.0, "1:1, so the rings stay hard")
+	assert_eq(light.texture.get_width(), 2 * radius + 1)
+	assert_between(light.energy, 0.0001, 0.9999, "energy below 1")
+	assert_false(light.shadow_enabled)
+
+
+func test_the_firelight_is_off_by_day_and_once_the_fire_is_out() -> void:
+	WeatherManager.sky.start_at(DAY_AT_S)
+	var fire := _lit_fire()
+	_drawn(fire)
+	assert_false(_fire_light(fire).visible, "off by day")
+	WeatherManager.sky.start_at(NIGHT_AT_S)
+	_drawn(fire)
+	assert_true(_fire_light(fire).visible, "on at night")
+	fire.advance(fire.tuning.fire_burn_s + 1.0)
+	_drawn(fire)
+	assert_false(_fire_light(fire).visible, "off once only embers are left")
+
+
+## A palm, a rain catcher and a workbench never make a light.
+func test_no_other_structure_makes_a_light() -> void:
+	WeatherManager.sky.start_at(NIGHT_AT_S)
+	var palm := PALM_SCENE.instantiate()
+	arena.add_child(palm)
+	var catcher := CATCHER_SCENE.instantiate()
+	arena.add_child(catcher)
+	var bench := (load("res://scenes/structures/workbench.tscn") as PackedScene).instantiate()
+	arena.add_child(bench)
+	for structure: Node in [palm, catcher, bench]:
+		_drawn(structure)
+		assert_null(_fire_light(structure), "%s has no light" % structure.name)
+
+
+func test_the_pool_follows_the_company_radius_in_data() -> void:
+	assert_eq(FireGlow.radius_px(6.0), 96)
+	var art := ArtTuning.standard()
+	assert_eq(FireGlow.texture(FireGlow.radius_px(6.0), art.fire_ring_values).get_width(), 193)
+
+
+func test_the_rings_are_hard_steps_and_nothing_lies_beyond_the_radius() -> void:
+	var art := ArtTuning.standard()
+	assert_eq(art.fire_ring_values.size(), art.fire_light_steps, "one value per ring")
+	var image: Image = FireGlow.texture(80, art.fire_ring_values).get_image()
+	var values: Dictionary[float, bool] = {}
+	for y: int in image.get_height():
+		for x: int in image.get_width():
+			var value: float = snappedf(image.get_pixel(x, y).r, 0.001)
+			var outside: bool = Vector2(x - 80, y - 80).length() > 80.0
+			if outside:
+				assert_eq(value, 0.0, "(%d, %d) lies beyond the radius" % [x, y])
+			elif value > 0.0:
+				values[value] = true
+	assert_eq(values.size(), art.fire_light_steps, "exactly %d hard steps" % art.fire_light_steps)
+
+
+func test_the_flicker_follows_the_flame_and_holds_still_under_reduce_flashes() -> void:
+	var art := ArtTuning.standard()
+	var frames: int = data.fire.get_frame_count(StructureArt.FIRE_LIT)
+	assert_eq(art.fire_flicker.size(), frames, "one factor per lit flame frame")
+	WeatherManager.sky.start_at(NIGHT_AT_S)
+	var fire := _lit_fire()
+	var look := _drawn(fire)
+	var was: bool = HurtCues.reduce_flashes
+	var seen: Dictionary[float, bool] = {}
+	HurtCues.reduce_flashes = false
+	for frame: int in frames:
+		look.sprite.frame = frame
+		look.step()
+		seen[snappedf(_fire_light(fire).energy / art.fire_flicker[frame], 0.0001)] = true
+	assert_eq(seen.size(), 1, "the energy follows the flame's frame through the table")
+	var steady: Dictionary[float, bool] = {}
+	HurtCues.reduce_flashes = true
+	for frame: int in frames:
+		look.sprite.frame = frame
+		look.step()
+		steady[snappedf(_fire_light(fire).energy, 0.0001)] = true
+	HurtCues.reduce_flashes = was
+	assert_eq(steady.size(), 1, "under Reducir destellos the light holds steady")
+

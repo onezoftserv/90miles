@@ -104,6 +104,7 @@ var capture_dir: String = ""
 ## Solo only: --only=foam runs just the shore views by day and by night (a quick way to tune the foam check);
 ## --only=cay travels straight to the coast cay and runs its steps; --only=palms walks to a nest palm
 ## and checks the palm looks round it (art-prop-polish D4).
+## --only=squall runs art-mood-pass's squall steps (task 4.6): by day, then at night beside a fire.
 var only: String = ""
 ## Host only: how many clients play (2: A rides, B leaves and joins; 1: one untagged client rides).
 var clients: int = 2
@@ -215,6 +216,11 @@ func _hooked(text: String) -> void:
 # The game's one sky (WeatherManager.sky), made in the autoload's _ready.
 func _sky() -> Object:
 	return root.get_node(^"WeatherManager").get("sky")
+
+
+# The seconds a phase's tint takes to blend in (DayCycleTuning.blend_s).
+func _blend_s() -> float:
+	return float((_sky().get("tuning") as Object).get("blend_s"))
 
 
 func _rendering() -> bool:
@@ -774,6 +780,9 @@ func _solo() -> void:
 	if only == "palms":
 		await _palms_only()
 		return
+	if only == "squall":
+		await _squall_only()
+		return
 	var day: Image = await _world_image("sandbar_day_view")
 	_check_no_magenta(day, "the sandbar by day")
 	await _check_shore_view("spawn_day")
@@ -791,6 +800,101 @@ func _solo() -> void:
 	await _crossing()
 	await _coast_cay()
 	await _binoculars_swim()
+
+
+# --only=squall (art-mood-pass task 4.6): a solo squall by day, then at night beside a lit fire, with the
+# player crouched in the rain. Checks that the sea's and the foam's paces ease up with no jump in their
+# clocks, that the weather window names the squall beside the phase, and that the rain is drawn inside
+# the tinted world, light and then heavy. The window captures carry the HUD.
+func _squall_only() -> void:
+	var driver: Node = island.get_node_or_null(^"Terrain/SeaPace")
+	var tint: Node = shell.get("tint")
+	var vfx: Node = tint.get_node_or_null(^"WeatherVfx") if tint != null else null
+	if not _check("the island's sea has its SeaPace driver and the tint its WeatherVfx", driver != null and vfx != null):
+		return
+	var tuning: Object = load("res://resources/art_tuning.tres")
+	var squall: Object = (root.get_node(^"GameState").get("content") as Object).call("get_entry", &"weather", &"squall")
+	var weather: Object = _sky().get("weather")
+	await _save_window("squall_day_before")
+	weather.call("start_weather", &"squall")
+	_hooked("a squall started (WeatherCycle.start_weather)")
+	await _paces_ease(driver.get("pace"), squall, float(tuning.get("pace_ease_s")))
+	Input.action_press(&"crouch")
+	await _seconds(0.5)
+	_check("held crouch in the rain: the crouch look", _pose() == "CROUCH", _pose())
+	var label: Label = hud.get("weather_label")
+	var panel: Control = hud.get("weather_panel")
+	_check("the weather window names the squall beside the phase", panel.visible and label.text == "Turbonada", "'%s', panel %s" % [label.text, panel.get_global_rect()])
+	var rain: Node = vfx.get("shown")
+	_check("the rain is drawn inside the tint, at z 10", rain != null and rain.get_parent() == vfx and int(rain.get("z_index")) == 10)
+	_check("the rain starts in its light stage", rain != null and int(rain.call("stage")) == 0)
+	await _save_window("squall_day_light")
+	weather.set("current_left_s", float(weather.get("current_left_s")) - float(tuning.get("rain_light_s")))
+	_hooked("the squall moved on %.0f s (WeatherCycle.current_left_s), to the heavy stage" % float(tuning.get("rain_light_s")))
+	await _seconds(0.5)
+	_check("then the heavy stage", rain != null and int(rain.call("stage")) == 1)
+	await _save_window("squall_day_heavy")
+	Input.action_release(&"crouch")
+	await _frames(4)
+	_sky().call("start_at", NIGHT_START_S + 30.0)
+	_hooked("day clock to 30 s into the night, calm (WorldSky.start_at)")
+	var fire: Node2D = _lit_fire_beside()
+	if not _check("a lit fire beside the player", fire != null):
+		return
+	await _seconds(1.0)
+	await _save_window("night_fire_before")
+	weather.call("start_weather", &"squall")
+	_hooked("a squall started at night beside the fire")
+	Input.action_press(&"crouch")
+	await _seconds(1.0)
+	_check("the fire still burns a second into the squall", bool(fire.get("lit")))
+	await _save_window("squall_night_fire")
+	Input.action_release(&"crouch")
+	await _frames(4)
+
+
+# Over the squall's first ease and a second more: both paces rise to the squall's and never fall,
+# and in no frame does a clock move more than the larger pace times that frame's time.
+func _paces_ease(pace: Object, squall: Object, ease_s: float) -> void:
+	var top: float = maxf(float(squall.get("sea_pace")), float(squall.get("foam_pace")))
+	var sea: float = float(pace.get("sea_time"))
+	var foam: float = float(pace.get("foam_time"))
+	var last_pace: float = float(pace.get("foam_pace"))
+	var worst: float = 0.0
+	var fell: bool = false
+	var started: int = Time.get_ticks_usec()
+	await process_frame
+	sea = float(pace.get("sea_time"))
+	foam = float(pace.get("foam_time"))
+	while Time.get_ticks_usec() - started < int((ease_s + 1.0) * 1000000.0):
+		# Read at process_frame, before the nodes run: the step this frame's _process gets.
+		var spent: float = root.get_process_delta_time()
+		await process_frame
+		var now_sea: float = float(pace.get("sea_time"))
+		var now_foam: float = float(pace.get("foam_time"))
+		worst = maxf(worst, maxf(now_sea - sea, now_foam - foam) / maxf(spent, 0.000001))
+		fell = fell or float(pace.get("foam_pace")) < last_pace - 0.000001
+		sea = now_sea
+		foam = now_foam
+		last_pace = float(pace.get("foam_pace"))
+	var reached: bool = absf(float(pace.get("sea_pace")) - float(squall.get("sea_pace"))) < 0.001 and absf(float(pace.get("foam_pace")) - float(squall.get("foam_pace"))) < 0.001
+	_check("the sea and the foam ease up to the squall's pace in %.0f s" % ease_s, reached and not fell, "sea %.2f, foam %.2f" % [float(pace.get("sea_pace")), float(pace.get("foam_pace"))])
+	_check("no clock jumped: at most the larger pace per second of frame time", worst <= top * 1.05, "largest rate %.2f, pace %.2f" % [worst, top])
+
+
+# A fire (fire.tscn, lit at once) on the nearest land cell two cells east or west of the player.
+func _lit_fire_beside() -> Node2D:
+	var at: Vector2i = _cell_of(body.global_position)
+	for offset: Vector2i in [Vector2i(2, 0), Vector2i(-2, 0), Vector2i(0, 2), Vector2i(0, -2)]:
+		if _is_water(at + offset) or _kind(at + offset) == CLIFF:
+			continue
+		var fire: Node2D = (load("res://scenes/structures/fire.tscn") as PackedScene).instantiate()
+		island.add_child(fire)
+		fire.global_position = _center(at + offset)
+		fire.call("light")
+		_hooked("a lit fire placed at %s (fire.tscn, Fire.light)" % (at + offset))
+		return fire
+	return null
 
 
 # --only=cay: the run travels straight to the coast cay (the host's travel_to, as a crossing's end calls it),
@@ -855,7 +959,7 @@ func _foam_only(spawn: Vector2) -> void:
 	await _walk_to(spawn)
 	_sky().call("start_at", NIGHT_START_S - 2.0)
 	_hooked("day clock to 2 s before night")
-	await _seconds(3.0)
+	await _seconds(3.0 + _blend_s())
 	await _world_image("sandbar_night_view")
 	await _check_shore_view("spawn_night")
 	await _crescent_walk("night")
@@ -1370,7 +1474,8 @@ func _night(spawn: Vector2, day: Image) -> void:
 	await _seconds(0.5)
 	_sky().call("start_at", NIGHT_START_S - 2.0)
 	_hooked("day clock to 2 s before night (played into night from there)")
-	await _seconds(3.0)
+	# Past the dusk-to-night blend: art-mood-pass C33a's brighter dusk would still show a second in.
+	await _seconds(3.0 + _blend_s())
 	var night: Image = await _world_image("sandbar_night_view")
 	_check_no_magenta(night, "the sandbar at night")
 	if night != null and day != null:

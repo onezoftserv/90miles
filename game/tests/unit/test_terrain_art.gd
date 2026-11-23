@@ -1370,3 +1370,37 @@ func test_the_depth_mask_holds_one_step_per_cell_and_pools_are_shallows() -> voi
 	assert_eq(mask[3], TerrainArt.depth_step(DataEnums.Terrain.BRACKISH))
 	assert_eq(mask[9], TerrainArt.depth_step(DataEnums.Terrain.SHALLOWS), "a tide pool is shallows")
 	assert_eq(mask[5], TerrainArt.depth_step(DataEnums.Terrain.DEEP), "land holds the commonest water step beside it, the lower step on a tie (3 deep, 3 shallows)")
+
+
+## art-terrain-polish C7 ("The wet lip shows below the foam"): on the four straight edges the
+## sand's 1 px lip (its pixels beside the sea) is under no foam pixel in at least 2 of the 8
+## frames, the ones where the wave has drawn back, while the foam still touches the sand in every
+## frame (the band test above; 4 frames would break it, design D7's build notes).
+func test_the_wet_lip_shows_below_the_foam() -> void:
+	var sand: Image = _sheet(SAND_SHEET)
+	var foam: Image = _sheet(FOAM_SHEET)
+	if sand == null or foam == null:
+		return
+	for mask: int in [3, 5, 10, 12]:
+		var tile: Image = sand.get_region(Rect2i(_mask_atlas(mask) * TILE, Vector2i(TILE, TILE)))
+		var lip: Array[Vector2i] = []
+		for y: int in TILE:
+			for x: int in TILE:
+				if tile.get_pixel(x, y).a == 0.0:
+					continue
+				for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+					var at: Vector2i = Vector2i(x, y) + step
+					if at.x >= 0 and at.y >= 0 and at.x < TILE and at.y < TILE and tile.get_pixel(at.x, at.y).a == 0.0:
+						lip.append(Vector2i(x, y))
+						break
+		var shown: int = 0
+		for frame: int in FOAM_FRAMES:
+			var piece: Image = foam.get_region(Rect2i(frame * TILE, mask * TILE, TILE, TILE))
+			var covered: bool = false
+			for at: Vector2i in lip:
+				if piece.get_pixel(at.x, at.y).a > 0.0:
+					covered = true
+					break
+			if not covered:
+				shown += 1
+		assert_gte(shown, 2, "mask %d: the lip shows in %d of 8 frames" % [mask, shown])
