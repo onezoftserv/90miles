@@ -303,7 +303,7 @@ As the task says, nothing was redrawn. The question went to the coordinating ses
 - **The hut shade.**
   - `terrain.py`'s shade step takes `"hut": {"north": 58, "south": 18, "bands": 3}` and adds one corner set per depth band after the spot row (rows 5 to 16), with a ramp from 58 on the hut's north edge to 18 at 48 px.
   - `TerrainView.hut_shade_tile` picks a band by depth from the hut's north edge, and a mask that counts the cell north of any shaded cell as shaded, for the shaded cells of a layout `ShelterArtData` names.
-  - The 48 tiles are declared in `decal_tiles.tres`.
+  - The 45 hut tiles with art are declared in `decal_tiles.tres`. Mask 0 covers nothing and is not declared. `test_terrain_tile_sets.gd` re-pins `shade.png` from 19 tiles to 64.
 - **Departures.**
   - **Three bands, not one row.** D5 says "a second row" of the shade sheet. A single ramped tile restarts its ramp in every hut row and draws stripes, so the ramp spans the hut's depth in three bands. `shade.png` grows from 64×80 to 64×272.
   - **Straight sides.** The hut shade takes the mask's straight quadrants, not the sand outline. The outline's wobble made a column's shade rise and fall along the hut's sides. A hut is a rectangle under a rectangular roof.
