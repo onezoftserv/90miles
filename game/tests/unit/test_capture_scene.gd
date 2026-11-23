@@ -9,7 +9,6 @@ extends GutTest
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const FOTO: ItemData = preload("res://tests/fixtures/content/items/foto_test.tres")
-## Per-process (UserTmp, test-user-folders), never a fixed path in the shared user folder.
 var settings_path: String = UserTmp.path("test_capture_scene_settings.cfg")
 const COAST: StringName = &"coast_cay"
 const SANDBAR: StringName = &"sandbar"

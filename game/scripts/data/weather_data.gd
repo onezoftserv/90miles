@@ -115,6 +115,10 @@ enum Hazard {
 @export var vfx_scene: PackedScene = null
 ## Ambience loop (asset).
 @export var ambient_loop: AudioStream = null
+## How fast the sea's water drifts against calm (art-mood-pass D4); the sea eases to it.
+@export var sea_pace: float = 1.0
+## How fast the shore foam steps its frames against calm (art-mood-pass D4).
+@export var foam_pace: float = 1.0
 
 @export_group("Survival")
 ## Heat-rise factor.

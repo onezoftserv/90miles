@@ -115,12 +115,12 @@
 
 ## 9. C7: land and water apart by value (TR7)
 
-- [ ] 9.1 Write these tests first and see them fail:
+- [x] 9.1 Write these tests first and see them fail:
   - in `test_art_palette.gd` or a new contrast test: the sand and dune means against the shallows mean at 1.6:1 or more, shallows against brackish at 1.4:1 or more, and deep < brackish < shallows in value;
   - in `test_terrain_art.gd`: the straight masks' lip uncovered in at least 4 of 8 foam frames.
   Add the 1-player test: on the sandbar built for one offline player, the sea uses the new shallows ramp, and the swimmer and fin contrast checks pass on shallows and deep.
-- [ ] 9.2 Darken the shallows ramp and move the brackish ramp in `terrain_tiles.json` (design D7). Add the new colours to `master_palette.png` and `.gpl` (at most 8, the palette at most 61 of 64). Lower the foam's `land_rows`, raise the dune and brush shore insets to 2, and repaint `fixes/terrain/tide_pool.png`'s water. Rebuild. Recompute the `art_tuning.tres` means. Verify that `test_in_every_frame_the_foam_is_one_band_on_the_sands_edge`, wave 1's foam corner tests, `test_the_tide_pool_is_irregular_with_a_few_stones_and_a_wet_sand_lip`, the crossing sea tests (the deep ramp is unchanged) and the palette tests pass. If the owner answers QT1 (b), add the second wet row in the same pass and amend wave 1's lip scenario.
-- [ ] 9.3 Windowed 1-player capture of the sandbar's west shore in colour and greyscale, compared with `before/sandbar_day_west_shore_mid_x3.png` and `before/west_mid_x3_grey.png`.
+- [x] 9.2 Darken the shallows ramp and move the brackish ramp in `terrain_tiles.json` (design D7). Add the new colours to `master_palette.png` and `.gpl` (at most 8, the palette at most 61 of 64). Lower the foam's `land_rows`, raise the dune and brush shore insets to 2, and repaint `fixes/terrain/tide_pool.png`'s water. Rebuild. Recompute the `art_tuning.tres` means. Verify that `test_in_every_frame_the_foam_is_one_band_on_the_sands_edge`, wave 1's foam corner tests, `test_the_tide_pool_is_irregular_with_a_few_stones_and_a_wet_sand_lip`, the crossing sea tests (the deep ramp is unchanged) and the palette tests pass. If the owner answers QT1 (b), add the second wet row in the same pass and amend wave 1's lip scenario.
+- [x] 9.3 Windowed 1-player capture of the sandbar's west shore in colour and greyscale, compared with `before/sandbar_day_west_shore_mid_x3.png` and `before/west_mid_x3_grey.png`.
 
 ## 10. Integration
 

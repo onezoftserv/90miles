@@ -1,0 +1,7 @@
+Pipeline source for tools/art/mood.py (art-mood-pass D9): the hand sources it checks and copies.
+
+Work: 90 Millas squall and sea art
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: rain.png and splash.png, copied unchanged to game/assets/art/fx/ (see the licence there)

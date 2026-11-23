@@ -37,6 +37,20 @@ unique_name_in_owner = true
 layout_mode = 2
 horizontal_alignment = 1
 
+[node name="WeatherPanel" type="PanelContainer" parent="."]
+visible = false
+offset_left = 384.0
+offset_top = 6.0
+offset_right = 464.0
+offset_bottom = 16.0
+mouse_filter = 2
+theme_type_variation = &"HudPanelThin"
+
+[node name="Weather" type="Label" parent="WeatherPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
 [node name="TeammatesPanel" type="PanelContainer" parent="."]
 unique_name_in_owner = true
 anchors_preset = 1

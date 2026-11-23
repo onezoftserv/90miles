@@ -11,6 +11,9 @@ extends Node
 ##     slots as real player scenes on the real sandbar, in a SubViewport, enlarged ×3. Crouch on the
 ##     beach; swim and dive in the sea; downed (top row) above dead (bottom row) on the beach; night
 ##     standing on the beach and swimming beside it, under the day-night tint at night.
+##   looks_scrub.png (art-sprite-polish C8): three players on scrub cells near the solo spawn, at
+##     least 3 cells apart and away from the lean-to, crouched, standing and crouched, each drawn
+##     behind its cell's bush front, enlarged ×3.
 ## The bodies never simulate (their processing is off); only their Look reads the states set here.
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
@@ -66,6 +69,7 @@ func _ready() -> void:
 			body.downed = true
 		else:
 			body.meters.dead = true)
+	await _capture_scrub()
 	WeatherManager.sky.start_at(NIGHT_S)
 	var stand_then_swim := func(body: PlayerBody, row: int) -> void:
 		if row == 1:
@@ -150,6 +154,67 @@ func _capture(capture: String, start: Vector2i, rows: int, setup: Callable, nigh
 	_save(image, capture)
 	view.queue_free()
 	await _frames(2)
+
+
+# looks_scrub.png: slots 0-2 on the three scrub cells nearest the solo spawn that lie within a
+# 12 x 8 box of the first, crouched, standing and crouched, in one view round them.
+func _capture_scrub() -> void:
+	var scrub: Array[Vector2i] = []
+	for cell: Vector2i in _island.terrain.cells:
+		if _island.terrain.terrain_at(cell) == DataEnums.Terrain.SCRUB and not _near_shade(cell):
+			scrub.append(cell)
+	scrub.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return _nearer(a, b))
+	var picked: Array[Vector2i] = []
+	for cell: Vector2i in scrub:
+		var apart: bool = true
+		for other: Vector2i in picked:
+			apart = apart and maxi(absi(cell.x - other.x), absi(cell.y - other.y)) >= 3
+		if picked.is_empty() or (apart and absi(cell.x - picked[0].x) < 12 and absi(cell.y - picked[0].y) < 8):
+			picked.append(cell)
+		if picked.size() == 3:
+			break
+	var box := Rect2i(picked[0], Vector2i.ONE)
+	for cell: Vector2i in picked:
+		box = box.expand(cell).expand(cell + Vector2i.ONE)
+	box = box.grow(2)
+	var view := SubViewport.new()
+	view.size = box.size * IslandLayout.TILE
+	view.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+	view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child(view)
+	var island := ISLAND_SCENE.instantiate() as SandbarIsland
+	island.layout = load(LAYOUT_PATH) as IslandLayoutData
+	island.with_creatures = false
+	island.position = -Vector2(box.position * IslandLayout.TILE)
+	view.add_child(island)
+	for slot: int in picked.size():
+		var body := PLAYER_SCENE.instantiate() as PlayerBody
+		body.process_mode = Node.PROCESS_MODE_DISABLED
+		body.look_slot = slot
+		body.local_player = false
+		body.position = island.position + IslandLayout.cell_center(picked[slot])
+		view.add_child(body)
+		body.camera.enabled = false
+		body.movement_state = MovementStep.Move.WALK if slot == 1 else MovementStep.Move.CROUCH
+		var look := body.get_node(^"Look") as PlayerLook
+		look.process_mode = Node.PROCESS_MODE_ALWAYS
+		look.facing.dir = Facing.Dir.DOWN
+	await _frames(SETTLE_FRAMES)
+	var image := view.get_texture().get_image()
+	image.resize(image.get_width() * VIEW_ZOOM, image.get_height() * VIEW_ZOOM, Image.INTERPOLATE_NEAREST)
+	_save(image, "looks_scrub")
+	view.queue_free()
+	await _frames(2)
+
+
+# Whether a shaded cell (the hut's) lies within 3 cells: this view does not sort the bodies among
+# the island's structures as the game does, so the capture keeps away from the lean-to.
+func _near_shade(cell: Vector2i) -> bool:
+	for y: int in range(-3, 4):
+		for x: int in range(-3, 4):
+			if _island.terrain.is_shaded(cell + Vector2i(x, y)):
+				return true
+	return false
 
 
 # The first cell, nearest the solo spawn, from which `rows` rows of four cells SPACING apart all

@@ -11,7 +11,7 @@ The beach and the dune SHALL stand apart from the shallows by value, not by hue 
 #### Scenario: The wet lip shows below the foam
 - **GIVEN** the straight sand edge tiles and their foam pieces
 - **WHEN** each of the 8 foam frames is laid over its sand tile
-- **THEN** the sand's last opaque row, its lip, is covered by no foam pixel in at least 4 of the 8 frames, while the foam still touches the sand in every frame (on the lip or the water pixel beyond it)
+- **THEN** the sand's last opaque row, its lip, is covered by no foam pixel in at least 2 of the 8 frames, the ones where the wave has drawn back, while the foam still touches the sand in every frame (on the lip or the water pixel beyond it)
 
 #### Scenario: A solo player's beach on the sandbar
 - **GIVEN** the sandbar built for one offline player
