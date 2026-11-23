@@ -1,6 +1,8 @@
 # Tasks
 
-Owner decisions Q1 and Q2 (design "Owner decisions") are pending. Groups 1 to 5 and 7 do not depend on them; group 6 builds whichever Q1 answer comes back.
+The owner chose Q1 A and Q2 B on 2026-11-23 (design "Owner decisions"):
+- Q1 A: one "Volumen" row, 0 to 100 %, default 80 %. This change ships the key and the API; run-menu adds the row.
+- Q2 B: CC0 recordings for the sea, wind and thunder, after the owner approves each file. Until then the generated three are placeholders (group 9).
 
 The commands below run from the repo root, using the Godot 4.7.2 console binary:
 - "Import" is `godot --headless --path game --import`, run twice on a fresh checkout.
@@ -76,11 +78,7 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 ## 6. Volume (audio "Volume level"; owner Q1)
 
 - [ ] 6.1 Tests first: extend the settings tests with the volume default (8), a round trip through a `UserTmp.path()` file, and malformed values (a string, -1, 11) falling back to 8. Write a shell test that the stored level reaches `AudioManager.volume()` at start.
-- [ ] 6.2 Add `GameSettings.volume` and apply it in `GameShell`. For the Ajustes row:
-  - Q1 A or B: hand the row's spec to the run-menu session through the coordinator, or add it here if run-menu has merged first;
-  - Q1 C: skip it.
-
-  Verify: Import, Smoke and GUT pass.
+- [ ] 6.2 Add `GameSettings.volume` and apply it in `GameShell`. The Ajustes row is run-menu's (Q1 A): the coordinator passes it the key, the steps (0 to 10, shown as 0 to 100 %) and `AudioManager.set_volume(volume / 10.0)`. Verify: Import, Smoke and GUT pass.
 
 ## 7. Co-op (audio "Own events are heard only by their player", "World events are heard by every peer")
 
@@ -100,3 +98,9 @@ The commands below run from the repo root, using the Godot 4.7.2 console binary:
 ## 8. Docs
 
 - [ ] 8.1 Add a short "Sound" section to `docs/GAME_DESIGN.md`: the cue list, own against world events, and "sound never carries information alone". Tick the `sound-pass` line in `TASKS.md`. Record the owner's answers in design "Owner decisions". Verify: `openspec validate sound-pass --strict`, and Import, Smoke and GUT pass.
+
+## 9. CC0 recordings for the sea, wind and thunder (owner Q2 B)
+
+- [ ] 9.1 Send the coordinator exact CC0 candidates for `sea`, `wind` and `thunder`: file name, source page, author, licence (CC0 only), size and format, two per sound where possible. Download nothing until the owner approves a file.
+- [ ] 9.2 Give `SoundData` a `generated: bool` field (default true). The bank and credits tests skip the rebuild check for a recording and ask its `License.txt` block for author, licence and source instead. Keep the three generated placeholders until approved files arrive.
+- [ ] 9.3 After approval, per file: copy it into the right folder, trim and loop it (seam crossfade, mono, 22 050 Hz), add its `.import` and its `License.txt` block, set its bank entry, and add its `CREDITS.md` row. Verify: Import, Smoke and GUT pass. This may land as its own small PR after the main one.

@@ -144,7 +144,9 @@ Voice acting, cloned voices, runtime TTS, challenges, seeded and daily runs, and
   - 4 loops: sea, wind, night, and a patrol motor that swells over the 20 s horizon warning;
   - 11 one-shots: pick-up, three hurt cues, use done, low thirst, raft hit, loudhailer, thunder, arrival and compass rattle.
 
-  The bank is data (`sound_bank.tres`). AudioManager plays ids and loop levels. `RunSounds` reads each peer's own state, so a player hears their own events and everyone hears the world. Audio never changes the simulation. Owner decisions pending: Q1 volume control, Q2 sources.
+  The bank is data (`sound_bank.tres`). AudioManager plays ids and loop levels. `RunSounds` reads each peer's own state, so a player hears their own events and everyone hears the world. Audio never changes the simulation. Owner, 2026-11-23:
+  - Q1 A: one "Volumen" row in Ajustes, 0 to 100 %, default 80 %. The key and API are here; the row is the run-menu session's.
+  - Q2 B: CC0 recordings for the sea, wind and thunder, once the owner approves each candidate file. Until then the generated three are placeholders.
 - [ ] Profanity toggle, English localization pass
 - [ ] Set pieces (Brogue machines): six from `docs/ISLANDS.md`
 - [x] A dead co-op player spectates a living teammate, a key cycling between them, instead of watching their own body (owner, 2026-11-08; `dead-spectate`, 2026-11-14)
