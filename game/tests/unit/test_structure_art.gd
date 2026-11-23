@@ -11,6 +11,7 @@ const SITE_SCENE: PackedScene = preload("res://scenes/structures/build_site.tscn
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const SANDBAR: IslandLayoutData = preload("res://resources/islands/sandbar.tres")
 const COAST_CAY: IslandLayoutData = preload("res://resources/islands/coast_cay.tres")
+const CAYO_SIN_NORTE: IslandLayoutData = preload("res://resources/islands/cayo_sin_norte.tres")
 
 # The fire's logs fill its frame's last rows (design.md K84); only the flame above them flickers.
 const FIRE_BASE_TOP: int = 12
@@ -141,12 +142,16 @@ func _row_middle(image: Image, row: int) -> float:
 
 func test_the_palm_look_pick_is_the_cells_hash_and_gives_the_same_look_twice() -> void:
 	assert_eq(data.palm_look_count(), PALM_LOOKS, "QP1 (a): today's palm and two redrawn looks")
-	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
+	for layout: IslandLayoutData in [SANDBAR, COAST_CAY, CAYO_SIN_NORTE]:
+		var seen: Dictionary[int, bool] = {}
 		for cell: Vector2i in IslandLayout.build(layout).palms:
 			var look: int = StructureArt.palm_look(layout.id, cell, PALM_LOOKS)
 			var hashed: int = (TerrainArt.cell_hash(layout.id, cell) >> StructureArt.PALM_LOOK_SHIFT) % PALM_LOOKS
 			assert_eq(look, hashed, "%s %s: the look is the cell's hash" % [layout.id, cell])
 			assert_eq(StructureArt.palm_look(layout.id, cell, PALM_LOOKS), look, "%s %s: the same look twice" % [layout.id, cell])
+			seen[look] = true
+		# The shift was chosen so each island's grove mixes; a moved palm that undoes it shows here.
+		assert_gt(seen.size(), 1, "%s: its palms draw more than one look" % layout.id)
 	assert_eq(StructureArt.palm_look(SANDBAR.id, Vector2i(26, 28), 1), 0, "one look: today's palm")
 	assert_eq(StructureArt.palm_look(SANDBAR.id, Vector2i(26, 28), 0), 0, "no table: today's palm")
 

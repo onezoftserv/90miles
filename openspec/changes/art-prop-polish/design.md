@@ -257,7 +257,7 @@ As the task says, nothing was redrawn. The question went to the coordinating ses
 
   Each is a hand-drawn trunk and crown (`tools/art/fixes/structures/palm_trunk_*.png`, `palm_crown_*.png`). Each frond is lit on its top in #99e550, #6abe30 through the middle and #4b692f underneath, with a serrated #323c39 underside. A frond reaching right shows less lit top. The bark uses today's colours and rings, lit on the left. The four base rows are today's, so the foot and its shade read the same.
 - **Departures.**
-  - **The bits of the hash.** The pick is `(TerrainArt.cell_hash(layout id, cell) >> 8) % 3`, not `>> 1`. From bit 1, five of the sandbar's six palms took the same look (2, 1, 2, 2, 2, 2), and with two looks every coast cay palm would. From bit 8, the sandbar draws [2, 0, 1, 1, 1, 2] and the coast cay [2, 0, 0, 2, 1]. Starting from another bit than the terrain's also keeps a palm's look from following its ground tile's pick. It is one constant, `StructureArt.PALM_LOOK_SHIFT`.
+  - **The bits of the hash.** The pick is `(TerrainArt.cell_hash(layout id, cell) >> 8) % 3`, not `>> 1`. From bit 1, five of the sandbar's six palms took the same look (2, 1, 2, 2, 2, 2), and with two looks every coast cay palm would. From bit 8, the sandbar draws [2, 0, 1, 1, 1, 2], the coast cay [2, 0, 0, 2, 1] (coast-cay-reshape keeps its palm cells, so this holds after it) and the hidden cay [1, 0, 2]. Starting from another bit than the terrain's also keeps a palm's look from following its ground tile's pick. It is one constant, `StructureArt.PALM_LOOK_SHIFT`.
   - **Shared overlays.** Every look keeps its crown hub under (16, 14), so the looks share today's coconut and nest overlays instead of each carrying its own. Their heights hold by construction, and the tests check that the crown is under each overlay point. `StructureArtData.palm_looks` lists the redrawn frames; look 0 stays `palm`, so a palm on no island draws today's palm.
   - **Where the pick is made.** It is made in `StructureLook`, the palm's art node, not in `palm.gd`, which is the host's climb script. The look picks once, from its island's layout id and the palm's cell, and keeps it.
 - **Checks.**
@@ -266,5 +266,6 @@ As the task says, nothing was redrawn. The question went to the coordinating ses
   - The windowed solo run `art_pass_run.gd --mode=solo --only=palms` (a step added for task 4.3) passed 15 of 15: every palm draws its cell's look, and two gulls perch over the nest point of the bowed look.
 - **Images:**
   - `docs/art-pass/prop-polish/sandbar_palms_before_after_x3.png`: before, left, from the 2026-11-14 review with its older sand; after, right, from `capture_terrain.tscn`, the same rect.
+  - `docs/art-pass/prop-polish/two_palms_col_before_after_x6.png`: `before/two_palms_col_x3.png` (×6 in fact), which shows palms 1 and 3 at (23, 31) and (23, 36), beside the same rect now: today's palm above the bowed look.
   - `docs/art-pass/prop-polish/palm_looks_x6.png`: the three looks, bare and with 3 coconuts and the nest.
   - `docs/art-pass/prop-polish/sandbar_palms_solo.png`: the solo run's view of the grove.
