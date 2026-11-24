@@ -27,9 +27,15 @@ static func hunger_drain(context: MeterContext, tuning: SurvivalTuning) -> float
 static func next_heat(heat: float, context: MeterContext, tuning: SurvivalTuning, delta: float) -> float:
 	if context.phase == DataEnums.DayPhase.NIGHT:
 		return 0.0
+	var next: float = heat - tuning.heat_fall_per_s * delta
 	if context.midday and context.in_direct_sun():
-		return heat + tuning.heat_rise_per_s * context.heat_factor * delta
-	return heat - tuning.heat_fall_per_s * delta
+		next = heat + tuning.heat_rise_per_s * context.heat_factor * delta
+	if context.at_sea:
+		# At sea: never past the cap, and above it heat falls at the shade rate down to it.
+		if heat > tuning.sea_heat_cap:
+			return maxf(heat - tuning.heat_fall_per_s * delta, tuning.sea_heat_cap)
+		return minf(next, tuning.sea_heat_cap)
+	return next
 
 
 ## Morale change per second: a teammate restores; at night, having neither a teammate nor a lit

@@ -22,7 +22,10 @@ extends Control
 ## frames, so in solo and on the host it runs on the same frames as the host's hold.
 ## A build site's prompt adds its state as this peer has it (inventory-hud "Build site prompt"):
 ## a line per missing input or tag, "Falta: Madera de la costa x4" first, or, once every input is
-## in, the shared progress as a bar with its percentage. A raft's launch prompt adds its state
+## in, the shared progress as a bar with its percentage. A staged site (island-pressure) adds its stage
+## line first, names what that stage needs and bars that stage's own progress, and a build that costs
+## energy says "Sin fuerzas: come algo." while the local player has none. A raft's launch prompt adds
+## the launch warning while a patrol would see the launch. A raft's launch prompt adds its state
 ## (inventory-hud "The raft's prompt shows its state", island-stop): "Balsa 48/100", its fittings,
 ## and a warning line below half its maximum; a raft job's prompt is a build site's.
 
@@ -133,11 +136,12 @@ static func place(anchor: Vector2, box: Vector2, rise: float, blockers: Array[Re
 
 
 ## What `site` still needs as this peer has it, one line per missing input or tag in the recipe's
-## order ("Madera de la costa x4", "Yesca x1"), the first headed "Falta:"; none once all is in.
+## order ("Madera de la costa x4", "Yesca x1"), the first headed "Falta:"; none once all is in. A
+## staged site names what the stage being worked still needs (island-pressure).
 static func site_lines(site: BuildSite, words: HudText, locale: String) -> PackedStringArray:
 	var shown: PackedStringArray = []
 	var count_format: String = words.line(&"count", locale)
-	var items := site.missing_items()
+	var items := site.stage_missing_items()
 	for id: StringName in items:
 		shown.append(count_format % [HudText.item_name(id, locale), items[id]])
 	var tags := site.missing_tags()
@@ -145,6 +149,53 @@ static func site_lines(site: BuildSite, words: HudText, locale: String) -> Packe
 		shown.append(count_format % [words.tag_name(tag as DataEnums.ItemTag, locale), tags[tag]])
 	if not shown.is_empty():
 		shown[0] = "%s %s" % [words.line(&"missing", locale), shown[0]]
+	return shown
+
+
+## A staged site's stage line as this peer has it: "Etapa 2/4: Armar el piso"; "" without stages.
+static func stage_line(site: BuildSite, words: HudText, locale: String) -> String:
+	if site.stage_count() == 0:
+		return ""
+	var index: int = site.stage_index()
+	return words.line(&"stage", locale) % [index + 1, site.stage_count(), site.recipe.stages[index].get_display_name(locale)]
+
+
+## The lines a build site's prompt adds for `player` (the local one), top first: the stage line of a
+## staged site, "Sin fuerzas: come algo." while the build costs energy the player has none of, then
+## what is missing or, once all of it is in, the progress line (the stage's own on a staged site).
+## `bar` gets the progress the bar shows, or stays below 0 with no bar.
+static func build_lines(site: BuildSite, player: PlayerBody, words: HudText, locale: String, bar: Array[float]) -> PackedStringArray:
+	var shown: PackedStringArray = []
+	var stage: String = stage_line(site, words, locale)
+	if not stage.is_empty():
+		shown.append(stage)
+	if site.needs_strength(player):
+		shown.append(words.line(&"no_strength", locale))
+	var needs := site_lines(site, words, locale)
+	if needs.is_empty():
+		var value: float = site.stage_progress()
+		bar[0] = value
+		needs.append(words.line(&"percent", locale) % roundi(value * 100.0))
+	shown.append_array(needs)
+	return shown
+
+
+## The launch warning (inventory-hud "Launch warning") while a launch of `raft`'s route from where
+## `player` stands would be seen: by day the two day lines, in a searchlight phase the night line;
+## none when no boat would see it or the route is not seen at launch. It never refuses the launch.
+static func launch_lines(raft: Raft, player: PlayerBody, run_session: CoopSession, words: HudText, locale: String) -> PackedStringArray:
+	var shown: PackedStringArray = []
+	var route := GameState.content.get_entry(&"routes", raft.recipe_id) as RouteData
+	if route == null or not route.seen_at_launch or player == null or run_session == null:
+		return shown
+	var boat: Creature = LaunchSight.seen_in(run_session, player.global_position)
+	if boat == null:
+		return shown
+	if boat.data.patrol.searchlight_phases.has(run_session.climate.phase):
+		shown.append(words.line(&"launch_night", locale))
+	else:
+		shown.append(words.line(&"launch_day", locale))
+		shown.append(words.line(&"launch_day_hint", locale))
 	return shown
 
 
@@ -250,14 +301,13 @@ func tick(delta: float) -> void:
 	_bar_value = NO_BAR
 	var site := target.get_parent() as BuildSite
 	if site != null and site.recipe != null:
-		var needs := site_lines(site, text, _locale())
-		if needs.is_empty():
-			_bar_value = site.progress()
-			needs.append(text.line(&"percent", _locale()) % roundi(_bar_value * 100.0))
-		shown.append_array(needs)
+		var bar: Array[float] = [NO_BAR]
+		shown.append_array(build_lines(site, body, text, _locale(), bar))
+		_bar_value = bar[0]
 	var raft := target.get_parent() as Raft
 	if raft != null and target == raft.interactable:
 		shown.append_array(raft_lines(raft, text, _locale()))
+		shown.append_array(launch_lines(raft, body, session, text, _locale()))
 	_show(shown)
 
 

@@ -17,6 +17,7 @@ heat_fall_per_s = 0.75
 sunstroke_at = 100.0
 sunstroke_ends_below = 60.0
 sunstroke_speed_factor = 0.6
+sea_heat_cap = 59.0
 meal_energy = 10.0
 sleep_energy = 50.0
 morale_alone_night_per_s = 0.08333333333333333

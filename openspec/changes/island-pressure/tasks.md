@@ -7,12 +7,12 @@ Written for the recommended answers to Q1–Q3 (design.md "Open decisions for th
 
 ## 0. Owner answers and groundwork
 
-- [ ] 0.1 Record the owner's answers to Q1–Q3 in design.md and proposal.md. If any answer is not (a), update the specs and these tasks first. Verify that `openspec validate island-pressure --strict` passes.
+- [x] 0.1 Record the owner's answers to Q1–Q3 in design.md and proposal.md. If any answer is not (a), update the specs and these tasks first. Verify that `openspec validate island-pressure --strict` passes.
 - [ ] 0.2 Rebase onto main. Sweep the tests that start a route (`start_for`, `request_route`, a raft launch) or work a raft site, and list in design.md which ones launch by day on an island with a spawned patrol boat or work the raft by standing. Verify that the list names every file `grep` finds, and that GUT passes on the rebased branch before any change.
 
 ## 1. Stages as data
 
-- [ ] 1.1 Add `game/scripts/data/build_stage_data.gd` (`BuildStageData`: `name_es`, `name_en`, `inputs`, `time_s`, typed) and three fields on `RecipeData`: `stages`, `work_energy_per_s` and `work_thirst_per_s`, all defaulting to off.
+- [x] 1.1 Add `game/scripts/data/build_stage_data.gd` (`BuildStageData`: `name_es`, `name_en`, `inputs`, `time_s`, typed) and three fields on `RecipeData`: `stages`, `work_energy_per_s` and `work_thirst_per_s`, all defaulting to off.
   Teach the content check that a staged recipe needs:
   - stage inputs summing to its inputs;
   - no tag inputs;
@@ -20,7 +20,7 @@ Written for the recommended answers to Q1–Q3 (design.md "Open decisions for th
   - names in both languages.
 
   Verify with `game/tests/unit/test_build_stages_data.gd`: a valid staged recipe passes; mismatched inputs, mismatched times, a zero-time stage and a staged recipe with tags each fail.
-- [ ] 1.2 Give `game/resources/recipes/raft.tres` the four stages of escape-routes "Raft stages" ("Amarrar las cámaras", "Armar el piso", "Amarrar la baranda", "Apretar los nudos"; English "Lash the inner tubes", "Build the deck", "Lash the rail", "Tighten the knots"), `time_s` 120, `work_energy_per_s` 1 and `work_thirst_per_s` 0.25. Verify that the scenario "The raft's stages from data" passes and that the content check of the whole catalog reports no errors.
+- [x] 1.2 Give `game/resources/recipes/raft.tres` the four stages of escape-routes "Raft stages" ("Amarrar las cámaras", "Armar el piso", "Amarrar la baranda", "Apretar los nudos"; English "Lash the tubes", "Build the deck", "Lash the rail", "Tighten the knots"), `time_s` 120, `work_energy_per_s` 1 and `work_thirst_per_s` 0.25. Verify that the scenario "The raft's stages from data" passes and that the content check of the whole catalog reports no errors.
 
 ## 2. Staged, held and paid work (host and clients)
 
@@ -63,7 +63,7 @@ Written for the recommended answers to Q1–Q3 (design.md "Open decisions for th
 
 ## 4. Heat at sea and the last stand
 
-- [ ] 4.1 Add `sea_heat_cap` (59) to `SurvivalTuning` and `survival_tuning.tres`, `at_sea` to `MeterContext`, `PlayerBody` and `SurvivalMeters`, and the cap in `SurvivalRules.next_heat`. Set the flag in `Crossing._bind_body` (one line beside `swim_energy_factor`) and clear it in `island_arrival.gd`.
+- [ ] 4.1 Add `sea_heat_cap` (59) to `SurvivalTuning` and `survival_tuning.tres`, `at_sea` to `MeterContext` and `SurvivalMeters`, and the cap in `SurvivalRules.next_heat`. `PlayerBody._meter_context` sets `at_sea` from the session's departures (design D6).
   Verify with 1-player, offline GUT tests of survival-meters "Solo midday at sea", "Boarding sunstruck" and "Back on land", plus a real 1-player crossing at 11:00 where the rider never gets sunstroke.
 - [ ] 4.2 Set `solo_last_stand_s` to 12 and make `_on_health_empty` use no base at sea. Update the tests of these scenarios:
   - survival-meters "Health and downed state" ("Solo", "Last one alive");

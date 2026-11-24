@@ -64,6 +64,13 @@ enum Availability {
 @export var skill_xp: int = 0
 ## Terrains where a STRUCTURE or VESSEL may be placed; empty means any land.
 @export var placement_terrain: Array[DataEnums.Terrain] = []
+## A build site's stages, in order (crafting-inventory "Build stages"): empty means not staged. A
+## staged site is worked by holding interact, and its work stops at a stage whose inputs are missing.
+@export var stages: Array[BuildStageData] = []
+## Energy each worker pays per second of work on the build site (crafting-inventory "Work costs").
+@export var work_energy_per_s: float = 0.0
+## Thirst each worker pays per second of work on the build site, on top of the normal drain.
+@export var work_thirst_per_s: float = 0.0
 
 @export_group("Output")
 ## ITEM, STRUCTURE, VESSEL, VESSEL_UPGRADE or VESSEL_REPAIR.
@@ -96,6 +103,16 @@ enum Availability {
 @export var availability: Availability = Availability.KNOWN
 ## NPC id who teaches or crafts it.
 @export var npc_id: StringName = &""
+
+
+## True for a build-site recipe that lists stages.
+func is_staged() -> bool:
+	return not stages.is_empty()
+
+
+## True when working its build site costs energy or thirst.
+func has_work_cost() -> bool:
+	return work_energy_per_s > 0.0 or work_thirst_per_s > 0.0
 
 
 func get_reference_fields() -> Dictionary[StringName, StringName]:

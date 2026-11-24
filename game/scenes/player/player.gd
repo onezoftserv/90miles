@@ -243,7 +243,15 @@ func _meter_context() -> MeterContext:
 	context.teammate_nearby = _has_living_teammate(radius_px)
 	context.near_fire = _near_lit_fire(radius_px)
 	context.crafting = crafter.is_crafting()
+	context.at_sea = _departed()
 	return context
+
+
+## This player left the island by a route and rides its crossing (the session's departures, the rule
+## UsePlan refuses item use at sea by).
+func _departed() -> bool:
+	var session := CoopSession.of(self)
+	return session != null and session.has_left(session.peer_of(self))
 
 
 ## Another player who is not dead (downed counts) and not waiting out of play, within `within_px`.

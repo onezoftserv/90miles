@@ -59,6 +59,9 @@ enum DumpTrigger {
 @export var reveal_radius_tiles: int = 8
 ## Effects applied when the route starts.
 @export var on_start_effects: Array[EffectData] = []
+## A launch the island's patrol can see (guardacostas-stealth "Launch in view"): by day always, at
+## night in a searchlight's cone. A seen launch does not start and is a spot. False for a swim.
+@export var seen_at_launch: bool = false
 
 @export_group("Vessel")
 ## Vessel used in the crossing.

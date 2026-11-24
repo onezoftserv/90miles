@@ -31,12 +31,12 @@ A build site's prompt SHALL add lines from the site's state as this peer has it:
 ## ADDED Requirements
 
 ### Requirement: Launch warning
-While a launch from a built vessel would be seen by a patrol (guardacostas-stealth "Launch in view"), its launch prompt SHALL add a warning line from the HUD text file: by day "De día te ve la lancha. Espera la noche o la turbonada.", at night "Te 'tá alumbrando el reflector." Each peer works it out from the phase, the weather and the boats' synced state. The warning never refuses: holding still asks the host, which decides. Solo the same.
+While a launch from a built vessel would be seen by a patrol (guardacostas-stealth "Launch in view"), its launch prompt SHALL add warning lines from the HUD text file, each within the prompt's 30-glyph line: by day "De día te ve la lancha." and "Sal de noche o con turbonada.", at night "La luz te 'tá alumbrando." Each peer works it out from the phase, the weather and the boats' synced state. The warning never refuses: holding still asks the host, which decides. Solo the same.
 
 #### Scenario: Solo by day
 - **GIVEN** a solo player beside a built raft on the sandbar at 14:00 in calm weather
 - **WHEN** the HUD is drawn
-- **THEN** the prompt reads "[E] Zarpar en la balsa" and its lines include "De día te ve la lancha. Espera la noche o la turbonada."
+- **THEN** the prompt reads "[E] Zarpar en la balsa" and its lines include "De día te ve la lancha." and "Sal de noche o con turbonada."
 
 #### Scenario: Solo at night, out of the light
 - **GIVEN** a solo player beside a built raft on the sandbar at 22:00, no searchlight on them

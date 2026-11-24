@@ -27,7 +27,10 @@ const REFUSALS: Array[StringName] = [&"empty", &"no_use", &"down", &"at_sea", &"
 ## a change over time ("%s en %d s": the change, the seconds), a delay ("%s a los %d s"), what is
 ## useful of a gain ("%s (+%d útil)"), an item given or spent ("%s" its name), a route started
 ## ("%s" its name), a noise and smoke (guardacostas-stealth's NOISE and SMOKE).
-const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point", &"close_note", &"watching", &"watching_dropped", &"watch_keys", &"cured", &"effect_cure", &"effect_and", &"effect_revive", &"effect_over", &"effect_delay", &"effect_useful", &"effect_give", &"effect_take", &"effect_route", &"effect_noise", &"effect_smoke"]
+## island-pressure adds a staged build's stage line ("Etapa %d/%d: %s": the stage, the count, its
+## name), a build that costs energy worked with none, and the launch warnings: the day's two lines and
+## the night's.
+const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point", &"close_note", &"watching", &"watching_dropped", &"watch_keys", &"cured", &"effect_cure", &"effect_and", &"effect_revive", &"effect_over", &"effect_delay", &"effect_useful", &"effect_give", &"effect_take", &"effect_route", &"effect_noise", &"effect_smoke", &"stage", &"no_strength", &"launch_day", &"launch_day_hint", &"launch_night"]
 
 ## Verb per ItemUseData.UseAction ("Beber").
 @export var use_verbs: Dictionary[ItemUseData.UseAction, PackedStringArray] = {}

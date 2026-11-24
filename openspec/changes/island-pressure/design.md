@@ -149,14 +149,14 @@ Rejected:
 - **A refused launch with no consequence:** the review asks for a spot, and G7 wants the squad met.
 
 ### D6. Heat at sea is capped
-- **The flag.** `PlayerBody.at_sea: bool` is set in `Crossing._bind_body`, beside `swim_energy_factor = 0.0` (one line), and cleared in `island_arrival.gd`, where the terrain and swim factor are reset. The body forwards it to `MeterContext.at_sea` and to `SurvivalMeters.at_sea`.
+- **The flag.** `MeterContext.at_sea` is true for a player who left the island by a route (`CoopSession.has_left`, the rule `UsePlan` already refuses item use at sea by). `PlayerBody._meter_context` sets it, and `SurvivalMeters` keeps the last tick's value for the last stand (D7). Built when this change was implemented, in place of a `PlayerBody.at_sea` field set in `Crossing._bind_body` and cleared in `island_arrival.gd`: the departures already reset with each island, so no flag can stick on land after a restart or a rematch, and `crossing.gd` (which the crossing-gameplay work owns) is untouched.
 - **The cap.** `SurvivalRules.next_heat`: when `at_sea`, a rise stops at `tuning.sea_heat_cap`, and heat above the cap falls at `heat_fall_per_s` down to it.
 - **Why 59.** It is below where sunstroke ends (60), so nobody is sunstruck at sea, and a rider who boards sunstruck clears it within about 54 s. A cap of 74 would keep the Calor label orange, but a sunstruck boarder would then stay blurred the whole crossing, which is G9 again.
 - **The number** lives in `survival_tuning.tres` with the other meter numbers, so `SurvivalRules` stays pure over context and tuning.
 - **When the toldo ships** (island-stop PR 2), it makes the deck shade, the cap goes, and island-stop's scenario "The same crossing without the toldo" is reread against whatever rule then holds. This is noted in the shared notes folder for that session.
 
 ### D7. A 12 s last stand on land
-- `solo_last_stand_s = 12`. `SurvivalMeters._on_health_empty` uses `(0 if at_sea else solo_last_stand_s) + downed_bonus_s`.
+- `solo_last_stand_s = 12`. `SurvivalMeters._on_health_empty` uses `(0 if at_sea else solo_last_stand_s) + downed_bonus_s`, with `at_sea` from the last tick's context (D6).
 - **Same for co-op's last one alive.** `solo` in code already covers them, and GAME_DESIGN treats them alike.
 - **None at sea.** Items are refused at sea (crossing-gameplay Q5), so a sea last stand could only delay a death. Keeping it out also keeps the drowning and shark scenarios exact.
 - **Why 12.** Drinking takes 2 s (coconut `time_s`), plus finding the slot.
