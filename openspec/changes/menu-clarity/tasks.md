@@ -4,10 +4,10 @@ Group 1 builds first, then run-menu, then groups 2 to 5. Every test with players
 
 ## 1. Fonts (Q16)
 
-- [ ] 1.1 Test first (`test_theme.gd`, `test_menu_windows.gd`): buttons, check boxes, dropdowns and popups, text fields, error and credits labels are Press Start 2P at 8; `HeadingLabel`, `PanelHeading` and `TitleLabel` stay Pixelify at 16 and 32; the join field draws "192.168.1.70" in Press Start 2P; the "Word gaps" check measures the summary's heading only.
-- [ ] 1.2 `game_theme.tres` font lines; the title's buttons at least 20 px tall; the host-lost `Message` as a body label.
-- [ ] 1.3 Captures at 640×360 of the title, settings, join (failed), lobby, credits and summary; fix any overflow.
-- [ ] 1.4 `docs/ASSETS.md` (fonts line) and `TASKS.md`: Q16 settled (owner, 2026-11-23); import, smoke run and GUT pass.
+- [x] 1.1 Test first (`test_theme.gd`, `test_menu_windows.gd`): buttons, check boxes, dropdowns and popups, text fields, error and credits labels are Press Start 2P at 8; `HeadingLabel`, `PanelHeading` and `TitleLabel` stay Pixelify at 16 and 32; the join field draws "192.168.1.70" in Press Start 2P; the "Word gaps" check measures the summary's heading only.
+- [x] 1.2 `game_theme.tres` font lines; the title's buttons at least 20 px tall; the host-lost `Message` as a body label.
+- [x] 1.3 Captures at 640×360 of the title, settings, join (failed), lobby, credits and summary; fix any overflow.
+- [x] 1.4 `docs/ASSETS.md` (fonts line) and `TASKS.md`: Q16 settled (owner, 2026-11-23); import, smoke run and GUT pass.
 
 ## 2. Win and death
 

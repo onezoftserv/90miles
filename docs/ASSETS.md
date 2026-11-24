@@ -113,7 +113,7 @@ python -I -m unittest discover -s tools -p 'test_fetch_assets.py'
 | Items: rope, jug, coconut, knife, tarp, cup, driftwood, dry grass, inner tube, binoculars, nails, mirror, aloe, lighter | Kyrise and DawnLike icons, hand-made for the rest | CC BY 4.0 / own | `assets/art/items/` | manual download, copied when used |
 | Palm, lean-to, workbench, fire, rain catcher, sign post, raft | Hand-made, kitbashed from Scallywag fronds and logs and Zelda-like props | CC0 / own | `assets/art/structures/` | — |
 | UI: windows, panels, buttons, slot wells, meter ramps, digits | Own work, built pixel by pixel from the master palette by `tools/art/ui.py` (`tools/art/ui_kit.json`) into `assets/art/ui/` | Own work | `tools/art/` | recipe |
-| Pixel font (Spanish accents and ñ required) | Google Fonts "Press Start 2P" (Latin) or "Pixelify Sans" | OFL | `assets/fonts/` | auto |
+| Pixel fonts (Spanish accents and ñ required) | Google Fonts "Press Start 2P" at 8 px for the HUD, buttons, fields and every body line; "Pixelify Sans" (as `menu_font.tres`, wider word spaces) only for the logo at 32 px and headings and window tabs at 16 px (Q16, owner, 2026-11-23) | OFL | `assets/fonts/` | auto |
 | Sea ambience, waves, wind, rain | freesound.org (CC0 filter) / Kenney "Audio" packs | CC0 | `assets/audio/ambience/` | manual |
 | UI and impact SFX | Kenney "Interface Sounds", "Impact Sounds" | CC0 | `assets/audio/sfx/` | auto |
 
