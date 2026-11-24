@@ -150,6 +150,16 @@ The makers' group waits for names and wording from the owner (owner, 2026-11-23)
 - **`hud_text.tres` is shared** with hud-clarity, which may add lines. → New keys go in alphabetical order inside `prompt_labels`, so a merge conflict stays a one-line hunk.
 - **The heading by local fate** (owner, 2026-11-23: each peer reads its own fate) reads oddly for a removed client who rejoins after the run (none can today). → "Fin del viaje" is the fallback.
 
+## Build notes (2026-11-23)
+
+- **"Libre" seats** keep the panel's ink colour rather than a dimmed one, so every seat still reads at 4.5:1 on paper ("Readable HUD and menu text"); the word itself marks the seat as free.
+- **`LobbyScreen.rows()`** still lists only the filled seats, so the rematch tests and `coop_rematch_run.gd` are unchanged; `seats()` lists all four.
+- **The rematch flag lives on the shell** (`_rematch_lobby`), because a client's lobby is rebuilt when the host's answer arrives. It is cleared when the run starts and on the way home.
+- **The gate's clock is the shell's**, so tests that press a summary button move `shown_at_s` back by `ACCEPT_DELAY_S` ("as if 0.8 s had passed"), and none waits on the wall clock.
+- **The split-party heading** is tested on both peers' entries with `SummaryScreen.heading_for` (`test_survivor_lines.gd`), not in the ShellHarness (task 2.5). A party in which one player arrives ends only on the chain's last island, after a crossing, which the harness cannot stage cheaply. Each peer builds the same entries from synced state, as the existing co-op summary tests show.
+- **The "Volumen" row** is a "-" and "+" stepper (buttons from the kit, so keyboard and gamepad reach it without a new slider style), on sound-pass's `GameSettings.volume` (0 to 10) and the shell's `apply_volume()`, which sound-pass merged first (#110).
+- **The vessel key** is read from the crossing's route in `InteractPrompt.vessel_key`; `rescue_point.gd` is untouched.
+
 ## Migration Plan
 
 No stored data changes. The change archives after hud-window-kit, damage-feedback and the archive PR #67. Their requirements are the base of this change's MODIFIED blocks ("Shared theme", "Readable HUD and menu text", "Menu windows" and "Settings").

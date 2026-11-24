@@ -8,16 +8,19 @@ extends RefCounted
 
 const CONTENT_TYPE: StringName = &"dialogue"
 const CONTENT_ID: StringName = &"death_one_liners"
+## The survivor one-liners (endings-progression "Survivor one-liners"): the same picking, one state
+## per route id, `other` for a route with no lines of its own (menu-clarity design D2).
+const SURVIVOR_ID: StringName = &"survivor_one_liners"
 
 ## State (cause id) to its lines in file order. The values are Array[DialogueLineData].
 var _by_cause: Dictionary = {}
 
 
-## The lines of the death-lines content in `catalog`, or none if it is missing.
-static func from_catalog(catalog: ContentCatalog) -> DeathLines:
+## The lines of the line set `id` in `catalog` (the death lines unless told), or none if it is missing.
+static func from_catalog(catalog: ContentCatalog, id: StringName = CONTENT_ID) -> DeathLines:
 	if catalog == null:
 		return DeathLines.new()
-	return from_dialogue(catalog.get_entry(CONTENT_TYPE, CONTENT_ID) as DialogueData)
+	return from_dialogue(catalog.get_entry(CONTENT_TYPE, id) as DialogueData)
 
 
 ## Every state of `data` keyed by its cause, with the lines that are not null.

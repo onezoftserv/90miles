@@ -8,6 +8,8 @@ signal back_requested
 signal display_changed
 ## "Reducir destellos" changed: the shell hands it to every hit and change cue.
 signal flashes_changed
+## "Volumen" changed: the shell applies the level at once (sound-pass "Volume level").
+signal volume_changed
 
 const SCALE_LABELS: Array[String] = ["Automática", "1×", "2×", "3×", "4×"]
 
@@ -19,6 +21,9 @@ var settings: GameSettings = GameSettings.new()
 @onready var scale_picker: OptionButton = %Scale
 @onready var filter_picker: OptionButton = %PixelFilter
 @onready var reduce_flashes_box: CheckBox = %ReduceFlashes
+@onready var volume_down: Button = %VolumeDown
+@onready var volume_up: Button = %VolumeUp
+@onready var volume_value: Label = %VolumeValue
 @onready var back_button: Button = %Back
 
 
@@ -34,6 +39,9 @@ func _ready() -> void:
 	scale_picker.item_selected.connect(_on_scale)
 	filter_picker.item_selected.connect(_on_filter)
 	reduce_flashes_box.toggled.connect(_on_reduce_flashes)
+	volume_down.pressed.connect(step_volume.bind(-1))
+	volume_up.pressed.connect(step_volume.bind(1))
+	_show_volume()
 	back_button.pressed.connect(_back)
 	name_field.grab_focus()
 
@@ -46,6 +54,7 @@ func bind(source: GameSettings) -> void:
 	scale_picker.select(settings.ui_scale)
 	filter_picker.select(settings.pixel_filter)
 	reduce_flashes_box.set_pressed_no_signal(settings.reduce_flashes)
+	_show_volume()
 
 
 ## Inside a run the session already sent the name, so the run menu shows every setting but it
@@ -91,6 +100,26 @@ func _on_filter(index: int) -> void:
 	settings.pixel_filter = index as PixelFilter.Mode
 	settings.save()
 	display_changed.emit()
+
+
+## "Volumen" one step (10 %) down (-1) or up (1), from 0 to 100 %: saved and applied at once
+## (menu-clarity group 6, sound-pass owner decision Q1 A).
+func step_volume(direction: int) -> void:
+	var before: int = settings.volume
+	settings.volume = settings.volume + direction
+	_show_volume()
+	if settings.volume == before:
+		return
+	settings.save()
+	volume_changed.emit()
+
+
+func _show_volume() -> void:
+	if volume_value == null:
+		return
+	volume_value.text = "%d %%" % (settings.volume * 100 / GameSettings.MAX_VOLUME)
+	volume_down.disabled = settings.volume <= 0
+	volume_up.disabled = settings.volume >= GameSettings.MAX_VOLUME
 
 
 func _on_reduce_flashes(on: bool) -> void:

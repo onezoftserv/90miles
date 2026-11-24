@@ -12,10 +12,17 @@ extends SceneTree
 ## project). Each check prints "RUNMENU PASS|FAIL <what>", and a failed check makes the run quit
 ## non-zero; the launcher also reads both logs for engine errors. Compiled before the autoloads
 ## exist, so it names no project class.
+## menu-clarity tasks 4.4 adds the lobby modes:
+##   godot --headless --path game -s res://tests/manual/run_menu_run.gd -- --mode=lobby_host --port=7801
+##   godot --headless --path game -s res://tests/manual/run_menu_run.gd -- --mode=lobby_client --port=7801
+## Papo joins; both print their seat rows and check "A bordo (2/4)"; the host's "Cerrar partida"
+## asks with "Cancelar" focused, and "Cerrar" sends Papo to the host-lost screen.
 
 const SHELL_PATH: String = "res://scenes/shell/game_shell.tscn"
 const STATE_PATH: String = "user://run_menu_run_state.cfg"
 const FLOW_TITLE: int = 0
+const FLOW_LOBBY: int = 2
+const FLOW_HOST_LOST: int = 6
 const FLOW_RUN: int = 3
 const HOST_ID: int = 1
 const DEADLINE_S: float = 240.0
@@ -36,13 +43,13 @@ func _initialize() -> void:
 			port = arg.trim_prefix("--port=").to_int()
 	var settings_path: String = "user://run_menu_run_%s.cfg" % mode
 	var config := ConfigFile.new()
-	config.set_value("player", "name", "Papo" if mode == "client" else "Yuni")
+	config.set_value("player", "name", "Papo" if mode.ends_with("client") else "Yuni")
 	config.set_value("player", "name_asked", true)
 	config.set_value("display", "fullscreen", false)
 	config.set_value("display", "ui_scale", 2)
 	config.set_value("display", "pixel_filter", 0)
 	config.save(settings_path)
-	if mode == "host" and FileAccess.file_exists(STATE_PATH):
+	if mode.ends_with("host") and FileAccess.file_exists(STATE_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(STATE_PATH))
 	shell = (load(SHELL_PATH) as PackedScene).instantiate()
 	shell.set("settings_path", settings_path)
@@ -59,6 +66,10 @@ func _main() -> void:
 		await _host()
 	elif mode == "client":
 		await _client()
+	elif mode == "lobby_host":
+		await _lobby_host()
+	elif mode == "lobby_client":
+		await _lobby_client()
 	else:
 		_check("known mode", false, mode)
 	_finish()
@@ -145,6 +156,51 @@ func _client() -> void:
 	_check("not paused", not paused)
 	# The host needs a moment to mark Papo dropped before this process quits.
 	await _seconds(3.0)
+
+
+func _lobby_host() -> void:
+	shell.set("port", port)
+	shell.call("start_host")
+	var session: Node = shell.get("session")
+	if not _check("start_host opened port %d" % port, session != null and not (session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer)):
+		return
+	if not await _wait_for("Papo in the lobby", func() -> bool: return (session.get("roster") as Dictionary).size() > 1, 120.0):
+		return
+	await _seconds(0.5)
+	var lobby: Node = shell.get("screen")
+	print("RUNMENU host seats: %s" % [lobby.call("seats")])
+	_check("the host's heading reads A bordo (2/4)", (lobby.get("heading") as Label).text == "A bordo (2/4)")
+	_check("the host's button reads Cerrar partida", (lobby.get("leave_button") as Button).text == "Cerrar partida")
+	if not await _wait_for("Papo's seat check", func() -> bool: return _state() == "client_seated", 30.0):
+		return
+	(lobby.get("leave_button") as Button).pressed.emit()
+	var confirm: Node = lobby.get("confirm")
+	if not _check("the host is asked first", confirm != null):
+		return
+	_check("Cancelar has the focus", (confirm.get("cancel_button") as Button).has_focus())
+	(confirm.get("confirm_button") as Button).pressed.emit()
+	if not await _wait_for("the host's title", func() -> bool: return shell.get("flow") == FLOW_TITLE, 10.0):
+		return
+	_check("the host is offline", shell.multiplayer.multiplayer_peer is OfflineMultiplayerPeer)
+	await _seconds(2.0)
+
+
+func _lobby_client() -> void:
+	shell.call("_join", "127.0.0.1", port)
+	var seated := func() -> bool:
+		var lobby: Node = shell.get("screen")
+		return shell.get("flow") == FLOW_LOBBY and lobby != null and (lobby.get("heading") as Label).text == "A bordo (2/4)"
+	if not await _wait_for("the lobby reading A bordo (2/4)", seated, 120.0):
+		return
+	var lobby: Node = shell.get("screen")
+	print("RUNMENU client seats: %s" % [lobby.call("seats")])
+	_check("four seats, two of them Libre", lobby.call("seats") == ["Yuni (anfitrión)", "Papo", "Libre", "Libre"])
+	_check("Papo's button reads Salir", (lobby.get("leave_button") as Button).text == "Salir")
+	_write_state("client_seated")
+	if not await _wait_for("the host-lost screen", func() -> bool: return shell.get("flow") == FLOW_HOST_LOST, 30.0):
+		return
+	var lost: Node = shell.get("host_lost_screen")
+	_check("Volver has the focus", lost != null and (lost.get("back_button") as Button).has_focus())
 
 
 func _state() -> String:

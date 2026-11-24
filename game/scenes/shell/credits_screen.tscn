@@ -76,6 +76,13 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6
 
+[node name="More" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CreditsLabel"
+text = "▼ Más abajo"
+horizontal_alignment = 1
+
 [node name="Back" type="Button" parent="Panel/Box"]
 unique_name_in_owner = true
 layout_mode = 2

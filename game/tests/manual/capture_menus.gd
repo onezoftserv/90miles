@@ -9,7 +9,8 @@ extends Node
 ##   menu_name_prompt (a first launch), menu_title, menu_settings, menu_controls, menu_credits,
 ##   menu_join, menu_join_failed, menu_lobby_host, menu_pause_solo, menu_run_settings,
 ##   menu_run_controls, menu_run_abandon, menu_summary_death, menu_pause_coop (a host alone in a
-##   run), menu_host_lost.
+##   run), menu_host_lost; menu-clarity adds menu_title_error, menu_lobby_rematch (a staged
+##   two-player roster), menu_lobby_confirm and menu_summary_arrival (a staged raft survivor).
 ## The solo run is started through the shell; its player is killed with a thirst hit by a hook. The
 ## host-lost screen is shown by calling the shell's handler, as a client's session would.
 
@@ -65,6 +66,10 @@ func _menus() -> void:
 		title.name_prompt.give()
 		await _frames(4)
 	await _shot("menu_title")
+	if _wanted("menu_title_error") and (shell.screen as TitleScreen).has_method("show_error"):
+		(shell.screen as TitleScreen).call("show_error", "No se pudo abrir el puerto 7777.")
+		await _frames(4)
+		await _shot("menu_title_error")
 	shell.show_settings()
 	await _frames(10)
 	await _shot("menu_settings")
@@ -97,6 +102,14 @@ func _menus() -> void:
 			lobby.addresses.text = "Tu IP: %s" % EXAMPLE_ADDRESS
 		await _frames(4)
 		await _shot("menu_lobby_host")
+		if lobby.has_method("ask_close"):
+			lobby.set("rematch", true)
+			lobby.show_roster({1: "Yuni", 5: "Papo"} as Dictionary[int, String])
+			await _frames(4)
+			await _shot("menu_lobby_rematch")
+			lobby.call("ask_close")
+			await _frames(4)
+			await _shot("menu_lobby_confirm")
 	shell.back_to_title()
 	await _frames(6)
 
@@ -135,6 +148,17 @@ func _run() -> void:
 		await _frames(1)
 	await _frames(10)
 	await _shot("menu_summary_death")
+	var summary := shell.screen as SummaryScreen
+	if summary != null and _wanted("menu_summary_arrival"):
+		var made := RunSummary.new()
+		made.islands_reached = 2
+		made.days = 3
+		made.length_s = 1260.0
+		var arrivals := DeathLines.from_catalog(GameState.content, &"survivor_one_liners")
+		made.add_survivor("Yuni", 1, &"raft", 0, arrivals, GameState.content)
+		summary.show_summary(made, "Otra vez", 1)
+		await _frames(6)
+		await _shot("menu_summary_arrival")
 	await _host_alone()
 
 
