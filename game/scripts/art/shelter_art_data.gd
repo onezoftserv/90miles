@@ -9,6 +9,9 @@ const STANDARD_PATH: String = "res://assets/art/structures/shelter_art.tres"
 
 ## Shelter scene by island layout id.
 @export var shelters: Dictionary[StringName, PackedScene] = {}
+## The layouts whose shaded cells take the hut shade, darkest under the roof (art-prop-polish D5).
+## The coast cay's garita keeps the post's own corner-set shade (D7), so it is not here.
+@export var hut_shade: Dictionary[StringName, bool] = {}
 
 
 static func standard() -> ShelterArtData:

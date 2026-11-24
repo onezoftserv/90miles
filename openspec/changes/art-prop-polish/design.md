@@ -367,3 +367,37 @@ As the task says, nothing was redrawn. The question went to the coordinating ses
   - `docs/art-pass/prop-polish/hidden_cay_scenery_x6.png`: the drag mark, the post and the rope end.
   - `docs/art-pass/prop-polish/hidden_cay_solo.png`: the solo player's view.
 
+**Group 7, the garita and the sign looks (D7, owner Q12 (a)).** Built after coast-cay-reshape merged (#101): this branch merges main at a8239b4.
+- **Tests first.** They failed for the right reasons: no shelter for the cay, no `hut_shade`, no `sign_texture`.
+  - `test_lean_to.gd`: `test_the_coast_cay_shaded_cells_get_no_lean_to` became `test_the_coast_cays_post_gets_the_garita_on_its_back_edge`.
+    - It is centred on the post, 80x48, on the back edge, with its roof over the row north of the post.
+    - Nothing in it collides, occludes or navigates.
+    - A still solo player set on each post cell stays there after a step, so every post cell is as walkable as without it.
+    - The post keeps today's shade.
+  - `test_structure_art.gd`: a sign with no look, or an unknown one, draws `sign_post.png`; a look draws its texture, on the sign node too.
+  - **The 1-player test** (`test_coast_cay_solo.gd`, one shell):
+    - the player on the post's back row, and the nails, the mirror and the radio, draw in front of the garita;
+    - one tile north of the post, its roof draws over the player;
+    - the four signs show their looks, and E opens and closes each one's note with its line.
+    - The two wall slogans are read from the side that makes them the candidate. From the south, the nails and the mirror are nearer.
+- **The data.**
+  - `IslandSignData.look` and `IslandSign.look`, set by the island from the layout.
+  - `StructureArtData.sign_looks` and `sign_texture(look)`, which falls back to the board.
+  - `StructureLook` draws a sign's look.
+  - `shelter_art.tres` names `garita.tscn` for `coast_cay`. The coast cay's four signs take `radio`, `slogan`, `slogan` and `sticks`.
+- **Hut shade, now its own flag.** `ShelterArtData.hut_shade` (the sandbar and the hidden cay) now decides which layouts take group 5's hut shade, not the presence of a shelter. D7 keeps the post's own shade, and the garita made the coast cay a sheltered layout.
+- **The art** (hand sources in `tools/art/fixes/structures/`, rimmed in the dark tones by `structures.py`):
+  - `garita.png`, 80x48: an open-front concrete booth under a rusted, corrugated tin roof that sags at the front, on two pipe posts. The back wall is low and broken, with a dark window hole and a faded red band with no letters. The side walls are broken lower on the right, over a cracked floor. There is no radio on a sill: sign r is the radio.
+  - `sign_radio.png`: a dead radio on a crate.
+  - `sign_sticks.png`: two crossed sticks in a sand mound.
+  - `sign_slogan.png`: a concrete fragment with the red band.
+  - `garita.tscn` gets two small post shadows, drawn behind it.
+- **Departure.** The captures come from `art_pass_run.gd --only=post`, a step added here.
+- **Checks.**
+  - `structures.py` built only the four new files.
+  - The windowed solo run `--only=post` passed 15 of 15, including the player on the back row drawn in front of the garita.
+- **Images:**
+  - `docs/art-pass/prop-polish/post_before_after_x4.png`: `before/cay_day_observation_post_crop4.png` and the same world rect now, (927, 560), 224x160, from the solo view. The rock round it is coast-cay-reshape's.
+  - `docs/art-pass/prop-polish/cay_post_x3.png`: the solo view, to set beside `before/cay_day_observation_post_x3.png` and `before/cay_day_rocky_point.png`.
+  - `docs/art-pass/prop-polish/garita_back_row_x6.png`: the player on the back row, in front of the garita.
+

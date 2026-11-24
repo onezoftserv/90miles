@@ -30,6 +30,9 @@ const STANDARD_PATH: String = "res://assets/art/structures/structure_art.tres"
 @export var board: SpriteFrames
 ## One-frame structures by kind: the workbench, the stake marker and the sign post.
 @export var stills: Dictionary[StringName, Texture2D] = {}
+## A sign's look by IslandSignData.look (art-prop-polish D7): the radio, the crossed sticks, the slogan
+## fragment. A sign with no look, or one this does not name, draws the sign board of `stills`.
+@export var sign_looks: Dictionary[StringName, Texture2D] = {}
 ## A build site's stages (SITE_MARKED, SITE_MATERIALS, SITE_HALF_BUILT) by recipe id; any other
 ## site is the stake marker.
 @export var site_frames: Dictionary[StringName, SpriteFrames] = {}
@@ -58,6 +61,12 @@ func palm_texture(look: int) -> Texture2D:
 ## The one-frame sprite of `kind`, or null when the kind draws nothing of its own.
 func still_for(kind: StringName) -> Texture2D:
 	return stills.get(kind, null) as Texture2D
+
+
+## The texture of a sign with `look`: its look, or the sign board.
+func sign_texture(look: StringName) -> Texture2D:
+	var texture: Texture2D = sign_looks.get(look, null) as Texture2D
+	return texture if texture != null else still_for(StructureArt.KIND_SIGN)
 
 
 ## The stages of the site of `recipe_id`, or null for a stake marker.

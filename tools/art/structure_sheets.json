@@ -1024,6 +1024,62 @@
           }
         ]
       ]
+    },
+    {
+      "out": "structures/garita.png",
+      "frame": [
+        80,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "garita.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/sign_radio.png",
+      "frame": [
+        16,
+        16
+      ],
+      "frames": [
+        [
+          {
+            "hand": "sign_radio.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/sign_sticks.png",
+      "frame": [
+        16,
+        16
+      ],
+      "frames": [
+        [
+          {
+            "hand": "sign_sticks.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/sign_slogan.png",
+      "frame": [
+        16,
+        16
+      ],
+      "frames": [
+        [
+          {
+            "hand": "sign_slogan.png"
+          }
+        ]
+      ]
     }
   ]
 }

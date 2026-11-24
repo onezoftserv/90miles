@@ -9,6 +9,7 @@ extends GutTest
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 var settings_path: String = UserTmp.path("test_lean_to_settings.cfg")
 const LEAN_TO_PATH: String = "res://scenes/art/lean_to.tscn"
+const GARITA_PATH: String = "res://scenes/art/garita.tscn"
 ## The node SandbarIsland places its shelter as.
 const SHELTER: NodePath = ^"Shelter"
 const TILE: float = 16.0
@@ -137,17 +138,45 @@ func test_a_solo_player_one_tile_north_of_the_hut_sorts_behind_the_roof() -> voi
 	assert_true(lean_to.get_rect().has_point(body.global_position - lean_to.global_position), "and covers where they stand")
 
 
-func test_the_coast_cay_shaded_cells_get_no_lean_to() -> void:
+## art-prop-polish D7 (owner Q12 (a)): the coast cay's watch post gets a ruined garita, standing on
+## the post block's back edge as the lean-to stands on the hut's, centred on the block, its roof over
+## the row north of it. It is drawing only: nothing in it collides, occludes or navigates, so every
+## post cell is as walkable as without it. The post keeps today's corner-set shade.
+func test_the_coast_cays_post_gets_the_garita_on_its_back_edge() -> void:
 	var shell := _shell()
 	shell.travel.travel(COAST)
 	await wait_process_frames(2)
 	var island := shell.island
 	assert_eq(island.layout.id, COAST)
-	assert_false(island.built.hut_cells.is_empty(), "the cay has shaded cells (its watch post)")
-	assert_null(ShelterArtData.standard().shelter_for(COAST), "no shelter named for the cay")
-	assert_null(_lean_to(island), "no shelter placed")
+	var post := island.built.hut_cells
+	assert_false(post.is_empty(), "the cay has its watch post")
+	assert_not_null(ShelterArtData.standard().shelter_for(COAST), "shelter_art.tres names the garita for the cay")
+	assert_false(ShelterArtData.standard().hut_shade.get(COAST, false), "the post keeps today's shade")
+	var garita := _lean_to(island)
+	assert_not_null(garita, "the cay's shelter is placed as %s" % SHELTER)
+	if garita == null:
+		return
+	assert_eq(garita.scene_file_path, GARITA_PATH, "the garita")
 	for node: Node in island.find_children("*", "", true, false):
-		assert_ne(node.scene_file_path, LEAN_TO_PATH, "no lean-to anywhere on the cay")
+		assert_ne(node.scene_file_path, LEAN_TO_PATH, "no lean-to on the cay")
+	assert_true(garita.is_in_group(&"art_view"), "drawing only")
+	assert_same(garita.get_parent(), island, "it sorts with the island's palms and the session")
+	var back_edge: float = _back_row(post) * TILE
+	assert_eq(garita.position, Vector2(_hut_centre_x(post), back_edge), "origin on the post's back edge, centred on the post")
+	var rect: Rect2 = garita.get_rect()
+	assert_eq(rect.size, Vector2(80, 48), "about 80x48")
+	assert_eq(garita.position.y + rect.end.y, back_edge, "the frame stands on the back edge")
+	assert_lte(garita.position.y + rect.position.y, back_edge - TILE, "its roof rises over the row north of the post")
+	for node: Node in [garita] + garita.find_children("*", "", true, false):
+		assert_false(node is CollisionObject2D or node is LightOccluder2D or node is NavigationRegion2D or node is TileMapLayer,
+			"%s: nothing in the garita collides, occludes or navigates" % node.name)
+	# Walkable as without it: a still solo player set on each post cell stays there after a step.
+	var body := shell.session.body(CoopSession.HOST_ID)
+	for cell: Vector2i in post:
+		body.global_position = IslandLayout.cell_center(cell)
+		body.intent = body.player_input.build_intent()
+		body.advance(0.1)
+		assert_lt(body.global_position.distance_to(IslandLayout.cell_center(cell)), 0.5, "%s stays walkable" % cell)
 
 # --- art-prop-polish D5: a frond shelter, its post shadows and the hut's shade ------------------
 

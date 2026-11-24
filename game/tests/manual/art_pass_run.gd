@@ -107,6 +107,7 @@ var capture_dir: String = ""
 ## south of it, to shoot the shelter and its shade (art-prop-polish D5).
 ## --only=squall runs art-mood-pass's squall steps (task 4.6): by day, then at night beside a fire.
 ## --only=hidden travels straight to the hidden cay and shoots its scenery (art-prop-polish D6).
+## --only=post travels straight to the coast cay and shoots the garita and the sign looks (D7).
 var only: String = ""
 ## Host only: how many clients play (2: A rides, B leaves and joins; 1: one untagged client rides).
 var clients: int = 2
@@ -792,6 +793,9 @@ func _solo() -> void:
 	if only == "hidden":
 		await _hidden_only()
 		return
+	if only == "post":
+		await _post_only()
+		return
 	var day: Image = await _world_image("sandbar_day_view")
 	_check_no_magenta(day, "the sandbar by day")
 	await _check_shore_view("spawn_day")
@@ -1010,6 +1014,40 @@ func _hidden_only() -> void:
 	if _check("walked to the embers", await _walk_to(_center(embers + Vector2i(0, 2)))):
 		await _frames(10)
 		await _world_image("hidden_cay_decor")
+
+
+# --only=post (art-prop-polish D7, task 7.3): the run travels straight to the coast cay, walks onto
+# the post's back row and shoots the garita with the player in front of it, then stands 2 tiles south
+# and shoots the post with its signs.
+func _post_only() -> void:
+	session.call("travel_to", "coast_cay", {1: {"health": 100.0, "energy": 100.0}}, 100.0)
+	_hooked("travelled to the coast cay at once (CoopSession.travel_to)")
+	await _frames(30)
+	island = shell.get("island")
+	body = session.call("body", 1)
+	if not _check("on the coast cay", island != null and (island.get("layout") as Object).get("id") == &"coast_cay"):
+		return
+	_build_land()
+	_set_day("garita captures")
+	var garita: Node2D = island.get_node_or_null(^"Shelter")
+	if not _check("the coast cay has its garita", garita != null and String(garita.scene_file_path).ends_with("garita.tscn")):
+		return
+	var post: Array = (island.get("built") as Object).get("hut_cells")
+	var back: int = 1 << 30
+	var west: int = 1 << 30
+	var east: int = -1
+	var south: int = -1
+	for cell: Vector2i in post:
+		back = mini(back, cell.y)
+		south = maxi(south, cell.y)
+		west = mini(west, cell.x)
+		east = maxi(east, cell.x)
+	if _check("walked onto the post's back row", await _walk_to(_center(Vector2i(west, back)))):
+		_check("the player on the back row is drawn in front of the garita", draw_order.call("drawn_after", body, garita))
+		await _world_image("cay_post_garita")
+	if _check("walked 2 tiles south of the post", await _walk_to(_center(Vector2i((west + east) / 2, south + 2)))):
+		await _frames(10)
+		await _world_image("cay_post")
 
 
 # --only=foam: the shore views by day, then by night.

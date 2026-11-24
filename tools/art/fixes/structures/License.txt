@@ -11,3 +11,9 @@ Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
 Files: decor_post.png (art-prop-polish D6: the hidden cay's post, before the rim)
+
+Work: 90 Millas garita and sign look sources
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: garita.png, sign_radio.png, sign_sticks.png and sign_slogan.png (art-prop-polish D7, before the rim)

@@ -469,3 +469,61 @@ func test_solo_lights_a_fire_with_the_lighter_in_one_second() -> void:
 	body.crafter.advance(0.1)
 	assert_eq(get_tree().get_nodes_in_group(PlayerBody.FIRE_GROUP).size(), 1, "the fire burns after 1 s")
 	assert_eq(body.inventory.slots[0].uses_left, 19, "the lighter has 19 uses left")
+
+
+## art-prop-polish 7.1, one player offline on the coast cay: on the post's back row the player, and
+## on the post the nails, the mirror and the radio, draw in front of the garita; one tile north of the
+## post its roof draws over the player; the four signs show their looks, and reading each opens its
+## note.
+func test_solo_at_the_post_the_garita_stands_behind_and_each_sign_shows_its_look_and_reads() -> void:
+	var shell := await _on_the_cay()
+	var island := shell.island
+	var garita := island.get_node_or_null(^"Shelter") as Sprite2D
+	assert_not_null(garita, "the garita")
+	if garita == null:
+		return
+	var body := shell.session.body(1)
+	var post := island.built.hut_cells
+	var back: int = post[0].y
+	for cell: Vector2i in post:
+		back = mini(back, cell.y)
+	body.global_position = IslandLayout.cell_center(Vector2i((post[0].x + post[-1].x) / 2, back))
+	assert_true(DrawOrder.drawn_after(body, garita), "the player on the back row is in front of the garita")
+	var found: Array[StringName] = []
+	for node: Node in shell.session.get_node(^"Pickups").get_children():
+		var item := node as WorldItem
+		if item != null and post.has(Vector2i(item.global_position / 16.0)):
+			found.append(item.item_id)
+			assert_true(DrawOrder.drawn_after(item, garita), "%s on the post is in front of the garita" % item.item_id)
+	assert_true(found.has(&"nails"), "the nails on the post: %s" % [found])
+	assert_true(found.has(&"mirror"), "the mirror on the post: %s" % [found])
+	body.global_position = IslandLayout.cell_center(Vector2i((post[0].x + post[-1].x) / 2, back - 1))
+	assert_true(DrawOrder.drawn_after(garita, body), "one tile north, the roof draws over the player")
+	var data := StructureArtData.standard()
+	var looks: Dictionary[String, StringName] = {"Un radio ruso": &"radio", "Dos palos": &"sticks", "«AQUÍ NO": &"slogan", "«VIGILANCIA": &"slogan"}
+	for prefix: String in looks:
+		var sign_node := _sign_with(shell, prefix)
+		assert_not_null(sign_node, "the sign that starts %s" % prefix)
+		if sign_node == null:
+			continue
+		assert_eq(sign_node.look, looks[prefix], "%s: its look" % prefix)
+		var look_node := sign_node.get_node(NodePath(StructureLook.NODE_NAME)) as StructureLook
+		look_node.step()
+		assert_same(look_node.still.texture, data.sign_texture(looks[prefix]), "%s shows its look" % prefix)
+		if prefix == "Un radio ruso":
+			assert_true(DrawOrder.drawn_after(sign_node, garita), "the radio is in front of the garita")
+		# Beside the sign on whichever side makes it the candidate: the slogans' south side is
+		# nearer the nails and the mirror.
+		for side: Vector2 in [Vector2(0.0, 8.0), Vector2(0.0, -8.0), Vector2(-8.0, 0.0), Vector2(8.0, 0.0)]:
+			body.global_position = sign_node.global_position + side
+			_frame(shell)
+			if shell.hud.prompt.target == sign_node:
+				break
+		assert_same(shell.hud.prompt.target, sign_node, "%s is the candidate" % prefix)
+		_tap(shell, KEY_E)
+		assert_true(shell.hud.sign_note.is_open(), "%s: E opens its note" % prefix)
+		assert_eq(shell.hud.sign_note.text_shown(), sign_node.line_es, "%s: its line" % prefix)
+		_tap(shell, KEY_E)
+		assert_false(shell.hud.sign_note.is_open(), "%s: E closes it" % prefix)
+	_release_keys()
+

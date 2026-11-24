@@ -83,24 +83,28 @@ group = &"dune"
 [sub_resource type="Resource" id="Resource_sign_r"]
 script = ExtResource("4_sign")
 glyph = "r"
+look = &"radio"
 text_es = "Un radio ruso sin pilas. Todavía tiene puesta la emisora oficial: lo único que funcionó siempre."
 text_en = "A dead Russian radio, still tuned to the official station: the one thing that always worked."
 
 [sub_resource type="Resource" id="Resource_sign_a"]
 script = ExtResource("4_sign")
 glyph = "a"
+look = &"slogan"
 text_es = "«AQUÍ NO SE RINDE NADIE» — y debajo, en carbón: «ni se queda nadie tampoco»."
 text_en = "‘NOBODY SURRENDERS HERE’, and under it, in charcoal: ‘nobody stays either’."
 
 [sub_resource type="Resource" id="Resource_sign_c"]
 script = ExtResource("4_sign")
 glyph = "c"
+look = &"slogan"
 text_es = "«VIGILANCIA REVOLUCIONARIA» — la pintura está tan vieja como la garita. La garita está vacía."
 text_en = "‘REVOLUTIONARY VIGILANCE’. The paint is as old as the post. The post is empty."
 
 [sub_resource type="Resource" id="Resource_sign_x"]
 script = ExtResource("4_sign")
 glyph = "x"
+look = &"sticks"
 text_es = "Dos palos en cruz, clavados en la arena. Alguien quiere que alguien cave aquí."
 text_en = "Two crossed sticks in the sand. Someone wants someone to dig here."
 
