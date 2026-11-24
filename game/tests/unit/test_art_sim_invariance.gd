@@ -13,8 +13,8 @@ extends GutTest
 ## - The player's synchronizer lists the same property paths both times, compared as lists, never as
 ##   a count (coop-networking and survival-meters own how many there are).
 ## - guardacostas-stealth: a second pair of runs starts at night with a patrol boat in its lap and an alert
-##   raised, so the patrol look (its hull, its PointLight2D cone and the loudhailer's speech bubble) runs in
-##   the built run: the boat's clock, aim, light and serial are part of each frame's snapshot too, and
+##   raised, so the patrol look (its hull, its PointLight2D cone and the loudhailer) and the HUD's call
+##   windows (art-guardacostas D6) run in the built run: the boat's clock, aim, light and serial are part of each frame's snapshot too, and
 ##   both runs stay equal.
 ## - damage-feedback (survival-meters "Hurt cue on the body"): at PINCH_FRAME, in both runs, a land
 ##   crab pinches the player through the host's own CreatureWorld.pinch, so the look's hurt blink
@@ -71,6 +71,8 @@ var planted: Array[StringName] = []
 var planted_alone: Array[StringName] = []
 ## The run starts at night with the patrol boat 5 s into its lap and an alert raised.
 var night_lap: bool = false
+## The night lap's call windows (art-guardacostas D6), or null.
+var call_windows: Control = null
 var _frame_no: int = 0
 # The built run's route: where to walk, then whether to press E there.
 var _route: Array[Vector2] = []
@@ -137,6 +139,25 @@ func _build() -> void:
 	_frame_no = 0
 	if night_lap:
 		_start_night_lap()
+		_add_call_windows()
+
+
+# art-guardacostas D6: the HUD's call windows bound to the run's session, in art_view, so the built run
+# steps them as each call shows and the stripped run strips them.
+func _add_call_windows() -> void:
+	call_windows = CallWindows.new()
+	call_windows.name = &"CallWindows"
+	call_windows.add_to_group(ART_GROUP)
+	session.add_child(call_windows)
+	if call_windows.has_method(&"bind"):
+		call_windows.call(&"bind", session)
+
+
+# How many calls the run's call windows showed (0 without them).
+func _calls_windowed() -> int:
+	if not is_instance_valid(call_windows) or not call_windows.has_method(&"count"):
+		return 0
+	return int(call_windows.get(&"calls_shown"))
 
 
 # The patrol boat 5 s into its lap at night.
@@ -408,7 +429,7 @@ func _built_run(frames: int) -> Dictionary:
 		intents.append(intent)
 		_frame(intent)
 		snapshots.append(_snapshot())
-	var result := {"frames": snapshots, "paths": _sync_paths(), "creatures": spawner.creatures().size(), "art": _art_in_run().size(), "enter_tree": enter_tree, "patrol_looks": _patrol_looks(), "lines": _loudhailer_lines(), "blinked": _blinked, "squad": _squad_art()}
+	var result := {"frames": snapshots, "paths": _sync_paths(), "creatures": spawner.creatures().size(), "art": _art_in_run().size(), "enter_tree": enter_tree, "patrol_looks": _patrol_looks(), "lines": _loudhailer_lines(), "blinked": _blinked, "squad": _squad_art(), "windowed": _calls_windowed()}
 	_free_run()
 	return result
 
@@ -515,6 +536,7 @@ func test_a_night_patrol_lap_runs_the_same_with_and_without_the_patrol_look() ->
 	assert_gt(squad["soldiers"], 0, "the built run drew the shore soldiers")
 	assert_true(squad["dinghy"], "and the dinghy")
 	assert_gt(squad["calls"], 0, "and showed a squad call")
+	assert_gt(built["windowed"], 0, "the call windows showed the calls in the built run (art-guardacostas D6)")
 	var first: int = _first_difference(built_frames, bare_frames)
 	assert_eq(first, -1, "every frame equal with and without the patrol look (first difference: %s)" % _detail(built_frames, bare_frames, first))
 	gut.p("patrol looks drawn: %d; loudhailer lines shown: %d; %d frames" % [built["patrol_looks"], built["lines"], FRAMES])

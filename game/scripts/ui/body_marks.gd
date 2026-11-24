@@ -7,10 +7,12 @@ extends Control
 ## centred over the body at whole pixels, its bottom edge 3 px above the drawn head (BodyLook), or
 ## above the name tag's label while the tag shows. A submerged diver gets none, and nothing is drawn
 ## while a screen is over the run or for a body that has left the island or is gone.
-## guardacostas-stealth "Patrol cues": a 7×5 px open eye over every player whose shown spot fraction
-## (`PlayerBody.spot_shown`, the host's net_spot) is above 0 and who is not hidden (the closed eye
-## wins), placed the same way. Its iris fills with the fraction: IRIS_PIXELS cells, `iris_pixels` of
-## them dark, from the bottom row up and left to right.
+## guardacostas-stealth "Patrol cues", as art-guardacostas D7 draws it: an open eye over every player whose
+## shown spot fraction (`PlayerBody.spot_shown`, the host's net_spot) is above 0 and who is not hidden
+## (the closed eye wins), placed the same way: the kit's 11×7 `eye_open_plate` (a cream almond with a dark
+## iris on a dark plate) and under it a bar sharing the plate's bottom row, 11×9 in all. The bar's 9 inner
+## cells fill from the left with the fraction (`bar_cells`), cream below half, orange from half and the
+## alert red from three quarters (`bar_color`), on the empty track's blue.
 ## guardacostas-capture "Capture cues": a 7×5 px rope mark over every captive (`PlayerBody.captive`, the
 ## host's net_capture), the local player included, placed the same way; it wins over both eyes. A taken
 ## captive is out of play and gets none.
@@ -28,15 +30,17 @@ const EYE_PIXELS: Array[Vector2i] = [
 	Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1),
 	Vector2i(1, 2), Vector2i(3, 2),
 ]
-## The open eye in the 5×3 inside the outline: the almond's white, by pixel.
-const OPEN_EYE_PIXELS: Array[Vector2i] = [
-	Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0),
-	Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(4, 1),
-	Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2),
-]
-## The iris: the middle 3×3 of the open eye's inside, filled from its bottom row up as the meter fills.
-const IRIS_PIXELS: int = 9
-const IRIS_COLOR: Color = HudStyle.OUTLINE
+## The open eye with its bar: the 11×7 plate and a 3 px bar sharing its bottom row.
+const EYE_SIZE: Vector2 = Vector2(11.0, 9.0)
+## The plate's height; the bar's frame starts on its last row.
+const PLATE_HEIGHT: int = 7
+## The bar's inner cells, filled from the left.
+const BAR_CELLS: int = 9
+## The bar's empty cells: the HUD's track blue.
+const BAR_TRACK: Color = HudStyle.TRACK
+## The plate's icon in the theme (`HudMarks/icons/eye_open_plate`), so the art rules find it in use.
+const PLATE_ICON: StringName = &"eye_open_plate"
+const ICON_TYPE: StringName = &"HudMarks"
 ## The rope in the 5×3 inside the outline: a braid, by pixel.
 const ROPE_PIXELS: Array[Vector2i] = [
 	Vector2i(0, 0), Vector2i(2, 0), Vector2i(4, 0),
@@ -100,7 +104,7 @@ func tick() -> void:
 				_rects.append(_place(player))
 			elif _spotted(player):
 				_eyed.append(player)
-				_eye_rects.append(_place(player))
+				_eye_rects.append(_place(player, EYE_SIZE))
 	queue_redraw()
 
 
@@ -135,10 +139,24 @@ func eye_fill(player: PlayerBody) -> float:
 	return clampf(player.spot_shown, 0.0, 1.0) if has_open_eye(player) else 0.0
 
 
-## How many of the iris's IRIS_PIXELS are dark for a fill of `fraction`: any fill above 0 shows at least
-## one, a full meter all of them.
-static func iris_pixels(fraction: float) -> int:
-	return clampi(ceili(fraction * IRIS_PIXELS - 0.000001), 1 if fraction > 0.0 else 0, IRIS_PIXELS)
+## How many of the bar's BAR_CELLS are filled for a fill of `fraction`: round(9 × fraction).
+static func bar_cells(fraction: float) -> int:
+	return clampi(roundi(BAR_CELLS * fraction), 0, BAR_CELLS)
+
+
+## The bar's fill colour for `fraction`: cream below half, orange from half, the alert red from three
+## quarters.
+static func bar_color(fraction: float) -> Color:
+	if fraction >= 0.75:
+		return HudStyle.ALERT
+	if fraction >= 0.5:
+		return HudStyle.ORANGE
+	return HudStyle.CREAM
+
+
+## The plate's texture, from the theme.
+func plate_texture() -> Texture2D:
+	return get_theme_icon(PLATE_ICON, ICON_TYPE)
 
 
 ## True when anything is marked over `player`: the closed eye or the open one (what a speech bubble or
@@ -191,12 +209,12 @@ func _hidden(player: PlayerBody) -> bool:
 
 
 # Centred over the body, its bottom HEAD_GAP_PX above the head or the shown name tag.
-func _place(player: PlayerBody) -> Rect2:
+func _place(player: PlayerBody, mark_size: Vector2 = MARK_SIZE) -> Rect2:
 	var canvas: Transform2D = player.get_global_transform_with_canvas()
 	var anchor: Vector2 = to_hud.call(canvas.origin)
 	var head: Vector2 = to_hud.call(canvas * Vector2(0.0, _top_of(player)))
 	var bottom: float = roundf(head.y) - HEAD_GAP_PX
-	return Rect2(Vector2(roundf(anchor.x - MARK_SIZE.x / 2.0), bottom - MARK_SIZE.y), MARK_SIZE)
+	return Rect2(Vector2(roundf(anchor.x - mark_size.x / 2.0), bottom - mark_size.y), mark_size)
 
 
 # The topmost drawn point over the body's origin, in its own pixels: the name tag's label while the
@@ -225,15 +243,16 @@ func _draw() -> void:
 			draw_rect(Rect2(inside + Vector2(pixel), Vector2.ONE), ROPE_COLOR)
 
 
-# The outline, the almond in cream and the iris's dark pixels from the bottom row up.
+# The kit's plate, then the bar sharing its bottom row: a dark frame with cut bottom corners round 9 cells,
+# `bar_cells` of them in `bar_color`, the rest the track.
 func _draw_open_eye(rect: Rect2, fraction: float) -> void:
-	draw_rect(rect, OUTLINE_COLOR)
-	var inside: Vector2 = rect.position + Vector2.ONE
-	for pixel: Vector2i in OPEN_EYE_PIXELS:
-		draw_rect(Rect2(inside + Vector2(pixel), Vector2.ONE), EYE_COLOR)
-	var dark: int = iris_pixels(fraction)
-	for n: int in dark:
-		# Bottom row first (y = 2), then the middle, then the top; left to right inside a row.
-		var row: int = 2 - n / 3
-		var column: int = 1 + n % 3
-		draw_rect(Rect2(inside + Vector2(column, row), Vector2.ONE), IRIS_COLOR)
+	var plate: Texture2D = plate_texture()
+	if plate != null:
+		draw_texture(plate, rect.position)
+	var top: Vector2 = rect.position + Vector2(0.0, PLATE_HEIGHT - 1)
+	draw_rect(Rect2(top, Vector2(EYE_SIZE.x, 2.0)), OUTLINE_COLOR)
+	draw_rect(Rect2(top + Vector2(1.0, 2.0), Vector2(EYE_SIZE.x - 2.0, 1.0)), OUTLINE_COLOR)
+	var filled: int = bar_cells(fraction)
+	var color: Color = bar_color(fraction)
+	for cell: int in BAR_CELLS:
+		draw_rect(Rect2(top + Vector2(1.0 + cell, 1.0), Vector2.ONE), color if cell < filled else BAR_TRACK)
