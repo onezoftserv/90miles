@@ -164,7 +164,8 @@ var _timed: Array[MeterOverTime] = []
 var _delayed_effects: Array[EffectData] = []
 var _delayed_left_s: Array[float] = []
 ## Seconds left of each timed status that is on (bleeding-and-sabila D1), keyed by DataEnums.Status.
-## Host only: every peer reads the synced bit, never the time, so a status set by the sync has none.
+## Host only: a status set by the sync has none here; the bleeding's time reaches every peer as
+## `bleeding_left_s` (hud-clarity).
 var _status_left_s: Dictionary[int, float] = {}
 ## Seconds of bleeding left, 0 while not bleeding (hud-clarity, survival-meters "Bleeding time on every
 ## peer"). The host writes it with the status's time; it is synced, so every peer's "Sangrando" bar

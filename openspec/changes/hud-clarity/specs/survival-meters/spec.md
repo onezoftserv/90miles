@@ -51,6 +51,29 @@ While the local player bleeds, their screen SHALL show a "Sangrando" status row 
 - **WHEN** the host's shark bites the client's player, 60 s pass, and later the host ends the bleeding
 - **THEN** the client's screen shows the "Sangrando" row with its time bar about half full at 60 s, then hides it
 
+### Requirement: Bleeding stops on its own
+Bleeding SHALL end on its own 120 s (4 in-game hours) after the latest wound that started it; a new wound while bleeding restarts the 120 s, and does not add a second drain. The host keeps the time left and every peer receives it with the player's synced meters ("Bleeding time on every peer"), so a client's "Sangrando" bar drains with the host's. The time runs only while the player's meters run (not while waiting out of play). A revive leaves bleeding as it is. Solo works the same, offline.
+
+#### Scenario: Solo bleeding ends after 120 s
+- **GIVEN** a 1-player run, offline, whose player starts bleeding at 100 health
+- **WHEN** 120 s pass
+- **THEN** the player no longer bleeds, the "Sangrando" tag is hidden, and health is 88 and stops falling
+
+#### Scenario: A second wound restarts the time
+- **GIVEN** a solo player who started bleeding 100 s ago
+- **WHEN** a shark strikes them again
+- **THEN** they still bleed 119 s later, and no longer bleed 121 s after the second strike
+
+#### Scenario: A client sees its bleeding end
+- **GIVEN** a host and a client, where the host's shark struck the client's player
+- **WHEN** 120 s pass on the host
+- **THEN** the bleeding ends on the host, and the client's game has its own player no longer bleeding, with its bleeding time at 0
+
+#### Scenario: Waiting out of play freezes the time
+- **GIVEN** a bleeding rider who arrives on the next island and waits out of play for 60 s
+- **WHEN** they come back into play
+- **THEN** they still bleed with the same time left as when they started waiting
+
 ## ADDED Requirements
 
 ### Requirement: Bleeding time on every peer

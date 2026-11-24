@@ -167,7 +167,7 @@ Gaps of 4 px separate the columns: 48+4+56+4+32+4+72 = 220.
 - **Format:** hours = `ceil(left/30)` while `left ≥ 30`, else minutes = `ceil(left × 2)`. For example, 18:30 is `t = 375` → 45 s → 2h; 05:40 is `t = 710` → 10 s → 20m.
 - **Colour:** cream, or orange while `360 ≤ t < 420`.
 
-**Phase words** come from `clock_words` in `hud_text.tres`, keyed `dawn`, `morning`, `midday`, `afternoon`, `dusk` and `night`. `RunHud.phase_name()` keeps its signature and returns these. Its tests in six files are updated for "Mañana" and "Tarde".
+**Phase words** come from `clock_words` in `hud_text.tres`, keyed `dawn`, `morning`, `midday`, `afternoon`, `dusk` and `night`. `RunHud.phase_name(climate)` gains an optional `locale` and returns these, telling morning from afternoon by the climate's new `time_of_day_s`. Only `test_run_hud.gd` read the old word.
 
 ### D4. The objective (`Objective`, pure; `ObjectiveRow`, drawing)
 `Objective.from(session, local_peer, island_layout, text, locale) -> Goal` returns a step and a line. The steps are `AT_SEA`, `WAIT_DARK`, `LAUNCH`, `GATHER(item, have, need)`, `DELIVER`, `WORK(percent)` and `NONE`, decided in the order the spec lists them.
@@ -182,7 +182,7 @@ Gaps of 4 px separate the columns: 48+4+56+4+32+4+72 = 220.
   - `have = mini(site.deposited.get(id,0) + inv.count_id(id), need)`, over `recipe.inputs` in its declared order;
   - `recipe.input_tags` follow, with `HudText.tag_names` as the noun;
   - the noun is `ItemData.count_name(locale)`, the short name or else the name.
-- **Wait for the dark:** with the raft built, `Objective.launch_waits(session, climate)` is true while a patrol `Creature` (`is_patrol()`, not queued for deletion) is among `session.entities`, the phase is not in its `data.patrol.searchlight_phases`, and the current `WeatherData` (`session.sky.weather.current`, which clients follow) neither keeps patrols in port (`patrols_in_port`, a squall) nor disables `SIGHT`. That mirrors island-pressure's `LaunchSight.seen_by` day rule (a boat with its light off sees the whole sea; a squall keeps patrols in port) without depending on it. Once island-pressure lands, whichever change merges second makes `launch_waits` call `LaunchSight` so the two can never disagree. At night the objective says go; the launch prompt's own warning covers a searchlight on the player.
+- **Wait for the dark:** with the raft built, `Objective.launch_waits(session)` is true while a patrol `Creature` (`is_patrol()`, not queued for deletion) is among `session.entities`, the phase is not in its `data.patrol.searchlight_phases`, and the current `WeatherData` (`session.sky.weather.current`, which clients follow) neither keeps patrols in port (`patrols_in_port`, a squall) nor disables `SIGHT`. That mirrors island-pressure's `LaunchSight.seen_by` day rule (a boat with its light off sees the whole sea; a squall keeps patrols in port) without depending on it. Once island-pressure lands, whichever change merges second makes `launch_waits` call `LaunchSight` so the two can never disagree. At night the objective says go; the launch prompt's own warning covers a searchlight on the player.
 - **Work:** percent = the site's progress × 100, floored. Today that is `BuildSite`'s work over `recipe.time_s`, read through a new `progress_ratio()` accessor if none exists.
 - **Lines** live in a new `objective_lines: Dictionary[StringName, PackedStringArray]` export on `HudText`, with `gather`, `deliver`, `work`, `wait_dark`, `launch_default` and `at_sea`. A test checks that every line, filled with its longest content (each vessel build-site recipe's inputs at their real need, 100%), fits in 27 glyphs in both languages. Two-digit counts would not fit with an 8-letter noun; no raft input needs ten.
 - **Updates:** `RunHud._process` already calls `refresh()` every frame. The row recomputes and redraws only when its line changes.
@@ -201,7 +201,7 @@ Gaps of 4 px separate the columns: 48+4+56+4+32+4+72 = 220.
 - **Bars:**
   - Insolación: `(heat − ends_below) / (sunstroke_at − ends_below)`, from `survival_tuning.tres`.
   - Sangrando: `bleeding_left_s / bleeding_s`.
-- **Height:** the window must stay inside y 90 with both status rows. If the 10 px rows overflow, the status rows drop to 9 px, which is still an 8 px glyph plus 1. A test with both on checks the rect.
+- **Height:** the window must stay inside y 90 with both status rows. The 10 px rows fit exactly (the window ends at y 90), so no 9 px fallback was needed. A test with both on checks the rect.
 - **Compatibility:** `MetersHud.bleeding_tag()` keeps its name and returns the row's word label, so the bleeding tests keep working.
 
 ### D7. The bleeding time, synced
@@ -248,6 +248,7 @@ The palette test already covers `assets/art/ui/`. The strip and the bars are dra
 - **[Merge friction in `run_hud.gd` and `hud_text.tres` with #75]** → Few lines, new export blocks, and no edits to `panel_rects()`.
 
 ## Migration Plan
+- **Archive after bleeding-and-sabila.** hud-clarity MODIFIES bleeding-and-sabila's "Bleeding stops on its own" (the time left is now synced), so `openspec archive` refuses this delta until that change is archived and the requirement is in `openspec/specs/survival-meters/spec.md`. Validation reports it as information only.
 - No saved data changes.
 - **Archive order:** hud-window-kit, damage-feedback, bleeding-and-sabila, art-mood-pass, then this change. Its MODIFIED blocks are written on hud-window-kit's "HUD layout" and "HUD bars" and on the main specs' "Inventory band and world marks", "Bleeding tag on the HUD" and "Needle on the carrier's HUD".
 - **Rollback:** revert the PR. Nothing persists.
@@ -270,5 +271,5 @@ The palette test already covers `assets/art/ui/`. The strip and the bars are dra
 - **Kit icons must be named by a scene.** `test_art_tracked` counts only `.tscn` and `.tres` as referrers, so the clock marks and the arrows are exports set in `run_hud.tscn`, and the status icons are set in `meters_hud.tscn`.
 - **The thermometer's tints** are the master palette's plum `#45283c` (the old empty colour), dark mustard `#524b24` and dark red-brown `#663931`; a brighter brown for the top zone read as a filled bar at heat 0. The status rows' time bars use the track colour `#3f3f74` for their empty part, so a half-drained bar reads as half.
 - **The session's language is not set from Ajustes yet.** `CoopSession.locale` stays "es" unless code sets it; the English lines are tested by setting it.
-- **Co-op checks.** `test_hud_clarity_net.gd` (host and client in one process, each with its own sky) and `tests/manual/hud_clarity_run.gd` over UDP 7800: 3 runs, host 9/9 and client 7/7 checks each, no engine errors. The client's Sangrando bar read 0.996, then 0.971 three seconds later, matching its synced time.
+- **Co-op checks.** `test_hud_clarity_net.gd` (host and client in one process, each with its own sky) and `tests/manual/hud_clarity_run.gd` over UDP 7800: 3 runs, host 14/14 and client 12/12 checks each, no engine errors. The client's Sangrando bar read 0.996, then 0.971 three seconds later, matching its synced time. The client's own raft-site arrow pointed south-west from the hut, its row read "Espera la noche pa' zarpar" once the host built the raft by day with the patrol boat out (so the patrol creatures and their data reach the client), and "Zarpa pa'l cayo" at night (so its `IslandTravel` gives the launch line).
 - **Captures.** `tests/manual/capture_hud_clarity.tscn` frames "before" (`docs/ui-shell/hud-clarity/before/`) and "after" (`.../after/`) the same way.

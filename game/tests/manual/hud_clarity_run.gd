@@ -11,6 +11,11 @@ extends SceneTree
 ##    from "Arma la balsa: 0/6 madera" to "Arma la balsa: 0/2 cámaras".
 ## 3. A bite makes Papo bleed on the host. Papo checks "Sangrando" shows with its time bar near full,
 ##    and that the bar drains with the host's time left (lower 3 s later, matching his synced time).
+## 4. The host puts Yuni beside the raft site and Papo up by the hut. Papo's arrow points south-west
+##    at the site from his own view; the host's shows none, its site in view.
+## 5. The host builds the raft at about 14:00 with the sandbar's patrol boat out. Both rows read
+##    "Espera la noche pa' zarpar", and Papo's arrow now points at the raft.
+## 6. The host puts the clock at 21:00. Both rows read the sandbar's launch line, "Zarpa pa'l cayo".
 ## Each check prints "HUDC PASS|FAIL <mode>: <what> | <detail>", and a failed check makes the run quit
 ## non-zero. Compiled before the autoloads exist, so it names no project class.
 
@@ -21,6 +26,12 @@ const BLEEDING: int = 1
 const DEADLINE_S: float = 240.0
 ## 14:00 on the one clock, day 2.
 const AFTERNOON_S: float = 240.0
+## 21:00 on the one clock.
+const NIGHT_S: float = 450.0
+## Papo by the hut, from the raft site: the site is out of his view to the south-west.
+const BY_THE_HUT: Vector2 = Vector2(300.0, -220.0)
+const WAIT_LINE: String = "Espera la noche pa' zarpar"
+const LAUNCH_LINE: String = "Zarpa pa'l cayo"
 
 var mode: String = ""
 var port: int = 7800
@@ -122,8 +133,37 @@ func _host() -> void:
 	print("HUDC step 3: Papo bleeds")
 	await _seconds(8.0)
 	_check("the time ran down on the host", float(papo_meters.get("bleeding_left_s")) < 115.0, str(papo_meters.get("bleeding_left_s")))
+	# 4. Yuni beside the site, Papo up by the hut.
+	var at_site: Vector2 = (site as Node2D).global_position
+	(yuni as Node2D).global_position = at_site + Vector2(24.0, 0.0)
+	(yuni.get("camera") as Camera2D).reset_smoothing()
+	(papo as Node2D).global_position = at_site + BY_THE_HUT
+	print("HUDC step 4: Yuni at the site, Papo by the hut")
+	await _seconds(1.0)
+	var arrow: Object = hud.get("site_arrow")
+	_check("the host's arrow is away, its site in view", arrow.call("shown") == false)
+	await _seconds(5.0)
+	# 5. The raft built by day, the patrol boat out.
+	var inputs: Dictionary = (site.get("recipe") as Resource).get("inputs")
+	var deposited: Dictionary = site.get("deposited")
+	for id: Variant in inputs:
+		deposited[id] = inputs[id]
+	site.call("work", 1.0)
+	await _seconds(0.5)
+	_check("the raft is built on the host", session.get_node_or_null("Raft") != null)
+	var waits := func() -> bool: return _objective(hud) == WAIT_LINE
+	_check("the host's row waits for the dark", await _wait_for("the wait line", waits, 3.0), _objective(hud))
+	print("HUDC step 5: the raft built by day")
+	await _seconds(6.0)
+	# 6. Night.
+	state = sky.call("to_state")
+	state["time_of_day_s"] = NIGHT_S
+	_check("the host's sky took 21:00", sky.call("apply_state", state) == true)
+	var launches := func() -> bool: return _objective(hud) == LAUNCH_LINE
+	_check("the host's row says to set off", await _wait_for("the launch line", launches, 3.0), _objective(hud))
+	print("HUDC step 6: night")
 	# The client needs the last state before the host goes away.
-	await _seconds(3.0)
+	await _seconds(6.0)
 
 
 func _client() -> void:
@@ -161,6 +201,19 @@ func _client() -> void:
 	var second: float = row.call("fill_ratio")
 	var expected: float = float(own_meters.get("bleeding_left_s")) / 120.0
 	_check("the bar drains with the host's time", second < first and absf(second - expected) < 0.02, "%.3f then %.3f, synced %.3f" % [first, second, expected])
+	# 4. Papo by the hut: his own arrow points south-west at the site.
+	var arrow: Object = hud.get("site_arrow")
+	var points := func() -> bool: return arrow.call("shown") == true and arrow.call("direction") == Vector2i(-1, 1)
+	_check("Papo's arrow points south-west at the site", await _wait_for("Papo's arrow", points, 20.0), "%s %s" % [arrow.call("shown"), arrow.call("direction")])
+	# 5. The raft built by day.
+	var waits := func() -> bool: return _objective(hud) == WAIT_LINE
+	_check("Papo's row waits for the dark", await _wait_for("the wait line", waits, 30.0), _objective(hud))
+	_check("the raft is built on Papo's side", session.get_node_or_null("Raft") != null)
+	var raft_arrow := func() -> bool: return arrow.call("shown") == true and arrow.call("site") == session.get_node_or_null("Raft")
+	_check("Papo's arrow points at the raft", await _wait_for("the raft's arrow", raft_arrow, 5.0))
+	# 6. Night: the sandbar's launch line.
+	var launches := func() -> bool: return _objective(hud) == LAUNCH_LINE
+	_check("Papo's row says to set off at night", await _wait_for("the launch line", launches, 30.0), _objective(hud))
 
 
 func _check(label: String, ok: bool, detail: String = "") -> bool:
