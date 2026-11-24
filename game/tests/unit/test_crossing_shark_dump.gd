@@ -91,4 +91,7 @@ func test_the_shark_shows_beside_the_deck_it_hit() -> void:
 			sharks.append(child as Creature)
 	assert_eq(sharks.size(), 1, "a shark circles")
 	if not sharks.is_empty():
-		assert_eq(sharks[0].position, crossing.deck_center() + CreatureThreats.SHARK_OFFSET_PX)
+		# Beside the hit deck, never on it (owner, art waves QS1 (a), 2026-11-16): 1 tile off the
+		# side the pass names, the west for an old-form pass.
+		var deck := crossing.deck_rect()
+		assert_eq(sharks[0].position, Vector2(deck.position.x - Crossing.TILE_PX, deck.get_center().y))

@@ -5,6 +5,7 @@ extends Node2D
 ## position put them. Placeholder shapes in the master palette, 1 px dark outline, until their art.
 ## It only reads its parent, every frame, so a client and a late joiner draw what they received;
 ## the crossing never names it. `Hazards` in crossing.tscn, at z −30: over the sea, under the deck.
+## Open leaks are drawn by a child at z −19, just over the deck, as spurts of water (crossing "Leaks").
 
 ## Master palette (docs/ASSETS.md): rock body and top, wood, outline, foam.
 const ROCK_COLOR: Color = Color("#595652")
@@ -14,6 +15,13 @@ const WOOD_DARK: Color = Color("#663931")
 const OUTLINE: Color = Color("#222034")
 const FOAM: Color = Color(1.0, 1.0, 1.0, 0.75)
 const NAIL: Color = Color("#9badb7")
+const SPURT: Color = Color("#cbdbfc")
+const SPURT_DARK: Color = Color("#639bff")
+## Leak spurts sit just over the deck and under the riders.
+const SPURT_Z: int = -19
+
+var _spurts: Node2D
+var _clock_s: float = 0.0
 
 var _items: Dictionary[StringName, Texture2D] = {}
 
@@ -22,8 +30,42 @@ func _init() -> void:
 	add_to_group(&"art_view")
 
 
-func _process(_delta: float) -> void:
+func _ready() -> void:
+	_spurts = Node2D.new()
+	_spurts.name = "Spurts"
+	_spurts.z_as_relative = false
+	_spurts.z_index = SPURT_Z
+	_spurts.draw.connect(_draw_spurts)
+	add_child(_spurts)
+
+
+func _process(delta: float) -> void:
+	_clock_s += delta
 	queue_redraw()
+	if _spurts != null:
+		_spurts.queue_redraw()
+
+
+## Where each open leak is drawn, in the crossing's coordinates.
+func shown_leaks() -> Array[Vector2]:
+	var crossing := get_parent() as Crossing
+	var spots: Array[Vector2] = []
+	if crossing == null or crossing.finished:
+		return spots
+	for leak: Dictionary in crossing.leaks.list:
+		spots.append(crossing.leak_position(leak) - global_position)
+	return spots
+
+
+# A leak: a little fountain of water that bobs.
+func _draw_spurts() -> void:
+	var rise: float = 1.0 + roundf(sin(_clock_s * 9.0))
+	for at: Vector2 in shown_leaks():
+		var base := at.round()
+		_spurts.draw_rect(Rect2(base + Vector2(-3, 1), Vector2(6, 2)), SPURT_DARK)
+		_spurts.draw_rect(Rect2(base + Vector2(-1, -2 - rise), Vector2(2, 3 + rise)), SPURT)
+		_spurts.draw_rect(Rect2(base + Vector2(-3, -1 - rise), Vector2(1, 1)), SPURT)
+		_spurts.draw_rect(Rect2(base + Vector2(2, -1 - rise), Vector2(1, 1)), SPURT)
 
 
 ## The lane beats on the sea now, each as [beat, centre in the crossing's coordinates], for tests

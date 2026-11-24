@@ -4,7 +4,7 @@ extends RefCounted
 ## peer that joins mid-crossing needs to build it. The host makes one with of() and sends
 ## to_dict(); a joiner checks what arrived with from_dict() and gives it to Crossing.restore().
 
-const KEYS: Array[String] = ["serial", "route", "riders", "plan", "elapsed_s", "maximum", "value", "broken", "states", "positions", "boards", "steer"]
+const KEYS: Array[String] = ["serial", "route", "riders", "plan", "elapsed_s", "maximum", "value", "broken", "states", "positions", "boards", "steer", "leaks", "taken", "shooed", "fins"]
 
 ## The crossing's number: its node name and where its sea lies.
 var serial: int = 0
@@ -24,7 +24,8 @@ var positions: Dictionary[int, Vector2] = {}
 ## otherwise.
 var boards: Dictionary[int, float] = {}
 ## The crossing's play state (crossing-gameplay "Crossing play state on every peer"): "steer" is
-## [lateral position, velocity].
+## [lateral position, velocity], "leaks" the open leaks as [[id, vessel, x, y], ...], "taken" the
+## flotsam taken as {beat index: peer}.
 var play: Dictionary = {}
 
 
@@ -73,6 +74,10 @@ func to_dict() -> Dictionary:
 		"positions": position_map,
 		"boards": board_map,
 		"steer": play.get("steer", [0.0, 0.0]),
+		"leaks": play.get("leaks", []),
+		"taken": play.get("taken", {}),
+		"shooed": play.get("shooed", []),
+		"fins": play.get("fins", {}),
 	}
 
 
@@ -97,6 +102,10 @@ static func from_dict(data: Variant) -> CrossingSnapshot:
 	if not snapshot._read_boards(raw.get("boards")):
 		return null
 	if not snapshot._read_steer(raw.get("steer")):
+		return null
+	if not snapshot._read_leaks(raw.get("leaks")) or not snapshot._read_taken(raw.get("taken")):
+		return null
+	if not snapshot._read_shark(raw.get("shooed"), raw.get("fins")):
 		return null
 	return snapshot
 
@@ -178,6 +187,50 @@ func _read_steer(raw_steer: Variant) -> bool:
 		if not (number is float or number is int) or not is_finite(float(number)):
 			return false
 	play["steer"] = [float(raw_steer[0]), float(raw_steer[1])]
+	return true
+
+
+# The open leaks, checked as a client checks them.
+func _read_leaks(raw_leaks: Variant) -> bool:
+	var check := CrossingLeaks.new()
+	if not check.read(raw_leaks, CrossingTuning.standard().max_leaks * (NetPeers.MAX_PLAYERS + 1)):
+		return false
+	play["leaks"] = check.to_array()
+	return true
+
+
+# Flotsam taken: beat indexes in the plan to riders.
+func _read_taken(raw_taken: Variant) -> bool:
+	if not raw_taken is Dictionary:
+		return false
+	var map: Dictionary = {}
+	for index: Variant in raw_taken:
+		var peer: Variant = raw_taken[index]
+		if not index is int or not peer is int or index < 0 or index >= plan.events.size():
+			return false
+		map[index] = peer
+	play["taken"] = map
+	return true
+
+
+# Shark passes shooed (beat indexes) and the warned fins' spots (beat index -> Vector2).
+func _read_shark(raw_shooed: Variant, raw_fins: Variant) -> bool:
+	if not raw_shooed is Array or not raw_fins is Dictionary:
+		return false
+	var count: int = plan.events.size()
+	var list: Array = []
+	for index: Variant in raw_shooed:
+		if not index is int or index < 0 or index >= count:
+			return false
+		list.append(index)
+	var fin_map: Dictionary = {}
+	for index: Variant in raw_fins:
+		var spot: Variant = raw_fins[index]
+		if not index is int or index < 0 or index >= count or not spot is Vector2 or not (spot as Vector2).is_finite():
+			return false
+		fin_map[index] = spot
+	play["shooed"] = list
+	play["fins"] = fin_map
 	return true
 
 
