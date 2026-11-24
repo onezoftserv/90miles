@@ -46,6 +46,8 @@ class RealKit(UiBase):
             "arrow_down": (7, 4), "radio_off": (7, 7), "radio_on": (7, 7),
             "ramp_health": (1, 5), "ramp_thirst": (1, 5), "ramp_hunger": (1, 5), "ramp_heat": (1, 5),
             "ramp_energy": (1, 5), "ramp_morale": (1, 5), "digits_3x5": (60, 14),
+            "eye_open_plate": (11, 7), "boat_chip_day": (9, 7), "boat_chip_night": (9, 7),
+            "boat_chip_outline": (9, 7),
         }
         self.assertEqual(set(sizes), set(self.images))
         for name, size in sizes.items():
@@ -190,6 +192,43 @@ class RealKit(UiBase):
                     self.assertEqual(on.get(x, y), off.get(x, y))
 
 
+    def test_eye_open_plate(self):
+        """art-guardacostas D7: a dark plate with cut corners, a cream almond and a 3x3 dark iris."""
+        eye = self.images["eye_open_plate"]
+        dark, cream = rgba("#222034"), rgba("#ffedde")
+        for x, y in ((0, 0), (10, 0), (0, 6), (10, 6)):
+            self.assertEqual(eye.get(x, y), T, (x, y))
+        for y in range(2, 5):
+            for x in range(4, 7):
+                self.assertEqual(eye.get(x, y), dark, ("iris", x, y))
+        self.assertEqual(eye.get(3, 3), cream, "the almond round the iris")
+        self.assertEqual(eye.get(1, 3), cream)
+        self.assertEqual(eye.get(5, 1), cream)
+        self.assertEqual(eye.get(1, 1), dark, "the plate outside the almond")
+        colours = {eye.get(x, y) for x in range(11) for y in range(7)}
+        self.assertEqual(colours, {T, dark, cream})
+
+    def test_boat_chips(self):
+        """art-guardacostas D8: a black-outlined hull, grey with a white cabin by day, lit at night."""
+        day, night, outline = (self.images[n] for n in ("boat_chip_day", "boat_chip_night", "boat_chip_outline"))
+        black = rgba("#000000")
+        for y in range(7):
+            for x in range(9):
+                drawn = outline.get(x, y)
+                self.assertIn(drawn, (T, black), (x, y))
+                if drawn == black:
+                    self.assertEqual(day.get(x, y), black, ("day outline", x, y))
+                    self.assertEqual(night.get(x, y), black, ("night outline", x, y))
+        self.assertEqual(day.get(4, 4), rgba("#9badb7"), "a grey hull by day")
+        self.assertEqual(day.get(4, 1), rgba("#ffffff"), "a white cabin")
+        self.assertEqual(night.get(4, 4), rgba("#3f3f74"), "a dark hull at night")
+        self.assertEqual(night.get(4, 1), rgba("#fbf236"), "a lit lamp")
+        self.assertEqual(outline.get(4, 4), T, "the outline chip is hollow")
+        for image in (day, night, outline):
+            for x, y in ((0, 0), (8, 0), (0, 6), (8, 6)):
+                self.assertEqual(image.get(x, y), T)
+
+
 class Kinds(UiBase):
     def test_ramp(self):
         recipe = {"pieces": [{"name": "r", "kind": "ramp", "highlight": "#ffffff", "base": "#222034", "shade": "#000000"}]}
@@ -246,7 +285,7 @@ class Kinds(UiBase):
                 self.assertEqual(ui.main(["--out", str(out)]), 0)
             files = sorted(p.name for p in first.iterdir())
             self.assertEqual(files, sorted(p.name for p in second.iterdir()))
-            self.assertEqual(len(files), 26)
+            self.assertEqual(len(files), 30)
             for name in files:
                 self.assertEqual((first / name).read_bytes(), (second / name).read_bytes(), name)
 

@@ -112,7 +112,7 @@ python -I -m unittest discover -s tools -p 'test_fetch_assets.py'
 | Shark, crab, gull sprites | Hand-made shark (DawnLike as its colour reference) and crab, Tiny, Tiny Heroes gull | CC BY 4.0 / own | `assets/art/creatures/` | manual download, copied when used |
 | Items: rope, jug, coconut, knife, tarp, cup, driftwood, dry grass, inner tube, binoculars, nails, mirror, aloe, lighter | Kyrise and DawnLike icons, hand-made for the rest | CC BY 4.0 / own | `assets/art/items/` | manual download, copied when used |
 | Palm, lean-to, workbench, fire, rain catcher, sign post, raft | Hand-made, kitbashed from Scallywag fronds and logs and Zelda-like props | CC0 / own | `assets/art/structures/` | — |
-| UI: windows, panels, buttons, slot wells, meter ramps, digits | Own work, built pixel by pixel from the master palette by `tools/art/ui.py` (`tools/art/ui_kit.json`) into `assets/art/ui/` | Own work | `tools/art/` | recipe |
+| UI: windows, panels, buttons, slot wells, meter ramps, digits, the spot eye's plate and the patrol warning chips | Own work, built pixel by pixel from the master palette by `tools/art/ui.py` (`tools/art/ui_kit.json`) into `assets/art/ui/` | Own work | `tools/art/` | recipe |
 | Pixel font (Spanish accents and ñ required) | Google Fonts "Press Start 2P" (Latin) or "Pixelify Sans" | OFL | `assets/fonts/` | auto |
 | Sea ambience, waves, wind, rain | freesound.org (CC0 filter) / Kenney "Audio" packs | CC0 | `assets/audio/ambience/` | manual |
 | UI and impact SFX | Kenney "Interface Sounds", "Impact Sounds" | CC0 | `assets/audio/sfx/` | auto |

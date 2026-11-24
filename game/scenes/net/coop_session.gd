@@ -28,6 +28,9 @@ signal player_removed(peer_id: int, last_position: Vector2)
 signal host_lost
 ## A quick-chat phrase is shown over `peer_id`'s player (on every peer).
 signal quick_chat_shown(peer_id: int, slot: int)
+## art-guardacostas D6: a loudhailer line or a squad call is shown over `speaker` (on this peer); the
+## HUD's call windows show it.
+signal call_shown(speaker: Node2D, text: String)
 ## The solo pause started or ended.
 signal paused_changed(paused: bool)
 ## The roster changed (a name arrived or a lobby player left).
@@ -1042,6 +1045,11 @@ static func checked_arrivals(arrivals: Dictionary) -> Variant:
 			kept["cell"] = cell
 		clean[peer] = kept
 	return clean
+
+
+## art-guardacostas D6: shows a coast guard call of `text` over `speaker` in the HUD's call windows.
+func show_call(speaker: Node2D, text: String) -> void:
+	call_shown.emit(speaker, text)
 
 
 ## Puts `text` over `speaker` (replacing a bubble already there) and plays `voice` if given.
