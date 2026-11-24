@@ -29,6 +29,7 @@ text = "Ajustes"
 horizontal_alignment = 1
 
 [node name="NameLabel" type="Label" parent="Panel/Rows"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"PanelLabel"
 text = "Nombre"

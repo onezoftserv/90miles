@@ -9,7 +9,7 @@ extends GutTest
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 var settings_path: String = UserTmp.path("test_credits_screen_settings.cfg")
 const SCREEN_RECT: Rect2 = Rect2(0.0, 0.0, 640.0, 360.0)
-const CREDITS_INDEX: int = 4
+const CREDITS_INDEX: int = 5
 const CC_BY: String = "CC BY 4.0"
 const CC_BY_URL: String = "https://creativecommons.org/licenses/by/4.0/"
 const PRESS_START_2P: String = "res://assets/fonts/PressStart2P-Regular.ttf"
@@ -80,8 +80,8 @@ func test_the_title_offers_credits_before_quit_inside_the_screen() -> void:
 	var shell := _shell()
 	await wait_frames(LAYOUT_FRAMES)
 	var buttons := (shell.screen as TitleScreen).buttons()
-	assert_eq(buttons.size(), 6)
-	assert_eq(buttons[CREDITS_INDEX - 1].text, "Ajustes")
+	assert_eq(buttons.size(), 7)
+	assert_eq(buttons[CREDITS_INDEX - 1].text, "Controles")
 	assert_eq(buttons[CREDITS_INDEX].text, "Créditos")
 	assert_eq(buttons[CREDITS_INDEX + 1].text, "Salir")
 	for button: Button in buttons:

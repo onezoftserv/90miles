@@ -13,6 +13,7 @@ const SCREENS: Dictionary[String, String] = {
 	"lobby": "res://scenes/shell/lobby_screen.tscn",
 	"credits": "res://scenes/shell/credits_screen.tscn",
 	"summary": "res://scenes/shell/summary_screen.tscn",
+	"controls": "res://scenes/shell/controls_card.tscn",
 }
 const HOST_LOST_SCENE: PackedScene = preload("res://scenes/ui/host_lost_screen.tscn")
 const PAPER: String = "res://assets/art/ui/panel_paper.png"

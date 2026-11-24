@@ -24,11 +24,13 @@ enum Flow {
 	SETTINGS,
 	HOST_LOST,
 	CREDITS,
+	CONTROLS,
 }
 
 const TITLE_SCENE: PackedScene = preload("res://scenes/shell/title_screen.tscn")
 const SETTINGS_SCENE: PackedScene = preload("res://scenes/shell/settings_screen.tscn")
 const CREDITS_SCENE: PackedScene = preload("res://scenes/shell/credits_screen.tscn")
+const CONTROLS_SCENE: PackedScene = preload("res://scenes/shell/controls_card.tscn")
 const JOIN_SCENE: PackedScene = preload("res://scenes/shell/join_screen.tscn")
 const SUMMARY_SCENE: PackedScene = preload("res://scenes/shell/summary_screen.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
@@ -154,6 +156,7 @@ func show_title() -> void:
 	title.host_requested.connect(start_host)
 	title.join_requested.connect(show_join)
 	title.settings_requested.connect(show_settings)
+	title.controls_requested.connect(show_controls)
 	title.credits_requested.connect(show_credits)
 	title.quit_requested.connect(func() -> void: get_tree().quit())
 	# A join from outside the game kept during a lobby or a run (or one from the launch line)
@@ -175,6 +178,15 @@ func show_credits() -> void:
 	var credits_screen := _show(CREDITS_SCENE, Flow.CREDITS) as CreditsScreen
 	credits_screen.show_credits(load(ArtCredits.STANDARD_PATH) as ArtCredits)
 	credits_screen.back_requested.connect(show_title)
+
+
+## ui-shell "Controles card" (run-menu design D6): on paper, offline; Volver and Esc go back to the
+## title with "Controles" focused.
+func show_controls() -> void:
+	var card := _show(CONTROLS_SCENE, Flow.CONTROLS) as ControlsCard
+	card.back_requested.connect(func() -> void:
+		show_title()
+		(screen as TitleScreen).focus_button(&"Controls"))
 
 
 ## damage-feedback "Reducir destellos": every hit and change cue reads it from HurtCues.
@@ -375,6 +387,9 @@ func _on_host_lost() -> void:
 		_end_run.call_deferred()
 		return
 	_close_screen()
+	# An open run menu closes first, so it neither keeps the focus nor holds the input (design D8).
+	if hud != null and hud.pause_menu != null:
+		hud.pause_menu.resume()
 	flow = Flow.HOST_LOST
 	host_lost_screen = HOST_LOST_SCENE.instantiate() as HostLostScreen
 	add_child(host_lost_screen)
@@ -503,6 +518,14 @@ func _enter_run() -> void:
 	hud.world_view = world_view
 	add_child(hud)
 	hud.bind(session, session.multiplayer.get_unique_id(), session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer)
+	# The run menu (run-menu design D1): its Ajustes saves into these settings, and "Abandonar"
+	# leaves as "Volver al inicio" does, for every role (design D5). Deferred: the menu is freed
+	# with the HUD.
+	var menu: PauseMenu = hud.pause_menu
+	menu.settings = settings
+	menu.abandon_confirmed.connect(back_to_title, CONNECT_DEFERRED)
+	menu.display_changed.connect(_on_display_changed)
+	menu.flashes_changed.connect(apply_flashes)
 	_wait_label = _make_wait_label()
 	hud.add_child(_wait_label)
 

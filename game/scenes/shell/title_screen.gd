@@ -8,6 +8,7 @@ signal solo_requested
 signal host_requested
 signal join_requested
 signal settings_requested
+signal controls_requested
 signal credits_requested
 signal quit_requested
 
@@ -17,6 +18,7 @@ const DESCRIPTIONS: Array[String] = [
 	"Abre una partida para hasta 4 jugadores. Los demás se unen por IP en el puerto UDP 7777.",
 	"Entra a la partida de un amigo con su dirección IP.",
 	"Tu nombre, pantalla completa y escala.",
+	"Las teclas y los botones del mando para cada cosa.",
 	"Quién hizo el arte y las fuentes del juego, y con qué licencias.",
 	"Cierra el juego.",
 ]
@@ -31,7 +33,7 @@ const DESCRIPTIONS: Array[String] = [
 
 func _ready() -> void:
 	version.text = "v%s" % ProjectSettings.get_setting("application/config/version", "")
-	var requests: Array[Signal] = [solo_requested, host_requested, join_requested, settings_requested, credits_requested, quit_requested]
+	var requests: Array[Signal] = [solo_requested, host_requested, join_requested, settings_requested, controls_requested, credits_requested, quit_requested]
 	var menu := buttons()
 	for i: int in menu.size():
 		menu[i].pressed.connect(requests[i].emit)
@@ -49,6 +51,14 @@ func buttons() -> Array[Button]:
 		if button != null:
 			found.append(button)
 	return found
+
+
+## Puts the focus on the button named `node_name` (as in the scene: "Settings", "Controls"), as
+## when a screen it opened closes.
+func focus_button(node_name: StringName) -> void:
+	var button := _menu.get_node_or_null(NodePath(String(node_name))) as Button
+	if button != null:
+		button.grab_focus()
 
 
 func _describe(index: int) -> void:
