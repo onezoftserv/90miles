@@ -8,11 +8,17 @@ extends Node
 ## prints the raft's integrity and lateral position at each capture, and quits.
 ##   godot --path game res://tests/manual/capture_crossing_gameplay.tscn [-- --out=<dir>]
 ## Writes <dir>/gameplay_<name>.png (default dir: user://crossing_gameplay_captures).
+## With `rolled` set (capture_crossing_timeline.tscn) it keeps the shell's rolled plan instead, rides
+## it idle and prints the timeline second by second: what is on the sea and the rider's choices then
+## (crossing-gameplay task 9.2), and the longest gap between decisions outside a squall's blow.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://capture_crossing_gameplay.cfg"
 const DAYLIGHT_AFTER_S: float = 60.0
 const K := CrossingBeat.Kind
+
+## Keep the shell's rolled plan and print its timeline instead of the scripted capture.
+@export var rolled: bool = false
 
 var _out_dir: String = ProjectSettings.globalize_path("user://crossing_gameplay_captures")
 var _crossing: Crossing
@@ -44,6 +50,10 @@ func _ready() -> void:
 	if _crossing == null:
 		push_error("capture_crossing_gameplay: the raft did not leave")
 		get_tree().quit(1)
+		return
+	if rolled:
+		await _timeline()
+		get_tree().quit()
 		return
 	await _until(4.5)
 	_save("coming")
@@ -91,7 +101,7 @@ func _launch_raft(session: CoopSession) -> Crossing:
 	if not session.start_route_for(1, &"raft"):
 		return null
 	var crossing := session.get_node_or_null(NodePath(Crossing.node_name_for(0))) as Crossing
-	if crossing != null:
+	if crossing != null and not rolled:
 		var tuning := CrossingTuning.standard()
 		var beats: Array[RefCounted] = [
 			CrossingBeat.create(7.0, K.DEBRIS, -3),
@@ -105,8 +115,60 @@ func _launch_raft(session: CoopSession) -> Crossing:
 	return crossing
 
 
+# The rolled plan, then one line a second: integrity, position, and each beat on the sea with the
+# rider's choice for it; then the gaps between beats.
+func _timeline() -> void:
+	var plan := _crossing.plan
+	var listed: PackedStringArray = []
+	for item: RefCounted in plan.events:
+		var beat := item as CrossingBeat
+		listed.append("%s@%.1f(lane %d)" % [CrossingBeat.Kind.keys()[beat.kind], beat.time_s, beat.lane])
+	print("TIMELINE plan %.1f s: %s" % [plan.length_s, ", ".join(listed)])
+	var second: int = 0
+	var choices := {
+		CrossingBeat.Kind.ROCK: "paddle out of its lane",
+		CrossingBeat.Kind.DEBRIS: "paddle out, or plug the leak",
+		CrossingBeat.Kind.FLOTSAM: "paddle to it and grab, or let it pass",
+		CrossingBeat.Kind.SHARK_PASS: "shoo the fin, or climb out",
+		CrossingBeat.Kind.SQUALL: "tie down late, then untie",
+		CrossingBeat.Kind.SQUALL_WARN: "watch the line",
+	}
+	var length_s: float = plan.length_s
+	var squall_blow_s: float = _crossing.tuning.squall_blow_s
+	var integrity: Array[float] = [_crossing.integrity.value]
+	_crossing.ended.connect(func(result: CrossingResult) -> void: integrity[0] = 0.0 if result.broken else result.integrity)
+	while is_instance_valid(_crossing) and not _crossing.finished:
+		await _until(float(second))
+		if not is_instance_valid(_crossing) or _crossing.finished:
+			break
+		var seen: PackedStringArray = []
+		for item: RefCounted in plan.events:
+			var beat := item as CrossingBeat
+			var ahead: float = beat.time_s - _crossing.elapsed_s
+			var lead: float = 60.0 if beat.kind == CrossingBeat.Kind.SQUALL else 5.0
+			if ahead > 0.0 and ahead <= lead and beat.kind != CrossingBeat.Kind.SQUALL_WARN:
+				seen.append("%s in %.1f s: %s" % [CrossingBeat.Kind.keys()[beat.kind], ahead, choices[beat.kind]])
+		print("TIMELINE t=%2d integrity %5.1f position %5.2f | %s" % [second, _crossing.integrity.value, _crossing.steer.position, "; ".join(seen) if not seen.is_empty() else "nothing to decide"])
+		if second == 20:
+			_save("rolled_20s")
+		integrity[0] = _crossing.integrity.value
+		second += 1
+	var times: Array[float] = []
+	for item: RefCounted in plan.events:
+		var beat := item as CrossingBeat
+		if beat.kind != CrossingBeat.Kind.SQUALL_WARN and (times.is_empty() or absf(times[-1] - beat.time_s) > 0.001):
+			times.append(beat.time_s)
+	var widest: float = times[0] if not times.is_empty() else length_s
+	var hit: float = plan.squall_hit_s()
+	for index: int in range(1, times.size()):
+		if hit >= 0.0 and times[index - 1] >= hit - 0.001 and times[index - 1] < hit + squall_blow_s:
+			continue
+		widest = maxf(widest, times[index] - times[index - 1])
+	print("TIMELINE done: integrity %.1f, %d beats, widest gap between decisions %.1f s (the calm start counted, a squall's blow not)" % [integrity[0], times.size(), widest])
+
+
 func _until(at_s: float) -> void:
-	while _crossing != null and _crossing.elapsed_s < at_s and not _crossing.finished:
+	while is_instance_valid(_crossing) and _crossing.elapsed_s < at_s and not _crossing.finished:
 		await get_tree().process_frame
 
 

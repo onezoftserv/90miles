@@ -47,7 +47,12 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 - [x] `crossing`: scrolling sea, raft integrity, squall event, fall-in and rescue
 - [x] `crossing-late-join`: a client that joins or rejoins mid-crossing sees the crossing and the route departures
 - [x] `crossing-shark-sync`: every peer, and a late joiner, sees the crossing's reef shark
-- [ ] `crossing-gameplay` (OpenSpec change proposed 2026-11-14 after the owner found the raft part boring; owner accepted the recommended option on all of Q1–Q12 on 2026-11-15; building in 3 PRs): telegraphed beats with counters (paddle round rocks and the reef line, plug leaks, grab flotsam, shoo the shark), a pacing budget of a decision every 6–9 s solo, the squall's rain, a crossing HUD. Baseline on cb7834f: 31.9% of coast raft crossings hold no event and 84% hold no decision
+- [x] `crossing-gameplay` (owner accepted the recommended option on all of Q1–Q12, 2026-11-15; built 2026-11-15 in three stacked PRs: #66 paddling, hazards and the paced plan, #70 leaks and flotsam, #75 the shark's fin and shoo, the crossing HUD and the balance check; merge in that order; not archived). Baseline on cb7834f: 31.9% of coast raft crossings held no event and 84% no decision. Now a decision every 6–9 s solo; measured over 500 rolled 75 s plans an idle solo rider keeps 29.5 integrity (30% broken), an attentive one 91.8. Two and three processes on UDP 7794 (`tests/manual/crossing_gameplay_run.gd`, host, client and a late joiner) passed twice
+  - [ ] `crossing-encounters`: a run deck of mid-crossing encounters (dolphins, a turtle in a net, another raft in trouble), SPD `SpecialRoom.initForRun` style (owner Q6, next)
+  - [ ] `crossing-fishing`: a fishing line for the Pescador (owner Q6, after encounters)
+  - [ ] The interact prompt over the rider's head hides hazards in the last tiles before the deck; look at it in the HUD and art review
+  - [ ] Owner's voice pass on the crossing's warning lines (`game/resources/crossing_text.tres`) and prompt verbs (Remar, Tapar, Agarrar, Espantar)
+  - [ ] Real art for rocks, debris, flotsam, leaks and the fin (placeholders drawn in the master palette today)
 - [x] `status-sync`: a player's statuses (bleeding) reach every peer, late joiners included, and a "Sangrando" tag shows on the HUD
 - [x] `dropped-teammate-state` (merged (#44), archived 2026-11-14):
   - Every peer knows a dropped teammate (a host-written flag in the body's synced state), so their row reads "Desconectado" on the host, the clients and late joiners.
