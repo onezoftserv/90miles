@@ -95,6 +95,11 @@ jobs:
           python3 -I -m unittest discover -s tools/art -p 'test_*.py'
           python3 -I -m unittest discover -s tools -p 'test_fetch_assets.py'
 
+      # The sound generator (sound-pass D1): offline, standard library only. It checks every
+      # tracked WAV under game/assets/audio/ against a fresh render of tools/audio/sounds.json.
+      - name: Audio tool tests (Python)
+        run: python3 -I -m unittest discover -s tools/audio -p 'test_*.py'
+
       # Runs the real game loop (autoloads first, then the main scene) to catch runtime errors in
       # autoloads and scenes outside the smoke script, and resource leaks reported at exit.
       - name: Run the game headless
