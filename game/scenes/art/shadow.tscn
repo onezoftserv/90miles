@@ -5,9 +5,10 @@
 [ext_resource type="Texture2D" path="res://assets/art/shadows/shadow_8x4.png" id="3_medium"]
 [ext_resource type="Texture2D" path="res://assets/art/shadows/shadow_6x3.png" id="4_small"]
 [ext_resource type="Texture2D" path="res://assets/art/shadows/shadow_23x5.png" id="5_lying"]
+[ext_resource type="Texture2D" path="res://assets/art/shadows/shadow_30x11.png" id="6_wide"]
 
 [node name="Shadow" type="Sprite2D" groups=["art_view"]]
 z_index = -1
 texture = ExtResource("2_large")
 script = ExtResource("1_shadow")
-textures = Array[Texture2D]([ExtResource("2_large"), ExtResource("3_medium"), ExtResource("4_small"), ExtResource("5_lying")])
+textures = Array[Texture2D]([ExtResource("2_large"), ExtResource("3_medium"), ExtResource("4_small"), ExtResource("5_lying"), ExtResource("6_wide")])
