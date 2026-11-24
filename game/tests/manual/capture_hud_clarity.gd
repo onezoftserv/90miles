@@ -20,8 +20,8 @@ const NIGHT_S: float = 450.0
 ## The rows and the meters window, in base pixels (the window is 640×360 at 1×).
 const TOP_BAND: Rect2i = Rect2i(0, 0, 640, 72)
 const METERS_WINDOW: Rect2i = Rect2i(0, 0, 144, 96)
-## How far from the raft site the arrow capture stands, in pixels (out of view to the east).
-const ARROW_OFFSET: Vector2 = Vector2(420.0, -40.0)
+## Frames for a change float to fade before the next capture.
+const FLOAT_FADE_FRAMES: int = 150
 const BLEED_WAIT_S: float = 60.0
 
 var _out_dir: String = ""
@@ -118,15 +118,16 @@ func _capture_sunstroke() -> void:
 	await _save("sunstroke_meters.png", METERS_WINDOW)
 	meters.heat = 0.0
 	meters.sunstroke = false
-	await _frames(2)
+	await _frames(FLOAT_FADE_FRAMES)
 
 
-# Far east of the raft site: the arrow on the frame's left edge points west (after the change only).
+# On the sand by the southern tide pools, the raft site far off to the north-west: the arrow on
+# the frame points at it (after the change only).
 func _capture_arrow() -> void:
 	var site := _shell.session.get_node_or_null(^"RaftSite") as Node2D
 	if site == null or _shell.hud.get_node_or_null(^"SiteArrow") == null:
 		return
-	await _place(site.global_position + ARROW_OFFSET)
+	await _place(IslandLayout.cell_center(_shell.island.built.tide_pools[0] + Vector2i(0, -1)))
 	await _save("arrow.png")
 
 

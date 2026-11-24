@@ -19,17 +19,17 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 
 ## 2. Clock row
 
-- [ ] 2.1 Tests for `DayStrip` (pure): segment edges, the marker's column, the time left and its format ("11h" at 09:00, "2h" orange at 18:30, "20m" at 05:40, "14h" at dawn), and the phase word for every stretch, including "Mañana" and "Tarde"
-- [ ] 2.2 Tests (1 player, offline) on a solo run: the clock row reads "Día 1 … 11h … Mañana" at 09:00; "Día 2" after travel to the coast cay; the row's rect is (152,4)–(380,18); and `PhasePanel`/`%Phase` still exist
-- [ ] 2.3 Build `DayStrip` and `ClockStrip`, and the kit icons `clock_moon` and `clock_sun` via `tools/art/ui.py`; grow `PhasePanel` to (152,4)–(380,18); `RunHud.phase_name()` returns the new words; update the six test files that read phase words
+- [x] 2.1 Tests for `DayStrip` (pure): segment edges, the marker's column, the time left and its format ("11h" at 09:00, "2h" orange at 18:30, "20m" at 05:40, "14h" at dawn), and the phase word for every stretch, including "Mañana" and "Tarde"
+- [x] 2.2 Tests (1 player, offline) on a solo run: the clock row reads "Día 1 … 11h … Mañana" at 09:00; "Día 2" after travel to the coast cay; the row's rect is (152,4)–(380,18); and `PhasePanel`/`%Phase` still exist
+- [x] 2.3 Build `DayStrip` and `ClockStrip`, and the kit icons `clock_moon` and `clock_sun` via `tools/art/ui.py`; grow `PhasePanel` to (152,4)–(380,18); `RunHud.phase_name()` returns the new words; update the test that read the old phase word (only `test_run_hud.gd` did)
 - [ ] 2.4 Import, smoke and GUT pass
 
 ## 3. Objective row
 
-- [ ] 3.1 Tests for `Objective` (pure, 1 player, offline): every step in spec order (first frame "0/6 madera", carried plus deposited "0/2 cámaras", "Lleva to' pa' la balsa", "Dale a la balsa: 40%", "Espera la noche pa' zarpar" by day with a patrol boat out, "Zarpa pa'l cayo" at night and in a squall, the launch line with no boat out, "Aguanta hasta tierra", coast cay "Zarpa pa'l norte", English "Build the raft: 0/6 wood"); a bench-placed build site is ignored; on the hidden cay nothing names the cay, chest, map or compass
-- [ ] 3.2 Test that every objective line, filled to its longest (each vessel build-site recipe's inputs at their real need, 100%), fits 27 glyphs in Spanish and English
-- [ ] 3.3 Tests (1 player, offline) for `ObjectiveRow` in `RunHud`: shown under the clock inside (152,20)–(380,30); hidden while the hut note is open and shown again after; hidden while a screen is shown
-- [ ] 3.4 Build `Objective`, `ObjectiveRow` and the `RunHud` wiring (island layout from `Travel`, settable in tests); add a `BuildSite` progress accessor if none exists
+- [x] 3.1 Tests for `Objective` (pure, 1 player, offline): every step in spec order (first frame "0/6 madera", carried plus deposited "0/2 cámaras", "Lleva to' pa' la balsa", "Dale a la balsa: 40%", "Espera la noche pa' zarpar" by day with a patrol boat out, "Zarpa pa'l cayo" at night and in a squall, the launch line with no boat out, "Aguanta hasta tierra", coast cay "Zarpa pa'l norte", English "Build the raft: 0/6 wood"); a bench-placed build site is ignored; on the hidden cay nothing names the cay, chest, map or compass
+- [x] 3.2 Test that every objective line, filled to its longest (each vessel build-site recipe's inputs at their real need, 100%), fits 27 glyphs in Spanish and English
+- [x] 3.3 Tests (1 player, offline) for `ObjectiveRow` in `RunHud`: shown under the clock inside (152,20)–(380,30); hidden while the hut note is open and shown again after; hidden while a screen is shown
+- [x] 3.4 Build `Objective`, `ObjectiveRow` and the `RunHud` wiring (island layout from `Travel`, settable in tests); add a `BuildSite` progress accessor if none exists
 - [ ] 3.5 Import, smoke and GUT pass
 
 ## 4. Top band and needle
@@ -40,8 +40,8 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 
 ## 5. Raft-site arrow
 
-- [ ] 5.1 Tests (1 player, offline): the arrow points west on the frame's left edge when the site is out of view to the west, and is gone when it is in view; its rect stays inside (8,96)–(632,300) and off every HUD window for targets in all eight directions; hidden at sea, with the crafting list or sign note open, and under a screen; it follows `Raft` once built
-- [ ] 5.2 Build `SiteArrow` and the kit icons `arrow_straight` and `arrow_diagonal`
+- [x] 5.1 Tests (1 player, offline): the arrow points west on the frame's left edge when the site is out of view to the west, and is gone when it is in view; its rect stays inside (8,96)–(632,300) and off every HUD window for targets in all eight directions; hidden at sea, with the crafting list or sign note open, and under a screen; it follows `Raft` once built
+- [x] 5.2 Build `SiteArrow` and the kit icons `arrow_straight` and `arrow_diagonal`
 - [ ] 5.3 Import, smoke and GUT pass
 
 ## 6. Meters: Calor last, Insolación and Sangrando rows

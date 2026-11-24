@@ -115,6 +115,8 @@ static func _is_number(value: Variant) -> bool:
 func _write_climate() -> void:
 	climate.phase = clock.phase()
 	climate.midday = clock.is_midday()
+	climate.time_of_day_s = clock.time_of_day_s
+	climate.day = clock.day
 	climate.heat_factor = weather.current.heat_gain_mult
 	climate.weather_id = weather.current.id
 

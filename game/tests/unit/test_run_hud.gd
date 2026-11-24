@@ -57,7 +57,7 @@ func test_critical_thirst() -> void:
 func test_solo_hud() -> void:
 	var hud := _hud(_session(), true)
 	assert_true(hud.meters.visible)
-	assert_eq(hud.phase_label.text, "Día")
+	assert_eq(hud.phase_label.text, "Mañana", "a bare session's climate: the day, before midday")
 	assert_false(hud.teammates_panel.visible, "no teammate list in solo")
 	assert_null(hud.wheel, "no quick-chat wheel in solo")
 
