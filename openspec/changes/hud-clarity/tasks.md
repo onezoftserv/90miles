@@ -62,8 +62,8 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 
 - [x] 8.1 GUT net test (host plus client in one process): a client's clock row matches the host's after a resync; a client's objective row follows the host's deposits; a client's "Sangrando" bar follows the host's time left
 - [x] 8.2 Two-process manual run on UDP 7800 (`tests/manual/hud_clarity_run.gd`): host and client each check the clock, the objective and the bleeding bar on the client, 3 runs, 0 engine errors
-- [ ] 8.3 "After" captures matching 0.2, plus the arrow and the hut note, in `docs/ui-shell/hud-clarity/after/`
-- [ ] 8.4 Update `docs/GAME_DESIGN.md` (the HUD list in §4 and §5), `TASKS.md` (this change's line, plus follow-ups: "Cayo 1/3", Energía and Ánimo, the sábila pulse) and the change's design.md with anything learned
+- [x] 8.3 "After" captures matching 0.2, plus the arrow and the hut note, in `docs/ui-shell/hud-clarity/after/`
+- [x] 8.4 Update `docs/GAME_DESIGN.md` (the HUD list in §4 and §5), `TASKS.md` (this change's line, plus follow-ups: "Cayo 1/3", Energía and Ánimo, the sábila pulse) and the change's design.md with anything learned
 - [ ] 8.5 Import, smoke and GUT pass; `openspec validate hud-clarity --type change --strict` passes
 
 ## Workflow follow-up

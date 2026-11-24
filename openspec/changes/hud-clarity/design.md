@@ -260,4 +260,15 @@ The palette test already covers `assets/art/ui/`. The strip and the bars are dra
 - **Consistency with island-pressure Q1 (a).** Every daytime launch from a patrolled island is seen, so players leave at night or in a squall. The hut note's "zarpa con luz" became "zarpa de noche o con la turbonada: de día la lancha te ve", and the objective gained the wait step "Espera la noche pa' zarpar" ("Objective waits for the dark").
 
 ## Open Questions
-- Whether a 9 px status row reads as well as a 10 px one at 1×. This is settled by the capture in task 6. It does not change the specs (the rect rule holds either way).
+- Settled in the build: the status rows did not need to drop to 9 px. With both rows on, 6 meter rows and 2 status rows of 10 px plus the window's margins end exactly at y 90 (`test_status_rows`, "both rows stay in the corner").
+
+## Build notes (2026-11-23)
+- **Short names are capped at 8, not 10.** "Arma la balsa: 9/9 " is 19 glyphs, so only an 8-letter noun keeps the gather line inside 27. Two-digit counts would not fit; no raft input needs ten. The length test fills each vessel build-site recipe's inputs at their real need.
+- **The climate carries the time.** `ClimateState` gained `time_of_day_s` and `day`, written by `WorldSky` with the rest. The clock row reads the session's climate, which the host's sky writes and a client's follows, so it needs no sky of its own, and a bare test session still draws a row.
+- **Only `test_run_hud.gd` read the old phase word** ("Día"), not six files.
+- **The wait rule reads the weather, not its id.** `Objective.launch_waits` checks the current `WeatherData`'s `patrols_in_port` and a disabled `SIGHT`, as island-pressure's D4 does, rather than the id `squall`. On main the sandbar already has a patrol boat out at every phase, so the row says "Espera la noche pa' zarpar" by day even before island-pressure enforces it. That is the advice the owner chose, and the hut note gives the same.
+- **Kit icons must be named by a scene.** `test_art_tracked` counts only `.tscn` and `.tres` as referrers, so the clock marks and the arrows are exports set in `run_hud.tscn`, and the status icons are set in `meters_hud.tscn`.
+- **The thermometer's tints** are the master palette's plum `#45283c` (the old empty colour), dark mustard `#524b24` and dark red-brown `#663931`; a brighter brown for the top zone read as a filled bar at heat 0. The status rows' time bars use the track colour `#3f3f74` for their empty part, so a half-drained bar reads as half.
+- **The session's language is not set from Ajustes yet.** `CoopSession.locale` stays "es" unless code sets it; the English lines are tested by setting it.
+- **Co-op checks.** `test_hud_clarity_net.gd` (host and client in one process, each with its own sky) and `tests/manual/hud_clarity_run.gd` over UDP 7800: 3 runs, host 9/9 and client 7/7 checks each, no engine errors. The client's Sangrando bar read 0.996, then 0.971 three seconds later, matching its synced time.
+- **Captures.** `tests/manual/capture_hud_clarity.tscn` frames "before" (`docs/ui-shell/hud-clarity/before/`) and "after" (`.../after/`) the same way.
