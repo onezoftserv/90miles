@@ -160,6 +160,9 @@ func show_title() -> void:
 	title.controls_requested.connect(show_controls)
 	title.credits_requested.connect(show_credits)
 	title.quit_requested.connect(func() -> void: get_tree().quit())
+	# ui-shell "First-launch name": once per install, while the name is still the default.
+	if settings.player_name == GameSettings.DEFAULT_NAME and not settings.name_asked:
+		title.ask_name(settings)
 	# A join from outside the game kept during a lobby or a run (or one from the launch line)
 	# starts now. Deferred: the title may show inside a NetManager signal.
 	_take_outside_join.call_deferred()

@@ -23,6 +23,11 @@ const DESCRIPTIONS: Array[String] = [
 	"Cierra el juego.",
 ]
 
+const NAME_PROMPT_SCENE: PackedScene = preload("res://scenes/shell/name_prompt.tscn")
+
+## The first-launch name window while it is open (run-menu design D7), else null.
+var name_prompt: NamePrompt = null
+
 @onready var sea: ColorRect = %Sea
 @onready var logo: Label = %Logo
 @onready var flavour: Label = %Flavour
@@ -51,6 +56,29 @@ func buttons() -> Array[Button]:
 		if button != null:
 			found.append(button)
 	return found
+
+
+## Opens the first-launch name window over the menu: the buttons give up the focus until it
+## closes, then "Jugar solo" takes it.
+func ask_name(source: GameSettings) -> void:
+	if name_prompt != null:
+		return
+	for button: Button in buttons():
+		button.focus_mode = Control.FOCUS_NONE
+	name_prompt = NAME_PROMPT_SCENE.instantiate() as NamePrompt
+	add_child(name_prompt)
+	name_prompt.closed.connect(_on_name_given)
+	name_prompt.ask(source)
+
+
+func _on_name_given() -> void:
+	if name_prompt != null:
+		name_prompt.queue_free()
+		name_prompt = null
+	var menu := buttons()
+	for button: Button in menu:
+		button.focus_mode = Control.FOCUS_ALL
+	menu[0].grab_focus()
 
 
 ## Puts the focus on the button named `node_name` (as in the scene: "Settings", "Controls"), as
