@@ -46,6 +46,8 @@ func _kill(body: PlayerBody) -> void:
 	body.meters.thirst = 0.0
 	body.meters.health = 2.0
 	body.meters.tick(1.0, MeterContext.new())
+	# island-pressure: a solo player on land gets a 12 s last stand before dying of thirst.
+	body.meters.tick(12.0, MeterContext.new())
 
 
 # A solo run with the raft built and launched; the crossing's plan is 60 s with no beats.

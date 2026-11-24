@@ -75,7 +75,8 @@ func test_a_client_sees_the_shared_progress_at_50_percent() -> void:
 	builder.inventory.add(&"inner_tube", 2)
 	builder.inventory.add(&"rope", 3)
 	host_site.deposit(builder)
-	host_site.work(0.5)
+	# island-pressure: 45 of 120 s is halfway through the second stage.
+	host_site.work(45.0 / 120.0)
 	var site := client.get_node("RaftSite") as BuildSite
 	_place(host, client, me, site.global_position + Vector2(4.0, 0.0))
 	var half := func() -> bool:
@@ -83,7 +84,7 @@ func test_a_client_sees_the_shared_progress_at_50_percent() -> void:
 		return is_equal_approx(hud.prompt.bar_progress(), 0.5)
 	assert_true(await wait_until(half, TIMEOUT_S), "the client's prompt shows the host's progress")
 	assert_same(hud.prompt.target, site.interactable, "over the client's own copy")
-	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "50 %"]))
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "Etapa 2/4: Armar el piso", "50 %"]))
 
 
 func _as(identity: PlayerIdentity, player_name: String = "Papo") -> Callable:
@@ -160,7 +161,7 @@ func test_a_client_joining_after_deposits_reads_the_raft_sites_live_state() -> v
 	var host_site := host.get_node("RaftSite") as BuildSite
 	var builder := host.body(CoopSession.HOST_ID)
 	builder.global_position = host_site.global_position
-	builder.inventory.add(&"driftwood", 2)
+	builder.inventory.add(&"inner_tube", 2)
 	host_site.deposit(builder)
 	var client := await net.join(_setup)
 	assert_not_null(client)
@@ -171,6 +172,7 @@ func test_a_client_joining_after_deposits_reads_the_raft_sites_live_state() -> v
 	_place(host, client, net.peer_id(client), site.global_position + Vector2(4.0, 0.0))
 	var live := func() -> bool:
 		hud.prompt.tick(STEP_S)
-		return hud.prompt.lines().size() > 1 and hud.prompt.lines()[1] == "Falta: Madera de la costa x4"
+		return hud.prompt.lines().size() > 2 and hud.prompt.lines()[2] == "Falta: Soga x1"
 	assert_true(await wait_until(live, TIMEOUT_S), "the level's site, made before the join, asks for its state")
-	assert_eq(site.deposited.get(&"driftwood", 0), 2)
+	assert_eq(site.deposited.get(&"inner_tube", 0), 2)
+	assert_eq(hud.prompt.lines()[1], "Etapa 1/4: Amarrar las cámaras")

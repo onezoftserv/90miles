@@ -1,6 +1,7 @@
 extends GutTest
-## survival-meters "Solo last stand" and "Free revive" (user decisions, 2026-11-05): a solo player
-## at 0 health gets 0 s plus their downed-timer bonuses; the Medalla's free revive stands its holder
+## survival-meters "Solo last stand" and "Free revive" (user decisions, 2026-11-05; island-pressure,
+## 2026-11-23): a solo player at 0 health gets 12 s on land plus their downed-timer bonuses, and the
+## bonuses alone at sea; the Medalla's free revive stands its holder
 ## at 30 once per run, solo or not. Bonus values come from endings-progression; tests set them.
 
 const M := DataEnums.Meter
@@ -25,9 +26,24 @@ func _hit_zero() -> void:
 	meters.add(M.HEALTH, -meters.health)
 
 
-func test_solo_on_run_1_with_no_bonus_dies_at_once() -> void:
+func test_solo_on_run_1_with_no_bonus_gets_12_s_on_land() -> void:
 	meters.solo = true
 	meters.downed_bonus_s = 0.0
+	_hit_zero()
+	assert_true(meters.last_stand)
+	assert_false(meters.downed)
+	assert_eq(meters.downed_time_left_s, 12.0)
+	_run(11.75)
+	assert_false(meters.dead)
+	_run(0.25)
+	assert_true(meters.dead)
+
+
+func test_solo_on_run_1_at_sea_dies_at_once() -> void:
+	meters.solo = true
+	var sea := MeterContext.new()
+	sea.at_sea = true
+	meters.tick(0.0, sea)
 	_hit_zero()
 	assert_true(meters.dead)
 	assert_false(meters.last_stand)
@@ -42,20 +58,20 @@ func test_last_stand_lasts_the_experiencia_bonus() -> void:
 	assert_true(meters.last_stand)
 	assert_false(meters.downed, "a last stand is not downed")
 	assert_false(meters.dead)
-	assert_eq(meters.downed_time_left_s, 15.0)
+	assert_eq(meters.downed_time_left_s, 27.0, "12 s on land and the 15 s bonus")
 	assert_signal_emitted_with_parameters(meters, "last_stand_changed", [true])
-	_run(14.0)
+	_run(26.0)
 	assert_false(meters.dead, "1 s left")
 	_run(1.0)
 	assert_true(meters.dead)
 
 
-func test_the_10_s_point_boost_alone_gives_a_10_s_last_stand() -> void:
+func test_the_10_s_point_boost_adds_10_s_to_the_last_stand() -> void:
 	meters.solo = true
 	meters.downed_bonus_s = 10.0
 	_hit_zero()
-	_run(9.75)
-	assert_false(meters.dead)
+	_run(21.75)
+	assert_false(meters.dead, "12 s on land and the 10 s boost")
 	_run(0.25)
 	assert_true(meters.dead)
 
@@ -104,7 +120,8 @@ func test_the_medalla_saves_a_solo_player_once() -> void:
 	assert_eq(meters.free_revives, 0, "the revive is used up")
 	assert_signal_emitted(meters, "free_revive_used")
 	_hit_zero()
-	assert_true(meters.dead, "the second time they die")
+	assert_true(meters.last_stand, "the second time, a 12 s last stand")
+	assert_eq(meters.downed_time_left_s, 12.0)
 
 
 func test_the_medalla_comes_before_the_last_stand() -> void:

@@ -85,6 +85,10 @@ func _raft_pair() -> Array[CoopSession]:
 	builder.inventory.add(&"rope", 3)
 	site.deposit(builder)
 	site.work(1.0)
+	# island-pressure: by day the island's patrol would see the launch; this test is about the crossing.
+	for boat: Creature in LaunchSight.boats_of(host):
+		boat.get_parent().remove_child(boat)
+		boat.queue_free()
 	assert_true(host.start_route_for(1, &"raft"), "the raft leaves with both")
 	var crossing := host.get_node_or_null(^"Crossing0") as Crossing
 	if crossing == null:

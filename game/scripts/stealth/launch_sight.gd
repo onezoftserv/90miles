@@ -8,6 +8,8 @@ extends RefCounted
 ## position), so the host's launch check and every peer's prompt warning give the same answer.
 
 const TILE: float = 16.0
+## The island's creature spawner in its session (SandbarIsland.CREATURES_NAME).
+const CREATURES_NAME: StringName = &"Creatures"
 
 
 ## The first boat (by member index) of `boats` that sees a launch at `point_px` in `phase` and
@@ -47,9 +49,12 @@ static func seen_in(session: CoopSession, point_px: Vector2) -> Creature:
 
 ## The weather the island's boats run on: the host's creature world, else the shared sky.
 static func weather_of(session: CoopSession) -> WeatherData:
-	var spawner := session.get_node_or_null(NodePath(SandbarIsland.CREATURES_NAME)) as CreatureSpawner
-	if spawner != null and spawner.world != null:
-		return spawner.world.weather()
+	# Read by name and by duck typing: naming the island's class here would close a load cycle (the
+	# island preloads the raft scene, whose routes read this sight).
+	var spawner: Node = session.get_node_or_null(NodePath(CREATURES_NAME))
+	var world: Object = spawner.get(&"world") if spawner != null else null
+	if world != null and world.has_method(&"weather"):
+		return world.call(&"weather") as WeatherData
 	return WeatherManager.sky.weather.current
 
 

@@ -1,7 +1,8 @@
 extends GutTest
 ## survival-meters "Cause of death" and "Cause ids", with exactly 1 player unless a test says
 ## otherwise: health losses name their cause, a downed player or a last stand keeps the cause that
-## put them down, a free revive records nothing, and the cause reaches clients before `dead`.
+## put them down, a free revive records nothing, and the cause reaches clients before `dead`. A solo
+## player on land gets a 12 s last stand first (island-pressure); a rider at sea dies at once.
 
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player/player.tscn")
 const SHARK: StringName = &"reef_shark"
@@ -31,7 +32,9 @@ func test_a_solo_player_dies_of_thirst() -> void:
 	meters.thirst = 0.0
 	meters.health = 2.0
 	meters.tick(1.0, MeterContext.new())
-	assert_true(meters.dead)
+	assert_true(meters.last_stand, "health 0 after 1 s: the 12 s last stand")
+	meters.tick(12.0, MeterContext.new())
+	assert_true(meters.dead, "dead after 13 s")
 	assert_eq(meters.death_cause, &"thirst")
 
 
@@ -61,7 +64,9 @@ func test_a_revive_forgets_the_downing_cause() -> void:
 	assert_false(meters.dead)
 	assert_almost_eq(meters.health, 2.0, 0.001)
 	meters.tick(1.0, MeterContext.new())
-	assert_true(meters.dead)
+	assert_true(meters.last_stand)
+	meters.tick(12.0, MeterContext.new())
+	assert_true(meters.dead, "dead after 27 s")
 	assert_eq(meters.death_cause, &"thirst")
 
 
@@ -71,10 +76,10 @@ func test_a_solo_last_stand_keeps_the_crab() -> void:
 	meters.downed_bonus_s = 15.0
 	meters.harm(100.0, CRAB)
 	assert_true(meters.last_stand)
-	meters.tick(14.0, MeterContext.new())
+	meters.tick(26.0, MeterContext.new())
 	assert_false(meters.dead)
 	meters.tick(1.0, MeterContext.new())
-	assert_true(meters.dead)
+	assert_true(meters.dead, "dead after 27 s")
 	assert_eq(meters.death_cause, CRAB)
 
 
@@ -83,11 +88,12 @@ func test_poison_is_other() -> void:
 	meters.solo = true
 	meters.health = 10.0
 	meters.add_over_time(DataEnums.Meter.HEALTH, -20.0, 30.0)
-	for i: int in 14:
+	for i: int in 16:
 		meters.tick(1.0, MeterContext.new())
-	assert_false(meters.dead)
-	meters.tick(1.0, MeterContext.new())
-	assert_true(meters.dead)
+	assert_true(meters.last_stand, "in a last stand after 16 s")
+	for i: int in 11:
+		meters.tick(1.0, MeterContext.new())
+	assert_true(meters.dead, "dead after 27 s")
 	assert_eq(meters.death_cause, &"other")
 
 
@@ -106,6 +112,8 @@ func test_a_plain_health_loss_is_other() -> void:
 	var meters := _meters()
 	meters.solo = true
 	meters.add(DataEnums.Meter.HEALTH, -100.0)
+	assert_true(meters.last_stand)
+	meters.tick(12.0, MeterContext.new())
 	assert_true(meters.dead)
 	assert_eq(meters.death_cause, &"other")
 
@@ -130,6 +138,8 @@ func test_a_crab_pinch_names_the_crab() -> void:
 	body.meters.solo = true
 	body.meters.health = 5.0
 	CreatureWorld.new().pinch(body, _creature(CRAB))
+	assert_true(body.meters.last_stand, "on land: a 12 s last stand")
+	body.meters.tick(12.0, MeterContext.new())
 	assert_true(body.meters.dead)
 	assert_eq(body.meters.death_cause, CRAB)
 
@@ -139,6 +149,8 @@ func test_a_shark_strike_names_the_shark() -> void:
 	body.meters.solo = true
 	body.meters.health = 25.0
 	CreatureWorld.new().strike(body, _creature(SHARK))
+	assert_true(body.meters.last_stand, "on land: a 12 s last stand")
+	body.meters.tick(12.0, MeterContext.new())
 	assert_true(body.meters.dead)
 	assert_eq(body.meters.death_cause, SHARK)
 	assert_true(body.meters.has_status(DataEnums.Status.BLEEDING))
@@ -164,6 +176,8 @@ func test_a_crossing_bite_names_the_reef_shark() -> void:
 	var rider := crossing.body_of(1)
 	rider.meters.solo = true
 	rider.meters.health = 25.0
+	# A tick in the water first, as every frame of a crossing has: the rider's meters know they are at sea.
+	CrossingRig.run(crossing, 0.1)
 	crossing.bite_swimmer(1)
 	assert_true(rider.meters.dead)
 	assert_eq(rider.meters.death_cause, SHARK)

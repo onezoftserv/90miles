@@ -122,8 +122,8 @@ func test_revive_stands_up_at_30_health() -> void:
 	assert_eq(tuning.revive_health, 30.0)
 
 
-func test_solo_last_stand_is_0_s_before_downed_timer_bonuses() -> void:
-	assert_eq(tuning.solo_last_stand_s, 0.0)
+func test_solo_last_stand_is_12_s_on_land_before_downed_timer_bonuses() -> void:
+	assert_eq(tuning.solo_last_stand_s, 12.0, "island-pressure: 12 s on land, none at sea")
 
 
 func test_bleeding_drains_6_health_per_min() -> void:

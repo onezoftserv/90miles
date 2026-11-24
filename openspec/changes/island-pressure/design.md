@@ -43,8 +43,10 @@ Night starts at 20:00, 7:00 real; midday runs 2:00–5:00 real.
 |---|---|
 | Start | 100 |
 | 10 coconuts as meals (needs the hut's knife, 40 uses) | +100 |
-| Climbing the 6 palms (−5 each) | −30 |
-| **Total by day** | **≈170** |
+| 10 climbs, one coconut each (−5 each) | −50 |
+| **Total by day** | **≈150** (≈140 without the 2 coconuts on the gulls’ nest palms) |
+
+Corrected while building: the first draft counted one climb per palm (−30, ≈170). A climb gives one coconut, so each coconut climbed for nets +5. The build’s 120 leaves a solo builder about 20–30 energy for the night and the crossing.
 
 Nothing refills on a clock: sleep is not wired.
 
@@ -149,7 +151,7 @@ Rejected:
 - **A refused launch with no consequence:** the review asks for a spot, and G7 wants the squad met.
 
 ### D6. Heat at sea is capped
-- **The flag.** `MeterContext.at_sea` is true for a player who left the island by a route (`CoopSession.has_left`, the rule `UsePlan` already refuses item use at sea by). `PlayerBody._meter_context` sets it, and `SurvivalMeters` keeps the last tick's value for the last stand (D7). Built when this change was implemented, in place of a `PlayerBody.at_sea` field set in `Crossing._bind_body` and cleared in `island_arrival.gd`: the departures already reset with each island, so no flag can stick on land after a restart or a rematch, and `crossing.gd` (which the crossing-gameplay work owns) is untouched.
+- **The flag.** `MeterContext.at_sea` is true for a player who left the island by a route (`CoopSession.has_left`, the rule `UsePlan` already refuses item use at sea by). `PlayerBody._meter_context` sets it, and a rider also counts when they walk on a crossing's sea under way in the session (a crossing built without the island's routes, as the test rigs do). For the last stand (D7), `SurvivalMeters.at_sea_source` asks the body at the moment health reaches 0, since a crossing's harm can land between ticks; bare meters in unit tests use the last tick's context. Built when this change was implemented, in place of a `PlayerBody.at_sea` field set in `Crossing._bind_body` and cleared in `island_arrival.gd`: the departures already reset with each island, so no flag can stick on land after a restart or a rematch, and `crossing.gd` (which the crossing-gameplay work owns) is untouched.
 - **The cap.** `SurvivalRules.next_heat`: when `at_sea`, a rise stops at `tuning.sea_heat_cap`, and heat above the cap falls at `heat_fall_per_s` down to it.
 - **Why 59.** It is below where sunstroke ends (60), so nobody is sunstruck at sea, and a rider who boards sunstruck clears it within about 54 s. A cap of 74 would keep the Calor label orange, but a sunstruck boarder would then stay blurred the whole crossing, which is G9 again.
 - **The number** lives in `survival_tuning.tres` with the other meter numbers, so `SurvivalRules` stays pure over context and tuning.
@@ -236,6 +238,18 @@ It runs headless with a fixed physics step (`--fixed-fps 60`), faster than real 
   - Island-stop PR 2 replaces the sea cap.
 
   All three are written in the shared notes folder.
+
+## Test sweep (task 0.2, on main 041e711)
+
+Baseline: GUT 2739 of 2739 passing on the rebased branch before any change.
+
+`grep` for tests that start a route (`start_for`, `start_route_for`, `request_route`, a raft's `interacted`) or work a raft site found 25 unit files and 5 manual scripts. What the change did to each:
+
+- **Work the raft by standing (fixed: they now hold interact and pay the work's energy):** `test_raft_site.gd`, `test_escape_routes_solo.gd`, `test_secret_cay_solo.gd`, `test_inventory_hud_solo_run.gd` (it now lets go at energy 10, drinks three carried coconuts from the HUD and goes back to hold E).
+- **Read the raft's 60 s (fixed):** `test_route_content.gd` (120 s), and the prompt's raft-site lines in `test_interact_prompt.gd` (stage lines).
+- **Launch by day on an island with a spawned patrol boat:** no unit test (they use islands without creatures, the secret cay, or other routes). The manual runs `capture_crossing.gd`, `capture_crossing_gameplay.gd`, `crossing_gameplay_run.gd` and `island_stop_run.gd` did; each now removes the island's patrol boats before its launch, with a printed hook where the run prints its hooks. `test_inventory_hud_solo_run.gd` waits for the night the warning asks for.
+- **Unchanged and passing:** the crossing, reconnect, rematch, status, structure-sync, perch-ride, coast-cay and route tests in the grep list, since they build the raft with `work(1.0)` on a full site and launch where no boat is.
+- **Solo deaths timed at 0 s:** changed with the 12 s last stand (task 4.2), listed with its commit.
 
 ## Migration Plan
 

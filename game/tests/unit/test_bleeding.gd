@@ -133,6 +133,8 @@ func test_with_thirst_empty_the_death_is_thirsts() -> void:
 	meters.health = 3.0
 	meters.set_status(BLEEDING, true)
 	_run(meters, 5.0)
+	assert_true(meters.last_stand, "island-pressure: a 12 s last stand first")
+	_run(meters, 12.0)
 	assert_true(meters.dead)
 	assert_eq(meters.death_cause, DeathCause.THIRST)
 
