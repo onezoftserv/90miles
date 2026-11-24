@@ -46,10 +46,10 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 
 ## 6. Meters: Calor last, Insolación and Sangrando rows
 
-- [ ] 6.1 Tests for the bleeding time (1 player, offline): `bleeding_left_s` counts down on the host, a new wound refills it, and it is 0 after the end; `player.tscn` replicates `SurvivalMeters:bleeding_left_s` (update `test_player_state_sync`)
-- [ ] 6.2 Tests (1 player, offline): rows read Salud, Sed, Hambre, Energía, Ánimo, Calor; Calor's track holds three zone tints and no plain empty colour at heat 2, with notches at 50 and 75; "Insolación" shows with the blur, with its bar full at 100, half at 80 and gone below 60; "Sangrando" with its icon, its bar half after 60 of 120 s and full again after a new bite; the window with both rows lies inside (4,4)–(136,90)
-- [ ] 6.3 Build `bleeding_left_s` and its replication entry; the `MeterBar` zones and notches; `StatusRow` and the icons `status_sunstroke` and `status_bleeding`; reorder `meters_hud.tscn`; keep `MetersHud.bleeding_tag()`
-- [ ] 6.4 Update the tests that read the meter order or the old tick (`test_hud_windows` and the meter tests)
+- [x] 6.1 Tests for the bleeding time (1 player, offline): `bleeding_left_s` counts down on the host, a new wound refills it, and it is 0 after the end; `player.tscn` replicates `SurvivalMeters:bleeding_left_s` (update `test_player_state_sync`)
+- [x] 6.2 Tests (1 player, offline): rows read Salud, Sed, Hambre, Energía, Ánimo, Calor; Calor's track holds three zone tints and no plain empty colour at heat 2, with notches at 50 and 75; "Insolación" shows with the blur, with its bar full at 100, half at 80 and gone below 60; "Sangrando" with its icon, its bar half after 60 of 120 s and full again after a new bite; the window with both rows lies inside (4,4)–(136,90)
+- [x] 6.3 Build `bleeding_left_s` and its replication entry; the `MeterBar` zones and notches; `StatusRow` and the icons `status_sunstroke` and `status_bleeding`; reorder `meters_hud.tscn`; keep `MetersHud.bleeding_tag()`
+- [x] 6.4 Update the tests that read the meter order or the old tick (`test_hud_windows` and the meter tests)
 - [ ] 6.5 Import, smoke and GUT pass
 
 ## 7. Hut note

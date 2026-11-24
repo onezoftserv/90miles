@@ -9,6 +9,10 @@ extends Control
 ## body's changes. A health hit flashes the screen edges (HurtOverlay), stronger for a bigger hit
 ## and with a floor, at most once per flash_min_gap_s; every sorted change goes to its bar; the
 ## sound hook hears hits, a drain's start and jumps. Rebinding forgets the old body. Drawing only.
+## hud-clarity (survival-meters "HUD bars", "Sunstroke tag on the HUD", "Bleeding tag on the HUD"):
+## the rows read Salud, Sed, Hambre, Energía, Ánimo and Calor last, a thermometer; under them a status
+## row shows while it applies: "Insolación" with the blur and its cooling bar (full at sunstroke_at,
+## empty at sunstroke_ends_below), then "Sangrando" with the synced bleeding time's bar.
 
 ## A sound cue asked of AudioManager (hurt_hit, hurt_big, hurt_drain, use_done); tests listen here.
 signal hurt_cued(id: StringName)
@@ -29,7 +33,8 @@ var _since_drain_s: float = INF
 @onready var _panel: PanelContainer = $Panel
 @onready var _bars_box: VBoxContainer = $Panel/Bars
 @onready var _blur: ColorRect = $Blur
-@onready var _bleeding: Label = $Panel/Bars/Bleeding
+@onready var _sun_row: StatusRow = $Panel/Bars/Sunstroke
+@onready var _bleeding_row: StatusRow = $Panel/Bars/Bleeding
 
 
 ## The meters this panel shows, or null.
@@ -54,7 +59,8 @@ func bind(meters: SurvivalMeters) -> void:
 	_meters = meters
 	if meters == null:
 		_blur.visible = false
-		_bleeding.visible = false
+		_sun_row.set_active(false)
+		_bleeding_row.set_active(false)
 		return
 	meters.meter_changed.connect(_on_meter_changed)
 	meters.sunstroke_changed.connect(_on_sunstroke_changed)
@@ -62,7 +68,9 @@ func bind(meters: SurvivalMeters) -> void:
 	for bar: MeterBar in bars():
 		bar.show_value(meters.value(bar.meter))
 	_blur.visible = meters.sunstroke
-	_bleeding.visible = meters.has_status(DataEnums.Status.BLEEDING)
+	_sun_row.set_active(meters.sunstroke)
+	_bleeding_row.set_active(meters.has_status(DataEnums.Status.BLEEDING))
+	_fill_status_rows()
 
 
 ## The rows, top to bottom.
@@ -98,6 +106,7 @@ func step(delta: float) -> void:
 		bar.step(delta)
 	if jumped:
 		_cue(&"use_done")
+	_fill_status_rows()
 	_step_flash(delta)
 	_since_drain_s += delta
 	if _draining and _since_drain_s >= _tuning.glow_linger_s:
@@ -118,9 +127,18 @@ func hurt_overlay() -> HurtOverlay:
 	return _overlay
 
 
-## The red "Sangrando" tag under the bars, shown while the player bleeds (status-sync).
+## The red "Sangrando" word under the bars, shown while the player bleeds (status-sync): the
+## bleeding row's word.
 func bleeding_tag() -> Label:
-	return _bleeding
+	return _bleeding_row.word
+
+
+## The status row for `key` (&"sunstroke" or &"bleeding"), or null.
+func status_row(key: StringName) -> StatusRow:
+	for row: StatusRow in [_sun_row, _bleeding_row]:
+		if row.key == key:
+			return row
+	return null
 
 
 ## Where the bars panel sits on screen, in HUD coordinates.
@@ -228,7 +246,21 @@ func _on_meter_changed(meter: DataEnums.Meter, new_value: float) -> void:
 
 func _on_sunstroke_changed(active: bool) -> void:
 	_blur.visible = active
+	_sun_row.set_active(active)
+	_fill_status_rows()
 
 
 func _on_statuses_changed(_flags: int) -> void:
-	_bleeding.visible = _meters != null and _meters.has_status(DataEnums.Status.BLEEDING)
+	_bleeding_row.set_active(_meters != null and _meters.has_status(DataEnums.Status.BLEEDING))
+	_fill_status_rows()
+
+
+# The status rows' time bars: the sunstroke's cooling from sunstroke_at down to sunstroke_ends_below,
+# and the bleeding's synced time left.
+func _fill_status_rows() -> void:
+	if _meters == null or not is_instance_valid(_meters):
+		return
+	var tuning: SurvivalTuning = _meters.tuning
+	var span: float = tuning.sunstroke_at - tuning.sunstroke_ends_below
+	_sun_row.show_fill((_meters.heat - tuning.sunstroke_ends_below) / span if span > 0.0 else 0.0)
+	_bleeding_row.show_fill(_meters.bleeding_left_s / tuning.bleeding_s if tuning.bleeding_s > 0.0 else 0.0)

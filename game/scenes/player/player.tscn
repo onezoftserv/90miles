@@ -88,6 +88,9 @@ properties/22/replication_mode = 1
 properties/23/path = NodePath("PlayerNet:net_capture")
 properties/23/spawn = true
 properties/23/replication_mode = 1
+properties/24/path = NodePath("SurvivalMeters:bleeding_left_s")
+properties/24/spawn = true
+properties/24/replication_mode = 1
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
