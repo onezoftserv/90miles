@@ -8,7 +8,7 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 ## 0. Before building
 
 - [x] 0.1 Read the owner's answers to Q1–Q4 and fold any change into the specs and design.md (Owner decisions), then re-run `openspec validate hud-clarity --type change --strict`
-- [ ] 0.2 Take the "before" captures on this branch's base (solo sandbar first frame, top band at 3×, meters with bleeding, a sunstroke frame) into `docs/ui-shell/hud-clarity/before/`
+- [x] 0.2 Take the "before" captures on this branch's base (solo sandbar first frame, top band at 3×, meters with bleeding, a sunstroke frame) into `docs/ui-shell/hud-clarity/before/` (`tests/manual/capture_hud_clarity.tscn`, which frames "after" the same way)
 
 ## 1. Content and data
 

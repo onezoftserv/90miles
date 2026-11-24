@@ -149,6 +149,11 @@ While the local player has left the island on a crossing, the objective row SHAL
 - **WHEN** the HUD is drawn, and again after they launch
 - **THEN** the row reads "Zarpa pa'l cayo", then "Aguanta hasta tierra" for the whole crossing
 
+#### Scenario: The coast cay uses the default line
+- **GIVEN** a solo player, offline, who reached the coast cay with an intact raft, at night
+- **WHEN** the HUD is drawn
+- **THEN** the objective row reads "Zarpa pa'l norte"
+
 ### Requirement: Objective waits for the dark
 While the island's raft is built, a patrol boat is out on the island and the day phase is one in which that boat's searchlight is off (dawn, day, dusk), the objective row SHALL read "Espera la noche pa' zarpar" ("Wait for dark to set off"), unless a squall is falling. It matches island-pressure's launch rule (owner, 2026-11-23): by day the patrol sees every launch; a squall keeps it in port. Solo, offline, the same.
 
@@ -166,11 +171,6 @@ While the island's raft is built, a patrol boat is out on the island and the day
 - **GIVEN** a solo player, offline, on an island with the raft built and no patrol boat out, at 09:00
 - **WHEN** the HUD is drawn
 - **THEN** the objective row reads the island's launch line
-
-#### Scenario: The coast cay uses the default line
-- **GIVEN** a solo player, offline, who reached the coast cay with an intact raft
-- **WHEN** the HUD is drawn
-- **THEN** the objective row reads "Zarpa pa'l norte"
 
 ### Requirement: The objective keeps secrets
 The objective row SHALL never name the island the party stands on, and never name, count or point at a secret item, the chest or the hidden cay (secret-cay "Secrecy"); it reads only the level's raft site and raft, never another build site. With exactly 1 player, offline, the same holds.
