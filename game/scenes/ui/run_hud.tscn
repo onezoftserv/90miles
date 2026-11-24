@@ -15,6 +15,10 @@
 [ext_resource type="Script" path="res://scenes/ui/day_strip_view.gd" id="13_day_strip"]
 [ext_resource type="Script" path="res://scenes/ui/objective_row.gd" id="14_objective"]
 [ext_resource type="Script" path="res://scenes/ui/site_arrow.gd" id="15_site_arrow"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/clock_moon.png" id="k_clock_moon"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/clock_sun.png" id="k_clock_sun"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrow_straight.png" id="k_arrow_straight"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrow_diagonal.png" id="k_arrow_diagonal"]
 
 [node name="RunHud" type="CanvasLayer"]
 layer = 3
@@ -41,6 +45,8 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 script = ExtResource("12_clock")
+moon_mark = ExtResource("k_clock_moon")
+sun_mark = ExtResource("k_clock_sun")
 
 [node name="Day" type="Label" parent="PhasePanel/Clock"]
 custom_minimum_size = Vector2(48, 0)
@@ -152,6 +158,8 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("15_site_arrow")
+straight = ExtResource("k_arrow_straight")
+diagonal = ExtResource("k_arrow_diagonal")
 
 [node name="WatchingPanel" type="PanelContainer" parent="."]
 unique_name_in_owner = true

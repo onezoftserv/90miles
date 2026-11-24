@@ -7,8 +7,6 @@ extends Control
 ## turned by quarter turns into eight directions: pixel art is never turned to any other angle. It
 ## reads the site by name, never another build site or anything secret. Drawing only.
 
-const STRAIGHT: Texture2D = preload("res://assets/art/ui/arrow_straight.png")
-const DIAGONAL: Texture2D = preload("res://assets/art/ui/arrow_diagonal.png")
 ## The band the arrow's rect keeps to: under the top windows, above the bottom band.
 const FRAME: Rect2 = Rect2(8.0, 96.0, 624.0, 204.0)
 ## The view, in HUD pixels, less a margin: a site centre outside it is off screen.
@@ -21,6 +19,10 @@ const DIRECTIONS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(-1, 1),
 	Vector2i(-1, 0), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1),
 ]
+
+## The two 9×9 kit arrows (set in run_hud.tscn): straight pointing east, diagonal pointing north-east.
+@export var straight: Texture2D = null
+@export var diagonal: Texture2D = null
 
 var session: CoopSession = null
 var local_peer: int = CoopSession.HOST_ID
@@ -108,7 +110,9 @@ func _draw() -> void:
 		return
 	# Even octants are the straight arrow turned from east; odd ones the diagonal turned from
 	# north-east (octant 7), each by whole quarter turns.
-	var texture: Texture2D = STRAIGHT if _octant % 2 == 0 else DIAGONAL
+	var texture: Texture2D = straight if _octant % 2 == 0 else diagonal
+	if texture == null:
+		return
 	var quarter_turns: int = _octant / 2 if _octant % 2 == 0 else ((_octant + 1) / 2) % 4
 	draw_set_transform(_rect.position + ARROW_SIZE / 2.0, float(quarter_turns) * PI / 2.0, Vector2.ONE)
 	draw_texture(texture, -ARROW_SIZE / 2.0)

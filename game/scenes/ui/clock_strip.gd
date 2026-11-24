@@ -6,8 +6,9 @@ extends HBoxContainer
 ## %Phase). It reads the session's climate, which the host's sky writes and every client's follows,
 ## so the row is the same on every peer to within one resync. Drawing only.
 
-const MOON: Texture2D = preload("res://assets/art/ui/clock_moon.png")
-const SUN: Texture2D = preload("res://assets/art/ui/clock_sun.png")
+## The 5×5 kit marks beside the time left (set in run_hud.tscn): the moon counts to dark, the sun to dawn.
+@export var moon_mark: Texture2D = null
+@export var sun_mark: Texture2D = null
 
 ## Whether the time left counts to dawn (the sun mark) rather than to dark (the moon mark).
 var counts_to_dawn: bool = false
@@ -24,7 +25,7 @@ func show_climate(climate: ClimateState, text: HudText, locale: String, phase_la
 	day_label.text = text.clock_word(&"day", locale) % climate.day
 	strip.show_time(seconds)
 	counts_to_dawn = DayStrip.counts_to_dawn(seconds)
-	mark.texture = SUN if counts_to_dawn else MOON
+	mark.texture = sun_mark if counts_to_dawn else moon_mark
 	left_label.text = DayStrip.left_text(seconds, text, locale)
 	left_label.add_theme_color_override(&"font_color", HudStyle.ORANGE if DayStrip.is_warning(seconds) else HudStyle.CREAM)
 	phase_label.text = RunHud.phase_name(climate, locale)
