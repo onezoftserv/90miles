@@ -13,6 +13,8 @@ enum Size {
 	SMALL,
 	## 23x5: a downed or dead player lying along the ground (art-sprite-polish D8).
 	LYING,
+	## 30x11: a raft, or its half-built site, resting on the sand (art-terrain-polish D3).
+	WIDE,
 }
 
 ## The ellipse of each Size, in the enum's order (set in shadow.tscn).

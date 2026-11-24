@@ -108,6 +108,8 @@ var capture_dir: String = ""
 ## --only=squall runs art-mood-pass's squall steps (task 4.6): by day, then at night beside a fire.
 ## --only=hidden travels straight to the hidden cay and shoots its scenery (art-prop-polish D6).
 ## --only=post travels straight to the coast cay and shoots the garita and the sign looks (D7).
+## --only=raft builds the sandbar's raft from beside its site, shooting each stage, then lands it on
+## the coast cay (art-terrain-polish D3, task 5.4).
 var only: String = ""
 ## Host only: how many clients play (2: A rides, B leaves and joins; 1: one untagged client rides).
 var clients: int = 2
@@ -796,6 +798,9 @@ func _solo() -> void:
 	if only == "post":
 		await _post_only()
 		return
+	if only == "raft":
+		await _raft_only()
+		return
 	var day: Image = await _world_image("sandbar_day_view")
 	_check_no_magenta(day, "the sandbar by day")
 	await _check_shore_view("spawn_day")
@@ -1048,6 +1053,60 @@ func _post_only() -> void:
 	if _check("walked 2 tiles south of the post", await _walk_to(_center(Vector2i((west + east) / 2, south + 2)))):
 		await _frames(10)
 		await _world_image("cay_post")
+
+
+# --only=raft (art-terrain-polish 5.4): the sandbar's site marked, with its materials, half built and
+# built, each shot from beside it with the prompt checked, then the raft beached on the coast cay's
+# landing. The hull leans toward land and its WIDE shadow shows from the half-built stage on.
+func _raft_only() -> void:
+	var site: Node2D = session.get_node_or_null(^"RaftSite")
+	if not _check("the sandbar has its raft site", site != null):
+		return
+	var look: Node = _look_of(site)
+	var aimed: bool = await _aim_at(site)
+	_check("beside the marked site the prompt is the site's own", aimed, "prompt %s" % _prompt_lines())
+	_check("the marked site leans toward land and casts no shadow", _frame(site) == "marked" and (look.get("sprite") as Node2D).get("offset").x < -32.0 and not (look.get("shadow") as CanvasItem).visible, "frame %s" % _frame(site))
+	await _frames(10)
+	await _world_image("raft_site_marked")
+	var need: Dictionary = {&"driftwood": 6, &"inner_tube": 2, &"rope": 3}
+	for item_id: StringName in need:
+		var short: int = int(need[item_id]) - _count(item_id)
+		if short > 0:
+			body.get("inventory").call("add", item_id, short)
+	_hooked("raft materials added to the inventory (this run starts at the site)")
+	var shot: PackedStringArray = ["marked"]
+	await _press_interact()
+	for i: int in ceili(90.0 * physics_hz):
+		if not is_instance_valid(site) or site.is_queued_for_deletion() or bool(site.get("built")):
+			break
+		var now: String = _frame(site)
+		if not shot.has(now):
+			shot.append(now)
+			var shadowed: bool = (look.get("shadow") as CanvasItem).visible
+			_check("the %s site: the WIDE shadow %s" % [now, "shows" if now == "half_built" else "is not drawn"], shadowed == (now == "half_built"))
+			await _world_image("raft_site_%s" % now)
+		await physics_frame
+	_check("the site went marked, materials, half built", shot.has("materials") and shot.has("half_built"), "%s" % shot)
+	await _frames(4)
+	var raft: Node2D = session.get_node_or_null(^"Raft")
+	if not _check("the raft stands whole in the site's place", raft != null and _frame(raft) == "whole", _frame(raft) if raft != null else "no raft"):
+		return
+	_check("the raft casts its WIDE shadow", (_look_of(raft).get("shadow") as CanvasItem).visible)
+	await _world_image("raft_built")
+	_check("beside the built raft the prompt is the raft's own, on its hull", await _aim_at(raft), "prompt %s" % _prompt_lines())
+	await _world_image("raft_built_prompt")
+	session.call("travel_to", "coast_cay", {1: {"health": 100.0, "energy": 100.0}}, 100.0)
+	_hooked("travelled to the coast cay with the raft at 100 (CoopSession.travel_to)")
+	await _frames(30)
+	island = shell.get("island")
+	body = session.call("body", 1)
+	if not _check("on the coast cay", island != null and (island.get("layout") as Object).get("id") == &"coast_cay"):
+		return
+	_build_land()
+	raft = session.get_node_or_null(^"Raft")
+	_check("the raft lies on the cay's landing, leaning toward land", raft != null and (_look_of(raft).get("sprite") as Node2D).get("offset").x < -32.0)
+	await _frames(10)
+	await _world_image("cay_landing")
 
 
 # --only=foam: the shore views by day, then by night.
