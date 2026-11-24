@@ -401,3 +401,45 @@ As the task says, nothing was redrawn. The question went to the coordinating ses
   - `docs/art-pass/prop-polish/cay_post_x3.png`: the solo view, to set beside `before/cay_day_observation_post_x3.png` and `before/cay_day_rocky_point.png`.
   - `docs/art-pass/prop-polish/garita_back_row_x6.png`: the player on the back row, in front of the garita.
 
+
+**Group 8, integration (2026-11-23).** Built from main 041e711, with all seven groups merged: group 1 (#105), 2 (#103), 3 (#102), 4 (#104), 5 (#106), 6 (#107) and 7 (#109).
+- **The rebuild (8.1).** Every recipe tool was run into a scratch folder from the read-only packs and the tracked hand sources. `terrain.py`, `structures.py`, `creatures.py`, `items.py`, `compose.py`, `fx.py`, `mood.py` and `ui.py` built 156 files, and each one `cmp`s equal to the tracked file. The 23 sheets this change touched are among them.
+  - Seven tracked files have no recipe and were not rebuilt: the three palette strips, the three drop shadows and `fx/dive_ripple.png`, all from art-pass. This change does not touch them.
+- **The sheets this change ships**, with their measured sizes:
+
+  | Sheet | Size | Group |
+  |---|---|---|
+  | `creatures/reef_shark.png`, `seagull.png`, `seagull_flight.png` | 160×16, 128×48, 96×48 | 1, re-rimmed in black |
+  | `items/nails.png`, `tarp.png`, `crab_cooked.png`, `hutia_cooked.png`, `iguana_cooked.png` | 16×16 each | 2 |
+  | `structures/rain_catcher.png` | 32×24 (2 frames of 16×24) | 3 |
+  | `structures/palm_bowed.png`, `palm_upright.png` | 32×48 each | 4 |
+  | `structures/lean_to.png` | 64×48 | 5 |
+  | `decals/shade.png` | 64×272 (from 64×80) | 5 |
+  | `structures/decor_post.png` | 16×24 | 6 |
+  | `fx/decor_cigar.png`, `fx/post_ripple.png` | 32×16 (2 frames), 12×5 | 6 |
+  | `decals/decor_drag.png`, `decals/decor_rope.png` | 32×16, 16×16 | 6 |
+  | `creatures/platino.png` | 16×16 | 6 |
+  | `structures/garita.png` | 80×48 | 7 |
+  | `structures/sign_radio.png`, `sign_sticks.png`, `sign_slogan.png` | 16×16 each | 7 |
+
+- **Looks and placements**, in layout cells:
+  - **Palms**, by look (0 today's, 1 bowed, 2 upright), read from `StructureArt.palm_look` on this build:
+    - the sandbar: (26, 28) 2, (23, 31) 0, (27, 34) 1, (23, 36) 1, (26, 39) 1, (24, 42) 2;
+    - the coast cay: (28, 19) 2, (51, 21) 0, (38, 24) 0, (11, 35) 2, (18, 40) 1;
+    - the hidden cay: (19, 11) 1, (27, 12) 0, (22, 17) 2.
+  - **The lean-to** stands on the back edge of the hut block, centred on it: the sandbar's 12 shaded cells (x 49 to 52, y 14 to 16) and the hidden cay's 8 (x 21 to 24, y 12 to 13). Those are the two layouts in `ShelterArtData.hut_shade`.
+  - **The garita** stands on the back edge of the coast cay's 15 post cells (x 63 to 67, y 38 to 40), centred on them. The post keeps its corner-set shade.
+  - **The coast cay's signs:** the radio at (65, 39) and the slogans at (64, 38) and (66, 38), all on the post, and the sticks at (44, 18).
+  - **The hidden cay's scenery:**
+    - the embers at (22, 14), drawn 6 px up;
+    - the cigar stub at (23, 14);
+    - the drag mark down (19, 15), (20, 15), (17, 16), (18, 16) and (16, 17), drawing nothing at (15, 17) in the shallows;
+    - the post at (14, 17) on its ripple;
+    - the cut line at (14, 18);
+    - Platino at (24, 4), beside the chest at (23, 3).
+- **Checks (8.1).**
+  - `check.py`: 0 problems on `game/assets/art` and on `tools/art/fixes`.
+  - The Python art tests: 255 OK.
+  - Import twice: the second is clean. Smoke: 10 frames, 0 problems.
+  - GUT: 2,739 of 2,739 pass in 293 scripts, in 332 s locally, under CI's 600 s step.
+- **TASKS.md (8.2)** records the change as built. The archive waits for the owner to see the captures in play.

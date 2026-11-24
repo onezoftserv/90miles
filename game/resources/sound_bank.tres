@@ -1,0 +1,219 @@
+[gd_resource type="Resource" script_class="SoundBank" format=3]
+
+[ext_resource type="Script" path="res://scripts/audio/sound_bank.gd" id="1_bank"]
+[ext_resource type="Script" path="res://scripts/audio/sound_data.gd" id="2_data"]
+[ext_resource type="AudioStream" uid="uid://d0sksi68vkoh6" path="res://assets/audio/loops/sea.wav" id="3_sea"]
+[ext_resource type="AudioStream" uid="uid://b0tum5us0iw5k" path="res://assets/audio/loops/wind.wav" id="4_wind"]
+[ext_resource type="AudioStream" uid="uid://bu8nyeuo0ekd8" path="res://assets/audio/loops/night.wav" id="5_night"]
+[ext_resource type="AudioStream" uid="uid://707mxj4keifb" path="res://assets/audio/loops/patrol_motor.wav" id="6_patrol_motor"]
+[ext_resource type="AudioStream" uid="uid://b5p43r3ivfsqn" path="res://assets/audio/sfx/pickup.wav" id="7_pickup"]
+[ext_resource type="AudioStream" uid="uid://dms3224v8fgmd" path="res://assets/audio/sfx/hurt_hit.wav" id="8_hurt_hit"]
+[ext_resource type="AudioStream" uid="uid://fnwp1iiawtnx" path="res://assets/audio/sfx/hurt_big.wav" id="9_hurt_big"]
+[ext_resource type="AudioStream" uid="uid://d3308q12hpmqr" path="res://assets/audio/sfx/hurt_drain.wav" id="10_hurt_drain"]
+[ext_resource type="AudioStream" uid="uid://d4m3ncwmr02cx" path="res://assets/audio/sfx/use_done.wav" id="11_use_done"]
+[ext_resource type="AudioStream" uid="uid://cy4ch7etkw246" path="res://assets/audio/sfx/thirst_low.wav" id="12_thirst_low"]
+[ext_resource type="AudioStream" uid="uid://bahd36kgegwnm" path="res://assets/audio/sfx/raft_hit.wav" id="13_raft_hit"]
+[ext_resource type="AudioStream" uid="uid://bt3fgcy7m3hd5" path="res://assets/audio/sfx/loudhailer.wav" id="14_loudhailer"]
+[ext_resource type="AudioStream" uid="uid://brem0md78ddri" path="res://assets/audio/sfx/thunder.wav" id="15_thunder"]
+[ext_resource type="AudioStream" uid="uid://bm0v5lparqla5" path="res://assets/audio/sfx/arrival.wav" id="16_arrival"]
+[ext_resource type="AudioStream" uid="uid://ccsnyouc1efft" path="res://assets/audio/sfx/compass_rattle.wav" id="17_compass_rattle"]
+
+[sub_resource type="Resource" id="Resource_sea"]
+script = ExtResource("2_data")
+id = &"sea"
+stream = ExtResource("3_sea")
+bus = 1
+volume_db = -14.0
+loop = true
+pitch_spread = 0.0
+min_interval_s = 0.0
+fade_s = 2.5
+generated = true
+
+[sub_resource type="Resource" id="Resource_wind"]
+script = ExtResource("2_data")
+id = &"wind"
+stream = ExtResource("4_wind")
+bus = 1
+volume_db = -16.0
+loop = true
+pitch_spread = 0.0
+min_interval_s = 0.0
+fade_s = 2.5
+generated = true
+
+[sub_resource type="Resource" id="Resource_night"]
+script = ExtResource("2_data")
+id = &"night"
+stream = ExtResource("5_night")
+bus = 1
+volume_db = -20.0
+loop = true
+pitch_spread = 0.0
+min_interval_s = 0.0
+fade_s = 3.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_patrol_motor"]
+script = ExtResource("2_data")
+id = &"patrol_motor"
+stream = ExtResource("6_patrol_motor")
+bus = 0
+volume_db = -8.0
+loop = true
+pitch_spread = 0.0
+min_interval_s = 0.0
+fade_s = 0.6
+generated = true
+
+[sub_resource type="Resource" id="Resource_pickup"]
+script = ExtResource("2_data")
+id = &"pickup"
+stream = ExtResource("7_pickup")
+bus = 0
+volume_db = -12.0
+loop = false
+pitch_spread = 0.04
+min_interval_s = 0.08
+fade_s = 1.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_hurt_hit"]
+script = ExtResource("2_data")
+id = &"hurt_hit"
+stream = ExtResource("8_hurt_hit")
+bus = 0
+volume_db = -7.0
+loop = false
+pitch_spread = 0.08
+min_interval_s = 0.06
+fade_s = 1.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_hurt_big"]
+script = ExtResource("2_data")
+id = &"hurt_big"
+stream = ExtResource("9_hurt_big")
+bus = 0
+volume_db = -5.0
+loop = false
+pitch_spread = 0.05
+min_interval_s = 0.1
+fade_s = 1.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_hurt_drain"]
+script = ExtResource("2_data")
+id = &"hurt_drain"
+stream = ExtResource("10_hurt_drain")
+bus = 0
+volume_db = -9.0
+loop = false
+pitch_spread = 0.0
+min_interval_s = 0.3
+fade_s = 1.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_use_done"]
+script = ExtResource("2_data")
+id = &"use_done"
+stream = ExtResource("11_use_done")
+bus = 0
+volume_db = -11.0
+loop = false
+pitch_spread = 0.0
+min_interval_s = 0.1
+fade_s = 1.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_thirst_low"]
+script = ExtResource("2_data")
+id = &"thirst_low"
+stream = ExtResource("12_thirst_low")
+bus = 0
+volume_db = -8.0
+loop = false
+pitch_spread = 0.0
+min_interval_s = 1.0
+fade_s = 1.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_raft_hit"]
+script = ExtResource("2_data")
+id = &"raft_hit"
+stream = ExtResource("13_raft_hit")
+bus = 0
+volume_db = -6.0
+loop = false
+pitch_spread = 0.1
+min_interval_s = 0.12
+fade_s = 1.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_loudhailer"]
+script = ExtResource("2_data")
+id = &"loudhailer"
+stream = ExtResource("14_loudhailer")
+bus = 0
+volume_db = -6.0
+loop = false
+pitch_spread = 0.04
+min_interval_s = 0.4
+fade_s = 1.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_thunder"]
+script = ExtResource("2_data")
+id = &"thunder"
+stream = ExtResource("15_thunder")
+bus = 0
+volume_db = -5.0
+loop = false
+pitch_spread = 0.08
+min_interval_s = 1.0
+fade_s = 1.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_arrival"]
+script = ExtResource("2_data")
+id = &"arrival"
+stream = ExtResource("16_arrival")
+bus = 0
+volume_db = -7.0
+loop = false
+pitch_spread = 0.0
+min_interval_s = 1.0
+fade_s = 1.0
+generated = true
+
+[sub_resource type="Resource" id="Resource_compass_rattle"]
+script = ExtResource("2_data")
+id = &"compass_rattle"
+stream = ExtResource("17_compass_rattle")
+bus = 0
+volume_db = -13.0
+loop = false
+pitch_spread = 0.05
+min_interval_s = 0.25
+fade_s = 1.0
+generated = true
+
+[resource]
+script = ExtResource("1_bank")
+entries = Array[ExtResource("2_data")]([SubResource("Resource_sea"), SubResource("Resource_wind"), SubResource("Resource_night"), SubResource("Resource_patrol_motor"), SubResource("Resource_pickup"), SubResource("Resource_hurt_hit"), SubResource("Resource_hurt_big"), SubResource("Resource_hurt_drain"), SubResource("Resource_use_done"), SubResource("Resource_thirst_low"), SubResource("Resource_raft_hit"), SubResource("Resource_loudhailer"), SubResource("Resource_thunder"), SubResource("Resource_arrival"), SubResource("Resource_compass_rattle")])
+motor_low_db = -24.0
+motor_high_db = 0.0
+motor_near_tiles = 8.0
+motor_far_tiles = 28.0
+motor_far_db = -18.0
+thirst_low_at = 25.0
+thirst_rearm_above = 30.0
+thunder_gap_min_s = 9.0
+thunder_gap_max_s = 22.0
+thunder_far_db = -12.0
+squall_weathers = Array[StringName]([&"squall"])
+sea_island = 0.55
+sea_crossing = 1.0
+wind_crossing = 0.6
+wind_squall = 1.0
+night_level = 1.0

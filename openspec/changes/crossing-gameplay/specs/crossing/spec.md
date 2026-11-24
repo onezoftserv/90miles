@@ -54,7 +54,7 @@ On entering, the host SHALL roll the crossing's plan in time order from the rout
 - **THEN** the plan is the one the same seed rolls for one rider, and it reaches nobody else
 
 ### Requirement: Raft integrity on the crossing
-A raft on the crossing SHALL start at its integrity when launched (100 for a new raft) and lose 30 per squall times the route's squall factor, 20 per shark hit, 40 per rock that hits it, 5 per debris that hits it and 0.5 per second for each open leak, and gain 10 per plank lashed on, never below 0 or above its starting maximum. At 0 it breaks: every rider aboard or tied falls in, nobody can climb or be pulled back, and they swim the rest of the crossing. Swimmers' routes have no integrity and take no vessel hits. The same holds with exactly 1 player, who swims the rest alone. (Adds debris, leaks and planks to docs/GAME_DESIGN.md §8.)
+A raft on the crossing SHALL start at its integrity when launched (100 for a new raft) and lose 30 per squall times the route's squall factor, 20 per shark hit, 40 per rock that hits it, 5 per debris that hits it and 0.5 per second for each open leak, and gain 10 per plank lashed on, never below 0 or above the route's vessel integrity (100 for a raft, even one launched damaged). At 0 it breaks: every rider aboard or tied falls in, nobody can climb or be pulled back, and they swim the rest of the crossing. Swimmers' routes have no integrity and take no vessel hits. The same holds with exactly 1 player, who swims the rest alone. (Adds debris, leaks and planks to docs/GAME_DESIGN.md §8.)
 
 #### Scenario: Raft hits add up
 - GIVEN a raft at integrity 100
