@@ -132,7 +132,7 @@ Rejected:
 
 **Why this reading of "in view".** The review asked that a first-time player see a night before launch. The diagnosis shows that only a clock-bound rule makes that true for a player who knows the island. The rule makes the patrol the reason to wait, as for the historical balseros, who left at night, and it puts the searchlight in normal play (G7).
 
-**Alternatives** (Open decision Q1):
+**Alternatives** (owner decision Q1 chose this rule over both):
 - **Seen only while a boat is in sight.** Soft; a knowing player leaves at about 3–4 minutes.
 - **Pull sleep forward from `night-ashore`** and price the build above a day's food. This needs a sleep rule, outside this change's scope.
 
@@ -243,19 +243,11 @@ It runs headless with a fixed physics step (`--fixed-fps 60`), faster than real 
 - Saved data never loses a field: the new recipe fields have defaults, and old `.tres` files load unstaged.
 - To roll back, revert the PR. No save format changes.
 
-## Open decisions for the owner (asked through the coordinating session)
+## Owner decisions (2026-11-23, through the coordinating session)
 
-- **Q1. How is the night guaranteed?**
-  - **(a) By day every launch is seen (recommended).** Every player leaves a patrolled island at night or in a squall.
-  - **(b) Seen only while a boat is in sight.** Soft; a knowing player leaves at about 3–4 min, and the acceptance bot becomes a first-time-player model.
-  - **(c) Pull sleep forward and price the build above a day's food.**
-- **Q2. What "a bot run of at least one in-game day" means.**
-  - **(a) Launch from island 1 after 20:00, having seen midday (recommended).** The whole run then lasts about 10–11 min, and the summary says Días 1.
-  - **(b) 720 s on island 1.**
-  - **(c) 720 s for the whole run.**
-- **Q3. The last stand.**
-  - **(a) 12 s on land for anyone with no living teammate, none at sea (recommended).**
-  - **(b) 15 s.**
-  - **(c) Solo runs only, not co-op's last one alive.**
+The owner chose the recommended answer to all three, in option dialogs:
+- **Q1 (a). Day launches are seen:** every player leaves a patrolled island at night or in a squall. The owner saw the caveats that this is close to the review's "only at night" option and that the coast cay also costs until dark when the party lands there by day.
+- **Q2 (a).** The measured bot sees midday on the sandbar and launches from island 1 at 20:00 or later.
+- **Q3 (a).** A 12 s last stand on land for anyone with no living teammate, and none at sea.
 
-The specs and tasks are written for the recommended answers. If another answer is chosen, the specs are updated before the build starts.
+The tuning numbers stand as written. Rejected, for the record: (b) seen only while a boat is in sight; (c) sleep pulled forward; 720 s on island 1 or for the whole run; a 15 s window; a last stand for solo runs only.

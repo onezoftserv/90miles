@@ -17,7 +17,7 @@ On 2026-11-23 the owner chose the review's option (a): a staged raft build that 
 - Energy refills only from meals (+10) and sleep. Sleep is not wired: `SurvivalMeters.sleep_night()` has no caller.
 - The sandbar's 10 coconuts are worth +100 energy.
 - So any energy price is paid in coconuts, not in time. An all-knowing bot under the staged build alone still leaves at about 3–4 minutes, before night (night starts 7:00 real).
-- Only a rule tied to the clock guarantees the night. The recommended one is below, and the owner's alternatives are in design.md "Open decisions".
+- Only a rule tied to the clock guarantees the night. The owner chose it on 2026-11-23 (design.md "Owner decisions": Q1–Q3 all (a)).
 
 The changes:
 - **Staged raft build.** The raft is built in four stages, each with its own inputs and 30 s of work (120 s in all, 60 s for a Mecánico):
