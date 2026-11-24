@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CrossingText" format=3]
+
+[ext_resource type="Script" path="res://scripts/crossing/crossing_text.gd" id="1_text"]
+
+[resource]
+script = ExtResource("1_text")
+squall_far_s = 30.0
+squall_near_s = 10.0
+line_s = 3.0
+squall_far = PackedStringArray("La raya negra viene pa'cá.", "The dark line is coming our way.")
+squall_near = PackedStringArray("¡Amárrate, que ahí viene!", "Tie down, here it comes!")
+fin_west = PackedStringArray("¡Aleta! Por la izquierda.", "Fin! On the left.")
+fin_east = PackedStringArray("¡Aleta! Por la derecha.", "Fin! On the right.")
+leak = PackedStringArray("¡Un hueco! Tápalo.", "A hole! Plug it.")
+vessel_names = Dictionary[int, PackedStringArray]({
+0: PackedStringArray("Balsa", "Raft"),
+5: PackedStringArray("Almendrón", "Car"),
+6: PackedStringArray("Tabla", "Board")
+})
+swimming = PackedStringArray("A nado", "Swimming")

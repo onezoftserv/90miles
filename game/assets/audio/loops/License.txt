@@ -1,0 +1,5 @@
+Work: 90 Millas generated sound loops
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: sea.wav, wind.wav, night.wav, patrol_motor.wav (made by tools/audio/sfx.py from tools/audio/sounds.json, openspec change sound-pass D1: synthesized from square, saw, sine and seeded noise voices, each folded into a seamless loop; sea.wav and wind.wav are placeholders until CC0 recordings are approved, owner Q2 B)

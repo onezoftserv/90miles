@@ -1,0 +1,5 @@
+Work: 90 Millas generated sound effects
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: pickup.wav, hurt_hit.wav, hurt_big.wav, hurt_drain.wav, use_done.wav, thirst_low.wav, raft_hit.wav, loudhailer.wav, thunder.wav, arrival.wav, compass_rattle.wav (made by tools/audio/sfx.py from tools/audio/sounds.json, openspec change sound-pass D1: synthesized from square, triangle, sine and seeded noise voices; thunder.wav is a placeholder until a CC0 recording is approved, owner Q2 B)

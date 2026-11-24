@@ -58,26 +58,32 @@ theme_override_constants/separation = 4
 
 [node name="Solo" type="Button" parent="Menu"]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 24)
 text = "Jugar solo"
 
 [node name="Host" type="Button" parent="Menu"]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 24)
 text = "Hospedar partida"
 
 [node name="Join" type="Button" parent="Menu"]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 24)
 text = "Unirse"
 
 [node name="Settings" type="Button" parent="Menu"]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 24)
 text = "Ajustes"
 
 [node name="Credits" type="Button" parent="Menu"]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 24)
 text = "Créditos"
 
 [node name="Quit" type="Button" parent="Menu"]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 24)
 text = "Salir"
 
 [node name="DescriptionPanel" type="PanelContainer" parent="."]

@@ -89,9 +89,13 @@ func test_game_state_owns_the_content_catalog() -> void:
 		assert_true(game_state.get(&"content") is ContentCatalog)
 
 
-# damage-feedback design D7: the sound hook the hit and use cues call; a no-op until sounds exist.
+# damage-feedback design D7: the sound hook the hit and use cues call; since sound-pass it plays
+# through the sound bank, and an empty id is still a silent no-op.
 func test_audio_manager_takes_a_sound_effect_id() -> void:
 	assert_true(AudioManager.has_method(&"play_sfx"))
+	AudioManager.reset_guard()
+	watch_signals(AudioManager)
 	AudioManager.play_sfx(&"hurt_hit")
+	assert_signal_emitted_with_parameters(AudioManager, "sfx_played", [&"hurt_hit"])
 	AudioManager.play_sfx(&"")
-	assert_eq(AudioManager.get_child_count(), 0, "plays nothing yet")
+	assert_signal_emit_count(AudioManager, "sfx_played", 1, "an empty id plays nothing")

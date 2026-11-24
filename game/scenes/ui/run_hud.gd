@@ -43,6 +43,9 @@ const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudPanelT
 const AVOID_GROUP: StringName = &"hud_avoid"
 ## A HUD panel whose top is above this is one of the top windows (art-guardacostas D8).
 const TOP_WINDOW_Y: float = 20.0
+## HUD windows another layer draws for this run (the crossing's strip and line, crossing-gameplay;
+## hud-window-kit D14), counted like this HUD's own while they show, for this session only.
+const OUTSIDE_PANEL_GROUP: StringName = &"hud_panel_outside"
 ## The keys that step a spectator's view (ui-shell "Switching the watched teammate"): the walk keys
 ## A and D, the arrows (the engine's ui_left and ui_right), the D-pad and the mouse wheel. Each is
 ## an action that does nothing else for a dead or waiting player, so no input is bound twice
@@ -251,8 +254,9 @@ func world_to_hud(point: Vector2) -> Vector2:
 	return point
 
 
-## The rects of every HUD panel on show and every piece of AVOID_GROUP, which world-anchored
-## marks keep clear of; the prompt's own panel is not one.
+## The rects of every HUD panel on show (this HUD's own, and the windows other layers draw for
+## this session in OUTSIDE_PANEL_GROUP) and every piece of AVOID_GROUP, which world-anchored marks
+## keep clear of; the prompt's own panel is not one.
 func panel_rects() -> Array[Rect2]:
 	var rects: Array[Rect2] = []
 	_collect_panels(self, rects)
@@ -260,6 +264,10 @@ func panel_rects() -> Array[Rect2]:
 		var piece := node as Control
 		if piece != null and is_ancestor_of(piece) and piece.is_visible_in_tree():
 			rects.append(piece.get_global_rect())
+	for node: Node in get_tree().get_nodes_in_group(OUTSIDE_PANEL_GROUP):
+		var box := node as Control
+		if box != null and session != null and box.is_visible_in_tree() and CoopSession.of(box) == session:
+			rects.append(box.get_global_rect())
 	return rects
 
 
