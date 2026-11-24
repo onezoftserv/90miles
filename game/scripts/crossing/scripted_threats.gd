@@ -13,9 +13,10 @@ func resolve(event: CrossingBeat, crossing: Crossing) -> void:
 				crossing.hit_vessel(crossing.tuning.rock_hit)
 		CrossingBeat.Kind.DEBRIS:
 			if crossing.beat_hits_vessel(event):
-				crossing.hit_vessel(crossing.tuning.debris_hit)
+				crossing.hole_vessel(event)
 		CrossingBeat.Kind.SHARK_PASS:
-			_shark_pass(crossing)
+			if not crossing.is_shooed(event):
+				_shark_pass(crossing)
 
 
 func _shark_pass(crossing: Crossing) -> void:

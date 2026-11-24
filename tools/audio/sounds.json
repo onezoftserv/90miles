@@ -1,0 +1,226 @@
+{
+  "about": "The recipe of the game's generated sounds (openspec change sound-pass D1). python -I tools/audio/sfx.py renders each into game/assets/audio/<folder>/<id>.wav. sea, wind and thunder are placeholders until the owner approves CC0 recordings (owner Q2 B).",
+  "sounds": [
+    {
+      "id": "sea",
+      "folder": "loops",
+      "length_s": 8.0,
+      "loop": true,
+      "crossfade_s": 1.5,
+      "about": "Surf: a dark brown-noise body that swells as waves arrive, with a hiss of wash on each crest.",
+      "parts": [
+        {"wave": "brown", "seed": 11, "lowpass": 700, "volume": 1.0,
+         "swell": {"min_s": 3.2, "max_s": 5.0, "floor": 0.35, "rise": 0.3, "seed": 21}},
+        {"wave": "noise", "freq": 22050, "seed": 12, "highpass": 900, "lowpass": 3200, "poles": 2, "volume": 0.22,
+         "swell": {"min_s": 3.2, "max_s": 5.0, "floor": 0.05, "rise": 0.25, "seed": 21}}
+      ]
+    },
+    {
+      "id": "wind",
+      "folder": "loops",
+      "length_s": 8.0,
+      "loop": true,
+      "crossfade_s": 1.5,
+      "about": "Open-sea wind: band-limited noise whose colour wanders like a whistle, in slow gusts.",
+      "parts": [
+        {"wave": "noise", "freq": 22050, "seed": 31, "highpass": 180, "poles": 2,
+         "lowpass": {"min": 420, "max": 1300, "min_s": 0.8, "max_s": 2.2, "seed": 32},
+         "swell": {"min_s": 2.5, "max_s": 4.5, "floor": 0.45, "rise": 0.45, "seed": 33}},
+        {"wave": "noise", "freq": 22050, "seed": 34, "highpass": 1500, "lowpass": 2600, "poles": 2, "volume": 0.25,
+         "swell": {"min_s": 1.8, "max_s": 3.0, "floor": 0.1, "rise": 0.5, "seed": 35}}
+      ]
+    },
+    {
+      "id": "night",
+      "folder": "loops",
+      "length_s": 6.0,
+      "loop": true,
+      "crossfade_s": 0.5,
+      "crossfade": "linear",
+      "about": "Island night: two crickets chirping on their own beats over a faint far-off surf.",
+      "parts": [
+        {"wave": "sine", "freq": 4400, "volume": 0.5,
+         "gate": {"every_s": 0.5, "len_s": 0.12, "rate": 25, "duty": 0.6}},
+        {"wave": "sine", "freq": 3900, "volume": 0.35,
+         "gate": {"every_s": 0.75, "len_s": 0.16, "rate": 31.25, "duty": 0.55, "offset_s": 0.21}},
+        {"wave": "brown", "seed": 41, "lowpass": 400, "volume": 0.35,
+         "swell": {"min_s": 2.5, "max_s": 3.5, "floor": 0.5, "rise": 0.35, "seed": 42}}
+      ]
+    },
+    {
+      "id": "patrol_motor",
+      "folder": "loops",
+      "length_s": 2.0,
+      "loop": true,
+      "crossfade_s": 0.25,
+      "crossfade": "linear",
+      "about": "An outboard motor: a buzzy 55 Hz pulse and its octave, chugging 18 times a second, with a little throttle flutter.",
+      "parts": [
+        {"wave": "square", "freq": 55, "duty": 0.3, "lowpass": 1100, "volume": 0.8,
+         "vibrato": {"rate": 3, "depth": 0.015},
+         "tremolo": {"rate": 18, "depth": 0.55}},
+        {"wave": "saw", "freq": 110, "lowpass": 900, "volume": 0.3,
+         "vibrato": {"rate": 3, "depth": 0.015},
+         "tremolo": {"rate": 18, "depth": 0.4}},
+        {"wave": "noise", "freq": 3000, "seed": 51, "lowpass": 1800, "volume": 0.18,
+         "tremolo": {"rate": 18, "depth": 0.8}}
+      ]
+    },
+    {
+      "id": "pickup",
+      "folder": "sfx",
+      "length_s": 0.18,
+      "about": "Something into the bag: a quick two-note square blip up a fourth.",
+      "parts": [
+        {"wave": "square", "duty": 0.25, "freq": 987.77, "steps": [[0.055, 1318.51]], "volume": 0.6,
+         "env": {"attack": 0.002, "decay": 0.04, "sustain": 0.7, "release": 0.09}}
+      ]
+    },
+    {
+      "id": "hurt_hit",
+      "folder": "sfx",
+      "length_s": 0.24,
+      "about": "A hit: a crunchy noise crack over a square that falls away.",
+      "parts": [
+        {"wave": "noise", "freq": 9000, "seed": 61, "length": 0.09, "volume": 0.7,
+         "env": {"attack": 0.0, "decay": 0.06, "sustain": 0.2, "release": 0.03}},
+        {"wave": "square", "duty": 0.5, "freq": 520, "to": 150, "length": 0.22, "volume": 0.5, "crush": 5,
+         "env": {"attack": 0.002, "decay": 0.08, "sustain": 0.5, "release": 0.12}}
+      ]
+    },
+    {
+      "id": "hurt_big",
+      "folder": "sfx",
+      "length_s": 0.5,
+      "about": "A big hit: a longer, lower crunch with a body thump.",
+      "parts": [
+        {"wave": "noise", "freq": 4500, "seed": 71, "lowpass": 3200, "length": 0.22, "volume": 0.8,
+         "env": {"attack": 0.0, "decay": 0.12, "sustain": 0.25, "release": 0.08}},
+        {"wave": "square", "duty": 0.5, "freq": 330, "to": 65, "length": 0.45, "volume": 0.5, "crush": 4,
+         "env": {"attack": 0.002, "decay": 0.15, "sustain": 0.45, "release": 0.25}},
+        {"wave": "sine", "freq": 95, "to": 45, "length": 0.28, "volume": 0.8,
+         "env": {"attack": 0.002, "decay": 0.1, "sustain": 0.4, "release": 0.15}}
+      ]
+    },
+    {
+      "id": "hurt_drain",
+      "folder": "sfx",
+      "length_s": 0.5,
+      "about": "Health draining: a soft, low heartbeat, lub-dub.",
+      "parts": [
+        {"wave": "sine", "freq": 62, "length": 0.13, "volume": 1.0, "lowpass": 500,
+         "env": {"attack": 0.01, "decay": 0.05, "sustain": 0.6, "release": 0.07}},
+        {"wave": "triangle", "freq": 124, "length": 0.11, "volume": 0.25, "lowpass": 500,
+         "env": {"attack": 0.01, "decay": 0.04, "sustain": 0.5, "release": 0.06}},
+        {"wave": "sine", "freq": 55, "start": 0.2, "length": 0.12, "volume": 0.7, "lowpass": 500,
+         "env": {"attack": 0.01, "decay": 0.05, "sustain": 0.5, "release": 0.06}}
+      ]
+    },
+    {
+      "id": "use_done",
+      "folder": "sfx",
+      "length_s": 0.26,
+      "about": "An item used: a bright, soft two-note chime, a fourth up.",
+      "parts": [
+        {"wave": "triangle", "freq": 783.99, "steps": [[0.07, 1046.5]], "volume": 0.8,
+         "env": {"attack": 0.003, "decay": 0.05, "sustain": 0.6, "release": 0.14}},
+        {"wave": "square", "duty": 0.125, "freq": 1567.98, "steps": [[0.07, 2093.0]], "volume": 0.15,
+         "env": {"attack": 0.003, "decay": 0.04, "sustain": 0.4, "release": 0.12}}
+      ]
+    },
+    {
+      "id": "thirst_low",
+      "folder": "sfx",
+      "length_s": 0.52,
+      "about": "Thirst at the danger step: a thin falling two-note warning, a fifth down, with a dry wobble.",
+      "parts": [
+        {"wave": "square", "duty": 0.125, "freq": 880, "steps": [[0.17, 587.33]], "volume": 0.55,
+         "vibrato": {"rate": 9, "depth": 0.012},
+         "env": {"attack": 0.004, "decay": 0.06, "sustain": 0.65, "release": 0.2}},
+        {"wave": "triangle", "freq": 440, "steps": [[0.17, 293.66]], "volume": 0.5,
+         "env": {"attack": 0.004, "decay": 0.06, "sustain": 0.65, "release": 0.2}}
+      ]
+    },
+    {
+      "id": "raft_hit",
+      "folder": "sfx",
+      "length_s": 0.42,
+      "about": "The vessel strikes something: a wooden thunk, a short crack and a low knock.",
+      "parts": [
+        {"wave": "triangle", "freq": 190, "to": 85, "length": 0.2, "volume": 0.9,
+         "env": {"attack": 0.001, "decay": 0.06, "sustain": 0.35, "release": 0.1}},
+        {"wave": "noise", "freq": 7000, "seed": 81, "highpass": 350, "lowpass": 2600, "length": 0.12, "volume": 0.6,
+         "env": {"attack": 0.0, "decay": 0.05, "sustain": 0.25, "release": 0.05}},
+        {"wave": "sine", "freq": 72, "to": 48, "length": 0.35, "volume": 0.7,
+         "env": {"attack": 0.002, "decay": 0.12, "sustain": 0.4, "release": 0.18}}
+      ]
+    },
+    {
+      "id": "loudhailer",
+      "folder": "sfx",
+      "length_s": 0.95,
+      "about": "A megaphone call with no words: a key-up crackle and three warbling, tinny syllables.",
+      "parts": [
+        {"wave": "noise", "freq": 11025, "seed": 91, "highpass": 1200, "length": 0.05, "volume": 0.5,
+         "env": {"attack": 0.0, "decay": 0.03, "sustain": 0.3, "release": 0.02}},
+        {"wave": "square", "duty": 0.35, "freq": 420, "to": 500, "sweep": "lin", "start": 0.05, "length": 0.17,
+         "highpass": 550, "lowpass": 2200, "crush": 5, "volume": 0.8,
+         "vibrato": {"rate": 28, "depth": 0.03},
+         "env": {"attack": 0.015, "decay": 0.04, "sustain": 0.8, "release": 0.04}},
+        {"wave": "square", "duty": 0.35, "freq": 540, "to": 450, "sweep": "lin", "start": 0.27, "length": 0.16,
+         "highpass": 550, "lowpass": 2200, "crush": 5, "volume": 0.8,
+         "vibrato": {"rate": 28, "depth": 0.03},
+         "env": {"attack": 0.015, "decay": 0.04, "sustain": 0.8, "release": 0.04}},
+        {"wave": "square", "duty": 0.35, "freq": 490, "to": 370, "sweep": "lin", "start": 0.48, "length": 0.42,
+         "highpass": 550, "lowpass": 2200, "crush": 5, "volume": 0.85,
+         "vibrato": {"rate": 24, "depth": 0.04},
+         "env": {"attack": 0.015, "decay": 0.08, "sustain": 0.75, "release": 0.16}},
+        {"wave": "noise", "freq": 6000, "seed": 92, "highpass": 1500, "lowpass": 4000, "start": 0.05, "length": 0.85, "volume": 0.08,
+         "env": {"attack": 0.01, "decay": 0.1, "sustain": 0.6, "release": 0.1}}
+      ]
+    },
+    {
+      "id": "thunder",
+      "folder": "sfx",
+      "length_s": 3.0,
+      "about": "Thunder: a bright crack falling into a long rolling rumble.",
+      "parts": [
+        {"wave": "noise", "freq": 22050, "seed": 101, "highpass": 700, "length": 0.18, "volume": 0.7,
+         "env": {"attack": 0.0, "decay": 0.09, "sustain": 0.3, "release": 0.08}},
+        {"wave": "brown", "seed": 102, "lowpass": 260, "length": 3.0, "volume": 1.0,
+         "env": {"attack": 0.06, "decay": 0.9, "sustain": 0.45, "release": 1.6},
+         "swell": {"min_s": 0.45, "max_s": 0.8, "floor": 0.45, "rise": 0.4, "seed": 103}},
+        {"wave": "noise", "freq": 1200, "seed": 104, "lowpass": 600, "start": 0.05, "length": 1.4, "volume": 0.35,
+         "env": {"attack": 0.02, "decay": 0.4, "sustain": 0.3, "release": 0.8}}
+      ]
+    },
+    {
+      "id": "arrival",
+      "folder": "sfx",
+      "length_s": 0.95,
+      "about": "Land reached: a short rising major jingle over a triangle bass.",
+      "parts": [
+        {"wave": "square", "duty": 0.5, "freq": 523.25, "steps": [[0.12, 659.25], [0.24, 783.99], [0.36, 1046.5]], "volume": 0.45,
+         "env": {"attack": 0.003, "decay": 0.06, "sustain": 0.75, "release": 0.4}},
+        {"wave": "square", "duty": 0.125, "freq": 1046.5, "steps": [[0.12, 1318.51], [0.24, 1567.98], [0.36, 2093.0]], "volume": 0.12,
+         "env": {"attack": 0.003, "decay": 0.06, "sustain": 0.6, "release": 0.4}},
+        {"wave": "triangle", "freq": 130.81, "steps": [[0.24, 196.0], [0.36, 261.63]], "volume": 0.6,
+         "env": {"attack": 0.005, "decay": 0.1, "sustain": 0.7, "release": 0.4}}
+      ]
+    },
+    {
+      "id": "compass_rattle",
+      "folder": "sfx",
+      "length_s": 0.3,
+      "about": "The broken compass's needle: four tiny metallic ticks, each quieter.",
+      "parts": [
+        {"wave": "square", "duty": 0.5, "freq": 3200, "to": 2600, "length": 0.03, "volume": 0.5,
+         "env": {"attack": 0.0, "decay": 0.01, "sustain": 0.3, "release": 0.015},
+         "repeat": {"count": 4, "every_s": 0.06, "decay": 0.7}},
+        {"wave": "noise", "freq": 16000, "seed": 111, "highpass": 3000, "length": 0.02, "volume": 0.4,
+         "env": {"attack": 0.0, "decay": 0.008, "sustain": 0.2, "release": 0.01},
+         "repeat": {"count": 4, "every_s": 0.06, "decay": 0.7}}
+      ]
+    }
+  ]
+}
