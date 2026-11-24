@@ -16,7 +16,8 @@ extends Node2D
 ## answer per rider, so the raft and the car keep their one shared deck and lashing unchanged.
 ## crossing-gameplay: riders paddle the vessel sideways (`steer`, a number: the deck never moves and
 ## the sea slides past it), and rocks and debris come down lanes from the north edge, hitting the
-## vessel only where their lane overlaps it and cutting the swimmers they pass over.
+## vessel only where their lane overlaps it and cutting the swimmers they pass over. Debris opens
+## leaks that drain the vessel until a rider plugs them; flotsam drifts by for riders to take.
 
 ## Host and clients: the crossing ended with this result.
 signal ended(result: CrossingResult)
@@ -75,6 +76,14 @@ var origin: Vector2 = Vector2.ZERO
 var serial: int = 0
 ## The vessel's lateral position and its paddlers (crossing "Paddling").
 var steer: CrossingSteer = CrossingSteer.new()
+## The open leaks (crossing "Leaks").
+var leaks: CrossingLeaks = CrossingLeaks.new()
+## Flotsam taken: beat index -> the peer who took it (crossing "Flotsam").
+var taken: Dictionary[int, int] = {}
+## Shark passes warned (beat index -> where the fin circles) and shooed (beat index -> true)
+## (crossing "Shooing the shark").
+var fins: Dictionary[int, Vector2] = {}
+var shooed: Dictionary[int, bool] = {}
 
 var _session: CoopSession
 ## Host: the peers that have this crossing, so the only ones sent its messages (crossing-late-join).
@@ -95,6 +104,11 @@ var _steer_send_left_s: float = 0.0
 var _steer_sent: float = 0.0
 # Host: beat index -> the peers that beat already cut (each hazard cuts a swimmer once).
 var _cut: Dictionary[int, Array] = {}
+# Leak id -> its plug point; flotsam beat index -> its grab point.
+var _plug_points: Dictionary[int, RescuePoint] = {}
+var _grab_points: Dictionary[int, RescuePoint] = {}
+# Shark pass beat index -> its shoo point.
+var _shoo_points: Dictionary[int, RescuePoint] = {}
 
 
 ## Builds the crossing for `peer_ids` under `session`. The host rolls and sends the plan; a client
@@ -175,7 +189,7 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 	# Swimmers and board riders share no vessel: the shared one has no integrity, so no deck or lashing.
 	var shared: bool = not route.riders_swim and not is_board_route()
 	var starting: float = 0.0 if not shared else (starting_integrity if starting_integrity > 0.0 else float(route.vessel_integrity))
-	integrity = VesselIntegrity.create(starting)
+	integrity = VesselIntegrity.create(starting, float(route.vessel_integrity) if shared else -1.0)
 	integrity.broke.connect(_on_broke)
 	session.player_rebound.connect(_on_player_rebound)
 	sea.default_terrain = DataEnums.Terrain.DEEP
@@ -189,6 +203,10 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 	_make_paddles()
 	for index: int in _peers.size():
 		_enter_rider(_peers[index], index)
+	# The crossing's own HUD on every peer; it shows only to this crossing's riders.
+	var hud := CrossingHud.new()
+	hud.name = "Hud"
+	add_child(hud)
 
 
 func peers() -> Array[int]:
@@ -271,6 +289,10 @@ func advance(delta: float) -> void:
 		return
 	elapsed_s += delta
 	steer.step(delta, tuning, _active_paddlers(), in_blow())
+	# Leaks drain before this step's beats fire, so a leak opened now drains from the next step.
+	_drain_leaks(delta)
+	_warn_sharks()
+	threats.tick(self, delta)
 	var reached_s: float = elapsed_s + EPSILON_S
 	for item: RefCounted in plan.due(_fired_to_s, reached_s):
 		_fire(item as CrossingBeat)
@@ -278,6 +300,7 @@ func advance(delta: float) -> void:
 	for peer: int in _peers:
 		_tick_rider(peer, delta)
 	_cut_swimmers()
+	_touch_flotsam()
 	_refresh_points()
 	if elapsed_s >= plan.length_s - EPSILON_S:
 		_finish()
@@ -362,6 +385,8 @@ func beat_width_tiles(beat: CrossingBeat) -> float:
 ## Whether a lane beat is still to be drawn: every rock and debris, and each flotsam piece nobody
 ## has taken.
 func beat_shown(beat: CrossingBeat) -> bool:
+	if beat.kind == CrossingBeat.Kind.FLOTSAM and plan != null:
+		return not taken.has(plan.index_of(beat))
 	return beat.is_lane_beat()
 
 
@@ -401,6 +426,121 @@ func beat_hits_vessel(beat: CrossingBeat) -> bool:
 		return false
 	var centre: float = steer.position + span.y
 	return absf(beat.lane - centre) < span.x + beat_width_tiles(beat) * 0.5 - EPSILON_S
+
+
+## Host: debris that hit the vessel (`beat_hits_vessel`): it takes the debris hit and, still afloat,
+## a leak on the half of its deck nearer the debris (crossing "Leaks"). On a board route the next
+## intact board in turn takes both. Nothing happens with no vessel left.
+func hole_vessel(beat: CrossingBeat) -> void:
+	var vessel_peer: int = 0
+	var vessel: VesselIntegrity = integrity
+	if is_board_route():
+		vessel_peer = _next_board()
+		if vessel_peer == 0:
+			return
+		vessel = boards[vessel_peer]
+	elif not integrity.intact():
+		return
+	var east: bool = beat.lane > steer.position + vessel_span_tiles().y + EPSILON_S
+	vessel.hit(tuning.debris_hit)
+	if vessel.intact():
+		leaks.open(vessel_peer, east, tuning.max_leaks)
+	_dirty = true
+	_sync_plug_points()
+
+
+## Where leak `leak` is (session coordinates): its spot on the deck or board it holes.
+func leak_position(leak: Dictionary) -> Vector2:
+	var vessel_peer: int = leak.get("vessel", 0)
+	var centre: Vector2 = deck_rect_of(vessel_peer).get_center() if vessel_peer != 0 else deck_center()
+	return centre + Vector2(float(leak.get("x", 0.0)), float(leak.get("y", 0.0))) * TILE_PX
+
+
+## Host: `peer` takes the flotsam piece of beat `index` (crossing "Flotsam"): an item into their
+## inventory, a plank lashed onto their vessel. False, and the piece still floating, when it was
+## taken, the inventory has no room, or a plank has no vessel to go on.
+func take_flotsam(index: int, peer: int) -> bool:
+	var beat := plan.beat_at(index) if plan != null else null
+	var body := body_of(peer)
+	if beat == null or beat.kind != CrossingBeat.Kind.FLOTSAM or taken.has(index) or body == null:
+		return false
+	var piece: StringName = tuning.flotsam_piece(beat.extra)
+	if piece == CrossingTuning.PLANK_ID:
+		var vessel := vessel_of(peer)
+		if not vessel.intact():
+			return false
+		vessel.repair(tuning.plank_repair)
+	elif body.inventory.add(piece, 1) < 1:
+		return false
+	taken[index] = peer
+	_dirty = true
+	return true
+
+
+## Whether the shark pass `beat` was shooed before its strike.
+func is_shooed(beat: CrossingBeat) -> bool:
+	return plan != null and shooed.has(plan.index_of(beat))
+
+
+## Host: the shark pass of beat `index` is shooed off, when a rider's hold completes before its
+## strike: it leaves and bites and hits nothing. False once it struck, or for anything else.
+func shoo_shark(index: int) -> bool:
+	var beat := plan.beat_at(index) if plan != null else null
+	if beat == null or beat.kind != CrossingBeat.Kind.SHARK_PASS or shooed.has(index) or not fins.has(index):
+		return false
+	if elapsed_s >= beat.time_s - EPSILON_S:
+		return false
+	shooed[index] = true
+	threats.shooed(beat, self)
+	_dirty = true
+	_sync_shoo_points()
+	return true
+
+
+## Host: where the shark pass `beat`'s fin circles: 1 tile off the side it names, beside the shared
+## deck, beside the board next in turn, or beside the swimmers with no vessel.
+func fin_spot(beat: CrossingBeat) -> Vector2:
+	var east: bool = beat.side() == CrossingBeat.Side.EAST
+	var rect: Rect2 = deck_rect()
+	if is_board_route():
+		var peer: int = _peek_next_board()
+		rect = deck_rect_of(peer) if peer != 0 else _board_rect(0)
+	elif not integrity.has_integrity():
+		var middle := Vector2.ZERO
+		var count: int = 0
+		for peer: int in _peers:
+			var body := body_of(peer)
+			if body != null and rider_state(peer) == Rider.IN_WATER:
+				middle += body.global_position
+				count += 1
+		var centre: Vector2 = middle / count if count > 0 else deck_center()
+		rect = Rect2(centre - Vector2(TILE_PX, TILE_PX) * 0.5, Vector2(TILE_PX, TILE_PX))
+	return _beside(rect, east)
+
+
+## Host: where the shark of `beat` strikes a vessel it hit, whose deck (or board) is centred at
+## `hit_center`: 1 tile off that deck's edge on the side the pass names, level with its middle, so
+## the shark is never on the planks (owner, art waves QS1 (a), 2026-11-16).
+func strike_spot(beat: CrossingBeat, hit_center: Vector2) -> Vector2:
+	var size := Vector2(BOARD_TILES if is_board_route() else DECK_TILES) * TILE_PX
+	return _beside(Rect2(hit_center - size * 0.5, size), beat.side() == CrossingBeat.Side.EAST)
+
+
+# 1 tile off `rect`'s east or west edge, level with its middle.
+func _beside(rect: Rect2, east: bool) -> Vector2:
+	var x: float = rect.end.x + TILE_PX if east else rect.position.x - TILE_PX
+	return Vector2(x, rect.get_center().y)
+
+
+## The prompt's name for the flotsam piece of beat `index` in `locale`: the item's name, or "" for a
+## plank (the prompt's own label names it).
+func flotsam_name(index: int, locale: String) -> String:
+	var beat := plan.beat_at(index) if plan != null else null
+	if beat == null:
+		return ""
+	var piece: StringName = tuning.flotsam_piece(beat.extra)
+	var item := GameState.content.get_entry(&"items", piece) as ItemData
+	return item.get_display_name(locale) if item != null else ""
 
 
 ## A shark's bite on a swimmer: health and bleeding. `by` is the biting creature's id, the cause
@@ -477,13 +617,42 @@ func receive_steer(steer_data: Array, time_s: float) -> void:
 ## What the crossing's play state is now (crossing "Crossing play state on every peer"), as plain
 ## values: the lateral position.
 func play_state() -> Dictionary:
-	return {"steer": steer.to_array()}
+	var taken_map: Dictionary = {}
+	taken_map.merge(taken)
+	var fin_map: Dictionary = {}
+	fin_map.merge(fins)
+	var shooed_list: Array = []
+	shooed_list.append_array(shooed.keys())
+	return {"steer": steer.to_array(), "leaks": leaks.to_array(), "taken": taken_map, "fins": fin_map, "shooed": shooed_list}
 
 
 ## Clients and joiners: the host's play state; malformed parts are ignored.
 func apply_play(play: Dictionary) -> void:
 	if play.has("steer"):
 		steer.read(play["steer"], tuning)
+	if play.has("leaks") and leaks.read(play["leaks"], tuning.max_leaks * (NetPeers.MAX_PLAYERS + 1)):
+		_sync_plug_points()
+	if play.get("taken") is Dictionary:
+		var events: int = plan.events.size() if plan != null else 0
+		for index: Variant in play["taken"]:
+			var peer: Variant = play["taken"][index]
+			if index is int and peer is int and index >= 0 and index < events:
+				taken[index] = peer
+	var shark_changed: bool = false
+	if play.get("fins") is Dictionary:
+		var count: int = plan.events.size() if plan != null else 0
+		for index: Variant in play["fins"]:
+			var spot: Variant = play["fins"][index]
+			if index is int and spot is Vector2 and (spot as Vector2).is_finite() and index >= 0 and index < count and not fins.has(index):
+				fins[index] = spot
+				shark_changed = true
+	if play.get("shooed") is Array:
+		for index: Variant in play["shooed"]:
+			if index is int and not shooed.has(index):
+				shooed[index] = true
+				shark_changed = true
+	if shark_changed:
+		_sync_shoo_points()
 
 
 ## Every board's integrity by rider, as plain values (empty off a board route).
@@ -577,6 +746,8 @@ func _shark_dump(riders: Array[int]) -> void:
 # A broken vessel throws everyone in, the tied included, and nobody can climb back.
 func _on_broke() -> void:
 	_sink_deck()
+	leaks.clear_vessel(0)
+	_sync_plug_points()
 	for peer: int in _peers:
 		throw_in(peer)
 	_dirty = true
@@ -588,6 +759,8 @@ func _show_broken() -> void:
 		return
 	integrity.broken = true
 	_sink_deck()
+	leaks.clear_vessel(0)
+	_sync_plug_points()
 
 
 func _sink_deck() -> void:
@@ -608,6 +781,8 @@ func _on_board_broke(board: VesselIntegrity) -> void:
 	if peer == 0:
 		return
 	_sink_board(peer)
+	leaks.clear_vessel(peer)
+	_sync_plug_points()
 	throw_in(peer)
 	_dirty = true
 
@@ -742,6 +917,16 @@ func _on_point_used(by: Node, point: RescuePoint) -> void:
 		RescuePoint.Kind.PADDLE:
 			if point.usable_by(by):
 				steer.start(user, point.side)
+		RescuePoint.Kind.PLUG:
+			if point.usable_by(by) and leaks.plug(point.target_id):
+				_dirty = true
+				_sync_plug_points()
+		RescuePoint.Kind.GRAB:
+			if point.usable_by(by):
+				take_flotsam(point.target_id, user)
+		RescuePoint.Kind.SHOO:
+			if point.usable_by(by):
+				shoo_shark(point.target_id)
 		_:
 			bring_aboard(point.swimmer)
 
@@ -790,6 +975,13 @@ func _on_player_rebound(old_peer: int, new_peer: int, _body: PlayerBody) -> void
 	for paddle: RescuePoint in _paddles:
 		if paddle.swimmer == old_peer:
 			paddle.swimmer = new_peer
+	leaks.rename_vessel(old_peer, new_peer)
+	for leak_id: int in _plug_points:
+		if _plug_points[leak_id].swimmer == old_peer:
+			_plug_points[leak_id].swimmer = new_peer
+	for index: int in taken:
+		if taken[index] == old_peer:
+			taken[index] = new_peer
 	for offset: int in 2:
 		var point := _points.get(old_peer * 2 + offset) as RescuePoint
 		_points.erase(old_peer * 2 + offset)
@@ -859,9 +1051,121 @@ func _send_state() -> void:
 	_steer_sent = steer.position
 
 
+# Host: each shark pass whose warning time has come gets its fin spot and its shark (crossing
+# "Shooing the shark"; creatures-ai "Crossing reef shark"). A pass in the first seconds is warned at
+# once, with whatever lead is left.
+func _warn_sharks() -> void:
+	for index: int in plan.events.size():
+		var beat := plan.events[index] as CrossingBeat
+		if beat.kind != CrossingBeat.Kind.SHARK_PASS or fins.has(index) or shooed.has(index):
+			continue
+		if elapsed_s < beat.time_s - tuning.shark_lead_s - EPSILON_S or elapsed_s >= beat.time_s - EPSILON_S:
+			continue
+		var spot: Vector2 = fin_spot(beat)
+		fins[index] = spot
+		threats.warn(beat, self, spot)
+		_dirty = true
+	_sync_shoo_points()
+
+
+# Every peer: a shoo point on each warned fin, until its strike or its shooing.
+func _sync_shoo_points() -> void:
+	for index: int in fins:
+		var point := _shoo_points.get(index) as RescuePoint
+		if point == null:
+			point = _make_point(RescuePoint.Kind.SHOO, 0, tuning.shoo_hold_s)
+			point.target_id = index
+			point.priority = tuning.shoo_priority
+			_shoo_points[index] = point
+		# Half a tile nearer the vessel than the fin, so a rider at the deck's edge reaches it.
+		point.global_position = fins[index] + Vector2(signf(deck_center().x - fins[index].x) * TILE_PX * 0.5, 0.0)
+		var beat := plan.beat_at(index) if plan != null else null
+		point.enabled = beat != null and elapsed_s < beat.time_s and not shooed.has(index)
+
+
+# Host: the board the next single-board hit would take, without taking the turn.
+func _peek_next_board() -> int:
+	for step: int in _peers.size():
+		var slot: int = (_board_turn + step) % _peers.size()
+		var board := boards.get(_peers[slot]) as VesselIntegrity
+		if board != null and board.intact():
+			return _peers[slot]
+	return 0
+
+
+# Host: each open leak drains its vessel (crossing "Leaks").
+func _drain_leaks(delta: float) -> void:
+	for leak: Dictionary in leaks.list.duplicate():
+		var vessel_peer: int = leak["vessel"]
+		var vessel: VesselIntegrity = boards.get(vessel_peer) as VesselIntegrity if vessel_peer != 0 else integrity
+		if vessel != null and vessel.intact():
+			vessel.hit(tuning.leak_drain_per_s * delta)
+
+
+# Every peer: one plug point on each open leak, for the riders aboard that vessel.
+func _sync_plug_points() -> void:
+	var open_ids: Array[int] = []
+	for leak: Dictionary in leaks.list:
+		var id: int = leak["id"]
+		open_ids.append(id)
+		var point := _plug_points.get(id) as RescuePoint
+		if point == null:
+			point = _make_point(RescuePoint.Kind.PLUG, leak["vessel"], tuning.plug_hold_s)
+			point.target_id = id
+			point.priority = tuning.plug_priority
+			point.enabled = true
+			_plug_points[id] = point
+		point.global_position = leak_position(leak)
+	for id: int in _plug_points.keys():
+		if not open_ids.has(id):
+			_plug_points[id].queue_free()
+			_plug_points.erase(id)
+
+
+# Every peer: a grab point on each flotsam piece, following it down its lane and kept on the side
+# of the piece nearer the deck, enabled while it floats on the sea untaken.
+func _refresh_grab_points() -> void:
+	if plan == null:
+		return
+	for index: int in plan.events.size():
+		var beat := plan.events[index] as CrossingBeat
+		if beat.kind != CrossingBeat.Kind.FLOTSAM:
+			continue
+		var point := _grab_points.get(index) as RescuePoint
+		if point == null:
+			point = _make_point(RescuePoint.Kind.GRAB, 0, tuning.grab_hold_s)
+			point.target_id = index
+			point.priority = tuning.grab_priority
+			_grab_points[index] = point
+		var at: Vector2 = beat_center(beat)
+		at.x -= signf(at.x - deck_center().x) * TILE_PX * 0.5
+		point.global_position = at
+		point.enabled = not taken.has(index) and beat_on_sea(beat)
+
+
+# Host: a swimmer who touches a passing piece takes it.
+func _touch_flotsam() -> void:
+	for index: int in plan.events.size():
+		var beat := plan.events[index] as CrossingBeat
+		if beat.kind != CrossingBeat.Kind.FLOTSAM or taken.has(index) or not beat_on_sea(beat):
+			continue
+		var at: Vector2 = beat_center(beat)
+		for peer: int in _peers:
+			var body := body_of(peer)
+			if body == null or rider_state(peer) != Rider.IN_WATER or body.global_position.distance_to(at) > TILE_PX * 0.5:
+				continue
+			if take_flotsam(index, peer):
+				break
+
+
 # Every peer: where the crossing-gameplay points sit and whether they are on, from the state this
 # peer has (the host each step, a client each frame), so a client's prompts follow the host's.
 func _refresh_play_points() -> void:
+	_refresh_grab_points()
+	# A fin's shoo point is on from its warning to its strike, unless it was shooed.
+	for index: int in _shoo_points:
+		var beat := plan.beat_at(index) if plan != null else null
+		_shoo_points[index].enabled = beat != null and elapsed_s < beat.time_s and not shooed.has(index)
 	for paddle: RescuePoint in _paddles:
 		var vessel: VesselIntegrity = vessel_of(paddle.swimmer) if paddle.swimmer != 0 else integrity
 		paddle.enabled = vessel.intact()

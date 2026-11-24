@@ -4,9 +4,10 @@ extends GutTest
 ## design.md D9 and D21 as amended by C1:
 ## - palette and alpha everywhere, the UI window kit in art/ui/ included (hud-window-kit, art-pass
 ##   "Master palette": Kenney's 9-slices and their exemption are gone);
-## - the outline rule on every frame cell in creatures/, items/ and structures/; characters are
-##   outlined as composed (task 5.3), so the part sheets in characters/parts/ get palette, alpha
-##   and import only, a hair or outfit alone having open edges by design;
+## - the outline rule on every frame cell in creatures/, items/ and structures/, by family
+##   (art-prop-polish D1): creatures and items in black, structures in the dark tones; characters
+##   are outlined as composed (task 5.3), in black, so the part sheets in characters/parts/ get
+##   palette, alpha and import only, a hair or outfit alone having open edges by design;
 ## - frame budgets on every actor and structure SpriteFrames and on every part sheet.
 
 const ART_ROOT: String = "res://assets/art"
@@ -51,10 +52,6 @@ func _world_pngs() -> PackedStringArray:
 
 func _palette() -> Dictionary:
 	return ArtChecks.palette_from_image(ArtChecks.read_png(_tuning().master_palette.resource_path))
-
-
-func _outline() -> Dictionary:
-	return ArtChecks.palette_from_colors(_tuning().outline_colors)
 
 
 func _sprite_frames() -> Dictionary[String, SpriteFrames]:
@@ -128,7 +125,7 @@ func test_every_world_image_uses_only_palette_colours_and_whole_alpha() -> void:
 
 
 func test_every_actor_frame_cell_has_its_outline() -> void:
-	var outline: Dictionary = _outline()
+	var colors: PackedColorArray = _tuning().outline_colors
 	var failures: PackedStringArray = []
 	var covered: Dictionary = {}
 	var frames_by_path: Dictionary[String, SpriteFrames] = _sprite_frames()
@@ -145,13 +142,13 @@ func test_every_actor_frame_cell_has_its_outline() -> void:
 				var region: Rect2i = Rect2i(atlas.region) if atlas != null else Rect2i(Vector2i.ZERO, frame.get_size())
 				covered[sheet_path] = true
 				var cell: Image = ArtChecks.read_png(sheet_path).get_region(region)
-				failures.append_array(ArtChecks.check_outline(label, cell, outline, region.size))
+				failures.append_array(ArtChecks.check_outline(label, cell, ArtChecks.family_outline(sheet_path, colors), region.size, ArtChecks.family_rule(sheet_path)))
 	for path: String in _pngs():
 		if covered.has(path) or not _in_any(path, OUTLINE_DIRS):
 			continue
 		var image: Image = ArtChecks.read_png(path)
 		var cell_size: Vector2i = ITEM_CELL if path.begins_with(ITEMS_DIR) else image.get_size()
-		failures.append_array(ArtChecks.check_outline(path, image, outline, cell_size))
+		failures.append_array(ArtChecks.check_outline(path, image, ArtChecks.family_outline(path, colors), cell_size, ArtChecks.family_rule(path)))
 	assert_eq(failures, PackedStringArray())
 
 

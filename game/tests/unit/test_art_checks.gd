@@ -202,6 +202,39 @@ func test_the_outline_rule_runs_per_frame_cell() -> void:
 	_assert_one_naming(cells, ["res://x/a.png", "(3, 1)", "cell (0, 0)"])
 
 
+# --- Outline families (art-prop-polish D1; owner Q15 (a), QO1 (a)) ------------------------------
+# Actors (characters, creatures, items) are outlined in black; structures in the dark tones. The
+# family is read from the folder.
+
+func _family_failures(relative: String, cell: Vector2i) -> PackedStringArray:
+	var path: String = _fixture(relative)
+	var outline: PackedColorArray = _colors(OUTLINE_SET)
+	return ArtChecks.check_outline(path, ArtChecks.read_png(path), ArtChecks.family_outline(path, outline), cell, ArtChecks.family_rule(path))
+
+
+func test_the_families_split_the_outline_set_black_for_actors_dark_tones_for_structures() -> void:
+	var outline: PackedColorArray = _colors(OUTLINE_SET)
+	var black: Dictionary = ArtChecks.palette_from_colors(_colors(["000000"]))
+	var dark: Dictionary = ArtChecks.palette_from_colors(_colors(["222034", "45283c", "323c39"]))
+	for path: String in ["res://assets/art/creatures/a.png", "res://assets/art/items/a.png", "res://assets/art/characters/a.png"]:
+		assert_eq(ArtChecks.family_outline(path, outline), black, "%s: black" % path)
+	assert_eq(ArtChecks.family_outline("res://assets/art/structures/a.png", outline), dark, "structures: the dark tones")
+	assert_eq(ArtChecks.family_outline("res://assets/art/terrain/a.png", outline), {}, "terrain: no outline family")
+
+
+func test_a_creature_sheet_with_a_plum_edge_fails_naming_the_file_and_the_pixel() -> void:
+	_assert_one_naming(_family_failures("creatures/plum_edge.png", Vector2i(8, 8)),
+		[_fixture("creatures/plum_edge.png"), "pixel (1, 1)", "#45283c", "black"])
+
+
+func test_the_same_edge_on_a_structure_passes() -> void:
+	assert_eq(_family_failures("structures/plum_edge.png", Vector2i(8, 8)), PackedStringArray())
+
+
+func test_an_item_icon_with_a_dark_tone_rim_fails_naming_the_file() -> void:
+	_assert_one_naming(_family_failures("items/dark_rim.png", Vector2i(16, 16)), [_fixture("items/dark_rim.png"), "#222034"])
+
+
 # --- Import ("A lossy import") -----------------------------------------------------------------
 
 func test_a_lossy_import_fails_naming_the_file() -> void:

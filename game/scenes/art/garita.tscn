@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/structures/garita.png" id="1_garita"]
+[ext_resource type="PackedScene" path="res://scenes/art/shadow.tscn" id="2_shadow"]
+
+[node name="Garita" type="Sprite2D" groups=["art_view"]]
+texture = ExtResource("1_garita")
+centered = false
+offset = Vector2(-40, -48)
+
+[node name="ShadowWest" parent="." instance=ExtResource("2_shadow")]
+show_behind_parent = true
+position = Vector2(-35, -1)
+size = 2
+
+[node name="ShadowEast" parent="." instance=ExtResource("2_shadow")]
+show_behind_parent = true
+position = Vector2(34, -1)
+size = 2

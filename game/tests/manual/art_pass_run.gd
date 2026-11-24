@@ -102,8 +102,12 @@ var host_tiles: String = ""
 var tag: String = ""
 var capture_dir: String = ""
 ## Solo only: --only=foam runs just the shore views by day and by night (a quick way to tune the foam check);
-## --only=cay travels straight to the coast cay and runs its steps.
+## --only=cay travels straight to the coast cay and runs its steps; --only=palms walks to a nest palm
+## and checks the palm looks round it (art-prop-polish D4); --only=hut walks into the lean-to and then
+## south of it, to shoot the shelter and its shade (art-prop-polish D5).
 ## --only=squall runs art-mood-pass's squall steps (task 4.6): by day, then at night beside a fire.
+## --only=hidden travels straight to the hidden cay and shoots its scenery (art-prop-polish D6).
+## --only=post travels straight to the coast cay and shoots the garita and the sign looks (D7).
 var only: String = ""
 ## Host only: how many clients play (2: A rides, B leaves and joins; 1: one untagged client rides).
 var clients: int = 2
@@ -776,8 +780,21 @@ func _solo() -> void:
 	if only == "cay":
 		await _cay_only()
 		return
+	if only == "palms":
+		await _palms_only()
+		return
+	if only == "hut":
+		await _lean_to()
+		await _hut_shade_view()
+		return
 	if only == "squall":
 		await _squall_only()
+		return
+	if only == "hidden":
+		await _hidden_only()
+		return
+	if only == "post":
+		await _post_only()
 		return
 	var day: Image = await _world_image("sandbar_day_view")
 	_check_no_magenta(day, "the sandbar by day")
@@ -900,6 +917,137 @@ func _cay_only() -> void:
 	_hooked("travelled to the coast cay at once (CoopSession.travel_to)")
 	await _frames(30)
 	await _coast_cay()
+
+
+# --only=palms (art-prop-polish D4, task 4.3): walks to the nearest nest palm and shoots the grove by
+# day. Every palm draws its cell's look, more than one look shows, and a gull perched in the nest
+# palm stands on the nest point of the look that palm draws.
+func _palms_only() -> void:
+	var nest_palm: Node2D = _nearest_nest_palm()
+	if not _check("a nest palm", nest_palm != null):
+		return
+	if not _check("walked south of the nest palm", await _walk_to(nest_palm.global_position + Vector2(0.0, 2.0 * TILE))):
+		return
+	await _frames(30)
+	# Loaded, not named: this script runs under -s, before the autoloads its class names would need.
+	var data: Resource = load("res://assets/art/structures/structure_art.tres")
+	var rules: GDScript = load("res://scripts/art/structure_art.gd")
+	var count: int = int(data.call("palm_look_count"))
+	var layout_id: StringName = (island.get("layout") as Object).get("id")
+	var cells: Array = (island.get("built") as Object).get("palms")
+	var palms: Array[Node] = island.get_node(^"Palms").get_children()
+	var looks: Array[int] = []
+	var wrong: Array[String] = []
+	for i: int in palms.size():
+		var look: Node = _look_of(palms[i])
+		var shown: int = int(look.get("palm_look"))
+		looks.append(shown)
+		var still: Sprite2D = look.get_node(^"Still")
+		if shown != int(rules.call("palm_look", layout_id, cells[i], count)) or still.texture != data.call("palm_texture", shown):
+			wrong.append("palm %d at %s draws look %d" % [i, cells[i], shown])
+	_check("every palm draws its cell's look", wrong.is_empty(), ", ".join(wrong))
+	var seen: Dictionary = {}
+	for shown: int in looks:
+		seen[shown] = true
+	_check("more than one palm look on the sandbar", seen.size() > 1, "looks %s" % [looks])
+	var perched: Array[Node2D] = _perched_at(nest_palm)
+	var nest_look: Node = _look_of(nest_palm)
+	var nest_point: Vector2 = nest_look.call("nest_point")
+	var off: Array[String] = []
+	for gull: Node2D in perched:
+		var sprite: Node2D = _look_of(gull).get_node(^"Sprite")
+		if absf(sprite.global_position.x - nest_point.x) > 0.5:
+			off.append("%s at x %.1f" % [gull.name, sprite.global_position.x])
+	_check("the nest palm's perched gulls stand over the nest point of look %d" % int(nest_look.get("palm_look")),
+		not perched.is_empty() and off.is_empty(), "%d perched; %s" % [perched.size(), ", ".join(off)])
+	_note("palm looks %s; the nest palm draws look %d" % [looks, int(nest_look.get("palm_look"))])
+	await _world_image("palms_solo")
+
+
+# --only=hut (art-prop-polish D5, task 5.3): after the lean-to step, steps 3 tiles south of the hut's
+# middle so the player does not stand on the shade, and shoots the shelter and its shade.
+func _hut_shade_view() -> void:
+	var hut: Array = (island.get("built") as Object).get("hut_cells")
+	var south: int = -1
+	var west: int = 1 << 30
+	var east: int = -1
+	for cell: Vector2i in hut:
+		south = maxi(south, cell.y)
+		west = mini(west, cell.x)
+		east = maxi(east, cell.x)
+	var spot := Vector2i((west + east) / 2, south + 3)
+	if not _check("walked south of the hut", await _walk_to(_center(spot))):
+		return
+	await _frames(10)
+	await _world_image("lean_to_shade")
+
+
+# --only=hidden (art-prop-polish D6, task 6.3): the run travels straight to the hidden cay (the
+# host's travel_to, as the shimmer's crossing ends), walks to the embers and shoots the scenery: every
+# decor cell draws its piece and none its colour square, and Platino stands beside the chest.
+func _hidden_only() -> void:
+	session.call("travel_to", "cayo_sin_norte", {1: {"health": 100.0, "energy": 100.0}}, 100.0)
+	_hooked("travelled to the hidden cay at once (CoopSession.travel_to)")
+	await _frames(30)
+	island = shell.get("island")
+	body = session.call("body", 1)
+	if not _check("on the hidden cay", island != null and (island.get("layout") as Object).get("id") == &"cayo_sin_norte"):
+		return
+	_build_land()
+	_set_day("hidden cay captures")
+	var view: Node = island.get_node_or_null(^"Decor")
+	var built: Object = island.get("built")
+	var squares: Array[String] = []
+	var embers: Vector2i = Vector2i(-1, -1)
+	var platino: Vector2i = Vector2i(-1, -1)
+	for entry: Dictionary in built.get("decor"):
+		var piece: Dictionary = view.call("piece_for", entry)
+		if piece["kind"] == &"square":
+			squares.append("%s at %s" % [entry["decor_id"], entry["cell"]])
+		if entry["decor_id"] == &"embers":
+			embers = entry["cell"]
+		elif entry["decor_id"] == &"platino":
+			platino = entry["cell"]
+	_check("every decor cell draws its piece, none its colour square", squares.is_empty(), ", ".join(squares))
+	var chest: Vector2i = built.get("chest")
+	_check("Platino stands beside the chest", platino.x >= 0 and Vector2(platino).distance_to(Vector2(chest)) <= 1.5, "Platino %s, chest %s" % [platino, chest])
+	if _check("walked to the embers", await _walk_to(_center(embers + Vector2i(0, 2)))):
+		await _frames(10)
+		await _world_image("hidden_cay_decor")
+
+
+# --only=post (art-prop-polish D7, task 7.3): the run travels straight to the coast cay, walks onto
+# the post's back row and shoots the garita with the player in front of it, then stands 2 tiles south
+# and shoots the post with its signs.
+func _post_only() -> void:
+	session.call("travel_to", "coast_cay", {1: {"health": 100.0, "energy": 100.0}}, 100.0)
+	_hooked("travelled to the coast cay at once (CoopSession.travel_to)")
+	await _frames(30)
+	island = shell.get("island")
+	body = session.call("body", 1)
+	if not _check("on the coast cay", island != null and (island.get("layout") as Object).get("id") == &"coast_cay"):
+		return
+	_build_land()
+	_set_day("garita captures")
+	var garita: Node2D = island.get_node_or_null(^"Shelter")
+	if not _check("the coast cay has its garita", garita != null and String(garita.scene_file_path).ends_with("garita.tscn")):
+		return
+	var post: Array = (island.get("built") as Object).get("hut_cells")
+	var back: int = 1 << 30
+	var west: int = 1 << 30
+	var east: int = -1
+	var south: int = -1
+	for cell: Vector2i in post:
+		back = mini(back, cell.y)
+		south = maxi(south, cell.y)
+		west = mini(west, cell.x)
+		east = maxi(east, cell.x)
+	if _check("walked onto the post's back row", await _walk_to(_center(Vector2i(west, back)))):
+		_check("the player on the back row is drawn in front of the garita", draw_order.call("drawn_after", body, garita))
+		await _world_image("cay_post_garita")
+	if _check("walked 2 tiles south of the post", await _walk_to(_center(Vector2i((west + east) / 2, south + 2)))):
+		await _frames(10)
+		await _world_image("cay_post")
 
 
 # --only=foam: the shore views by day, then by night.

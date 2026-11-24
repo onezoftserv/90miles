@@ -135,7 +135,7 @@ A use that would change nothing is refused with a reason and spends nothing:
 
 It counts as changing nothing only when every meter it raises is within 1 point of full, every status it cures is absent, and it has no other effect. A coconut is still drunk when you are hungry, and a conch still leaves its horn.
 
-**Durability.** Tools wear out. The raft loses 25% integrity per crossing and more in squalls; repair with driftwood and rope.
+**Durability.** Tools wear out. The raft loses integrity on each crossing to what its riders do not dodge, plug or shoo (§8 "Playing the crossing"; measured on a 75 s coast crossing: about 70 for a rider who does nothing, under 10 for an attentive one, a squall's 30 aside) and more in squalls; a plank caught at sea mends 10, and on land it is repaired with driftwood and rope.
 
 **Mending the raft** (`island-stop`). Any built raft still on the island can be mended at its work point, on its land side. A mend costs 1 driftwood and 1 rope and 10 s of work (5 s for a Mecánico), gives +20 integrity, never goes above the raft's maximum, and can be repeated.
 - There is one job on a raft at a time. Anyone deposits into it and anyone works it.
@@ -174,6 +174,10 @@ Swimmers in the water lose energy every second, moving or not (3 a second, times
 
 - **Paddling.** A rider aboard holds interact at the paddle on the deck's west or east edge (on a board, beside it) to slide the vessel that way: 1.5 tiles/s, 2.25 with two or more on one side, the two sides subtracting, never more than 6 tiles from the line. When nobody paddles, the current pulls it back to the line at 0.5 tiles/s, so a rider who does nothing sits on the line and meets every beat in it. Paddling is not drift: coast drift stays 0 and the Gulf Stream rule above is untouched.
 - **Rocks and debris** come down a lane from the sea's north edge, 5 s before they reach the deck, and hit only where their lane overlaps the vessel (a rock is 2 tiles wide, debris 1, the raft and the car 4, boards the whole row): a rock −40, debris −5. A row of boards takes each hit on the next board in turn, as above. A swimmer a rock passes over is cut (−15 health and bleeding, so the shark's first choice); debris takes 5.
+- **Leaks.** Debris that hits a vessel also opens a leak on the half of its deck nearer the debris (on a board, on that board): it drains 0.5 integrity a second until a rider aboard that vessel, untied, holds interact on it for 2 s. At most 3 are open on one vessel.
+- **Flotsam.** Coconuts, driftwood, rope, plastic jugs, cloth, the odd inner tube and planks drift down lanes 2 to 5 tiles off the line. A rider aboard holds interact for 0.3 s as a piece passes within 1 tile of them, or a swimmer touches it: an item goes into their inventory (a full one leaves it in the sea), a plank is lashed on at once for +10, up to the route's full integrity (a raft launched at 70 can be mended to 100). Items still cannot be used at sea.
+- **The shark** is told 5 s ahead by its fin circling 1 tile off one side; a rider aboard who holds interact on it for 1 s before the strike shoos it off. When a press reaches several jobs, it goes to the fin, then a swimmer to pull, then flotsam, then a leak, then a paddle or the lashing.
+- **The crossing HUD** sits top-centre under the day phase: a strip from island to island with the vessel at the share of the crossing gone, the vessel's integrity ("Balsa 70/100", "A nado" for swimmers), and short shouted lines for the squall (30 s and 10 s before its hit), a fin and a leak.
 - **Pacing.** The host rolls no beat in the first 6 s, puts the first between 6 and 9 s and then one every 3 to 9 s (the 9 s ×0.9 for each rider past the first), with rocks, debris and flotsam weighted 0.12, 0.20 and 0.68 on the coast. The squall's blow (the 15 s after its hit, when paddling runs at half speed) holds no rolled beat, and a rock or debris falls in the 10 s before a hit, so tying down early costs a dodge. Every crossing ends with the reef line: two rocks 10 tiles apart, 4 s before the end, with the gap within 3 tiles of the line.
 
 ## 9. Threats
@@ -341,6 +345,18 @@ Claude Haiku 4.5 on Amazon Bedrock generates dialogue for **important NPCs and t
 | Weather and day-night | `WeatherManager` autoload driving CanvasModulate and spawns | Original |
 | Stealth | Searchlight cones tested by the host as plain geometry (angle and distance; no Area2D, no occlusion), a spot meter per player, noise and smoke events on a bus owned by the session (not an autoload) | Brogue stealth, SPD guard cones, DCSS noise |
 | Dialogue | `DialogueService` autoload with cache + fallback | Original |
+| Sound | `AudioManager` autoload plays ids from `sound_bank.tres`; `RunSounds`, one per peer, reads state the peer already holds | SPD `Sample`, DCSS `sound.cc`, DST hound warning |
+
+### Sound (`sound-pass`, 2026-11-23)
+
+The first pass is about 15 retro effects and loops, and no music, which is still a Milestone G task.
+- **Where the sounds come from.** Each is generated by `tools/audio/sfx.py` from `tools/audio/sounds.json`, so any of them can be rebuilt and tuned. The sea, wind and thunder become CC0 recordings once the owner approves each file.
+- **Own events are heard only by their player.** These are the pick-up, the hurt and use cues, low thirst (Sed at 25, where the bar pulses) and the compass rattle.
+- **World events are heard by everyone.** These are the sea (louder at sea), the wind (crossings and squalls), insects at night on an island, thunder (quiet at a squall's warning, loud when it breaks), the patrol motor, the loudhailer, a hit on your raft, and arrival.
+- **The patrol motor.** It swells over the boat's 20 s horizon warning and then follows the boat's distance, so the patrol is heard before it is seen. This is DST's growing hound warning.
+- **Sound never carries information alone.** Every cue has something you can see, so a muted player loses nothing. This follows Brogue, which has no audio at all.
+- **Sound never changes the simulation.** A test runs the same run with and without it.
+- **Volume.** The volume setting (Ajustes "Volumen", 0 to 100 %, default 80 %) scales everything.
 
 ### Tooling
 

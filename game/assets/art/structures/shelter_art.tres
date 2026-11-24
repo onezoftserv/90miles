@@ -2,10 +2,16 @@
 
 [ext_resource type="Script" path="res://scripts/art/shelter_art_data.gd" id="1_data"]
 [ext_resource type="PackedScene" path="res://scenes/art/lean_to.tscn" id="2_lean_to"]
+[ext_resource type="PackedScene" path="res://scenes/art/garita.tscn" id="3_garita"]
 
 [resource]
 script = ExtResource("1_data")
 shelters = Dictionary[StringName, PackedScene]({
 &"cayo_sin_norte": ExtResource("2_lean_to"),
+&"coast_cay": ExtResource("3_garita"),
 &"sandbar": ExtResource("2_lean_to")
+})
+hut_shade = Dictionary[StringName, bool]({
+&"cayo_sin_norte": true,
+&"sandbar": true
 })

@@ -6,8 +6,12 @@ extends Resource
 
 const STANDARD_PATH: String = "res://assets/art/structures/structure_art.tres"
 
-## The palm, 32x48, its trunk base at the bottom-centre.
+## The palm, 32x48, its trunk base at the bottom-centre. It is palm look 0.
 @export var palm: Texture2D
+## The redrawn palm looks (art-prop-polish D4, owner QP1 (a)), lit from the upper left like `palm`:
+## look i is palm_looks[i - 1]. Each is 32x48 with the same trunk base and its crown round
+## `nest_point`, so every look takes the coconut and nest overlays below.
+@export var palm_looks: Array[Texture2D] = []
 ## Overlays on the palm's frame for 1, 2 and 3 coconuts, in that order.
 @export var coconut_overlays: Array[Texture2D] = []
 ## The gull nest overlay, on the palm's frame.
@@ -26,6 +30,9 @@ const STANDARD_PATH: String = "res://assets/art/structures/structure_art.tres"
 @export var board: SpriteFrames
 ## One-frame structures by kind: the workbench, the stake marker and the sign post.
 @export var stills: Dictionary[StringName, Texture2D] = {}
+## A sign's look by IslandSignData.look (art-prop-polish D7): the radio, the crossed sticks, the slogan
+## fragment. A sign with no look, or one this does not name, draws the sign board of `stills`.
+@export var sign_looks: Dictionary[StringName, Texture2D] = {}
 ## A build site's stages (SITE_MARKED, SITE_MATERIALS, SITE_HALF_BUILT) by recipe id; any other
 ## site is the stake marker.
 @export var site_frames: Dictionary[StringName, SpriteFrames] = {}
@@ -39,9 +46,27 @@ static func standard() -> StructureArtData:
 	return load(STANDARD_PATH) as StructureArtData
 
 
+## How many palm looks there are: `palm` and the redrawn ones.
+func palm_look_count() -> int:
+	return 1 + palm_looks.size()
+
+
+## The frame of palm look `look`; `palm` for a look the table does not hold.
+func palm_texture(look: int) -> Texture2D:
+	if look >= 1 and look <= palm_looks.size():
+		return palm_looks[look - 1]
+	return palm
+
+
 ## The one-frame sprite of `kind`, or null when the kind draws nothing of its own.
 func still_for(kind: StringName) -> Texture2D:
 	return stills.get(kind, null) as Texture2D
+
+
+## The texture of a sign with `look`: its look, or the sign board.
+func sign_texture(look: StringName) -> Texture2D:
+	var texture: Texture2D = sign_looks.get(look, null) as Texture2D
+	return texture if texture != null else still_for(StructureArt.KIND_SIGN)
 
 
 ## The stages of the site of `recipe_id`, or null for a stake marker.

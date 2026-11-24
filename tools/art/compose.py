@@ -16,6 +16,9 @@ must be mapped), "drop": ["#rrggbb", ...] (pack colours cut from the walk frames
 such as an outfit's shoes), "over": "body_man" (the body sheet an overlay is rimmed over, built
 first)}.
 
+Outline family (art-prop-polish D1): a character is an actor, outlined in black as composed; an
+overlay's edge over the body keeps its own colour, since it is inside the composed figure.
+
 Usage: python -I tools/art/compose.py [part ids] [--packs <dir>] [--parts look_parts.json]
        [--fixes tools/art/fixes] [--out game/assets/art/characters/parts]
 """

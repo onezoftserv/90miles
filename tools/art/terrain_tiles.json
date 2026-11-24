@@ -87,10 +87,15 @@
     "colour": "#000000",
     "alpha": 46,
     "edge": [5, 10, 16, 22, 28, 34, 40],
-    "spots": "shade_spots.png"
+    "spots": "shade_spots.png",
+    "hut": {"north": 58, "south": 18, "bands": 3}
   },
   "copies": [
     {"from": "tide_pool.png", "to": "terrain/tide_pool.png"},
+    {"from": "decor_cigar.png", "to": "fx/decor_cigar.png"},
+    {"from": "post_ripple.png", "to": "fx/post_ripple.png"},
+    {"from": "decor_rope.png", "to": "decals/decor_rope.png"},
+    {"from": "decor_drag.png", "to": "decals/decor_drag.png"},
     {"from": "pebbles.png", "to": "decals/pebbles.png"}
   ]
 }

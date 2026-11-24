@@ -17,7 +17,7 @@ Direction C, **"GBA tropic"**: a bright *A Link to the Past* / Pokémon look wit
 | Scallywag – Water and Islands | Foozle / Pixel Carvel | CC0 | `itch/scallywag-water-islands/` | sea texture, palm fronds, floating debris | 16 px grid, straight-down view, 3-frame deep water, foam rims |
 | Scallywag – Ships | Foozle / Pixel Carvel | CC0 | `itch/scallywag-ships/` | later: wreck and route-map references | 720×672 sheet |
 | 16×16 Shoreline Wave Animation Tiles | Eldiran | CC0 | `oga/eldiran-shoreline/` | animated foam on shores | 4-colour template (plus black label text), a mid-tile shoreline: 8-frame edge and 8-frame curve (16×33, two tiles) |
-| DawnLike 16×16 Universal Rogue-like tileset v1.81 | DragonDePlatino, palette by DawnBringer | CC BY 4.0 | `oga/dawnlike/` | shark and fin, items (rope, dagger, glasses, fruit), later creatures | 16×16, 2 frames per creature, DawnBringer's 16-colour palette (DB16; none of its colours is in DB32, so it is remapped like the other packs); no crab |
+| DawnLike 16×16 Universal Rogue-like tileset v1.81 | DragonDePlatino, palette by DawnBringer | CC BY 4.0 | `oga/dawnlike/` | shark and fin, items (rope, dagger, glasses, fruit), Platino (hidden on the hidden cay's chest ledge), later creatures | 16×16, 2 frames per creature, DawnBringer's 16-colour palette (DB16; none of its colours is in DB32, so it is remapped like the other packs); no crab |
 | Tiny, Tiny Heroes – Animals | Kacper Woźniak (thkaspar) | CC BY 4.0 | `itch/tth-animals/` | the seagull (later the galleguito, snakes) | 16×16; gull in 3 facings, 4 standing and 4 flying frames |
 | Kyrise's Free 16x16 RPG Icon Pack v1.3 | Kyrise | CC BY 4.0 | `itch/kyrise-icons/` | item icons (wood, cup, bottles, fish, fruit) | 350 icons at 16×16, black outlines, 111 colours |
 | Shikashi's Fantasy Icons Pack v2 | Matt Firth (shikashipx); game-icons.net bases | CC BY 4.0 (game-icons.net CC BY 3.0) | `itch/shikashi-icons/` | later: HUD meter and status icons after a palette reduction | 245 icons at 32×32, 1,237 colours |
@@ -41,7 +41,7 @@ Everything else under `game/assets/art/` is own work (the crab, the shark, eleve
 ## Style guide
 
 - **Palette:** one master palette, at most 64 colours (52 today): DawnBringer's 32 plus the tropical, sea and skin ramps the packs need (`game/assets/art/palette/master_palette.png`). Every world image uses only its colours, fully opaque or fully transparent; only drop shadows and shade decals (`shadows/`, `decals/`) use partial alpha. Pack art, DawnLike included, is remapped to it (baked half-transparent shadows removed) and fixed by hand.
-- **Outlines:** a closed 1 px outline in one of the palette's darkest colours on every character, creature, item and structure frame, added by the pipeline's rim step (which recolours a piece's own edge ring, or grows one where there is none); none on terrain, water, foam, shadows or decals.
+- **Outlines:** a closed 1 px outline on every character, creature, item and structure frame, added by the pipeline's rim step (which recolours a piece's own edge ring, or grows one where there is none); none on terrain, water, foam, shadows or decals. The colour goes by family (art-prop-polish D1, owner Q15 (a) and QO1 (a)). Actors (characters, creatures, item icons and pick-ups) are outlined in black, #000000, the only outline colour that reaches 3:1 against deep water. A character is checked as composed, since a hair or outfit part alone has open edges over the body. Structures (palms, the lean-to, the fire, the catcher, the bench, signs, the raft) are outlined in the palette's dark tones, #222034, #45283c or #323c39, whichever the rim step finds nearest, which keeps them a step behind the actors. `check.py` and `test_art_tracked.gd` read the family from the folder (`creatures/` and `items/` black, `structures/` dark tones), and `test_look_composer.gd` checks the composed players.
 - **Characters:** figures about 14×29 in 32×32 frames on one fixed feet line (the bottom edge of the standing frame's lowest opaque row) 4 px below the body position, so the walk keeps its bob; down, up and side facings (side mirrored); a head anchor per pose for the name tag, speech bubble, HUD marks and, later, the gull perch. Clothing in a key ramp that a palette swap recolours per player; skin and hair in their own reserved ramps.
 - **Frame budget:** at most 6 unique frames per actor or structure animation and facing, at most 4 per creature animation, at most 48 per character, at most 12 fps; holds repeat frames. Terrain, sea and foam overlays (the 8-frame shoreline) are exempt.
 - **Terrain:** corner-matched land tiles with a transparent water side and no water or foam of their own; one foam line per shore, drawn on the land side.
@@ -83,7 +83,7 @@ python -I tools/art/check.py game/assets/art
 - `remap.py` maps a piece to the master palette, or through a colour map (`--map`, the only way to write a clothing key colour; `--strict` fails on an unmapped colour), drops half-transparent pixels outside `shadows/` and `decals/`, and prints every change.
 - `rim.py` gives a piece its closed 1 px outline: it recolours the piece's own edge ring to the nearest outline colour (or the one `--outline` colour), so the piece keeps its size; `--grow` grows a ring round a piece with none, and `--over` rims an overlay against the body sheet it is drawn on. For example, MetroCity's walk sheet in 32 px cells, read through the packs root: `python -I tools/art/rim.py "itch/metrocity/extracted/MetroCity/MetroCity/CharacterModel/Character Model.png" <out.png> --cell 32 --outline "#000000" --packs game/assets`.
 - `compose.py` builds the player part sheets listed in `tools/art/look_parts.json` into `game/assets/art/characters/parts/`: cut the walk frames, apply the pose rules of `poses.py`, blend the part's hand fixes, remap, then rim. It fails naming the part and cell when a rule would lose a pixel.
-- `check.py` runs the licence, palette, alpha, outline and import rules over a folder and exits non-zero naming each failing file (`--licence-only` for a folder of pipeline source such as `tools/art/fixes/`).
+- `check.py` runs the licence, palette, alpha, outline (by family) and import rules over a folder and exits non-zero naming each failing file (`--licence-only` for a folder of pipeline source such as `tools/art/fixes/`).
 - `png.py`, `poses.py` and `palette.py` are the tools' shared modules.
 
 **Checks.** CI has no packs, so the GUT tests, which read only tracked files, are the gate; the Python tests cover the tools.
@@ -91,6 +91,7 @@ python -I tools/art/check.py game/assets/art
 ```sh
 godot --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit
 python -I -m unittest discover -s tools/art -p 'test_*.py'
+python -I -m unittest discover -s tools/audio -p 'test_*.py'
 python -I -m unittest discover -s tools -p 'test_fetch_assets.py'
 ```
 
@@ -113,9 +114,9 @@ python -I -m unittest discover -s tools -p 'test_fetch_assets.py'
 | Items: rope, jug, coconut, knife, tarp, cup, driftwood, dry grass, inner tube, binoculars, nails, mirror, aloe, lighter | Kyrise and DawnLike icons, hand-made for the rest | CC BY 4.0 / own | `assets/art/items/` | manual download, copied when used |
 | Palm, lean-to, workbench, fire, rain catcher, sign post, raft | Hand-made, kitbashed from Scallywag fronds and logs and Zelda-like props | CC0 / own | `assets/art/structures/` | — |
 | UI: windows, panels, buttons, slot wells, meter ramps, digits | Own work, built pixel by pixel from the master palette by `tools/art/ui.py` (`tools/art/ui_kit.json`) into `assets/art/ui/` | Own work | `tools/art/` | recipe |
-| Pixel font (Spanish accents and ñ required) | Google Fonts "Press Start 2P" (Latin) or "Pixelify Sans" | OFL | `assets/fonts/` | auto |
-| Sea ambience, waves, wind, rain | freesound.org (CC0 filter) / Kenney "Audio" packs | CC0 | `assets/audio/ambience/` | manual |
-| UI and impact SFX | Kenney "Interface Sounds", "Impact Sounds" | CC0 | `assets/audio/sfx/` | auto |
+| Pixel fonts (Spanish accents and ñ required) | Google Fonts "Press Start 2P" at 8 px for the HUD, buttons, fields and every body line; "Pixelify Sans" (as `menu_font.tres`, wider word spaces) only for the logo at 32 px and headings and window tabs at 16 px (Q16, owner, 2026-11-23) | OFL | `assets/fonts/` | auto |
+| Sound effects and loops (`sound-pass`): pick-up, hurt, use, low thirst, raft hit, loudhailer, thunder, arrival, compass rattle, and the sea, wind, night and patrol motor loops | Own work, generated by `tools/audio/sfx.py` from `tools/audio/sounds.json` (standard library only, seeded, rebuilt byte for byte) | Own work | `assets/audio/sfx/`, `assets/audio/loops/` (tracked, each with its `License.txt`) | recipe |
+| Sea, wind and thunder recordings, replacing the generated placeholders (owner Q2 B, 2026-11-23) | freesound.org or OpenGameArt, CC0 only, each file approved by the owner first | CC0 | copied into `assets/audio/loops/` or `sfx/` with a `License.txt` block and a `CREDITS.md` row; raw downloads stay in the git-ignored `assets/audio/ambience/` | manual, after approval |
 
 ## Priority 2 — content pass
 

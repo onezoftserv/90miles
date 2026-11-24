@@ -151,6 +151,40 @@
       ]
     },
     {
+      "out": "structures/palm_bowed.png",
+      "frame": [
+        32,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "palm_trunk_bowed.png"
+          },
+          {
+            "hand": "palm_crown_bowed.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/palm_upright.png",
+      "frame": [
+        32,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "palm_trunk_upright.png"
+          },
+          {
+            "hand": "palm_crown_upright.png"
+          }
+        ]
+      ]
+    },
+    {
       "out": "structures/palm_coconuts_1.png",
       "frame": [
         32,
@@ -973,6 +1007,76 @@
           },
           {
             "hand": "lean_to_eave.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/decor_post.png",
+      "frame": [
+        16,
+        24
+      ],
+      "frames": [
+        [
+          {
+            "hand": "decor_post.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/garita.png",
+      "frame": [
+        80,
+        48
+      ],
+      "frames": [
+        [
+          {
+            "hand": "garita.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/sign_radio.png",
+      "frame": [
+        16,
+        16
+      ],
+      "frames": [
+        [
+          {
+            "hand": "sign_radio.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/sign_sticks.png",
+      "frame": [
+        16,
+        16
+      ],
+      "frames": [
+        [
+          {
+            "hand": "sign_sticks.png"
+          }
+        ]
+      ]
+    },
+    {
+      "out": "structures/sign_slogan.png",
+      "frame": [
+        16,
+        16
+      ],
+      "frames": [
+        [
+          {
+            "hand": "sign_slogan.png"
           }
         ]
       ]

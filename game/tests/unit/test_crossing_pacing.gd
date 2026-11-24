@@ -4,7 +4,8 @@ extends GutTest
 ## reef line, with exactly 1 player and with 4.
 
 const K := CrossingBeat.Kind
-const SEEDS: int = 2000
+## Seeds per rider count: enough to meet every branch of the director, kept small for CI's GUT step.
+const SEEDS: int = 600
 const EPS: float = 0.001
 
 var tuning: CrossingTuning

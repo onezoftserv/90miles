@@ -26,6 +26,7 @@ Kenney packs are fetched by `python -I tools/fetch_assets.py` and are git-ignore
 | Shark reference (DawnLike - 16x16 Universal Rogue-like tileset v1.81, `Characters/Aquatic0.png` and `Objects/Effect0.png`: the sharks' grey ramp and the water bursts) | DragonDePlatino; palette by DawnBringer | CC BY 4.0 | https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181 | none copied: `art/creatures/reef_shark.png`, its fin, body and strike spray, is own work drawn after them (license: `art/creatures/License.txt`) |
 | Crab shape reference (Tiny Dungeon, `Tiles/tile_0110.png`) | Kenney (kenney.nl) | CC0 1.0 | https://kenney.nl/assets/tiny-dungeon | none copied: `art/creatures/land_crab.png` is own work drawn after its proportions (license: `art/creatures/License.txt`) |
 | Item icons (Kyrise's Free 16x16 RPG Icon Pack v1.3, `icons/16x16/wood_01a.png` and `cup_01a.png`) | Kyrise | CC BY 4.0 | https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack | `art/items/driftwood.png`, modified: redrawn by hand over the log's silhouette as bleached tan wood with new grain and end ring (`tools/art/fixes/items/driftwood.png`); `rain_cup.png`, modified: remapped to the master palette; both outlined in black by `tools/art/items.py` (tracked copies; license: `art/items/License.txt`) |
+| Platino (DawnLike v1.81, `Characters/Reptile0.png`: Platino, x 48, y 192) | DragonDePlatino; palette by DawnBringer | CC BY 4.0 | https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181 | `art/creatures/platino.png`, modified: recoloured to the master palette and outlined in black by `tools/art/creatures.py`; shape unchanged; hidden on the hidden cay's chest ledge, as the pack's README asks (license: `art/creatures/License.txt`) |
 | Item icon (DawnLike v1.81, `Items/ShortWep.png`: the dagger) | DragonDePlatino; palette by DawnBringer | CC BY 4.0 | https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181 | `art/items/knife.png`, modified: redrawn by hand over the dagger with a wider steel blade, a bolster and a wooden handle (`tools/art/fixes/items/knife.png`), outlined in black by `tools/art/items.py` (tracked copy; `rope.png` and the other icons are own work; license: `art/items/License.txt`) |
 | Structure pieces (Zelda-like tilesets and sprites, `gfx/Overworld.png`: the barrel, the bench, the plain sign board and the log) | ArMM1998 | CC0 1.0 | https://opengameart.org/content/zelda-like-tilesets-and-sprites | `art/structures/rain_catcher.png`, `workbench.png`, `sign_post.png`, `raft.png`, `raft_site.png`, `car.png`, modified: recoloured to the master palette, shadows keyed out, cut and joined, with own-work parts (tracked; license: `art/structures/License.txt`) |
 | Palm fronds (Scallywag - Water and Islands 1.0, `Water and Island tiles.png`: the single frond) | Foozle, commissioned from Pixel Carvel | CC0 1.0 | https://foozlecc.itch.io/scallywag-water-islands | `art/structures/palm.png`, modified: recoloured and flipped as the crown's two front fronds; the trunk and the other fronds are own work (tracked; license: `art/structures/License.txt`) |
@@ -47,6 +48,15 @@ Downloaded by hand with the owner's permission into git-ignored folders (`game/a
 | Kyrise's Free 16x16 RPG Icon Pack (v1.3) | © 2018 Kyrise | CC BY 4.0 | https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack | `itch/kyrise-icons/` |
 | Shikashi's Fantasy Icons Pack v2 | Matt Firth (shikashipx); based on game-icons.net designs | CC BY 4.0 (game-icons.net: CC BY 3.0) | https://shikashipx.itch.io/shikashis-fantasy-icons-pack | `itch/shikashi-icons/` |
 
+## Sound
+
+Every sound file the game plays and where it came from (openspec change `sound-pass`). `test_sound_credits.gd` checks that each WAV under `game/assets/audio/sfx/` and `game/assets/audio/loops/` is named in its folder's `License.txt` and in this table. A recording added later gets its own row with its author, licence and source page, after the owner approves the file.
+
+| Sound | Author | License | Source | Local files |
+| --- | --- | --- | --- | --- |
+| Generated sound effects | 90 Millas (own work) | All rights reserved (see LICENSE) | `tools/audio/sfx.py` from `tools/audio/sounds.json` | `audio/sfx/`: `pickup.wav`, `hurt_hit.wav`, `hurt_big.wav`, `hurt_drain.wav`, `use_done.wav`, `thirst_low.wav`, `raft_hit.wav`, `loudhailer.wav`, `thunder.wav`, `arrival.wav`, `compass_rattle.wav` (license: `audio/sfx/License.txt`) |
+| Generated sound loops | 90 Millas (own work) | All rights reserved (see LICENSE) | `tools/audio/sfx.py` from `tools/audio/sounds.json` | `audio/loops/`: `sea.wav`, `wind.wav`, `night.wav`, `patrol_motor.wav` (license: `audio/loops/License.txt`) |
+
 ## Fonts
 
 | Font | Author | License | Source | Local file |
@@ -58,5 +68,5 @@ Downloaded by hand with the owner's permission into git-ignored folders (`game/a
 
 Listed in `docs/ASSETS.md` but still to source (manual download, license checked per pack):
 
-- Sea ambience, waves, wind and rain (freesound.org, CC0 filter; needs a login).
+- Sea ambience, waves, wind and rain (freesound.org, CC0 filter; needs a login). For `sound-pass` (owner Q2 B, 2026-11-23), CC0 recordings of the sea, wind and thunder replace the generated placeholders once the owner approves each candidate file.
 - Priority 2 content-pass art and music.

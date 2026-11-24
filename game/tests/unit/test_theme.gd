@@ -59,15 +59,24 @@ func test_small_text_is_press_start_2p_at_8() -> void:
 	assert_eq(theme.default_font_size, 8)
 
 
-func test_buttons_and_titles_use_the_menu_font_at_16_and_32() -> void:
+func test_the_logo_and_headings_use_the_menu_font_at_32_and_16() -> void:
+	# menu-clarity design D1 (owner Q16, 2026-11-23): Pixelify Sans only on the logo and headings.
 	var theme := _theme()
-	for type: StringName in [&"Button", &"OptionButton", &"CheckBox", &"LineEdit", &"TitleLabel", &"HeadingLabel", &"CreditsLabel", &"PopupMenu", &"ErrorLabel"]:
+	for type: StringName in [&"TitleLabel", &"HeadingLabel"]:
 		assert_eq(theme.get_font(&"font", type).resource_path, MENU_FONT, String(type))
-	assert_eq(theme.get_font_size(&"font_size", &"Button"), 16)
 	assert_eq(theme.get_type_variation_base(&"TitleLabel"), &"Label")
 	assert_eq(theme.get_font_size(&"font_size", &"TitleLabel"), 32)
 	assert_eq(theme.get_font_size(&"font_size", &"HeadingLabel"), 16)
 	assert_eq(theme.get_type_variation_base(&"PanelHeading"), &"HeadingLabel")
+
+
+func test_controls_fields_and_body_text_use_press_start_2p_at_8() -> void:
+	# menu-clarity design D1: buttons, check boxes, dropdowns and their lists, text fields, error
+	# lines and the credits read in Press Start 2P at 8, so digits are unambiguous.
+	var theme := _theme()
+	for type: StringName in [&"Button", &"OptionButton", &"CheckBox", &"LineEdit", &"PopupMenu", &"ErrorLabel", &"CreditsLabel", &"Label", &"PanelLabel"]:
+		assert_eq(theme.get_font(&"font", type).resource_path, SMALL_FONT, String(type))
+		assert_eq(theme.get_font_size(&"font_size", type), 8, String(type))
 
 
 func test_the_menu_font_is_pixelify_sans_with_wider_word_spaces() -> void:
@@ -77,9 +86,9 @@ func test_the_menu_font_is_pixelify_sans_with_wider_word_spaces() -> void:
 		return
 	assert_eq(font.base_font.resource_path, BIG_FONT)
 	var plain := load(BIG_FONT) as Font
-	# The gap each space adds between two words, measured inside real menu lines (a lone space is
+	# The gap each space adds between two words, measured inside real headings (a lone space is
 	# trimmed by the measure, so it would read the bare glyph).
-	for line: String in ["Fin del viaje", "Volver al inicio", "Otra vez", "Hospedar partida"]:
+	for line: String in ["Fin del viaje", "Conexión perdida", "A bordo"]:
 		var spaces: float = float(line.count(" "))
 		var gap: float = (_width(font, line) - _width(font, line.replace(" ", ""))) / spaces
 		var plain_gap: float = (_width(plain, line) - _width(plain, line.replace(" ", ""))) / spaces

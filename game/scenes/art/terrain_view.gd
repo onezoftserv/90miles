@@ -25,6 +25,11 @@ const WIDE_WEST: Vector2i = Vector2i(1, 4)
 const WIDE_EAST: Vector2i = Vector2i(2, 4)
 const WIDE_WEST_OFFSET: Vector2i = Vector2i(-2, 0)
 const WIDE_EAST_OFFSET: Vector2i = Vector2i(-1, 0)
+## Under a shelter (art-prop-polish D5) the shaded cells take the hut shade of decals/shade.png:
+## one corner set per depth band from the hut's north edge, starting on this row, darkest under the
+## roof and fading south; a deeper cell takes the last band.
+const HUT_SHADE_ROW: int = 5
+const HUT_SHADE_BANDS: int = 3
 ## How far the sea reaches past the grid on each side, in px, for a camera at the island's edge.
 const SEA_MARGIN_PX: float = 640.0
 
@@ -113,8 +118,12 @@ func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vecto
 	_decals.clear()
 	for pool: Vector2i in pools:
 		_decals.set_cell(pool, POOL_SOURCE, Vector2i.ZERO)
+	var sheltered: bool = ShelterArtData.standard().hut_shade.get(layout_id, false)
 	for cell: Vector2i in grid.shaded:
 		if not pools.has(cell):
+			if sheltered:
+				_decals.set_cell(cell, SHADE_SOURCE, hut_shade_tile(cell, grid))
+				continue
 			var mask: int = _shade_mask(cell, grid)
 			@warning_ignore("integer_division")
 			_decals.set_cell(cell, SHADE_SOURCE, Vector2i(mask % TerrainArt.COLUMNS, mask / TerrainArt.COLUMNS))
@@ -149,6 +158,25 @@ static func _pebble_side(cell: Vector2i, grid: GridTerrain, pools: Array[Vector2
 
 
 # A corner of a shaded cell counts when the four cells round it are shaded (design.md K39).
+## The hut-shade tile of the shaded cell `cell` under a shelter (art-prop-polish D5): the band of its
+## depth from the hut's north edge, and the corner mask counting the cell north of any shaded cell
+## as shaded, so the shade is whole up to the roof line instead of fading at the posts.
+static func hut_shade_tile(cell: Vector2i, grid: GridTerrain) -> Vector2i:
+	var depth: int = 0
+	while grid.is_shaded(cell - Vector2i(0, depth + 1)):
+		depth += 1
+	var mask: int = 0
+	for corner: int in TerrainArt.CORNER_CELLS:
+		var whole: bool = true
+		for offset: Vector2i in TerrainArt.CORNER_CELLS[corner]:
+			var near: Vector2i = cell + offset
+			whole = whole and (grid.is_shaded(near) or grid.is_shaded(near + Vector2i.DOWN))
+		if whole:
+			mask |= corner
+	@warning_ignore("integer_division")
+	return Vector2i(mask % TerrainArt.COLUMNS, HUT_SHADE_ROW + mini(depth, HUT_SHADE_BANDS - 1) * TerrainArt.COLUMNS + mask / TerrainArt.COLUMNS)
+
+
 static func _shade_mask(cell: Vector2i, grid: GridTerrain) -> int:
 	var mask: int = 0
 	for corner: int in TerrainArt.CORNER_CELLS:

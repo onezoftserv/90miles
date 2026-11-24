@@ -95,6 +95,11 @@ jobs:
           python3 -I -m unittest discover -s tools/art -p 'test_*.py'
           python3 -I -m unittest discover -s tools -p 'test_fetch_assets.py'
 
+      # The sound generator (sound-pass D1): offline, standard library only. It checks every
+      # tracked WAV under game/assets/audio/ against a fresh render of tools/audio/sounds.json.
+      - name: Audio tool tests (Python)
+        run: python3 -I -m unittest discover -s tools/audio -p 'test_*.py'
+
       # Runs the real game loop (autoloads first, then the main scene) to catch runtime errors in
       # autoloads and scenes outside the smoke script, and resource leaks reported at exit.
       - name: Run the game headless
@@ -110,4 +115,6 @@ jobs:
           fi
 
       - name: Unit tests (GUT)
-        run: timeout 300 "$GODOT" --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit
+        # The suite takes about 5 minutes on the runner (2,700+ tests by 2026-11-23); 600 s leaves room
+        # inside the job's 20-minute limit.
+        run: timeout 600 "$GODOT" --headless --path game -s res://addons/gut/gut_cmdln.gd -gexit

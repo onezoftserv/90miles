@@ -11,10 +11,12 @@ var value: float = 0.0
 var broken: bool = false
 
 
-static func create(starting: float) -> VesselIntegrity:
+## A vessel at `starting`, whose maximum is `top` when given (the route's full integrity, so a plank
+## can mend a raft launched damaged), else `starting`.
+static func create(starting: float, top: float = -1.0) -> VesselIntegrity:
 	var integrity := VesselIntegrity.new()
-	integrity.maximum = maxf(starting, 0.0)
-	integrity.value = integrity.maximum
+	integrity.maximum = maxf(maxf(starting, top), 0.0)
+	integrity.value = maxf(starting, 0.0)
 	return integrity
 
 
@@ -26,6 +28,12 @@ func has_integrity() -> bool:
 ## True while there is a vessel people can be aboard.
 func intact() -> bool:
 	return has_integrity() and not broken
+
+
+## Adds `amount` back, never above the maximum; nothing for a broken vessel (crossing "Flotsam").
+func repair(amount: float) -> void:
+	if intact():
+		value = minf(value + amount, maximum)
 
 
 ## Takes `amount` off, never below 0. True on the hit that breaks the vessel.
