@@ -319,3 +319,13 @@ None. The owner chose (a) for QG1–QG4 on 2026-11-23 (proposal.md).
     - Until the sprites PR, the call window points at the polygon hull's top (`PatrolLook.TOP_Y` = −9) and the placeholder soldier's cap (`SquadLook.SOLDIER_TOP_Y` = −13).
     - `RunHud.top_window_rects()` (panels whose top is above y 20) feeds the chip; `RunHud.call_avoid_rects()` (every panel plus the prompt) feeds the call windows.
   - **Measured.** The longest shipped call, 71 characters, wraps to 3 rows; every call of `patrol_boat.tres` (14 lines in two languages) fits. The plated eye is 11×9 and the chips 9×7.
+- **2026-11-23, sprites PR (groups 4–6), stacked on the HUD PR.**
+  - **Departures.**
+    - The launch's sheet is 384×48 (four 96×48 cells in one row); D3 said 192×48, which holds only two. The lamp is at (49, 9) in every cell, and the hull bobs under it in `idle`.
+    - The dinghy's keel middle is (14, 11) in its 32×16 cell.
+    - `GuardacostasArt` keeps `hull_cell`, `dinghy_cell` and `dinghy_foot_px` instead of `hull_foot_px` and `soldier_foot_px`: a soldier's feet use the player's own `PlayerPose.OFFSET`, and the hull is anchored on its lamp.
+    - The cone's two rims take the lower of the two smoothsteps, not their product, so the wedge's far corners are drawn at half strength too (D4's "every lit cell at half or more").
+    - Call windows also keep clear of the local player's figure and its mark (`RunHud.local_figure_rect`): a squad landing beside the player covered their head in the first capture. A rect whose middle is above y 120 pushes a window down, any other pushes it up.
+    - `outfit_uniform` keeps Outfit5's shoes, recoloured to #222034 boots; `hair_cap` is band 7 with a generated overlay (crown, a 2-row visor to the front and side, crown only from behind). The cap reads tall: rough first, to be refined in a later pass.
+  - **Measured.** Hull frames 86–94 × 36–37 opaque against the raft's 64×32 frame; dinghy 24×13 rowing, 28×14 beached.
+  - **Two-process run on UDP 7803** (`tests/manual/guardacostas_art_run.gd`, headless): host and client both draw the launch at the docked boat, the dinghy beached on the landing cell, three soldiers in `soldada`, `soldado_1` and `soldado_2`, and the landing call in a call window; 0 engine errors on either peer.

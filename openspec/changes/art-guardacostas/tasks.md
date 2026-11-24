@@ -89,13 +89,13 @@
 
 ## 4. Soldiers (D2, D5) — sprites PR
 
-- [ ] 4.1 Write these first and see them fail:
+- [x] 4.1 Write these first and see them fail:
   - `test_look_parts.gd`: the shipped parts add `outfit_uniform` and `hair_cap`;
   - `test_look_composer.gd`: each soldier look composes with closed #000000 outlines and no key-ramp colour;
   - a new `test_guardacostas_art.gd`: `GuardacostasArt` lists three soldier looks; a soldier named `Creature<n>` takes look `n mod 3`; three consecutive soldiers take three looks;
   - `test_capture_cues.gd`: rewrite `test_the_soldier_and_the_dinghy_are_drawn_from_the_synced_state` so a soldier is an `AnimatedSprite2D` in a walk while moving, facing its motion, idle when still;
   - the 1-player test: a solo player's spot on the sandbar lands three soldiers drawn in three different looks.
-- [ ] 4.2 Make the art:
+- [x] 4.2 Make the art:
   - add the `outfit_uniform` and `hair_cap` entries to `look_parts.json`;
   - draw `tools/art/fixes/hair_cap.png`;
   - build with `compose.py outfit_uniform hair_cap`;
@@ -103,11 +103,11 @@
   - add `scripts/art/guardacostas_art.gd` and `guardacostas_art.tres`.
 
   Rebuild, then verify that `check.py` is clean, that the other parts are byte-identical, and that `test_art_tracked.gd` and `test_look_composer.gd` pass.
-- [ ] 4.3 Draw soldiers in `SquadLook` from the composite (D2), and reword the soldier's exemption in `CreatureArt.frames_problems`. Verify that the tests from 4.1 pass, along with `test_art_sim_invariance` and `test_draw_order`.
+- [x] 4.3 Draw soldiers in `SquadLook` from the composite (D2), and reword the soldier's exemption in `CreatureArt.frames_problems`. Verify that the tests from 4.1 pass, along with `test_art_sim_invariance` and `test_draw_order`.
 
 ## 5. The launch and the dinghy (D3, D5) — sprites PR
 
-- [ ] 5.1 Write these first and see them fail:
+- [x] 5.1 Write these first and see them fail:
   - a new `test_guardacostas_art.gd` case: every hull frame's opaque bounds are wider and taller than every raft frame's;
   - the hull mirrors by heading;
   - the lamp pixel sits on the creature's position, which is the light's apex;
@@ -115,7 +115,7 @@
   - `test_patrol_cues.gd`: rewrite the polygon-hull test for the sprite;
   - the dinghy is a `DinghyLook` at `dinghy_px` that sorts by its own y. It shows `row` while rowing and `beached` at `dinghy_t` 1 with the squad ashore;
   - the 1-player test: a solo player walking past the beached dinghy draws in front of it from the south and behind it from the north.
-- [ ] 5.2 Make the art:
+- [x] 5.2 Make the art:
   - draw `tools/art/fixes/creatures/patrol_boat.png` and `dinghy.png`;
   - add both to `creature_sheets.json`;
   - build with `creatures.py`;
@@ -123,21 +123,21 @@
   - update `docs/ASSETS.md`'s "Patrol boat, cutter, dinghy" row.
 
   Verify that `check.py` is clean, the frame budget holds (at most 4 per animation), and the other creature sheets are byte-identical.
-- [ ] 5.3 Draw the hull sprite in `PatrolLook`, and add `DinghyLook`, created by `SquadLook`. Reword the boat's exemption. Verify:
+- [x] 5.3 Draw the hull sprite in `PatrolLook`, and add `DinghyLook`, created by `SquadLook`. Reword the boat's exemption. Verify:
   - the tests from 5.1 pass;
   - `test_patrol_cues.gd`'s "client joining mid-lap draws the boat and its cone in place" passes;
   - `test_art_sim_invariance`'s night-lap test passes.
 
 ## 6. The cone's edge (D4) — sprites PR
 
-- [ ] 6.1 Rewrite `test_patrol_cues.gd`'s "60 degree 10 tile wedge" test and see it fail:
+- [x] 6.1 Rewrite `test_patrol_cues.gd`'s "60 degree 10 tile wedge" test and see it fail:
   - every cell `Searchlight` lights reads at half strength or more in the texture, at its offset;
   - no texel beyond the rim's outer half is lit;
   - the near and far falloff is kept.
 
   The 1-player test: a solo player just inside the edge is drawn lit and their meter fills.
-- [ ] 6.2 Change `PatrolCone._build`, `length_px` and `height_px`. Verify that the tests from 6.1 pass and that the light's offset still puts the apex on the lamp.
-- [ ] 6.3 Two-process check on UDP 7803 (`test_capture_net.gd` or a new `test_guardacostas_art_net.gd`). With a squad ashore, the client has:
+- [x] 6.2 Change `PatrolCone._build`, `length_px` and `height_px`. Verify that the tests from 6.1 pass and that the light's offset still puts the apex on the lamp.
+- [x] 6.3 Two-process check on UDP 7803 (`test_capture_net.gd` or a new `test_guardacostas_art_net.gd`). With a squad ashore, the client has:
   - three soldier sprites with the host's looks;
   - the dinghy `beached` at the host's landing cell;
   - the hull drawn at the docked boat.
