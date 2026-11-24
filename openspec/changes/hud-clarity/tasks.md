@@ -34,8 +34,8 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 
 ## 4. Top band and needle
 
-- [ ] 4.1 Tests (1 player, offline): the needle sits at (384,20)–(408,44); "The top band holds together" with a squall, the compass, the longest objective lines and the note label, against #75's crossing rects as constants; the teammate list stays clear (host with three clients)
-- [ ] 4.2 Move the needle in `compass_needle.tscn`; update `test_compass_needle.gd` and `test_run_hud.gd`'s weather-panel clearances
+- [x] 4.1 Tests (1 player, offline): the needle sits at (384,20)–(408,44); "The top band holds together" with a squall, the compass, the longest objective lines and the note label, against #75's crossing rects as constants; the teammate list stays clear (host with three clients)
+- [x] 4.2 Move the needle in `compass_needle.tscn`; update `test_compass_needle.gd` and `test_run_hud.gd`'s weather-panel clearances
 - [ ] 4.3 Import, smoke and GUT pass
 
 ## 5. Raft-site arrow

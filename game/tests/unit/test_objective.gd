@@ -217,7 +217,7 @@ func test_nothing_secret() -> void:
 	var cay := _secret_layout()
 	assert_not_null(cay, "a secret island exists")
 	_bag(shell).add(&"mapa_sin_norte", 1)
-	_bag(shell).add(&"compass", 1)
+	_bag(shell).add(&"brujula_rota", 1)
 	var goal := Objective.from(shell.session, CoopSession.HOST_ID, cay, text, "es")
 	assert_eq(goal.line, "Arma la balsa: 0/6 madera")
 	for word: String in [cay.name_es, "cofre", "mapa", "brújula", "cayo"]:

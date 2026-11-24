@@ -1,8 +1,8 @@
 class_name NoteLabel
 extends PanelContainer
 ## The note on the HUD until the reading panel exists (secret-cay "Note on the HUD until the
-## reading panel", "Map hint"; design.md decision 8): a HUD panel top-centre under the needle's
-## place, 360 px wide, its text word-wrapped, shown for the tuning's base time plus a time per
+## reading panel", "Map hint"; design.md decision 8): a HUD panel top-centre under the clock and
+## objective rows, 360 px wide, its text word-wrapped, shown for the tuning's base time plus a time per
 ## character, then hidden. It is a HudPanel, so the interact prompt keeps clear of it. The chest
 ## and the hunt reach every peer's label through `show_in`, each in that peer's language.
 
