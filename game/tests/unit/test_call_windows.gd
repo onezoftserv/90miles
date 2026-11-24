@@ -134,6 +134,16 @@ func test_a_window_keeps_clear_of_top_windows_the_prompt_and_the_bottom_band() -
 	assert_lte(low.end.y, 326.0)
 
 
+# A speaker just south of the local player in the middle of the view: the window goes up over the
+# player's figure, never on it.
+func test_a_window_keeps_clear_of_the_local_players_figure() -> void:
+	var size := Vector2(200.0, 30.0)
+	var figure := Rect2(312.0, 140.0, 16.0, 40.0)
+	var rect: Rect2 = CallWindows.place(Vector2(320.0, 200.0), size, [figure], [])
+	assert_false(rect.intersects(figure), "clear of the player")
+	assert_lte(rect.end.y, figure.position.y, "over the player, not under")
+
+
 func test_two_overlapping_windows_stack_the_later_above() -> void:
 	var size := Vector2(120.0, 20.0)
 	var first: Rect2 = CallWindows.place(Vector2(300.0, 200.0), size, [], [])
@@ -216,3 +226,26 @@ func test_a_new_call_from_the_same_speaker_replaces_the_old_one() -> void:
 	windows.screen_shown = true
 	windows.tick(0.0)
 	assert_false(windows.panel_of(0).visible, "nothing shows under a screen")
+
+
+# The 1-player run: a solo player beside a landing squad sees the call over the soldier and clear of
+# their own figure.
+func test_a_solo_players_own_figure_is_never_under_a_call_window() -> void:
+	shell = SHELL_SCENE.instantiate() as GameShell
+	shell.settings_path = settings_path
+	add_child_autofree(shell)
+	(shell.screen as TitleScreen).solo_requested.emit()
+	var body: PlayerBody = shell.session.body(CoopSession.HOST_ID)
+	body.player_input.enabled = false
+	await wait_physics_frames(3)
+	var hud: RunHud = shell.hud
+	var figure: Rect2 = hud.local_figure_rect()
+	assert_true(figure.has_area(), "the player's figure in the HUD")
+	var speaker := Node2D.new()
+	add_child_autofree(speaker)
+	speaker.global_position = body.get_global_transform_with_canvas().origin + Vector2(4.0, 20.0)
+	hud.call_windows.to_hud = func(point: Vector2) -> Vector2: return point
+	hud.call_windows.show_call(speaker, "Se procede a la inspección del cayo. Colaboren con la autoridad.")
+	hud.call_windows.tick(0.0)
+	var rect: Rect2 = hud.call_windows.rect_of(hud.call_windows.count() - 1)
+	assert_false(rect.intersects(hud.local_figure_rect()), "the window is clear of the player's figure")

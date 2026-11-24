@@ -1,8 +1,10 @@
 class_name PatrolLook
 extends Node2D
 ## A patrol boat's look (guardacostas-stealth decision 11): the `PatrolLook` child of creature.tscn, in
-## `art_view`, used on every peer, the host's too. For a boat in sight (its lap or an alert) it draws a
-## placeholder hull until the art pass makes the boat, and, while the boat's light is on, the searchlight
+## `art_view`, used on every peer, the host's too. For a boat in sight (its lap or an alert) it draws the
+## launch (art-guardacostas D3): GuardacostasArt's hull on `hull`, side-on and mirrored when heading
+## west, `move` while its drawn position moves and `idle` otherwise, drawn so its roof lamp covers the
+## boat's position; and, while the boat's light is on, the searchlight
 ## as a PointLight2D with the generated cone texture (PatrolCone) rotated to the beam: under the night
 ## CanvasModulate a light brightens the sand it covers, which reads as a searchlight. It also speaks the
 ## loudhailer: when the boat's `alert_serial` changes, a call window over the boat (art-guardacostas D6,
@@ -12,23 +14,19 @@ extends Node2D
 ## position, facing, state, clock, beam, light and serial and never writes any of them. A creature that
 ## is not a patrol boat draws nothing. CreatureRig processes no frames, so tests drive `step` themselves.
 
-## The top of the drawn boat over its origin, where a call window's tail points (art-guardacostas D6).
-const TOP_Y: float = -9.0
-const HULL_FILL: Color = Color(0.62, 0.67, 0.72)
-const CABIN_FILL: Color = Color(0.86, 0.88, 0.9)
-const HULL_LINE: Color = Color(0.1, 0.12, 0.18)
 const LIGHT_COLOR: Color = Color(1.0, 0.93, 0.72)
 const LIGHT_ENERGY: float = 1.2
-## The hull's outline in pixels, bow toward +x: a 17 by 8 boat with a pointed bow.
-const HULL_POINTS: PackedVector2Array = [
-	Vector2(9.0, 0.0), Vector2(5.0, -4.0), Vector2(-8.0, -4.0), Vector2(-8.0, 4.0), Vector2(5.0, 4.0),
-]
-const CABIN_POINTS: PackedVector2Array = [
-	Vector2(-1.0, -2.0), Vector2(-6.0, -2.0), Vector2(-6.0, 2.0), Vector2(-1.0, 2.0),
-]
+const MOVE: StringName = &"move"
+const IDLE: StringName = &"idle"
+## How far the drawn boat moves in a frame before it shows `move`.
+const MOVING_PX: float = 0.01
 
 ## True while the hull is drawn (the boat is in its lap or an alert).
 var hull_visible: bool = false
+## The launch's sprite, or null before the first step of a patrol boat.
+var hull: AnimatedSprite2D = null
+## True while the hull shows mirrored (heading west).
+var mirrored: bool = false
 ## The searchlight, or null before the first step of a patrol boat.
 var light: PointLight2D = null
 ## The loudhailer line shown last, and how many have been shown.
@@ -36,7 +34,8 @@ var last_line: String = ""
 var lines_shown: int = 0
 
 var _serial: int = -1
-var _facing: float = 0.0
+var _last_position: Vector2 = Vector2.INF
+var _art: GuardacostasArt = GuardacostasArt.standard()
 
 
 func _ready() -> void:
@@ -56,10 +55,10 @@ func step(_delta: float) -> void:
 		return
 	var state: int = creature.state_id
 	var in_sight: bool = PatrolRoute.is_in_sight_state(state)
-	if in_sight != hull_visible or not is_equal_approx(_facing, creature.facing.angle()):
-		hull_visible = in_sight
-		_facing = creature.facing.angle()
-		queue_redraw()
+	hull_visible = in_sight
+	if hull == null:
+		_make_hull()
+	_draw_hull(creature)
 	if light == null:
 		_make_light(creature.data.patrol)
 	light.visible = in_sight and creature.light_on
@@ -67,15 +66,38 @@ func step(_delta: float) -> void:
 	_speak(creature, state)
 
 
-func _draw() -> void:
-	if not hull_visible:
+## The top of the drawn launch over the boat's position, where a call window's tail points
+## (art-guardacostas D6).
+static func top_y() -> float:
+	var art: GuardacostasArt = GuardacostasArt.standard()
+	return art.hull_top_y() if art != null else -16.0
+
+
+func _make_hull() -> void:
+	hull = AnimatedSprite2D.new()
+	hull.name = &"Hull"
+	hull.centered = false
+	hull.sprite_frames = _art.hull_frames if _art != null else null
+	hull.visible = false
+	# Under the searchlight's own child, which lights the sand and not the hull.
+	add_child(hull)
+	move_child(hull, 0)
+
+
+# The launch side-on, mirrored by its heading, moving or idle, its lamp on the boat's position.
+func _draw_hull(creature: Creature) -> void:
+	hull.visible = hull_visible
+	if absf(creature.facing.x) > 0.01:
+		mirrored = creature.facing.x < 0.0
+	var moved: bool = _last_position != Vector2.INF and creature.position.distance_to(_last_position) > MOVING_PX
+	_last_position = creature.position
+	if not hull_visible or hull.sprite_frames == null:
 		return
-	draw_set_transform(Vector2.ZERO, _facing)
-	draw_colored_polygon(HULL_POINTS, HULL_FILL)
-	draw_colored_polygon(CABIN_POINTS, CABIN_FILL)
-	var outline: PackedVector2Array = HULL_POINTS.duplicate()
-	outline.append(HULL_POINTS[0])
-	draw_polyline(outline, HULL_LINE, 1.0)
+	hull.flip_h = mirrored
+	hull.offset = _art.hull_offset(mirrored)
+	var animation: StringName = MOVE if moved else IDLE
+	if hull.sprite_frames.has_animation(animation) and (not hull.is_playing() or hull.animation != animation):
+		hull.play(animation)
 
 
 func _make_light(patrol: PatrolData) -> void:
@@ -129,8 +151,8 @@ static func line_for(patrol: PatrolData, locale: String, alerting: bool, serial:
 
 
 func _hide() -> void:
-	if hull_visible:
-		hull_visible = false
-		queue_redraw()
+	hull_visible = false
+	if hull != null:
+		hull.visible = false
 	if light != null:
 		light.visible = false

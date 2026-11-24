@@ -110,7 +110,7 @@ See proposal.md "Why" for the review findings. As built on main 446f22b:
 ### D3. The launch and the dinghy are creature sheets drawn by the coast guard looks
 
 **The launch.**
-- `creature_sheets.json` gains `patrol_boat`: a 192×48 sheet in 96×48 cells, four frames. Two frames of `move` with alternating bow foam, two of `idle` with a 1 px bob.
+- `creature_sheets.json` gains `patrol_boat`: a 384×48 sheet, four 96×48 cells in one row. Two frames of `move` with alternating bow foam, two of `idle` with a 1 px bob.
 - It is drawn from `tools/art/fixes/creatures/patrol_boat.png`:
   - a grey hull (#9badb7, #847e87, #595652);
   - a white cabin (#ffffff, #cbdbfc) with dark windows;

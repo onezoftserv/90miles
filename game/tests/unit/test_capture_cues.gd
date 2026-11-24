@@ -216,10 +216,18 @@ func test_the_soldier_and_the_dinghy_are_drawn_from_the_synced_state() -> void:
 	look.step(0.0)
 	assert_true(look.dinghy_visible, "the dinghy on the beach")
 	assert_eq(look.dinghy_px, IslandLayout.cell_center(boat.landing))
+	# art-guardacostas D3: a DinghyLook at the landing, beached.
+	assert_not_null(look.dinghy)
+	assert_eq(look.dinghy.global_position, look.dinghy_px)
+	assert_eq(look.dinghy.animation(), DinghyLook.BEACHED)
 	var soldier: Creature = (boat.brain as PatrolRoute).soldiers[0]
 	var soldier_look := soldier.get_node(^"SquadLook") as SquadLook
 	soldier_look.step(0.0)
 	assert_false(soldier_look.dinghy_visible, "a soldier has no dinghy")
+	# art-guardacostas D2: the soldier is a composed figure on an AnimatedSprite2D, standing when still.
+	assert_true(soldier_look.soldier_sprite is AnimatedSprite2D)
+	assert_not_null(soldier_look.soldier_sprite.sprite_frames)
+	assert_eq(soldier_look.pose, PlayerPose.Pose.STANDING)
 	assert_true(soldier.is_in_group(FreeHandle.SOLDIER_GROUP))
 
 
@@ -286,3 +294,50 @@ func test_both_peers_show_the_same_spot_call_over_the_soldier_giving_chase() -> 
 			client_text = client_hud.call_windows.text_of(i)
 	assert_eq(client_text, host_text, "the same line on both peers")
 	assert_eq(host_text, host_look.last_call)
+
+
+# art-guardacostas task 6.3 (spec "A client sees the same soldier", "A client sees the dinghy beached"):
+# with a squad ashore the client draws three soldier figures in the host's looks, the dinghy beached at
+# the host's landing cell and the launch at the docked boat, from the synced state alone.
+func test_a_client_draws_the_squads_looks_the_beached_dinghy_and_the_docked_launch() -> void:
+	var pair := await _pair()
+	var host := pair[0]
+	var client := pair[1]
+	var boat := _squad_ashore(host)
+	var soldiers: Array[Creature] = (boat.brain as PatrolRoute).soldiers
+	var theirs := func(node: Node) -> Creature: return client.entities.get_node_or_null(NodePath(node.name)) as Creature
+	var arrived := func() -> bool:
+		var copy: Creature = theirs.call(boat)
+		if copy == null or copy.squad_state != PatrolRoute.Squad.ASHORE or copy.dinghy_t < 1.0:
+			return false
+		for soldier: Creature in soldiers:
+			if theirs.call(soldier) == null:
+				return false
+		return true
+	assert_true(await wait_until(arrived, TIMEOUT_S), "the client has the boat ashore and the three soldiers")
+	await wait_physics_frames(3)
+	var art := GuardacostasArt.standard()
+	var host_looks: Array[StringName] = []
+	for soldier: Creature in soldiers:
+		var host_look := soldier.get_node(^"SquadLook") as SquadLook
+		var client_look := (theirs.call(soldier) as Creature).get_node(^"SquadLook") as SquadLook
+		host_look.step(0.0)
+		client_look.step(0.0)
+		assert_not_null(client_look.soldier_sprite, "the client draws %s as a figure" % soldier.name)
+		assert_eq(client_look.soldier_look, host_look.soldier_look, "in the host's look")
+		assert_eq(client_look.soldier_look, art.soldier_look(soldier.name))
+		host_looks.append(host_look.soldier_look.id)
+	assert_ne(host_looks[0], host_looks[1])
+	assert_ne(host_looks[1], host_looks[2])
+	assert_ne(host_looks[0], host_looks[2])
+	var copy: Creature = theirs.call(boat)
+	var squad := copy.get_node(^"SquadLook") as SquadLook
+	squad.step(0.0)
+	assert_not_null(squad.dinghy, "the client draws the dinghy")
+	assert_eq(squad.dinghy.animation(), DinghyLook.BEACHED, "beached")
+	assert_eq(squad.dinghy.global_position, IslandLayout.cell_center(boat.landing), "at the host's landing cell")
+	var patrol_look := copy.get_node(^"PatrolLook") as PatrolLook
+	patrol_look.step(0.0)
+	assert_true(patrol_look.hull.visible, "the launch drawn at the docked boat")
+	assert_eq(copy.state_id, PatrolRoute.State.DOCKED, "docked")
+	assert_lt(copy.position.distance_to(boat.position), TILE, "where the host has it")

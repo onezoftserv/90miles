@@ -6,7 +6,7 @@ extends Control
 ## words, and stays `show_s` seconds. Each frame a window is placed from its speaker's canvas position
 ## mapped into the HUD (`to_hud`): its bottom TAIL_PX over the speaker's top, centred, at whole pixels;
 ## kept EDGE_PX inside the view and above the bottom band (BOTTOM_Y); moved down under a top HUD window
-## or up over the prompt it would cover (`avoid`); stacked above an earlier window it would overlap. A
+## or up over the prompt or the local player's figure it would cover (`avoid`); stacked above an earlier window it would overlap. A
 ## 3 px tail points at the speaker, from the nearest edge when the speaker is off screen. A new call
 ## from the same speaker replaces its old one; a freed speaker's call goes. The window uses its own
 ## theme variation (VARIATION), not one of RunHud.HUD_PANELS, so the interact prompt never dodges a
@@ -26,6 +26,9 @@ const EDGE_PX: float = 2.0
 ## A window's bottom never goes below this (the bottom band starts under it).
 const BOTTOM_Y: float = 326.0
 const VIEW: Vector2 = Vector2(640.0, 360.0)
+## A rect whose middle is above this is a top window: a window it covers moves down under it; any other
+## (the prompt, the local player's figure) it moves up over.
+const TOP_BAND_Y: float = 120.0
 ## A call stays at least this long.
 const MIN_S: float = 3.0
 ## Characters read per second, after the first second.
@@ -112,7 +115,7 @@ static func place(anchor: Vector2, size: Vector2, avoid_rects: Array[Rect2], tak
 	for _pass: int in 2:
 		for other: Rect2 in avoid_rects:
 			if Rect2(spot, size).intersects(other):
-				if other.get_center().y < VIEW.y / 2.0:
+				if other.get_center().y < TOP_BAND_Y:
 					spot.y = other.end.y + 1.0
 				else:
 					spot.y = other.position.y - 1.0 - size.y
@@ -139,9 +142,9 @@ static func tail_side(anchor: Vector2, rect: Rect2) -> int:
 static func top_of(speaker: Node2D) -> float:
 	var creature := speaker as Creature
 	if creature != null and creature.is_patrol():
-		return PatrolLook.TOP_Y
+		return PatrolLook.top_y()
 	if creature != null and creature.is_in_group(FreeHandle.SOLDIER_GROUP):
-		return SquadLook.SOLDIER_TOP_Y
+		return SquadLook.soldier_top_y()
 	return DEFAULT_TOP_Y
 
 

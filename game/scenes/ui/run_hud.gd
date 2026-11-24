@@ -43,6 +43,8 @@ const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudPanelT
 const AVOID_GROUP: StringName = &"hud_avoid"
 ## A HUD panel whose top is above this is one of the top windows (art-guardacostas D8).
 const TOP_WINDOW_Y: float = 20.0
+## Half the width of a player's drawn figure, which a call window keeps clear of (art-guardacostas D6).
+const FIGURE_HALF_PX: float = 8.0
 ## The keys that step a spectator's view (ui-shell "Switching the watched teammate"): the walk keys
 ## A and D, the arrows (the engine's ui_left and ui_right), the D-pad and the mouse wheel. Each is
 ## an action that does nothing else for a dead or waiting player, so no input is bound twice
@@ -273,12 +275,30 @@ func top_window_rects() -> Array[Rect2]:
 	return rects
 
 
-## What a call window keeps clear of: every HUD panel on show and the interact prompt while it shows.
+## What a call window keeps clear of: every HUD panel on show, the interact prompt while it shows, and the
+## local player's figure with its mark.
 func call_avoid_rects() -> Array[Rect2]:
 	var rects: Array[Rect2] = panel_rects()
 	if prompt.panel.is_visible_in_tree():
 		rects.append(prompt.panel.get_global_rect())
+	var figure: Rect2 = local_figure_rect()
+	if figure.has_area():
+		rects.append(figure)
 	return rects
+
+
+## The local player's drawn figure in HUD pixels, from its feet to its head and the mark over it, or an
+## empty rect without a player on the island.
+func local_figure_rect() -> Rect2:
+	if not is_instance_valid(_local_body) or not _local_body.is_inside_tree() or _local_body.left_island:
+		return Rect2()
+	var canvas: Transform2D = _local_body.get_global_transform_with_canvas()
+	var feet: Vector2 = world_to_hud(canvas.origin)
+	var head: Vector2 = world_to_hud(canvas * Vector2(0.0, PlayerPose.OFFSET.y))
+	var rect := Rect2(Vector2(roundf(feet.x) - FIGURE_HALF_PX, roundf(head.y)), Vector2(FIGURE_HALF_PX * 2.0, roundf(feet.y) - roundf(head.y)))
+	if marks.has_marker(_local_body):
+		rect = rect.merge(marks.marker_rect(_local_body))
+	return rect
 
 
 func _collect_panels(node: Node, into: Array[Rect2]) -> void:
