@@ -1,7 +1,7 @@
 class_name GameSettings
 extends RefCounted
 ## ui-shell "Settings": what each install keeps across launches (player name, fullscreen,
-## scale, pixel filter), in one ConfigFile. Nothing here is synced to other players. Values read from the file are checked; anything malformed falls
+## scale, pixel filter, volume), in one ConfigFile. Nothing here is synced to other players. Values read from the file are checked; anything malformed falls
 ## back to its default.
 
 const DEFAULT_PATH: String = "user://settings.cfg"
@@ -15,6 +15,9 @@ const HIDDEN_RANGES: Array[Vector2i] = [
 ]
 ## 0 is automatic; 1 to MAX_SCALE is fixed.
 const MAX_SCALE: int = 4
+## sound-pass "Volume level" (owner Q1 A): steps of 10 %, 80 % on a fresh install.
+const MAX_VOLUME: int = 10
+const DEFAULT_VOLUME: int = 8
 
 var path: String
 var player_name: String = DEFAULT_NAME:
@@ -27,6 +30,11 @@ var ui_scale: int = 0:
 var pixel_filter: PixelFilter.Mode = PixelFilter.Mode.SHARP
 ## "Reducir destellos" (damage-feedback): hit and change cues without flashes, blinks or shakes.
 var reduce_flashes: bool = false
+## The volume (sound-pass), 0 to MAX_VOLUME, shown as 0 to 100 % in Ajustes; AudioManager plays at
+## volume / MAX_VOLUME. Never synced.
+var volume: int = DEFAULT_VOLUME:
+	set(value):
+		volume = clampi(value, 0, MAX_VOLUME)
 ## This install's player id and secret (coop-reconnect). Made fresh until the file has one.
 var identity: PlayerIdentity = PlayerIdentity.create()
 ## Whether `identity` came from the file or has been saved (false: made now, not kept yet).
@@ -64,6 +72,9 @@ static func load_from(file_path: String = DEFAULT_PATH) -> GameSettings:
 	var flashes_value: Variant = config.get_value("display", "reduce_flashes", false)
 	if flashes_value is bool:
 		settings.reduce_flashes = flashes_value
+	var volume_value: Variant = config.get_value("audio", "volume", DEFAULT_VOLUME)
+	if volume_value is int and volume_value >= 0 and volume_value <= MAX_VOLUME:
+		settings.volume = volume_value
 	return settings
 
 
@@ -76,6 +87,7 @@ func save() -> Error:
 	config.set_value("display", "ui_scale", ui_scale)
 	config.set_value("display", "pixel_filter", pixel_filter)
 	config.set_value("display", "reduce_flashes", reduce_flashes)
+	config.set_value("audio", "volume", volume)
 	var saved := config.save(path)
 	if saved == OK:
 		identity_stored = true
