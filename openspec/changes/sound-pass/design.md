@@ -302,3 +302,15 @@ Asked through the coordinating session on 2026-11-23, recommended first. The own
     - the `tools/audio` provenance list.
   - Spec "Generated sounds are reproducible and credited" already covers this: an outside sound comes in only with the owner's approval and a recorded origin. A recording's bank entry is marked `generated = false`. The rebuild check then skips it, and the credits check asks for its author and source instead.
   - Not chosen: A, all generated; C, Kenney's Impact and Interface Sounds for hits and the pick-up.
+- **Q2 files (2026-11-23): candidate A for all three.** The owner downloads them, because Freesound needs a login:
+  - sea: `416325__johnnyguitar01__kephalonia-sea-loop.wav`;
+  - wind: `659004__tom_kaszuba__wind-at-ocean-shore.wav`;
+  - thunder: `536903__cognito-perceptu__thunder-dry-crack-rumble.wav`.
+
+  `tools/audio/recordings.py` turns them into game files, using the trim and level kept as data in `recordings.json`:
+  - ffmpeg decodes, downmixes and resamples each one to mono 22 050 Hz;
+  - a loop's tail is folded over its head with an equal-power crossfade;
+  - a thunder clap fades out to silence;
+  - the level matches the RMS of the placeholder it replaces, so the bank's dB values still hold.
+
+  The three ids then leave `sounds.json`, so the generator can never overwrite a recording. The raw downloads stay git-ignored, so CI checks the tracked files and not the rebuild.

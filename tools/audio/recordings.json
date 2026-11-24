@@ -1,0 +1,50 @@
+{
+  "about": "The approved CC0 recordings (openspec change sound-pass, owner Q2 B, 2026-11-23) and how recordings.py trims each into a game sound. rms is the level of the generated placeholder each one replaces, so the bank's dB values still hold. expect_s is the approved file's length, to catch a wrong download.",
+  "recordings": [
+    {
+      "id": "sea",
+      "folder": "loops",
+      "loop": true,
+      "source": "416325__johnnyguitar01__kephalonia-sea-loop.wav",
+      "freesound_id": 416325,
+      "page": "https://freesound.org/people/johnnyguitar01/sounds/416325/",
+      "author": "johnnyguitar01",
+      "licence": "CC0 1.0",
+      "expect_s": 18.6,
+      "start_s": 0.0,
+      "length_s": 16.0,
+      "crossfade_s": 2.0,
+      "rms": 0.1786
+    },
+    {
+      "id": "wind",
+      "folder": "loops",
+      "loop": true,
+      "source": "659004__tom_kaszuba__wind-at-ocean-shore.wav",
+      "freesound_id": 659004,
+      "page": "https://freesound.org/people/Tom_Kaszuba/sounds/659004/",
+      "author": "Tom_Kaszuba",
+      "licence": "CC0 1.0",
+      "expect_s": 66.0,
+      "start_s": 0.0,
+      "length_s": 14.0,
+      "crossfade_s": 2.0,
+      "rms": 0.1738
+    },
+    {
+      "id": "thunder",
+      "folder": "sfx",
+      "loop": false,
+      "source": "536903__cognito-perceptu__thunder-dry-crack-rumble.wav",
+      "freesound_id": 536903,
+      "page": "https://freesound.org/people/cognito%20perceptu/sounds/536903/",
+      "author": "cognito perceptu",
+      "licence": "CC0 1.0",
+      "expect_s": 10.6,
+      "start_s": 0.0,
+      "length_s": 8.0,
+      "fade_out_s": 2.5,
+      "rms": 0.1031
+    }
+  ]
+}
