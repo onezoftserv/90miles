@@ -12,9 +12,9 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 
 ## 1. Content and data
 
-- [ ] 1.1 Tests (1 player, offline): `count_name` falls back from the short name to the name and from English to Spanish; driftwood, inner tube and rope have their short names; the sandbar's launch lines; the validator fails an 11-character short name and a 28-character launch line and names the file
-- [ ] 1.2 `ItemData.short_name_es`/`short_name_en` and `count_name(locale)`; fill driftwood, inner tube and rope; `IslandLayoutData.launch_line_es`/`launch_line_en`; fill the sandbar; length checks in `ContentValidator`
-- [ ] 1.3 `HudText` gains `objective_lines` and `clock_words` export blocks with every key in Spanish and English in `hud_text.tres`, and a test that every key exists in both languages
+- [x] 1.1 Tests (1 player, offline): `count_name` falls back from the short name to the name and from English to Spanish; driftwood, inner tube and rope have their short names; the sandbar's launch lines; the validator fails a 9-character or capitalised short name and a 28-character launch line and names the file
+- [x] 1.2 `ItemData.short_name_es`/`short_name_en` and `count_name(locale)`; fill driftwood, inner tube and rope; `IslandLayoutData.launch_line_es`/`launch_line_en`; fill the sandbar; length checks in `ContentValidator`
+- [x] 1.3 `HudText` gains `objective_lines` and `clock_words` export blocks with every key in Spanish and English in `hud_text.tres`, and a test that every key exists in both languages
 - [ ] 1.4 Import, smoke and GUT pass
 
 ## 2. Clock row
@@ -27,7 +27,7 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 ## 3. Objective row
 
 - [ ] 3.1 Tests for `Objective` (pure, 1 player, offline): every step in spec order (first frame "0/6 madera", carried plus deposited "0/2 cámaras", "Lleva to' pa' la balsa", "Dale a la balsa: 40%", "Espera la noche pa' zarpar" by day with a patrol boat out, "Zarpa pa'l cayo" at night and in a squall, the launch line with no boat out, "Aguanta hasta tierra", coast cay "Zarpa pa'l norte", English "Build the raft: 0/6 wood"); a bench-placed build site is ignored; on the hidden cay nothing names the cay, chest, map or compass
-- [ ] 3.2 Test that every objective line, filled to its longest (two-digit counts, longest short name, 100%), fits 27 glyphs in Spanish and English
+- [ ] 3.2 Test that every objective line, filled to its longest (each vessel build-site recipe's inputs at their real need, 100%), fits 27 glyphs in Spanish and English
 - [ ] 3.3 Tests (1 player, offline) for `ObjectiveRow` in `RunHud`: shown under the clock inside (152,20)–(380,30); hidden while the hut note is open and shown again after; hidden while a screen is shown
 - [ ] 3.4 Build `Objective`, `ObjectiveRow` and the `RunHud` wiring (island layout from `Travel`, settable in tests); add a `BuildSite` progress accessor if none exists
 - [ ] 3.5 Import, smoke and GUT pass

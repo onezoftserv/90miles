@@ -7,6 +7,8 @@
 script = ExtResource("1_item")
 sprite = ExtResource("icon_inner_tube")
 tags = Array[int]([4])
+short_name_es = "cámaras"
+short_name_en = "tubes"
 stack_size = 2
 weight = 2.0
 id = &"inner_tube"

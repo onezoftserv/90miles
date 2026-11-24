@@ -182,9 +182,9 @@ Gaps of 4 px separate the columns: 48+4+56+4+32+4+72 = 220.
   - `have = mini(site.deposited.get(id,0) + inv.count_id(id), need)`, over `recipe.inputs` in its declared order;
   - `recipe.input_tags` follow, with `HudText.tag_names` as the noun;
   - the noun is `ItemData.count_name(locale)`, the short name or else the name.
-- **Wait for the dark:** with the raft built, `Objective.launch_waits(session, climate)` is true while a patrol `Creature` (`is_patrol()`, not queued for deletion) is among `session.entities`, the phase is not in its `data.patrol.searchlight_phases`, and the climate's `weather_id` is not `squall`. That mirrors island-pressure's `LaunchSight.seen_by` day rule (a boat with its light off sees the whole sea; a squall keeps patrols in port) without depending on it. Once island-pressure lands, whichever change merges second makes `launch_waits` call `LaunchSight` so the two can never disagree. At night the objective says go; the launch prompt's own warning covers a searchlight on the player.
+- **Wait for the dark:** with the raft built, `Objective.launch_waits(session, climate)` is true while a patrol `Creature` (`is_patrol()`, not queued for deletion) is among `session.entities`, the phase is not in its `data.patrol.searchlight_phases`, and the current `WeatherData` (`session.sky.weather.current`, which clients follow) neither keeps patrols in port (`patrols_in_port`, a squall) nor disables `SIGHT`. That mirrors island-pressure's `LaunchSight.seen_by` day rule (a boat with its light off sees the whole sea; a squall keeps patrols in port) without depending on it. Once island-pressure lands, whichever change merges second makes `launch_waits` call `LaunchSight` so the two can never disagree. At night the objective says go; the launch prompt's own warning covers a searchlight on the player.
 - **Work:** percent = the site's progress × 100, floored. Today that is `BuildSite`'s work over `recipe.time_s`, read through a new `progress_ratio()` accessor if none exists.
-- **Lines** live in a new `objective_lines: Dictionary[StringName, PackedStringArray]` export on `HudText`, with `gather`, `deliver`, `work`, `wait_dark`, `launch_default` and `at_sea`. A test checks that every line, filled with its longest content (two-digit counts, the longest short name, 100%), fits in 27 glyphs in both languages.
+- **Lines** live in a new `objective_lines: Dictionary[StringName, PackedStringArray]` export on `HudText`, with `gather`, `deliver`, `work`, `wait_dark`, `launch_default` and `at_sea`. A test checks that every line, filled with its longest content (each vessel build-site recipe's inputs at their real need, 100%), fits in 27 glyphs in both languages. Two-digit counts would not fit with an 8-letter noun; no raft input needs ten.
 - **Updates:** `RunHud._process` already calls `refresh()` every frame. The row recomputes and redraws only when its line changes.
 
 ### D5. The raft-site arrow (`SiteArrow`)
@@ -214,7 +214,7 @@ Gaps of 4 px separate the columns: 48+4+56+4+32+4+72 = 220.
 ### D8. Content fields
 - `ItemData` gains `short_name_es` and `short_name_en` and a `count_name(locale)` helper. They are filled for driftwood, the inner tube and rope.
 - `IslandLayoutData` gains `launch_line_es` and `launch_line_en`, in the "Drinking and signs" group's neighbour group "HUD". They are filled for the sandbar.
-- `ContentValidator` checks the lengths (10 and 27).
+- `ContentValidator` checks the lengths (8 and 27) and that a short name is lower case. The short-name limit is what keeps "Arma la balsa: 9/9 " plus the noun inside 27 glyphs.
 
 ### D9. The hut note
 - Glyph `n`, terrain sand (`terrain_glyphs["n"] = 3`), one cell on the sand row just south of the hut's `HHHq` row, facing the spawn. It is a one-character edit in `rows`, plus a new `IslandSignData` in `signs`.

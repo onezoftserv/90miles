@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Short names for counts
-An item MAY have a Spanish and an English short name, and the HUD SHALL count the item with it ("0/6 madera"). A short name is lower case and at most 10 characters. An empty short name falls back to the item's name, and an empty English short name to the Spanish one. Driftwood's short names are "madera" and "wood", the inner tube's "cámaras" and "tubes", and rope's "sogas" and "ropes". Adding or changing one needs no code change.
+An item MAY have a Spanish and an English short name, and the HUD SHALL count the item with it ("0/6 madera"). A short name is lower case and at most 8 characters (so the objective row's count fits 27 glyphs). An empty short name falls back to the item's name, and an empty English short name to the Spanish one. Driftwood's short names are "madera" and "wood", the inner tube's "cámaras" and "tubes", and rope's "sogas" and "ropes".
 
 #### Scenario: A count uses the short name
 - **GIVEN** driftwood with the name "Madera de la costa" and the short name "madera"
@@ -14,7 +14,7 @@ An item MAY have a Spanish and an English short name, and the HUD SHALL count th
 - **THEN** "Coco" is returned
 
 #### Scenario: A short name too long
-- **GIVEN** an item file whose Spanish short name has 11 characters
+- **GIVEN** an item file whose Spanish short name has 9 characters
 - **WHEN** the content check runs
 - **THEN** it fails and names the file
 

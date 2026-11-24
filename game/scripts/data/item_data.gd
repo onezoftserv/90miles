@@ -6,6 +6,9 @@ extends ContentData
 ## the sources (POIs, chains, creatures, recipes...). Sources: ITEMS.md, crafting-inventory spec.
 
 ## Manifest line, used for UI sorting. KEEPSAKE only for KeepsakeData, TEXT only for TextData.
+## Longest short name: "Arma la balsa: 9/9 " plus the noun fits the objective row's 27 glyphs.
+const SHORT_NAME_MAX: int = 8
+
 enum Category {
 	WATER,
 	FOOD,
@@ -63,6 +66,11 @@ enum IdentifyGroup {
 @export var category: Category = Category.MATERIAL
 ## Tags other systems read (SHINY: barracuda, FOOD: theft, MEAT: dogs, UNKNOWN iff identify_group != NONE).
 @export var tags: Array[DataEnums.ItemTag] = []
+## The HUD's count noun ("0/6 madera", content-data "Short names for counts"): lower case, at most
+## SHORT_NAME_MAX characters. Empty uses the item's name.
+@export var short_name_es: String = ""
+## English count noun ("0/6 wood"); empty uses the Spanish one.
+@export var short_name_en: String = ""
 
 @export_group("Inventory")
 ## Max units per inventory slot (12 slots).
@@ -141,6 +149,16 @@ enum IdentifyGroup {
 @export var cooks_into: StringName = &""
 ## Seconds at a fire.
 @export var cook_time_s: float = 0.0
+
+
+## The noun the HUD counts this item with in `locale`: the short name (English, else Spanish),
+## else the item's name.
+func count_name(locale: String = "es") -> String:
+	if locale.begins_with("en") and not short_name_en.is_empty():
+		return short_name_en
+	if not short_name_es.is_empty():
+		return short_name_es
+	return get_display_name(locale)
 
 
 func get_reference_fields() -> Dictionary[StringName, StringName]:

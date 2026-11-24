@@ -10,6 +10,8 @@
 script = ExtResource("3_nj3ul")
 sprite = ExtResource("icon_driftwood")
 tags = Array[int]([4, 10])
+short_name_es = "madera"
+short_name_en = "wood"
 stack_size = 10
 weight = 2.0
 id = &"driftwood"
