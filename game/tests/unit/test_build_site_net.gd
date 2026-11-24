@@ -348,11 +348,12 @@ func test_in_co_op_esc_closes_the_clients_list_and_pauses_nothing() -> void:
 	assert_false(hud.craft_list.is_open(), "Esc closes the list")
 	# Host and client share this process's one tree, so this covers both peers.
 	assert_false(get_tree().paused, "nothing pauses")
-	assert_false(hud.pause_menu.visible, "no pause menu")
+	assert_false(hud.pause_menu.visible, "the first Esc only closes the list")
 	_esc(true)
 	_esc(false)
 	assert_false(get_tree().paused, "a second Esc pauses nothing either, in co-op")
-	assert_false(hud.pause_menu.visible)
+	assert_true(hud.pause_menu.visible, "it opens the run menu, which pauses nothing (run-menu)")
+	hud.pause_menu.resume()
 	var before: Vector2 = host.body(CoopSession.HOST_ID).global_position
 	host.body(CoopSession.HOST_ID).intent = MoveIntent.create(Vector2.RIGHT, false, false, false)
 	await wait_physics_frames(5)

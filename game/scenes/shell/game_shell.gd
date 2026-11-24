@@ -710,6 +710,11 @@ func _show(scene: PackedScene, next: Flow) -> Control:
 
 func _close_screen() -> void:
 	if screen != null:
+		# A screen on its way out keeps no focus: a text field it held (the first-launch name)
+		# would otherwise read as typing until it is freed (run-menu design D7).
+		var focused: Control = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+		if focused != null and screen.is_ancestor_of(focused):
+			focused.release_focus()
 		screen.queue_free()
 		screen = null
 	_backdrop.visible = false

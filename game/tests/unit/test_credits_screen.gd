@@ -28,6 +28,10 @@ func after_each() -> void:
 
 
 func _shell() -> GameShell:
+	# An install that was already asked its name, so the title's buttons take the focus (run-menu D7).
+	var config := ConfigFile.new()
+	config.set_value("player", "name_asked", true)
+	config.save(settings_path)
 	var shell := SHELL_SCENE.instantiate() as GameShell
 	shell.settings_path = settings_path
 	add_child_autofree(shell)
