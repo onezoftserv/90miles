@@ -350,6 +350,10 @@ Other (was in Milestone G):
   - Requirements were added to or updated in `art-pass`, `content-data`, `coop-networking`, `crafting-inventory`, `creatures-ai`, `endings-progression`, `guardacostas-stealth`, `island-generation`, `player-movement` and `ui-shell`.
   - No two of the eight changed the same requirement, no MODIFIED block dropped a scenario, and nothing was merged by hand.
   - `guardacostas-stealth` now holds the detection-only "Alert" beside the older chase and capture requirements. Those stay as they are until `guardacostas-capture` archives; its five MODIFIED blocks still apply.
-  - Every active change's delta still names existing requirements. This was rechecked on 2026-11-22 against main 8c58c16 for all fourteen active changes and the open crossing-gameplay PRs. The only one that modifies a requirement archived here is `guardacostas-capture`'s "Alert", which keeps every scenario.
+  - Every active change's delta still applies, with no dropped scenario. This was rechecked on 2026-11-23 against main 3fbaad4 for all eighteen active changes.
+    - Two of them modify a requirement archived here, and both keep every scenario: `guardacostas-capture`'s "Alert" and `art-guardacostas`'s "Patrol cues".
+    - Four MODIFIED blocks name requirements that other active changes add, so those changes must archive first:
+      - `guardacostas-capture` before `art-guardacostas` ("Capture cues");
+      - `hud-window-kit` before `menu-clarity` ("Readable HUD and menu text", "Menu windows") and before `run-menu` ("Pause and host-lost windows").
   - `openspec validate --all` passes. `--strict` fails on warnings only: 34 long requirements and one missing SHALL. Two of the long ones are new from the archived text: art-pass "Player look slots" and island-generation "Coast cay contents".
   - Open items from the eight are listed under their lines above.
