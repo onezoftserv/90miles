@@ -95,7 +95,7 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
 
 ## 5. Leaks (crossing "Leaks", "Raft integrity on the crossing")
 
-- [ ] 5.1 Write `test_crossing_leaks.gd` first:
+- [x] 5.1 Write `test_crossing_leaks.gd` first:
   - unplugged (90 at 30 s);
   - solo plugs 22–24 s (93);
   - letting go early does not plug;
@@ -104,15 +104,15 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
   - a board rider plugs their own board (54).
 
   See it fail.
-- [ ] 5.2 Add `crossing_leaks.gd` (spots on the hit half, drain per tick, at most 3) and `RescuePoint` kind PLUG, with prompt id `plug` ("Tapar") appended to `hud_text.tres`. Draw leak spurts in `CrossingHazards`. Verify `test_crossing_leaks.gd`.
-- [ ] 5.3 Sync leaks in `receive_state`, with a required snapshot key "leaks". Verify these in `test_crossing_leaks_net.gd`:
+- [x] 5.2 Add `crossing_leaks.gd` (spots on the hit half, drain per tick, at most 3) and `RescuePoint` kind PLUG, with prompt id `plug` ("Tapar") appended to `hud_text.tres`. Draw leak spurts in `CrossingHazards`. Verify `test_crossing_leaks.gd`.
+- [x] 5.3 Sync leaks in `receive_state`, with a required snapshot key "leaks". Verify these in `test_crossing_leaks_net.gd`:
   - a client plugs and both peers show it plugged;
   - a joiner sees an open leak drain;
   - solo offline sends nothing.
 
 ## 6. Flotsam (crossing "Flotsam")
 
-- [ ] 6.1 Write `test_crossing_flotsam.gd` first:
+- [x] 6.1 Write `test_crossing_flotsam.gd` first:
   - solo grabs a coconut in lane 3;
   - rope in lane 6 passes;
   - a plank brings 70 to 80, and 95 to 100;
@@ -121,9 +121,9 @@ These tasks follow the owner's answers to design.md "Owner decisions" (2026-11-1
   - two riders reach for one coconut (host and client, the first completed hold wins).
 
   See it fail.
-- [ ] 6.2 Add `RescuePoint` kind GRAB, which follows the piece on every peer, plus touch pickup for swimmers on the host, the host's inventory add, and the plank's repair through the vessel's integrity. The prompt id `grab` ("Agarrar") names the piece. Draw pieces in `CrossingHazards`. Verify `test_crossing_flotsam.gd`, and that `test_use_on_crossing.gd` still refuses item uses at sea.
-- [ ] 6.3 Sync the taken pieces (beat index to peer) in `receive_state`, with a required snapshot key "taken". Verify that a joiner does not see a taken coconut, in `test_crossing_flotsam_net.gd`.
-- [ ] 6.4 Update GAME_DESIGN.md §8 for leaks, planks and flotsam. Open the second PR (groups 5–6) after a solo windowed crossing runs clean.
+- [x] 6.2 Add `RescuePoint` kind GRAB, which follows the piece on every peer, plus touch pickup for swimmers on the host, the host's inventory add, and the plank's repair through the vessel's integrity. The prompt id `grab` ("Agarrar") names the piece. Draw pieces in `CrossingHazards`. Verify `test_crossing_flotsam.gd`, and that `test_use_on_crossing.gd` still refuses item uses at sea.
+- [x] 6.3 Sync the taken pieces (beat index to peer) in `receive_state`, with a required snapshot key "taken". Verify that a joiner does not see a taken coconut, in `test_crossing_flotsam_net.gd`.
+- [x] 6.4 Update GAME_DESIGN.md §8 for leaks, planks and flotsam. Open the second PR (groups 5–6) after a solo windowed crossing runs clean.
 
 ## 7. Shark telegraph and shoo (crossing "Shark pass event", "Shooing the shark"; creatures-ai "Crossing reef shark", "Every peer sees the crossing shark")
 

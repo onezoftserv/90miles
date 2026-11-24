@@ -1,10 +1,11 @@
 extends Node
 ## Manual check for crossing-gameplay, run windowed (it needs a real renderer, so never headless and
 ## never in CI). A solo run through the game shell launches the sandbar's raft on a short
-## hand-written plan with debris, a rock in line, a coconut and the reef line. A scripted rider
-## paddles east out of the rock's lane and lets the current pull the raft back, and the view is
-## saved as the beats come down, while paddling, and at the reef line. It prints the raft's
-## integrity and lateral position at each capture, and quits.
+## hand-written plan with debris, a rock in line, a coconut, more debris and the reef line. A
+## scripted rider paddles east out of the rock's lane, grabs the coconut as it passes, lets the
+## current pull the raft back onto the second debris and plugs the leak it opens. The view is saved
+## as the beats come down, while paddling, at the grab, with the leak open and at the reef line. It
+## prints the raft's integrity and lateral position at each capture, and quits.
 ##   godot --path game res://tests/manual/capture_crossing_gameplay.tscn [-- --out=<dir>]
 ## Writes <dir>/gameplay_<name>.png (default dir: user://crossing_gameplay_captures).
 
@@ -54,11 +55,23 @@ func _ready() -> void:
 	_save("paddling")
 	await _until(9.5)
 	_body.intent = MoveIntent.new()
-	await _until(10.0)
-	_save("past_the_rock")
-	await _until(13.6)
+	await _until(9.8)
+	_body.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	await _until(10.1)
+	_save("grab")
+	_body.intent = MoveIntent.new()
+	print("capture_crossing_gameplay: coconuts carried %d" % _body.inventory.count_id(&"coco"))
+	await _until(16.5)
+	_save("leak")
+	if not _crossing.leaks.list.is_empty():
+		_body.global_position = _crossing.leak_position(_crossing.leaks.list[0])
+		_body.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	await _until(19.0)
+	_body.intent = MoveIntent.new()
+	_save("plugged")
+	await _until(23.6)
 	_save("reef_line")
-	await _until(15.0)
+	await _until(25.0)
 	print("capture_crossing_gameplay: done, integrity %.1f, position %.2f" % [_crossing.integrity.value, _crossing.steer.position])
 	get_tree().quit()
 
@@ -83,9 +96,10 @@ func _launch_raft(session: CoopSession) -> Crossing:
 		var beats: Array[RefCounted] = [
 			CrossingBeat.create(7.0, K.DEBRIS, -3),
 			CrossingBeat.create(9.0, K.ROCK, 1),
-			CrossingBeat.create(10.0, K.FLOTSAM, 4, tuning.flotsam_items.find(&"coco")),
-			CrossingBeat.create(14.0, K.ROCK, -3),
-			CrossingBeat.create(14.0, K.ROCK, 7),
+			CrossingBeat.create(10.0, K.FLOTSAM, 7, tuning.flotsam_items.find(&"coco")),
+			CrossingBeat.create(16.0, K.DEBRIS, 0),
+			CrossingBeat.create(24.0, K.ROCK, -3),
+			CrossingBeat.create(24.0, K.ROCK, 7),
 		]
 		crossing.plan = CrossingPlan.create(30.0, beats)
 	return crossing
