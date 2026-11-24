@@ -34,6 +34,25 @@ class LyingShadowTest(unittest.TestCase):
         self.assertEqual(tracked, fx.build(fx.load_recipe(), palette.load_palette())["shadows/shadow_23x5"])
 
 
+class WideShadowTest(unittest.TestCase):
+    """art-terrain-polish D3 (C14): the raft's shadow on the sand, a soft 30x11 ellipse in the same colour and alpha."""
+
+    def test_the_wide_shadow_is_a_soft_mirrored_ellipse_that_fills_its_box(self):
+        image = fx.build(fx.load_recipe(), palette.load_palette())["shadows/shadow_30x11"]
+        self.assertEqual((image.width, image.height), (30, 11))
+        texels = {image.get(x, y) for y in range(image.height) for x in range(image.width)}
+        self.assertEqual(texels, {(0, 0, 0, 0), (0, 0, 0, 78)}, "MetroCity's black at alpha 78")
+        self.assertTrue(all(image.alpha(x, 5) for x in (0, image.width - 1)), "it reaches both ends")
+        self.assertTrue(any(image.alpha(x, 0) for x in range(image.width)) and any(image.alpha(x, 10) for x in range(image.width)))
+        for y in range(image.height):
+            row = [image.alpha(x, y) for x in range(image.width)]
+            self.assertEqual(row, row[::-1], f"row {y} mirrored left to right")
+
+    def test_the_tracked_wide_shadow_is_the_recipes(self):
+        tracked = png.read_png(palette.ART / "shadows" / "shadow_30x11.png")
+        self.assertEqual(tracked, fx.build(fx.load_recipe(), palette.load_palette())["shadows/shadow_30x11"])
+
+
 class SwimRingTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

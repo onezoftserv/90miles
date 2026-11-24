@@ -267,22 +267,50 @@ func test_the_workbench_and_an_island_sign_show_their_stills() -> void:
 	_assert_stands_on_origin(_look(sign), "the sign")
 
 
+# art-terrain-polish D3 (C14): a raft or its site stands bottom-centre on its origin moved by its
+# look offset toward land (`side`: -1 west, 1 east), and so does its shadow; the look itself stays
+# on the origin, where the prompt and the interactable are.
+func _assert_rests_toward_land(look: StructureLook, kind: StringName, side: int, what: String) -> void:
+	var lean: Vector2 = data.look_offset(kind, side)
+	var size: Vector2 = look.sprite.sprite_frames.get_frame_texture(look.sprite.animation, 0).get_size()
+	assert_ne(lean, Vector2.ZERO, "%s leans toward land" % what)
+	assert_eq(look.sprite.offset, StructureArt.frame_offset(size) + lean, "%s stands bottom-centre on its origin moved toward land" % what)
+	assert_eq(look.position, Vector2.ZERO, "%s: the look sits on the structure's origin" % what)
+	if look.shadow.visible:
+		assert_eq(look.shadow.position, lean + data.shadow_offsets.get(kind, Vector2.ZERO), "%s: its shadow leans with it" % what)
+
+
+func _assert_wide_shadow(look: StructureLook, shown: bool, what: String) -> void:
+	assert_eq(look.shadow.visible, shown, "%s: %s" % [what, "the WIDE shadow" if shown else "no shadow"])
+	if shown:
+		assert_eq(int(look.shadow.size), int(DropShadow.Size.get("WIDE", -2)), "%s: the WIDE shadow" % what)
+
+
+## art-terrain-polish D3 (C14), one player offline: the site's stages and the raft lean toward land.
+## Off an island (this arena has no session) the ground is TerrainQuery's featureless beach, as
+## Raft.work_offset reads it, so they lean west. Marked and with materials the site casts no shadow;
+## half-built, and as a raft, the WIDE one.
 func test_a_solo_build_shows_every_site_stage_then_the_raft_in_its_place() -> void:
 	var site := SITE_SCENE.instantiate() as BuildSite
 	site.recipe = _raft_recipe()
 	site.position = IslandLayout.cell_center(IslandLayout.build(SANDBAR).raft_site)
 	arena.add_child(site)
 	var at: Vector2 = site.position
+	var lean: Vector2 = data.look_offset(StructureArt.KIND_RAFT_SITE, -1)
 	assert_eq(_drawn(site).frame(), StructureArt.SITE_MARKED)
-	_assert_stands_on_origin(_look(site), "the raft site")
-	assert_eq(StructureArt.foot_rect(at, Vector2(64, 32)), Rect2(at + _look(site).sprite.offset, Vector2(64, 32)), "over the B cell")
+	_assert_rests_toward_land(_look(site), StructureArt.KIND_RAFT_SITE, -1, "the raft site")
+	_assert_wide_shadow(_look(site), false, "a marked site")
+	assert_eq(StructureArt.foot_rect(at + lean, Vector2(64, 32)), Rect2(at + _look(site).sprite.offset, Vector2(64, 32)), "beside the B cell, toward land")
 	body.inventory.add(&"driftwood", 6)
 	body.inventory.add(&"inner_tube", 2)
 	body.inventory.add(&"rope", 3)
 	site.deposit(body)
 	assert_eq(_drawn(site).frame(), StructureArt.SITE_MATERIALS)
+	_assert_wide_shadow(_look(site), false, "a site with its materials")
 	site.work(0.5)
 	assert_eq(_drawn(site).frame(), StructureArt.SITE_HALF_BUILT)
+	_assert_wide_shadow(_look(site), true, "a half-built site")
+	_assert_rests_toward_land(_look(site), StructureArt.KIND_RAFT_SITE, -1, "the half-built site")
 	site.work(0.5)
 	var raft: Raft = null
 	for child: Node in arena.get_children():
@@ -293,7 +321,8 @@ func test_a_solo_build_shows_every_site_stage_then_the_raft_in_its_place() -> vo
 		return
 	assert_eq(raft.position, at, "in the site's place")
 	assert_eq(_drawn(raft).frame(), StructureArt.RAFT_WHOLE)
-	_assert_stands_on_origin(_look(raft), "the raft")
+	_assert_rests_toward_land(_look(raft), StructureArt.KIND_RAFT, -1, "the raft")
+	_assert_wide_shadow(_look(raft), true, "the raft")
 
 
 func test_a_bench_placed_site_hides_its_stake_marker_once_built() -> void:
@@ -323,6 +352,64 @@ func test_a_raft_look_follows_integrity_set_after_it_enters_the_tree_every_frame
 	await wait_process_frames(1)
 	assert_eq(_look(raft).frame(), StructureArt.NO_FRAME, "no deck at 0")
 	assert_false(_look(raft).sprite.visible)
+	assert_false(_look(raft).shadow.visible, "and no shadow")
+
+
+## art-terrain-polish 5.1 (C14), one player offline: on the sandbar and on the coast cay the site,
+## marked, leans toward land with no shadow; a raft beached there leans the same way, the opaque
+## pixels of its bottom rows lie over land cells (read from the frame's image and the layout), its
+## WIDE shadow lies over land, and its origin, where the prompt anchors, is still on the hull.
+func test_a_solo_raft_on_the_sandbar_and_the_coast_cay_rests_on_land_with_its_wide_shadow() -> void:
+	var shell := _solo_shell()
+	await wait_process_frames(2)
+	for id: StringName in [&"sandbar", &"coast_cay"]:
+		if shell.island.layout.id != id:
+			shell.travel.travel(id)
+			await wait_process_frames(2)
+		var island := shell.island
+		assert_eq(island.layout.id, id)
+		var site_cell: Vector2i = island.built.raft_site
+		var origin: Vector2 = IslandLayout.cell_center(site_cell)
+		var side: int = StructureArt.land_side(island.built.terrain, site_cell)
+		assert_eq(side, -1, "%s: land west of the site" % id)
+		var site := shell.session.get_node_or_null(^"RaftSite") as BuildSite
+		assert_not_null(site, "%s: the site" % id)
+		if site == null:
+			continue
+		assert_eq(_drawn(site).frame(), StructureArt.SITE_MARKED, "%s: marked" % id)
+		_assert_rests_toward_land(_look(site), StructureArt.KIND_RAFT_SITE, side, "%s: the marked site" % id)
+		_assert_wide_shadow(_look(site), false, "%s: the marked site" % id)
+		island.beach_raft(100.0)
+		await wait_process_frames(1)
+		var raft := shell.session.get_node_or_null(^"Raft") as Raft
+		assert_not_null(raft, "%s: a raft on the site" % id)
+		if raft == null:
+			continue
+		var look := _drawn(raft)
+		assert_eq(look.frame(), StructureArt.RAFT_WHOLE)
+		_assert_rests_toward_land(look, StructureArt.KIND_RAFT, side, "%s: the raft" % id)
+		_assert_wide_shadow(look, true, "%s: the raft" % id)
+		var image := _frame_image(look)
+		var top_left: Vector2 = raft.global_position + look.sprite.offset
+		var row_top: float = site_cell.y * IslandLayout.TILE
+		var wet: Array[String] = []
+		for y: int in image.get_height():
+			if top_left.y + y < row_top:
+				continue
+			for x: int in image.get_width():
+				if image.get_pixel(x, y).a8 == 0:
+					continue
+				var cell := Vector2i(floori((top_left.x + x) / IslandLayout.TILE), site_cell.y)
+				if TerrainQuery.is_water(island.built.terrain.terrain_at(cell)) and not wet.has(str(cell)):
+					wet.append(str(cell))
+		assert_eq(wet, [] as Array[String], "%s: the hull's bottom rows over land" % id)
+		var shadow_rect := Rect2(look.shadow.global_position - look.shadow.texture.get_size() / 2.0, look.shadow.texture.get_size())
+		for corner: Vector2 in [shadow_rect.position, shadow_rect.end - Vector2.ONE, Vector2(shadow_rect.position.x, shadow_rect.end.y - 1.0), Vector2(shadow_rect.end.x - 1.0, shadow_rect.position.y)]:
+			var cell := Vector2i(floori(corner.x / IslandLayout.TILE), floori(corner.y / IslandLayout.TILE))
+			assert_false(TerrainQuery.is_water(island.built.terrain.terrain_at(cell)), "%s: the shadow's corner %s over land" % [id, cell])
+		var hull := Rect2(raft.global_position + look.sprite.offset, Vector2(image.get_size()))
+		assert_true(hull.has_point(raft.global_position + Vector2(0.0, -1.0)), "%s: the origin, where the prompt anchors, is on the hull" % id)
+		assert_eq(raft.global_position, origin, "%s: the raft itself stays on the site" % id)
 
 
 # --- art-mood-pass C33b: firelight (design D2; owner Q13 (a)) ---

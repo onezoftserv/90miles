@@ -76,14 +76,14 @@
 
 ## 5. C14: the raft on the sand (TR15)
 
-- [ ] 5.1 Write these tests first and see them fail:
+- [x] 5.1 Write these tests first and see them fail:
   - in `test_drop_shadow.gd`, `SIZES` gains the 30×11 `WIDE` ellipse, still a soft ellipse in the darkest colour;
   - in `test_structure_looks.gd`, a raft and a site's half-built stage show the wide shadow, a marked site and its materials show none, and their frames are moved by `look_offsets` toward the land beside the origin;
   - in `test_crossing_art.gd`, the crossing deck's position is unchanged.
   Add the 1-player test: on the sandbar and on the coast cay built for one offline player, with a raft built at the site, the opaque pixels of the raft frame's bottom rows lie over land cells (read from the frame's image and the layout).
-- [ ] 5.2 Draw the 30×11 shadow as a hand file, copy it into `game/assets/art/shadows/` through the tools, and add its own-work block to `shadows/License.txt` and `CREDITS.md` if needed. Add `DropShadow.Size.WIDE`, `StructureArtData.look_offsets` and the stage-keyed site shadow (design D3). Map `raft` to `WIDE` in `structure_art.tres`. Measure and record the offset (16–24 px).
-- [ ] 5.3 Remove `WIDE_WEST`, `WIDE_EAST`, their offsets and the raft-site branch from `TerrainView._build_decals`. Rewrite `test_the_raft_site_holds_the_wide_shade_and_the_workbench_is_shaded` to check that the site has no decal and the workbench still has its shade. Verify that `_assert_stands_on_origin` still holds for every other kind, and that the raft's foot rect and the size range in `test_structure_art.gd` pass.
-- [ ] 5.4 Windowed 1-player run: build a raft solo on the sandbar. Compare the marked, half-built and built stages with `before/sandbar_day_raft_site_crop4.png`, `before/raft_stages.png` and `before/cay_day_landing.png`. Check that the interact prompt still reads on the hull.
+- [x] 5.2 Draw the 30×11 shadow as a hand file, copy it into `game/assets/art/shadows/` through the tools, and add its own-work block to `shadows/License.txt` and `CREDITS.md` if needed. Add `DropShadow.Size.WIDE`, `StructureArtData.look_offsets` and the stage-keyed site shadow (design D3). Map `raft` to `WIDE` in `structure_art.tres`. Measure and record the offset (16–24 px).
+- [x] 5.3 Remove `WIDE_WEST`, `WIDE_EAST`, their offsets and the raft-site branch from `TerrainView._build_decals`. Rewrite `test_the_raft_site_holds_the_wide_shade_and_the_workbench_is_shaded` to check that the site has no decal and the workbench still has its shade. Verify that `_assert_stands_on_origin` still holds for every other kind, and that the raft's foot rect and the size range in `test_structure_art.gd` pass.
+- [x] 5.4 Windowed 1-player run: build a raft solo on the sandbar. Compare the marked, half-built and built stages with `before/sandbar_day_raft_site_crop4.png`, `before/raft_stages.png` and `before/cay_day_landing.png`. Check that the interact prompt still reads on the hull.
 
 ## 6. C11: a beach with no grid (TR12)
 

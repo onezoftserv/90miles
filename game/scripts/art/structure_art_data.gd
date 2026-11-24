@@ -40,6 +40,15 @@ const STANDARD_PATH: String = "res://assets/art/structures/structure_art.tres"
 @export var shadows: Dictionary[StringName, int] = {}
 ## Where each kind's shadow is centred, from its origin.
 @export var shadow_offsets: Dictionary[StringName, Vector2] = {}
+## A frame's own shadow, a DropShadow.Size or -1, before its kind's (art-terrain-polish D3): the raft
+## site casts the WIDE one from its half-built stage on, and none while marked or holding materials.
+@export var frame_shadows: Dictionary[StringName, int] = {}
+## How far a kind's frame and shadow lean toward land from its origin (art-terrain-polish D3): x
+## toward the land side StructureArt.land_side picks, mirrored for east; y as it is. The raft and
+## its site lean so the hull rests on the sand instead of hanging over the shallows. Drawing only:
+## the structure, its interactable and its prompt stay on the origin, and the crossing deck never
+## reads this.
+@export var look_offsets: Dictionary[StringName, Vector2] = {}
 
 
 static func standard() -> StructureArtData:
@@ -67,6 +76,20 @@ func still_for(kind: StringName) -> Texture2D:
 func sign_texture(look: StringName) -> Texture2D:
 	var texture: Texture2D = sign_looks.get(look, null) as Texture2D
 	return texture if texture != null else still_for(StructureArt.KIND_SIGN)
+
+
+## How far `kind` leans toward land on `side` (-1 west, 1 east, 0 none); zero for a kind that does
+## not lean.
+func look_offset(kind: StringName, side: int) -> Vector2:
+	if side == 0:
+		return Vector2.ZERO
+	var lean: Vector2 = look_offsets.get(kind, Vector2.ZERO)
+	return Vector2(lean.x * side, lean.y)
+
+
+## The shadow of `kind` showing `frame`: the frame's own, else the kind's; -1 for none.
+func shadow_for(kind: StringName, frame: StringName) -> int:
+	return frame_shadows.get(frame, shadows.get(kind, -1))
 
 
 ## The stages of the site of `recipe_id`, or null for a stake marker.

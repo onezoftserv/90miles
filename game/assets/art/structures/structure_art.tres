@@ -51,7 +51,7 @@ shadows = Dictionary[StringName, int]({
 &"island_sign": 2,
 &"palm": 0,
 &"rain_catcher": 0,
-&"raft": -1,
+&"raft": 4,
 &"raft_site": -1,
 &"stake": 2,
 &"workbench": -1
@@ -60,5 +60,14 @@ shadow_offsets = Dictionary[StringName, Vector2]({
 &"island_sign": Vector2(0, -1),
 &"palm": Vector2(0, -2),
 &"rain_catcher": Vector2(0, -2),
+&"raft": Vector2(0, -2),
+&"raft_site": Vector2(0, -2),
 &"stake": Vector2(0, -1)
+})
+frame_shadows = Dictionary[StringName, int]({
+&"half_built": 4
+})
+look_offsets = Dictionary[StringName, Vector2]({
+&"raft": Vector2(24, 0),
+&"raft_site": Vector2(24, 0)
 })
