@@ -170,7 +170,7 @@ Gaps of 4 px separate the columns: 48+4+56+4+32+4+72 = 220.
 **Phase words** come from `clock_words` in `hud_text.tres`, keyed `dawn`, `morning`, `midday`, `afternoon`, `dusk` and `night`. `RunHud.phase_name()` keeps its signature and returns these. Its tests in six files are updated for "Mañana" and "Tarde".
 
 ### D4. The objective (`Objective`, pure; `ObjectiveRow`, drawing)
-`Objective.from(session, local_peer, island_layout, text, locale) -> Goal` returns a step and a line. The steps are `AT_SEA`, `LAUNCH`, `GATHER(item, have, need)`, `DELIVER`, `WORK(percent)` and `NONE`, decided in the order the spec lists them.
+`Objective.from(session, local_peer, island_layout, text, locale) -> Goal` returns a step and a line. The steps are `AT_SEA`, `WAIT_DARK`, `LAUNCH`, `GATHER(item, have, need)`, `DELIVER`, `WORK(percent)` and `NONE`, decided in the order the spec lists them.
 
 - **Inputs:**
   - `session.get_node_or_null("RaftSite") as BuildSite`;
@@ -182,8 +182,9 @@ Gaps of 4 px separate the columns: 48+4+56+4+32+4+72 = 220.
   - `have = mini(site.deposited.get(id,0) + inv.count_id(id), need)`, over `recipe.inputs` in its declared order;
   - `recipe.input_tags` follow, with `HudText.tag_names` as the noun;
   - the noun is `ItemData.count_name(locale)`, the short name or else the name.
+- **Wait for the dark:** with the raft built, `Objective.launch_waits(session, climate)` is true while a patrol `Creature` (`is_patrol()`, not queued for deletion) is among `session.entities`, the phase is not in its `data.patrol.searchlight_phases`, and the climate's `weather_id` is not `squall`. That mirrors island-pressure's `LaunchSight.seen_by` day rule (a boat with its light off sees the whole sea; a squall keeps patrols in port) without depending on it. Once island-pressure lands, whichever change merges second makes `launch_waits` call `LaunchSight` so the two can never disagree. At night the objective says go; the launch prompt's own warning covers a searchlight on the player.
 - **Work:** percent = the site's progress × 100, floored. Today that is `BuildSite`'s work over `recipe.time_s`, read through a new `progress_ratio()` accessor if none exists.
-- **Lines** live in a new `objective_lines: Dictionary[StringName, PackedStringArray]` export on `HudText`, with `gather`, `deliver`, `work`, `launch_default` and `at_sea`. A test checks that every line, filled with its longest content (two-digit counts, the longest short name, 100%), fits in 27 glyphs in both languages.
+- **Lines** live in a new `objective_lines: Dictionary[StringName, PackedStringArray]` export on `HudText`, with `gather`, `deliver`, `work`, `wait_dark`, `launch_default` and `at_sea`. A test checks that every line, filled with its longest content (two-digit counts, the longest short name, 100%), fits in 27 glyphs in both languages.
 - **Updates:** `RunHud._process` already calls `refresh()` every frame. The row recomputes and redraws only when its line changes.
 
 ### D5. The raft-site arrow (`SiteArrow`)
@@ -218,8 +219,9 @@ Gaps of 4 px separate the columns: 48+4+56+4+32+4+72 = 220.
 ### D9. The hut note
 - Glyph `n`, terrain sand (`terrain_glyphs["n"] = 3`), one cell on the sand row just south of the hut's `HHHq` row, facing the spawn. It is a one-character edit in `rows`, plus a new `IslandSignData` in `signs`.
 - **Draft text,** for the owner's voice pass (Q4):
-  - ES: "Pa'l que venga detrás: la Florida 'tá a noventa millas, pa'l norte. Arma una balsa con palos, cámaras y soga, y zarpa con luz. De noche no se ve na', y la patrulla a ti sí te ve."
-  - EN: "For whoever comes next: Florida's ninety miles north. Build a raft from wood, tubes and rope, and leave by daylight. At night you can't see a thing, but the patrol sees you fine."
+  - ES: "Pa'l que venga detrás: la Florida 'tá a noventa millas, pa'l norte. Arma una balsa con palos, cámaras y soga, y zarpa de noche o con la turbonada: de día la lancha te ve."
+  - EN: "For whoever comes next: Florida's ninety miles north. Build a raft from wood, tubes and rope, and set off at night or in a squall: by day the patrol boat sees you."
+  - The first draft said "zarpa con luz" (leave by daylight). The owner's island-pressure Q1 (a), 2026-11-23, makes every daytime launch seen by the patrol, so the clause now gives the same advice as island-pressure's launch warning ("De día te ve la lancha. Espera la noche o la turbonada."). It stays flagged for the voice pass.
 - It names no count, so island-pressure's recipe changes can't make it wrong.
 - It is a sign, not the "first bottle note" found text that `docs/ISLANDS.md` puts in the hut. That stays balsero-lore's, for when found texts exist.
 
@@ -250,11 +252,12 @@ The palette test already covers `assets/art/ui/`. The strip and the bars are dra
 - **Archive order:** hud-window-kit, damage-feedback, bleeding-and-sabila, art-mood-pass, then this change. Its MODIFIED blocks are written on hud-window-kit's "HUD layout" and "HUD bars" and on the main specs' "Inventory band and world marks", "Bleeding tag on the HUD" and "Needle on the carrier's HUD".
 - **Rollback:** revert the PR. Nothing persists.
 
-## Owner decisions (asked 2026-11-23; recommended first)
-- **Q1. DAY's phase word.** (a) "Mañana", "Mediodía", "Tarde", so the row never reads "Día 2 … Día"; (b) keep "Día".
-- **Q2. Time to dark.** (a) Always shown, in in-game hours beside a moon mark, orange from dusk, counting to dawn at night; (b) only from 2 h before dark (DCSS-style); (c) the strip only, no number.
-- **Q3. Raft-site arrow.** (a) Whenever the site is off screen; (b) only after the player has seen the site once (SPD-style).
-- **Q4. Hut note wording.** (a) Ship D9's draft and let the voice pass rewrite it later; (b) the owner writes it now.
+## Owner decisions (answered 2026-11-23: all four (a))
+- **Q1 (a).** DAY reads "Mañana", "Mediodía" or "Tarde", so the row never reads "Día 2 … Día".
+- **Q2 (a).** Time to dark is always shown, in in-game hours beside a moon mark, orange from dusk, counting to dawn at night.
+- **Q3 (a).** The raft-site arrow shows whenever the site is off screen.
+- **Q4 (a).** The hut note ships as D9's draft, flagged for the later voice pass.
+- **Consistency with island-pressure Q1 (a).** Every daytime launch from a patrolled island is seen, so players leave at night or in a squall. The hut note's "zarpa con luz" became "zarpa de noche o con la turbonada: de día la lancha te ve", and the objective gained the wait step "Espera la noche pa' zarpar" ("Objective waits for the dark").
 
 ## Open Questions
 - Whether a 9 px status row reads as well as a 10 px one at 1×. This is settled by the capture in task 6. It does not change the specs (the rect rule holds either way).

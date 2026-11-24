@@ -19,9 +19,9 @@ The sandbar SHALL hold one sign on the sand just south of the ruined hut, on the
 - **THEN** it holds the same palms, coconuts, pick-ups, workbench and raft build site as before, and one sign
 
 ### Requirement: The hut note's words
-The hut note's Spanish line SHALL state the run's goal in Cuban voice: Florida lies ninety miles to the north, a raft is built from wood, inner tubes and rope, and the crossing is best started by daylight. It names no recipe count, so a change to the raft's recipe never makes it wrong, and it quotes no real person. Its English line says the same and keeps the slang. Each wraps to at most 8 lines in the sign note. With exactly 1 player, offline, the words are the same.
+The hut note's Spanish line SHALL state the run's goal in Cuban voice: Florida lies ninety miles to the north, a raft is built from wood, inner tubes and rope, and the crossing starts at night or in a squall, since by day the patrol sees a launch. It names no recipe count and quotes no real person. Its English line says the same and keeps the slang. Each wraps to at most 8 lines in the sign note. With exactly 1 player, offline, the words are the same.
 
 #### Scenario: The note names the goal
 - **GIVEN** the sandbar layout file
 - **WHEN** the hut note's Spanish and English lines are read
-- **THEN** the Spanish line names "la Florida" and "norte", the English one "Florida" and "north", neither holds a digit, and each wraps to 8 lines or fewer
+- **THEN** the Spanish line names "la Florida", "norte" and "noche", the English one "Florida", "north" and "night", neither holds a digit, and each wraps to 8 lines or fewer

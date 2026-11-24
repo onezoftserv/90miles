@@ -7,7 +7,7 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 
 ## 0. Before building
 
-- [ ] 0.1 Read the owner's answers to Q1–Q4 and fold any change into the specs and design.md (Owner decisions), then re-run `openspec validate hud-clarity --type change --strict`
+- [x] 0.1 Read the owner's answers to Q1–Q4 and fold any change into the specs and design.md (Owner decisions), then re-run `openspec validate hud-clarity --type change --strict`
 - [ ] 0.2 Take the "before" captures on this branch's base (solo sandbar first frame, top band at 3×, meters with bleeding, a sunstroke frame) into `docs/ui-shell/hud-clarity/before/`
 
 ## 1. Content and data
@@ -26,7 +26,7 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 
 ## 3. Objective row
 
-- [ ] 3.1 Tests for `Objective` (pure, 1 player, offline): every step in spec order (first frame "0/6 madera", carried plus deposited "0/2 cámaras", "Lleva to' pa' la balsa", "Dale a la balsa: 40%", "Zarpa pa'l cayo", "Aguanta hasta tierra", coast cay "Zarpa pa'l norte", English "Build the raft: 0/6 wood"); a bench-placed build site is ignored; on the hidden cay nothing names the cay, chest, map or compass
+- [ ] 3.1 Tests for `Objective` (pure, 1 player, offline): every step in spec order (first frame "0/6 madera", carried plus deposited "0/2 cámaras", "Lleva to' pa' la balsa", "Dale a la balsa: 40%", "Espera la noche pa' zarpar" by day with a patrol boat out, "Zarpa pa'l cayo" at night and in a squall, the launch line with no boat out, "Aguanta hasta tierra", coast cay "Zarpa pa'l norte", English "Build the raft: 0/6 wood"); a bench-placed build site is ignored; on the hidden cay nothing names the cay, chest, map or compass
 - [ ] 3.2 Test that every objective line, filled to its longest (two-digit counts, longest short name, 100%), fits 27 glyphs in Spanish and English
 - [ ] 3.3 Tests (1 player, offline) for `ObjectiveRow` in `RunHud`: shown under the clock inside (152,20)–(380,30); hidden while the hut note is open and shown again after; hidden while a screen is shown
 - [ ] 3.4 Build `Objective`, `ObjectiveRow` and the `RunHud` wiring (island layout from `Travel`, settable in tests); add a `BuildSite` progress accessor if none exists
@@ -54,7 +54,7 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 
 ## 7. Hut note
 
-- [ ] 7.1 Tests (1 player, offline): the sandbar has one sign, glyph `n`, reachable from the solo spawn and every co-op spawn; its lines name Florida and the north, hold no digit and wrap to 8 lines or fewer; reading it opens the sign note and changes nothing; the sandbar's other contents are unchanged
+- [ ] 7.1 Tests (1 player, offline): the sandbar has one sign, glyph `n`, reachable from the solo spawn and every co-op spawn; its lines name Florida, the north and the night, hold no digit and wrap to 8 lines or fewer; reading it opens the sign note and changes nothing; the sandbar's other contents are unchanged
 - [ ] 7.2 Edit `sandbar.tres` (one cell, `terrain_glyphs`, the sign) with the D9 text (or the owner's)
 - [ ] 7.3 Import, smoke and GUT pass
 

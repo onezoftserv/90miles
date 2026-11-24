@@ -142,12 +142,30 @@ While the raft is not built, the objective row SHALL read the level's raft site 
 - **THEN** the client's objective row reads "Arma la balsa: 0/2 cámaras"
 
 ### Requirement: Objective at launch and at sea
-While the local player has left the island on a crossing, the objective row SHALL read "Aguanta hasta tierra" ("Hold on till land"). Otherwise, while the island's raft is built, it reads the island's launch line (content-data "Launch lines"), or the default "Zarpa pa'l norte" ("Set off north"). With exactly 1 player, offline, the lines are the same.
+While the local player has left the island on a crossing, the objective row SHALL read "Aguanta hasta tierra" ("Hold on till land"). Otherwise, while the island's raft is built and the launch would not wait for the dark ("Objective waits for the dark"), it reads the island's launch line (content-data "Launch lines"), or the default "Zarpa pa'l norte" ("Set off north"). With exactly 1 player, offline, the lines are the same.
 
 #### Scenario: Built, then at sea
-- **GIVEN** a solo player, offline, on the sandbar with the raft built
+- **GIVEN** a solo player, offline, on the sandbar at night with the raft built
 - **WHEN** the HUD is drawn, and again after they launch
 - **THEN** the row reads "Zarpa pa'l cayo", then "Aguanta hasta tierra" for the whole crossing
+
+### Requirement: Objective waits for the dark
+While the island's raft is built, a patrol boat is out on the island and the day phase is one in which that boat's searchlight is off (dawn, day, dusk), the objective row SHALL read "Espera la noche pa' zarpar" ("Wait for dark to set off"), unless a squall is falling. It matches island-pressure's launch rule (owner, 2026-11-23): by day the patrol sees every launch; a squall keeps it in port. Solo, offline, the same.
+
+#### Scenario: A solo player builds by day
+- **GIVEN** a solo player, offline, on the sandbar at 09:00 with the raft built and a patrol boat out
+- **WHEN** the HUD is drawn
+- **THEN** the objective row reads "Espera la noche pa' zarpar"
+
+#### Scenario: Night or a squall opens the window
+- **GIVEN** the same player and boat
+- **WHEN** the phase turns to night, or a squall starts falling by day
+- **THEN** the objective row reads "Zarpa pa'l cayo"
+
+#### Scenario: No boat, no wait
+- **GIVEN** a solo player, offline, on an island with the raft built and no patrol boat out, at 09:00
+- **WHEN** the HUD is drawn
+- **THEN** the objective row reads the island's launch line
 
 #### Scenario: The coast cay uses the default line
 - **GIVEN** a solo player, offline, who reached the coast cay with an intact raft

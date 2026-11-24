@@ -30,7 +30,8 @@ The owner took the review's recommended options on 2026-11-23:
   - "Arma la balsa: 2/6 madera", counting each input the raft site still needs, input by input;
   - "Lleva to' pa' la balsa";
   - "Dale a la balsa: 40%";
-  - "Zarpa pa'l cayo";
+  - by day, while a patrol boat is out, "Espera la noche pa' zarpar" (island-pressure's launch rule, owner 2026-11-23);
+  - at night or in a squall, "Zarpa pa'l cayo";
   - at sea, "Aguanta hasta tierra".
 - It reads only the level's synced raft site, the built raft and the local player's own inventory, so every peer shows its own player's view of the same goal.
 - It never names or points at anything secret.
@@ -41,7 +42,7 @@ The owner took the review's recommended options on 2026-11-23:
 - The arrow keeps out of the HUD windows, the horizon band and the bottom band.
 
 **Hut note** (island-generation "The hut note")
-- A new sign beside the sandbar's hut, read with the existing sign note. It states the goal in voice: Florida is to the north, and you build a raft from wood, tubes and rope.
+- A new sign beside the sandbar's hut, read with the existing sign note. It states the goal in voice: Florida is to the north, you build a raft from wood, tubes and rope, and you set off at night or in a squall, because by day the patrol boat sees you.
 
 **Calor row and Insolación** (survival-meters "HUD bars", "Sunstroke tag on the HUD")
 - Calor leaves the middle of the meters and becomes the last row.
