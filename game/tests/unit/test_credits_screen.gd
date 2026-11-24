@@ -12,7 +12,7 @@ const SCREEN_RECT: Rect2 = Rect2(0.0, 0.0, 640.0, 360.0)
 const CREDITS_INDEX: int = 4
 const CC_BY: String = "CC BY 4.0"
 const CC_BY_URL: String = "https://creativecommons.org/licenses/by/4.0/"
-const PIXELIFY_SANS: String = "res://assets/fonts/PixelifySans[wght].ttf"
+const PRESS_START_2P: String = "res://assets/fonts/PressStart2P-Regular.ttf"
 ## Containers sort and labels wrap over the next frames.
 const LAYOUT_FRAMES: int = 3
 
@@ -159,28 +159,26 @@ func test_a_modified_pack_is_marked() -> void:
 		assert_eq(text.contains("modificado"), entry.modified, entry.pack)
 
 
-func test_the_list_is_in_pixelify_sans_inside_the_screen_and_scrolls() -> void:
+func test_the_list_is_in_press_start_2p_inside_the_screen_and_scrolls() -> void:
 	var shell := _shell()
 	var screen := _open_credits(shell)
 	await wait_frames(LAYOUT_FRAMES)
 	assert_eq(screen.scroll.horizontal_scroll_mode, ScrollContainer.SCROLL_MODE_DISABLED, "lines wrap, never scroll sideways")
-	assert_gt(screen.list_height(), SCREEN_RECT.size.y, "taller than the screen")
 	assert_gt(screen.list_height(), screen.scroll.size.y, "taller than its view")
 	assert_true(SCREEN_RECT.encloses(screen.scroll.get_global_rect()), "the view inside 640×360")
 	assert_true(SCREEN_RECT.encloses(screen.back_button.get_global_rect()), "Volver inside 640×360")
 	for label: Label in screen.entry_labels():
-		var font := label.get_theme_font(&"font") as FontVariation
-		assert_not_null(font, "%s: the menu font (hud-window-kit design D3)" % label.text)
-		if font != null:
-			assert_eq(font.base_font.resource_path, PIXELIFY_SANS, label.text)
-		assert_eq(label.get_theme_font_size(&"font_size"), 16, label.text)
+		# menu-clarity design D1 (owner Q16): the credits are body text in Press Start 2P at 8.
+		assert_eq(label.get_theme_font(&"font").resource_path, PRESS_START_2P, "%s: Press Start 2P" % label.text)
+		assert_eq(label.get_theme_font_size(&"font_size"), 8, label.text)
 		assert_lte(label.get_global_rect().end.x, SCREEN_RECT.end.x, "%s fits across" % label.text)
 	screen._unhandled_input(_down_event())
 	await wait_frames(1)
 	assert_gt(screen.scroll.scroll_vertical, 0, "the down key scrolls the list")
 	screen.scroll.scroll_vertical = 100000
 	await wait_frames(1)
-	assert_gt(screen.scroll.scroll_vertical, int(SCREEN_RECT.size.y / 2.0), "scrolls to the end")
+	var end: float = screen.list_height() - screen.scroll.size.y
+	assert_almost_eq(float(screen.scroll.scroll_vertical), end, 1.0, "scrolls to the end")
 	_assert_offline(shell, "while scrolling")
 
 
