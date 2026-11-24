@@ -115,6 +115,7 @@ func _ready() -> void:
 	apply_display()
 	apply_pixel_filter()
 	apply_flashes()
+	apply_volume()
 	show_title()
 
 
@@ -192,6 +193,11 @@ func show_controls() -> void:
 ## damage-feedback "Reducir destellos": every hit and change cue reads it from HurtCues.
 func apply_flashes() -> void:
 	HurtCues.reduce_flashes = settings.reduce_flashes
+
+
+## sound-pass "Volume level": the stored volume, on every sound. Ajustes calls it after a change.
+func apply_volume() -> void:
+	AudioManager.set_volume(float(settings.volume) / float(GameSettings.MAX_VOLUME))
 
 
 func _on_display_changed() -> void:
@@ -526,6 +532,10 @@ func _enter_run() -> void:
 	menu.abandon_confirmed.connect(back_to_title, CONNECT_DEFERRED)
 	menu.display_changed.connect(_on_display_changed)
 	menu.flashes_changed.connect(apply_flashes)
+	# sound-pass: this peer's cues; freed with the HUD, which stops every loop when the run ends.
+	var sounds := RunSounds.new()
+	hud.add_child(sounds)
+	sounds.bind(session, session.multiplayer.get_unique_id(), hud.needle)
 	_wait_label = _make_wait_label()
 	hud.add_child(_wait_label)
 
