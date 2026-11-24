@@ -54,8 +54,8 @@ Every group is built test-first: write the group's tests, watch them fail, then 
 
 ## 7. Hut note
 
-- [ ] 7.1 Tests (1 player, offline): the sandbar has one sign, glyph `n`, reachable from the solo spawn and every co-op spawn; its lines name Florida, the north and the night, hold no digit and wrap to 8 lines or fewer; reading it opens the sign note and changes nothing; the sandbar's other contents are unchanged
-- [ ] 7.2 Edit `sandbar.tres` (one cell, `terrain_glyphs`, the sign) with the D9 text (or the owner's)
+- [x] 7.1 Tests (1 player, offline): the sandbar has one sign, glyph `n`, reachable from the solo spawn and every co-op spawn; its lines name Florida, the north and the night, hold no digit and wrap to 8 lines or fewer; reading it opens the sign note and changes nothing; the sandbar's other contents are unchanged
+- [x] 7.2 Edit `sandbar.tres` (one cell, `terrain_glyphs`, the sign) with the D9 text (or the owner's)
 - [ ] 7.3 Import, smoke and GUT pass
 
 ## 8. Co-op check and captures
