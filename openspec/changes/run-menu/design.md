@@ -28,7 +28,7 @@
 - Rebinding keys, glyph sets for other gamepads, and a volume or language setting (MN-10 is its own change).
 - Save-and-quit. Abandoning ends the run; nothing is kept.
 - Hints, placeholders and nudges from the parked `controls-onboarding` proposal.
-- Numbering duplicate names in a lobby (MN-03's last part), unless the owner pulls it in.
+- Numbering duplicate names in a lobby (MN-03's last part): a follow-up (owner, 2026-11-23).
 
 ## Decisions
 
@@ -172,7 +172,15 @@ Its `Message` label moves from `HeadingLabel` to the body label, because menu-cl
 - **A client in the menu still takes damage**, as DST players do. → The co-op tab and line say the game goes on. That is the honest rule, not a bug.
 - **Test churn from the name window.** Shell tests that show the title would find it open. → One helper marks fresh test settings as asked. `test_suite_integrity.gd` catches a suite that stops parsing.
 - **GUT time is near CI's limit.** → The new suites are pure scene tests, under 5 s each. There is one ShellHarness test, not one per scenario.
-- **The `feat/controls-onboarding` proposal also has a Controles screen** (as an F1 overlay). → The proposal names this change as narrowing it, and the coordinator's message asks the owner to confirm.
+- **The `feat/controls-onboarding` proposal also has a Controles screen** (as an F1 overlay). → The owner chose (2026-11-23) that this card replaces its overlay and its pause rows; its hints and placeholders stay parked.
+
+## Owner answers (2026-11-23)
+
+The owner picked the recommended option on each question:
+- **Abandonar viaje** goes straight out: solo to the title with no summary, the host closes the game for everyone, a client leaves as a disconnect.
+- **The first-launch name window** shows once per install; Esc skips it.
+- **The Controles card** replaces the parked controls-onboarding overlay.
+- **Follow-ups stay follow-ups:** numbering duplicate names in a lobby, tie-down in squalls and MN-10.
 
 ## Migration Plan
 

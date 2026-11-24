@@ -116,7 +116,7 @@ The raft keeps the plain keys. Reading the crossing from the prompt side leaves 
 
 A `More` label, "▼ Más abajo", sits under the scroll. It is visible while `scroll_vertical` plus the view's height is less than the list's height, and is updated on the scroll bar's `value_changed` and after `show_credits`. If Press Start 2P lacks "▼", the label reads "v Más abajo", checked by a glyph test.
 
-The makers' group waits for the names from the owner (see the coordinator message).
+The makers' group waits for names and wording from the owner (owner, 2026-11-23); this change lists each licence once and adds no makers' group.
 
 ## Reference games (ideas only)
 
@@ -148,7 +148,7 @@ The makers' group waits for the names from the owner (see the coordinator messag
 - **Narrower buttons and text** can change layouts that tests measure (`test_menu_windows.gd`, `test_theme.gd`, `test_fonts.gd`). → Group 1 updates those tests first, and captures check each screen at 640×360.
 - **Press Start 2P is wide**, so long lines wrap more: the lobby note, the title descriptions and the summary rows. → The panels autowrap already; the captures check for overflow.
 - **`hud_text.tres` is shared** with hud-clarity, which may add lines. → New keys go in alphabetical order inside `prompt_labels`, so a merge conflict stays a one-line hunk.
-- **The heading by local fate** reads oddly for a removed client who rejoins after the run (none can today). → "Fin del viaje" is the fallback.
+- **The heading by local fate** (owner, 2026-11-23: each peer reads its own fate) reads oddly for a removed client who rejoins after the run (none can today). → "Fin del viaje" is the fallback.
 
 ## Migration Plan
 
