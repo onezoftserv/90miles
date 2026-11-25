@@ -262,7 +262,7 @@ func test_the_shark_draws_at_the_water_line_with_no_shadow() -> void:
 	var frame: Texture2D = sprite.sprite_frames.get_frame_texture(sprite.animation, sprite.frame)
 	assert_eq(material.get_shader_parameter(&"water_line_y"), entry.water_line_px - frame.get_size().y / 2.0, "the line in the sprite's own px")
 	assert_false(_shadow(shark).visible, "no shadow under the fin")
-	assert_eq(sprite.animation, &"patrol")
+	assert_eq(sprite.animation, &"patrol_down", "a new creature faces down (art-sprite-polish D4)")
 
 
 func test_the_shark_fin_stands_out_on_shallows_and_deep_water() -> void:
@@ -281,6 +281,111 @@ func test_the_shark_fin_stands_out_on_shallows_and_deep_water() -> void:
 			checked += 1
 	assert_eq(failures, PackedStringArray())
 	assert_gt(checked, 0)
+
+
+# --- art-sprite-polish D4 (C24, SP4): the shark redraw and its facings ---------------------------
+
+## The rows of a shark frame the water-line shader draws: those above the line, the line itself and
+## the faded rows under it (art_common.gdshaderinc ART_FADE_ROWS); the rest is cut.
+const SHARK_FADE_ROWS: int = 4
+## crossing-gameplay circles a waiting fin 4 px round a spot 1 tile (16 px) off the deck's edge
+## (CreatureThreats.CIRCLE_RADIUS_PX), so a frame's drawn pixels may reach at most 12 px from its
+## centre or the fin is drawn over the deck (D3; the design's 15 px predates the circle).
+const SHARK_HALF_WIDTH_PX: int = 12
+## A short foam dash beside the fin's base on the water-line row.
+const SHARK_DASH_PX: int = 3
+
+
+func _shark_cell(frames: SpriteFrames, animation: StringName, index: int) -> Image:
+	var atlas := frames.get_frame_texture(animation, index) as AtlasTexture
+	return ArtChecks.read_png(atlas.atlas.resource_path).get_region(Rect2i(atlas.region))
+
+
+# The longest run of opaque pixels on row `y` of `cell`.
+func _longest_run(cell: Image, y: int) -> int:
+	var longest: int = 0
+	var run: int = 0
+	for x: int in cell.get_width():
+		run = run + 1 if cell.get_pixel(x, y).a8 > 0 else 0
+		longest = maxi(longest, run)
+	return longest
+
+
+func test_the_shark_has_side_up_and_down_frames_for_patrol_circle_and_move() -> void:
+	var frames := _data(&"reef_shark").sprite_frames
+	var names: PackedStringArray = frames.get_animation_names()
+	for state: String in ["patrol", "circle", "move"]:
+		for facing: String in ["side", "up", "down"]:
+			assert_true(names.has("%s_%s" % [state, facing]), "%s_%s" % [state, facing])
+		assert_false(names.has(state), "%s is split by facing" % state)
+	assert_true(names.has("strike") and names.has("idle"), "strike and idle stay single")
+	for animation: String in names:
+		var unique: Dictionary[Rect2, bool] = {}
+		for index: int in frames.get_frame_count(animation):
+			unique[(frames.get_frame_texture(animation, index) as AtlasTexture).region] = true
+		assert_lte(unique.size(), 4, "%s: at most 4 unique frames" % animation)
+	# The up and down fins are edge-on: narrower above the line than the side fin.
+	var entry := _art().entry(&"reef_shark")
+	var line: int = int(entry.water_line_px)
+	var side_base: int = _longest_run(_shark_cell(frames, &"patrol_side", 0), line - 1)
+	for animation: StringName in [&"patrol_up", &"patrol_down"]:
+		var base: int = _longest_run(_shark_cell(frames, animation, 0), line - 1)
+		assert_lt(base, side_base, "%s: an edge-on fin, narrower than the side fin (%d < %d)" % [animation, base, side_base])
+
+
+func test_no_side_frame_draws_a_solid_foam_bar_on_the_water_line() -> void:
+	var frames := _data(&"reef_shark").sprite_frames
+	var line: int = int(_art().entry(&"reef_shark").water_line_px)
+	var checked: int = 0
+	for animation: StringName in [&"patrol_side", &"circle_side", &"move_side", &"idle", &"strike"]:
+		for index: int in frames.get_frame_count(animation):
+			var cell := _shark_cell(frames, animation, index)
+			var base: int = _longest_run(cell, line - 1)
+			assert_gt(base, 0, "%s[%d] has a fin base over the line" % [animation, index])
+			assert_lte(_longest_run(cell, line), base + SHARK_DASH_PX, "%s[%d]: the line holds the fin's base and short dashes, not a bar" % [animation, index])
+			checked += 1
+	assert_gt(checked, 0)
+
+
+func test_every_shark_frame_draws_within_12_px_of_its_centre() -> void:
+	var frames := _data(&"reef_shark").sprite_frames
+	var drawn_rows: int = int(_art().entry(&"reef_shark").water_line_px) + SHARK_FADE_ROWS
+	for animation: StringName in frames.get_animation_names():
+		for index: int in frames.get_frame_count(animation):
+			var cell := _shark_cell(frames, animation, index)
+			var centre: float = cell.get_width() / 2.0
+			var reach: float = 0.0
+			for y: int in mini(drawn_rows, cell.get_height()):
+				for x: int in cell.get_width():
+					if cell.get_pixel(x, y).a8 > 0:
+						reach = maxf(reach, maxf(centre - x, x + 1 - centre))
+			assert_lte(reach, float(SHARK_HALF_WIDTH_PX), "%s[%d] reaches %d px from its centre" % [animation, index, reach])
+
+
+## art-sprite-polish 6.1, one player offline: the sandbar's shark heading mostly north plays
+## `patrol_up`; turned east it plays `patrol_side` unmirrored, and west mirrored.
+func test_a_solo_sandbar_shark_heading_north_plays_patrol_up_then_side_when_it_turns() -> void:
+	NetManager.start_solo()
+	WeatherManager.stop()
+	var shell := SHELL_SCENE.instantiate() as GameShell
+	shell.settings_path = settings_path
+	add_child_autofree(shell)
+	(shell.screen as TitleScreen).solo_requested.emit()
+	shell.session.body(CoopSession.HOST_ID).player_input.enabled = false
+	await wait_physics_frames(2)
+	var shark: Creature = null
+	for child: Node in shell.session.entities.get_children():
+		if child is Creature and (child as Creature).data.id == &"reef_shark":
+			shark = child as Creature
+	assert_not_null(shark, "the sandbar's reef shark")
+	if shark == null:
+		return
+	shark.state_id = PATROL
+	for case: Array in [[Vector2(0.3, -1.0), &"patrol_up", false], [Vector2(1.0, 0.2), &"patrol_side", false], [Vector2(-1.0, 0.1), &"patrol_side", true]]:
+		shark.facing = case[0]
+		_step(shark)
+		assert_eq(_sprite(shark).animation, case[1], "facing %s" % case[0])
+		assert_eq(_sprite(shark).flip_h, case[2], "facing %s: mirrored %s" % [case[0], case[2]])
 
 
 func test_a_solo_crab_on_the_sand_has_its_shadow_under_it() -> void:

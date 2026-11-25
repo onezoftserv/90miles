@@ -45,6 +45,8 @@ prompt_verbs = Dictionary[StringName, PackedStringArray]({
 })
 prompt_labels = Dictionary[StringName, PackedStringArray]({
 &"climb_aboard": PackedStringArray("a la balsa", "aboard the raft"),
+&"climb_aboard.board": PackedStringArray("a tu tabla", "onto your board"),
+&"climb_aboard.car": PackedStringArray("al almendrón", "aboard the car"),
 &"climb_palm": PackedStringArray("Mata de coco", "Coconut palm"),
 &"grab": PackedStringArray("el tablón", "the plank"),
 &"launch": PackedStringArray("en la balsa", "on the raft"),
@@ -56,7 +58,9 @@ prompt_labels = Dictionary[StringName, PackedStringArray]({
 &"raft_job": PackedStringArray("la balsa", "the raft"),
 &"raft_work": PackedStringArray("la balsa", "the raft"),
 &"tie_down": PackedStringArray("a la balsa", "to the raft"),
+&"tie_down.car": PackedStringArray("al almendrón", "to the car"),
 &"untie": PackedStringArray("de la balsa", "from the raft"),
+&"untie.car": PackedStringArray("del almendrón", "from the car"),
 &"workbench": PackedStringArray("en el banco", "at the bench")
 })
 tag_names = Dictionary[int, PackedStringArray]({

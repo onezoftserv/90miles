@@ -6,7 +6,10 @@ extends Node
 ## with the raft worn:
 ##   godot --path game res://tests/manual/capture_crossing.tscn -- --out=<dir>
 ## Writes <dir>/crossing_aboard_0.png, crossing_aboard_1.png, crossing_swimmer.png and
-## crossing_worn.png, each the 640×360 view.
+## crossing_worn.png, each the 640×360 view. Then (art-sprite-polish D3, D4) a shark pass from the
+## east: crossing_shark_tell.png while its fin circles beside the raft, crossing_shark_strike.png
+## after it struck. Last (art-sprite-polish D2) the rider thrown in on the north side, just above the
+## deck's top edge: crossing_swimmer_north.png.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://capture_crossing.cfg"
@@ -14,6 +17,10 @@ const SETTLE_FRAMES: int = 30
 const PLAN_S: float = 600.0
 const BESIDE_PX: float = 6.0
 const DAYLIGHT_AFTER_S: float = 60.0
+## Where the north swimmer is put: this far west of the deck's centre and north of its top edge, as
+## the review's squall throw-in was (before/crossing_raft_squall.png).
+const NORTH_WEST_PX: float = 12.0
+const NORTH_PX: float = 3.0
 
 var _out_dir: String = ""
 
@@ -60,6 +67,16 @@ func _ready() -> void:
 	crossing.hit_vessel(45.0)
 	await _frames(SETTLE_FRAMES)
 	_save("crossing_worn")
+	# A shark pass from the east 4 s from now, so it is warned at once (its lead is 5 s).
+	crossing.plan = CrossingPlan.create(PLAN_S, [CrossingBeat.create(crossing.elapsed_s + 4.0, CrossingBeat.Kind.SHARK_PASS, 0, CrossingBeat.Side.EAST)])
+	await get_tree().create_timer(1.5).timeout
+	_save("crossing_shark_tell")
+	await get_tree().create_timer(3.0).timeout
+	_save("crossing_shark_strike")
+	crossing.throw_in(1)
+	body.global_position = Vector2(crossing.deck_center().x - NORTH_WEST_PX, crossing.deck_rect().position.y - NORTH_PX)
+	await _frames(SETTLE_FRAMES)
+	_save("crossing_swimmer_north")
 	get_tree().quit()
 
 

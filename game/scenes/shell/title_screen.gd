@@ -17,7 +17,7 @@ const DESCRIPTIONS: Array[String] = [
 	"Una persona, sin red: nadie espera a nadie. Sobrevive y busca cómo salir de la isla.",
 	"Abre una partida para hasta 4 jugadores. Los demás se unen por IP en el puerto UDP 7777.",
 	"Entra a la partida de un amigo con su dirección IP.",
-	"Tu nombre, pantalla completa y escala.",
+	"Tu nombre, la pantalla, la escala y el volumen.",
 	"Las teclas y los botones del mando para cada cosa.",
 	"Quién hizo el arte y las fuentes del juego, y con qué licencias.",
 	"Cierra el juego.",
@@ -33,6 +33,8 @@ var name_prompt: NamePrompt = null
 @onready var flavour: Label = %Flavour
 @onready var description: Label = %Description
 @onready var version: Label = %Version
+## A failure to host, on a red band under the description; hidden until show_error (design D6).
+@onready var status: Label = %Status
 @onready var _menu: VBoxContainer = %Menu
 
 
@@ -56,6 +58,13 @@ func buttons() -> Array[Button]:
 		if button != null:
 			found.append(button)
 	return found
+
+
+## Shows `text` on the red band under the description panel, until the title is left. Moving the
+## focus or the pointer changes only the description.
+func show_error(text: String) -> void:
+	status.text = text
+	status.visible = not text.is_empty()
 
 
 ## Opens the first-launch name window over the menu: the buttons give up the focus until it

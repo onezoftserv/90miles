@@ -54,24 +54,24 @@ Rebuilds: `python -I tools/art/compose.py --packs C:/Users/liann/src/90miles/gam
 
 ## 6. Shark redraw, facings and the fin off the deck (C24, SP4, SP1) — after crossing-gameplay merges
 
-- [ ] 6.1 Write the tests and see them fail:
+- [x] 6.1 Write the tests and see them fail:
   - `test_creature_art.gd`: `patrol`, `circle` and `move` have `_side`, `_up` and `_down`; no side frame's water-line row holds an opaque run longer than the fin's base plus a short dash; every frame's drawn pixels lie within 15 px of its centre; the `patrol` assertion follows the default down facing; `test_the_shark_fin_stands_out_on_shallows_and_deep_water` on today's and C7's shallows;
   - 1-player: a solo sandbar shark heading mostly north plays `patrol_up`;
   - a new crossing test, 1-player: in a solo raft crossing whose shark pass names the east side, and in a solo board crossing, the fin's drawn box (from its frame's non-clear texels and `CreatureLook`'s placement) never overlaps an intact deck or board rect from the warning to the retreat, and stays inside `sea_rect()`.
-- [ ] 6.2 Redraw `tools/art/fixes/creatures/reef_shark.png` with the facing rows (design D4), update `creature_sheets.json` and `reef_shark_frames.tres`. Verify `tools/art/test_creatures.py`, `test_crossing_creature_shark.gd`, `test_crossing_shark_dump.gd`, `test_crossing_shark_net.gd` and `test_crossing_art.gd`.
-- [ ] 6.3 If the fin test fails at the strike because crossing-gameplay still places the shark at `deck_center() + SHARK_OFFSET_PX`, do not move it in art: send the coordinator the failing frame and the seam (design "Owner decisions").
-- [ ] 6.4 Windowed 1-player captures: an island shark heading north and west, and a solo crossing's shark tell and strike. Compare with `before/cr_water_day_crop5.png` and `before/crossing_shark.png`.
+- [x] 6.2 Redraw `tools/art/fixes/creatures/reef_shark.png` with the facing rows (design D4), update `creature_sheets.json` and `reef_shark_frames.tres`. Verify `tools/art/test_creatures.py`, `test_crossing_creature_shark.gd`, `test_crossing_shark_dump.gd`, `test_crossing_shark_net.gd` and `test_crossing_art.gd`.
+- [x] 6.3 If the fin test fails at the strike because crossing-gameplay still places the shark at `deck_center() + SHARK_OFFSET_PX`, do not move it in art: send the coordinator the failing frame and the seam (design "Owner decisions").
+- [x] 6.4 Windowed 1-player captures: an island shark heading north and west, and a solo crossing's shark tell and strike. Compare with `before/cr_water_day_crop5.png` and `before/crossing_shark.png`.
 
 ## 7. Swimmer behind the deck (C22; SP5) — after crossing-gameplay merges
 
-- [ ] 7.1 Write the tests and see them fail, in `test_crossing_art.gd`:
+- [x] 7.1 Write the tests and see them fail, in `test_crossing_art.gd`:
   - 1-player: a swimmer 1 px north of the deck's top edge, within its span, is drawn after the sea and before the deck (Look z −21);
   - a swimmer beside the deck (`put_beside_deck`, east), one south of it, a rider aboard and an island swimmer keep z 0;
   - after the deck sinks, a north swimmer is back at z 0;
   - on a board route, a swimmer north of a board goes under that board.
   Update `test_the_crossing_sea_and_deck_lie_under_its_riders` with the north swimmer.
-- [ ] 7.2 Add the z swap to `PlayerLook.step` (design D2). Verify `test_art_sim_invariance`, `test_draw_order.gd` and the crossing tests.
-- [ ] 7.3 Windowed 1-player capture of a squall throw-in on the north side: compare with `before/crossing_raft_squall.png`.
+- [x] 7.2 Add the z swap to `PlayerLook.step` (design D2). Verify `test_art_sim_invariance`, `test_draw_order.gd` and the crossing tests.
+- [x] 7.3 Windowed 1-player capture of a squall throw-in on the north side: compare with `before/crossing_raft_squall.png`.
 
 ## 8. Integration
 

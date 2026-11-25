@@ -96,8 +96,10 @@ func test_the_totals_of_a_first_day_on_the_sandbar() -> void:
 	assert_eq(summary.islands.text, "Islas: 1")
 	assert_eq(summary.days.text, "Días: 1")
 	assert_eq(summary.run_length.text, "3:00")
-	assert_eq(summary.companions.text, "Compañeros: ninguno")
-	assert_eq(summary.texts.text, "Textos: ninguno")
+	# endings-progression "Run summary totals": nothing to count yet, so neither line shows.
+	assert_false(summary.companions.visible, "no Compañeros line")
+	assert_false(summary.texts.visible, "no Textos line")
+	assert_false(summary.extras.visible)
 
 
 func test_every_players_fate_in_co_op() -> void:
@@ -173,8 +175,11 @@ func test_four_players_with_tips_fit_the_screen() -> void:
 	for index: int in 4:
 		screen.row(index).set_tip("y".repeat(120))
 	await wait_frames(2)
-	assert_eq(screen.panel.get_rect(), Rect2(32.0, 16.0, 576.0, 328.0))
+	# menu-clarity design D4: the card is centred and its inset stops growing at 200 px.
+	assert_eq(screen.panel.get_rect().size.x, 576.0)
+	assert_almost_eq(screen.panel.get_rect().get_center(), Vector2(320.0, 180.0), Vector2(1.0, 1.0))
 	assert_true(Rect2(0.0, 0.0, 640.0, 360.0).encloses(screen.panel.get_rect()))
+	assert_eq(screen.scroll.custom_minimum_size.y, SummaryScreen.INSET_CAP_PX, "capped, then it scrolls")
 	assert_true(screen.row(0).get_parent().get_parent() is ScrollContainer, "the rows scroll")
 
 
@@ -206,3 +211,19 @@ func test_the_entry_keys_are_the_contract() -> void:
 	var keys: Array = (shell.screen as SummaryScreen).summary.entries[0].keys()
 	keys.sort()
 	assert_eq(keys, ["cause", "cause_label", "dead", "line", "line_id", "name", "peer"])
+
+
+
+# menu-clarity design D4: the inset is as tall as its rows once they are laid out, so a wrapped
+# one-liner is never cut.
+func test_the_inset_fits_a_wrapped_one_liner() -> void:
+	var entry := _entry("Balsero", true)
+	entry["line"] = "Una sed más larga que el Período Especial, y eso es mucho decir. " + "Y más."
+	var screen := _screen_with([entry] as Array[Dictionary])
+	await wait_frames(3)
+	var rows := screen.row(0).get_parent() as Control
+	var border: float = screen.scroll.get_theme_stylebox(&"panel").get_minimum_size().y
+	assert_gt(border, 0.0, "the inset has a border")
+	assert_gte(screen.scroll.size.y - border, rows.get_combined_minimum_size().y - 0.5, "the inset shows every row line inside its border")
+	assert_almost_eq(screen.scroll.size.y, rows.get_combined_minimum_size().y + border, 1.0, "and no more")
+	assert_true(screen.row(0).line.get_line_count() >= 2, "the line wrapped")

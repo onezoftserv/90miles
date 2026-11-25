@@ -5,6 +5,8 @@ extends Node
 ## On the real sandbar, beside a standing player, it shows a crab standing, one scuttling east, one
 ## pinching and one stealing, and a gull swooping south over the sand, enlarged x6; then the same
 ## crabs at night under the day-night tint. Writes <dir>/creatures_day.png and creatures_night.png.
+## Then (art-sprite-polish D4) four reef sharks on a block of the sandbar's water, heading north,
+## west, east and south, enlarged x6: <dir>/sharks_day.png.
 ## Nothing simulates: the bodies' processing is off; only their looks read the states set here,
 ## and the walkers are moved a pixel a frame by this script.
 
@@ -23,6 +25,8 @@ const PLAYER_AT: Vector2i = Vector2i(1, 2)
 const CRABS: Array[Array] = [[Vector2i(3, 2), 0, false], [Vector2i(4, 3), 0, true], [Vector2i(6, 2), 4, false], [Vector2i(7, 3), 2, false]]
 const GULL_AT: Vector2i = Vector2i(5, 1)
 const GULL_SWOOP: int = 1
+## art-sprite-polish D4: the sharks' cells in their water block and the way each heads.
+const SHARKS: Array[Array] = [[Vector2i(1, 2), Vector2.UP], [Vector2i(3, 2), Vector2.LEFT], [Vector2i(5, 2), Vector2.RIGHT], [Vector2i(7, 2), Vector2.DOWN]]
 
 var _out_dir: String = ""
 var _walkers: Array[Node2D] = []
@@ -42,6 +46,8 @@ func _ready() -> void:
 	await _capture("creatures_day", false)
 	WeatherManager.sky.start_at(NIGHT_S)
 	await _capture("creatures_night", true)
+	WeatherManager.stop()
+	await _capture_sharks("sharks_day")
 	get_tree().quit()
 
 
@@ -92,6 +98,50 @@ func _capture(capture: String, night: bool) -> void:
 	print("capture_creatures: %s" % capture)
 	view.queue_free()
 	await _frames(2)
+
+
+# art-sprite-polish D4: the sharks, each patrolling its own way, on the sandbar's water.
+func _capture_sharks(capture: String) -> void:
+	var layout := load(LAYOUT_PATH) as IslandLayoutData
+	var built: IslandLayout = IslandLayout.build(layout)
+	var origin: Vector2i = _water_block(built)
+	var view := SubViewport.new()
+	view.size = SPAN * IslandLayout.TILE
+	view.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+	view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child(view)
+	var island := ISLAND_SCENE.instantiate() as SandbarIsland
+	island.layout = layout
+	island.with_creatures = false
+	island.position = -Vector2(origin * IslandLayout.TILE)
+	view.add_child(island)
+	for shark: Array in SHARKS:
+		var creature := _creature(view, &"reef_shark", shark[0], 0) as Creature
+		creature.facing = shark[1]
+	await _frames(SETTLE_FRAMES)
+	var image := view.get_texture().get_image()
+	image.resize(image.get_width() * ZOOM, image.get_height() * ZOOM, Image.INTERPOLATE_NEAREST)
+	image.save_png(_out_dir.path_join(capture + ".png"))
+	print("capture_creatures: %s" % capture)
+	view.queue_free()
+	await _frames(2)
+
+
+# The top-left cell of the first SPAN block of the sandbar that is all water, shallows and deep both.
+func _water_block(built: IslandLayout) -> Vector2i:
+	for y: int in built.size.y - SPAN.y:
+		for x: int in built.size.x - SPAN.x:
+			var kinds: Dictionary[int, bool] = {}
+			var wet: bool = true
+			for dy: int in SPAN.y:
+				for dx: int in SPAN.x:
+					var terrain: DataEnums.Terrain = built.terrain.terrain_at(Vector2i(x + dx, y + dy))
+					wet = wet and TerrainQuery.is_water(terrain)
+					kinds[terrain] = true
+			if wet and kinds.has(DataEnums.Terrain.SHALLOWS) and kinds.has(DataEnums.Terrain.DEEP):
+				return Vector2i(x, y)
+	push_error("capture_creatures: no all-water block of %s on the sandbar" % SPAN)
+	return Vector2i.ZERO
 
 
 func _creature(view: SubViewport, id: StringName, cell: Vector2i, state: int) -> Node2D:

@@ -3,8 +3,9 @@ extends RefCounted
 ## What the run summary shows (endings-progression "Run summary totals" and "Cause of death on
 ## the run summary"): the totals and one entry per player. Entry keys: `name`, `dead`, `cause`
 ## (a DeathCause id, empty for a survivor), `cause_label`, `line` (the one-liner), `line_id`,
-## `peer` (0 for a removed player), and `route` only for a survivor who left by a route. Living
-## players come first in peer order, then the removed in removal order.
+## `peer` (0 for a removed player), and `route` (its name) and `route_id` only for a survivor who
+## left by a route, whose one-liner is that route's (endings-progression "Survivor one-liners").
+## Living players come first in peer order, then the removed in removal order.
 
 var islands_reached: int = 1
 var days: int = 1
@@ -17,7 +18,7 @@ var entries: Array[Dictionary] = []
 
 
 ## The summary of `session`'s run, read from its players, their routes and the run seed.
-static func collect(session: CoopSession, islands: int, day: int, run_length_s: float, lines: DeathLines, catalog: ContentCatalog) -> RunSummary:
+static func collect(session: CoopSession, islands: int, day: int, run_length_s: float, lines: DeathLines, catalog: ContentCatalog, arrival_lines: DeathLines = null) -> RunSummary:
 	var made := RunSummary.new()
 	made.islands_reached = islands
 	made.days = day
@@ -30,7 +31,7 @@ static func collect(session: CoopSession, islands: int, day: int, run_length_s: 
 		if meters.dead:
 			made._add_dead(player_name, peer_id, DeathCause.of(meters), run_seed, lines, catalog, session.locale)
 		else:
-			made.entries.append(_survivor(player_name, peer_id, routes.route_left_by(peer_id), catalog))
+			made.add_survivor(player_name, peer_id, routes.route_left_by(peer_id), run_seed, arrival_lines, catalog, session.locale)
 	var removed: Array[String] = session.removed_names()
 	var causes: Array[StringName] = session.removed_causes()
 	for index: int in removed.size():
@@ -54,6 +55,21 @@ func _add_dead(player_name: String, peer_id: int, cause: StringName, run_seed: i
 	})
 
 
+## A survivor: the route they left by, if any, and that route's line for the next survivor of it
+## under `run_seed` (the same pick as death lines, so every peer shows the same line).
+func add_survivor(player_name: String, peer_id: int, left_by: StringName, run_seed: int, arrival_lines: DeathLines, catalog: ContentCatalog, locale: String = "es") -> void:
+	var entry: Dictionary = _survivor(player_name, peer_id, left_by, catalog)
+	if not left_by.is_empty() and arrival_lines != null:
+		var nth: int = 0
+		for earlier: Dictionary in entries:
+			if not earlier["dead"] and earlier.get("route_id", &"") == left_by:
+				nth += 1
+		var line := arrival_lines.line_for(left_by, run_seed, nth)
+		entry["line"] = DeathLines.text(line, locale)
+		entry["line_id"] = line.id if line != null else &""
+	entries.append(entry)
+
+
 static func _survivor(player_name: String, peer_id: int, left_by: StringName, catalog: ContentCatalog) -> Dictionary:
 	var entry: Dictionary = {
 		"name": player_name, "dead": false, "cause": &"", "cause_label": "",
@@ -61,6 +77,7 @@ static func _survivor(player_name: String, peer_id: int, left_by: StringName, ca
 	}
 	if not left_by.is_empty():
 		entry["route"] = _route_name(left_by, catalog)
+		entry["route_id"] = left_by
 	return entry
 
 

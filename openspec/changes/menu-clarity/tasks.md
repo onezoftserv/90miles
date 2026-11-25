@@ -11,38 +11,38 @@ Group 1 builds first, then run-menu, then groups 2 to 5. Every test with players
 
 ## 2. Win and death
 
-- [ ] 2.1 Test first (`test_run_summary.gd`, `test_survivor_lines.gd`): with run seed 0 a solo raft survivor gets `arrival_raft_1` and the heading "Llegaste"; a solo thirst death keeps `death_thirst_1` and "Fin del viaje"; two raft survivors get `_1` and `_2`; an unknown route uses `arrival_other_1`; the content check (states, at least 2 lines each, at most 120 characters, soft variant when swearing); no "Compañeros" or "Textos" line at zero, and "Compañeros: 1 salvados, 0 perdidos" with one saved.
-- [ ] 2.2 `DialogueData.Kind.SURVIVOR_LINES`, `survivor_one_liners.tres` (8 lines, Spanish and English, Cuban voice), `DeathLines.from_catalog(catalog, id)`, `RunSummary` survivor lines, `SummaryRow` showing them.
-- [ ] 2.3 `SummaryScreen`: heading by local fate, hidden empty totals, fitted inset, centred panel; the shell passes the local peer.
-- [ ] 2.4 Test first: the 0.8 s gate with an injected clock (press at 0.3 s dropped, focus kept; at 1 s works; a mouse click inside the gate dropped); then the gate.
-- [ ] 2.5 Host-plus-client ShellHarness check that a split party shows "Llegaste" on the host and "Fin del viaje" on the client, with the same rows; import, smoke run and GUT pass.
+- [x] 2.1 Test first (`test_run_summary.gd`, `test_survivor_lines.gd`): with run seed 0 a solo raft survivor gets `arrival_raft_1` and the heading "Llegaste"; a solo thirst death keeps `death_thirst_1` and "Fin del viaje"; two raft survivors get `_1` and `_2`; an unknown route uses `arrival_other_1`; the content check (states, at least 2 lines each, at most 120 characters, soft variant when swearing); no "Compañeros" or "Textos" line at zero, and "Compañeros: 1 salvados, 0 perdidos" with one saved.
+- [x] 2.2 `DialogueData.Kind.SURVIVOR_LINES`, `survivor_one_liners.tres` (8 lines, Spanish and English, Cuban voice), `DeathLines.from_catalog(catalog, id)`, `RunSummary` survivor lines, `SummaryRow` showing them.
+- [x] 2.3 `SummaryScreen`: heading by local fate, hidden empty totals, fitted inset, centred panel; the shell passes the local peer.
+- [x] 2.4 Test first: the 0.8 s gate with an injected clock (press at 0.3 s dropped, focus kept; at 1 s works; a mouse click inside the gate dropped); then the gate.
+- [x] 2.5 Split party: "Llegaste" for the peer who arrived and "Fin del viaje" for the one who drowned, from the same entries, checked with `SummaryScreen.heading_for` (`test_survivor_lines.gd`); a ShellHarness run cannot stage an arrival cheaply (design.md Build notes). Import, smoke run and GUT pass.
 
 ## 3. Failures on red bands
 
-- [ ] 3.1 Test first (`test_game_shell.gd`): with the port taken, hosting shows the reason on the title's red band, and focusing every button and moving the pointer leaves it unchanged.
-- [ ] 3.2 `TitleScreen.show_error()` and its `Status` label; `GameShell._show_host_failure` uses it.
-- [ ] 3.3 Import, smoke run and GUT pass.
+- [x] 3.1 Test first (`test_game_shell.gd`): with the port taken, hosting shows the reason on the title's red band, and focusing every button and moving the pointer leaves it unchanged.
+- [x] 3.2 `TitleScreen.show_error()` and its `Status` label; `GameShell._show_host_failure` uses it.
+- [x] 3.3 Import, smoke run and GUT pass.
 
 ## 4. The lobby
 
-- [ ] 4.1 Test first (`test_lobby_screen.gd`): four seats with "Libre", "A bordo (1/4)" and "(2/4)", addresses before the note, the rematch line, "Cerrar partida" for the host and "Salir" while opening and for a client, the confirm with "Cancelar" focused only while someone else is aboard, Esc in the confirm cancels.
-- [ ] 4.2 `lobby_screen.gd/.tscn`, `ConfirmBox` (reuse run-menu's if merged), the shell's rematch flag.
-- [ ] 4.3 ShellHarness test (`test_coop_rematch_net.gd` or a new `test_lobby_seats_net.gd`): after "Otra vez" both lobbies show the rematch line and "A bordo (2/4)"; the host's "Cerrar partida" asks, "Cerrar" sends the client to host-lost.
-- [ ] 4.4 Two processes on UDP 7801 (`run_menu_run.gd` mode `lobby`): a client joins, both print the seat rows, the host confirms the close, the client shows host-lost; 0 engine errors.
-- [ ] 4.5 Import, smoke run and GUT pass.
+- [x] 4.1 Test first (`test_lobby_screen.gd`): four seats with "Libre", "A bordo (1/4)" and "(2/4)", addresses before the note, the rematch line, "Cerrar partida" for the host and "Salir" while opening and for a client, the confirm with "Cancelar" focused only while someone else is aboard, Esc in the confirm cancels.
+- [x] 4.2 `lobby_screen.gd/.tscn`, `ConfirmBox` (reuse run-menu's if merged), the shell's rematch flag.
+- [x] 4.3 ShellHarness test (`test_coop_rematch_net.gd` or a new `test_lobby_seats_net.gd`): after "Otra vez" both lobbies show the rematch line and "A bordo (2/4)"; the host's "Cerrar partida" asks, "Cerrar" sends the client to host-lost.
+- [x] 4.4 Two processes on UDP 7801 (`run_menu_run.gd` mode `lobby`): a client joins, both print the seat rows, the host confirms the close, the client shows host-lost; 0 engine errors.
+- [x] 4.5 Import, smoke run and GUT pass.
 
 ## 5. Credits and vessel words
 
-- [ ] 5.1 Test first (`test_credits_screen.gd`): the CC BY address appears exactly once; each CC BY entry still has "CC BY 4.0" and its source; the "▼ Más abajo" cue at the top of a long list and gone at its end; the labels are Press Start 2P at 8.
-- [ ] 5.2 `credits_screen.gd/.tscn`; the makers' group only if the owner gives names.
-- [ ] 5.3 Test first (`test_vessel_prompts.gd`, 1 player): a crossing built with a car route shows "[E] Amarrarse al almendrón", tied "[E] Soltarse del almendrón"; a raft "[E] Amarrarse a la balsa"; a board's climb point "[E] Subir a tu tabla"; a vessel with no words of its own reads the raft's.
-- [ ] 5.4 `InteractPrompt.vessel_key` and the label lookup; the `hud_text.tres` keys.
-- [ ] 5.5 Captures (summary win and death, lobby with seats and confirm, title with the error band, credits, car prompt); import, smoke run and GUT pass; `TASKS.md` updated.
+- [x] 5.1 Test first (`test_credits_screen.gd`): the CC BY address appears exactly once; each CC BY entry still has "CC BY 4.0" and its source; the "▼ Más abajo" cue at the top of a long list and gone at its end; the labels are Press Start 2P at 8.
+- [x] 5.2 `credits_screen.gd/.tscn`; no makers' group (owner, 2026-11-23: it waits for names and wording).
+- [x] 5.3 Test first (`test_vessel_prompts.gd`, 1 player): a crossing built with a car route shows "[E] Amarrarse al almendrón", tied "[E] Soltarse del almendrón"; a raft "[E] Amarrarse a la balsa"; a board's climb point "[E] Subir a tu tabla"; a vessel with no words of its own reads the raft's.
+- [x] 5.4 `InteractPrompt.vessel_key` and the label lookup; the `hud_text.tres` keys.
+- [x] 5.5 Captures (summary win and death, lobby with seats and confirm, title with the error band, credits, car prompt); import, smoke run and GUT pass; `TASKS.md` updated.
 
 ## 6. Volumen in Ajustes (sound-pass owner decision Q1 A, 2026-11-23)
 
 sound-pass owns the level: the `[audio] volume` settings key in `game_settings.gd` and `AudioManager.set_volume`. This group adds only the row. If this branch lands before sound-pass, the key name is agreed through the coordinator first, and the row ships with it.
 
-- [ ] 6.1 Test first (`test_display_settings.gd` or `test_settings_volume.gd`, 1 player, `UserTmp.path()`): a fresh settings screen shows "Volumen 80 %"; stepping down three times shows 50 %, saves it, and calls the volume setter each step; a second load of the same file reads 50 %; the row is in the dark in-run Ajustes too.
-- [ ] 6.2 The "Volumen" row in `settings_screen.gd/.tscn` (a left/right stepper or an `HSlider` with step 10, focusable by keyboard and gamepad), wired to the settings and `AudioManager.set_volume`.
-- [ ] 6.3 Import, smoke run and GUT pass.
+- [x] 6.1 Test first (`test_display_settings.gd` or `test_settings_volume.gd`, 1 player, `UserTmp.path()`): a fresh settings screen shows "Volumen 80 %"; stepping down three times shows 50 %, saves it, and calls the volume setter each step; a second load of the same file reads 50 %; the row is in the dark in-run Ajustes too.
+- [x] 6.2 The "Volumen" row in `settings_screen.gd/.tscn` (a left/right stepper or an `HSlider` with step 10, focusable by keyboard and gamepad), wired to the settings and `AudioManager.set_volume`.
+- [x] 6.3 Import, smoke run and GUT pass.

@@ -208,3 +208,64 @@ Measured values and departures are recorded here as the tasks ship.
 - The sandbar has no whole inland scrub cell; its inland bushes are lone bushes on the brush's row-4 islet picks (the variants there), so the 1-player test uses one of those and a fitted shore bush. The secret cay's row-5 picks come along the same way (the tile is copied, whatever row it is on).
 - Tests (`test_bush_front.gd`, written first; they failed to parse before the node existed): solo, crouched on a lone bush and standing on a shore bush, the front copies the layer's tile, its sheet, its front rows, sits at the cell and is drawn after the sprite; off scrub, swimming and diving it is hidden; a palm south of the player draws over the bush front, which draws over the body (`DrawOrder`); host and client show the same tile at the same place for the client's player. `test_art_sim_invariance`, `test_draw_order`, `test_hidden_solo`, `test_player_art` and `test_terrain_view` stay green.
 - Capture: `docs/art-pass/sprite-polish/bush_front_after_x3.png` (`capture_looks.tscn`'s new `looks_scrub.png`: two players crouched behind their bushes and one standing behind a shore bush; before: `docs/art-pass/review-2026-11-14/before/scrub_three.png`). The capture tool draws its bodies beside the island rather than in its y-sorted world, so it picks scrub cells away from the lean-to.
+
+**Group 6, the shark redraw, facings and the fin off the deck (D3, D4; C24, SP4, SP1).** Built after crossing-gameplay merged (#70, #75), from main f8a6c75.
+- **Group 0 re-read.** Since this design was written, crossing-gameplay has changed two things that matter here:
+  - its strike already lands 1 tile off the hit side's edge (`Crossing.strike_spot`), so 6.3's seam is closed;
+  - a warned fin circles 4 px round its spot, also 1 tile off the edge (`CreatureThreats.CIRCLE_RADIUS_PX`), so the drawn shark moves 4 px toward the deck.
+- **Tests first.** They failed for the right reasons:
+  - `test_creature_art.gd`:
+    - **facing rows:** `patrol`, `circle` and `move` come as `_side`, `_up` and `_down`, and the bare names are gone. Each animation has at most 4 unique frames. The up and down fins are narrower above the line than the side fin;
+    - **the water line:** no side or strike frame's line row holds a run longer than the fin's base (row 8) plus a 3 px dash. Today's frames ran 15 to 27 px;
+    - **the width:** every frame draws within 12 px of its centre, down to the last faded row. Today's frames reached 15 px;
+    - the new-creature test now expects `patrol_down`;
+    - **the 1-player test:** the solo sandbar's shark heading mostly north plays `patrol_up`; turned east it plays `patrol_side` unmirrored, and turned west mirrored.
+  - `test_crossing_art.gd`, two 1-player tests:
+    - a solo raft crossing with an east shark pass;
+    - a solo board crossing (the `test_board` fixture).
+
+    Each steps the crossing, the shark and its look from the warning to the retreat. The fin's drawn box is the frame's non-clear texels down to the last faded row, mirrored as the sprite is, at the sprite's place. It never overlaps an intact deck or board and stays in `sea_rect()`. Today it overlapped the deck by 3 px at the warning.
+  - The two-peer crossing test expects `patrol_down`. `art_pass_run.gd`'s offshore-shark check reads any `patrol`, `circle` or `move` facing.
+- **The width, measured.** The spot is 16 px off the edge and the circle reaches 4 px toward it, so a drawn pixel may sit at most 12 px from the shark's centre, in columns 4 to 27 of the 32×16 cell. That is narrower than D3's and D4's 15 px, which predate the circle. Every frame keeps to it, so the fin's box at the circle's nearest point just touches the deck's edge and never overlaps it.
+- **The redraw.** The hand source `tools/art/fixes/creatures/reef_shark.png` is redrawn by a helper as fills; the sheet's black rim outlines them. The sheet grows from 160×16 to 160×48:
+  - **Row 0 (side, nose east):** two swim frames, then the three strike frames.
+    - The dorsal fin is lit on its left (#cbdbfc, #9badb7) and shaded toward its leading edge (#847e87), on rows 2 to 7. Its base, row 8, is black, as today's was. The black base keeps the fin's edge ring at 3.34:1 on the deep; with a lit base row the edge-on fins read only 2.43:1.
+    - On the line, row 9, the fin's 10 px base and two dashes of 2 to 3 px, which `waterline.gdshader` turns to foam, instead of a 15 px bar.
+    - Under the line, rows 10 to 12 hold a tapered spindle from the forked tail at column 4 to the nose at 27. The second frame flicks the tail and moves the dashes.
+    - **Strike:** the fin rises a row and throws 4×3 droplets, which keep a white core inside the rim, then sinks.
+  - **Row 1 (up, heading north):** an edge-on fin with a 5 px base in the shade colours, a dash each side, and the tail fork under the water.
+  - **Row 2 (down, heading south):** the same fin lit, with the snout under the water.
+  - `reef_shark_frames.tres`:
+    - `patrol`, `circle` and `move` each have `_side`, `_up` and `_down`, two frames at 4 fps;
+    - `idle` and `strike` stay single;
+    - 9 unique frames in all.
+- **Checks.**
+  - `creatures.py` rebuilt only `reef_shark.png`. The crab, the gulls and Platino rebuilt byte-identical.
+  - `check.py`: 0 problems on the art and the fixes. Every frame keeps 3:1 on the shallows and the deep (3.34:1 on the deep at worst).
+  - The four crossing-shark test files stay green.
+- **Noted, not changed.** A passing crossing shark never changes its synced `facing` (new creatures face down, and `CreatureThreats` only moves it), so it always draws `patrol_down`, the edge-on fin. Turning it to show its side would be a crossing-gameplay change (setting the facing along its circle), not art.
+- **Captures,** off-screen, per the owner's 2026-11-23 rule:
+  - `capture_creatures.tscn` gains `sharks_day.png`: four sharks on the sandbar's water heading north, west, east and south;
+  - `capture_crossing.tscn` gains a shark pass from the east, with `crossing_shark_tell.png` and `crossing_shark_strike.png`.
+- **Images:**
+  - `docs/art-pass/sprite-polish/shark_facings_before_after_x5.png`: `before/cr_water_day_crop5.png` left, and the four facings now right.
+  - `docs/art-pass/sprite-polish/crossing_fin_before_after_x6.png`: from `before/crossing_shark.png` at the top, the fin over the deck; below it, the fin waiting a tile off the hull during the tell, then after the strike.
+
+**Group 7, a swimmer north of the deck goes under it (D2; C22, SP5).** Stacked on group 6, from main f8a6c75.
+- **Tests first.** They failed for the right reasons (the look stayed at z 0):
+  - `test_crossing_art.gd`, all 1-player:
+    - a swimmer 1 px north of the deck's top edge, at its middle and 4 px west of its west corner, has Look z −21: drawn after the sea and before the deck;
+    - beside the deck (`put_beside_deck`, east), south of it, north but 40 px east of it, and aboard, it keeps z 0;
+    - once the deck has sunk, the north swimmer is back at z 0;
+    - on the `test_board` route, a swimmer north of the board goes under it;
+    - an island swimmer, with no crossing, keeps z 0.
+  - `test_draw_order.gd`: `test_the_crossing_sea_and_deck_lie_under_its_riders` gains the north swimmer, over the sea and under the deck.
+- **The swap.** `PlayerLook.step` sets the look's `z_index` to `UNDER_DECK_Z` (−21) while all three hold, and 0 otherwise:
+  1. the pose is wet (SWIM or FLOAT);
+  2. the body rides a running crossing (not `finished`, one of its `peers()`), found through `CoopSession.of(body)`;
+  3. it is north of a drawn deck's or board's top edge, within its x span widened by the frame's half-width (16 px).
+  - A deck counts as drawn on the rule `CrossingDeck` and `CrossingBoards` draw by: each afloat board on a board route, else the shared deck while its vessel is intact. The rule lives in a new helper, `CrossingArt.drawn_decks` (`scripts/art/crossing_art.gd`), which art-mood-pass's wake (C35) shares.
+  - The look reads that state rather than the deck node's visibility, so it never lags the deck by a frame.
+  - It is drawing only: it writes nothing, and `test_art_sim_invariance` stays green.
+- **Capture,** off-screen: `capture_crossing.tscn` adds `crossing_swimmer_north.png`, the rider thrown in 12 px west of the deck's centre and 3 px north of its top edge, as in the review's squall shot.
+- **Image:** `docs/art-pass/sprite-polish/swimmer_north_of_deck_before_after_x6.png`: `before/crossing_raft_squall.png` left, where the swimmer is drawn over the deck's top rows. On the right, the same spot now: the planks hide the body and only the head shows above them.

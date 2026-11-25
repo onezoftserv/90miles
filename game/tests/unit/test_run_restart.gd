@@ -88,6 +88,8 @@ func test_solo_again_starts_clean() -> void:
 	var old_session: CoopSession = shell.session
 	_kill(shell.session.body(1))
 	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	(shell.screen as SummaryScreen).shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	(shell.screen as SummaryScreen).restart_button.pressed.emit()
 	assert_eq(shell.flow, GameShell.Flow.RUN)
 	assert_null(shell.screen)
@@ -134,6 +136,8 @@ func test_drowned_mid_crossing_then_again() -> void:
 	await wait_frames(2)
 	assert_eq(shell.flow, GameShell.Flow.SUMMARY)
 	assert_eq((shell.screen as SummaryScreen).rows(), ["Balsero: Murió (ahogamiento)"] as Array[String])
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	(shell.screen as SummaryScreen).shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	(shell.screen as SummaryScreen).restart_button.pressed.emit()
 	assert_true(shell.crossings.is_empty())
 	assert_eq(_crossings_under(shell.session), 0)
@@ -157,6 +161,8 @@ func test_a_new_run_never_starts_paused() -> void:
 	var shell := _solo()
 	_kill(shell.session.body(1))
 	get_tree().paused = true
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	(shell.screen as SummaryScreen).shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	(shell.screen as SummaryScreen).restart_button.pressed.emit()
 	assert_false(get_tree().paused)
 	assert_eq(shell.flow, GameShell.Flow.RUN)
@@ -180,6 +186,8 @@ func test_a_host_alone_gets_otra_vez_and_a_lobby_of_one() -> void:
 	assert_true(summary.restart_button.has_focus())
 	assert_true(summary.home_button.visible)
 	assert_false(summary.note.visible, "the host waits for nobody")
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	summary.shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	summary.restart_button.pressed.emit()
 	assert_eq(shell.flow, GameShell.Flow.LOBBY)
 	var lobby := shell.screen as LobbyScreen
@@ -203,6 +211,8 @@ func test_solo_again_stays_offline_and_calls_nobody() -> void:
 	_kill(shell.session.body(1))
 	var summary := shell.screen as SummaryScreen
 	assert_false(summary.note.visible, "no waiting note in solo")
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	summary.shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	summary.restart_button.pressed.emit()
 	assert_eq(shell.flow, GameShell.Flow.RUN, "a solo run at once")
 	assert_null(shell.screen, "with no lobby")
@@ -223,5 +233,7 @@ func test_a_client_keeps_its_summary_when_the_host_leaves() -> void:
 	assert_false(summary.restart_button.visible)
 	await wait_frames(2)
 	assert_null(shell.session, "the run behind it is freed")
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	summary.shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	summary.home_button.pressed.emit()
 	assert_eq(shell.flow, GameShell.Flow.TITLE)
