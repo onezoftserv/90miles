@@ -14,6 +14,11 @@ func _init() -> void:
 
 func build_intent() -> MoveIntent:
 	var intent := MoveIntent.new()
+	var holder := get_parent() as PlayerBody
+	if holder != null and holder.menu_holds_input:
+		# Standing still with the menu open; still sent, so the host sees a player, not a stall.
+		intent.crouch = holder.intent.crouch
+		return intent
 	intent.direction = Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
 	intent.run = Input.is_action_pressed(&"run")
 	intent.crouch = Input.is_action_pressed(&"crouch")
