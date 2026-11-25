@@ -47,6 +47,11 @@ func after_each() -> void:
 
 
 func _shell(host_port: int = 0) -> GameShell:
+	# An install already asked its name, so the title's buttons can take the focus (run-menu D7).
+	if not FileAccess.file_exists(settings_path):
+		var config := ConfigFile.new()
+		config.set_value("player", "name_asked", true)
+		config.save(settings_path)
 	var shell := SHELL_SCENE.instantiate() as GameShell
 	shell.settings_path = settings_path
 	shell.port = host_port
@@ -111,6 +116,8 @@ func test_solo_from_the_title_with_a_broken_platform() -> void:
 	var summary := shell.screen as SummaryScreen
 	assert_true(summary.restart_button.visible)
 	assert_eq(summary.restart_button.text, "Otra vez")
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	summary.shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	summary.restart_button.pressed.emit()
 	assert_eq(shell.flow, GameShell.Flow.RUN, "Otra vez starts a new run")
 	assert_true(_offline(), "still offline")
@@ -168,6 +175,8 @@ func test_an_outside_join_during_a_solo_run_waits_for_the_title() -> void:
 	await wait_process_frames(3)
 	assert_eq(shell.flow, GameShell.Flow.SUMMARY, "the summary is not interrupted either")
 	assert_eq(fake.calls, PackedStringArray(["start"]), "kept, not joined")
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	(shell.screen as SummaryScreen).shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	(shell.screen as SummaryScreen).home_button.pressed.emit()
 	assert_eq(shell.flow, GameShell.Flow.TITLE)
 	assert_true(await wait_until(func() -> bool: return fake.calls.has("join"), 2.0), "the join starts once the title shows")
@@ -234,7 +243,8 @@ func test_a_late_host_failure_returns_to_the_title_with_its_reason() -> void:
 	(shell.screen as TitleScreen).host_requested.emit()
 	assert_eq(shell.flow, GameShell.Flow.LOBBY)
 	assert_true(await wait_until(func() -> bool: return shell.flow == GameShell.Flow.TITLE, 2.0), "back on the title")
-	assert_eq((shell.screen as TitleScreen).description.text, "Inicia sesión en la plataforma para jugar en línea.")
+	assert_eq((shell.screen as TitleScreen).status.text, "Inicia sesión en la plataforma para jugar en línea.", "on the red band")
+	assert_true((shell.screen as TitleScreen).status.visible)
 	assert_null(shell.session)
 	assert_true(_offline())
 	assert_has(fake.calls, "leave")
@@ -268,7 +278,19 @@ func test_enet_wording_is_kept_on_a_taken_port() -> void:
 	(shell.screen as TitleScreen).host_requested.emit()
 	assert_engine_error("Couldn't create an ENet host")
 	assert_eq(shell.flow, GameShell.Flow.TITLE, "the title stays")
-	assert_eq((shell.screen as TitleScreen).description.text, "No se pudo abrir el puerto %d." % port)
+	# ui-shell "Menu windows", scenario "Hosting fails" (menu-clarity design D6): the reason shows on
+	# the title's red band and stays while the focus and the pointer move over the buttons.
+	var title := shell.screen as TitleScreen
+	var reason: String = "No se pudo abrir el puerto %d." % port
+	assert_eq(title.status.text, reason)
+	assert_true(title.status.visible)
+	assert_eq(title.status.theme_type_variation, &"ErrorLabel", "a red band")
+	for button: Button in title.buttons():
+		button.grab_focus()
+		button.mouse_entered.emit()
+		assert_eq(title.status.text, reason, "kept while '%s' has the focus" % button.text)
+		assert_true(title.status.visible)
+	assert_ne(title.description.text, reason, "the description panel describes the focused button")
 	assert_null(shell.session)
 	assert_true(_offline())
 

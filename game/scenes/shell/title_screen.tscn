@@ -105,6 +105,17 @@ layout_mode = 2
 theme_type_variation = &"PanelLabel"
 autowrap_mode = 2
 
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 300.0
+offset_top = 232.0
+offset_right = 568.0
+offset_bottom = 248.0
+theme_type_variation = &"ErrorLabel"
+autowrap_mode = 2
+
 [node name="Version" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0

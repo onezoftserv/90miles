@@ -53,6 +53,8 @@ func _lobby_of(shell: GameShell) -> LobbyScreen:
 
 
 func _pick_otra_vez(host: GameShell) -> void:
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	_summary_of(host).shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	_summary_of(host).restart_button.pressed.emit()
 
 

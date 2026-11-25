@@ -260,6 +260,102 @@ func test_the_deck_ignores_the_beachs_look_offset() -> void:
 	assert_eq(_deck_drawn_rect(deck), crossing.deck_rect(), "the deck stays on deck_rect")
 
 
+# --- art-sprite-polish D3 (SP1): the fin stays off the deck -------------------------------------
+
+## The rows the water-line shader draws under the line (art_common.gdshaderinc ART_FADE_ROWS).
+const FIN_FADE_ROWS: int = 4
+
+
+# The box of the drawn pixels of `shark`'s current frame, where its look draws it: the frame's
+# non-clear texels down to the water line's last faded row, mirrored as the sprite is.
+func _fin_box(shark: Creature) -> Rect2:
+	var sprite := shark.get_node(^"Look/Sprite") as AnimatedSprite2D
+	var atlas := sprite.sprite_frames.get_frame_texture(sprite.animation, sprite.frame) as AtlasTexture
+	var cell: Image = ArtChecks.read_png(atlas.atlas.resource_path).get_region(Rect2i(atlas.region))
+	var entry := (load("res://assets/art/creatures/creature_art.tres") as CreatureArt).entry(&"reef_shark")
+	var rows: int = mini(cell.get_height(), int(entry.water_line_px) + FIN_FADE_ROWS)
+	var low := Vector2i(cell.get_width(), rows)
+	var high := Vector2i(-1, -1)
+	for y: int in rows:
+		for x: int in cell.get_width():
+			if cell.get_pixel(x, y).a8 > 0:
+				var drawn_x: int = cell.get_width() - 1 - x if sprite.flip_h else x
+				low = Vector2i(mini(low.x, drawn_x), mini(low.y, y))
+				high = Vector2i(maxi(high.x, drawn_x), maxi(high.y, y))
+	var top_left: Vector2 = sprite.global_position - Vector2(cell.get_size()) / 2.0
+	return Rect2(top_left + Vector2(low), Vector2(high - low + Vector2i.ONE))
+
+
+func _crossing_sharks(crossing: Crossing) -> Array[Creature]:
+	var found: Array[Creature] = []
+	for child: Node in (crossing.get_parent() as CoopSession).entities.get_children():
+		if child is Creature and (child as Creature).data.id == &"reef_shark" and not child.is_queued_for_deletion():
+			found.append(child as Creature)
+	return found
+
+
+# Runs `crossing` past its shark pass at 6 s and the shark's circle, drawing each shark every step,
+# and returns what the fin's drawn box did: the steps it was drawn, and every overlap of an intact
+# deck or board rect or step outside the sea.
+func _fin_pass(crossing: Crossing, rects: Callable) -> Dictionary:
+	var drawn: int = 0
+	var spots: Dictionary[Vector2i, bool] = {}
+	var bad: PackedStringArray = []
+	for step: int in 140:
+		crossing.advance(CrossingRig.STEP_S)
+		for peer: int in crossing.peers():
+			crossing.body_of(peer).advance(CrossingRig.STEP_S)
+		for shark: Creature in _crossing_sharks(crossing):
+			shark.advance(CrossingRig.STEP_S)
+			if shark.is_queued_for_deletion():
+				continue
+			(shark.get_node(^"Look") as CreatureLook).step(CrossingRig.STEP_S)
+			var box := _fin_box(shark)
+			drawn += 1
+			spots[Vector2i(shark.position.round())] = true
+			for rect: Rect2 in rects.call():
+				if box.intersects(rect):
+					bad.append("%.1f s: %s over %s (%s)" % [crossing.elapsed_s, box, rect, (shark.get_node(^"Look/Sprite") as AnimatedSprite2D).animation])
+			if not crossing.sea_rect().encloses(box):
+				bad.append("%.1f s: %s outside the sea" % [crossing.elapsed_s, box])
+	return {"drawn": drawn, "spots": spots.size(), "bad": bad}
+
+
+## art-sprite-polish 6.1 (D3, SP1), one player offline: in a raft crossing whose shark pass names the
+## east side, the fin's drawn box never overlaps the intact deck from the warning (5 s before the
+## pass) through its circle and strike to its retreat, and stays inside the sea.
+func test_a_solo_raft_crossings_fin_never_draws_over_the_deck() -> void:
+	_start_solo()
+	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0, [CrossingBeat.create(6.0, SHARK, 0, CrossingBeat.Side.EAST)])
+	var deck := func() -> Array[Rect2]:
+		var rects: Array[Rect2] = []
+		if crossing.integrity.intact():
+			rects.append(crossing.deck_rect())
+		return rects
+	var result := _fin_pass(crossing, deck)
+	assert_gt(int(result["drawn"]), 50, "the fin was drawn from its warning to its retreat")
+	assert_gt(int(result["spots"]), 2, "it circled and then struck")
+	assert_eq(result["bad"], PackedStringArray(), "the fin's drawn box stays off the deck and in the sea")
+
+
+## art-sprite-polish 6.1 (D3, SP1), one player offline: on a board crossing the fin's drawn box never
+## overlaps the intact board.
+func test_a_solo_board_crossings_fin_never_draws_over_the_board() -> void:
+	_start_solo()
+	FixtureRoutes.put_in()
+	var crossing := CrossingRig.make(self, &"test_board", 1, 0.0, 90.0, [CrossingBeat.create(6.0, SHARK, 0, CrossingBeat.Side.EAST)])
+	var boards := func() -> Array[Rect2]:
+		var rects: Array[Rect2] = []
+		for peer: int in crossing.boards:
+			if crossing.boards[peer].intact():
+				rects.append(crossing.deck_rect_of(peer))
+		return rects
+	var result := _fin_pass(crossing, boards)
+	FixtureRoutes.take_out()
+	assert_gt(int(result["drawn"]), 50, "the fin was drawn from its warning to its retreat")
+	assert_eq(result["bad"], PackedStringArray(), "the fin's drawn box stays off the board and in the sea")
+
+
 func test_a_solo_raft_crossing_with_a_squall_throw_in() -> void:
 	_start_solo()
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0, [CrossingRig.beat(0.5, SQUALL)])
@@ -349,7 +445,8 @@ func test_host_and_client_draw_riders_and_the_shark_over_the_sea_and_the_deck() 
 		var look := _shark_look(sharks[0])
 		assert_not_null(look, "%s: the shark has its look" % peer)
 		if look != null:
-			assert_eq(look.animation, &"patrol", "%s: the passing shark glides" % peer)
+			# art-sprite-polish D4: patrol comes by facing; a passing shark keeps a new creature's down.
+			assert_eq(look.animation, &"patrol_down", "%s: the passing shark glides" % peer)
 			assert_true(look.is_playing(), "%s: and the glide plays" % peer)
 	var line := func() -> bool: return _water_line_on(client_crossing.body_of(client_id))
 	assert_true(await wait_until(line, TIMEOUT_S), "the client draws its own swimmer at the water line")

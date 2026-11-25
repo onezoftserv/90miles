@@ -80,13 +80,18 @@ What that means for one player starting full at dawn: thirst lasts 1.15 days (�
 - **"Reducir destellos"** in Ajustes turns every blink, flash and shake into a steady tint or nothing.
 
 **Reading the HUD** (`hud-window-kit`, owner 2026-11-14 and 2026-11-15). The HUD sits on dark rounded windows, cream paper for notes, all in the game palette (`ui-shell` "Shared theme").
-- **The meters** read Salud, Sed, Hambre, Calor, Energía, Ánimo from the top: a label, a thin bar in the meter's colour and the value. A label turns orange at 50 (heat at 50) and red at 25 (heat at 75), where the bar's frame and the value pulse.
+- **The meters** read Salud, Sed, Hambre, Energía, Ánimo, then Calor last (`hud-clarity`, 2026-11-23): a label, a thin bar in the meter's colour and the value. A label turns orange at 50 (heat at 50) and red at 25 (heat at 75), where the bar's frame and the value pulse. Calor is a thermometer: its empty track is tinted by zone, with small notches at 50 and 75.
+- **Status rows** show under the meters only while they apply: "Insolación" (a sun icon and a bar that empties as the player cools from 100 to 60, beside the sunstroke blur) and "Sangrando" (a drop icon and a bar of the bleeding time left, the same on every screen).
+- **The clock row** sits top-centre: the day count ("Día 2", never reset by travel), a strip of the day from dawn to dawn with a marker, the time left before dark beside a moon mark (orange from dusk; at night, the time to dawn beside a sun mark), and the phase word: Amanecer, Mañana, Mediodía, Tarde, Atardecer, Noche.
+- **The objective row** under it names the goal in voice and follows the party: "Arma la balsa: 0/6 madera" (what the raft site holds plus what you carry), "Lleva to' pa' la balsa", "Dale a la balsa: 40%", "Espera la noche pa' zarpar" while a patrol boat would see a daytime launch, the island's launch line ("Zarpa pa'l cayo"), and "Aguanta hasta tierra" at sea. It hides while a note is open and never names anything secret.
+- **The raft-site arrow** points at the raft site from the edge of the view while it is off screen.
+- **The hut note** on the sandbar, a sign left by an earlier balsero, says where Florida is, what the raft takes, and to set off at night or in a squall.
 - **Teammates** sit top right, one block each: the name, a chip in their clothing colour, a small health bar and their state ("Caído", "Muerto", "Desconectado").
 - **The strip** keeps its slots. Small digits give a stack's count or a tool's uses (orange on the last use), the number key shows only on the selected slot, a slot whose use would be refused now is dimmed, and the mouse gets a tooltip with the item and its verb.
 
 ## 5. Weather and time
 
-A day is 12 real minutes: dawn (1), day (5), dusk (1), night (5). One in-game hour is 30 real seconds and the clock reads 06:00 when dawn starts, so the day phase runs 08:00–18:00, dusk 18:00–20:00 and night 20:00–06:00 (provisional, `survival-meters`). Midday, 10:00–16:00, is the middle 3 real minutes of the day phase.
+A day is 12 real minutes: dawn (1), day (5), dusk (1), night (5). One in-game hour is 30 real seconds and the clock reads 06:00 when dawn starts, so the day phase runs 08:00–18:00, dusk 18:00–20:00 and night 20:00–06:00 (provisional, `survival-meters`). Midday, 10:00–16:00, is the middle 3 real minutes of the day phase. The HUD's clock row names 08:00–10:00 "Mañana" and 16:00–18:00 "Tarde", so the day phase never reads as the day count's "Día" (`hud-clarity`).
 
 | Weather | Effect | Tell |
 | --- | --- | --- |

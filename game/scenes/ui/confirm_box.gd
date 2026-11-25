@@ -10,6 +10,7 @@ signal cancelled
 
 const CANCEL_TEXT: String = "Cancelar"
 
+@onready var shade: ColorRect = %Shade
 @onready var question: Label = %Question
 @onready var line: Label = %Line
 @onready var cancel_button: Button = %Cancel
@@ -23,8 +24,9 @@ func _ready() -> void:
 
 
 ## Shows `question_text`, `line_text` (hidden when empty) and the action `action_text`, with
-## "Cancelar" focused.
-func ask(question_text: String, line_text: String, action_text: String) -> void:
+## "Cancelar" focused. `shaded` dims what lies behind (over a menu screen; the run menu has its own).
+func ask(question_text: String, line_text: String, action_text: String, shaded: bool = false) -> void:
+	shade.visible = shaded
 	question.text = question_text
 	line.text = line_text
 	line.visible = not line_text.is_empty()

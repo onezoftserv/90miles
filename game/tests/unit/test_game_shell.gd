@@ -115,6 +115,8 @@ func test_end_of_a_solo_run() -> void:
 	assert_eq(summary.rows().size(), 1)
 	assert_string_contains(summary.rows()[0], "Balsero")
 	assert_string_contains(summary.rows()[0], "Murió")
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	summary.shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	summary.home_button.pressed.emit()
 	assert_eq(shell.flow, GameShell.Flow.TITLE)
 	assert_null(shell.session, "the run is over")

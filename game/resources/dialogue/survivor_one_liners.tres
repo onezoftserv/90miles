@@ -1,0 +1,94 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/dialogue_data.gd" id="1_dd"]
+[ext_resource type="Script" path="res://scripts/data/dialogue_state_data.gd" id="2_ds"]
+[ext_resource type="Script" path="res://scripts/data/dialogue_line_data.gd" id="3_dl"]
+
+[sub_resource type="Resource" id="Line_arrival_raft_1"]
+script = ExtResource("3_dl")
+id = &"arrival_raft_1"
+speaker_id = &"narrator"
+text_es = "Llegó en una balsa de palos y fe. Los palos aguantaron; la fe, más o menos."
+text_en = "Made it on a raft of sticks and faith. The sticks held up; the faith, more or less."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_arrival_raft_2"]
+script = ExtResource("3_dl")
+id = &"arrival_raft_2"
+speaker_id = &"narrator"
+text_es = "Tierra firme. Por fin algo en este viaje que no se mueve."
+text_en = "Dry land. Finally something on this trip that doesn't move."
+emotion = 1
+
+[sub_resource type="Resource" id="Line_arrival_raft_3"]
+script = ExtResource("3_dl")
+id = &"arrival_raft_3"
+speaker_id = &"narrator"
+text_es = "Remó tanto que ya no siente los brazos, pero respira, y eso no viene en la libreta."
+text_en = "Rowed so much the arms are gone, but still breathing, and that never came in the libreta."
+emotion = 6
+
+[sub_resource type="Resource" id="Line_arrival_raft_4"]
+script = ExtResource("3_dl")
+id = &"arrival_raft_4"
+speaker_id = &"narrator"
+text_es = "La balsa llegó con más huecos que el discurso, pero llegó."
+text_en = "The raft arrived with more holes than the speech, but it arrived."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_arrival_binoculars_swim_1"]
+script = ExtResource("3_dl")
+id = &"arrival_binoculars_swim_1"
+speaker_id = &"narrator"
+text_es = "Llegó nadando. Si le preguntan, que diga que vino en crucero."
+text_en = "Swam the whole way. If anyone asks, say it was a cruise."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_arrival_binoculars_swim_2"]
+script = ExtResource("3_dl")
+id = &"arrival_binoculars_swim_2"
+speaker_id = &"narrator"
+text_es = "Nadó como si atrás viniera el CDR con la lista."
+text_en = "Swam like the CDR was right behind with the list."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_arrival_other_1"]
+script = ExtResource("3_dl")
+id = &"arrival_other_1"
+speaker_id = &"narrator"
+text_es = "Llegó. Cómo, nadie sabe, y mejor no preguntar."
+text_en = "Made it. How, nobody knows, and better not to ask."
+emotion = 5
+
+[sub_resource type="Resource" id="Line_arrival_other_2"]
+script = ExtResource("3_dl")
+id = &"arrival_other_2"
+speaker_id = &"narrator"
+text_es = "Un pie en tierra y ya 'tá pensando en mandar remesas pa' la casa."
+text_en = "One foot on land and already thinking about sending remesas back home."
+emotion = 7
+
+[sub_resource type="Resource" id="State_raft"]
+script = ExtResource("2_ds")
+state = &"raft"
+pick = 1
+lines = Array[ExtResource("3_dl")]([SubResource("Line_arrival_raft_1"), SubResource("Line_arrival_raft_2"), SubResource("Line_arrival_raft_3"), SubResource("Line_arrival_raft_4")])
+
+[sub_resource type="Resource" id="State_binoculars_swim"]
+script = ExtResource("2_ds")
+state = &"binoculars_swim"
+pick = 1
+lines = Array[ExtResource("3_dl")]([SubResource("Line_arrival_binoculars_swim_1"), SubResource("Line_arrival_binoculars_swim_2")])
+
+[sub_resource type="Resource" id="State_other"]
+script = ExtResource("2_ds")
+state = &"other"
+pick = 1
+lines = Array[ExtResource("3_dl")]([SubResource("Line_arrival_other_1"), SubResource("Line_arrival_other_2")])
+
+[resource]
+script = ExtResource("1_dd")
+name_es = "Frases de llegada"
+kind = 6
+states = Array[ExtResource("2_ds")]([SubResource("State_raft"), SubResource("State_binoculars_swim"), SubResource("State_other")])
+id = &"survivor_one_liners"
