@@ -3,8 +3,9 @@ extends Node
 ## headless and never in CI). It starts a solo sandbar run at 09:00 with the weather held calm, sets
 ## each scene up by hand and saves what the window shows. It reads only nodes that exist before and
 ## after the change (and finds the new ones by name), so one script frames "before" and "after" the
-## same way:
-##   godot --path game res://tests/manual/capture_hud_clarity.tscn -- --out=<dir> [--scale=3]
+## same way. Launch it off-screen (owner, 2026-11-23: windowed runs must not interrupt), one launch per
+## scale; the window goes back to where the command line put it after the shell centres it:
+##   godot --position -32000,-32000 --resolution 640x360 --path game res://tests/manual/capture_hud_clarity.tscn -- --out=<dir> [--scale=3]
 ## Writes <dir>/first_frame.png (the whole window on the first settled frame), top_band.png (the top
 ## 72 px rows), meters_bleeding.png (the meters window 60 s into a bite), sunstroke.png (the whole
 ## window at heat 100), and, where the pieces exist, arrow.png (the player far east of the raft site),
@@ -42,9 +43,12 @@ func _ready() -> void:
 		return
 	DirAccess.make_dir_recursive_absolute(_out_dir)
 	_write_settings()
+	var launched_at: Vector2i = DisplayServer.window_get_position()
 	_shell = SHELL_SCENE.instantiate() as GameShell
 	_shell.settings_path = SETTINGS_PATH
 	add_child(_shell)
+	# The shell centres the window on the screen; keep it where it was launched (off-screen).
+	DisplayServer.window_set_position(launched_at)
 	await _frames(5)
 	_shell.start_solo()
 	WeatherManager.sky.weather.rolls_enabled = false
