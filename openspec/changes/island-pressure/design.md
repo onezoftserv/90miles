@@ -152,7 +152,7 @@ Rejected:
 
 ### D6. Heat at sea is capped
 - **The flag.** `MeterContext.at_sea` is true for a player who left the island by a route (`CoopSession.has_left`, the rule `UsePlan` already refuses item use at sea by). `PlayerBody._meter_context` sets it, and a rider also counts when they walk on a crossing's sea under way in the session (a crossing built without the island's routes, as the test rigs do). For the last stand (D7), `SurvivalMeters.at_sea_source` asks the body at the moment health reaches 0, since a crossing's harm can land between ticks; bare meters in unit tests use the last tick's context. Built when this change was implemented, in place of a `PlayerBody.at_sea` field set in `Crossing._bind_body` and cleared in `island_arrival.gd`: the departures already reset with each island, so no flag can stick on land after a restart or a rematch, and `crossing.gd` (which the crossing-gameplay work owns) is untouched.
-- **The cap.** `SurvivalRules.next_heat`: when `at_sea`, a rise stops at `tuning.sea_heat_cap`, and heat above the cap falls at `heat_fall_per_s` down to it.
+- **The cap.** `SurvivalRules.next_heat`: when `SurvivalRules.sea_heat_capped(context, tuning)` holds (`at_sea`, and `sea_heat_cap` not negative), a rise stops at `tuning.sea_heat_cap`, and heat above the cap falls at no less than `heat_fall_per_s` down to it (shade at sea keeps falling past it). That function is the cap's one switch, which the island-stop toldo turns off.
 - **Why 59.** It is below where sunstroke ends (60), so nobody is sunstruck at sea, and a rider who boards sunstruck clears it within about 54 s. A cap of 74 would keep the Calor label orange, but a sunstruck boarder would then stay blurred the whole crossing, which is G9 again.
 - **The number** lives in `survival_tuning.tres` with the other meter numbers, so `SurvivalRules` stays pure over context and tuning.
 - **When the toldo ships** (island-stop PR 2), it makes the deck shade, the cap goes, and island-stop's scenario "The same crossing without the toldo" is reread against whatever rule then holds. This is noted in the shared notes folder for that session.
@@ -181,10 +181,10 @@ A manual script, `tests/manual/island_pressure_run.gd`, boots the real game shel
 **Order of play:**
 1. **Gather** the next missing stage's inputs, the nearest first, and pick up the hut's knife.
 2. **Work** by holding the site.
-3. **When energy reaches 0**, climb the nearest palm with coconuts, then eat coconuts until energy is at least 40 or none are carried.
+3. **When energy reaches 0**, climb the nearest palm with coconuts (not a gull's nest palm first), eat each at once out of the gulls' sight, and repeat until energy is at least 20 or no palm has coconuts. (Was "at least 40": corrected when building, since a climb gives one coconut for 5 energy; see "Measured run".)
 4. **Drink** a coconut whenever thirst drops below 30.
 5. **Cool off** at midday: at heat 80 or more, walk to the hut's shade until heat is below 30.
-6. **Wait** once the raft is built. If thirst is below 30 or energy below 40, top up first. Then stand in the hut's shade until the launch warning is gone.
+6. **Wait** once the raft is built. If thirst is below 30 or energy below 20, top up first. Then stand in the hut's shade until the launch warning is gone.
 7. **Launch.**
 
 **At sea and after:** the review bot's dodge and tie-down rules. On the cay, the same policy (top up, wait for no warning, launch).
@@ -250,6 +250,50 @@ Baseline: GUT 2739 of 2739 passing on the rebased branch before any change.
 - **Launch by day on an island with a spawned patrol boat:** no unit test (they use islands without creatures, the secret cay, or other routes). The manual runs `capture_crossing.gd`, `capture_crossing_gameplay.gd`, `crossing_gameplay_run.gd` and `island_stop_run.gd` did; each now removes the island's patrol boats before its launch, with a printed hook where the run prints its hooks. `test_inventory_hud_solo_run.gd` waits for the night the warning asks for.
 - **Unchanged and passing:** the crossing, reconnect, rematch, status, structure-sync, perch-ride, coast-cay and route tests in the grep list, since they build the raft with `work(1.0)` on a full site and launch where no boat is.
 - **Solo deaths timed at 0 s:** changed with the 12 s last stand (task 4.2), listed with its commit.
+
+## Measured run (task 6.2, 2026-11-23)
+
+`tests/manual/island_pressure_run.gd` ran headless with `--fixed-fps 60`, solo, offline, with calm weather pinned and a quiet 75 s crossing plan (a printed hook). It passed 8 of 8 checks with 0 engine or script errors. One policy detail was corrected before the run: D9's "eat until energy is at least 40" became "at least 20". A climb gives one coconut and costs 5 energy, so 40 cannot be reached after a 120-energy build (see the corrected budget table above).
+
+**Timeline:**
+
+| Game time | Clock | What | Sed | Calor | Energía |
+|---|---|---|---|---|---|
+| 0 s | 06:00 | knife, gather | 100 | 0 | 100 |
+| 30 s | 07:00 | stage 1 | 94 | 0 | 89 |
+| 120 s | 10:00 | stage 3 | 65 | 0 | 32 |
+| 150 s | 11:00 | stage 3, energy runs out | 52 | 45 | 2 |
+| 180 s | 12:00 | ate 3 coconuts; cools off in the hut | 90 | 89 | 20 |
+| 270 s | 15:00 | stage 4 | 79 | 44 | 16 |
+| ≈ 291 s | 15:31 | **raft built** | | | |
+| 300 s | 16:00 | top up | 69 | 89 | 0 |
+| 330–420 s | 17:00–20:00 | waits in the hut's shade for the night | 98 → 89 | 67 → 0 | 20 |
+| ≈ 428 s | **20:15** | **launch** (not seen: night, out of the light) | 89 | 0 | 20 |
+| — | 22:44 | lands on the coast cay at night and leaves at once, out of the light | 85 | 0 | 20 |
+| 581 s | — | the run summary, alive | | | |
+
+**The targets:**
+- midday was seen on the sandbar;
+- the lowest thirst on the sandbar was **49.2**;
+- the launch came at 20:15;
+- the player was alive at the summary;
+- 6 coconuts were eaten and 1 was taken by a gull.
+
+The whole run took 9:41, against 4:14 in the review's run.
+
+**The GUT mirror:** `test_island_pressure_day.gd` plays the same policy against the pure rules. It builds the raft at 12:50 and launches at 20:17, with the lowest thirst at 46.8 and 20 energy left.
+
+**Margins worth knowing:**
+- The bot's lowest thirst is only just under 50. It is a knowing player that eats for energy, and each coconut also gives +15 thirst. A first-time player who wanders will dip lower.
+- A solo builder reaches the night with about 20 energy, and sleep (`night-ashore`) is the follow-up that refills it.
+
+## Two processes (task 6.3, 2026-11-24, on main f8a6c75)
+
+`tests/manual/island_pressure_coop_run.gd` ran headless on UDP 7799, host first. Host 18 of 18 and client 9 of 9 passed, with 0 errors on either:
+- the client's hold finished the first stage alone (30 s, −30 energy) while the host's player was away, and the site waited at its end on both peers;
+- both held until the raft was built and shared the last 90 s (host −45, client −60 in all);
+- the client's day launch was seen, nobody left, the raft stayed at 100 and both saw the boat dock;
+- a squall recalled the squad; then at 22:00 the client's launch, out of the light, carried both to the coast cay.
 
 ## Migration Plan
 

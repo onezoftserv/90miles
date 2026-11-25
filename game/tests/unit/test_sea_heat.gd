@@ -75,6 +75,24 @@ func test_back_on_land() -> void:
 	assert_true(meters.sunstroke)
 
 
+func test_the_cap_has_one_switch() -> void:
+	var context := _sun(true)
+	assert_true(SurvivalRules.sea_heat_capped(context, meters.tuning))
+	assert_false(SurvivalRules.sea_heat_capped(_sun(false), meters.tuning), "on land, no cap")
+	var off := meters.tuning.duplicate() as SurvivalTuning
+	off.sea_heat_cap = -1.0
+	assert_false(SurvivalRules.sea_heat_capped(context, off), "a negative cap is off")
+	assert_almost_eq(SurvivalRules.next_heat(59.0, context, off, 1.0), 59.75, 0.0001, "and the sun works as on land")
+
+
+func test_shade_at_sea_falls_past_the_cap() -> void:
+	var shade := _sun(true)
+	shade.shaded = true
+	meters.heat = 70.0
+	_tick(shade, 20.0)
+	assert_almost_eq(meters.heat, 55.0, 0.001, "the shade rate all the way, as the toldo's shade will be")
+
+
 func test_the_cap_holds_nothing_below_it() -> void:
 	var shade := MeterContext.new()
 	shade.phase = DataEnums.DayPhase.DAY

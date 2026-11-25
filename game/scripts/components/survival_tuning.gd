@@ -35,8 +35,8 @@ extends Resource
 ## Speed multiplier during sunstroke.
 @export var sunstroke_speed_factor: float
 ## A rider at sea never gains heat past this, and above it falls at the shade rate down to it
-## (island-pressure D6; below sunstroke_ends_below, so nobody is sunstruck at sea). The island-stop
-## toldo replaces it.
+## (island-pressure D6; below sunstroke_ends_below, so nobody is sunstruck at sea). Negative turns the
+## cap off; SurvivalRules.sea_heat_capped is its one switch, which the island-stop toldo replaces.
 @export var sea_heat_cap: float
 
 @export_group("Energy")

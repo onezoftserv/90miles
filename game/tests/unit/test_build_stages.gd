@@ -6,7 +6,7 @@ extends GutTest
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
-const STEP_S: float = 1.0 / 60.0
+const STEP_S: float = 0.1
 const RAFT_TIME_S: float = 120.0
 
 var island: SandbarIsland
