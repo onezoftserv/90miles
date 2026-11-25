@@ -43,6 +43,8 @@ const TOP_WINDOW_Y: float = 20.0
 ## HUD windows another layer draws for this run (the crossing's strip and line, crossing-gameplay;
 ## hud-window-kit D14), counted like this HUD's own while they show, for this session only.
 const OUTSIDE_PANEL_GROUP: StringName = &"hud_panel_outside"
+## The session's island keeper (GameShell names its IslandTravel so); the objective row's launch line.
+const TRAVEL_NAME: NodePath = ^"Travel"
 ## The keys that step a spectator's view (ui-shell "Switching the watched teammate"): the walk keys
 ## A and D, the arrows (the engine's ui_left and ui_right), the D-pad and the mouse wheel. Each is
 ## an action that does nothing else for a dead or waiting player, so no input is bound twice
@@ -354,11 +356,17 @@ func refresh_objective(locale: String) -> void:
 
 
 ## The island whose launch line the objective row reads: `island_layout`, else the current island.
+## Read by name, as StructureLook reads its island: IslandTravel's script names the island, which
+## preloads the palm and raft scenes whose look names the session, so naming the class here would
+## load them in a cycle.
 func objective_layout() -> IslandLayoutData:
 	if island_layout != null:
 		return island_layout
-	var travel := IslandTravel.of(session)
-	return travel.island.layout if travel != null and is_instance_valid(travel.island) else null
+	var travel: Node = session.get_node_or_null(TRAVEL_NAME)
+	var island: Variant = travel.get(&"island") if travel != null else null
+	if not is_instance_valid(island):
+		return null
+	return (island as Object).get(&"layout") as IslandLayoutData
 
 
 ## art-mood-pass D5: the current weather's own name in its window right of the phase, in the
