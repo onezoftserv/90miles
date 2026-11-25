@@ -148,6 +148,8 @@ func _body(peer: int) -> Node2D:
 
 
 func _raft() -> Node2D:
+	if not is_instance_valid(session):
+		return null
 	var raft := session.get_node_or_null(^"Raft") as Node2D
 	return raft if raft != null and not raft.is_queued_for_deletion() else null
 
@@ -233,6 +235,8 @@ func _host() -> void:
 		return
 	await _seconds(2.0)
 	await _mend_here(other, WORN + 40.0, "coast cay")
+	# Stay up a while, so the client sees the last mend before this host goes away.
+	await _seconds(5.0)
 
 
 # Host: the client fits the sandbar's tarp with the host's 2 driftwood as a toldo, and the client's
