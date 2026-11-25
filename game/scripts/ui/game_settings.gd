@@ -35,6 +35,9 @@ var reduce_flashes: bool = false
 var volume: int = DEFAULT_VOLUME:
 	set(value):
 		volume = clampi(value, 0, MAX_VOLUME)
+## The first-launch name window was shown on this install (run-menu design D7): it never opens
+## again, whether a name was given or Esc skipped it. A file without it reads false.
+var name_asked: bool = false
 ## This install's player id and secret (coop-reconnect). Made fresh until the file has one.
 var identity: PlayerIdentity = PlayerIdentity.create()
 ## Whether `identity` came from the file or has been saved (false: made now, not kept yet).
@@ -53,6 +56,9 @@ static func load_from(file_path: String = DEFAULT_PATH) -> GameSettings:
 	var name_value: Variant = config.get_value("player", "name", DEFAULT_NAME)
 	if name_value is String:
 		settings.player_name = name_value
+	var asked_value: Variant = config.get_value("player", "name_asked", false)
+	if asked_value is bool:
+		settings.name_asked = asked_value
 	var id_value: Variant = config.get_value("player", "id", "")
 	var secret_value: Variant = config.get_value("player", "secret", "")
 	if id_value is String and secret_value is String:
@@ -83,6 +89,7 @@ func save() -> Error:
 	config.set_value("player", "name", player_name)
 	config.set_value("player", "id", identity.id)
 	config.set_value("player", "secret", identity.secret)
+	config.set_value("player", "name_asked", name_asked)
 	config.set_value("display", "fullscreen", fullscreen)
 	config.set_value("display", "ui_scale", ui_scale)
 	config.set_value("display", "pixel_filter", pixel_filter)

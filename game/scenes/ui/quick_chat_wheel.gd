@@ -86,13 +86,19 @@ func release() -> int:
 func _process(_delta: float) -> void:
 	# A "q" typed into a text field is not the quick-chat button.
 	var typing: bool = get_viewport().gui_get_focus_owner() is LineEdit
-	var held: bool = Input.is_action_pressed(ACTION) and not typing
+	var held: bool = Input.is_action_pressed(ACTION) and not typing and not _menu_open()
 	if held and not visible:
 		open()
 	elif not held and visible:
 		release()
 	if visible:
 		aim(_aim_direction())
+
+
+# The run menu is open over the run (run-menu design D2): quick chat waits until it closes.
+func _menu_open() -> bool:
+	var hud := get_parent() as RunHud
+	return hud != null and hud.pause_menu != null and hud.pause_menu.visible
 
 
 func _aim_direction() -> Vector2:

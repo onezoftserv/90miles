@@ -160,3 +160,35 @@ func test_disabled_input_leaves_the_intent_alone() -> void:
 	Input.action_press(&"move_right")
 	remote_input._physics_process(1.0 / 60.0)
 	assert_eq(body.intent.direction, Vector2.UP)
+
+
+# coop-networking "Pause", scenario "Held still while the menu is open" (run-menu design D2), with
+# exactly 1 player: while a menu holds the input, the intent walks, runs and interacts with nothing
+# and keeps the last intent's crouch, so a crouched player stays hidden.
+func test_a_menu_holds_the_player_still_and_crouched() -> void:
+	var body := (preload("res://scenes/player/player.tscn") as PackedScene).instantiate() as PlayerBody
+	add_child_autofree(body)
+	Input.action_press(&"move_right")
+	Input.action_press(&"crouch")
+	for i: int in 10:
+		body.player_input._physics_process(1.0 / 60.0)
+		body._physics_process(1.0 / 60.0)
+	assert_gt(body.position.x, 0.0, "walked east first")
+	assert_true(body.intent.crouch)
+	body.menu_holds_input = true
+	Input.action_release(&"crouch")
+	Input.action_press(&"run")
+	Input.action_press(&"interact")
+	var held_at: Vector2 = body.position
+	for i: int in 30:
+		body.player_input._physics_process(1.0 / 60.0)
+		body._physics_process(1.0 / 60.0)
+	assert_eq(body.intent.direction, Vector2.ZERO, "no direction")
+	assert_false(body.intent.run, "no run")
+	assert_false(body.intent.interact_held, "no interact")
+	assert_true(body.intent.crouch, "the crouch is kept")
+	assert_almost_eq(body.position.distance_to(held_at), 0.0, 0.5, "the body has not moved")
+	body.menu_holds_input = false
+	body.player_input._physics_process(1.0 / 60.0)
+	assert_eq(body.intent.direction, Vector2.RIGHT, "walks again once the menu lets go")
+	assert_false(body.intent.crouch, "and reads crouch again")
