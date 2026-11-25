@@ -48,6 +48,28 @@ static func _validate_type(catalog: ContentCatalog, type: StringName) -> PackedS
 		errors.append_array(_check_patrol(where, data))
 		errors.append_array(_check_squad(catalog, where, data))
 		errors.append_array(_check_vessel_recipe(where, data))
+		errors.append_array(_check_hud_words(where, data))
+	return errors
+
+
+# hud-clarity, content-data "Short names for counts" and "Launch lines": the objective row fits 27
+# glyphs, so a count noun is lower case and at most 8 characters and a launch line at most 27.
+static func _check_hud_words(where: String, data: ContentData) -> PackedStringArray:
+	var errors: PackedStringArray = []
+	var item := data as ItemData if data is ItemData else null
+	if item != null:
+		for field: String in ["short_name_es", "short_name_en"]:
+			var noun: String = item.get(field)
+			if noun.length() > ItemData.SHORT_NAME_MAX:
+				errors.append("%s: %s \"%s\" is longer than %d characters" % [where, field, noun, ItemData.SHORT_NAME_MAX])
+			elif noun != noun.to_lower():
+				errors.append("%s: %s \"%s\" must be lower case" % [where, field, noun])
+	var layout := data as IslandLayoutData if data is IslandLayoutData else null
+	if layout != null:
+		for field: String in ["launch_line_es", "launch_line_en"]:
+			var line: String = layout.get(field)
+			if line.length() > IslandLayoutData.LAUNCH_LINE_MAX:
+				errors.append("%s: %s \"%s\" is longer than %d characters" % [where, field, line, IslandLayoutData.LAUNCH_LINE_MAX])
 	return errors
 
 

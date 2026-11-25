@@ -41,9 +41,9 @@ func test_the_dark_windows() -> void:
 	assert_eq(_piece(hud.meters.get_node(^"Panel") as Control), DARK, "meters")
 	assert_eq(_piece(hud.get_node(^"PhasePanel") as Control), DARK, "phase")
 	assert_eq(_piece(hud.watching_panel), DARK, "watching line")
-	assert_eq((hud.get_node(^"PhasePanel") as Control).get_global_rect(), Rect2(260.0, 4.0, 120.0, 14.0), "the phase keeps its rect")
+	assert_eq((hud.get_node(^"PhasePanel") as Control).get_global_rect(), Rect2(152.0, 4.0, 228.0, 14.0), "the clock row's rect (hud-clarity)")
 	var phase := hud.phase_label.get_global_rect()
-	assert_true(Rect2(263.0, 7.0, 114.0, 8.0).encloses(Rect2(phase.position, Vector2(phase.size.x, 8.0))), "the phase's text inside the 3 px frame: %s" % phase)
+	assert_true(Rect2(155.0, 7.0, 222.0, 8.0).encloses(Rect2(phase.position, Vector2(phase.size.x, 8.0))), "the phase's text inside the 3 px frame: %s" % phase)
 
 
 func test_the_thin_rows_keep_their_rects() -> void:

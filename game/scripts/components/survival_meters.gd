@@ -164,8 +164,13 @@ var _timed: Array[MeterOverTime] = []
 var _delayed_effects: Array[EffectData] = []
 var _delayed_left_s: Array[float] = []
 ## Seconds left of each timed status that is on (bleeding-and-sabila D1), keyed by DataEnums.Status.
-## Host only: every peer reads the synced bit, never the time, so a status set by the sync has none.
+## Host only: a status set by the sync has none here; the bleeding's time reaches every peer as
+## `bleeding_left_s` (hud-clarity).
 var _status_left_s: Dictionary[int, float] = {}
+## Seconds of bleeding left, 0 while not bleeding (hud-clarity, survival-meters "Bleeding time on every
+## peer"). The host writes it with the status's time; it is synced, so every peer's "Sangrando" bar
+## drains with the host's.
+var bleeding_left_s: float = 0.0
 
 
 ## One host step: timed changes, then drains and restores from `context`, then the states.
@@ -285,6 +290,7 @@ func set_status(status: DataEnums.Status, active: bool) -> void:
 		_status_left_s[status] = duration_s
 	else:
 		_status_left_s.erase(status)
+	_write_bleeding_left()
 
 
 ## Seconds `status` lasts once started, from the tuning; 0 means until cured.
@@ -398,6 +404,11 @@ func _advance_statuses(delta: float) -> void:
 			set_status(status as DataEnums.Status, false)
 		else:
 			_status_left_s[status] = left_s
+	_write_bleeding_left()
+
+
+func _write_bleeding_left() -> void:
+	bleeding_left_s = _status_left_s.get(DataEnums.Status.BLEEDING, 0.0)
 
 
 func _advance_timed(delta: float) -> void:
