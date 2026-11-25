@@ -64,14 +64,14 @@ Rebuilds: `python -I tools/art/compose.py --packs C:/Users/liann/src/90miles/gam
 
 ## 7. Swimmer behind the deck (C22; SP5) — after crossing-gameplay merges
 
-- [ ] 7.1 Write the tests and see them fail, in `test_crossing_art.gd`:
+- [x] 7.1 Write the tests and see them fail, in `test_crossing_art.gd`:
   - 1-player: a swimmer 1 px north of the deck's top edge, within its span, is drawn after the sea and before the deck (Look z −21);
   - a swimmer beside the deck (`put_beside_deck`, east), one south of it, a rider aboard and an island swimmer keep z 0;
   - after the deck sinks, a north swimmer is back at z 0;
   - on a board route, a swimmer north of a board goes under that board.
   Update `test_the_crossing_sea_and_deck_lie_under_its_riders` with the north swimmer.
-- [ ] 7.2 Add the z swap to `PlayerLook.step` (design D2). Verify `test_art_sim_invariance`, `test_draw_order.gd` and the crossing tests.
-- [ ] 7.3 Windowed 1-player capture of a squall throw-in on the north side: compare with `before/crossing_raft_squall.png`.
+- [x] 7.2 Add the z swap to `PlayerLook.step` (design D2). Verify `test_art_sim_invariance`, `test_draw_order.gd` and the crossing tests.
+- [x] 7.3 Windowed 1-player capture of a squall throw-in on the north side: compare with `before/crossing_raft_squall.png`.
 
 ## 8. Integration
 

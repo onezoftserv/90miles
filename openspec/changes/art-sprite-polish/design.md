@@ -250,3 +250,22 @@ Measured values and departures are recorded here as the tasks ship.
 - **Images:**
   - `docs/art-pass/sprite-polish/shark_facings_before_after_x5.png`: `before/cr_water_day_crop5.png` left, and the four facings now right.
   - `docs/art-pass/sprite-polish/crossing_fin_before_after_x6.png`: from `before/crossing_shark.png` at the top, the fin over the deck; below it, the fin waiting a tile off the hull during the tell, then after the strike.
+
+**Group 7, a swimmer north of the deck goes under it (D2; C22, SP5).** Stacked on group 6, from main f8a6c75.
+- **Tests first.** They failed for the right reasons (the look stayed at z 0):
+  - `test_crossing_art.gd`, all 1-player:
+    - a swimmer 1 px north of the deck's top edge, at its middle and 4 px west of its west corner, has Look z −21: drawn after the sea and before the deck;
+    - beside the deck (`put_beside_deck`, east), south of it, north but 40 px east of it, and aboard, it keeps z 0;
+    - once the deck has sunk, the north swimmer is back at z 0;
+    - on the `test_board` route, a swimmer north of the board goes under it;
+    - an island swimmer, with no crossing, keeps z 0.
+  - `test_draw_order.gd`: `test_the_crossing_sea_and_deck_lie_under_its_riders` gains the north swimmer, over the sea and under the deck.
+- **The swap.** `PlayerLook.step` sets the look's `z_index` to `UNDER_DECK_Z` (−21) while all three hold, and 0 otherwise:
+  1. the pose is wet (SWIM or FLOAT);
+  2. the body rides a running crossing (not `finished`, one of its `peers()`), found through `CoopSession.of(body)`;
+  3. it is north of a drawn deck's or board's top edge, within its x span widened by the frame's half-width (16 px).
+  - A deck counts as drawn on the rule `CrossingDeck` and `CrossingBoards` draw by: each afloat board on a board route, else the shared deck while its vessel is intact. The rule lives in a new helper, `CrossingArt.drawn_decks` (`scripts/art/crossing_art.gd`), which art-mood-pass's wake (C35) shares.
+  - The look reads that state rather than the deck node's visibility, so it never lags the deck by a frame.
+  - It is drawing only: it writes nothing, and `test_art_sim_invariance` stays green.
+- **Capture,** off-screen: `capture_crossing.tscn` adds `crossing_swimmer_north.png`, the rider thrown in 12 px west of the deck's centre and 3 px north of its top edge, as in the review's squall shot.
+- **Image:** `docs/art-pass/sprite-polish/swimmer_north_of_deck_before_after_x6.png`: `before/crossing_raft_squall.png` left, where the swimmer is drawn over the deck's top rows. On the right, the same spot now: the planks hide the body and only the head shows above them.
