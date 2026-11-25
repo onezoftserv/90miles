@@ -242,9 +242,10 @@ func _squad_art() -> Dictionary:
 		if look == null or not _in_run(look):
 			continue
 		var creature := look.get_parent() as Creature
-		if creature != null and creature.data.behavior == CreatureData.Behavior.SEARCH_CAPTURE:
+		# art-guardacostas D2, D3: a soldier's figure and the boat's DinghyLook.
+		if creature != null and creature.data.behavior == CreatureData.Behavior.SEARCH_CAPTURE and look.soldier_sprite != null:
 			soldiers += 1
-		dinghy = dinghy or look.dinghy_visible
+		dinghy = dinghy or (look.dinghy_visible and look.dinghy != null)
 		calls += look.calls_shown
 	return {"soldiers": soldiers, "dinghy": dinghy, "calls": calls}
 

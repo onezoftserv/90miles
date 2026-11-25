@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GuardacostasArt" format=3]
+
+[ext_resource type="Script" path="res://scripts/art/guardacostas_art.gd" id="1_art"]
+[ext_resource type="Script" path="res://scripts/art/player_look_data.gd" id="1_look_script"]
+[ext_resource type="SpriteFrames" path="res://assets/art/creatures/patrol_boat_frames.tres" id="2_hull"]
+[ext_resource type="SpriteFrames" path="res://assets/art/creatures/dinghy_frames.tres" id="3_dinghy"]
+[ext_resource type="Resource" path="res://assets/art/characters/looks/soldado_1.tres" id="4_soldado_1"]
+[ext_resource type="Resource" path="res://assets/art/characters/looks/soldado_2.tres" id="5_soldado_2"]
+[ext_resource type="Resource" path="res://assets/art/characters/looks/soldada.tres" id="6_soldada"]
+
+[resource]
+script = ExtResource("1_art")
+hull_frames = ExtResource("2_hull")
+hull_cell = Vector2i(96, 48)
+hull_lamp_px = Vector2i(49, 9)
+dinghy_frames = ExtResource("3_dinghy")
+dinghy_cell = Vector2i(32, 16)
+dinghy_foot_px = Vector2i(14, 11)
+soldier_looks = Array[ExtResource("1_look_script")]([ExtResource("4_soldado_1"), ExtResource("5_soldado_2"), ExtResource("6_soldada")])

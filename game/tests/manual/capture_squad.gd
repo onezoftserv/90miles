@@ -3,8 +3,9 @@ extends Node
 ## headless and never in CI). A solo sandbar run by day: the patrol boat docks for a player spotted on
 ## the sand, its dinghy rows in and the squad lands; the player stands on the beach beside the landing
 ## and the window is saved with the soldiers, the dinghy and the landing call in view:
+## art-guardacostas adds the dinghy halfway in, the camera on the landing for a moment:
 ##   godot --path game res://tests/manual/capture_squad.tscn -- --out=<dir> [--scale=2]
-## Writes <dir>/squad_ashore.png.
+## Writes <dir>/squad_rowing_in.png and <dir>/squad_ashore.png.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://capture_squad.cfg"
@@ -53,10 +54,20 @@ func _ready() -> void:
 	# The player out of sight in the water while the squad lands, then on the beach beside it, hidden.
 	body.global_position = Vector2(2.5, 2.5) * TILE
 	body.stealth_state = MovementStep.Stealth.SUBMERGED
+	var rowing_saved: bool = false
 	for i: int in 400:
 		if boat.squad_state == PatrolRoute.Squad.ASHORE:
 			break
 		await get_tree().physics_frame
+		if not rowing_saved and boat.dinghy_t > 0.4 and boat.dinghy_t < 0.7:
+			rowing_saved = true
+			var waiting: Vector2 = body.global_position
+			# The camera on the dinghy, the player held just north of it.
+			body.global_position = (boat.get_node(^"SquadLook") as SquadLook).dinghy_px + Vector2(0.0, -2.0 * TILE)
+			body.camera.reset_smoothing()
+			await _frames(3)
+			await _save("squad_rowing_in.png")
+			body.global_position = waiting
 	await _frames(20)
 	for soldier: Creature in brain.soldiers:
 		soldier.set_physics_process(false)
@@ -65,14 +76,18 @@ func _ready() -> void:
 	await _frames(SETTLE_FRAMES)
 	print("capture_squad: %d soldiers ashore, dinghy %s at %s, %d call(s) shown" % [brain.soldiers.size(),
 		(boat.get_node(^"SquadLook") as SquadLook).dinghy_visible, boat.landing, (boat.get_node(^"SquadLook") as SquadLook).calls_shown])
+	await _save("squad_ashore.png")
+	get_tree().quit(0)
+
+
+func _save(file_name: String) -> void:
 	await RenderingServer.frame_post_draw
 	var window_size := DisplayFit.window_size(_scale)
 	var image := get_viewport().get_texture().get_image()
 	if image.get_size() != window_size:
 		image.resize(window_size.x, window_size.y, Image.INTERPOLATE_NEAREST)
-	var path := _out_dir.path_join("squad_ashore.png")
+	var path := _out_dir.path_join(file_name)
 	print("capture_squad: %s (%s)" % [path, error_string(image.save_png(path))])
-	get_tree().quit(0)
 
 
 func _frames(count: int) -> void:
