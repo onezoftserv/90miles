@@ -151,6 +151,13 @@ func _add_call_windows() -> void:
 	session.add_child(call_windows)
 	if call_windows.has_method(&"bind"):
 		call_windows.call(&"bind", session)
+	# art-guardacostas D9: La captura's staging bound to the run's capture scene, so its frames run too.
+	var stage := CaptureStage.new()
+	stage.name = &"CaptureStage"
+	stage.add_to_group(ART_GROUP)
+	session.add_child(stage)
+	if stage.has_method(&"bind"):
+		stage.call(&"bind", null, session)
 
 
 # How many calls the run's call windows showed (0 without them).

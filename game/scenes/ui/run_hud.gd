@@ -43,6 +43,13 @@ const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudPanelT
 const AVOID_GROUP: StringName = &"hud_avoid"
 ## A HUD panel whose top is above this is one of the top windows (art-guardacostas D8).
 const TOP_WINDOW_Y: float = 20.0
+## art-guardacostas D9: what La captura's staging hides (by transparency, so their own refreshes and their
+## input stay as they are): the meters, phase, weather, teammates, needle, note, watching panel, strip,
+## prompt, marks, floats, patrol chips and call windows. The scene panel and the menus stay.
+const STAGED_HIDDEN: Array[StringName] = [
+	&"Meters", &"PhasePanel", &"WeatherPanel", &"TeammatesPanel", &"Needle", &"NoteLabel", &"WatchingPanel",
+	&"Strip", &"Prompt", &"Marks", &"Floats", &"PatrolHorizon", &"CallWindows",
+]
 ## Half the width of a player's drawn figure, which a call window keeps clear of (art-guardacostas D6).
 const FIGURE_HALF_PX: float = 8.0
 ## HUD windows another layer draws for this run (the crossing's strip and line, crossing-gameplay;
@@ -97,6 +104,10 @@ var scene_panel: ScenePanel = null
 ## art-guardacostas D6: the coast guard's calls, each in a small window over its speaker, made here and
 ## fed by the session's `call_shown`.
 var call_windows: CallWindows = null
+## art-guardacostas D9: La captura's staging (the bars, the framing and the closing notice), made here.
+var capture_stage: CaptureStage = null
+## True while La captura is staged: everything in STAGED_HIDDEN is hidden, the scene panel stays.
+var staged: bool = false
 @onready var phase_label: Label = %Phase
 @onready var weather_panel: PanelContainer = $WeatherPanel
 @onready var weather_label: Label = %Weather
@@ -158,6 +169,12 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	call_windows.avoid = call_avoid_rects
 	call_windows.screen_shown = screen_shown
 	call_windows.bind(session)
+	scene_panel.device = device
+	capture_stage = CaptureStage.new()
+	capture_stage.name = &"CaptureStage"
+	add_child(capture_stage)
+	move_child(capture_stage, scene_panel.get_index())
+	capture_stage.bind(self, session)
 	for peer_id: int in session.peer_ids():
 		_follow(peer_id)
 	refresh()
@@ -202,6 +219,8 @@ func _input(event: InputEvent) -> void:
 		strip.set_device(device)
 		prompt.set_device(device)
 		sign_note.set_device(device)
+		if scene_panel != null:
+			scene_panel.device = device
 	if _step_spectate(event):
 		get_viewport().set_input_as_handled()
 		return
@@ -247,6 +266,21 @@ func set_screen_shown(value: bool) -> void:
 	if call_windows != null:
 		call_windows.screen_shown = value
 	refresh_watching()
+
+
+## art-guardacostas D9: La captura starts (true) or ends: everything in STAGED_HIDDEN is hidden or shown
+## again. Input stays open and the scene panel stays.
+func set_staged(value: bool) -> void:
+	staged = value
+	for node_name: StringName in STAGED_HIDDEN:
+		var node := get_node_or_null(NodePath(node_name)) as CanvasItem
+		if node != null:
+			node.modulate.a = 0.0 if value else 1.0
+
+
+## True while `node` is hidden by the staging.
+func is_staged_hidden(node: CanvasItem) -> bool:
+	return node.modulate.a <= 0.0
 
 
 ## A point of the world's canvas (the world view's pixels, camera applied) in HUD pixels.
