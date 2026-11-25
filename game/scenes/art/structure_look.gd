@@ -17,7 +17,7 @@ const SURVIVAL_TUNING: SurvivalTuning = preload("res://resources/survival_tuning
 
 ## Read once per look; every look shares the one resource.
 var data: StructureArtData = StructureArtData.standard()
-## A palm's look (art-prop-polish D4): picked once from its island's layout id and its cell, and
+## A palm's look (art-prop-polish D4): picked once from its island's art key (IslandSource.art_key) and its cell, and
 ## kept; -1 until it is drawn. A palm on no island draws today's palm, look 0.
 var palm_look: int = -1
 ## art-mood-pass D2: a fire's light, made on its first step (other kinds never have one).
@@ -110,7 +110,7 @@ func _show_palm(palm: Palm) -> void:
 		palm_look = 0
 		if layout != null:
 			var cell := Vector2i((palm.position / IslandLayout.TILE).floor())
-			palm_look = StructureArt.palm_look(layout.id, cell, data.palm_look_count())
+			palm_look = StructureArt.palm_look(IslandSource.art_key(layout), cell, data.palm_look_count())
 	_show_still(data.palm_texture(palm_look))
 	var shown: int = StructureArt.coconuts_shown(palm.coconuts)
 	if shown > 0 and shown <= data.coconut_overlays.size():

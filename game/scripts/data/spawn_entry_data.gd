@@ -24,6 +24,20 @@ enum Kind {
 ## Infinite harvest; the rate is a rule plus the Pescador modifier.
 @export var unlimited: bool = false
 
+@export_group("Placement")
+## Units in each pick-up the island generator lays; `count` stays the total units.
+@export var per_cell: int = 1
+## Terrain of a pick-up's cell; empty means any walkable land.
+@export var on_terrain: Array[DataEnums.Terrain] = []
+## The cell needs a 4-neighbour of one of these; empty means no such need.
+@export var beside_terrain: Array[DataEnums.Terrain] = []
+## Tiles from the POI's anchor (0 is the anchor itself); ignored for ambient entries.
+@export var within_tiles: int = 0
+## Least distance in tiles from the entry's other cells.
+@export var apart_tiles: int = 0
+## The pick-ups' set; empty means the POI id (required for ambient entries).
+@export var group: StringName = &""
+
 @export_group("Conditions")
 ## Whether or when it spawns (TIDE_IS low, CHAIN_IS storm_resort).
 @export var conditions: Array[ConditionData] = []

@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="PoiData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/poi_data.gd" id="1_poi"]
+[ext_resource type="Script" path="res://scripts/data/spawn_entry_data.gd" id="2_spawn"]
+
+[sub_resource type="Resource" id="Resource_tube"]
+script = ExtResource("2_spawn")
+ref_id = &"inner_tube"
+count = Vector2i(2, 2)
+per_cell = 1
+on_terrain = Array[int]([3])
+within_tiles = 6
+apart_tiles = 2
+group = &"flotsam"
+respawn = 1
+
+[sub_resource type="Resource" id="Resource_jug"]
+script = ExtResource("2_spawn")
+ref_id = &"plastic_jug"
+count = Vector2i(2, 3)
+per_cell = 1
+on_terrain = Array[int]([3])
+within_tiles = 6
+apart_tiles = 2
+group = &"flotsam"
+respawn = 1
+
+[sub_resource type="Resource" id="Resource_rope"]
+script = ExtResource("2_spawn")
+ref_id = &"rope"
+count = Vector2i(2, 2)
+per_cell = 1
+on_terrain = Array[int]([3])
+within_tiles = 6
+apart_tiles = 2
+group = &"flotsam"
+respawn = 1
+
+[resource]
+script = ExtResource("1_poi")
+id = &"flotsam_line"
+name_es = "Lo que trajo el mar"
+name_en = "Flotsam line"
+description_es = "La marea deja aquí lo que se le cae a otros: cámaras, pomos, soga. Después de un turbión trae más."
+description_en = "The tide leaves here what others lost: inner tubes, jugs, rope. After a squall it brings more."
+category = 0
+placement = 5
+needs_shoreline_access = true
+anchor_terrain = Array[int]([3])
+loot = Array[ExtResource("2_spawn")]([SubResource("Resource_tube"), SubResource("Resource_jug"), SubResource("Resource_rope")])

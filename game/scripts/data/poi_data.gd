@@ -65,6 +65,24 @@ enum Vantage {
 @export var min_distance_tiles: int = 12
 ## Repeated objects inside (6 palms, 6 lobster traps, 3 rock bowls).
 @export var object_count: int = 1
+## Terrain the anchor cell may be; empty means any cell its placement allows.
+@export var anchor_terrain: Array[DataEnums.Terrain] = []
+## Least Chebyshev distance in tiles from the anchor to water.
+@export var anchor_min_water_tiles: int = 0
+## Cells within this Chebyshev distance of the anchor are shaded; -1 means none.
+@export var shade_tiles: int = -1
+
+@export_group("Palms")
+## Min/max palms in the POI.
+@export var palm_count: Vector2i = Vector2i.ZERO
+## Min/max coconuts over all its palms.
+@export var palm_coconuts: Vector2i = Vector2i.ZERO
+## Terrain a palm stands on.
+@export var palm_terrain: DataEnums.Terrain = DataEnums.Terrain.BEACH
+## Palms lie within this many tiles of the anchor.
+@export var palm_within_tiles: int = 0
+## Least distance in tiles between two palms.
+@export var palm_apart_tiles: int = 0
 
 @export_group("Look")
 ## Prefab with the component objects (asset).

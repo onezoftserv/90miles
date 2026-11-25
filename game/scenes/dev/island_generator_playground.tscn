@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/dev/island_generator_playground.gd" id="1_gen"]
+[ext_resource type="Resource" path="res://resources/chains/reef_traps.tres" id="2_reef"]
+
+[node name="IslandGeneratorPlayground" type="Node2D"]
+y_sort_enabled = true
+script = ExtResource("1_gen")
+chain = ExtResource("2_reef")

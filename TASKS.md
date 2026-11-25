@@ -111,7 +111,8 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
 
 ## 5. Milestone C — Procedural islands
 
-- [ ] `island-generation`: seeded landmass, bands, POI placement, validation
+- [x] `island-generation`: seeded landmass, bands, POI placement, validation
+  - Built 2026-11-25 test-first on `claude/project-thread-1tpas4` (PR #128: tasks 0.3–5.3, then solo, party scaling and the dawn refill, travel and the network, the dev scene `scenes/dev/island_generator_playground.tscn`, docs). Not archived; not merged. The lee rule's narrowing (west ray only) awaits the owner's OK. The hash and seed constants were recorded on Linux; the first Windows run is the cross-platform check
   - Spec written 2026-11-08 (OpenSpec change `island-generator`: the seeded generator for one chain, the reef cay `reef_traps`). Its nine owner decisions were settled on 2026-11-08 and re-checked against `main` on 2026-11-14 with none reopened; decision 10 (no workbench, so no fire, on the reef) was settled on 2026-11-14. The build waits for the Milestone A/B playtest (owner, 2026-11-14)
 - [ ] Chain templates: sandbar, coast, mangrove, reef, rock (data in `.tres`)
 - [ ] Resource rules and respawn hooks (squall, night)
@@ -273,6 +274,8 @@ Other (was in Milestone G):
 - [ ] Steam/relay joining: a Steam backend behind the `net-platform-seam` seam; its plan, data row, two-machine verify list and open questions Q3–Q7 are in that change's design.md, "Deferred to the Steam change (v2)"
 
 ## Done
+
+- 2026-11-25: `island-generator` built test-first (not archived, PR #128): the reef cay `reef_traps` generated from the run seed and island index (SHA-256 stage seeds, a reef-ring painter, POI and pick-up placement, a canonical text and hash, a validator, 50 attempts then a seeded fallback); generated islands travel by chain id, index and hash, a mismatched client takes the host's text; driftwood scales with the party above the raft floor and the cave seep refills each dawn; a dev scene walks reefs alone; a host and a client crossed to the same generated reef as two processes. Mean 1.20 attempts over 200 seeds, about 200 ms per attempt.
 
 - 2026-11-05: Tooling: Godot 4.7.2 (winget), ECC plugin, OpenSpec 1.16 (`openspec init`, Claude Code), reference games cloned. Still open: ECC rules copy, Godot MCP build and registration, AWS and GitHub MCPs (each needs the user).
 - 2026-11-05: Assets: 9 Kenney packs (CC0) and both OFL pixel fonts via the fixed `tools/fetch_assets.py`; `game/assets/CREDITS.md`; Spanish glyph coverage tested. Manual downloads still open.

@@ -573,3 +573,30 @@ func test_the_cay_content_passes_the_check() -> void:
 	assert_true(GameState.content.has_entry(&"islands", &"cayo_sin_norte"))
 	assert_eq(ContentValidator.validate(GameState.content), PackedStringArray())
 	assert_true(SecretRules.is_secret(_cay()), "the shared check knows the cay")
+
+
+# island-generator "A reef with no grove is sound": a layout that names no palm glyph needs no palm.
+func _palmless(palm_glyph: String) -> IslandLayoutData:
+	var layout := IslandLayoutData.new()
+	layout.rows = PackedStringArray(["~-..", "~-.1"])
+	layout.terrain_glyphs = {
+		"~": DataEnums.Terrain.DEEP,
+		"-": DataEnums.Terrain.SHALLOWS,
+		".": DataEnums.Terrain.BEACH,
+		"1": DataEnums.Terrain.BEACH,
+	} as Dictionary[String, DataEnums.Terrain]
+	layout.palm_glyph = palm_glyph
+	layout.solo_spawn_glyph = "1"
+	layout.coop_spawn_glyphs = "1"
+	return layout
+
+
+func test_a_layout_with_no_palm_glyph_needs_no_palm() -> void:
+	var island := IslandLayout.build(_palmless(""))
+	assert_eq(island.problems(), PackedStringArray())
+	assert_eq(island.palms.size(), 0)
+
+
+func test_a_layout_that_names_a_palm_glyph_still_needs_a_palm() -> void:
+	var island := IslandLayout.build(_palmless("P"))
+	assert_true(island.problems().has("no palms"))

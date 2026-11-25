@@ -101,6 +101,8 @@ Generation: `IslandGenerator` builds a landmass from seeded integer steps (heigh
 
 **Biome.** Rocky shore, a beach on the lee side, reef flats at low tide, deep water 3 tiles out.
 
+**Size.** Generated (`reef_traps.tres`, `island-generator`, measured over run seeds 1–200 for island 3): 96×64 cells, 1,004–1,299 land cells (16.3–21.1%, mean 1,139) in one long rocky island with a beach on its west-facing coast, every land cell within 10 tiles of water. Four landing cells on that beach. Walks from the first landing cell: raft site 1.5–1.8 s, flotsam line 1–7 s, palm grove 3–15 s, limestone cave 6–17 s, lobster traps 6–19 s. Counts: trap rope ×6 (one per trap, in the shallows beside rock), tubes ×2, jugs 2–3, flotsam rope ×2, driftwood 8 (×0.8 per extra player, never below a raft: 8/6/6/6), one 2-cup seep in the cave refilled each dawn, and on 94 of 200 reefs a grove of 3 palms with 5 coconuts. No workbench. Mean 1.2 attempts per island, about 0.2 s each.
+
 **POIs.**
 | POI | Resources | Notes |
 | --- | --- | --- |

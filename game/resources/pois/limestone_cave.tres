@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="PoiData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/poi_data.gd" id="1_poi"]
+
+[resource]
+script = ExtResource("1_poi")
+id = &"limestone_cave"
+name_es = "La cueva de caliza"
+name_en = "Limestone cave"
+description_es = "La única sombra del cayo. Gotea agua dulce de la roca, dos vasitos al día, y to' lo que digas retumba."
+description_en = "The cay's only shade. Fresh water drips from the rock, two cups a day, and everything you say echoes."
+category = 2
+placement = 3
+anchor_terrain = Array[int]([6])
+anchor_min_water_tiles = 3
+shade_tiles = 1
+water_item_id = &"rain_cup"
+water_capacity_cups = 2
+water_refill = 2
+water_refill_cups = 2
+features = Array[int]([1])
+noise_multiplier = 2.0
