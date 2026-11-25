@@ -8,7 +8,8 @@ extends Node
 ## Writes <dir>/crossing_aboard_0.png, crossing_aboard_1.png, crossing_swimmer.png and
 ## crossing_worn.png, each the 640×360 view. Then (art-sprite-polish D3, D4) a shark pass from the
 ## east: crossing_shark_tell.png while its fin circles beside the raft, crossing_shark_strike.png
-## after it struck. Last (art-sprite-polish D2) the rider thrown in on the north side, just above the
+## after it struck. After aboard_1 (art-mood-pass C35) a coconut and a plank drift past:
+## crossing_flotsam.png. Last (art-sprite-polish D2) the rider thrown in on the north side, just above the
 ## deck's top edge: crossing_swimmer_north.png.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
@@ -59,6 +60,15 @@ func _ready() -> void:
 	_save("crossing_aboard_0")
 	await get_tree().create_timer(1.0).timeout
 	_save("crossing_aboard_1")
+	# art-mood-pass C35: a coconut and a plank drifting down past the raft, among the crests and over
+	# the wake.
+	var items: Array[StringName] = crossing.tuning.flotsam_items
+	crossing.plan = CrossingPlan.create(PLAN_S, [
+		CrossingBeat.create(crossing.elapsed_s + 2.0, CrossingBeat.Kind.FLOTSAM, 2, items.find(&"coco")),
+		CrossingBeat.create(crossing.elapsed_s + 2.4, CrossingBeat.Kind.FLOTSAM, -3, items.find(CrossingTuning.PLANK_ID)),
+	])
+	await get_tree().create_timer(1.0).timeout
+	_save("crossing_flotsam")
 	crossing.throw_in(1)
 	body.global_position = Vector2(crossing.deck_rect().end.x + BESIDE_PX, crossing.deck_center().y)
 	await _frames(SETTLE_FRAMES)

@@ -27,3 +27,9 @@ Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
 Files: foam_still.png (art-terrain-polish D2: a 1 px #8fe0f0 line on the first water pixel round each of the 16 sand shapes of ../terrain/sand.png, the same in all 8 frames, for the rim of still water such as the coast cay's lagoon)
+
+Work: 90 Millas crossing sea
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: crests.png (3 frames of an 8x3 crest in the deep ramp and #4a85a8), wake_bow.png (2 frames of a 16x3 bow ripple), wake_stern.png (3 frames of a 32x24 stern V of dashes), flotsam_ring.png (2 frames of an 18x5 dashed ring) and plank.png (a 16x5 board with two nails, outlined in black); all drawn by hand in tools/art/fixes/mood/ and copied by tools/art/mood.py (art-mood-pass D6-D9)

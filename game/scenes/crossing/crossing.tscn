@@ -1,10 +1,17 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/crossing/crossing.gd" id="1_crossing"]
 [ext_resource type="Script" path="res://scenes/crossing/crossing_sea.gd" id="2_sea"]
 [ext_resource type="Script" path="res://scenes/crossing/crossing_deck.gd" id="3_deck"]
 [ext_resource type="Script" path="res://scenes/crossing/crossing_boards.gd" id="4_boards"]
 [ext_resource type="Script" path="res://scenes/crossing/crossing_hazards.gd" id="5_hazards"]
+[ext_resource type="Script" path="res://scenes/crossing/crossing_crests.gd" id="6_crests"]
+[ext_resource type="Script" path="res://scenes/crossing/crossing_wake.gd" id="7_wake"]
+[ext_resource type="Texture2D" path="res://assets/art/sea/crests.png" id="8_crests"]
+[ext_resource type="Texture2D" path="res://assets/art/sea/wake_bow.png" id="9_bow"]
+[ext_resource type="Texture2D" path="res://assets/art/sea/wake_stern.png" id="10_stern"]
+[ext_resource type="Texture2D" path="res://assets/art/sea/plank.png" id="11_plank"]
+[ext_resource type="Texture2D" path="res://assets/art/sea/flotsam_ring.png" id="12_ring"]
 
 [node name="Crossing" type="Node2D"]
 script = ExtResource("1_crossing")
@@ -13,9 +20,22 @@ script = ExtResource("1_crossing")
 z_index = -40
 script = ExtResource("2_sea")
 
+[node name="Crests" type="Node2D" parent="." groups=["art_view"]]
+z_index = -38
+script = ExtResource("6_crests")
+texture = ExtResource("8_crests")
+
+[node name="Wake" type="Node2D" parent="." groups=["art_view"]]
+z_index = -35
+script = ExtResource("7_wake")
+bow_texture = ExtResource("9_bow")
+stern_texture = ExtResource("10_stern")
+
 [node name="Hazards" type="Node2D" parent="." groups=["art_view"]]
 z_index = -30
 script = ExtResource("5_hazards")
+plank_texture = ExtResource("11_plank")
+ring_texture = ExtResource("12_ring")
 
 [node name="Deck" type="Sprite2D" parent="." groups=["art_view"]]
 z_index = -20

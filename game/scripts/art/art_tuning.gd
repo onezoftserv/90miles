@@ -42,6 +42,19 @@ const STANDARD_PATH: String = "res://resources/art_tuning.tres"
 @export var pace_ease_s: float
 @export var rain_light_s: float
 @export var rain_splashes: int
+## art-mood-pass D6: the crests' lattice cell in tiles, the share of a cell's time slots that show a
+## crest, and a slot's seconds (one rise, peak and fall).
+@export var crest_cell_tiles: int
+@export var crest_density: float
+@export var crest_slot_s: float
+## art-mood-pass D7: the wake's frame steps per scroll wrap (a multiple of the bow's 2 frames and the
+## stern's 3, so the wrap never shows).
+@export var wake_steps: int
+## art-mood-pass D8: a flotsam icon is cut this many rows above its lowest opaque row, keeping at
+## least `flotsam_min_rows` of it; it bobs 1 px every `flotsam_bob_s`.
+@export var flotsam_cut_rows: int
+@export var flotsam_min_rows: int
+@export var flotsam_bob_s: float
 ## One pixel per colour: DawnBringer's 32 and the added colours (at most 64 in all).
 @export var master_palette: Texture2D
 ## Row 0 the clothing key ramp, rows 1-4 the look slots azul, rojo, amarillo and verde; columns
