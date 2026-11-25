@@ -233,7 +233,8 @@ func _read(layout: IslandLayoutData) -> void:
 	solo_spawn = spawns.get(layout.solo_spawn_glyph, Vector2i(-1, -1))
 	if not spawns.has(layout.solo_spawn_glyph):
 		_problems.append("no solo spawn point")
-	if palms.is_empty():
+	# A layout that names no palm glyph (a reef with no grove) needs no palm.
+	if palms.is_empty() and not layout.palm_glyph.is_empty():
 		_problems.append("no palms")
 	for index: int in layout.nest_palms:
 		if index < 0 or index >= palms.size():

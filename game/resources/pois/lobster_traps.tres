@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="PoiData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/poi_data.gd" id="1_poi"]
+[ext_resource type="Script" path="res://scripts/data/spawn_entry_data.gd" id="2_spawn"]
+
+[sub_resource type="Resource" id="Resource_rope"]
+script = ExtResource("2_spawn")
+ref_id = &"rope"
+count = Vector2i(6, 6)
+per_cell = 1
+on_terrain = Array[int]([1])
+beside_terrain = Array[int]([6])
+within_tiles = 10
+apart_tiles = 3
+group = &"traps"
+
+[resource]
+script = ExtResource("1_poi")
+id = &"lobster_traps"
+name_es = "Las nasas"
+name_en = "Lobster traps"
+description_es = "Nasas amarradas a las piedras, con soga buena. La mitad son de Ramón, y él las cuenta."
+description_en = "Traps tied off on the rocks, with good rope. Half of them are Ramón's, and he counts them."
+category = 0
+placement = 5
+anchor_terrain = Array[int]([6])
+object_count = 6
+loot = Array[ExtResource("2_spawn")]([SubResource("Resource_rope")])

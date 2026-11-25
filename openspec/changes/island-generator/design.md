@@ -77,7 +77,7 @@ Grids are `PackedInt32Array` indexed `y * width + x`. Distances are integers: Ch
 4. **Sea level by rank (`land`).** Roll the target land count inside `land_cells`; sort the heights of the cells inside the margin, highest first, ties by reading order; the first that many cells are land. The land count is exact before clean-up.
 5. **One landmass and clean-up.** Label 4-connected land bodies and keep the largest; enclosed water bodies under 12 cells become land; a land cell touching other land only diagonally, or with at most one land neighbour, becomes water; repeat until nothing changes or 20 passes. Recount (the attempt fails if the count left the band).
 6. **Water bands.** Water within Chebyshev 2 of land is shallows, the rest deep.
-7. **Shore and lee (`bands`).** Roll the shore width (2–4). Land within that Chebyshev distance of water is the shore band. A coast cell (distance 1) is a lee coast cell if any of three straight rays from it (the lee direction and its two 45° neighbours: west, north-west, south-west) reaches the grid edge over water only. Shore cells within the shore width of a lee coast cell (a breadth-first walk over shore cells) take `lee_terrain` (beach); the rest of the shore takes `shore_terrain` (rock).
+7. **Shore and lee (`bands`).** Roll the shore width (2–4). Land within that Chebyshev distance of water is the shore band. A coast cell (distance 1) is a lee coast cell if a straight ray from it in the lee direction (west) reaches the grid edge over water only (changed in the build; see "Changes from the build plan"). Shore cells within the shore width of a lee coast cell (a breadth-first walk over shore cells) take `lee_terrain` (beach); the rest of the shore takes `shore_terrain` (rock).
 8. **Interior (`bands`).** On land beyond the shore band: a seeded fill at the rock weight, two clustering passes (3×3 majority), then cells are grown or eroded at patch edges in reading order until rock is within ±5% of the interior of its weight. Rock patches, scrub elsewhere.
 9. **Landing (`landing`).** Candidates are lee beach coast cells beside shallows. Take the candidate nearest the candidates' integer centroid, then a seeded pick among the five nearest it; add the 3 nearest beach cells to it (squared distance, reading order) so all 4 are pairwise at most 5 tiles apart. The first is where a lone arrival stands.
 10. **Walk map.** Chamfer walk distances from the first landing cell over land and shallows. The chamfer is never shorter than `AStarGrid2D`'s Euclidean path and at most 6.1% longer, so the generator checks upper bands as they are and lower bands raised by 7%: an island it accepts also passes the tests' `AStarGrid2D` measure.
@@ -170,6 +170,36 @@ Between this change being written (7368a3d) and this re-check, these merged: inv
 - **Art key.** Cosmetic variants are keyed on the layout id, which is `reef_traps_3` for every seed. `TerrainView` and `SeaMask.phase_bytes` take `island_hash` as the key when the island has one, and the layout id otherwise (§6 "Art"; tasks 6.1 and 6.2).
 - **The joiner's island id.** `IslandTravel._join_extras` sends `island.layout.id`. For a generated island that would be `reef_traps_3`, while §6 says the world state's `island` is the chain id, with `island_index` beside it. `_join_extras` and `follow` change together in task 8.3.
 - **`island_index` beside `islands`.** run-end's `islands` counter already exists (`IslandTravel.islands_reached`, sent in `_join_extras`). `island_index` stays a separate key because the secret cay (off-graph) and "previous island after capture" move the stood-on count without moving the index the seed uses.
+
+## Changes from the build plan
+
+Built on main f8a6c75 (2026-11-25), tasks 0.3 to 5.3. The import, smoke run and GUT passed on the untouched branch first.
+
+**Drift since the re-check (task 0.3).** `secret-cay` merged (2026-11-14): `IslandLayoutData` gained `off_graph`, `secret`, `chest_glyph`, `chest_item_id`, `decor_glyphs` and `decor_colors`, and `IslandLayout` reads a chest, decor cells and hiding spots. A generated reef leaves all of them empty, so nothing here changes; the writer does not emit them. `art-pass` was already taken in by the re-check.
+
+**The lee rule (step 7).** A coast cell is a lee coast cell when its ray *west* reaches the edge over water only, not any of west, north-west and south-west. With any of the three rays, nearly every coast of a long east-west island was lee: on run seed 1 only 9 coast cells stayed rock, and the six traps' rope (shallows beside rock, 3 apart) fitted nowhere. Requiring all three left too little beach: the 8 driftwood found no room in 198 attempts over 20 seeds. The west ray alone gives a beach on the west-facing coast and rock elsewhere, which is what the spec's scenario already says ("beach on the west-facing coast"); proposal.md and tasks.md 3.1 now say the same.
+
+**The landmass painter (steps 2–4), tuned until the 200-seed tests pass.**
+- A spine point's cap reaches 6 tiles past its half-width (`CAP_EXTRA_TILES`), and every cap has the same peak (1,024), so a wider point makes the land wider, not taller. Without the extra reach the rank cut ran out of raised cells and filled the rest in reading order along the top margin.
+- The spine's heights are the *highest* cap over each cell, not their sum. Summed caps pile up in the middle of the spine and the ends lose height, so the middle got fat: 31 of 40 first attempts had land more than 10 tiles from water. With the highest cap the height is a distance field from the spine and the land keeps one width end to end (6 of 40).
+- The seeded bumps add a quarter of a cap's peak, enough to wobble the coast.
+- The spine starts half its bend back from east, with no extra random notch, so its chord lies along the long axis; when it still does not fit inside the margin, points are dropped from its end.
+- Clean-up (step 5) also turns a 2×2 block with land on one diagonal only into land, so 4-connected reach and the drawn coast agree.
+
+**Placement details (steps 9–14).**
+- The landing's three extra cells are the nearest beach cells beside shallows (the spec's "4 beach cells beside shallows"), not any beach cell.
+- `apart_tiles` holds within one loot entry, so a flotsam jug may lie next to a flotsam tube.
+- A placement of `SHORELINE` is a land cell at Chebyshev 1 from water, `INTERIOR` a land cell beyond the shore band, `BEACH` a beach cell.
+- Palms, shade cells and every pick-up avoid each other and every marker; the cave's water lies on its anchor.
+
+**Writer.** The canonical text names the chain (`chain reef_traps`) and the POI whose palms the island has (`climb palm_grove`), so `parse` can fill names, lore and the climb from the client's own files; the layout carries both as metadata. `parse` also refuses an unknown or repeated line. The hash function is `IslandLayoutWriter.digest`, because the source scan of task 2.1 bans the text `hash(`.
+
+**Tests.** `tests/helpers/reef_samples.gd` (`ReefSamples`) generates the 200 reefs once per GUT run and shares them across the test scripts. The validation test's far end is moved out of its band by lowering a template copy's band below the island's measured far end, because a causeway long enough to put land 23 s out does not fit every map. A land count outside its band is made by turning 400 scrub cells to deep water.
+
+**Measured (this container, Linux, Godot 4.7.2).**
+- Attempts over run seeds 1–200: mean 1.20, maximum 5; no seed needed the fallback.
+- About 200 ms per attempt in GDScript. The new tests add about 100 s to a full GUT run (387 s to 486 s here), most of it generating the 200 shared reefs.
+- Recorded constants: `IslandSeeds.seed_for(1, 3, reef_traps, 0, land)` = 355171497221103513; the hash of island 3 of `reef_traps` for run seed 1 = `cbac9cd5e6c91bab3a6d5d8237c8fd78c74d2d6424554604cad0bb668813b9ef`. Both were recorded on Linux, not Windows: there is no Windows machine in this build, so the first Windows run is the cross-platform check.
 
 ## Risks / follow-ups
 

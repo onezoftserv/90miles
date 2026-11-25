@@ -97,6 +97,42 @@ enum CrossingEvent {
 ## Players may start on different landmasses.
 @export var spawn_split_across_landmasses: bool = false
 
+@export_group("Generation")
+## Columns and rows of the generated grid.
+@export var grid_size: Vector2i = Vector2i(96, 64)
+## Tiles along every edge that stay water.
+@export var edge_margin_tiles: int = 8
+## Min/max land cells; (0, 0) means land_fraction alone bounds the land.
+@export var land_cells: Vector2i = Vector2i.ZERO
+## The shore band's terrain away from the lee.
+@export var shore_terrain: DataEnums.Terrain = DataEnums.Terrain.BEACH
+## The shore band's terrain on the lee coast.
+@export var lee_terrain: DataEnums.Terrain = DataEnums.Terrain.BEACH
+## Outward direction of the lee coast (west is (-1, 0)).
+@export var lee_facing: Vector2i = Vector2i(-1, 0)
+## Painter parameters: spine length in tiles (min, max).
+@export var shape_length_tiles: Vector2i = Vector2i(40, 60)
+## Painter parameters: total bend of the spine in degrees (min, max).
+@export var shape_bend_degrees: Vector2i = Vector2i(0, 60)
+## Painter parameters: half-width of the land round the spine in tiles (min, max).
+@export var shape_half_width_tiles: Vector2i = Vector2i(6, 10)
+## Beach cells where arrivals land.
+@export var landing_cell_count: int = 4
+## Largest distance in tiles between any two landing cells.
+@export var landing_spread_tiles: int = 5
+## Seconds a lone arrival walks to the raft site (min, max).
+@export var raft_site_walk_s: Vector2 = Vector2(0.5, 3.0)
+## Seconds a lone arrival walks to the farthest land (min, max).
+@export var far_end_walk_s: Vector2 = Vector2(0.0, 60.0)
+## POI id -> seconds a lone arrival walks to its anchor (min, max).
+@export var poi_walk_s: Dictionary[StringName, Vector2] = {}
+## Attempts before the fallback island.
+@export var max_attempts: int = 50
+## The last attempts that skip rolled POIs.
+@export var relaxed_attempts: int = 5
+## Run seed of the fallback island (index 0).
+@export var fallback_seed: int = 0
+
 @export_group("POIs")
 ## Min/max POIs placed, including forced route starters and NPC camps.
 @export var poi_count: Vector2i = Vector2i(3, 6)
@@ -150,4 +186,5 @@ func get_reference_fields() -> Dictionary[StringName, StringName]:
 		&"guaranteed_poi_ids": &"pois",
 		&"signature_poi_id": &"pois",
 		&"boss_id": &"creatures",
+		&"poi_walk_s": &"pois",
 	}

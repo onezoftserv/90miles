@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="PoiData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/poi_data.gd" id="1_poi"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="2_effect"]
+
+[sub_resource type="Resource" id="Resource_climb"]
+script = ExtResource("2_effect")
+meter = 4
+amount = -5.0
+
+[resource]
+script = ExtResource("1_poi")
+id = &"palm_grove"
+name_es = "El palmar"
+name_en = "Palm grove"
+description_es = "Tres matas de coco en la arena. Los únicos cocos del cayo, así que no te los comas to' de una vez."
+description_en = "Three coconut palms on the sand. The cay's only coconuts, so don't eat them all at once."
+category = 0
+placement = 1
+object_count = 3
+palm_count = Vector2i(3, 3)
+palm_coconuts = Vector2i(5, 5)
+palm_terrain = 3
+palm_within_tiles = 5
+palm_apart_tiles = 2
+harvest_effects = Array[ExtResource("2_effect")]([SubResource("Resource_climb")])

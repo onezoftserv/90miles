@@ -71,7 +71,7 @@ All data in `reef_traps.tres` and the POI files, for the owner to confirm or ret
 
 - Grid 96×64, no land within 8 cells of the edge, one landmass, 1,000–1,300 land cells, land share 0.16–0.22, every land cell within 10 tiles of water (Euclidean, as the handmade tests measure).
 - Shallows: every water cell within 2 tiles of land (Chebyshev); deep water from 3 ("deep water 3 tiles out", `docs/ISLANDS.md` §4).
-- Shore band 2–4 tiles (one width per island): rock, except beach where the coast faces west, north-west or south-west to open water (the lee of the trade wind). Interior scrub with rock patches on 20–40% of it.
+- Shore band 2–4 tiles (one width per island): rock, except beach where the coast faces west to open water (the lee of the trade wind). Interior scrub with rock patches on 20–40% of it.
 - Shape (painter parameters): a spine 50–66 tiles long in 3-tile steps, bending 0–60° in all, half-width 7–11 tiles.
 - Landing: 4 beach cells beside shallows on the lee beach, every pair at most 5 tiles apart; the first is the lone arrival's. Raft build site: a beach cell 0.5–3 s from the first landing cell.
 - POIs: 3–6 by the generic rule; on the reef today 3 or 4, at least 12 tiles apart.
