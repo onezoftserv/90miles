@@ -3,8 +3,8 @@ extends RefCounted
 ## sound-pass audio "Generated sounds are reproducible and credited" (design D2): every WAV in a
 ## sound folder is named in that folder's License.txt and in the "Sound" table of CREDITS.md, and a
 ## recording (a bank entry that is not generated, owner Q2 B) has a Pack: block with its author,
-## a CC0 licence and a source page. Each check returns its failures, naming the file; empty when
-## the rule holds.
+## a CC0 licence and a source page, and no Work: block claims it as own work. Each check returns
+## its failures, naming the file; empty when the rule holds.
 
 const LICENCE_FILE: String = "License.txt"
 
@@ -27,7 +27,7 @@ static func check_folder(folder: String, credits_md: String) -> PackedStringArra
 
 
 ## Each recording of `bank` has a Pack: block naming its file, with an author, a CC0 licence and
-## a source page.
+## a source page, and no Work: block names it.
 static func check_recordings(bank: SoundBank) -> PackedStringArray:
 	var failures: PackedStringArray = []
 	for entry: SoundData in bank.entries:
@@ -38,7 +38,12 @@ static func check_recordings(bank: SoundBank) -> PackedStringArray:
 		var text: String = FileAccess.get_file_as_string(licence_path) if FileAccess.file_exists(licence_path) else ""
 		var found := false
 		for block: Dictionary in ArtChecks.licence_blocks(text):
-			if block["kind"] != "Pack" or not _names(String(block.get("Files", "")), path.get_file()):
+			if not _names(String(block.get("Files", "")), path.get_file()):
+				continue
+			if block["kind"] == "Work":
+				failures.append("%s is a recording but a Work: block in %s names it as own work" % [path, licence_path])
+				continue
+			if block["kind"] != "Pack":
 				continue
 			found = true
 			var licence: String = String(block.get("Licence", block.get("License", "")))

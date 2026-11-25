@@ -23,12 +23,12 @@ script = ExtResource("2_data")
 id = &"sea"
 stream = ExtResource("3_sea")
 bus = 1
-volume_db = -14.0
+volume_db = -10.8
 loop = true
 pitch_spread = 0.0
 min_interval_s = 0.0
 fade_s = 2.5
-generated = true
+generated = false
 
 [sub_resource type="Resource" id="Resource_wind"]
 script = ExtResource("2_data")
@@ -40,7 +40,7 @@ loop = true
 pitch_spread = 0.0
 min_interval_s = 0.0
 fade_s = 2.5
-generated = true
+generated = false
 
 [sub_resource type="Resource" id="Resource_night"]
 script = ExtResource("2_data")
@@ -167,12 +167,12 @@ script = ExtResource("2_data")
 id = &"thunder"
 stream = ExtResource("15_thunder")
 bus = 0
-volume_db = -5.0
+volume_db = -4.0
 loop = false
 pitch_spread = 0.08
 min_interval_s = 1.0
 fade_s = 1.0
-generated = true
+generated = false
 
 [sub_resource type="Resource" id="Resource_arrival"]
 script = ExtResource("2_data")

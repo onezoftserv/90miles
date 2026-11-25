@@ -314,3 +314,10 @@ Asked through the coordinating session on 2026-11-23, recommended first. The own
   - the level matches the RMS of the placeholder it replaces, so the bank's dB values still hold.
 
   The three ids then leave `sounds.json`, so the generator can never overwrite a recording. The raw downloads stay git-ignored, so CI checks the tracked files and not the rebuild.
+
+  The trims were chosen by measurement (`--analyse`, levels in 0.5 s windows), since this session cannot listen:
+  - sea: the file loops seamlessly, so one whole 18.58 s turn is taken. It is decoded twice over and the turn starts at 1.0 s, so the resampler's edges never reach the seam.
+  - wind: the flattest 16 s, from 18.0 s, folded into a 14 s loop with a 2 s crossfade.
+  - thunder: 7.5 s from 1.9 s, which keeps the 0.35 s of rumble before the crack, with a 2.5 s fade to silence.
+
+  The sea's wave crests and the thunder's crack stop the RMS match at a 0.95 peak. The bank makes up the difference instead: sea goes from -14 to -10.8 dB, and thunder from -5 to -4 dB. These levels are a starting point for the owner's ear.

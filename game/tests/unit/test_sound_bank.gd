@@ -8,6 +8,8 @@ const SPEC_IDS: PackedStringArray = [
 	"patrol_motor", "pickup", "raft_hit", "sea", "thirst_low", "thunder", "use_done", "wind",
 ]
 const LOOP_IDS: PackedStringArray = ["night", "patrol_motor", "sea", "wind"]
+## The owner's approved CC0 recordings (owner Q2 B); every other id comes from tools/audio/sfx.py.
+const RECORDING_IDS: PackedStringArray = ["sea", "thunder", "wind"]
 
 var bank: SoundBank
 
@@ -64,7 +66,7 @@ func test_every_entry_has_sane_numbers() -> void:
 		assert_between(entry.pitch_spread, 0.0, 0.2, "%s pitch spread" % entry.id)
 		assert_true(entry.min_interval_s >= 0.0, "%s repeat guard" % entry.id)
 		assert_true(entry.fade_s > 0.0, "%s fade" % entry.id)
-		assert_true(entry.generated, "%s comes from tools/audio until a recording is approved" % entry.id)
+		assert_eq(entry.generated, not RECORDING_IDS.has(String(entry.id)), "%s's generated flag" % entry.id)
 
 
 func test_the_low_thirst_step_is_the_sed_bars_pulse_step() -> void:

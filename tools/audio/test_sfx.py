@@ -17,12 +17,14 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import sfx  # noqa: E402
 
 RATE = sfx.RATE
-SPEC_IDS = {
-    "sea", "wind", "night", "patrol_motor",
+# The twelve generated ids. sea, wind and thunder are CC0 recordings (owner Q2 B), made by
+# recordings.py; test_recordings checks that the two lists cover the fifteen spec ids once each.
+GENERATED_IDS = {
+    "night", "patrol_motor",
     "pickup", "hurt_hit", "hurt_big", "hurt_drain", "use_done",
-    "thirst_low", "raft_hit", "loudhailer", "thunder", "arrival", "compass_rattle",
+    "thirst_low", "raft_hit", "loudhailer", "arrival", "compass_rattle",
 }
-LOOPS = {"sea", "wind", "night", "patrol_motor"}
+LOOPS = {"night", "patrol_motor"}
 
 
 def rms(samples):
@@ -155,8 +157,8 @@ class RecipeTest(unittest.TestCase):
         cls.sounds = {sound["id"]: sound for sound in cls.recipe["sounds"]}
         cls.rendered = {sid: sfx.render_sound(sound, RATE) for sid, sound in cls.sounds.items()}
 
-    def test_the_recipe_has_the_fifteen_ids_in_their_folders(self):
-        self.assertEqual(set(self.sounds), SPEC_IDS)
+    def test_the_recipe_has_the_twelve_generated_ids_in_their_folders(self):
+        self.assertEqual(set(self.sounds), GENERATED_IDS)
         for sid, sound in self.sounds.items():
             self.assertEqual(sound["folder"], "loops" if sid in LOOPS else "sfx", sid)
             self.assertEqual(bool(sound.get("loop", False)), sid in LOOPS, sid)
@@ -180,7 +182,7 @@ class RecipeTest(unittest.TestCase):
             self.assertTrue(sfx.seam_ok(self.rendered[sid], RATE), f"{sid} clicks at its seam")
 
     def test_two_renders_are_byte_identical(self):
-        for sid in ("sea", "loudhailer"):
+        for sid in ("night", "loudhailer"):
             again = sfx.render_sound(self.sounds[sid], RATE)
             self.assertEqual(sfx.wav_bytes(again, RATE), sfx.wav_bytes(self.rendered[sid], RATE), sid)
 

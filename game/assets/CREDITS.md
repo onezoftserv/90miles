@@ -50,12 +50,15 @@ Downloaded by hand with the owner's permission into git-ignored folders (`game/a
 
 ## Sound
 
-Every sound file the game plays and where it came from (openspec change `sound-pass`). `test_sound_credits.gd` checks that each WAV under `game/assets/audio/sfx/` and `game/assets/audio/loops/` is named in its folder's `License.txt` and in this table. A recording added later gets its own row with its author, licence and source page, after the owner approves the file.
+Every sound file the game plays and where it came from (openspec change `sound-pass`). `test_sound_credits.gd` checks that each WAV under `game/assets/audio/sfx/` and `game/assets/audio/loops/` is named in its folder's `License.txt` and in this table. Each recording has its own row with its author, licence and source page; the owner approved each file before it was downloaded (owner Q2 B, 2026-11-23).
 
 | Sound | Author | License | Source | Local files |
 | --- | --- | --- | --- | --- |
-| Generated sound effects | 90 Millas (own work) | All rights reserved (see LICENSE) | `tools/audio/sfx.py` from `tools/audio/sounds.json` | `audio/sfx/`: `pickup.wav`, `hurt_hit.wav`, `hurt_big.wav`, `hurt_drain.wav`, `use_done.wav`, `thirst_low.wav`, `raft_hit.wav`, `loudhailer.wav`, `thunder.wav`, `arrival.wav`, `compass_rattle.wav` (license: `audio/sfx/License.txt`) |
-| Generated sound loops | 90 Millas (own work) | All rights reserved (see LICENSE) | `tools/audio/sfx.py` from `tools/audio/sounds.json` | `audio/loops/`: `sea.wav`, `wind.wav`, `night.wav`, `patrol_motor.wav` (license: `audio/loops/License.txt`) |
+| kephalonia sea loop.wav (Freesound 416325) | johnnyguitar01 | CC0 1.0 (Creative Commons 0) | https://freesound.org/people/johnnyguitar01/sounds/416325/ | `audio/loops/sea.wav`, made by `tools/audio/recordings.py` from `tools/audio/recordings.json` (license: `audio/loops/License.txt`) |
+| Wind at Ocean shore. (Freesound 659004) | Tom_Kaszuba | CC0 1.0 (Creative Commons 0) | https://freesound.org/people/Tom_Kaszuba/sounds/659004/ | `audio/loops/wind.wav`, made by `tools/audio/recordings.py` from `tools/audio/recordings.json` (license: `audio/loops/License.txt`) |
+| thunder dry crack rumble.wav (Freesound 536903) | cognito perceptu | CC0 1.0 (Creative Commons 0) | https://freesound.org/people/cognito%20perceptu/sounds/536903/ | `audio/sfx/thunder.wav`, made by `tools/audio/recordings.py` from `tools/audio/recordings.json` (license: `audio/sfx/License.txt`) |
+| Generated sound effects | 90 Millas (own work) | All rights reserved (see LICENSE) | `tools/audio/sfx.py` from `tools/audio/sounds.json` | `audio/sfx/`: `pickup.wav`, `hurt_hit.wav`, `hurt_big.wav`, `hurt_drain.wav`, `use_done.wav`, `thirst_low.wav`, `raft_hit.wav`, `loudhailer.wav`, `arrival.wav`, `compass_rattle.wav` (license: `audio/sfx/License.txt`) |
+| Generated sound loops | 90 Millas (own work) | All rights reserved (see LICENSE) | `tools/audio/sfx.py` from `tools/audio/sounds.json` | `audio/loops/`: `night.wav`, `patrol_motor.wav` (license: `audio/loops/License.txt`) |
 
 ## Fonts
 
@@ -68,5 +71,5 @@ Every sound file the game plays and where it came from (openspec change `sound-p
 
 Listed in `docs/ASSETS.md` but still to source (manual download, license checked per pack):
 
-- Sea ambience, waves, wind and rain (freesound.org, CC0 filter; needs a login). For `sound-pass` (owner Q2 B, 2026-11-23), CC0 recordings of the sea, wind and thunder replace the generated placeholders once the owner approves each candidate file.
+- Rain (freesound.org, CC0 filter; needs a login). The sea, wind and thunder recordings are in the Sound table above.
 - Priority 2 content-pass art and music.

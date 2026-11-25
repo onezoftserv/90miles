@@ -1,35 +1,6 @@
 {
-  "about": "The recipe of the game's generated sounds (openspec change sound-pass D1). python -I tools/audio/sfx.py renders each into game/assets/audio/<folder>/<id>.wav. sea, wind and thunder are placeholders until the owner approves CC0 recordings (owner Q2 B).",
+  "about": "The recipe of the game's generated sounds (openspec change sound-pass D1). python -I tools/audio/sfx.py renders each into game/assets/audio/<folder>/<id>.wav. sea, wind and thunder are CC0 recordings instead (owner Q2 B), made by recordings.py from recordings.json, so they are not in this recipe and the generator never writes them.",
   "sounds": [
-    {
-      "id": "sea",
-      "folder": "loops",
-      "length_s": 8.0,
-      "loop": true,
-      "crossfade_s": 1.5,
-      "about": "Surf: a dark brown-noise body that swells as waves arrive, with a hiss of wash on each crest.",
-      "parts": [
-        {"wave": "brown", "seed": 11, "lowpass": 700, "volume": 1.0,
-         "swell": {"min_s": 3.2, "max_s": 5.0, "floor": 0.35, "rise": 0.3, "seed": 21}},
-        {"wave": "noise", "freq": 22050, "seed": 12, "highpass": 900, "lowpass": 3200, "poles": 2, "volume": 0.22,
-         "swell": {"min_s": 3.2, "max_s": 5.0, "floor": 0.05, "rise": 0.25, "seed": 21}}
-      ]
-    },
-    {
-      "id": "wind",
-      "folder": "loops",
-      "length_s": 8.0,
-      "loop": true,
-      "crossfade_s": 1.5,
-      "about": "Open-sea wind: band-limited noise whose colour wanders like a whistle, in slow gusts.",
-      "parts": [
-        {"wave": "noise", "freq": 22050, "seed": 31, "highpass": 180, "poles": 2,
-         "lowpass": {"min": 420, "max": 1300, "min_s": 0.8, "max_s": 2.2, "seed": 32},
-         "swell": {"min_s": 2.5, "max_s": 4.5, "floor": 0.45, "rise": 0.45, "seed": 33}},
-        {"wave": "noise", "freq": 22050, "seed": 34, "highpass": 1500, "lowpass": 2600, "poles": 2, "volume": 0.25,
-         "swell": {"min_s": 1.8, "max_s": 3.0, "floor": 0.1, "rise": 0.5, "seed": 35}}
-      ]
-    },
     {
       "id": "night",
       "folder": "loops",
@@ -177,21 +148,6 @@
          "env": {"attack": 0.015, "decay": 0.08, "sustain": 0.75, "release": 0.16}},
         {"wave": "noise", "freq": 6000, "seed": 92, "highpass": 1500, "lowpass": 4000, "start": 0.05, "length": 0.85, "volume": 0.08,
          "env": {"attack": 0.01, "decay": 0.1, "sustain": 0.6, "release": 0.1}}
-      ]
-    },
-    {
-      "id": "thunder",
-      "folder": "sfx",
-      "length_s": 3.0,
-      "about": "Thunder: a bright crack falling into a long rolling rumble.",
-      "parts": [
-        {"wave": "noise", "freq": 22050, "seed": 101, "highpass": 700, "length": 0.18, "volume": 0.7,
-         "env": {"attack": 0.0, "decay": 0.09, "sustain": 0.3, "release": 0.08}},
-        {"wave": "brown", "seed": 102, "lowpass": 260, "length": 3.0, "volume": 1.0,
-         "env": {"attack": 0.06, "decay": 0.9, "sustain": 0.45, "release": 1.6},
-         "swell": {"min_s": 0.45, "max_s": 0.8, "floor": 0.45, "rise": 0.4, "seed": 103}},
-        {"wave": "noise", "freq": 1200, "seed": 104, "lowpass": 600, "start": 0.05, "length": 1.4, "volume": 0.35,
-         "env": {"attack": 0.02, "decay": 0.4, "sustain": 0.3, "release": 0.8}}
       ]
     },
     {

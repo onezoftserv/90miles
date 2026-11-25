@@ -202,12 +202,22 @@ Each install SHALL keep a volume level that scales every sound. It lasts across 
 - **THEN** the volume is 30 %
 
 ### Requirement: Generated sounds are reproducible and credited
-Every sound file this pass ships SHALL come from the repository's own sound generator and its stored parameters, and running the generator again SHALL rebuild the same files. Every shipped sound file SHALL be listed with its origin in the asset credits and in its folder's licence file. A sound from outside the repository SHALL be added only after the owner's approval, with its author, licence and source recorded the same way.
+Every generated sound file SHALL come from the repository's own sound generator and its stored parameters, and running the generator again SHALL rebuild the same files. Every shipped sound file SHALL be listed with its origin in the asset credits and in its folder's licence file.
 
 #### Scenario: Rebuilding the sounds
 - **WHEN** the generator runs on the stored parameters
-- **THEN** it writes the same fifteen files, byte for byte on the machine that wrote them and within one step of the last bit on another
+- **THEN** it writes the same twelve generated files, byte for byte on the machine that wrote them and within one step of the last bit on another
+- **AND** it leaves the three recordings untouched
 
 #### Scenario: Every file is credited
 - **WHEN** the verification checks run
 - **THEN** every audio file under the game's audio folders appears in its folder's licence file and in the asset credits
+
+### Requirement: Approved recordings
+A sound from outside the repository SHALL be added only after the owner has approved that file. Its author, licence and source page SHALL be recorded in its folder's licence file and in the asset credits, no own-work entry SHALL claim it, and the generator SHALL never write it. In this pass `sea`, `wind` and `thunder` are approved CC0 recordings (owner Q2 B), and the other twelve sounds are generated.
+
+#### Scenario: A recording is credited to its author
+- **GIVEN** `thunder` is an approved CC0 recording
+- **WHEN** the verification checks run
+- **THEN** its folder's licence file names its author, its CC0 licence and its source page
+- **AND** no own-work entry claims it

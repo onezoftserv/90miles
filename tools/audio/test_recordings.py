@@ -97,7 +97,55 @@ class ShapingTest(unittest.TestCase):
             self.assertIn("CC0", rec["licence"], rec["id"])
             self.assertTrue(rec["page"].startswith("https://freesound.org/"), rec["id"])
             self.assertTrue(rec["source"].startswith(f"{rec['freesound_id']}__"), rec["id"])
-            self.assertGreater(rec["expect_s"], rec["start_s"] + rec["length_s"] + rec.get("crossfade_s", 0.0), rec["id"])
+            if rec.get("seamless", False):
+                self.assertTrue(rec["loop"], rec["id"])
+                self.assertAlmostEqual(rec["length_s"], rec["expect_s"], delta=0.05, msg=rec["id"])
+            else:
+                self.assertGreater(rec["expect_s"], rec["start_s"] + rec["length_s"] + rec.get("crossfade_s", 0.0), rec["id"])
+
+
+SPEC_IDS = {
+    "sea", "wind", "night", "patrol_motor",
+    "pickup", "hurt_hit", "hurt_big", "hurt_drain", "use_done",
+    "thirst_low", "raft_hit", "loudhailer", "thunder", "arrival", "compass_rattle",
+}
+
+
+class TrackedRecordingsTest(unittest.TestCase):
+    """The tracked files recordings.py wrote. The raw downloads are git-ignored, so this checks the
+    results, not a rebuild."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.recs = recordings.load_params()["recordings"]
+
+    def test_the_recipe_and_the_recordings_cover_the_fifteen_ids_once(self):
+        generated = [sound["id"] for sound in sfx.load_recipe()["sounds"]]
+        recorded = [rec["id"] for rec in self.recs]
+        self.assertEqual(sorted(generated + recorded), sorted(SPEC_IDS))
+
+    def test_each_recording_is_a_22050_hz_mono_file_of_its_length(self):
+        for rec in self.recs:
+            path = sfx.DEFAULT_OUT / rec["folder"] / f"{rec['id']}.wav"
+            self.assertTrue(path.exists(), f"{path} is missing: run python -I tools/audio/recordings.py")
+            rate, ints = sfx.read_wav(path.read_bytes())
+            self.assertEqual(rate, RATE, rec["id"])
+            self.assertEqual(len(ints), round(rec["length_s"] * RATE), rec["id"])
+            samples = [v / 32767 for v in ints]
+            self.assertGreater(recordings.rms(samples), 0.05, f"{rec['id']} is too quiet")
+            self.assertLessEqual(max(abs(s) for s in samples), recordings.PEAK_CAP + 1e-3, f"{rec['id']} clips")
+            if rec["loop"]:
+                self.assertTrue(sfx.seam_ok(samples, RATE), f"{rec['id']} clicks at its seam")
+            else:
+                self.assertLess(max(abs(s) for s in samples[-32:]), 0.02, f"{rec['id']} ends with a click")
+                self.assertLess(abs(samples[0]), 0.02, f"{rec['id']} starts with a click")
+
+    def test_the_generator_leaves_the_recordings_alone(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            written = sfx.build(sfx.load_recipe(), pathlib.Path(tmp))
+            names = {p.relative_to(tmp).as_posix() for p in written}
+        for rec in self.recs:
+            self.assertNotIn(f"{rec['folder']}/{rec['id']}.wav", names)
 
 
 @unittest.skipUnless(HAS_FFMPEG, "ffmpeg is not installed")
@@ -128,6 +176,19 @@ class FfmpegPassTest(unittest.TestCase):
         self.assertTrue(sfx.seam_ok(samples, RATE), notes)
         self.assertAlmostEqual(recordings.rms(samples), 0.18, places=2)
         self.assertIn("seam ok", notes)
+
+    def test_a_seamless_download_is_taken_whole_turn_from_inside(self):
+        rate, seconds = 44100, 2.0
+        wave_at = [0.2 * math.sin(2 * math.pi * 5 * i / rate) + 0.1 * math.sin(2 * math.pi * 441 * i / rate)
+                   for i in range(int(seconds * rate))]
+        write_wav(self.root / "raw" / "1__a__sea.wav", list(zip(wave_at, wave_at)), rate, 32, True)
+        rec = self.rec(expect_s=2.0, start_s=0.7, length_s=2.0, crossfade_s=0.0, seamless=True)
+        path, notes = recordings.prepare(rec, self.root / "raw", self.root / "out")
+        rate_out, ints = sfx.read_wav(path.read_bytes())
+        self.assertEqual((rate_out, len(ints)), (RATE, 2 * RATE))
+        samples = [v / 32767 for v in ints]
+        self.assertTrue(sfx.seam_ok(samples, RATE), notes)
+        self.assertAlmostEqual(recordings.rms(samples), 0.18, places=2)
 
     def test_a_24_bit_48k_download_is_found_by_its_number(self):
         left = noise(4 * 48000, 3)

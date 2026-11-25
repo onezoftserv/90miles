@@ -2,6 +2,8 @@
 
 ffmpeg decodes, downmixes, resamples and trims each raw download to mono at 22 050 Hz. Then:
 - a loop's tail is crossfaded over its head with sfx.py's fold, so it runs on without a seam;
+  a download that already loops seamlessly ("seamless") is decoded twice over and one whole
+  turn of it is taken, so the resampler's edges never reach the seam;
 - a one-shot gets a short fade-in and a fade-out to silence;
 - the level is set to the RMS of the generated placeholder the file replaces, so the bank's dB
   values still hold, unless that would push a peak past PEAK_CAP.
@@ -71,9 +73,13 @@ def probe(path):
     return duration, text
 
 
-def decode(path, start_s=0.0, length_s=None, rate=RATE):
-    """Mono float samples of `path` from start_s for length_s seconds (all of it when None)."""
-    command = ["ffmpeg", "-v", "error", "-nostdin", "-i", str(path), "-ss", f"{start_s:.6f}"]
+def decode(path, start_s=0.0, length_s=None, rate=RATE, repeat=0):
+    """Mono float samples of `path` from start_s for length_s seconds (all of it when None),
+    with the file played 1 + repeat times end to end."""
+    command = ["ffmpeg", "-v", "error", "-nostdin"]
+    if repeat > 0:
+        command += ["-stream_loop", str(repeat)]
+    command += ["-i", str(path), "-ss", f"{start_s:.6f}"]
     if length_s is not None:
         command += ["-t", f"{length_s:.6f}"]
     command += ["-ac", "1", "-ar", str(rate), "-f", "f32le", "-"]
@@ -148,6 +154,14 @@ def flattest(levels, count, floor=0.0):
 def shape(rec, decoded, rate=RATE):
     """The game sound for `rec` from its decoded samples (length_s plus any crossfade_s)."""
     length = int(round(float(rec["length_s"]) * rate))
+    if rec.get("seamless", False):
+        # One whole turn of a loop that already runs on: only its offset is taken out, since a
+        # filter's start-up would leave a step at the seam.
+        if len(decoded) < length:
+            raise ValueError(f"{rec['id']}: the trim runs past the end of the file")
+        mean = sum(decoded[:length]) / length
+        scaled, _gain, _capped = level([s - mean for s in decoded[:length]], float(rec["rms"]))
+        return scaled
     samples = sfx._dc_block(decoded)
     if rec.get("loop", False):
         fold = int(round(float(rec["crossfade_s"]) * rate))
@@ -175,8 +189,9 @@ def prepare(rec, source_dir=DEFAULT_SOURCE, out_root=sfx.DEFAULT_OUT, rate=RATE)
     if abs(duration - float(rec["expect_s"])) > DURATION_SLACK_S:
         raise ValueError(f"{rec['id']}: {source.name} lasts {duration:.2f} s, not the approved "
                          f"{rec['expect_s']} s; is it the approved file?")
-    take = float(rec["length_s"]) + (float(rec["crossfade_s"]) if rec.get("loop", False) else 0.0)
-    decoded = decode(source, float(rec["start_s"]), take, rate)
+    seamless = bool(rec.get("seamless", False))
+    take = float(rec["length_s"]) + (float(rec.get("crossfade_s", 0.0)) if rec.get("loop", False) else 0.0)
+    decoded = decode(source, float(rec["start_s"]), take, rate, repeat=1 if seamless else 0)
     samples = shape(rec, decoded, rate)
     path = pathlib.Path(out_root) / rec["folder"] / f"{rec['id']}.wav"
     path.parent.mkdir(parents=True, exist_ok=True)

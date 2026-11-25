@@ -1,5 +1,5 @@
 {
-  "about": "The approved CC0 recordings (openspec change sound-pass, owner Q2 B, 2026-11-23) and how recordings.py trims each into a game sound. rms is the level of the generated placeholder each one replaces, so the bank's dB values still hold. expect_s is the approved file's length, to catch a wrong download.",
+  "about": "The approved CC0 recordings (openspec change sound-pass, owner Q2 B, 2026-11-23) and how recordings.py trims each into a game sound. rms is the level of the generated placeholder each one replaces, so the bank's dB values still hold. expect_s is the approved file's length, to catch a wrong download. Trims were chosen from --analyse: the sea loops seamlessly, so one whole turn is taken from inside it; the wind take is its flattest 16 s; the thunder starts 0.35 s before the crack and ends in its own rumble.",
   "recordings": [
     {
       "id": "sea",
@@ -11,10 +11,11 @@
       "author": "johnnyguitar01",
       "licence": "CC0 1.0",
       "expect_s": 18.6,
-      "start_s": 0.0,
-      "length_s": 16.0,
-      "crossfade_s": 2.0,
-      "rms": 0.1786
+      "start_s": 1.0,
+      "length_s": 18.584082,
+      "crossfade_s": 0.0,
+      "rms": 0.1786,
+      "seamless": true
     },
     {
       "id": "wind",
@@ -26,7 +27,7 @@
       "author": "Tom_Kaszuba",
       "licence": "CC0 1.0",
       "expect_s": 66.0,
-      "start_s": 0.0,
+      "start_s": 18.0,
       "length_s": 14.0,
       "crossfade_s": 2.0,
       "rms": 0.1738
@@ -41,8 +42,8 @@
       "author": "cognito perceptu",
       "licence": "CC0 1.0",
       "expect_s": 10.6,
-      "start_s": 0.0,
-      "length_s": 8.0,
+      "start_s": 1.9,
+      "length_s": 7.5,
       "fade_out_s": 2.5,
       "rms": 0.1031
     }
