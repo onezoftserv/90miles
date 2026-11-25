@@ -12,6 +12,7 @@ signal abandon_confirmed
 ## Ajustes changed the display or "Reducir destellos": the shell applies it, as on the title.
 signal display_changed
 signal flashes_changed
+signal volume_changed
 
 enum Role {
 	SOLO,
@@ -127,6 +128,7 @@ func open_settings() -> void:
 	screen.back_requested.connect(close_view)
 	screen.display_changed.connect(display_changed.emit)
 	screen.flashes_changed.connect(flashes_changed.emit)
+	screen.volume_changed.connect(volume_changed.emit)
 
 
 func open_controls() -> void:

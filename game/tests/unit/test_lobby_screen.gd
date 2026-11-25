@@ -126,3 +126,72 @@ func test_esc_leaves_a_client_lobby_but_never_closes_the_host_lobby() -> void:
 	watch_signals(host)
 	host._unhandled_input(_cancel_event())
 	assert_signal_not_emitted(host, "back_requested", "closing the lobby for everyone takes Salir")
+
+
+# --- menu-clarity design D7: seats, the count, the rematch line and the host's close question ---
+
+func test_four_seats_under_a_count() -> void:
+	var lobby := _lobby(true)
+	lobby.show_roster({1: "Yuni"} as Dictionary[int, String])
+	assert_eq(lobby.heading.text, "A bordo (1/4)")
+	assert_eq(lobby.seats(), ["Yuni (anfitrión)", "Libre", "Libre", "Libre"] as Array[String])
+	assert_eq(lobby.rows(), ["Yuni (anfitrión)"] as Array[String], "rows() lists who is aboard")
+	lobby.show_roster({1: "Yuni", 5: "Papo"} as Dictionary[int, String])
+	assert_eq(lobby.heading.text, "A bordo (2/4)")
+	assert_eq(lobby.seats(), ["Yuni (anfitrión)", "Papo", "Libre", "Libre"] as Array[String])
+
+
+func test_the_hosts_addresses_come_before_the_port_note() -> void:
+	var lobby := _lobby(true)
+	lobby.set_addresses(PackedStringArray(["192.168.1.70"]))
+	assert_lt(lobby.addresses.get_index(), lobby.note.get_index(), "Tu IP first")
+	assert_eq(lobby.addresses.text, "Tu IP: 192.168.1.70")
+
+
+func test_a_rematch_lobby_says_so() -> void:
+	var lobby := _lobby(true)
+	assert_false(lobby.rematch_line.visible, "a fresh lobby does not")
+	lobby.rematch = true
+	assert_true(lobby.rematch_line.visible)
+	assert_eq(lobby.rematch_line.text, "Otro viaje con el mismo grupo.")
+
+
+func test_the_leave_button_reads_by_role() -> void:
+	assert_eq(_lobby(true).leave_button.text, "Cerrar partida", "the host closes the game")
+	assert_eq(_lobby(false).leave_button.text, "Salir", "a client leaves")
+	var opening := _lobby(true)
+	opening.show_opening()
+	assert_eq(opening.leave_button.text, "Salir", "the opening lobby cancels")
+
+
+func test_a_host_alone_closes_at_once() -> void:
+	var lobby := _lobby(true)
+	lobby.show_roster({1: "Yuni"} as Dictionary[int, String])
+	watch_signals(lobby)
+	lobby.leave_button.pressed.emit()
+	assert_signal_emitted(lobby, "back_requested")
+	assert_null(lobby.confirm, "no question asked")
+
+
+func test_the_host_is_asked_while_others_are_aboard() -> void:
+	var lobby := _lobby(true)
+	lobby.show_roster({1: "Yuni", 5: "Papo"} as Dictionary[int, String])
+	watch_signals(lobby)
+	lobby.leave_button.pressed.emit()
+	assert_signal_not_emitted(lobby, "back_requested", "not yet")
+	assert_not_null(lobby.confirm)
+	if lobby.confirm == null:
+		return
+	assert_eq(lobby.confirm.question.text, "¿Cerrar la partida?")
+	assert_eq(lobby.confirm.line.text, "Los demás vuelven al inicio.")
+	assert_eq(lobby.confirm.confirm_button.text, "Cerrar")
+	assert_eq(get_viewport().gui_get_focus_owner(), lobby.confirm.cancel_button, "Cancelar focused")
+	assert_eq((lobby.confirm.get_node(^"%Panel") as PanelContainer).theme_type_variation, &"", "on paper")
+	lobby.confirm._unhandled_input(_cancel_event())
+	await wait_process_frames(1)
+	assert_null(lobby.confirm, "Esc cancels")
+	assert_signal_not_emitted(lobby, "back_requested")
+	assert_eq(get_viewport().gui_get_focus_owner(), lobby.leave_button)
+	lobby.leave_button.pressed.emit()
+	lobby.confirm.confirm_button.pressed.emit()
+	assert_signal_emitted(lobby, "back_requested", "Cerrar closes it")

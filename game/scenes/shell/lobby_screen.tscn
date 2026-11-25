@@ -28,16 +28,29 @@ layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="Heading" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"PanelHeading"
 text = "A bordo"
 horizontal_alignment = 1
 
+[node name="RematchLine" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
+text = "Otro viaje con el mismo grupo."
+horizontal_alignment = 1
+
 [node name="Rows" type="VBoxContainer" parent="Panel/Box"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_constants/separation = 4
+
+[node name="Addresses" type="Label" parent="Panel/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PanelLabel"
 
 [node name="Note" type="Label" parent="Panel/Box"]
 unique_name_in_owner = true
@@ -46,11 +59,6 @@ layout_mode = 2
 theme_type_variation = &"PanelLabel"
 text = "Los demás se unen por IP en el puerto UDP 7777. Por internet, abre ese puerto en tu router."
 autowrap_mode = 2
-
-[node name="Addresses" type="Label" parent="Panel/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"PanelLabel"
 
 [node name="Waiting" type="Label" parent="Panel/Box"]
 unique_name_in_owner = true
