@@ -10,9 +10,13 @@ extends Node
 ## - Host: a squad that rows out with captives while someone is free takes them (CaptureRules.take).
 ## - The scene: every player is held out of play. The host resolves the scene's states (open, act,
 ##   plea, outcome) from the DialogueData, each state's highest-priority entry whose conditions hold
-##   for the scene's party, sends every line to every peer in order, holds each for its reveal time
-##   (40 chars/s) plus 2 s, then frees the party, stands a downed player at 30 health and applies the
-##   outcome's effects (the flags, the fire sources, the release or the restart).
+##   for the scene's party, sends every line to every peer in order, holds each `hold_s` (art-guardacostas
+##   D12: 1 s plus 1 s per 15 characters, never less than its reveal at 40 chars/s plus 2 s), then frees
+##   the party, stands a downed player at 30 health and applies the outcome's effects (the flags, the
+##   fire sources, the release or the restart).
+## - Host (art-guardacostas D13): around the outcome's effects it records what each player lost, item
+##   by item kind in slot order, and sends each peer its own list (`show_confiscated`); a release, which
+##   takes nothing, sends nothing.
 ## - Every peer: `current_*` hold the line the scene panel draws; a joiner is sent it on arrival.
 
 ## Host: a whole-party capture in the final crossing (the final-crossing work connects the ending).
@@ -22,11 +26,18 @@ signal scene_started
 signal scene_ended
 ## Every peer: a new line is current.
 signal line_changed
+## Every peer (art-guardacostas D13): the host says what this peer's own player lost to the outcome.
+signal confiscation_shown(ids: PackedStringArray)
 
 const NODE_NAME: StringName = &"CaptureScene"
 const DEFAULT_SCENE_ID: StringName = &"beat_la_captura"
 const REVEAL_CHARS_PER_S: float = 40.0
 const LINE_HOLD_S: float = 2.0
+## art-guardacostas D12: a line stays at least 1 s plus 1 s per READ_CHARS_PER_S characters.
+const READ_BASE_S: float = 1.0
+const READ_CHARS_PER_S: float = 15.0
+## The most item ids a confiscation report keeps.
+const MAX_CONFISCATED: int = 16
 ## The speaker id of a line a player says (the plea).
 const PLAYER_SPEAKER: StringName = &"player"
 const START_STATE: StringName = &"open"
@@ -42,6 +53,10 @@ var current_scene_id: StringName = &""
 var current_line_id: StringName = &""
 var current_speaker_id: StringName = &""
 var current_speaker_peer: int = 0
+## This peer's own player's losses to the last outcome, as the host reported them (art-guardacostas D13).
+var confiscated: PackedStringArray = []
+## Host: every player's losses to the last outcome, by peer (art-guardacostas D13).
+var last_report: Dictionary[int, PackedStringArray] = {}
 ## Host: the final-crossing seam, `func() -> bool`; false until the final crossing exists.
 var in_final_crossing: Callable = Callable()
 
@@ -168,9 +183,30 @@ func _next_line() -> void:
 	show_line.rpc(_index + 1, String(_scene_id), String(line["id"]), String(line["speaker"]), int(line["peer"]))
 
 
-## Seconds a line of `text` stays: its reveal at 40 chars/s, plus 2 s.
+## Seconds a line of `text` stays (art-guardacostas D12): 1 s plus 1 s per 15 characters, never less than
+## its reveal at 40 chars/s plus 2 s.
 static func hold_s(text: String) -> float:
-	return float(text.length()) / REVEAL_CHARS_PER_S + LINE_HOLD_S
+	var length: float = float(text.length())
+	return maxf(length / REVEAL_CHARS_PER_S + LINE_HOLD_S, READ_BASE_S + length / READ_CHARS_PER_S)
+
+
+## Each item id `inventory` holds with its count, in slot order (art-guardacostas D13).
+static func item_counts(inventory: Inventory) -> Dictionary[StringName, int]:
+	var counts: Dictionary[StringName, int] = {}
+	for slot: InventorySlot in inventory.slots:
+		if slot.is_empty():
+			continue
+		counts[slot.item_id] = counts.get(slot.item_id, 0) + slot.count
+	return counts
+
+
+## The ids whose count fell from `before` to `after`, in `before`'s order, one entry per item kind.
+static func losses(before: Dictionary[StringName, int], after: Dictionary[StringName, int]) -> PackedStringArray:
+	var lost := PackedStringArray()
+	for id: StringName in before:
+		if after.get(id, 0) < before[id]:
+			lost.append(String(id))
+	return lost
 
 
 # The scene ends: the party is free and in play again, a downed player stands at 30 health, and the
@@ -189,10 +225,35 @@ func _finish() -> void:
 			body.meters.revive()
 	if outcome == null:
 		return
+	var before: Dictionary[PlayerBody, Dictionary] = {}
+	for body: PlayerBody in party:
+		if is_instance_valid(body):
+			before[body] = item_counts(body.inventory)
 	var actor: PlayerBody = party[0] if not party.is_empty() else null
 	for effect: EffectData in outcome.on_enter_effects:
 		if actor != null:
 			EffectApplier.apply(effect, actor, actor)
+	_report(before)
+
+
+# Host: each player's losses to the outcome, sent to that player's peer after the travel's own message
+# (the same reliable channel), so a client has landed when it shows them. Nothing for no loss.
+func _report(before: Dictionary[PlayerBody, Dictionary]) -> void:
+	last_report.clear()
+	for body: PlayerBody in before:
+		if not is_instance_valid(body):
+			continue
+		var counts: Dictionary[StringName, int] = {}
+		counts.assign(before[body])
+		var lost: PackedStringArray = losses(counts, item_counts(body.inventory))
+		if lost.is_empty():
+			continue
+		var peer: int = _session.peer_of(body)
+		last_report[peer] = lost
+		if peer == multiplayer.get_unique_id():
+			show_confiscated(lost)
+		elif not _session.is_dropped(peer) and _session.peer_ids().has(peer):
+			show_confiscated.rpc_id(peer, lost)
 
 
 # Every player of the run in peer order but the dead: the captive, the taken, the downed and the
@@ -306,6 +367,22 @@ func end_scene() -> void:
 	current_serial = 0
 	current_line_id = &""
 	scene_ended.emit()
+
+
+## Every peer, from the host: what this peer's own player lost to the outcome (art-guardacostas D13). At
+## most MAX_CONFISCATED ids are kept and ids that are not items are dropped.
+@rpc("authority", "call_local", "reliable")
+func show_confiscated(ids: PackedStringArray) -> void:
+	if not _from_host():
+		return
+	var kept := PackedStringArray()
+	for id: String in ids:
+		if kept.size() >= MAX_CONFISCATED:
+			break
+		if GameState.content.get_entry(&"items", StringName(id)) is ItemData:
+			kept.append(id)
+	confiscated = kept
+	confiscation_shown.emit(kept)
 
 
 ## Every peer, from the host: `peer_id`'s player was taken; it waits out of play here too.

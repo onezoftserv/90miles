@@ -1,0 +1,5 @@
+Work: 90 Millas portraits
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: rodriguez.png (art-guardacostas D10: the coast guard officer Rodríguez's 32x32 bust portrait, built by tools/art/portraits.py from tools/art/fixes/portraits/rodriguez.png with its edge rimmed in black: a tired man in his forties in front view with an olive patrol cap and dark visor, greying temples and moustache, bags under the eyes and an olive shirt with plain shoulder boards; a fictional man who resembles nobody, with no real insignia, rank mark, flag, lettering or logo)
