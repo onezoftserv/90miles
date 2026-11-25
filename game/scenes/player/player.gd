@@ -56,6 +56,9 @@ var taken: bool = false
 ## A HUD panel holds the interact button (inventory-hud's crafting list, until interact is let go
 ## after it closes): the local intent carries no interact press meanwhile.
 var hud_holds_interact: bool = false
+## The run menu is open on this peer in co-op (coop-networking "Pause", run-menu design D2): the
+## local intent moves, runs and interacts with nothing, and keeps the last intent's crouch.
+var menu_holds_input: bool = false
 ## Scales the energy swimming spends: 0 where the crossing pays its own pace drain instead.
 var swim_energy_factor: float = 1.0
 ## The look slot (0-3) the host gave this body in its spawn payload (art-pass "Player look slots"):

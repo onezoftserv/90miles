@@ -11,6 +11,14 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/compass_needle.tscn" id="9_needle"]
 [ext_resource type="PackedScene" path="res://scenes/ui/note_label.tscn" id="10_note_label"]
 [ext_resource type="PackedScene" path="res://scenes/ui/patrol_horizon.tscn" id="11_patrol_horizon"]
+[ext_resource type="Script" path="res://scenes/ui/clock_strip.gd" id="12_clock"]
+[ext_resource type="Script" path="res://scenes/ui/day_strip_view.gd" id="13_day_strip"]
+[ext_resource type="Script" path="res://scenes/ui/objective_row.gd" id="14_objective"]
+[ext_resource type="Script" path="res://scenes/ui/site_arrow.gd" id="15_site_arrow"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/clock_moon.png" id="k_clock_moon"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/clock_sun.png" id="k_clock_sun"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrow_straight.png" id="k_arrow_straight"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/arrow_diagonal.png" id="k_arrow_diagonal"]
 
 [node name="RunHud" type="CanvasLayer"]
 layer = 3
@@ -25,17 +33,57 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 
 [node name="PhasePanel" type="PanelContainer" parent="."]
-offset_left = 260.0
+offset_left = 152.0
 offset_top = 4.0
 offset_right = 380.0
 offset_bottom = 18.0
 mouse_filter = 2
 theme_type_variation = &"HudPanel"
 
-[node name="Phase" type="Label" parent="PhasePanel"]
-unique_name_in_owner = true
+[node name="Clock" type="HBoxContainer" parent="PhasePanel"]
 layout_mode = 2
-horizontal_alignment = 1
+mouse_filter = 2
+theme_override_constants/separation = 4
+script = ExtResource("12_clock")
+moon_mark = ExtResource("k_clock_moon")
+sun_mark = ExtResource("k_clock_sun")
+
+[node name="Day" type="Label" parent="PhasePanel/Clock"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Strip" type="Control" parent="PhasePanel/Clock"]
+custom_minimum_size = Vector2(56, 7)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("13_day_strip")
+
+[node name="Left" type="HBoxContainer" parent="PhasePanel/Clock"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Mark" type="TextureRect" parent="PhasePanel/Clock/Left"]
+custom_minimum_size = Vector2(5, 5)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+stretch_mode = 3
+
+[node name="Time" type="Label" parent="PhasePanel/Clock/Left"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Phase" type="Label" parent="PhasePanel/Clock"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+horizontal_alignment = 2
 
 [node name="WeatherPanel" type="PanelContainer" parent="."]
 visible = false
@@ -49,6 +97,21 @@ theme_type_variation = &"HudPanelThin"
 [node name="Weather" type="Label" parent="WeatherPanel"]
 unique_name_in_owner = true
 layout_mode = 2
+horizontal_alignment = 1
+
+[node name="ObjectiveRow" type="PanelContainer" parent="."]
+visible = false
+offset_left = 152.0
+offset_top = 20.0
+offset_right = 380.0
+offset_bottom = 30.0
+mouse_filter = 2
+theme_type_variation = &"HudPanelThin"
+script = ExtResource("14_objective")
+
+[node name="Line" type="Label" parent="ObjectiveRow"]
+layout_mode = 2
+mouse_filter = 2
 horizontal_alignment = 1
 
 [node name="TeammatesPanel" type="PanelContainer" parent="."]
@@ -85,6 +148,18 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("7_marks")
+
+[node name="SiteArrow" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("15_site_arrow")
+straight = ExtResource("k_arrow_straight")
+diagonal = ExtResource("k_arrow_diagonal")
 
 [node name="WatchingPanel" type="PanelContainer" parent="."]
 unique_name_in_owner = true

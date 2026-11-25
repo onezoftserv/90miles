@@ -1,7 +1,9 @@
 class_name RunHud
 extends CanvasLayer
 ## ui-shell "HUD layout": the run's HUD inside a 640×360 budget. Meters top-left (labels inside
-## the bars, Brogue), the day phase top-centre, teammates top-right in co-op only (Brogue's
+## the bars, Brogue), the clock row top-centre (`clock`, hud-clarity: the day count, the day strip, the
+## time left before dark and the phase word) with the objective row under it (`objective_row`: the
+## local player's goal from Objective), teammates top-right in co-op only (Brogue's
 ## sidebar, teammates first), a name tag over each teammate, the pause menu (solo only, it
 ## refuses in co-op) and, in co-op only, the quick-chat wheel. The bottom band holds the local
 ## player's inventory strip with its lines (inventory-hud), bound to the local body in one place,
@@ -14,7 +16,8 @@ extends CanvasLayer
 ## each holds the input while open. A closed-eye
 ## mark shows over every hidden player (`marks`), placed like the prompt, and an open one over every lit
 ## player whose spot meter is above 0. While a patrol boat is on the horizon, a light or hull shows on
-## the horizon band (`patrol_horizon`). Right of the day phase, a weather that is not clear names itself
+## the horizon band (`patrol_horizon`). While the raft site is off screen, an arrow on the frame of the
+## view points at it (`site_arrow`). Right of the day phase, a weather that is not clear names itself
 ## in its own window (`weather_panel`, art-mood-pass D5). Under the day phase, the
 ## broken compass's needle (`needle`, secret-cay) shows while the local player carries it, and
 ## under it the note label (`note_label`) shows the chest's note and the map's text for a while.
@@ -27,12 +30,6 @@ const WHEEL_SCENE: PackedScene = preload("res://scenes/ui/quick_chat_wheel.tscn"
 const PAUSE_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
 const NAME_TAG_SCENE: PackedScene = preload("res://scenes/ui/name_tag.tscn")
 const TEAMMATE_SCENE: PackedScene = preload("res://scenes/ui/teammate_block.tscn")
-const PHASE_NAMES: Dictionary[DataEnums.DayPhase, String] = {
-	DataEnums.DayPhase.DAWN: "Amanecer",
-	DataEnums.DayPhase.DAY: "Día",
-	DataEnums.DayPhase.DUSK: "Atardecer",
-	DataEnums.DayPhase.NIGHT: "Noche",
-}
 const TAG_NAME: StringName = &"NameTag"
 const HUD_PANEL: StringName = &"HudPanel"
 ## Every HUD window variation the prompt keeps clear of: the dark window, its thin rows and the
@@ -43,9 +40,13 @@ const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudPanelT
 const AVOID_GROUP: StringName = &"hud_avoid"
 ## A HUD panel whose top is above this is one of the top windows (art-guardacostas D8).
 const TOP_WINDOW_Y: float = 20.0
+## Half the width of a player's drawn figure, which a call window keeps clear of (art-guardacostas D6).
+const FIGURE_HALF_PX: float = 8.0
 ## HUD windows another layer draws for this run (the crossing's strip and line, crossing-gameplay;
 ## hud-window-kit D14), counted like this HUD's own while they show, for this session only.
 const OUTSIDE_PANEL_GROUP: StringName = &"hud_panel_outside"
+## The session's island keeper (GameShell names its IslandTravel so); the objective row's launch line.
+const TRAVEL_NAME: NodePath = ^"Travel"
 ## The keys that step a spectator's view (ui-shell "Switching the watched teammate"): the walk keys
 ## A and D, the arrows (the engine's ui_left and ui_right), the D-pad and the mouse wheel. Each is
 ## an action that does nothing else for a dead or waiting player, so no input is bound twice
@@ -96,6 +97,11 @@ var scene_panel: ScenePanel = null
 ## fed by the session's `call_shown`.
 var call_windows: CallWindows = null
 @onready var phase_label: Label = %Phase
+@onready var clock: ClockStrip = $PhasePanel/Clock
+@onready var objective_row: ObjectiveRow = $ObjectiveRow
+@onready var site_arrow: SiteArrow = $SiteArrow
+## The island the objective row's launch line comes from; null reads the session's IslandTravel.
+var island_layout: IslandLayoutData = null
 @onready var weather_panel: PanelContainer = $WeatherPanel
 @onready var weather_label: Label = %Weather
 @onready var teammates_panel: Control = %TeammatesPanel
@@ -104,11 +110,23 @@ var call_windows: CallWindows = null
 @onready var _teammates: VBoxContainer = %Teammates
 
 
-## "Mediodía" for the day's 10:00-16:00 window, else the phase's Spanish name.
-static func phase_name(climate: ClimateState) -> String:
-	if climate.phase == DataEnums.DayPhase.DAY and climate.midday:
-		return "Mediodía"
-	return PHASE_NAMES.get(climate.phase, "")
+## The clock row's phase word for `climate` in `locale` (ui-shell "Phase words"): "Amanecer", then
+## by day "Mañana" (08-10), "Mediodía" (10-16) or "Tarde" (16-18), then "Atardecer" and "Noche".
+static func phase_name(climate: ClimateState, locale: String = "es") -> String:
+	var key: StringName = DayStrip.WORD_KEYS[0]
+	match climate.phase:
+		DataEnums.DayPhase.DAY:
+			if climate.midday:
+				key = &"midday"
+			elif climate.time_of_day_s >= DayClock.MIDDAY_END_S:
+				key = &"afternoon"
+			else:
+				key = &"morning"
+		DataEnums.DayPhase.DUSK:
+			key = &"dusk"
+		DataEnums.DayPhase.NIGHT:
+			key = &"night"
+	return HudText.load_default().clock_word(key, locale)
 
 
 ## "Muerto", "Desconectado", "Caído" or "" for a teammate.
@@ -143,6 +161,8 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	marks.bind(session)
 	patrol_horizon.avoid = top_window_rects
 	patrol_horizon.bind(session, local_peer_id)
+	site_arrow.session = session
+	site_arrow.local_peer = local_peer_id
 	floats.locale = CoopSession.locale_of(session)
 	floats.bind(session)
 	scene_panel = ScenePanel.new()
@@ -181,6 +201,7 @@ func _ready() -> void:
 	sign_note.closed.connect(func() -> void: list_open = false)
 	prompt.sign_pressed.connect(sign_note.open)
 	marks.to_hud = world_to_hud
+	site_arrow.to_hud = world_to_hud
 	floats.name = &"Floats"
 	add_child(floats)
 	move_child(floats, marks.get_index() + 1)
@@ -281,12 +302,30 @@ func top_window_rects() -> Array[Rect2]:
 	return rects
 
 
-## What a call window keeps clear of: every HUD panel on show and the interact prompt while it shows.
+## What a call window keeps clear of: every HUD panel on show, the interact prompt while it shows, and the
+## local player's figure with its mark.
 func call_avoid_rects() -> Array[Rect2]:
 	var rects: Array[Rect2] = panel_rects()
 	if prompt.panel.is_visible_in_tree():
 		rects.append(prompt.panel.get_global_rect())
+	var figure: Rect2 = local_figure_rect()
+	if figure.has_area():
+		rects.append(figure)
 	return rects
+
+
+## The local player's drawn figure in HUD pixels, from its feet to its head and the mark over it, or an
+## empty rect without a player on the island.
+func local_figure_rect() -> Rect2:
+	if not is_instance_valid(_local_body) or not _local_body.is_inside_tree() or _local_body.left_island:
+		return Rect2()
+	var canvas: Transform2D = _local_body.get_global_transform_with_canvas()
+	var feet: Vector2 = world_to_hud(canvas.origin)
+	var head: Vector2 = world_to_hud(canvas * Vector2(0.0, PlayerPose.OFFSET.y))
+	var rect := Rect2(Vector2(roundf(feet.x) - FIGURE_HALF_PX, roundf(head.y)), Vector2(FIGURE_HALF_PX * 2.0, roundf(feet.y) - roundf(head.y)))
+	if marks.has_marker(_local_body):
+		rect = rect.merge(marks.marker_rect(_local_body))
+	return rect
 
 
 func _collect_panels(node: Node, into: Array[Rect2]) -> void:
@@ -300,7 +339,11 @@ func _collect_panels(node: Node, into: Array[Rect2]) -> void:
 
 
 func refresh() -> void:
-	phase_label.text = phase_name(session.climate)
+	var locale: String = CoopSession.locale_of(session)
+	clock.show_climate(session.climate, _text, locale, phase_label)
+	refresh_objective(locale)
+	site_arrow.held = screen_shown or list_open
+	site_arrow.tick()
 	refresh_weather()
 	refresh_watching()
 	if solo:
@@ -321,6 +364,29 @@ func refresh() -> void:
 		var player := session.body(others[i])
 		var state := state_word(player, session.is_dropped(others[i]))
 		(_teammates.get_child(i) as TeammateBlock).show_teammate(session.player_name(others[i]), player.meters.health, state, player.look_slot)
+
+
+## hud-clarity, ui-shell "Objective row": the local player's goal under the clock, hidden while a
+## sign note is open or a screen is over the run, and when no goal applies.
+func refresh_objective(locale: String) -> void:
+	var line: String = ""
+	if not screen_shown and not sign_note.is_open():
+		line = Objective.from(session, local_peer, objective_layout(), _text, locale).line
+	objective_row.show_line(line)
+
+
+## The island whose launch line the objective row reads: `island_layout`, else the current island.
+## Read by name, as StructureLook reads its island: IslandTravel's script names the island, which
+## preloads the palm and raft scenes whose look names the session, so naming the class here would
+## load them in a cycle.
+func objective_layout() -> IslandLayoutData:
+	if island_layout != null:
+		return island_layout
+	var travel: Node = session.get_node_or_null(TRAVEL_NAME)
+	var island: Variant = travel.get(&"island") if travel != null else null
+	if not is_instance_valid(island):
+		return null
+	return (island as Object).get(&"layout") as IslandLayoutData
 
 
 ## art-mood-pass D5: the current weather's own name in its window right of the phase, in the

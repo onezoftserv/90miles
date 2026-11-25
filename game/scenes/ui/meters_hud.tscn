@@ -9,6 +9,9 @@
 [ext_resource type="Texture2D" path="res://assets/art/ui/ramp_heat.png" id="r_heat"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/ramp_energy.png" id="r_energy"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/ramp_morale.png" id="r_morale"]
+[ext_resource type="PackedScene" path="res://scenes/ui/status_row.tscn" id="5_status"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/status_sunstroke.png" id="i_sunstroke"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/status_bleeding.png" id="i_bleeding"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_blur"]
 shader = ExtResource("4_blur")
@@ -74,14 +77,6 @@ fill_color = Color(0.85098039, 0.62745098, 0.4, 1)
 ramp = ExtResource("r_hunger")
 empty_color = Color(0.27058824, 0.15686275, 0.23529412, 1)
 
-[node name="Heat" parent="Panel/Bars" instance=ExtResource("2_bar")]
-layout_mode = 2
-meter = 3
-label_text = "Calor"
-fill_color = Color(0.8745098, 0.44313725, 0.14901961, 1)
-ramp = ExtResource("r_heat")
-empty_color = Color(0.27058824, 0.15686275, 0.23529412, 1)
-
 [node name="Energy" parent="Panel/Bars" instance=ExtResource("2_bar")]
 layout_mode = 2
 meter = 4
@@ -98,9 +93,27 @@ fill_color = Color(0.84313725, 0.48235294, 0.72941176, 1)
 ramp = ExtResource("r_morale")
 empty_color = Color(0.27058824, 0.15686275, 0.23529412, 1)
 
-[node name="Bleeding" type="Label" parent="Panel/Bars"]
+[node name="Heat" parent="Panel/Bars" instance=ExtResource("2_bar")]
+layout_mode = 2
+meter = 3
+label_text = "Calor"
+fill_color = Color(0.8745098, 0.44313725, 0.14901961, 1)
+ramp = ExtResource("r_heat")
+empty_color = Color(0.27058824, 0.15686275, 0.23529412, 1)
+zones = PackedColorArray(0.27058824, 0.15686275, 0.23529412, 1, 0.32156863, 0.29411765, 0.14117647, 1, 0.4, 0.22352941, 0.19215686, 1)
+
+[node name="Sunstroke" parent="Panel/Bars" instance=ExtResource("5_status")]
 visible = false
 layout_mode = 2
-mouse_filter = 2
-theme_type_variation = &"AlertLabel"
-text = "Sangrando"
+key = &"sunstroke"
+icon_texture = ExtResource("i_sunstroke")
+word_text = "Insolación"
+fill_color = Color(0.8745098, 0.44313725, 0.14901961, 1)
+
+[node name="Bleeding" parent="Panel/Bars" instance=ExtResource("5_status")]
+visible = false
+layout_mode = 2
+key = &"bleeding"
+icon_texture = ExtResource("i_bleeding")
+word_text = "Sangrando"
+fill_color = Color(0.85098039, 0.34117647, 0.38823529, 1)

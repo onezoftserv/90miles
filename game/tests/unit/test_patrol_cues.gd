@@ -328,12 +328,14 @@ func test_the_look_draws_a_hull_and_a_cone_rotated_to_the_beam_only_while_the_li
 	_clock(patrol.horizon_warning_s + 10.0)
 	look.step(0.0)
 	assert_true(look.hull_visible, "the hull in its lap")
+	assert_true(look.hull.visible, "the launch's sprite (art-guardacostas D3)")
+	assert_eq(look.hull.offset, GuardacostasArt.standard().hull_offset(look.mirrored), "its lamp on the boat")
 	assert_true(boat.light_on)
 	assert_true(look.light.visible, "the light is on at night")
 	assert_almost_eq(look.light.rotation, deg_to_rad(boat.beam), 0.0001, "rotated to the beam")
 	assert_true(look.light is PointLight2D)
-	assert_eq(look.light.texture.get_width(), 160, "10 tiles long")
-	assert_eq(look.light.offset.x, 80.0, "its apex on the boat")
+	assert_eq(look.light.texture.get_width(), 166, "10 tiles long and the rim's outer half (art-guardacostas D4)")
+	assert_eq(look.light.offset.x, 83.0, "its apex on the boat")
 	assert_gt(look.light.energy, 0.0)
 	# The same lap by day: the hull, no light.
 	WeatherManager.sky.start_at(DAY_S)
@@ -345,20 +347,76 @@ func test_the_look_draws_a_hull_and_a_cone_rotated_to_the_beam_only_while_the_li
 	assert_false(look.light.visible, "no beam by day")
 
 
-func test_the_cone_texture_is_a_60_degree_10_tile_wedge() -> void:
+# art-guardacostas D4 (spec "Searchlight edge", "Lit cells look lit"): every texel whose point the
+# Searchlight lights is drawn at half its fade or more, nothing beyond the rim's outer half is drawn, and
+# the near-to-far fade is kept.
+func test_the_cone_lights_every_lit_point_at_half_strength_and_nothing_beyond_its_rim() -> void:
 	var cone: ImageTexture = PatrolCone.texture(60.0, 10.0)
-	assert_eq(cone.get_width(), 160)
+	assert_eq(cone.get_width(), 166, "the range and the rim's outer half")
 	var image: Image = cone.get_image()
+	var centre_y: float = image.get_height() / 2.0
+	var light := Searchlight.new()
+	light.cone_deg = 60.0
+	light.range_tiles = 10.0
+	var radius: float = 160.0
+	var lit: int = 0
+	var weak: int = 0
+	var stray: int = 0
+	for y: int in image.get_height():
+		for x: int in image.get_width():
+			var gap := Vector2(x + 0.5, y + 0.5 - centre_y)
+			var drawn: float = image.get_pixel(x, y).r
+			if light.is_lit(gap / TILE, Vector2.ZERO, 0.0):
+				lit += 1
+				if drawn < 0.5 * PatrolCone.fade_at(gap.length(), radius) - 0.01:
+					weak += 1
+			elif absf(rad_to_deg(gap.angle())) > 30.0 + PatrolCone.RIM_DEG / 2.0 or gap.length() > radius + PatrolCone.RIM_PX / 2.0:
+				if drawn > 0.0:
+					stray += 1
+	assert_gt(lit, 5000, "the cone covers its wedge")
+	assert_eq(weak, 0, "every lit point is drawn at half strength or more")
+	assert_eq(stray, 0, "nothing is drawn beyond the rim's outer half")
 	var middle: int = image.get_height() / 2
-	assert_gt(image.get_pixel(100, middle).r, 0.4, "lit on the axis")
-	assert_lt(image.get_pixel(5, middle - 20).r, 0.01, "dark outside 30 degrees near the boat")
-	var edge_y: int = middle + int(100.0 * tan(deg_to_rad(35.0)))
-	assert_lt(image.get_pixel(100, edge_y).r, 0.01, "dark 35 degrees off the axis")
-	var inside_y: int = middle + int(100.0 * tan(deg_to_rad(20.0)))
-	assert_gt(image.get_pixel(100, inside_y).r, 0.3, "lit 20 degrees off the axis")
-	assert_lt(image.get_pixel(159, middle + 30).r, 0.01, "dark beyond the range")
+	assert_almost_eq(image.get_pixel(20, middle).r, PatrolCone.fade_at(20.5, radius), 0.01, "full strength well inside, near")
+	assert_almost_eq(image.get_pixel(140, middle).r, PatrolCone.fade_at(140.5, radius), 0.01, "and the far fade kept")
+	assert_gt(image.get_pixel(20, middle).r, image.get_pixel(140, middle).r, "brighter near the boat")
 	assert_same(PatrolCone.texture(60.0, 10.0), cone, "built once")
 	assert_ne(PatrolCone.texture(45.0, 10.0), cone, "a retuned cone gets its own texture")
+
+
+# Spec "A solo player at the edge": a solo player on sand just inside the cone's side is drawn lit and
+# their spot meter fills.
+func test_a_solo_player_just_inside_the_cones_edge_is_drawn_lit_and_their_meter_fills() -> void:
+	await _start(NIGHT_S)
+	var terrain: GridTerrain = shell.island.terrain
+	var half: float = patrol.searchlight_cone_deg / 2.0
+	var found: Vector2 = Vector2(-1.0, -1.0)
+	var lap: float = 0.0
+	for lap_s: float in [5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]:
+		_clock(patrol.horizon_warning_s + lap_s)
+		for cell: Vector2i in terrain.cells:
+			if terrain.cells[cell] != DataEnums.Terrain.BEACH or terrain.shaded.has(cell):
+				continue
+			var centre: Vector2 = IslandLayout.cell_center(cell)
+			var gap: Vector2 = centre - boat.position
+			var off: float = absf(wrapf(rad_to_deg(gap.angle()) - boat.beam, -180.0, 180.0))
+			if gap.length() >= 3.0 * TILE and off > half - 3.0 and brain.lights(centre):
+				found = centre
+				break
+		if found.x >= 0.0:
+			lap = lap_s
+			break
+	assert_gt(found.x, -1.0, "some lap clock puts open sand just inside the cone's side")
+	var local: Vector2 = (found - boat.position).rotated(-deg_to_rad(boat.beam))
+	var strength: float = PatrolCone.strength_at(local, patrol.searchlight_cone_deg, patrol.searchlight_range_tiles * TILE)
+	assert_gte(strength, 0.5 * PatrolCone.fade_at(local.length(), patrol.searchlight_range_tiles * TILE) - 0.01, "drawn lit")
+	body.global_position = found
+	body.stealth_state = VISIBLE
+	body.spot_meter.clear()
+	for i: int in 30:
+		_clock(patrol.horizon_warning_s + lap)
+		spawner.watch.step(DT)
+	assert_gt(body.spot_meter.value, 0.0, "the meter fills")
 
 
 func test_a_creature_that_is_not_a_patrol_boat_draws_nothing_of_the_patrol_look() -> void:

@@ -169,7 +169,7 @@ class CreatureArtTest(unittest.TestCase):
                     self.assertTrue((creatures.DEFAULT_FIXES / layer["hand"]).is_file(), layer["hand"])
                 else:
                     self.assertIn(layer["from"], recipe["sources"])
-        self.assertEqual(sorted(ids), ["land_crab", "platino", "reef_shark", "seagull", "seagull_flight"])
+        self.assertEqual(sorted(ids), ["dinghy", "land_crab", "patrol_boat", "platino", "reef_shark", "seagull", "seagull_flight"])
 
 
 if __name__ == "__main__":

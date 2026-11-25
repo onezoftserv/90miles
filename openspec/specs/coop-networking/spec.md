@@ -194,12 +194,22 @@ In a solo session (one player, offline) the pause button SHALL open the pause me
 - **THEN** the list closes, and nothing pauses
 
 ### Requirement: Per-peer rate limits
-The host SHALL limit each client to 90 intents per second with a burst of 30, and to 1 s of simulated movement per second of real time with 0.25 s of slack, each intent counting at least one 1/60 s frame and at most 0.1 s. Every player, solo included, gets 3 quick-chat phrases in a burst, then one every 2 s. Over-limit messages are dropped. The host's own (solo) player's intents are never limited.
+The host SHALL limit each client to 90 intents per second with a burst of 90, and to 1 s of simulated movement per second of real time with 1.25 s of slack, each intent counting at least one 1/60 s frame and at most 0.1 s. An intent counts once, when the host first applies it; repeats of it cost nothing. Every player, solo included, gets 3 quick-chat phrases in a burst, then one every 2 s. Over-limit messages are dropped. The host's own (solo) player's intents are never limited.
 
 #### Scenario: Client claims extra time
 - **GIVEN** a client whose player is walking east
 - **WHEN** it sends, within 1 s, 60 intents that each claim 0.1 s
-- **THEN** the host moves that player at most 5 tiles (1.25 s of walking at 4 tiles/s)
+- **THEN** the host moves that player at most 9 tiles (2.25 s of walking at 4 tiles/s)
+
+#### Scenario: Client after a host hitch
+- **GIVEN** a client walking east whose host has been sending states every frame
+- **WHEN** one host frame lasts 1 s, so the client's 60 intents of that second arrive together
+- **THEN** the host applies all 60 and the client's player is not corrected
+
+#### Scenario: Jitter after a hitch
+- **GIVEN** a client walking east whose host has just had a 1 s frame and applied the backlog
+- **WHEN** the client walks on for 30 s at one intent per 1/60 s frame, with arrivals up to 20 ms early or late
+- **THEN** the host applies every intent
 
 #### Scenario: Solo player during a long frame
 - **GIVEN** a solo player walking east
@@ -341,3 +351,121 @@ A client SHALL apply a structure message only when the host sent it, and only to
 - **GIVEN** a client on the sandbar
 - **WHEN** a message from the host gives a palm 9 coconuts, more than its layout's 2, or a negative count
 - **THEN** the palm shows 2, or 0
+
+### Requirement: Intent delivery
+Each intent message a client sends SHALL carry its newest movement intent and the intents before it that the host has not acknowledged, up to 8. The message SHALL NOT depend on ordered or reliable delivery. The host SHALL apply each intent once, the first time it arrives, and ignore older and repeated ones. The host's own player, and so the solo player, sends one intent per frame and applies it on that frame, with no copies.
+
+#### Scenario: A lost message costs no movement
+- **GIVEN** a client walking east whose host has acknowledged nothing for its last 3 frames
+- **WHEN** the messages of 2 of those frames are lost and the third arrives
+- **THEN** the host moves the player for all 3 frames, and once the host's state arrives the client's player is exactly where the host has it, with no correction
+
+#### Scenario: A repeated intent is applied once
+- **GIVEN** a host that has applied a client's intents up to number 40
+- **WHEN** a message arrives carrying intents 38 to 42
+- **THEN** the host applies 41 and 42 once each and nothing else, and the rate limits are charged for those two only
+
+#### Scenario: Messages arrive out of order
+- **GIVEN** a host that has applied a client's intents up to number 9, and a client that sends a message carrying intents 10 to 12 and then one carrying 10 to 13
+- **WHEN** the second arrives before the first
+- **THEN** the host applies 10, 11, 12 and 13 once each and ignores the first message when it comes
+
+#### Scenario: Solo player sends one intent a frame
+- **GIVEN** a solo player, offline, walking east for 60 frames
+- **WHEN** each frame's input is made
+- **THEN** each intent is applied once, on the frame it was made, and no intent is ever sent or applied twice
+
+### Requirement: Unreliable traffic is not thinned on a lossless link
+On a link that loses no packets, the transport SHALL deliver every unreliable message (intents and host states), however the round trip varies. On ENet, this means the host keeps ENet's packet throttle open on every connection. Solo uses no transport and is unaffected.
+
+#### Scenario: Round trips slow down after a calm start
+- **GIVEN** a client that joined over a calm link with round trips of about 2 ms
+- **WHEN** both machines' frames slow to 120 ms for 16 frames while the client walks and sends requests
+- **THEN** the host receives every intent the client sent in those frames and the client receives one host state per host frame
+
+#### Scenario: A solo run
+- **GIVEN** a solo player, offline
+- **WHEN** they play
+- **THEN** no transport exists and nothing is throttled
+
+### Requirement: Finishing a takeover
+When a join request takes back a player whose old connection the host still holds (Reclaiming a player), the host SHALL finish the takeover only after it has read every packet that arrived with that request. Until then the old connection still plays that player and nothing new is sent to it. The host then closes the old connection first, and the new one takes back the player. No packet from either connection logs an error on the host. Solo has nobody to take over.
+
+#### Scenario: A second copy while the first still sends
+- **GIVEN** Papo's game is connected in the run and still sends his moves every frame
+- **WHEN** a second copy of his game, from the same install, joins
+- **THEN** the host closes the first copy's connection, the second copy takes back the same body, and the host's log has no error
+
+#### Scenario: A repeated join request during the takeover
+- **GIVEN** Papo's game is connected and still sending
+- **WHEN** a second copy of his game sends its join request twice before the host has finished taking over
+- **THEN** the second request is ignored: the second copy takes back the body once and stays connected
+
+#### Scenario: A second copy in the lobby
+- **GIVEN** Papo's game is in the lobby and still connected
+- **WHEN** a second copy of his game joins the lobby
+- **THEN** the host closes the first copy's connection, the roster lists Papo once, under the second copy, and the host's log has no error
+
+#### Scenario: Solo has nobody to take over
+- **GIVEN** one player plays offline
+- **WHEN** a join request reaches the session
+- **THEN** it is ignored, nothing is taken over, and the player keeps their own body
+
+### Requirement: Rematch with the same party
+A co-op host's rematch SHALL start a new run with every client still connected, on the connections they already have. The host opens a new lobby. Each connected client ends its run and sends its join request again with the same name and player id, so the host knows each player as before. Nobody reconnects and the port stays open. Solo has no rematch: its "Otra vez" starts a solo run at once (endings-progression "Restart from the summary").
+
+#### Scenario: Two players again
+- **GIVEN** a host Yuni and a client Papo, both on their run summaries
+- **WHEN** Yuni picks "Otra vez"
+- **THEN** both lobbies list Yuni (anfitrión) and Papo, Papo's client opened no new connection, and the host knows Papo by the same player id as in the run that ended
+
+#### Scenario: A client still in its run
+- **GIVEN** a host whose run has ended and a client whose summary has not shown yet
+- **WHEN** the host picks "Otra vez"
+- **THEN** the client's run ends and its lobby shows, as everyone's does
+
+#### Scenario: The host starts at once
+- **GIVEN** a host who picks "Otra vez" and then "Empezar viaje" before a client's join request has arrived
+- **WHEN** that join request arrives
+- **THEN** the client joins the new run under way with its HUD, as any joiner does
+
+#### Scenario: A client that never asks again
+- **GIVEN** a host who picked "Otra vez"
+- **WHEN** a connected client sends no join request for 10 s
+- **THEN** the host disconnects it, as it does any peer that never asks to join
+
+#### Scenario: Solo again
+- **GIVEN** exactly 1 player, offline, whose run has ended
+- **WHEN** they pick "Otra vez"
+- **THEN** a solo run starts at once with no lobby, and nothing is sent over the network
+
+### Requirement: Rematch is the host's call
+Only the host SHALL start a rematch. A rematch message from anyone else is ignored, and a client's summary never offers one. Only clients connected when the host starts it follow it. A client that left before, or a dropped player still waiting out their 90 s, is not brought back; they can join the new lobby as anyone joins.
+
+#### Scenario: A rematch message not from the host is ignored
+- **GIVEN** a host and a client on their run summaries
+- **WHEN** a rematch message reaches the client from anyone but the host, or reaches the host itself
+- **THEN** nobody's run ends and every summary stays
+
+#### Scenario: A client who left is not pulled back
+- **GIVEN** a host and two clients, Papo and Dayana, on their run summaries
+- **WHEN** Dayana picks "Volver al inicio" and the host then picks "Otra vez"
+- **THEN** the new lobbies list only the host and Papo, and Dayana stays on her title screen
+
+#### Scenario: A dropped player joins later
+- **GIVEN** a client who dropped during the run and whose body died before it was removed, so the run ended without them
+- **WHEN** the host picks "Otra vez", and afterwards that player joins the host again from the join screen
+- **THEN** the rematch lobby did not list them until they joined, and they join it as a new joiner
+
+### Requirement: Rematch message order
+In a rematch, the host's old run SHALL be gone on every client before anything of the new run reaches that client, so each client receives the new island whole: the same pick-ups, creatures, sites and structures as the host. What a client's old run sent before it ended is ignored by the host's new run: no player spawns from it and nothing changes. No peer logs an engine error during a rematch.
+
+#### Scenario: The new island is whole on the client
+- **GIVEN** a host and a client after a rematch
+- **WHEN** the client's lobby shows and the host starts the run
+- **THEN** the client's sandbar has the same pick-ups and creatures as the host's, and neither peer logged an engine error
+
+#### Scenario: An old message reaches the new lobby
+- **GIVEN** a client whose old run sent movement and actions just before the host's rematch
+- **WHEN** those messages reach the host's new lobby
+- **THEN** the host ignores them: no body spawns and no state changes

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="LookPart" format=3]
+
+[ext_resource type="Script" path="res://scripts/art/look_part.gd" id="1_part"]
+[ext_resource type="Texture2D" path="res://assets/art/characters/parts/outfit_uniform.png" id="2_sheet"]
+
+[resource]
+script = ExtResource("1_part")
+id = &"outfit_uniform"
+name_es = "Uniforme verde olivo"
+name_en = "Olive uniform"
+layer = 1
+sheet = ExtResource("2_sheet")

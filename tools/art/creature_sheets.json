@@ -64,6 +64,26 @@
       ],
       "rim": true,
       "outline": "#000000"
+    },
+    {
+      "id": "patrol_boat",
+      "size": [384, 48],
+      "cell": [96, 48],
+      "layers": [
+        {"hand": "patrol_boat.png"}
+      ],
+      "rim": true,
+      "outline": "#000000"
+    },
+    {
+      "id": "dinghy",
+      "size": [96, 16],
+      "cell": [32, 16],
+      "layers": [
+        {"hand": "dinghy.png"}
+      ],
+      "rim": true,
+      "outline": "#000000"
     }
   ]
 }

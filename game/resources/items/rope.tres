@@ -7,6 +7,8 @@
 script = ExtResource("1_item")
 sprite = ExtResource("icon_rope")
 tags = Array[int]([4])
+short_name_es = "sogas"
+short_name_en = "ropes"
 stack_size = 5
 weight = 0.5
 id = &"rope"

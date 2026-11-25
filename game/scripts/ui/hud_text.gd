@@ -31,6 +31,14 @@ const REFUSALS: Array[StringName] = [&"empty", &"no_use", &"down", &"at_sea", &"
 ## name), a build that costs energy worked with none, and the launch warnings: the day's two lines and
 ## the night's.
 const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight", &"count", &"percent", &"carried", &"weight_readout", &"decimal_point", &"close_note", &"watching", &"watching_dropped", &"watch_keys", &"cured", &"effect_cure", &"effect_and", &"effect_revive", &"effect_over", &"effect_delay", &"effect_useful", &"effect_give", &"effect_take", &"effect_route", &"effect_noise", &"effect_smoke", &"stage", &"no_strength", &"launch_day", &"launch_day_hint", &"launch_night"]
+## The clock row's words (hud-clarity, ui-shell "Clock strip" and "Phase words"): the phase words
+## ("Amanecer", "Mañana" 08-10, "Mediodía" 10-16, "Tarde" 16-18, "Atardecer", "Noche"), the day
+## count ("Día %d") and the time left in in-game hours and minutes ("%dh", "%dm").
+const CLOCK_WORDS: Array[StringName] = [&"dawn", &"morning", &"midday", &"afternoon", &"dusk", &"night", &"day", &"hours", &"minutes"]
+## The objective row's lines (ui-shell "Objective row"), each at most 27 glyphs once filled: a count
+## ("Arma la balsa: %d/%d %s": have, need, the item's short name), take it all to the raft, work it
+## ("Dale a la balsa: %d%%"), wait for the dark, the default launch line and at sea.
+const OBJECTIVE_LINES: Array[StringName] = [&"gather", &"deliver", &"work", &"wait_dark", &"launch_default", &"at_sea"]
 
 ## Verb per ItemUseData.UseAction ("Beber").
 @export var use_verbs: Dictionary[ItemUseData.UseAction, PackedStringArray] = {}
@@ -60,6 +68,10 @@ const LINES: Array[StringName] = [&"needs_tool", &"faster", &"missing", &"weight
 @export var wasted_meters: Dictionary[DataEnums.Meter, PackedStringArray] = {}
 ## The refusal when a use would cure one status the player does not have: "No 'tás sangrando."
 @export var wasted_statuses: Dictionary[DataEnums.Status, PackedStringArray] = {}
+## The clock row's words by key (CLOCK_WORDS).
+@export var clock_words: Dictionary[StringName, PackedStringArray] = {}
+## The objective row's lines by key (OBJECTIVE_LINES).
+@export var objective_lines: Dictionary[StringName, PackedStringArray] = {}
 
 
 ## The project's HUD text file.
@@ -136,3 +148,11 @@ func wasted_meter(meter: DataEnums.Meter, locale: String = "es") -> String:
 
 func wasted_status(status: DataEnums.Status, locale: String = "es") -> String:
 	return pick(wasted_statuses.get(status, PackedStringArray()), locale)
+
+
+func clock_word(key: StringName, locale: String = "es") -> String:
+	return pick(clock_words.get(key, PackedStringArray()), locale)
+
+
+func objective_line(key: StringName, locale: String = "es") -> String:
+	return pick(objective_lines.get(key, PackedStringArray()), locale)

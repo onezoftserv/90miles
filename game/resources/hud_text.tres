@@ -222,3 +222,22 @@ wasted_statuses = Dictionary[int, PackedStringArray]({
 7: PackedStringArray("No 'tás quemao.", "You're not sunburnt."),
 8: PackedStringArray("No 'tás alucinando.", "You're not hallucinating.")
 })
+clock_words = Dictionary[StringName, PackedStringArray]({
+&"dawn": PackedStringArray("Amanecer", "Dawn"),
+&"morning": PackedStringArray("Mañana", "Morning"),
+&"midday": PackedStringArray("Mediodía", "Midday"),
+&"afternoon": PackedStringArray("Tarde", "Afternoon"),
+&"dusk": PackedStringArray("Atardecer", "Dusk"),
+&"night": PackedStringArray("Noche", "Night"),
+&"day": PackedStringArray("Día %d", "Day %d"),
+&"hours": PackedStringArray("%dh", "%dh"),
+&"minutes": PackedStringArray("%dm", "%dm")
+})
+objective_lines = Dictionary[StringName, PackedStringArray]({
+&"gather": PackedStringArray("Arma la balsa: %d/%d %s", "Build the raft: %d/%d %s"),
+&"deliver": PackedStringArray("Lleva to' pa' la balsa", "Take it all to the raft"),
+&"work": PackedStringArray("Dale a la balsa: %d%%", "Work the raft: %d%%"),
+&"wait_dark": PackedStringArray("Espera la noche pa' zarpar", "Wait for dark to set off"),
+&"launch_default": PackedStringArray("Zarpa pa'l norte", "Set off north"),
+&"at_sea": PackedStringArray("Aguanta hasta tierra", "Hold on till land")
+})

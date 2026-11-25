@@ -11,7 +11,7 @@ const ROOT: String = "res://assets/art/characters"
 const FIXTURE_ROOT: String = "res://tests/fixtures/art/look"
 const SHIPPED: Array[String] = [
 	"body_man", "body_woman", "hair_0", "hair_1", "hair_2", "hair_3", "hair_4", "hair_5", "hair_6",
-	"hair_7", "outfit_tee_shorts",
+	"hair_7", "hair_cap", "outfit_tee_shorts", "outfit_uniform",
 ]
 const BODIES: Array[String] = ["body_man", "body_woman"]
 ## The body every overlay is rimmed over (look_parts.json "over"); both bodies share its mask.
@@ -60,7 +60,7 @@ func _colours(image: Image) -> Dictionary:
 	return keys
 
 
-func test_the_shipped_parts_are_the_two_bodies_eight_hairs_and_one_outfit() -> void:
+func test_the_shipped_parts_are_the_two_bodies_nine_hairs_and_two_outfits() -> void:
 	var ids: Array[String] = []
 	for id: StringName in _catalog().list_ids(&"parts"):
 		ids.append(String(id))
@@ -152,7 +152,10 @@ func test_the_clothing_key_colours_appear_only_in_outfits() -> void:
 		for colour: int in colours:
 			if key.has(colour):
 				keyed += 1
-		if id.begins_with("outfit_"):
+		# art-guardacostas D2: the soldiers' uniform is drawn in palette olives, with no slot to colour.
+		if id == "outfit_uniform":
+			assert_eq(keyed, 0, "%s is drawn in olives, not the key ramp" % id)
+		elif id.begins_with("outfit_"):
 			assert_gt(keyed, 0, "%s draws its clothing in the key ramp" % id)
 		else:
 			assert_eq(keyed, 0, "%s has no key colour" % id)

@@ -5,6 +5,9 @@ extends ContentData
 ## are the palms, the workbench, the spawn points, the tide pools and the pick-ups. Moving a palm
 ## or adding a jug is an edit of the rows. Files live in game/resources/islands/.
 
+## The objective row's budget (ui-shell "Objective row").
+const LAUNCH_LINE_MAX: int = 27
+
 @export_multiline var description_es: String = ""
 @export_multiline var description_en: String = ""
 
@@ -56,6 +59,13 @@ extends ContentData
 ## Signs: one glyph each, shown as speech bubbles.
 @export var signs: Array[IslandSignData] = []
 
+@export_group("HUD")
+## The objective row's words once the raft is built (content-data "Launch lines"), at most
+## LAUNCH_LINE_MAX characters; empty uses the HUD's default line. Never names a secret island.
+@export var launch_line_es: String = ""
+## English launch line; empty uses the Spanish one.
+@export var launch_line_en: String = ""
+
 @export_group("Pick-ups")
 @export var pickups: Array[IslandGlyphData] = []
 
@@ -74,6 +84,13 @@ extends ContentData
 @export var decor_glyphs: Dictionary[String, StringName] = {}
 ## Each decor id's placeholder colour, drawn on its cells until its art comes.
 @export var decor_colors: Dictionary[StringName, Color] = {}
+
+
+## The launch line in `locale` (English, else Spanish); "" when the island has none.
+func launch_line(locale: String = "es") -> String:
+	if locale.begins_with("en") and not launch_line_en.is_empty():
+		return launch_line_en
+	return launch_line_es
 
 
 func get_reference_fields() -> Dictionary[StringName, StringName]:

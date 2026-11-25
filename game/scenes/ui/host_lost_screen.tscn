@@ -57,6 +57,13 @@ text = "Se perdió la conexión con el anfitrión."
 horizontal_alignment = 1
 autowrap_mode = 2
 
+[node name="Next" type="Label" parent="Frame/Window/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Vuelve al inicio para unirte otra vez o jugar solo."
+horizontal_alignment = 1
+autowrap_mode = 2
+
 [node name="Back" type="Button" parent="Frame/Window/Box"]
 unique_name_in_owner = true
 layout_mode = 2

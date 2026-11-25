@@ -100,6 +100,22 @@
       "colour_map": {
         "#464646": "#595652", "#242424": "#323c39"
       }
+    },
+    {
+      "id": "outfit_uniform", "layer": "outfit", "band": 0, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Outfits/Outfit5.png",
+      "colour_map": {
+        "#eeeeee": "#8f974a", "#d4d4d4": "#4b692f", "#bdbdbd": "#524b24", "#4c4c4c": "#323c39",
+        "#2d95ec": "#4b692f", "#247cc6": "#524b24", "#1965a5": "#524b24", "#0f2e65": "#323c39",
+        "#120308": "#222034", "#812238": "#222034", "#b45131": "#222034", "#da633d": "#222034"
+      }
+    },
+    {
+      "id": "hair_cap", "layer": "hair", "band": 7, "outline": "#000000", "strict": true, "over": "body_man",
+      "file": "itch/metrocity/extracted/MetroCity/MetroCity/Hair/Hairs.png",
+      "colour_map": {
+        "#464646": "#595652", "#242424": "#323c39"
+      }
     }
   ]
 }
