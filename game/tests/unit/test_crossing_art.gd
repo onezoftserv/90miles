@@ -260,6 +260,94 @@ func test_the_deck_ignores_the_beachs_look_offset() -> void:
 	assert_eq(_deck_drawn_rect(deck), crossing.deck_rect(), "the deck stays on deck_rect")
 
 
+# --- art-sprite-polish D2 (C22, SP5): a swimmer north of the deck goes under it ------------------
+
+## Between the crossing's sea (-40) and its deck (-20): a swimmer just north of a drawn deck.
+const UNDER_DECK_Z: int = -21
+
+
+func _player_look(body: PlayerBody) -> PlayerLook:
+	return body.get_node(^"Look") as PlayerLook
+
+
+# Puts `body` at `at` and draws its look there now.
+func _swim_at(body: PlayerBody, at: Vector2) -> PlayerLook:
+	body.global_position = at
+	var look := _player_look(body)
+	look.step(0.0)
+	return look
+
+
+# A solo raft crossing with its rider thrown in and swimming.
+func _solo_swimmer(route: StringName, integrity: float) -> Crossing:
+	_start_solo()
+	var crossing := CrossingRig.make(self, route, 1, integrity, 90.0)
+	crossing.throw_in(1)
+	CrossingRig.run(crossing, 0.2)
+	await wait_process_frames(2)
+	return crossing
+
+
+## art-sprite-polish 7.1, one player offline: a swimmer 1 px north of the deck's top edge, within its
+## span, is drawn after the sea and before the deck; beside the deck (east), south of it and aboard
+## the rider keeps z 0; and once the deck has sunk the north swimmer is back at z 0.
+func test_a_solo_swimmer_north_of_the_deck_goes_under_it_and_nowhere_else() -> void:
+	var crossing: Crossing = await _solo_swimmer(&"raft", 100.0)
+	var body := crossing.body_of(1)
+	var deck := crossing.deck_rect()
+	var look := _swim_at(body, Vector2(deck.get_center().x, deck.position.y - 1.0))
+	assert_true(PlayerPose.shows_swim_ring(look.pose), "swimming: %s" % PlayerPose.Pose.keys()[look.pose])
+	assert_eq(look.z_index, UNDER_DECK_Z, "north of the deck: under it")
+	assert_true(DrawOrder.drawn_after(look, _sea_of(crossing)), "over the sea")
+	assert_true(DrawOrder.drawn_after(_deck_of(crossing), look), "under the deck")
+	look = _swim_at(body, Vector2(deck.position.x - 4.0, deck.position.y - 1.0))
+	assert_eq(look.z_index, UNDER_DECK_Z, "north of the deck's west corner, within the sprite's half-width")
+	CrossingRig.put_beside_deck(crossing, body, 6.0)
+	look = _swim_at(body, body.global_position)
+	assert_eq(look.z_index, 0, "beside the deck, east")
+	look = _swim_at(body, Vector2(deck.get_center().x, deck.end.y + 6.0))
+	assert_eq(look.z_index, 0, "south of the deck")
+	look = _swim_at(body, Vector2(deck.end.x + 40.0, deck.position.y - 1.0))
+	assert_eq(look.z_index, 0, "north but well east of the deck")
+	crossing.bring_aboard(1)
+	CrossingRig.run(crossing, 0.2)
+	look = _player_look(body)
+	look.step(0.0)
+	assert_false(PlayerPose.shows_swim_ring(look.pose), "aboard")
+	assert_eq(look.z_index, 0, "a rider aboard")
+	crossing.throw_in(1)
+	CrossingRig.run(crossing, 0.2)
+	crossing.hit_vessel(crossing.integrity.value)
+	assert_false(crossing.integrity.intact(), "the deck has sunk")
+	look = _swim_at(crossing.body_of(1), Vector2(deck.get_center().x, deck.position.y - 1.0))
+	assert_eq(look.z_index, 0, "no deck: back at z 0")
+
+
+## art-sprite-polish 7.1, one player offline: on a board route a swimmer north of a board goes under
+## that board.
+func test_a_solo_swimmer_north_of_a_board_goes_under_it() -> void:
+	FixtureRoutes.put_in()
+	var crossing: Crossing = await _solo_swimmer(&"test_board", 0.0)
+	var board := crossing.deck_rect_of(1)
+	assert_true(crossing.boards[1].intact(), "the board is afloat")
+	var look := _swim_at(crossing.body_of(1), Vector2(board.get_center().x, board.position.y - 1.0))
+	FixtureRoutes.take_out()
+	assert_true(PlayerPose.shows_swim_ring(look.pose), "swimming")
+	assert_eq(look.z_index, UNDER_DECK_Z, "north of the board: under it")
+
+
+## art-sprite-polish 7.1, one player offline: an island swimmer, with no crossing, keeps z 0.
+func test_a_solo_island_swimmer_keeps_z_0() -> void:
+	_start_solo()
+	var rig := CreatureRig.make(self)
+	var body := rig.player(Vector2i(20, 10))
+	body.movement_state = MovementStep.Move.SWIM
+	var look := _player_look(body)
+	look.step(0.0)
+	assert_true(PlayerPose.shows_swim_ring(look.pose), "swimming")
+	assert_eq(look.z_index, 0, "no crossing, no deck")
+
+
 # --- art-sprite-polish D3 (SP1): the fin stays off the deck -------------------------------------
 
 ## The rows the water-line shader draws under the line (art_common.gdshaderinc ART_FADE_ROWS).

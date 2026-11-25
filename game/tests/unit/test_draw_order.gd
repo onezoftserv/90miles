@@ -235,6 +235,13 @@ func test_the_crossing_sea_and_deck_lie_under_its_riders() -> void:
 	assert_true(DrawOrder.drawn_after(rider, deck), "a rider aboard over the deck")
 	crossing.throw_in(1)
 	assert_true(DrawOrder.drawn_after(rider, sea), "a rider in the water over the sea")
+	# art-sprite-polish D2: a swimmer just north of the deck is drawn under it, over the sea.
+	CrossingRig.run(crossing, 0.2)
+	rider.global_position = Vector2(crossing.deck_rect().get_center().x, crossing.deck_rect().position.y - 1.0)
+	var look := rider.get_node(^"Look") as PlayerLook
+	look.step(0.0)
+	assert_true(DrawOrder.drawn_after(look, sea), "a swimmer north of the deck over the sea")
+	assert_true(DrawOrder.drawn_after(deck, look), "and under the deck")
 
 
 func test_after_travel_a_player_on_the_coast_cay_is_drawn_over_its_terrain() -> void:

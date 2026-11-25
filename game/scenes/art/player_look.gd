@@ -18,6 +18,10 @@ const SWIM_RING_ANIMATION: StringName = &"swim"
 const BUSH_FRONT_TOP: int = 4
 const BUSH_FRONT_ROWS: int = 11
 const TILE_PX: float = 16.0
+## art-sprite-polish D2 ("A swimmer north of the deck goes under it"): the look's z while it swims
+## just north of a drawn deck or board, between the crossing's sea (-40) and its deck (-20), so the
+## planks hide the body under them and only the head shows above; 0 everywhere else.
+const UNDER_DECK_Z: int = -21
 
 ## The pose drawn now.
 var pose: PlayerPose.Pose = PlayerPose.Pose.STANDING
@@ -70,6 +74,7 @@ func step(delta: float) -> void:
 	var dead: bool = meters != null and meters.dead
 	pose = PlayerPose.pick(body.movement_state, body.stealth_state, body.downed, dead, facing.moving())
 	_draw_pose()
+	z_index = UNDER_DECK_Z if _north_of_a_deck(body) else 0
 	_draw_bush_front(body)
 	_draw_hurt(meters, delta)
 
@@ -137,6 +142,30 @@ func _draw_bush_front(body: PlayerBody) -> void:
 
 # The Brush layer of the island this body is on: the `Terrain` view of a node beside one of the
 # body's ancestors (the island sits beside the session in the shell and the tests), found once.
+# art-sprite-polish D2: true while the pose is wet (SWIM or FLOAT), the body rides a running crossing
+# with a drawn deck or board, and it is north of that deck's or board's top edge within its x span
+# widened by the sprite's half-width. Swimmers are drawn SWIM_DROP_PX lower than their feet, so a
+# swimmer just north of the top edge would otherwise be drawn over the deck's top rows.
+func _north_of_a_deck(body: PlayerBody) -> bool:
+	if not PlayerPose.shows_swim_ring(pose):
+		return false
+	var session := CoopSession.of(body)
+	if session == null:
+		return false
+	var reach: float = 0.0
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(sprite.animation):
+		reach = sprite.sprite_frames.get_frame_texture(sprite.animation, 0).get_size().x / 2.0
+	for child: Node in session.get_children():
+		var crossing := child as Crossing
+		if crossing == null or crossing.finished or not crossing.peers().has(crossing.peer_of(body)):
+			continue
+		var at: Vector2 = crossing.to_local(body.global_position)
+		for deck: Rect2 in CrossingArt.drawn_decks(crossing):
+			if at.y < deck.position.y and at.x >= deck.position.x - reach and at.x <= deck.end.x + reach:
+				return true
+	return false
+
+
 func _brush_layer(body: PlayerBody) -> TileMapLayer:
 	if is_instance_valid(_brush):
 		return _brush
