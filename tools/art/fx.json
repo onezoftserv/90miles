@@ -1,6 +1,7 @@
 {
   "pieces": [
     {"name": "swim_ring", "folder": "fx", "kind": "ring", "size": [20, 5], "frames": 3, "front": "#ffffff", "back": "#cbdbfc", "dash": 2, "gap": 1},
-    {"name": "shadow_23x5", "folder": "shadows", "kind": "shadow", "size": [23, 5], "colour": "#000000", "alpha": 78}
+    {"name": "shadow_23x5", "folder": "shadows", "kind": "shadow", "size": [23, 5], "colour": "#000000", "alpha": 78},
+    {"name": "shadow_30x11", "folder": "shadows", "kind": "shadow", "size": [30, 11], "colour": "#000000", "alpha": 78}
   ]
 }

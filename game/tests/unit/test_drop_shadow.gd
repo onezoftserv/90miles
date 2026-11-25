@@ -10,8 +10,9 @@ const SHADOW_SCENE: String = "res://scenes/art/shadow.tscn"
 const SHADOWS_DIR: String = "res://assets/art/shadows/"
 const ART_GROUP: StringName = &"art_view"
 ## The scene's sizes, in order: 0 a player's, 1 a pick-up's (design.md K6), 2 the smallest, 3 a
-## lying body's (art-sprite-polish D8, appended so the others keep their values).
-const SIZES: Array[Vector2i] = [Vector2i(12, 7), Vector2i(8, 4), Vector2i(6, 3), Vector2i(23, 5)]
+## lying body's (art-sprite-polish D8), 4 a raft's on the sand (art-terrain-polish D3), each
+## appended so the others keep their values.
+const SIZES: Array[Vector2i] = [Vector2i(12, 7), Vector2i(8, 4), Vector2i(6, 3), Vector2i(23, 5), Vector2i(30, 11)]
 const PICKUP_SIZE: int = 1
 const GROUND_Z: int = -10
 
@@ -101,6 +102,7 @@ func test_the_sizes_keep_their_values_and_lying_is_appended() -> void:
 	assert_eq(DropShadow.Size.MEDIUM, 1)
 	assert_eq(DropShadow.Size.SMALL, 2)
 	assert_eq(DropShadow.Size.LYING, 3)
+	assert_eq(DropShadow.Size.get("WIDE", -1), 4, "WIDE, the raft's, is appended after LYING")
 
 
 func test_the_pickup_size_is_the_8_by_4_ellipse() -> void:

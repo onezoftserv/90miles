@@ -26,9 +26,10 @@ const SHORE_SHADER: String = "res://scenes/art/sea/shore.gdshader"
 const POOL_SOURCE: int = 0
 const SHADE_SOURCE: int = 1
 const PALM_SHADE: Vector2i = Vector2i(0, 4)
-## The two halves of the wide spot shade on row 4, under the raft site (design.md K39).
-const WIDE_WEST: Vector2i = Vector2i(1, 4)
-const WIDE_EAST: Vector2i = Vector2i(2, 4)
+## The two halves of the wide spot shade on row 4 that lay under the raft site (design.md K39).
+## art-terrain-polish D3 (C14) moved the raft's shade to its look; they stay on the sheet, laid
+## nowhere.
+const WIDE_HALVES: Array[Vector2i] = [Vector2i(1, 4), Vector2i(2, 4)]
 ## The bound on one island's layer build (design.md T12); about 300 ms on the dev laptop.
 const BUILD_BOUND_MS: float = 1500.0
 ## Frames a one-tile walk may take at walking speed, with room to spare.
@@ -419,16 +420,24 @@ func test_pools_get_the_pool_tile_and_palm_bases_the_shade() -> void:
 		assert_eq(_tile_at(island, &"Decals", palm), [SHADE_SOURCE, PALM_SHADE, 0], "palm base %s" % palm)
 
 
-func test_the_raft_site_holds_the_wide_shade_and_the_workbench_is_shaded() -> void:
-	var island := _island(SANDBAR)
-	var site: Vector2i = island.built.raft_site
-	assert_true(site.x > 0, "the sandbar has a raft site")
-	assert_eq(_tile_at(island, &"Decals", site + Vector2i(-1, 0)), [SHADE_SOURCE, WIDE_EAST, 0], "the cell west of the site")
-	assert_eq(_tile_at(island, &"Decals", site + Vector2i(-2, 0)), [SHADE_SOURCE, WIDE_WEST, 0], "two cells west")
-	assert_eq(_tile_at(island, &"Decals", site)[0], -1, "none on the site's own shore cell, where it would lie over the foam")
-	var bench: Vector2i = island.built.workbench
-	assert_true(bench.x > 0, "the sandbar has a workbench")
-	assert_eq(_tile_at(island, &"Decals", bench)[0], SHADE_SOURCE, "the workbench cell is shaded")
+## art-terrain-polish D3 (C14): the raft's shade is its look's WIDE drop shadow, so no decal lies
+## under the site or west of it, marked or built; the workbench keeps its shade.
+func test_the_raft_site_has_no_decal_and_the_workbench_is_shaded() -> void:
+	for layout: IslandLayoutData in [SANDBAR, COAST_CAY]:
+		var island := _island(layout)
+		var site: Vector2i = island.built.raft_site
+		assert_true(site.x > 0, "%s has a raft site" % layout.id)
+		for step: int in range(0, 3):
+			assert_eq(_tile_at(island, &"Decals", site - Vector2i(step, 0))[0], -1, "%s: no decal %d cells west of the site" % [layout.id, step])
+		var decals := _layer(island, &"Decals")
+		for cell: Vector2i in decals.get_used_cells():
+			if decals.get_cell_source_id(cell) == SHADE_SOURCE:
+				assert_false(WIDE_HALVES.has(decals.get_cell_atlas_coords(cell)), "%s: no wide half at %s" % [layout.id, cell])
+		var bench: Vector2i = island.built.workbench
+		if layout == SANDBAR:
+			assert_true(bench.x > 0, "the sandbar has a workbench")
+		if bench.x >= 0:
+			assert_eq(_tile_at(island, &"Decals", bench)[0], SHADE_SOURCE, "%s: the workbench cell is shaded" % layout.id)
 
 
 func test_the_coast_cays_shaded_cells_get_the_corner_set() -> void:
@@ -437,7 +446,7 @@ func test_the_coast_cays_shaded_cells_get_the_corner_set() -> void:
 	assert_gt(terrain.shaded.size(), 0)
 	var site: Vector2i = island.built.raft_site
 	for cell: Vector2i in terrain.shaded:
-		if island.built.tide_pools.has(cell) or cell == site + Vector2i(-1, 0) or cell == site + Vector2i(-2, 0):
+		if island.built.tide_pools.has(cell):
 			continue
 		var mask: int = TerrainView._shade_mask(cell, terrain)
 		@warning_ignore("integer_division")

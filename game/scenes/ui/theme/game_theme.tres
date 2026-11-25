@@ -22,6 +22,10 @@
 [ext_resource type="Texture2D" path="res://assets/art/ui/radio_off.png" id="k_radio_off"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/radio_on.png" id="k_radio_on"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/digits_3x5.png" id="k_digits_3x5"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/eye_open_plate.png" id="k_eye_open_plate"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/boat_chip_day.png" id="k_boat_chip_day"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/boat_chip_night.png" id="k_boat_chip_night"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/boat_chip_outline.png" id="k_boat_chip_outline"]
 
 [sub_resource type="StyleBoxTexture" id="hud_panel"]
 content_margin_left = 4.0
@@ -364,6 +368,8 @@ ErrorLabel/styles/normal = SubResource("error_band")
 HeadingLabel/base_type = &"Label"
 HeadingLabel/font_sizes/font_size = 16
 HeadingLabel/fonts/font = ExtResource("1_menu")
+HudCall/base_type = &"PanelContainer"
+HudCall/styles/panel = SubResource("hud_panel_thin")
 HudCheckBox/base_type = &"CheckBox"
 HudCheckBox/colors/font_color = Color(1, 0.92941176, 0.87058824, 1)
 HudCheckBox/colors/font_disabled_color = Color(0.60784314, 0.67843137, 0.71764706, 1)
@@ -376,6 +382,10 @@ HudCount/colors/font_outline_color = Color(0.13333333, 0.1254902, 0.20392157, 1)
 HudCount/colors/font_shadow_color = Color(0, 0, 0, 0)
 HudCount/constants/outline_size = 1
 HudDigits/icons/atlas = ExtResource("k_digits_3x5")
+HudHorizon/icons/boat_chip_day = ExtResource("k_boat_chip_day")
+HudHorizon/icons/boat_chip_night = ExtResource("k_boat_chip_night")
+HudHorizon/icons/boat_chip_outline = ExtResource("k_boat_chip_outline")
+HudMarks/icons/eye_open_plate = ExtResource("k_eye_open_plate")
 HudNote/base_type = &"PanelContainer"
 HudNote/styles/panel = SubResource("hud_note")
 HudNoteText/base_type = &"Label"

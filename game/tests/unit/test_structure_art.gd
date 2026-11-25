@@ -379,6 +379,89 @@ func test_the_site_and_raft_stand_bottom_centre_on_the_b_cell() -> void:
 	assert_eq(data.raft.get_frame_texture(StructureArt.RAFT_WHOLE, 0).get_size(), size)
 
 
+## art-terrain-polish D3 (C14): a raft or its site leans toward land: west when the cell west of its
+## origin is land, else east when the cell east of it is, else not at all.
+func test_the_land_side_is_west_then_east_then_none() -> void:
+	var at := Vector2i(10, 10)
+	var terrain := GridTerrain.new()
+	assert_eq(StructureArt.land_side(terrain, at), -1, "land on both sides: west")
+	terrain.set_cell(at + Vector2i(-1, 0), DataEnums.Terrain.SHALLOWS)
+	assert_eq(StructureArt.land_side(terrain, at), 1, "water west, land east: east")
+	terrain.set_cell(at + Vector2i(1, 0), DataEnums.Terrain.DEEP)
+	assert_eq(StructureArt.land_side(terrain, at), 0, "water on both sides: none")
+	terrain.set_cell(at + Vector2i(-1, 0), DataEnums.Terrain.ROCK)
+	assert_eq(StructureArt.land_side(terrain, at), -1, "rock is land")
+	assert_eq(data.look_offset(StructureArt.KIND_RAFT, 0), Vector2.ZERO, "no side, no offset")
+	var west: Vector2 = data.look_offset(StructureArt.KIND_RAFT, -1)
+	assert_eq(data.look_offset(StructureArt.KIND_RAFT, 1), Vector2(-west.x, west.y), "east mirrors west")
+	assert_eq(data.look_offset(StructureArt.KIND_RAFT_SITE, -1), west, "the site leans as its raft does")
+	for kind: StringName in StructureArt.KINDS:
+		if kind != StructureArt.KIND_RAFT and kind != StructureArt.KIND_RAFT_SITE:
+			assert_eq(data.look_offset(kind, -1), Vector2.ZERO, "%s stays on its origin" % kind)
+
+
+# The image of a frame, cut from its sheet.
+func _frame_pixels(texture: Texture2D) -> Image:
+	var atlas := texture as AtlasTexture
+	if atlas == null:
+		return ArtChecks.read_png(texture.resource_path)
+	return ArtChecks.read_png(atlas.atlas.resource_path).get_region(Rect2i(atlas.region))
+
+
+# The cells under the opaque pixels of `image` drawn with its top left at `top_left`, on the rows of
+# the world from `from_y` (inclusive) to `to_y` (exclusive), that are not land.
+func _wet_cells(image: Image, top_left: Vector2, from_y: float, to_y: float, terrain: TerrainQuery) -> Array[String]:
+	var wet: Array[String] = []
+	for y: int in image.get_height():
+		var world_y: float = top_left.y + y
+		if world_y < from_y or world_y >= to_y:
+			continue
+		for x: int in image.get_width():
+			if image.get_pixel(x, y).a8 == 0:
+				continue
+			var cell := Vector2i(floori((top_left.x + x) / IslandLayout.TILE), floori(world_y / IslandLayout.TILE))
+			if TerrainQuery.is_water(terrain.terrain_at(cell)) and not wet.has(str(cell)):
+				wet.append(str(cell))
+	return wet
+
+
+## art-terrain-polish D3 (C14): at the site of every island that has one, each raft frame and the
+## site's half-built stage, moved by look_offsets toward the land beside the origin, put the
+## opaque pixels of their bottom rows (the rows on the site's own row of cells) over land, and so
+## does their WIDE shadow. The marked and materials stages lean the same way and have no shadow.
+func test_every_raft_frame_and_the_half_built_site_rest_on_land_at_each_site() -> void:
+	var wide: int = int(DropShadow.Size.get("WIDE", -2))
+	var stages: SpriteFrames = data.site_frames_for(&"raft")
+	for layout: IslandLayoutData in [SANDBAR, COAST_CAY, CAYO_SIN_NORTE]:
+		var built := IslandLayout.build(layout)
+		var site: Vector2i = built.raft_site
+		assert_true(site.x >= 0, "%s has a raft site" % layout.id)
+		var origin: Vector2 = IslandLayout.cell_center(site)
+		var side: int = StructureArt.land_side(built.terrain, site)
+		assert_eq(side, -1, "%s: land lies west of the site" % layout.id)
+		var row_top: float = site.y * IslandLayout.TILE
+		for case: Array in [[StructureArt.KIND_RAFT, data.raft, [StructureArt.RAFT_WHOLE, StructureArt.RAFT_WORN, StructureArt.RAFT_BREAKING]],
+				[StructureArt.KIND_RAFT_SITE, stages, [StructureArt.SITE_HALF_BUILT]]]:
+			var kind: StringName = case[0]
+			var frames: SpriteFrames = case[1]
+			var offset: Vector2 = data.look_offset(kind, side)
+			assert_between(-offset.x, 16.0, 24.0, "%s leans 16 to 24 px toward land" % kind)
+			for frame: StringName in case[2]:
+				var texture: Texture2D = frames.get_frame_texture(frame, 0)
+				var image := _frame_pixels(texture)
+				var top_left: Vector2 = origin + offset + StructureArt.frame_offset(texture.get_size())
+				var wet := _wet_cells(image, top_left, row_top, row_top + IslandLayout.TILE, built.terrain)
+				assert_eq(wet, [] as Array[String], "%s %s %s: its bottom rows over land" % [layout.id, kind, frame])
+				assert_eq(data.shadow_for(kind, frame), wide, "%s %s casts the WIDE shadow" % [kind, frame])
+				var shadow_at: Vector2 = origin + offset + data.shadow_offsets.get(kind, Vector2.ZERO)
+				var shadow := Image.create(30, 11, false, Image.FORMAT_RGBA8)
+				shadow.fill(Color.BLACK)
+				var shadow_wet := _wet_cells(shadow, shadow_at - Vector2(15.0, 5.5), -INF, INF, built.terrain)
+				assert_eq(shadow_wet, [] as Array[String], "%s %s %s: its shadow over land" % [layout.id, kind, frame])
+		for frame: StringName in [StructureArt.SITE_MARKED, StructureArt.SITE_MATERIALS]:
+			assert_eq(data.shadow_for(StructureArt.KIND_RAFT_SITE, frame), -1, "a %s site casts no shadow" % frame)
+
+
 func test_every_frame_name_the_rules_pick_is_in_the_frames() -> void:
 	for frame: StringName in [StructureArt.FIRE_LIT, StructureArt.FIRE_OUT]:
 		assert_true(data.fire.has_animation(frame), String(frame))
@@ -390,6 +473,9 @@ func test_every_frame_name_the_rules_pick_is_in_the_frames() -> void:
 func test_each_structure_names_its_shadow() -> void:
 	for kind: StringName in StructureArt.KINDS:
 		assert_true(data.shadows.has(kind), "%s names a shadow size or none (-1)" % kind)
+	# A structure's shadow is a player's, a pick-up's, the smallest or the raft's WIDE one, never a
+	# lying body's (art-terrain-polish D3).
+	var allowed: Array[int] = [-1, DropShadow.Size.LARGE, DropShadow.Size.MEDIUM, DropShadow.Size.SMALL, int(DropShadow.Size.get("WIDE", -2))]
 	for kind: StringName in data.shadows:
 		var size: int = data.shadows[kind]
-		assert_true(size >= -1 and size <= DropShadow.Size.SMALL, "%s: %d" % [kind, size])
+		assert_true(allowed.has(size), "%s: %d" % [kind, size])

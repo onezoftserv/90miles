@@ -28,6 +28,20 @@
   {"name": "ramp_heat", "kind": "ramp", "highlight": "#fbf236", "base": "#df7126", "shade": "#ac3232"},
   {"name": "ramp_energy", "kind": "ramp", "highlight": "#ffffff", "base": "#fbf236", "shade": "#8a6f30"},
   {"name": "ramp_morale", "kind": "ramp", "highlight": "#ffedde", "base": "#d77bba", "shade": "#76428a"},
-  {"name": "digits_3x5", "kind": "digits", "colours": ["#ffedde", "#df7126"], "outline": "#222034"}
+  {"name": "digits_3x5", "kind": "digits", "colours": ["#ffedde", "#df7126"], "outline": "#222034"},
+  {"name": "eye_open_plate", "kind": "icon", "size": [11, 7], "layers": [
+   {"colour": "#222034", "rows": [".#########.", "###########", "###########", "###########", "###########", "###########", ".#########."]},
+   {"colour": "#ffedde", "rows": ["", "...#####...", "..#######..", ".#########.", "..#######..", "...#####..."]},
+   {"colour": "#222034", "rows": ["", "", "....###....", "....###....", "....###...."]}]},
+  {"name": "boat_chip_day", "kind": "icon", "size": [9, 7], "layers": [
+   {"colour": "#000000", "rows": ["..#####..", "..#...#..", "#########", "#.......#", "#.......#", ".#.....#.", "..#####.."]},
+   {"colour": "#ffffff", "rows": ["", "...###..."]},
+   {"colour": "#9badb7", "rows": ["", "", "", ".#######.", ".#######.", "..#####.."]}]},
+  {"name": "boat_chip_night", "kind": "icon", "size": [9, 7], "layers": [
+   {"colour": "#000000", "rows": ["..#####..", "..#...#..", "#########", "#.......#", "#.......#", ".#.....#.", "..#####.."]},
+   {"colour": "#fbf236", "rows": ["", "...###..."]},
+   {"colour": "#3f3f74", "rows": ["", "", "", ".#######.", ".#######.", "..#####.."]}]},
+  {"name": "boat_chip_outline", "kind": "icon", "size": [9, 7], "layers": [
+   {"colour": "#000000", "rows": ["..#####..", "..#...#..", "#########", "#.......#", "#.......#", ".#.....#.", "..#####.."]}]}
  ]
 }
