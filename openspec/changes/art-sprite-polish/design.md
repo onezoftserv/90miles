@@ -269,3 +269,29 @@ Measured values and departures are recorded here as the tasks ship.
   - It is drawing only: it writes nothing, and `test_art_sim_invariance` stays green.
 - **Capture,** off-screen: `capture_crossing.tscn` adds `crossing_swimmer_north.png`, the rider thrown in 12 px west of the deck's centre and 3 px north of its top edge, as in the review's squall shot.
 - **Image:** `docs/art-pass/sprite-polish/swimmer_north_of_deck_before_after_x6.png`: `before/crossing_raft_squall.png` left, where the swimmer is drawn over the deck's top rows. On the right, the same spot now: the planks hide the body and only the head shows above them.
+
+**Group 8, integration (2026-11-24).** From main acddafe, with every group merged (6 and 7 last, #123 and #127).
+- **The rebuild and the checks (8.1)** ran on this same commit for art-terrain-polish's integration (#131):
+  - every recipe tool built 171 files into scratch, each `cmp`-equal to the tracked file, this change's sheets among them;
+  - `check.py` 0 problems on the art and the fixes;
+  - the Python art tests 270 OK;
+  - the import twice clean;
+  - smoke 0 problems;
+  - GUT 3,053 of 3,053.
+- **The re-shoots (8.2),** off-screen per the owner's 2026-11-23 rule (`--position -32000,-32000 --resolution 640x360`), one launch each of `capture_looks.tscn` and `capture_crossing.tscn`. Neither log has a shader or script error.
+  - `docs/art-pass/looks_swim.png` (528×336), `looks_downed.png` (528×384) and `looks_crouch.png` (528×336) are replaced.
+  - `crossing.png` (640×360) is now `capture_crossing`'s `crossing_aboard_0`, the rider aboard as before. It now shows the crossing HUD, which the old shot predates.
+- **Sizes and anchors (8.3):**
+
+  | Sheet | Size | Group |
+  |---|---|---|
+  | `fx/swim_ring.png` | 60×5 (3 frames of 20×5) | 1 |
+  | `creatures/land_crab.png` | 160×16 (cells 16×16, every frame 12 px wide, x 2–13) | 2 |
+  | `creatures/seagull_flight.png` | 96×48 (cells 24×16) | 3 |
+  | `shadows/shadow_23x5.png` | 23×5 | 4 |
+  | `characters/parts/*.png` (11 sheets) | 320×128 each | 1, 4 (the swim bob and the lying pose) |
+  | `creatures/reef_shark.png` | 160×48 (side, up and down rows of 32×16; every frame within 12 px of its centre) | 6 |
+
+  - The anchors are as each group recorded: the swim head anchor unchanged at −16; downed and dead −14 (−13 on the turned frame); the bush front rows 4 to 14 of a Brush tile; the shark's water line at row 9.
+  - The look's z is −21 for a swimmer just north of a drawn deck (group 7).
+- **Docs.** `docs/ASSETS.md` lists `fx.py` beside the other art tools: the swim ring and the recipe shadows. TASKS.md marks the wave built.
