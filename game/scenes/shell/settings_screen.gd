@@ -13,6 +13,7 @@ const SCALE_LABELS: Array[String] = ["Automática", "1×", "2×", "3×", "4×"]
 
 var settings: GameSettings = GameSettings.new()
 
+@onready var name_label: Label = %NameLabel
 @onready var name_field: LineEdit = %Name
 @onready var fullscreen_box: CheckBox = %Fullscreen
 @onready var scale_picker: OptionButton = %Scale
@@ -45,6 +46,15 @@ func bind(source: GameSettings) -> void:
 	scale_picker.select(settings.ui_scale)
 	filter_picker.select(settings.pixel_filter)
 	reduce_flashes_box.set_pressed_no_signal(settings.reduce_flashes)
+
+
+## Inside a run the session already sent the name, so the run menu shows every setting but it
+## (run-menu design D4); the focus moves to the first setting left.
+func hide_name() -> void:
+	name_field.release_focus()
+	for row: Control in [name_label, name_field]:
+		row.visible = false
+	fullscreen_box.grab_focus()
 
 
 func _unhandled_input(event: InputEvent) -> void:

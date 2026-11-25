@@ -13,6 +13,7 @@ const SCREENS: Dictionary[String, String] = {
 	"lobby": "res://scenes/shell/lobby_screen.tscn",
 	"credits": "res://scenes/shell/credits_screen.tscn",
 	"summary": "res://scenes/shell/summary_screen.tscn",
+	"controls": "res://scenes/shell/controls_card.tscn",
 }
 const HOST_LOST_SCENE: PackedScene = preload("res://scenes/ui/host_lost_screen.tscn")
 const PAPER: String = "res://assets/art/ui/panel_paper.png"
@@ -144,6 +145,16 @@ func test_host_lost_sits_in_a_centred_dark_window_with_its_tab() -> void:
 	assert_almost_eq(frame.get_center().y, 180.0, 1.0)
 	assert_true(window.get_global_rect().encloses(screen.back_button.get_global_rect()), "Volver inside the window")
 	assert_true(window.get_global_rect().encloses(screen.message.get_global_rect()), "the line inside the window")
+	# run-menu design D8: the next step shows, "Volver" has the focus, and Esc leaves.
+	assert_eq(screen.next_step.text, "Vuelve al inicio para unirte otra vez o jugar solo.")
+	assert_true(window.get_global_rect().encloses(screen.next_step.get_global_rect()), "the next step inside the window")
+	assert_eq(get_viewport().gui_get_focus_owner(), screen.back_button, "Volver focused")
+	watch_signals(screen)
+	var cancel := InputEventAction.new()
+	cancel.action = &"ui_cancel"
+	cancel.pressed = true
+	screen._unhandled_input(cancel)
+	assert_signal_emitted(screen, "back_requested", "Esc leaves as Volver does")
 	# menu-clarity design D1: the line is body text, so it reads in Press Start 2P at 8.
 	assert_eq(screen.message.get_theme_font(&"font").resource_path, SMALL_FONT, "the host-lost line is body text")
 	assert_eq(screen.message.get_theme_font_size(&"font_size"), 8)

@@ -1,6 +1,6 @@
 extends GutTest
-## coop-networking "Pause" (approved 2026-11-05): in a solo session (one player, offline) the
-## pause menu freezes the whole host simulation; co-op has no pause.
+## coop-networking "Pause" (approved 2026-11-05; run-menu 2026-11-23): in a solo session (one player,
+## offline) the run menu freezes the whole host simulation; in co-op it opens but pauses nothing.
 
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const MENU_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
@@ -106,8 +106,10 @@ func test_co_op_has_no_pause() -> void:
 		assert_false(session.can_pause())
 		assert_false(session.set_paused(true))
 		var menu := _menu(session)
-		assert_false(menu.open(), "the pause button does nothing in co-op")
-		assert_false(menu.visible)
+		assert_true(menu.open(), "the run menu opens in co-op (run-menu)")
+		assert_true(menu.visible)
+		assert_false(get_tree().paused, "and pauses nothing")
+		menu.resume()
 	assert_false(get_tree().paused)
 
 

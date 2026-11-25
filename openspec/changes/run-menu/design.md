@@ -109,7 +109,7 @@ Its rows are a const table. Each row has:
 - the actions for the gamepad column;
 - `range`, for the slot keys, which give "1 … =".
 
-Labels come from `InputLabels.label_for` and `HudText`'s button names, read when the card opens. A few named keys get short words (`KEY_ESCAPE` "Esc", `KEY_SHIFT` "Mayús", the arrows "↑ ↓"). Press Start 2P has no arrow glyphs, so the build checks those glyphs and falls back to "Arriba"/"Abajo" if they are missing. `for_run(solo)` hides the quick chat row in a solo run; the title shows it marked "(en grupo)".
+Labels come from `InputLabels.label_for` and `HudText`'s button names, read when the card opens. A few named keys get short words (`KEY_ESCAPE` "Esc", `KEY_SHIFT` "Mayús", the arrows "↑ ↓"). The build checks that the body font draws the arrow glyphs and falls back to "Arriba"/"Abajo" if one is missing; Press Start 2P draws ↑ ↓ ← → and "…", so the card shows the arrows (`test_controls_card.gd`). `for_run(solo)` hides the quick chat row in a solo run; the title shows it marked "(en grupo)".
 
 ### D7. The first-launch name window
 
@@ -173,6 +173,13 @@ Its `Message` label moves from `HeadingLabel` to the body label, because menu-cl
 - **Test churn from the name window.** Shell tests that show the title would find it open. → One helper marks fresh test settings as asked. `test_suite_integrity.gd` catches a suite that stops parsing.
 - **GUT time is near CI's limit.** → The new suites are pure scene tests, under 5 s each. There is one ShellHarness test, not one per scenario.
 - **The `feat/controls-onboarding` proposal also has a Controles screen** (as an F1 overlay). → The owner chose (2026-11-23) that this card replaces its overlay and its pause rows; its hints and placeholders stay parked.
+
+## Build notes (2026-11-23)
+
+- **The pause menu's frame** is 176 px wide (was 136), so "Abandonar viaje" and "La partida sigue." fit in Press Start 2P with the window's margins.
+- **The title's buttons** are 20 px tall (min) so seven fit the menu column; PR 1 had given the six 24 px.
+- **Quick chat** (`quick_chat_wheel.gd`) checks the HUD's run menu, so Q does not open the wheel while the co-op menu is open. The strip already refuses slot and use input then (`RunHud.input_open`).
+- **The co-op hold test** (`test_run_menu_net.gd`) drives the client's own body with real input in the ShellHarness, and the two-process run (`run_menu_run.gd`, UDP 7801) does the same with the pause key parsed as the game's input. The exit-time "leaked at exit" lines of both processes are the same as the merged `coop_rematch_run.gd`'s, so they are a baseline of two-process SceneTree runs, not of this change.
 
 ## Owner answers (2026-11-23)
 
