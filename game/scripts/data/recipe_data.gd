@@ -71,6 +71,9 @@ enum Availability {
 @export var work_energy_per_s: float = 0.0
 ## Thirst each worker pays per second of work on the build site, on top of the normal drain.
 @export var work_thirst_per_s: float = 0.0
+## With a work cost in energy: how fast a worker with no energy still works (owner Q4 (a): the raft's
+## 0.25, a quarter speed), paying `work_thirst_per_s` per second held and no energy. 0 stops the work.
+@export var exhausted_work_factor: float = 0.0
 
 @export_group("Output")
 ## ITEM, STRUCTURE, VESSEL, VESSEL_UPGRADE or VESSEL_REPAIR.

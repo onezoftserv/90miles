@@ -5,7 +5,8 @@ extends SceneTree
 ## 1. Gather the next missing stage's inputs, the nearest first, and pick up the hut's knife.
 ## 2. Work by holding the raft site.
 ## 3. When energy reaches 0, climb a palm with coconuts (out of the gulls' nests first), eat at once out
-##    of the gulls' sight, and repeat until energy is at least 20 or no palm has coconuts.
+##    of the gulls' sight, and repeat until energy is at least 20 or no palm has coconuts. With none left,
+##    hold on: the work goes on at a quarter speed for thirst only (owner Q4 (a)).
 ## 4. Drink a coconut whenever thirst drops below 30.
 ## 5. Cool off at midday: at heat 80 or more, stand in the hut's shade until heat is below 30.
 ## 6. Once the raft is built, top up the same way, then stand in the hut's shade until the launch
@@ -87,6 +88,8 @@ var alive_at_end: bool = false
 var coconuts_eaten: int = 0
 var stolen: int = 0
 var running: bool = false
+## When the bot first had to work on with no energy and no coconut (owner Q4 (a): slow work), or "".
+var slow_since: String = ""
 var lose: int = 0
 
 
@@ -149,7 +152,7 @@ func _report_and_quit() -> void:
 	if done:
 		return
 	done = true
-	print("PRESSBOT timeline: launched from the sandbar at %s (day %d); arrivals %s; run %.0f s of game time; coconuts eaten %d, stolen %d" % [launch_clock, launch_day, arrivals, game_s, coconuts_eaten, stolen])
+	print("PRESSBOT timeline: launched from the sandbar at %s (day %d); arrivals %s; run %.0f s of game time; coconuts eaten %d, stolen %d; slow work from %s" % [launch_clock, launch_day, arrivals, game_s, coconuts_eaten, stolen, slow_since if not slow_since.is_empty() else "never"])
 	_check("midday seen on the sandbar", midday_seen)
 	_check("the sandbar's minimum thirst is under 50", min_thirst_sandbar < 50.0, "%.1f" % min_thirst_sandbar)
 	_check("launched from the sandbar at 20:00 or later", launch_day > 1 or launch_time_of_day_s >= NIGHT_START_S, launch_clock)
@@ -207,10 +210,9 @@ func _sandbar() -> void:
 	while not done and _site() != null:
 		if await _needs():
 			continue
-		if float(body.get("meters").get("energy")) <= 0.000001:
-			_check("energy for the raft", false, "no energy and no coconut left at %s, work %.0f s of 120" % [_clock_text(), float(_site().call("progress")) * 120.0])
-			_report_and_quit()
-			return
+		if float(body.get("meters").get("energy")) <= 0.000001 and not slow_since:
+			slow_since = _clock_text()
+			print("PRESSBOT no energy and no coconut left at %s with %.0f of 120 s built: working on slowly" % [slow_since, float(_site().call("progress")) * 120.0])
 		var site := _site()
 		var missing: Dictionary = site.call("stage_missing_items")
 		var wanted: Array[StringName] = []
@@ -272,12 +274,12 @@ func _work() -> void:
 		if site == null:
 			break
 		var meters: Object = body.get("meters")
-		if float(meters.get("energy")) <= 0.000001 or float(meters.get("thirst")) < LOW_THIRST:
+		if (float(meters.get("energy")) <= 0.000001 and _coconut_left()) or (float(meters.get("thirst")) < LOW_THIRST and _coconut_left()):
 			break
 		if float(meters.get("heat")) >= HOT and sky.get("clock").call("is_midday"):
 			break
 		var now: float = float(site.call("progress"))
-		still_s = still_s + 1.0 / Engine.physics_ticks_per_second if is_equal_approx(now, last) else 0.0
+		still_s = still_s + 1.0 / Engine.physics_ticks_per_second if now == last else 0.0
 		last = now
 		if still_s >= 0.5:
 			break

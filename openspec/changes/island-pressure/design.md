@@ -113,9 +113,9 @@ Nothing refills on a clock: sleep is not wired.
 
 Rejected: holding for every build site. It would change the fire, the catcher and the mend for no review finding.
 
-### D3. Work costs and the energy gate
+### D3. Work costs and slow work at 0 energy
 - **What a worker pays.** Each host frame, a worker on a recipe with a cost pays `work_energy_per_s × delta` through `spend_energy` and `work_thirst_per_s × delta` off thirst. The skill factor speeds the stage, not the rate, so a Mecánico pays half per stage.
-- **The gate.** With `work_energy_per_s > 0` and energy at 0, `work()` is not called: the hold does nothing, and the prompt says "Sin fuerzas: come algo."
+- **Slow work at 0 energy** (owner Q4 (a), 2026-11-24; this replaced a gate that stopped all work and could strand a solo player, see "Stress runs"). With `work_energy_per_s > 0` and energy at 0, a hold works at `RecipeData.exhausted_work_factor` (the raft's 0.25). Each second held still pays `work_thirst_per_s`; no energy is spent. The prompt says "Sin fuerzas: come algo." The worker gets out at the price of time and thirst: the last 20 s of a raft take 80 s of holding.
 - **Numbers:**
   - energy 1/s: GAME_DESIGN §4 already says "building 1/s"; the owner pointed at it.
   - thirst +0.25/s: a 30 s stage costs 7.5, about half a coconut, so the build's 30 thirst is felt.
@@ -302,11 +302,13 @@ The sandbar holds no other food: coconuts do not regrow, there are no food pick-
 | `--lose=3` (3 coconuts gone at the start, as gulls would take them) | stranded at 18:38 with 110 of 120 s |
 | both | stranded at 16:28 with 101 of 120 s |
 
-Stranded means alive, with an almost-built raft and no way to finish it on island 1. The run never ends until thirst kills the player. That breaks "solo must be winnable" for any player who is less than careful, so it goes to the owner as Q4 before merging, with options:
+Stranded means alive, with an almost-built raft and no way to finish it on island 1. The run never ends until thirst kills the player. That broke "solo must be winnable" for any player who is less than careful, so it went to the owner as Q4 before merging, with options:
 - **(a)** Work at 0 energy at a quarter speed, paying thirst only (recommended).
 - **(b)** Coconuts regrow each dawn.
 - **(c)** The raft's work costs 0.75 energy a second.
 - **(d)** Pull `night-ashore` sleep forward.
+
+**The owner chose (a) on 2026-11-24.** Its reruns are under "Stress runs after Q4 (a)".
 
 ## Two processes (task 6.3, 2026-11-24, on main f8a6c75)
 

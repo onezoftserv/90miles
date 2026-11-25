@@ -63,6 +63,8 @@ static func _check_staged_recipe(where: String, data: ContentData) -> PackedStri
 		return errors
 	if recipe.work_energy_per_s < 0.0 or recipe.work_thirst_per_s < 0.0:
 		errors.append("%s: a work cost is never negative" % where)
+	if recipe.exhausted_work_factor < 0.0 or recipe.exhausted_work_factor > 1.0:
+		errors.append("%s: the slow-work factor is between 0 and 1" % where)
 	if not recipe.is_staged():
 		return errors
 	if not recipe.build_site:

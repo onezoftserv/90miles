@@ -72,7 +72,7 @@ Heat SHALL rise 0.75/s (45/min) in direct sun between in-game 10:00 and 16:00, �
 - **THEN** their heat is 100 and sunstroke has started
 
 ### Requirement: Energy
-Energy SHALL drain per activity (swim 3/s, run 0.5/s, and work on a build at its work cost: 1/s on a raft stage, crafting-inventory "Work costs") and restore +50 per sleep (a full night in shelter) and +10 per meal, where a meal is anything that restores hunger. It does not regenerate otherwise. At 0, the player can only crawl and cannot work a build that costs energy. (`docs/GAME_DESIGN.md` §4 "building 1/s" is the raft's work cost.)
+Energy SHALL drain per activity (swim 3/s, run 0.5/s, and work on a build at its work cost: 1/s on a raft stage, crafting-inventory "Work costs") and restore +50 per sleep (a full night in shelter) and +10 per meal, where a meal is anything that restores hunger. It does not regenerate otherwise. At 0, the player can only crawl and works a build that costs energy at its slow-work factor (a quarter speed on the raft), paying its thirst only. (`docs/GAME_DESIGN.md` §4 "building 1/s" is the raft's work cost.)
 
 #### Scenario: Running out of energy
 - GIVEN a player on land with energy 5

@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Build site prompt
-A build site's prompt SHALL add lines from the site's state as this peer has it: while inputs are missing, one line per missing input or tag as "<Spanish name> x<count>", the first headed "Falta:"; once every input is in, the shared build progress as a bar with a percentage. A staged build first adds the stage line, "Etapa 2/4: Armar el piso"; its "Falta:" lines name what that stage still needs and its bar shows that stage's own progress. While the local player has no energy for a build that costs energy, a line reads "Sin fuerzas: come algo." Deposited items, deposited tags and progress reach every peer, later joiners included, so every peer reads the same state. Solo the same.
+A build site's prompt SHALL add lines from the site's state as this peer has it: while inputs are missing, one line per missing input or tag as "<Spanish name> x<count>", the first headed "Falta:"; once every input is in, the shared build progress as a bar with a percentage. A staged build first adds the stage line, "Etapa 2/4: Armar el piso"; its "Falta:" lines name what that stage still needs and its bar shows that stage's own progress. While the local player has no energy for a build that costs energy (the work then goes on slowly), a line reads "Sin fuerzas: come algo." Deposited items, deposited tags and progress reach every peer, later joiners included, so every peer reads the same state. Solo the same.
 
 #### Scenario: The raft site
 - **GIVEN** a solo player next to the raft site holding 2 driftwood, with nothing deposited

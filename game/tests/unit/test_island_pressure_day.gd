@@ -164,11 +164,17 @@ func _work() -> void:
 	var stop_s: float = _stage_end_s(_stage())
 	crafting = true
 	while work_s < recipe.time_s - 0.0001 and _stage_missing().is_empty():
-		if meters.energy <= 0.000001 or meters.thirst < LOW_THIRST or (meters.heat >= HOT and _midday()):
+		if (meters.energy <= 0.000001 and _coconut_left()) or meters.thirst < LOW_THIRST or (meters.heat >= HOT and _midday()):
 			break
-		var step: float = minf(STEP_S, meters.energy / recipe.work_energy_per_s)
-		meters.spend_energy(recipe.work_energy_per_s * step)
-		meters.add(DataEnums.Meter.THIRST, -recipe.work_thirst_per_s * step)
+		var step: float
+		if meters.energy <= 0.000001:
+			# owner Q4 (a): no energy and no coconut left, so the hold goes on at the slow-work factor.
+			step = STEP_S * recipe.exhausted_work_factor
+			meters.add(DataEnums.Meter.THIRST, -recipe.work_thirst_per_s * STEP_S)
+		else:
+			step = minf(STEP_S, meters.energy / recipe.work_energy_per_s)
+			meters.spend_energy(recipe.work_energy_per_s * step)
+			meters.add(DataEnums.Meter.THIRST, -recipe.work_thirst_per_s * step)
 		_spend(STEP_S)
 		work_s = minf(work_s + step, recipe.time_s)
 		if work_s >= stop_s - 0.0001:
@@ -280,8 +286,6 @@ func test_the_policy_spends_a_day_on_the_sandbar() -> void:
 	while work_s < recipe.time_s - 0.0001 and clock_s < GIVE_UP_S:
 		if _needs():
 			continue
-		if meters.energy <= 0.000001:
-			break
 		var missing := _stage_missing()
 		var wanted: StringName = &""
 		for id: StringName in missing:

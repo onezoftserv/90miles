@@ -56,6 +56,7 @@ skill_speed_multiplier = 2.0
 stages = Array[ExtResource("2_stage")]([SubResource("Resource_tubes"), SubResource("Resource_deck"), SubResource("Resource_rail"), SubResource("Resource_knots")])
 work_energy_per_s = 1.0
 work_thirst_per_s = 0.25
+exhausted_work_factor = 0.25
 output_kind = 2
 vessel_integrity = 100.0
 id = &"raft"

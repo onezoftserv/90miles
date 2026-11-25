@@ -47,7 +47,7 @@ A staged build SHALL advance only while a worker in reach holds interact on it. 
 - **THEN** the first stage is done
 
 ### Requirement: Work costs
-A build-site recipe MAY name a work cost in energy and thirst per second. Every worker SHALL pay it for each second they work, on top of the normal drains; a worker whose energy is empty does no work until they have energy again. A recipe that names no cost costs nothing extra. The raft names 1 energy and 0.25 thirst per second. With exactly 1 player, that player pays it all. (Implements docs/GAME_DESIGN.md §4 Energy "building 1/s"; adds the thirst cost there.)
+A build-site recipe MAY name a work cost in energy and thirst per second. Every worker SHALL pay it per second worked, on top of the normal drains. With no energy, a worker works at the recipe's slow-work factor and pays thirst only. The raft: 1 energy, 0.25 thirst, a quarter speed. Solo, that player pays it all. (GAME_DESIGN §4 "building 1/s"; owner Q4 (a).)
 
 #### Scenario: Solo stage at dawn
 - **GIVEN** a 1-player run, offline, at dawn, a player at energy 100 and thirst 80 at the raft site with the first stage's inputs in
@@ -55,9 +55,14 @@ A build-site recipe MAY name a work cost in energy and thirst per second. Every 
 - **THEN** the first stage is done, their energy is 70 and their thirst is 69.5
 
 #### Scenario: Out of strength
-- **GIVEN** a 1-player run, offline, a player at energy 5 holding interact on the raft site with every input in
+- **GIVEN** a 1-player run, offline, a player at energy 5 and thirst 80 holding interact on the raft site at dawn with every input in
 - **WHEN** 10 s pass
-- **THEN** the site's progress rose by 5 s of work and stopped, and the player's energy is 0
+- **THEN** the site's progress rose by 6.25 s of work (5 s, then 5 s at a quarter speed), the player's energy is 0 and their thirst is 76.5
+
+#### Scenario: No food left
+- **GIVEN** a 1-player run, offline, a player at energy 0 with no food, at the sandbar's raft site at 100 of its 120 s
+- **WHEN** they hold interact on it for 80 s
+- **THEN** the raft is built, and at night out of the light they launch it
 
 #### Scenario: A free fire
 - **GIVEN** a solo player at energy 100 at a fire site with its inputs in

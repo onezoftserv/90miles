@@ -183,14 +183,44 @@ func test_solo_stage_at_dawn() -> void:
 	assert_almost_eq(body.meters.thirst, 69.5, 0.01)
 
 
+# owner Q4 (a): at 0 energy the work goes on at a quarter speed and costs thirst only.
 func test_out_of_strength() -> void:
 	_carry(6, 2, 3)
 	site.deposit(body)
 	body.meters.energy = 5.0
+	body.meters.thirst = 80.0
 	_hold(10.0)
-	assert_almost_eq(_work_s(), 5.0, 0.02)
+	assert_almost_eq(_work_s(), 6.25, 0.03, "5 s, then 5 s at a quarter speed")
 	assert_almost_eq(body.meters.energy, 0.0, 0.0001)
+	assert_almost_eq(body.meters.thirst, 76.5, 0.03, "the thirst of every second held, and the rest drain")
 	assert_true(site.needs_strength(body), "the prompt asks for food")
+
+
+func test_the_slow_work_factor_is_data() -> void:
+	assert_eq(site.recipe.exhausted_work_factor, 0.25)
+	var fire := GameState.content.get_entry(&"recipes", &"fire") as RecipeData
+	assert_eq(fire.exhausted_work_factor, 0.0, "a recipe without a work cost has none")
+
+
+# crafting-inventory "No food left": a player who reaches 0 energy with no food still finishes the
+# raft on island 1, and launches it at night.
+func test_no_food_left_still_finishes_and_launches() -> void:
+	_carry(6, 2, 3)
+	site.deposit(body)
+	site.work(100.0 / RAFT_TIME_S)
+	body.meters.energy = 0.0
+	assert_eq(body.inventory.held_food(), &"", "no food")
+	_hold(79.0)
+	assert_null(_raft(), "not yet: 19.75 of the last 20 s")
+	_hold(1.2)
+	var raft := _raft()
+	assert_not_null(raft, "the raft is built at a quarter speed")
+	assert_almost_eq(body.meters.energy, 0.0, 0.0001, "no energy was needed")
+	assert_false(body.meters.dead)
+	island.climate.phase = DataEnums.DayPhase.NIGHT
+	var routes := session.get_node("Routes") as IslandRoutes
+	raft.global_position = body.global_position
+	assert_true(routes.start_for(1, &"raft"), "launched at night")
 
 
 func test_building_the_raft_in_the_sun() -> void:
@@ -214,7 +244,7 @@ func test_solo_raft() -> void:
 	_carry(6, 2, 3)
 	body.inventory.add(&"coco", 2)
 	body.inventory.add(&"knife", 1)
-	_hold(110.0)
+	_hold(100.0)
 	assert_almost_eq(_work_s(), 100.0, 0.05, "100 energy buys 100 s of work")
 	assert_eq(site.stage_index(), 3, "in the fourth stage")
 	assert_almost_eq(body.meters.energy, 0.0, 0.0001)
