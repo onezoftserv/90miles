@@ -44,9 +44,9 @@ signal removal_recorded(peer_id: int, player_name: String)
 ## A rejoined player took back its body: it now belongs to `new_peer` (on every peer).
 signal player_rebound(old_peer: int, new_peer: int, body: PlayerBody)
 ## Every peer: the host loads island `layout_id` with these arrivals (peer id -> {health, energy})
-## and a beached raft of `raft_integrity` (0: none), as island number `index` of the run (0: the next
+## and the beached raft `raft` (null: none), as island number `index` of the run (0: the next
 ## one; guardacostas-capture "Island history"). IslandTravel does it.
-signal island_travel_requested(layout_id: StringName, arrivals: Dictionary, raft_integrity: float, index: int)
+signal island_travel_requested(layout_id: StringName, arrivals: Dictionary, raft: RaftRecord, index: int)
 ## Every peer: the host released the party from an island that names no next one (guardacostas-capture
 ## "Release at the next island"); IslandTravel ends the run as leaving that island does.
 signal off_the_chain_requested
@@ -990,20 +990,22 @@ func _is_unsafe_node_name(node_name: String) -> bool:
 
 
 ## Every peer: the host loads the island `layout_id` for everyone, with `arrivals` (peer id ->
-## {health, energy}) landing on its landing cells in peer order and `raft_integrity` for the raft
-## beached at its build site (0: none), as island number `index` of the run (0: the next one), so
+## {health, energy}) landing on its landing cells in peer order and `raft` for the raft beached at
+## its build site (a RaftRecord's dict with its integrity, maximum and fittings; empty: none), as
+## island number `index` of the run (0: the next one), so
 ## every peer counts the same islands reached. Anything not from the host, or not shaped like this,
 ## is ignored: a client never loads an island on its own.
 @rpc("authority", "call_local", "reliable")
-func travel_to(layout_id: String, arrivals: Dictionary, raft_integrity: float, index: int = 0) -> void:
+func travel_to(layout_id: String, arrivals: Dictionary, raft: Dictionary, index: int = 0) -> void:
 	if not _is_from_host():
 		return
 	var id := StringName(layout_id)
 	var clean: Variant = checked_arrivals(arrivals)
 	# get_entry, not has_entry: a test's fixture island lives in the catalog's cache, not its folder.
-	if clean == null or not is_finite(raft_integrity) or not GameState.content.get_entry(&"islands", id) is IslandLayoutData:
+	var record := RaftRecord.from_dict(raft) if not raft.is_empty() else null
+	if clean == null or (record == null and not raft.is_empty()) or not GameState.content.get_entry(&"islands", id) is IslandLayoutData:
 		return
-	island_travel_requested.emit(id, clean, maxf(raft_integrity, 0.0), clampi(index, 0, MAX_ISLAND_INDEX))
+	island_travel_requested.emit(id, clean, record, clampi(index, 0, MAX_ISLAND_INDEX))
 
 
 ## Every peer, from the host (guardacostas-capture "Release at the next island"): the party was

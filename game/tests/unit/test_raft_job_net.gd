@@ -123,8 +123,8 @@ func test_a_client_starts_a_mend_from_its_list() -> void:
 	hud.craft_list.open_raft(_raft(client))
 	assert_true(hud.craft_list.is_open())
 	assert_eq(hud.craft_list.head_texts(), PackedStringArray(["Balsa 50/100"]))
-	assert_eq(hud.craft_list.row_texts(), PackedStringArray(["Remiendo"]))
-	assert_true(hud.craft_list.choose(0), "the choice goes to the host")
+	assert_eq(hud.craft_list.row_texts(), PackedStringArray(["Clavazón", "Defensas", "Remiendo", "Toldo"]))
+	assert_true(hud.craft_list.choose(2), "the choice goes to the host (Remiendo, the third row)")
 	assert_true(await wait_until(_has_job.bind(host), TIMEOUT_S), "the host opens the mend on the raft")
 	assert_true(await wait_until(_has_job.bind(client), TIMEOUT_S), "and the client shows it")
 

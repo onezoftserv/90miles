@@ -64,11 +64,11 @@ func test_only_a_raft_kept_on_arrival_is_beached() -> void:
 	var travel := IslandTravel.new()
 	autofree(travel)
 	travel._results = [_result(&"raft", 1, 70.0), _result(&"test_car", 2, 95.0), _result(&"test_board", 3, 50.0)] as Array[CrossingResult]
-	assert_eq(travel._beached_integrity(), 70.0, "the raft at 70, not the car at 95 or a board")
+	assert_eq(travel._beached_raft().integrity, 70.0, "the raft at 70, not the car at 95 or a board")
 	travel._results = [_result(&"test_car", 1, 95.0), _result(&"test_board", 2, 50.0), _result(&"binoculars_swim", 3, 0.0)] as Array[CrossingResult]
-	assert_eq(travel._beached_integrity(), 0.0, "no raft, nothing beached")
+	assert_null(travel._beached_raft(), "no raft, nothing beached")
 	travel._results = [_result(&"raft", 1, 70.0, true)] as Array[CrossingResult]
-	assert_eq(travel._beached_integrity(), 0.0, "a broken raft is lost")
+	assert_null(travel._beached_raft(), "a broken raft is lost")
 
 
 func test_a_dead_teammate_anchors_nobody() -> void:
@@ -110,7 +110,7 @@ func test_solo_board_rider_lands_on_the_first_landing_cell_and_leaves_nothing() 
 
 func test_a_cell_that_is_not_land_falls_back_to_the_landing_cells() -> void:
 	var shell := _shell()
-	shell.travel._load(COAST, {1: {"health": 90.0, "energy": 50.0, "cell": Vector2i(0, 0)}}, 0.0)
+	shell.travel._load(COAST, {1: {"health": 90.0, "energy": 50.0, "cell": Vector2i(0, 0)}}, null)
 	await wait_process_frames(2)
 	assert_eq(shell.island.layout.id, COAST)
 	assert_eq(shell.session.body(1).position, IslandLayout.cell_center(shell.island.built.landing_cells()[0]))
@@ -119,7 +119,7 @@ func test_a_cell_that_is_not_land_falls_back_to_the_landing_cells() -> void:
 func test_a_sent_land_cell_is_where_the_rider_stands() -> void:
 	var shell := _shell()
 	var beach := Vector2i(20, 26)
-	shell.travel._load(COAST, {1: {"health": 90.0, "energy": 50.0, "cell": beach}}, 0.0)
+	shell.travel._load(COAST, {1: {"health": 90.0, "energy": 50.0, "cell": beach}}, null)
 	await wait_process_frames(2)
 	assert_eq(shell.island.built.terrain.cells.get(beach), DataEnums.Terrain.BEACH)
 	assert_eq(shell.session.body(1).position, IslandLayout.cell_center(beach))

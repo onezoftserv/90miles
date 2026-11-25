@@ -172,10 +172,10 @@ func test_a_clients_arrival_is_driven_by_the_host() -> void:
 		net.peer_id(client): {"health": 100.0, "energy": 100.0},
 	}
 	# A client cannot load an island on its own, and the host ignores what makes no sense.
-	client.travel_to(String(COAST), arrivals, 0.0)
-	host.travel_to("no_such_island", arrivals, 0.0)
-	host.travel_to(String(COAST), {"x": 1}, 0.0)
-	host.travel_to(String(COAST), arrivals, NAN)
+	client.travel_to(String(COAST), arrivals, {})
+	host.travel_to("no_such_island", arrivals, {})
+	host.travel_to(String(COAST), {"x": 1}, {})
+	host.travel_to(String(COAST), arrivals, {"integrity": NAN, "max": 100.0, "fittings": []})
 	await wait_frames(5)
 	assert_eq(_island_id(client), SANDBAR, "the client stays where the host is")
 	assert_eq(_island_id(host), SANDBAR)

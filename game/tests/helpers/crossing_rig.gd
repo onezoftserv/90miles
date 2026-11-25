@@ -8,12 +8,13 @@ const STEP_S: float = 0.1
 
 
 ## The crossing, with `players` riders (peer ids 1, 2, ...) and a plan of `length_s` and `beats`.
-static func make(test: GutTest, route_id: StringName, players: int, integrity: float, length_s: float, beats: Array[RefCounted] = []) -> Crossing:
+## `raft` is a launched raft's maximum and fittings (island-stop), or null.
+static func make(test: GutTest, route_id: StringName, players: int, integrity: float, length_s: float, beats: Array[RefCounted] = [], raft: RaftRecord = null) -> Crossing:
 	var session := make_session(test, players)
 	var ids: Array[int] = []
 	for id: int in range(1, players + 1):
 		ids.append(id)
-	return launch_on(session, route_id, ids, integrity, length_s, beats)
+	return launch_on(session, route_id, ids, integrity, length_s, beats, raft)
 
 
 ## A started session with `players` idle bodies (peer ids 1, 2, ...) and no crossing yet.
@@ -32,9 +33,10 @@ static func make_session(test: GutTest, players: int) -> CoopSession:
 
 
 ## A crossing on `route_id` in `session` for the riders `ids`, in that order.
-static func launch_on(session: CoopSession, route_id: StringName, ids: Array[int], integrity: float, length_s: float, beats: Array[RefCounted] = []) -> Crossing:
+static func launch_on(session: CoopSession, route_id: StringName, ids: Array[int], integrity: float, length_s: float, beats: Array[RefCounted] = [], raft: RaftRecord = null) -> Crossing:
 	var route := (GameState.content.get_entry(&"routes", route_id) as RouteData).duplicate() as RouteData
 	var crossing := Crossing.SCENE.instantiate() as Crossing
+	crossing.fitted = raft
 	session.add_child(crossing)
 	crossing.setup(session, route, ids, integrity, CrossingPlan.create(length_s, beats), 0)
 	crossing.advance(0.0)

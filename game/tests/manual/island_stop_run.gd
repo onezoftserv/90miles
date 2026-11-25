@@ -1,12 +1,14 @@
 extends SceneTree
-## Manual host-and-client run for island-stop task 2.8: two Godot processes playing the real game
-## shell over UDP port 7798 (other sessions share the machine, so never 7777).
+## Manual host-and-client run for island-stop tasks 2.8 and 3.8: two Godot processes playing the
+## real game shell over UDP port 7798 (other sessions share the machine, so never 7777).
 ##
 ## 1. On the sandbar, the host builds the raft and wears it to 50.
 ## 2. The client opens a mend on it through its own request, as its raft list sends it.
 ## 3. Each player deposits one input and the client's player works it, to 70 on both processes.
-## 4. Both ride a quiet 20 s crossing to the coast cay, where the raft lies at 70 on both.
-## 5. There the client mends it again to 90.
+## 4. The host fits the toldo, and both processes show it.
+## 5. Both ride a quiet 20 s crossing, the toldo's shade on the deck on both, to the coast cay,
+##    where the raft lies at 70 of 100 with the toldo on both.
+## 6. There the client mends it again to 90, and the host nails it to 110 of 120, on both.
 ##
 ## Headless, host first:
 ##   godot --headless --path game -s res://tests/manual/island_stop_run.gd -- --mode=host
@@ -24,6 +26,8 @@ const PORT: int = 7798
 const FLOW_RUN: int = 3
 const COAST: StringName = &"coast_cay"
 const MEND: StringName = &"raft_mend"
+const TOLDO: StringName = &"raft_toldo"
+const CLAVAZON: StringName = &"raft_clavazon"
 const WORN: float = 50.0
 const CROSSING_S: float = 20.0
 const DEADLINE_S: float = 300.0
@@ -154,6 +158,21 @@ func _integrity_is(value: float) -> bool:
 	return raft != null and is_equal_approx(float(raft.get("integrity")), value)
 
 
+func _fittings_are(ids: Array) -> bool:
+	var raft := _raft()
+	if raft == null:
+		return false
+	var have: Array = raft.get("fittings")
+	return have.size() == ids.size() and ids.all(func(id: Variant) -> bool: return have.has(id))
+
+
+# Whether `crossing`'s deck is shade: the toldo's (island-stop D7).
+func _crossing_shaded(crossing: Node) -> bool:
+	var deck: Rect2 = crossing.call("deck_rect")
+	var cell := Vector2i((deck.get_center() / 16.0).floor())
+	return crossing.get("sea").call("is_shaded", cell) == true
+
+
 func _job() -> Node2D:
 	var raft := _raft()
 	return raft.get("job") as Node2D if raft != null else null
@@ -207,6 +226,10 @@ func _host() -> void:
 	await _mend_here(other, WORN + 20.0, "sandbar")
 	if fails > 0:
 		return
+	await _fit_here(TOLDO, {&"tarp": 1, &"driftwood": 2}, "sandbar")
+	_check("the toldo is on the host's raft", _fittings_are([TOLDO]) and _integrity_is(WORN + 20.0))
+	if fails > 0:
+		return
 	# Both ride the raft out on a quiet crossing.
 	_body(_me()).global_position = _raft().global_position
 	_body(other).global_position = _raft().global_position + Vector2(6.0, 0.0)
@@ -217,11 +240,32 @@ func _host() -> void:
 		return
 	crossings[0].set("plan", (load(PLAN_PATH) as Script).call("create", CROSSING_S))
 	_hooked("a quiet %d s crossing" % int(CROSSING_S))
+	_check("the host's crossing has the toldo's shade", _crossing_shaded(crossings[0]))
 	if not await _arrive():
 		return
 	await _seconds(2.0)
 	await _mend_here(other, WORN + 40.0, "coast cay")
+	if fails > 0:
+		return
+	await _fit_here(CLAVAZON, {&"nails": 4}, "coast cay")
+	_check("the host's raft is nailed to %d of 120" % int(WORN + 60.0), _fittings_are([TOLDO, CLAVAZON]) and _integrity_is(WORN + 60.0) and is_equal_approx(float(_raft().get("max_integrity")), 120.0), "%s/%s" % [_raft().get("integrity"), _raft().get("max_integrity")])
+	# Give the client time to see the last state before the host quits.
+	await _seconds(3.0)
 
+
+# Host: its own player opens `id` at the raft's work point, deposits `inputs` and works it alone.
+func _fit_here(id: StringName, inputs: Dictionary, where: String) -> void:
+	var point: Node2D = _raft().get("work_point")
+	_body(_me()).global_position = point.global_position
+	for item: StringName in inputs:
+		_body(_me()).get("inventory").call("add", item, inputs[item])
+	_hooked("the host at the work point on the %s with %s" % [where, inputs])
+	if not _check("the host opens %s on the %s" % [id, where], session.call("craft_for", _me(), id, session.get_path_to(_raft())) == true):
+		return
+	session.call("deposit_for", _me(), session.get_path_to(_job()))
+	_body(_me()).get("crafter").call("start_work", _job())
+	var done_fitting := func() -> bool: return _job() == null and (_raft().get("fittings") as Array).has(id)
+	_check("%s is done on the %s" % [id, where], await _wait_for("%s done here" % id, done_fitting, 45.0))
 
 # Host: both players at the raft's work point, the client's with a rope and the host's with a
 # driftwood; the client opens the mend and deposits, the host deposits, and the client's player
@@ -257,6 +301,7 @@ func _arrive() -> bool:
 	if not _check("on the coast cay with a beached raft", await _wait_for("the coast cay", landed, CROSSING_S + 40.0)):
 		return false
 	_check("the beached raft is at %d of 100" % int(WORN + 20.0), _integrity_is(WORN + 20.0) and is_equal_approx(float(_raft().get("max_integrity")), 100.0), "%s" % _raft().get("integrity"))
+	_check("the beached raft keeps its toldo", _fittings_are([TOLDO]), "%s" % [_raft().get("fittings")])
 	return true
 
 
@@ -272,11 +317,24 @@ func _client() -> void:
 	await _ask_and_feed(WORN + 20.0, "sandbar")
 	if fails > 0:
 		return
+	_check("the client sees the toldo on the raft", await _wait_for("the toldo here", _fittings_are.bind([TOLDO]), 40.0))
+	var riding := func() -> bool:
+		for child: Node in session.get_children():
+			if child.get("fitted") != null and child.get("plan") != null:
+				return true
+		return false
+	if _check("the client rides the crossing", await _wait_for("the crossing here", riding, 40.0)):
+		for child: Node in session.get_children():
+			if child.get("fitted") != null:
+				_check("the client's crossing has the toldo's shade and 70 of 100", _crossing_shaded(child) and is_equal_approx(float(child.get("integrity").get("maximum")), 100.0))
 	var landed := func() -> bool: return _island_id() == COAST and _raft() != null and not _body(_me()).get("left_island")
 	if not _check("landed on the coast cay with a beached raft", await _wait_for("the coast cay", landed, CROSSING_S + 60.0)):
 		return
 	_check("the beached raft is at %d here too" % int(WORN + 20.0), _integrity_is(WORN + 20.0), "%s" % _raft().get("integrity"))
+	_check("the beached raft keeps its toldo here too", await _wait_for("the toldo on the cay", _fittings_are.bind([TOLDO]), 10.0))
 	await _ask_and_feed(WORN + 40.0, "coast cay")
+	var nailed := func() -> bool: return _fittings_are([TOLDO, CLAVAZON]) and _integrity_is(WORN + 60.0) and is_equal_approx(float(_raft().get("max_integrity")), 120.0)
+	_check("the client sees the raft nailed to %d of 120" % int(WORN + 60.0), await _wait_for("the clavazón here", nailed, 60.0), "%s/%s" % [_raft().get("integrity"), _raft().get("max_integrity")] if _raft() != null else "no raft")
 
 
 # Client: once the host handed this player a rope, ask for a mend on the raft as the raft's list

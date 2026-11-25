@@ -178,23 +178,26 @@ func _place_chest() -> void:
 
 
 ## Every peer: a raft that ended its crossing intact lies on the build site with the integrity it
-## has left, and can be launched again. The empty site it replaces goes. Nothing for a broken raft
-## or a layout with no site.
-func beach_raft(integrity: float) -> void:
-	if built.raft_site.x < 0 or integrity <= 0.0 or _session == null:
+## has left, its maximum and its fittings (`raft`), and can be launched again. The empty site it
+## replaces goes. Nothing for no raft (a broken one), one at 0, or a layout with no site.
+func beach_raft(raft: RaftRecord) -> void:
+	if built.raft_site.x < 0 or raft == null or raft.integrity <= 0.0 or _session == null:
 		return
 	var site := _session.get_node_or_null(NodePath(RAFT_SITE_NAME))
 	if site != null:
 		_session.remove_child(site)
 		site.queue_free()
-	var raft := RAFT_SCENE.instantiate() as Raft
-	raft.name = RAFT_NAME
-	raft.climate = climate
-	raft.position = IslandLayout.cell_center(built.raft_site)
-	_session.add_child(raft)
-	raft.on_built(GameState.content.get_entry(&"recipes", RAFT_RECIPE_ID) as RecipeData)
-	# on_built gives the recipe's full integrity: the beached raft has what the crossing left.
-	raft.integrity = integrity
+	var built_raft := RAFT_SCENE.instantiate() as Raft
+	built_raft.name = RAFT_NAME
+	built_raft.climate = climate
+	built_raft.position = IslandLayout.cell_center(built.raft_site)
+	_session.add_child(built_raft)
+	built_raft.on_built(GameState.content.get_entry(&"recipes", RAFT_RECIPE_ID) as RecipeData)
+	# on_built gives the recipe's full integrity and no fittings: the beached raft has what the
+	# crossing left.
+	built_raft.max_integrity = maxf(raft.maximum, raft.integrity)
+	built_raft.integrity = raft.integrity
+	built_raft.fittings = raft.fittings.duplicate()
 
 
 # Host: the creature spawner runs the island's crabs, gulls and shark. Clients only receive them.

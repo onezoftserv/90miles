@@ -20,8 +20,10 @@ var offered: Array[RouteData] = []
 var discovered: Dictionary[StringName, bool] = {}
 ## Peer id -> the route that player left by.
 var departed: Dictionary[int, StringName] = {}
-## Host: route id -> integrity of the vessel that left (the sandbar frees the raft as the route starts).
-var departure_integrity: Dictionary[StringName, float] = {}
+## Every peer: route id -> the raft that left by it, with its integrity, maximum and fittings
+## (island-stop D6; the sandbar frees the raft as the route starts). A route whose vessel is not a
+## built raft has none: its crossing starts at the route's own integrity.
+var departure_raft: Dictionary[StringName, RaftRecord] = {}
 
 var _session: CoopSession
 
@@ -88,10 +90,14 @@ func start_for(peer: int, route_id: StringName) -> bool:
 	for rider: PlayerBody in riders:
 		peers.append(peer_of(rider))
 	RouteLauncher.spend(route, sender, riders)
-	departure_integrity[route_id] = _structure_integrity(route)
+	var raft := _departing_raft(route)
+	if raft != null:
+		departure_raft[route_id] = raft
+	else:
+		departure_raft.erase(route_id)
 	# Clients hear first: their crossing must exist before the host's plan reaches it.
 	if not _session.multiplayer.get_peers().is_empty():
-		receive_departure.rpc(route_id, peers)
+		receive_departure.rpc(route_id, peers, raft.to_dict() if raft != null else {})
 	_depart(route_id, peers)
 	return true
 
@@ -108,11 +114,17 @@ func discover_check() -> void:
 				break
 
 
-## Clients: the host started a route; its riders leave here too.
+## Clients: the host started a route, with the raft that left by it (`raft`, a RaftRecord's dict,
+## empty for any other vessel); its riders leave here too.
 @rpc("authority", "call_remote", "reliable")
-func receive_departure(route_id: StringName, peer_ids: Array[int]) -> void:
+func receive_departure(route_id: StringName, peer_ids: Array[int], raft: Dictionary = {}) -> void:
 	if multiplayer.get_remote_sender_id() != HOST_ID or _route(route_id) == null:
 		return
+	var record := RaftRecord.from_dict(raft) if not raft.is_empty() else null
+	if record != null:
+		departure_raft[route_id] = record
+	else:
+		departure_raft.erase(route_id)
 	_depart(route_id, peer_ids)
 
 
@@ -188,13 +200,14 @@ func _anchor(route: RouteData, sender: PlayerBody) -> Variant:
 	return null
 
 
-# The integrity of the built structure a BUILD_SITE route starts from; the route's own otherwise.
-func _structure_integrity(route: RouteData) -> float:
-	if route.starter_kind == RouteData.StarterKind.BUILD_SITE:
-		for node: Node in get_tree().get_nodes_in_group(PlayerBody.STRUCTURE_GROUP):
-			if node.get_meta(&"recipe_id", &"") == route.starter_id and node.get(&"integrity") is float:
-				return node.get(&"integrity")
-	return float(route.vessel_integrity)
+# The built raft a BUILD_SITE raft route starts from, as a record; null for any other route.
+func _departing_raft(route: RouteData) -> RaftRecord:
+	if route.starter_kind != RouteData.StarterKind.BUILD_SITE or route.vessel != DataEnums.Vessel.RAFT:
+		return null
+	for node: Node in get_tree().get_nodes_in_group(PlayerBody.STRUCTURE_GROUP):
+		if node is Raft and node.get_meta(&"recipe_id", &"") == route.starter_id:
+			return RaftRecord.of_raft(node as Raft)
+	return null
 
 
 func _on_island() -> Array[PlayerBody]:

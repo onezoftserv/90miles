@@ -20,6 +20,19 @@
 [ext_resource type="Texture2D" path="res://assets/art/structures/sign_radio.png" id="18_sign_radio"]
 [ext_resource type="Texture2D" path="res://assets/art/structures/sign_sticks.png" id="19_sign_sticks"]
 [ext_resource type="Texture2D" path="res://assets/art/structures/sign_slogan.png" id="20_sign_slogan"]
+[ext_resource type="Texture2D" path="res://assets/art/structures/raft_fittings.png" id="21_fittings"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_clavazon"]
+atlas = ExtResource("21_fittings")
+region = Rect2(0, 0, 64, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_defensas"]
+atlas = ExtResource("21_fittings")
+region = Rect2(64, 0, 64, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_toldo"]
+atlas = ExtResource("21_fittings")
+region = Rect2(128, 0, 64, 32)
 
 [resource]
 script = ExtResource("1_data")
@@ -42,6 +55,11 @@ sign_looks = Dictionary[StringName, Texture2D]({
 &"radio": ExtResource("18_sign_radio"),
 &"slogan": ExtResource("20_sign_slogan"),
 &"sticks": ExtResource("19_sign_sticks")
+})
+raft_fittings = Dictionary[StringName, Texture2D]({
+&"raft_clavazon": SubResource("AtlasTexture_clavazon"),
+&"raft_defensas": SubResource("AtlasTexture_defensas"),
+&"raft_toldo": SubResource("AtlasTexture_toldo")
 })
 site_frames = Dictionary[StringName, SpriteFrames]({
 &"raft": ExtResource("13_site")

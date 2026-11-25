@@ -3,7 +3,8 @@ extends Sprite2D
 ## The crossing's deck (art-pass "Crossing look", "Raft site and raft"; design.md D18, T5, T8): the
 ## raft frame StructureArt picks for the vessel's integrity, centred on the deck so it covers the
 ## deck rect, and nothing once the deck has sunk or on a swim with no vessel. A car route draws the
-## car instead, each by its share of the route's vessel integrity (vessel-car-board D3, D4); a
+## car instead, each by its share of its maximum: the route's vessel integrity, plus a raft's
+## fittings' bonuses (vessel-car-board D3, D4; island-stop "Vessel look on the crossing"); a
 ## board route has no shared deck, its boards are CrossingBoards'. Its lowest rows are
 ## drawn through the water-line shader, so the logs and tubes sit in the sea with a ripple along
 ## them instead of lying on it. It only reads its parent, every frame, so a client and a late
@@ -45,12 +46,15 @@ func _follow() -> void:
 		if frames != _frames:
 			_frames = frames
 			frame_name = StructureArt.NO_FRAME
-		shown = StructureArt.vessel_frame(crossing.integrity.value, float(crossing.route.vessel_integrity))
+		shown = StructureArt.vessel_frame(crossing.integrity.value, crossing.integrity.maximum)
 	visible = shown != StructureArt.NO_FRAME and _frames != null and _frames.has_animation(shown)
 	if not visible:
 		frame_name = StructureArt.NO_FRAME
 		return
 	position = crossing.deck_center()
+	# A raft's fittings over its frame (island-stop task 3.6); the car has none.
+	var fittings: Array[StringName] = crossing.fitted.fittings if crossing.fitted != null else ([] as Array[StringName])
+	RaftFittingsLook.of(self).show_fittings(_art, fittings, self)
 	if shown != frame_name:
 		frame_name = shown
 		texture = _frames.get_frame_texture(shown, 0)

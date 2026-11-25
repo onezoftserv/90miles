@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+description_es = "Cuatro clavos y la balsa deja de crujir."
+description_en = "Four nails and the raft stops creaking."
+inputs = Dictionary[StringName, int]({
+&"nails": 4
+})
+station = 0
+time_s = 20.0
+skill = 2
+skill_speed_multiplier = 2.0
+output_kind = 3
+integrity_delta = 20.0
+id = &"raft_clavazon"
+name_es = "Clavazón"
+name_en = "Nailing"

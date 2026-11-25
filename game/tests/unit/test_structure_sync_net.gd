@@ -399,8 +399,9 @@ func _crossing_setup(session: CoopSession) -> void:
 	var routes := session.get_node("Routes") as IslandRoutes
 	routes.route_started.connect(func(id: StringName, peers: Array[int]) -> void:
 		var route := GameState.content.get_entry(&"routes", id) as RouteData
-		var integrity: float = routes.departure_integrity.get(id, float(route.vessel_integrity))
-		Crossing.launch(session, route, peers, integrity, DataEnums.DistanceBand.COAST, rng))
+		var raft: RaftRecord = routes.departure_raft.get(id)
+		var integrity: float = raft.integrity if raft != null else float(route.vessel_integrity)
+		Crossing.launch(session, route, peers, integrity, DataEnums.DistanceBand.COAST, rng, raft))
 
 
 # Host: the host's player fills the sandbar's raft site and builds the raft.

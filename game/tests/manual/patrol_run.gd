@@ -334,7 +334,7 @@ func _host() -> void:
 	var arrivals: Dictionary = {}
 	for peer: int in session.call("peer_ids"):
 		arrivals[peer] = {"health": 100.0, "energy": 100.0}
-	session.rpc("travel_to", "coast_cay", arrivals, 100.0)
+	session.rpc("travel_to", "coast_cay", arrivals, {"integrity": 100.0, "max": 100.0, "fittings": []})
 	_hooked("travelled to the coast cay at once (CoopSession.travel_to over its RPC), for both players")
 	if not await _wait_for("both peers on the coast cay", func() -> bool: return _on_cay() and _body_of(client_peer) != null and not _boats().is_empty(), 60.0):
 		return
