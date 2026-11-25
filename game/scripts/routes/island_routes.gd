@@ -22,6 +22,8 @@ var discovered: Dictionary[StringName, bool] = {}
 var departed: Dictionary[int, StringName] = {}
 ## Host: route id -> integrity of the vessel that left (the sandbar frees the raft as the route starts).
 var departure_integrity: Dictionary[StringName, float] = {}
+## Host: route id -> the fittings of the raft that left (island-stop): its maximum follows from them.
+var departure_fittings: Dictionary[StringName, Array] = {}
 
 var _session: CoopSession
 
@@ -89,6 +91,7 @@ func start_for(peer: int, route_id: StringName) -> bool:
 		peers.append(peer_of(rider))
 	RouteLauncher.spend(route, sender, riders)
 	departure_integrity[route_id] = _structure_integrity(route)
+	departure_fittings[route_id] = _structure_fittings(route)
 	# Clients hear first: their crossing must exist before the host's plan reaches it.
 	if not _session.multiplayer.get_peers().is_empty():
 		receive_departure.rpc(route_id, peers)
@@ -189,6 +192,17 @@ func _anchor(route: RouteData, sender: PlayerBody) -> Variant:
 
 
 # The integrity of the built structure a BUILD_SITE route starts from; the route's own otherwise.
+# The fittings on the built structure a BUILD_SITE route starts from (a raft's); none otherwise.
+func _structure_fittings(route: RouteData) -> Array[StringName]:
+	var found: Array[StringName] = []
+	if route.starter_kind == RouteData.StarterKind.BUILD_SITE:
+		for node: Node in get_tree().get_nodes_in_group(PlayerBody.STRUCTURE_GROUP):
+			if node.get_meta(&"recipe_id", &"") == route.starter_id and node.get(&"fittings") is Array:
+				found.assign(node.get(&"fittings"))
+				return found
+	return found
+
+
 func _structure_integrity(route: RouteData) -> float:
 	if route.starter_kind == RouteData.StarterKind.BUILD_SITE:
 		for node: Node in get_tree().get_nodes_in_group(PlayerBody.STRUCTURE_GROUP):

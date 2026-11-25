@@ -5,7 +5,7 @@ The owner answered (a) on all eight questions on 2026-11-15 (design.md "Owner de
 ## 0. Owner answers and sequencing
 
 - [x] 0.1 Record the owner's answers to Q1–Q8 in design.md "Owner decisions" and in proposal.md. If any answer is not (a), update the affected specs and these tasks. Verify that `openspec validate island-stop --strict` passes.
-- [ ] 0.2 Before group 3, confirm that crossing-gameplay's three PRs are merged. Before task 2.6, rebase onto the guardacostas-capture build if it has landed, because both edit `game/scripts/levels/island_travel.gd`. Verify that `git log main` shows the merges.
+- [x] 0.2 Before group 3, confirm that crossing-gameplay's three PRs are merged. Before task 2.6, rebase onto the guardacostas-capture build if it has landed, because both edit `game/scripts/levels/island_travel.gd`. Verify that `git log main` shows the merges.
 
 ## 1. Vessel recipes as data
 
@@ -67,7 +67,7 @@ The owner answered (a) on all eight questions on 2026-11-15 (design.md "Owner de
 
 ## 3. The fittings (PR 2, after crossing-gameplay)
 
-- [ ] 3.1 Add the fitting recipes, each with `station = NONE` and Spanish and English names and the D9 draft descriptions:
+- [x] 3.1 Add the fitting recipes, each with `station = NONE` and Spanish and English names and the D9 draft descriptions:
   - `raft_clavazon.tres`: 4 nails, 20 s, `integrity_delta` 20, raising the maximum and integrity by the same amount (D3), with no `VESSEL_MAX_INTEGRITY` modifier;
   - `raft_defensas.tres`: 1 inner tube and 1 rope, 10 s, `VESSEL_HAZARD_DAMAGE` MULTIPLY 0.75 (or the factor the owner picks in Q3);
   - `raft_toldo.tres`: 1 tarp and 2 driftwood, 15 s, `VESSEL_DECK_SHADE` SET 1.
@@ -76,20 +76,20 @@ The owner answered (a) on all eight questions on 2026-11-15 (design.md "Owner de
   - "Solo puts a toldo on the sandbar raft";
   - "A fitting only once";
   - "Fittings from data", which loads all four recipes with no content-check errors.
-- [ ] 3.2 Bring a raft's maximum to sea: the crossing starts at the beached integrity and maximum, planks stop at the maximum, and the frame's look uses the share of the maximum (crossing "Vessel look on the crossing", modified). Verify with 1-player tests:
+- [x] 3.2 Bring a raft's maximum to sea: the crossing starts at the beached integrity and maximum, planks stop at the maximum, and the frame's look uses the share of the maximum (crossing "Vessel look on the crossing", modified). Verify with 1-player tests:
   - "Solo launches a nailed raft" (90 of 120, then 60 after a tied squall);
   - "A plank stops at the maximum";
   - "The look follows a fitted raft's maximum";
   - the existing car and board look tests still pass.
-- [ ] 3.3 Apply `VESSEL_HAZARD_DAMAGE` to rocks and debris, the reef line's rocks included, leaving leaks, squalls and sharks unchanged. Verify with 1-player tests:
+- [x] 3.3 Apply `VESSEL_HAZARD_DAMAGE` to rocks and debris, the reef line's rocks included, leaving leaks, squalls and sharks unchanged. Verify with 1-player tests:
   - "Solo rock on the defensas" (70);
   - "A squall is unchanged" (70);
   - "Debris on the defensas" (96.25 and a leak).
-- [ ] 3.4 Make the toldo shade the deck: mark the crossing's deck cells as shaded on its `GridTerrain` when the vessel has `VESSEL_DECK_SHADE`. Verify with 1-player tests:
+- [x] 3.4 Make the toldo shade the deck: mark the crossing's deck cells as shaded on its `GridTerrain` when the vessel has `VESSEL_DECK_SHADE`. Verify with 1-player tests:
   - "Solo midday crossing under the toldo" (11:00, calm, 75 s: heat 0, thirst 72.5);
   - "The same crossing without the toldo" (thirst 65, sunstroke).
   Set the clock after `solo_requested`, as in the crossing-gameplay notes.
-- [ ] 3.5 Carry fittings through the crossing, replacing the beached-integrity float with the record `{integrity, max, fittings}` in `IslandRoutes` (departure), `CrossingResult`, `IslandTravel` (`_beached_raft()`, `travel_to`, the join extras "raft") and the island's beaching (moved here from task 2.6):
+- [x] 3.5 Carry fittings through the crossing, replacing the beached-integrity float with the record `{integrity, max, fittings}` in `IslandRoutes` (departure), `CrossingResult`, `IslandTravel` (`_beached_raft()`, `travel_to`, the join extras "raft") and the island's beaching (moved here from task 2.6):
   - the record's fittings go in the crossing result;
   - the beached raft keeps them;
   - a broken raft loses them;
@@ -101,15 +101,21 @@ The owner answered (a) on all eight questions on 2026-11-15 (design.md "Owner de
   - "The sturdiest raft keeps its own fittings";
   - "A joiner sees the fittings mid-crossing";
   - a snapshot without "raft" is refused.
-- [ ] 3.6 Draw the toldo, the defensas and the clavazón on the raft frame, on the island and at sea. They are client-side and kitbashed from the tracked packs, with any new files under `game/assets/art/` and their licence. Verify that drawing changes no simulation test, and take a screenshot through the Godot MCP of a fully fitted raft on the coast cay and at sea.
-- [ ] 3.7 Write the docs:
+  Built narrower than planned: `travel_to` and the join extras keep the float. The host refits its beached raft from the result, and clients learn it through the raft's own state request (design.md D10).
+- [x] 3.6 Draw the toldo, the defensas and the clavazón on the raft frame, on the island and at sea. They are client-side and kitbashed from the tracked packs, with any new files under `game/assets/art/` and their licence. Verify that drawing changes no simulation test, and take a screenshot through the Godot MCP of a fully fitted raft on the coast cay and at sea.
+  Built as placeholders with the tracked item icons (tarp, inner tube, nails), with no new art files. The Godot MCP screenshot was not taken: the owner's rule since 2026-11-23 is headless runs only. Real art is a TASKS.md follow-up.
+- [x] 3.7 Write the docs:
   - GAME_DESIGN §6 "Crafting": the three fittings;
   - GAME_DESIGN §8: the toldo and the defensas at sea;
   - ITEMS.md: the uses of nails, tarp, inner tube and tire;
   - `game/assets/CREDITS.md`, if new art was copied.
   Verify that the docs match the specs.
-- [ ] 3.8 Run the import, the smoke run and GUT, and check that they pass. Run the project through the Godot MCP and check that it runs clean. Run a host and a client locally, and check that the fittings show on both peers at sea and after arrival.
+- [x] 3.8 Run the import, the smoke run and GUT, and check that they pass. Run the project through the Godot MCP and check that it runs clean. Run a host and a client locally, and check that the fittings show on both peers at sea and after arrival.
 
+  Done 2026-11-23, headless only:
+  - The import ran twice and is clean, and the smoke run reports 0 problems.
+  - GUT passes (see the PR).
+  - Two processes on UDP 7798: host 20/20 and client 15/15, 0 engine errors. The client fits a toldo on the sandbar, both see it and the shaded deck at sea, and both see it on the raft beached on the coast cay.
 ## 4. Integration check
 
 - [ ] 4.1 Play one solo run, offline, through the Godot MCP:

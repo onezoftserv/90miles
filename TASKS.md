@@ -75,7 +75,15 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
     - the launch prompt shows "Balsa 48/100" and warns below half;
     - every peer and every joiner sees the raft's state;
     - 1-player, host-plus-client and two-process (UDP 7798, `tests/manual/island_stop_run.gd`) checks.
-  - [ ] PR 2, the fittings: clavazón (+20 maximum), defensas (rocks and debris ×0.75), toldo (the deck is shade), carried through the crossing to the next beach. It waits for `crossing-gameplay`'s three PRs.
+  - [x] PR 2, the fittings (built 2026-11-23 on main 3fbaad4, after `crossing-gameplay`'s three PRs):
+    - clavazón (4 nails, 20 s, +20 to the maximum and integrity);
+    - defensas (a tube and a rope, 10 s; rocks and debris ×0.75);
+    - toldo (the sandbar's tarp and 2 driftwood, 15 s; the deck is shade);
+    - carried through the crossing (the plan message, the snapshot's required `fittings` key and the result) to the next beach, where the host refits the beached raft and the raft tells every client;
+    - drawn with the tracked tarp, tube and nail icons as placeholders;
+    - 1-player, host-plus-client and two-process (UDP 7798) checks.
+  - [ ] When `island-pressure` lands: its sea heat cap (`survival_tuning.tres` `sea_heat_cap`, `SurvivalRules.next_heat`) goes, because the owner's rule is "capped until the toldo ships". Keep its `MeterContext.at_sea` for the last stand at sea. Whichever of the two merges second removes the cap (design.md D7).
+  - [ ] Real art for the toldo, the defensas and the clavazón on the raft (today the item icons stand in), with the art review.
   - [ ] Follow-ups (owner Q8): `night-ashore` (sleep in a shelter at night, +50 energy, wiring `sleep_night()`), then the patrol spotting a launch, with the cutter boss.
   - [ ] The Mecánico's 2× applies once a Mecánico background exists (the backgrounds change). Today the rule reads `BackgroundData.skills`, and only the Maestro and the Médico ship.
 - [x] `creatures-ai`: reef shark (patrol/circle/strike), crabs, gulls

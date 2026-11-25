@@ -112,23 +112,26 @@ func test_a_raft_at_half_or_more_shows_no_warning() -> void:
 	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Zarpar en la balsa", "Balsa 60/120"]), "60 is half: no warning")
 
 
-# No fitting recipe ships until the fittings PR, so the mend's name stands in for a fitting's: the
-# lines read whatever recipe names the raft holds.
 func test_a_fitted_raft_lists_its_fittings_on_a_line_of_their_own() -> void:
 	raft.integrity = 90.0
 	raft.max_integrity = 120.0
-	raft.fittings = [&"raft_mend"] as Array[StringName]
+	raft.fittings = [&"raft_clavazon", &"raft_toldo"] as Array[StringName]
 	body.global_position = raft.global_position
 	_frame()
-	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Zarpar en la balsa", "Balsa 90/120", "Remiendo"]))
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Zarpar en la balsa", "Balsa 90/120", "Clavazón · Toldo"]))
 	var text := HudText.load_default()
-	assert_eq(InteractPrompt.raft_fittings_line(raft, text, "es"), "Remiendo")
-	raft.fittings = [&"raft_mend", &"fire", &"raft"] as Array[StringName]
-	assert_eq(InteractPrompt.raft_fittings_line(raft, text, "es"), "Remiendo · Fogata · Balsa", "names joined with a middle dot")
-	raft.fittings = [&"raft_mend"] as Array[StringName]
+	raft.fittings = [&"raft_clavazon", &"raft_defensas", &"raft_toldo"] as Array[StringName]
+	assert_eq(InteractPrompt.raft_fittings_line(raft, text, "es"), "Clavazón · Defensas · Toldo", "all three fit the 30-glyph line")
+	raft.fittings = [&"raft_clavazon", &"raft_toldo"] as Array[StringName]
 	_open_list()
-	assert_eq(hud.craft_list.head_texts(), PackedStringArray(["Balsa 90/120", "Remiendo"]), "the list's head too")
-	assert_eq(hud.craft_list.row_texts(), PackedStringArray(["Remiendo"]), "the rows below both head lines")
+	assert_eq(hud.craft_list.head_texts(), PackedStringArray(["Balsa 90/120", "Clavazón · Toldo"]), "the list's head too")
+	assert_eq(hud.craft_list.row_texts(), PackedStringArray(["Clavazón", "Defensas", "Remiendo", "Toldo"]), "the rows below both head lines")
+	assert_true(hud.craft_list.row_dimmed(0), "the clavazón it has is dimmed")
+	assert_false(hud.craft_list.row_dimmed(1), "the defensas it lacks are not")
+	assert_true(hud.craft_list.row_dimmed(3), "nor a second toldo")
+	assert_false(hud.craft_list.choose(3))
+	assert_eq(hud.notice.shown_text(), "La balsa ya lo tiene.")
+	assert_true(hud.craft_list.is_open(), "the list stays open")
 
 
 func test_the_work_points_prompt() -> void:
@@ -137,13 +140,17 @@ func test_the_work_points_prompt() -> void:
 
 
 func test_solo_opens_the_rafts_list_on_the_coast_cay() -> void:
+	body.inventory.add(&"nails", 4)
 	body.inventory.add(&"driftwood", 1)
 	body.inventory.add(&"rope", 1)
 	_open_list()
 	assert_eq(hud.craft_list.head_texts(), PackedStringArray(["Balsa 48/100"]))
-	assert_eq(hud.craft_list.row_texts(), PackedStringArray(["Remiendo"]))
-	assert_false(hud.craft_list.row_dimmed(0))
-	assert_eq(hud.craft_list.detail_texts(), PackedStringArray(["1/1 Madera de la costa", "1/1 Soga"]))
+	assert_eq(hud.craft_list.row_texts(), PackedStringArray(["Clavazón", "Defensas", "Remiendo", "Toldo"]))
+	for row: int in 4:
+		assert_false(hud.craft_list.row_dimmed(row), "row %d is open to a worn, bare raft" % row)
+	assert_eq(hud.craft_list.detail_texts(), PackedStringArray(["4/4 Clavos"]), "the clavazón highlighted")
+	hud.craft_list.highlight(2)
+	assert_eq(hud.craft_list.detail_texts(), PackedStringArray(["1/1 Madera de la costa", "1/1 Soga"]), "the mend")
 	assert_signal_emit_count(hud.craft_list, SENT, 0, "opening sends nothing")
 	assert_false(get_tree().paused, "the list does not pause")
 
@@ -151,8 +158,9 @@ func test_solo_opens_the_rafts_list_on_the_coast_cay() -> void:
 func test_a_whole_raft_refuses_a_mend() -> void:
 	raft.integrity = 100.0
 	_open_list()
-	assert_true(hud.craft_list.row_dimmed(0), "dimmed")
-	assert_false(hud.craft_list.choose(0))
+	assert_true(hud.craft_list.row_dimmed(2), "dimmed")
+	assert_false(hud.craft_list.row_dimmed(0), "a fitting still is not")
+	assert_false(hud.craft_list.choose(2))
 	assert_eq(hud.notice.shown_text(), "La balsa está entera.")
 	assert_true(hud.craft_list.is_open(), "the list stays open")
 	assert_signal_emit_count(hud.craft_list, SENT, 0, "nothing is sent")
@@ -161,7 +169,7 @@ func test_a_whole_raft_refuses_a_mend() -> void:
 
 func test_choosing_the_mend_opens_the_job_and_its_prompt_names_it() -> void:
 	_open_list()
-	assert_true(hud.craft_list.choose(0))
+	assert_true(hud.craft_list.choose(2))
 	assert_signal_emitted_with_parameters(hud.craft_list, SENT, [&"raft_mend", session.get_path_to(raft)])
 	assert_false(hud.craft_list.is_open(), "a sent choice closes the list")
 	assert_not_null(raft.job, "the host opened the mend")

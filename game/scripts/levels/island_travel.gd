@@ -252,13 +252,29 @@ func _join_extras() -> Dictionary:
 # vessel is lost (crossing "Beaching by vessel"): only a route whose vessel is a raft kept on
 # arrival beaches one, never a board, a car or swimmers.
 func _beached_integrity() -> float:
-	var best: float = 0.0
+	var best := _beached_result()
+	return best.integrity if best != null else 0.0
+
+
+# The fittings on that raft (island-stop "Fittings ride with the raft"): the host refits the beached
+# raft with them, and the raft tells every client.
+func _beached_fittings() -> Array[StringName]:
+	var best := _beached_result()
+	var fitted: Array[StringName] = []
+	if best != null:
+		fitted.assign(best.fittings)
+	return fitted
+
+
+# The sturdiest intact raft's result, or null.
+func _beached_result() -> CrossingResult:
+	var best: CrossingResult = null
 	for result: CrossingResult in _results:
 		var route := GameState.content.get_entry(&"routes", result.route_id) as RouteData
 		if route == null or route.vessel != DataEnums.Vessel.RAFT or not route.vessel_kept_on_arrival:
 			continue
-		if not result.broken and result.integrity > best:
-			best = result.integrity
+		if not result.broken and result.integrity > (best.integrity if best != null else 0.0):
+			best = result
 	return best
 
 
@@ -360,6 +376,8 @@ func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float, i
 	fresh.furnish(session)
 	fresh.beach_raft(raft_integrity)
 	if session.multiplayer.is_server():
+		if raft_integrity > 0.0:
+			fresh.refit_raft(_beached_fittings())
 		fresh.place_pickups(session)
 	_results.clear()
 	# The host's message names the island's index (0 from an older caller: the next index). An

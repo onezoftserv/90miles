@@ -45,7 +45,7 @@ func _follow() -> void:
 		if frames != _frames:
 			_frames = frames
 			frame_name = StructureArt.NO_FRAME
-		shown = StructureArt.vessel_frame(crossing.integrity.value, float(crossing.route.vessel_integrity))
+		shown = StructureArt.vessel_frame(crossing.integrity.value, crossing.integrity.maximum)
 	visible = shown != StructureArt.NO_FRAME and _frames != null and _frames.has_animation(shown)
 	if not visible:
 		frame_name = StructureArt.NO_FRAME
