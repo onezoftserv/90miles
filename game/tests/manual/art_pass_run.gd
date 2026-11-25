@@ -1464,7 +1464,11 @@ func _shark_offshore() -> void:
 	var look: Node = _look_of(shark)
 	var sprite: AnimatedSprite2D = look.get_node(^"Sprite")
 	var shadow: CanvasItem = look.get_node(^"Shadow")
-	_check("the shark circles offshore playing its own frames", not anims.has("<hidden>") and (anims.has("patrol") or anims.has("circle") or anims.has("move")), "state %s, animations %s" % [_state_of(shark), anims])
+	# art-sprite-polish D4: patrol, circle and move come by facing (_side, _up, _down).
+	var own: bool = false
+	for anim: String in anims:
+		own = own or anim.begins_with("patrol") or anim.begins_with("circle") or anim.begins_with("move")
+	_check("the shark circles offshore playing its own frames", not anims.has("<hidden>") and own, "state %s, animations %s" % [_state_of(shark), anims])
 	_check("only its fin shows: cut at the water line, no shadow", sprite.material is ShaderMaterial and not shadow.visible)
 
 

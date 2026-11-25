@@ -6,7 +6,7 @@
   "sheets": [
     {
       "id": "reef_shark",
-      "size": [160, 16],
+      "size": [160, 48],
       "cell": [32, 16],
       "layers": [
         {"hand": "reef_shark.png"}
