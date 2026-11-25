@@ -247,9 +247,14 @@ Baseline: GUT 2739 of 2739 passing on the rebased branch before any change.
 
 - **Work the raft by standing (fixed: they now hold interact and pay the work's energy):** `test_raft_site.gd`, `test_escape_routes_solo.gd`, `test_secret_cay_solo.gd`, `test_inventory_hud_solo_run.gd` (it now lets go at energy 10, drinks three carried coconuts from the HUD and goes back to hold E).
 - **Read the raft's 60 s (fixed):** `test_route_content.gd` (120 s), and the prompt's raft-site lines in `test_interact_prompt.gd` (stage lines).
-- **Launch by day on an island with a spawned patrol boat:** no unit test (they use islands without creatures, the secret cay, or other routes). The manual runs `capture_crossing.gd`, `capture_crossing_gameplay.gd`, `crossing_gameplay_run.gd` and `island_stop_run.gd` did; each now removes the island's patrol boats before its launch, with a printed hook where the run prints its hooks. `test_inventory_hud_solo_run.gd` waits for the night the warning asks for.
-- **Unchanged and passing:** the crossing, reconnect, rematch, status, structure-sync, perch-ride, coast-cay and route tests in the grep list, since they build the raft with `work(1.0)` on a full site and launch where no boat is.
-- **Solo deaths timed at 0 s:** changed with the 12 s last stand (task 4.2), listed with its commit.
+- **Launch by day on an island with a spawned patrol boat (fixed: the island's boats are taken away first, since these tests are about the crossing or the relaunch):** `test_coast_cay_solo.gd` (the relaunch from the cay), and `test_crossing_art.gd` and `test_crossing_join.gd`. The last two spawn the sandbar's creatures and never set the clock, so before this change they passed or failed on the clock other tests left behind. The manual runs `capture_crossing.gd`, `capture_crossing_gameplay.gd`, `crossing_gameplay_run.gd` and `island_stop_run.gd` get the same, with a printed hook where the run prints its hooks. `test_inventory_hud_solo_run.gd` waits for the night the warning asks for.
+- **A hollow pass (fixed):** `test_crafting_solo.gd` "every recipe completes with one player" still passed for the raft, because letting go ends the work. It now holds interact, pays the energy and checks that the site was built.
+- **The prompt's stage lines (fixed):** `test_interact_prompt.gd` and `test_interact_prompt_net.gd` (the client's prompt at 45 of 120 s, and the joiner's first-stage lines).
+- **Solo deaths timed at 0 s (fixed for the 12 s last stand):** `test_survival_tuning.gd`, `test_survival_last_stand.gd`, `test_survival_health.gd`, `test_player_meters.gd`, `test_bleeding.gd`, `test_death_cause.gd`, `test_run_summary.gd` and `test_run_restart.gd`. The crossing's drowning and shark bite still kill at once, since the body reports it is at sea.
+- **Unchanged and passing:** the other crossing, reconnect, rematch, status, structure-sync, perch-ride, coast-cay and route tests in the grep list. They build the raft with `work(1.0)` on a full site and launch where no boat is yet.
+- **Found in passing:** the shell tests failed to load the palm and raft scenes when run first. The cause was this change's own load cycle, `LaunchSight` naming `SandbarIsland`, now removed.
+
+After the merge with main f8a6c75: GUT passes 2957 of 2957, and smoke reports 0 problems.
 
 ## Measured run (task 6.2, 2026-11-23)
 
@@ -286,6 +291,22 @@ The whole run took 9:41, against 4:14 in the review's run.
 **Margins worth knowing:**
 - The bot's lowest thirst is only just under 50. It is a knowing player that eats for energy, and each coconut also gives +15 thirst. A first-time player who wanders will dip lower.
 - A solo builder reaches the night with about 20 energy, and sleep (`night-ashore`) is the follow-up that refills it.
+
+### Stress runs: a solo player can strand (open owner question Q4)
+
+The sandbar holds no other food: coconuts do not regrow, there are no food pick-ups, and crabs only steal. Sleep is not wired. The bot ran three stress variants (printed hooks), each headless on the merged branch:
+
+| Variant | Result |
+|---|---|
+| `--run` (runs everywhere, 0.5 energy a second) | stranded at 19:17 with 109 of 120 s built: 0 energy, no coconut left (5 eaten, 4 taken by gulls) |
+| `--lose=3` (3 coconuts gone at the start, as gulls would take them) | stranded at 18:38 with 110 of 120 s |
+| both | stranded at 16:28 with 101 of 120 s |
+
+Stranded means alive, with an almost-built raft and no way to finish it on island 1. The run never ends until thirst kills the player. That breaks "solo must be winnable" for any player who is less than careful, so it goes to the owner as Q4 before merging, with options:
+- **(a)** Work at 0 energy at a quarter speed, paying thirst only (recommended).
+- **(b)** Coconuts regrow each dawn.
+- **(c)** The raft's work costs 0.75 energy a second.
+- **(d)** Pull `night-ashore` sleep forward.
 
 ## Two processes (task 6.3, 2026-11-24, on main f8a6c75)
 

@@ -15,6 +15,8 @@ extends SceneTree
 ##
 ## Headless, faster than real time, with the game's own clock and calm weather pinned:
 ##   godot --headless --fixed-fps 60 --path game -s res://tests/manual/island_pressure_run.gd
+## Stress variants (printed as hooks): `-- --run` runs everywhere (0.5 energy a second), and
+## `-- --lose=N` takes N coconuts off the non-nest palms at the start, as gulls taking them would.
 ##
 ## Prints "PRESSBOT snapshot ..." every 30 s of game time and "PRESSBOT PASS|FAIL <what>" for each
 ## target: midday seen on the sandbar, the sandbar's minimum thirst under 50, the launch at 20:00 or
@@ -84,6 +86,8 @@ var arrivals: PackedStringArray = []
 var alive_at_end: bool = false
 var coconuts_eaten: int = 0
 var stolen: int = 0
+var running: bool = false
+var lose: int = 0
 
 
 func _init() -> void:
@@ -91,6 +95,11 @@ func _init() -> void:
 
 
 func _initialize() -> void:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg == "--run":
+			running = true
+		elif arg.begins_with("--lose="):
+			lose = int(arg.trim_prefix("--lose="))
 	var settings_path: String = "user://island_pressure_run.cfg"
 	var config := ConfigFile.new()
 	config.set_value("player", "name", "Yuni")
@@ -117,6 +126,10 @@ func _main() -> void:
 	sky.get("weather").set("rolls_enabled", false)
 	sky.get("weather").call("start_weather", &"calm")
 	print("PRESSBOT set calm weather pinned (no rolls)")
+	if running:
+		print("PRESSBOT set the bot runs everywhere")
+	if lose > 0:
+		_lose_coconuts(lose)
 	_watch()
 	await _sandbar()
 	if not done and _left():
@@ -348,6 +361,22 @@ func _coast() -> void:
 
 # --- coconuts, shade and walking ----------------------------------------------------------------
 
+# The stress hook: `count` coconuts off the non-nest palms, nearest the hut first.
+func _lose_coconuts(count: int) -> void:
+	var island: Node = shell.get("island")
+	var palms: Node = island.get_node(^"Palms")
+	var nests: Array = (island.get("layout") as Resource).get("nest_palms")
+	var left: int = count
+	for i: int in palms.get_child_count():
+		if nests.has(i):
+			continue
+		var palm: Node = palms.get_child(i)
+		while left > 0 and int(palm.get("coconuts")) > 0:
+			palm.set("coconuts", int(palm.get("coconuts")) - 1)
+			left -= 1
+	print("PRESSBOT set %d coconut(s) taken off the palms, as gulls would" % (count - left))
+
+
 func _coconut_left() -> bool:
 	return _carried(&"coco") > 0 or _palm_with_coconuts() != null
 
@@ -486,7 +515,7 @@ func _walk_to(goal: Vector2) -> bool:
 	var budget: int = maxi(240, ceili(body.global_position.distance_to(goal) * 8.0))
 	for point: Vector2 in points:
 		while body.global_position.distance_to(point) > AT_PX:
-			_intent((point - body.global_position).normalized(), false)
+			_intent((point - body.global_position).normalized(), false, running)
 			await physics_frame
 			budget -= 1
 			if budget <= 0 or done:
@@ -497,9 +526,9 @@ func _walk_to(goal: Vector2) -> bool:
 	return true
 
 
-func _intent(direction: Vector2, interact: bool) -> void:
+func _intent(direction: Vector2, interact: bool, run: bool = false) -> void:
 	if is_instance_valid(body):
-		body.set("intent", (load(INTENT_PATH) as Script).call("create", direction, false, false, interact))
+		body.set("intent", (load(INTENT_PATH) as Script).call("create", direction, run, false, interact))
 
 
 func _seconds(seconds: float) -> void:

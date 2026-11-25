@@ -13,8 +13,6 @@ const RAFT_NAME: StringName = &"Raft"
 const RAFT_CELL: Vector2i = Vector2i(10, 6)
 const RAFT_TIME_S: float = 120.0
 const TIMEOUT_S: float = 5.0
-## Real-time progress is counted per host frame, so its seconds are only near the wall clock.
-const WORK_TOLERANCE_S: float = 0.6
 
 var net: NetHarness
 
@@ -119,10 +117,14 @@ func test_two_hold_together() -> void:
 	_hold(host, client, me, true)
 	var both := func() -> bool: return host.body(CoopSession.HOST_ID).crafter.is_crafting() and host.body(me).crafter.is_crafting()
 	assert_true(await wait_until(both, TIMEOUT_S), "both players work the site")
+	# Counted in the host's physics frames, not the wall clock: each frame each holder adds a frame's work.
 	var started: float = _work_s(host)
-	await wait_seconds(1.5)
+	var from_frame: int = Engine.get_physics_frames()
+	await wait_physics_frames(60)
 	var gained: float = _work_s(host) - started
-	assert_almost_eq(gained, 3.0, WORK_TOLERANCE_S, "two holders do 2 s of work per second")
+	var frame_s: float = 1.0 / Engine.physics_ticks_per_second
+	var expected: float = 2.0 * float(Engine.get_physics_frames() - from_frame) * frame_s
+	assert_almost_eq(gained, expected, 4.0 * frame_s, "two holders do 2 s of work per second")
 	var stage_done := func() -> bool: return _site(host).stage_index() == 1
 	assert_true(await wait_until(stage_done, TIMEOUT_S), "the first stage is done")
 	_hold(host, client, CoopSession.HOST_ID, false)
