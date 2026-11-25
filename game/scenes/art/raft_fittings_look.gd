@@ -6,7 +6,8 @@ extends Node2D
 ## - the defensas' inner tubes on both edges;
 ## - the clavazón's nails at the near corners.
 ## It reads its parent each frame: a beached Raft (its look stands bottom-centre on the raft's
-## origin, so the 64x32 raft's centre is 16 px up), or a Crossing (the deck's centre, nothing once
+## origin, so the 64x32 raft's centre is 16 px up, leaning toward land as the raft's look leans), or
+## a Crossing (the deck's centre, nothing once
 ## it sank). Drawing only: it never writes the raft or the crossing, and each peer draws the
 ## fittings it holds. It names neither class, so loading it loads neither scene.
 
@@ -47,13 +48,24 @@ func step() -> void:
 		if vessel is VesselIntegrity and (vessel as VesselIntegrity).intact():
 			fitted.assign(source.get(&"fittings"))
 	else:
-		position = ISLAND_CENTER
+		position = ISLAND_CENTER + _lean(source)
 		if source.get(&"fittings") is Array:
 			fitted.assign(source.get(&"fittings"))
 	if fitted == _shown:
 		return
 	_shown = fitted
 	_rebuild()
+
+
+# The beached raft leans toward land by its look offset (art-terrain-polish C14), read from the same
+# terrain and data the raft's own look reads, so the icons sit on the raft as it is drawn.
+func _lean(source: Node) -> Vector2:
+	if not source is Node2D:
+		return Vector2.ZERO
+	var session := CoopSession.of(source)
+	var terrain: TerrainQuery = session.terrain if session != null else TerrainQuery.new()
+	var cell := Vector2i(((source as Node2D).position / float(IslandLayout.TILE)).floor())
+	return StructureArtData.standard().look_offset(StructureArt.KIND_RAFT, StructureArt.land_side(terrain, cell))
 
 
 ## The icons on show, for tests.

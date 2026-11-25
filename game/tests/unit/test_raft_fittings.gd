@@ -314,6 +314,12 @@ func test_the_fittings_are_drawn_on_the_beached_raft() -> void:
 	raft.fittings = _fit([CLAVAZON, DEFENSAS, TOLDO])
 	look.step()
 	assert_eq(look.sprite_count(), 5, "two nail icons, two tubes and the tarp")
+	var raft_look := raft.get_node_or_null(^"Look") as StructureLook
+	if raft_look != null:
+		raft_look.step()
+		var frame_size: Vector2 = raft_look.sprite.sprite_frames.get_frame_texture(raft_look.sprite.animation, 0).get_size()
+		var lean: Vector2 = raft_look.sprite.offset - StructureArt.frame_offset(frame_size)
+		assert_eq(look.position, RaftFittingsLook.ISLAND_CENTER + lean, "the icons lean toward land with the raft (C14)")
 	assert_eq(raft.integrity, 70.0, "drawing changes nothing")
 	assert_eq(raft.fittings, _fit([CLAVAZON, DEFENSAS, TOLDO]))
 

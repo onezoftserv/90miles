@@ -25,13 +25,13 @@
 ## 0. Gate
 
 - [x] 0.1 Record the owner's answers to QG1–QG4 in proposal.md. If an answer is not (a), update the specs, design and tasks to it, then run `openspec validate art-guardacostas --strict`. Done when it passes and the docs PR is open.
-- [ ] 0.2 Branch each build PR from the latest main. Re-read, as they are on main then:
+- [x] 0.2 Branch each build PR from the latest main. Re-read, as they are on main then:
   - `run_hud.gd`/`.tscn` (hud-clarity, run-menu);
   - `patrol_look.gd` and `patrol_horizon.gd` (sound-pass);
   - `ui_kit.json`, `look_parts.json` and `creature_sheets.json` (art-waves).
 
   Check whether PR #105 (the outline family check) has merged. Done when the re-read is noted in design.md's build notes.
-- [ ] 0.3 Take the "before" captures from main under `UserTmp`:
+- [x] 0.3 Take the "before" captures from main under `UserTmp`:
   - `capture_patrol.tscn`: the boat by day, and the alert at night;
   - `tests/manual/capture_squad.gd`: the squad ashore, and the dinghy rowing in;
   - `capture_la_captura.tscn`: lines 1 and 3, and after.
@@ -40,33 +40,33 @@
 
 ## 1. Call windows (D6) — HUD PR
 
-- [ ] 1.1 Write these tests first and see them fail:
+- [x] 1.1 Write these tests first and see them fail:
   - `test_call_windows.gd`: every alert, give-up and squad line of every patrol `.tres`, in ES and EN, wraps to at most 3 rows of 30 glyphs in the `HudCall` window;
   - a call shows for `max(3, 1 + length / 15)` s;
   - an off-screen speaker puts the window at the nearest edge with its tail toward the speaker;
   - the window never overlaps a top HUD window or the prompt, and stays above y 326;
   - the 1-player test: on the sandbar at night, a solo player's boat alert shows its Spanish line in a window over the boat, not in a `SpeechBubble`.
-- [ ] 1.2 Rewrite these first, so they fail on today's code:
+- [x] 1.2 Rewrite these first, so they fail on today's code:
   - `test_patrol_cues.gd`'s loudhailer tests;
   - `test_capture_cues.gd`'s "squad's landing, spot and leaving calls" test, to read the call window.
-- [ ] 1.3 Build the feature:
+- [x] 1.3 Build the feature:
   - add `CoopSession.call_shown`;
   - make `PatrolLook._speak` and `SquadLook._speak` emit it;
   - add the `HudCall` theme variation (the `window_thin` stylebox, content margins 4/1/4/1);
   - add `scenes/ui/call_windows.gd`, created in `RunHud.bind`.
 
   Verify that the tests from 1.1 and 1.2 pass, that `test_quick_chat_session.gd` still shows quick chat in bubbles, and that `test_art_sim_invariance` covers `CallWindows`.
-- [ ] 1.4 Two-process check: `test_patrol_cues.gd`'s "both peers show the same loudhailer line" and a new "both peers show the same spot call over the soldier giving chase" pass with the window. Done when both pass in GUT.
+- [x] 1.4 Two-process check: `test_patrol_cues.gd`'s "both peers show the same loudhailer line" and a new "both peers show the same spot call over the soldier giving chase" pass with the window. Done when both pass in GUT.
 
 ## 2. The plated eye (D7) — HUD PR
 
-- [ ] 2.1 Write these first and see them fail:
+- [x] 2.1 Write these first and see them fail:
   - `test_ui.py`: `eye_open_plate` is 11×7, palette only, with an iris of 3×3 #222034;
   - `test_body_look.gd`: the open eye's rect is 11×9, centred over the head, its bottom 3 px above the head;
   - `test_patrol_cues.gd`: the bar's fill is `round(9 × fraction)` px, in cream below 0.5, orange from 0.5 and alert red from 0.75;
   - the closed eye still wins over the open eye, and the rope still wins over both;
   - the 1-player test: a solo player lit at night for 1.5 s of a 2 s spot shows a bar more than 3/4 full in the alert colour.
-- [ ] 2.2 Add the piece to `ui_kit.json` and rebuild with `ui.py`. Then:
+- [x] 2.2 Add the piece to `ui_kit.json` and rebuild with `ui.py`. Then:
   - draw the plate and bar in `BodyMarks`;
   - make `marker_rect` return 11×9 for an open eye.
 
@@ -74,14 +74,14 @@
 
 ## 3. The warning chip (D8) — HUD PR
 
-- [ ] 3.1 Rewrite `test_patrol_cues.gd`'s 5×2 hull and 3×2 light tests and see them fail. They become:
+- [x] 3.1 Rewrite `test_patrol_cues.gd`'s 5×2 hull and 3×2 light tests and see them fail. They become:
   - a 9×7 day chip and a lit night chip;
   - placed by bearing, then slid clear of the meters, phase, weather and teammates windows;
   - blinking at 2 Hz;
   - blinking at 4 Hz in the last 5 s, from the synced `route_t`.
 
   The 1-player test: a solo player at night sees the lit chip for the 20 s warning and none once the lap starts.
-- [ ] 3.2 Add `boat_chip_day` and `boat_chip_night` to `ui_kit.json`, rebuild, and draw them in `PatrolHorizon`. Verify:
+- [x] 3.2 Add `boat_chip_day` and `boat_chip_night` to `ui_kit.json`, rebuild, and draw them in `PatrolHorizon`. Verify:
   - the tests from 3.1 pass;
   - `test_patrol_cues.gd`'s two-process horizon test passes;
   - `check.py` is clean.

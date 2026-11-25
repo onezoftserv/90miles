@@ -110,11 +110,11 @@ func _key(keycode: Key, pressed: bool) -> void:
 
 # Where the mark goes for `body` whose head is `head_y` px above (negative) or below its origin:
 # centred on its x at whole pixels, its bottom edge 3 px above that point, in HUD pixels.
-func _expected_mark(body: PlayerBody, top_y: float) -> Rect2:
+func _expected_mark(body: PlayerBody, top_y: float, size: Vector2 = MARK_SIZE) -> Rect2:
 	var anchor: Vector2 = hud.world_to_hud(body.get_global_transform_with_canvas().origin)
 	var head: Vector2 = hud.world_to_hud(body.get_global_transform_with_canvas() * Vector2(0.0, top_y))
 	var bottom: float = roundf(head.y) - HEAD_GAP_PX
-	return Rect2(Vector2(roundf(anchor.x - MARK_SIZE.x / 2.0), bottom - MARK_SIZE.y), MARK_SIZE)
+	return Rect2(Vector2(roundf(anchor.x - size.x / 2.0), bottom - size.y), size)
 
 
 func test_holding_crouch_draws_the_crouch_pose_and_letting_go_the_walk_pose() -> void:
@@ -171,6 +171,21 @@ func test_hidden_in_brush_the_mark_shows_over_the_head_until_sand() -> void:
 	assert_eq(body.stealth_state, MovementStep.Stealth.VISIBLE, "crouching on sand does not hide")
 	assert_false(hud.marks.has_mark(body), "the mark goes on the sand")
 	assert_eq(hud.marks.mark_rects().size(), 0)
+
+
+# art-guardacostas D7: the plated open eye with its bar is 11×9, centred over the head, its bottom 3 px
+# above it, and what stacks over a player's mark (marker_rect) is that rect.
+func test_the_plated_open_eye_is_11_by_9_centred_over_the_head() -> void:
+	var body := _solo(_grid(), Vector2i(20, 5))
+	_frame(body)
+	# The host's shown fraction, as net_spot brings it: half a meter.
+	body.spot_shown = 0.5
+	hud.marks.tick()
+	assert_true(hud.marks.has_open_eye(body))
+	var rect: Rect2 = hud.marks.eye_rect(body)
+	assert_eq(rect.size, Vector2(11.0, 9.0), "an 11×7 plate and its bar")
+	assert_eq(rect, _expected_mark(body, _look(body).head_y(), Vector2(11.0, 9.0)), "centred, its bottom 3 px above the head")
+	assert_eq(hud.marks.marker_rect(body), rect, "the bubble and the prompt stack over the whole mark")
 
 
 func test_over_a_teammate_whose_name_tag_shows_it_sits_above_the_tag() -> void:

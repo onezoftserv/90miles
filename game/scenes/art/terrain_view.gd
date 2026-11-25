@@ -19,12 +19,6 @@ const SHADE_SOURCE: int = 1
 const PEBBLE_SOURCE: int = 2
 const PEBBLE_SIDE: Dictionary[int, Vector2i] = {10: Vector2i(0, 0), 5: Vector2i(1, 0), 12: Vector2i(2, 0), 3: Vector2i(3, 0)}
 const PALM_SHADE: Vector2i = Vector2i(0, 4)
-## The two halves of the wide shade under the raft site, on the two cells west of its own cell:
-## the site's cell is a shore cell, and a decal there would lie over the foam and the water.
-const WIDE_WEST: Vector2i = Vector2i(1, 4)
-const WIDE_EAST: Vector2i = Vector2i(2, 4)
-const WIDE_WEST_OFFSET: Vector2i = Vector2i(-2, 0)
-const WIDE_EAST_OFFSET: Vector2i = Vector2i(-1, 0)
 ## Under a shelter (art-prop-polish D5) the shaded cells take the hut shade of decals/shade.png:
 ## one corner set per depth band from the hut's north edge, starting on this row, darkest under the
 ## roof and fading south; a deeper cell takes the last band.
@@ -99,7 +93,7 @@ func _build(source: Node, grid: GridTerrain) -> void:
 	var still: Dictionary[Vector2i, bool] = ShoreRule.still_water(grid, pools)
 	for cell: Vector2i in shore_cells:
 		_put(_shore, cell, ShoreRule.foam_tile(cell, grid, pools, still))
-	_build_decals(grid, pools, palms, spots, built.raft_site if built != null else Vector2i(-1, -1))
+	_build_decals(grid, pools, palms, spots)
 	depth_bytes = SeaMask.depth_bytes(grid_size, grid)
 	phase_bytes = SeaMask.phase_bytes(layout_id, grid_size, grid, pools, shore_cells)
 	_build_sea()
@@ -113,8 +107,9 @@ func _put(tiles: TileMapLayer, cell: Vector2i, tile: Dictionary) -> void:
 
 
 # Tide pools, then the shade of shaded cells as a corner set, then a foot shade under each palm
-# and the workbench whose cell holds no decal yet, then the wide shade under the raft site.
-func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vector2i], spots: Array[Vector2i], raft_site: Vector2i) -> void:
+# and the workbench whose cell holds no decal yet, then the pebbles. The raft and its site cast
+# their own WIDE drop shadow from their look (art-terrain-polish D3), so no decal lies under them.
+func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vector2i], spots: Array[Vector2i]) -> void:
 	_decals.clear()
 	for pool: Vector2i in pools:
 		_decals.set_cell(pool, POOL_SOURCE, Vector2i.ZERO)
@@ -134,11 +129,6 @@ func _build_decals(grid: GridTerrain, pools: Array[Vector2i], palms: Array[Vecto
 		var side: Vector2i = _pebble_side(cell, grid, pools)
 		if side.x >= 0 and has_pebbles(layout_id, cell) and _decals.get_cell_source_id(cell) < 0:
 			_decals.set_cell(cell, PEBBLE_SOURCE, side)
-	if raft_site.x >= 0:
-		for half: Dictionary in [{&"cell": raft_site + WIDE_WEST_OFFSET, &"atlas": WIDE_WEST}, {&"cell": raft_site + WIDE_EAST_OFFSET, &"atlas": WIDE_EAST}]:
-			var cell: Vector2i = half[&"cell"]
-			if TerrainArt.depth_step(grid.terrain_at(cell)) < 0 and _decals.get_cell_source_id(cell) < 0:
-				_decals.set_cell(cell, SHADE_SOURCE, half[&"atlas"])
 
 
 ## Whether the rock cell `cell` of the layout `layout_id` shows pebbles at its foot: about one

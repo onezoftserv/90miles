@@ -5,7 +5,8 @@ extends Node2D
 ## workbench or island sign, in `art_view`. Every frame it reads its structure's fields (a palm's
 ## coconuts, a fire's `lit`, a catcher's cups, a site's deposits, progress and `built`, a raft's
 ## integrity) and shows the frame StructureArt picks, standing bottom-centre on the structure's
-## origin, with the shadow its kind names. It never writes the structure. Each peer draws the state
+## origin, with the shadow its kind names. A raft and its site lean toward land by their look offset
+## (art-terrain-polish D3), shadow and all. It never writes the structure. Each peer draws the state
 ## it holds: palm coconuts, fire burn-out and rain cups are host state a client does not receive
 ## today, so a client's look follows its own copy (design.md D18's risk note).
 
@@ -52,6 +53,7 @@ func step() -> void:
 	var stages: SpriteFrames = data.site_frames_for(site.recipe.id) if site != null and site.recipe != null else null
 	if stages != null:
 		kind = StructureArt.KIND_RAFT_SITE
+	var lean: Vector2 = _lean(structure, kind)
 	still.visible = false
 	coconuts.visible = false
 	nest.visible = false
@@ -65,9 +67,10 @@ func step() -> void:
 		StructureArt.KIND_RAIN_CATCHER:
 			_play(data.rain_catcher, StructureArt.catcher_frame((structure as RainCatcher).cups))
 		StructureArt.KIND_RAFT_SITE:
-			_play(stages, StructureArt.site_stage(site.deposited, site.tags_deposited, site.progress()))
+			_play(stages, StructureArt.site_stage(site.deposited, site.tags_deposited, site.progress()), lean)
 		StructureArt.KIND_RAFT:
-			_play(data.raft, StructureArt.vessel_frame((structure as Raft).integrity, (structure as Raft).max_integrity))
+			# By the share of its maximum, which a fitting raises (island-stop), leaning toward land (C14).
+			_play(data.raft, StructureArt.vessel_frame((structure as Raft).integrity, (structure as Raft).max_integrity), lean)
 		StructureArt.KIND_STAKE:
 			if StructureArt.site_marker_shown(site.built):
 				_show_still(data.still_for(kind))
@@ -75,7 +78,7 @@ func step() -> void:
 			_show_still(data.still_for(kind))
 		StructureArt.KIND_SIGN:
 			_show_still(data.sign_texture((structure as IslandSign).look))
-	_place_shadow(kind, still.visible or sprite.visible)
+	_place_shadow(kind, frame(), still.visible or sprite.visible, lean)
 
 
 ## The frame shown now: the animation's name, or the kind for a one-frame structure; empty when
@@ -137,15 +140,28 @@ func _show_still(texture: Texture2D) -> void:
 	still.visible = true
 
 
-func _play(frames: SpriteFrames, animation: StringName) -> void:
+func _play(frames: SpriteFrames, animation: StringName, lean: Vector2 = Vector2.ZERO) -> void:
 	if frames == null or animation == StructureArt.NO_FRAME or not frames.has_animation(animation):
 		return
 	if sprite.sprite_frames != frames:
 		sprite.sprite_frames = frames
 	if sprite.animation != animation or not sprite.is_playing():
 		sprite.play(animation)
-	sprite.offset = StructureArt.frame_offset(frames.get_frame_texture(animation, 0).get_size())
+	sprite.offset = StructureArt.frame_offset(frames.get_frame_texture(animation, 0).get_size()) + lean
 	sprite.visible = true
+
+
+# art-terrain-polish D3 (C14): how far a kind with a look offset (the raft and its site) leans toward
+# the land beside its origin, read every step from its session's terrain, so a site placed before
+# the session's terrain is set still leans the right way once it is. Off a session the ground is
+# TerrainQuery's featureless beach, as Raft.work_offset reads it.
+func _lean(structure: Node, kind: StringName) -> Vector2:
+	if not data.look_offsets.has(kind) or not structure is Node2D:
+		return Vector2.ZERO
+	var session := CoopSession.of(structure)
+	var terrain: TerrainQuery = session.terrain if session != null else TerrainQuery.new()
+	var cell := Vector2i(((structure as Node2D).position / float(IslandLayout.TILE)).floor())
+	return data.look_offset(kind, StructureArt.land_side(terrain, cell))
 
 
 # art-mood-pass D2 (owner Q13 (a)): a lit fire lights a pool of hard rings exactly as far as its
@@ -194,11 +210,11 @@ func _flicker() -> float:
 	return table[posmod(sprite.frame, table.size())]
 
 
-func _place_shadow(kind: StringName, drawn: bool) -> void:
-	var size: int = data.shadows.get(kind, -1)
+func _place_shadow(kind: StringName, shown: StringName, drawn: bool, lean: Vector2) -> void:
+	var size: int = data.shadow_for(kind, shown)
 	shadow.visible = drawn and size >= 0
 	if not shadow.visible:
 		return
 	if shadow.size != size:
 		shadow.size = size as DropShadow.Size
-	shadow.position = data.shadow_offsets.get(kind, Vector2.ZERO)
+	shadow.position = data.shadow_offsets.get(kind, Vector2.ZERO) + lean

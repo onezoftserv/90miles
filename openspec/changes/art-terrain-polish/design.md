@@ -333,3 +333,51 @@ Measured values and departures are recorded here as the tasks ship.
 - **Tide pool.** Its water #5fcde4 is repainted #43a0c0.
 - Tests: `test_land_and_water_read_apart_by_value` (sand and dune 1.6:1 over the shallows, shallows 1.4:1 over brackish, deep < brackish < shallows; failed at 1.09:1), `test_the_wet_lip_shows_below_the_foam` (failed at 0 of 8), `BareFoamTests`, and the 1-player test that the solo sandbar's sea draws the darker shallows, every shade on the palette and the base 1.6:1 from the sand.
 - Capture: `docs/art-pass/terrain-polish/c7_west_shore_colour_grey_before_after_x2.png` (the west shore; colour above, greyscale below; before left, after right). In greyscale the shallows now sit a clear step below the beach.
+
+**C14, the raft on the sand (group 5, D3).** Built after crossing-gameplay merged (#70, #75), from main 3fbaad4.
+- **Tests first.** They failed for the right reasons once a compile-only skeleton gave the new names (`DropShadow.Size.WIDE` with no texture, `StructureArt.land_side` returning 0, `look_offset` returning zero, `shadow_for` reading the kind alone):
+  - `test_drop_shadow.gd`: `SIZES` gains the 30×11 ellipse, and `WIDE` is 4, after `LYING`.
+  - `test_structure_art.gd`:
+    - the size range allows `WIDE` and still refuses `LYING`;
+    - `land_side` is west, else east, else none, on a `GridTerrain`. The east and none cases have no shipped site, so they are tested here;
+    - at the site of all three islands, every raft frame and the half-built stage put the opaque pixels of their bottom rows, and their shadow, over land cells. At offset 0 the hull hung over (32, 29) and (33, 29) on the sandbar and (21, 45) on the cay.
+  - `test_structure_looks.gd`:
+    - the arena build leans every stage toward land, with no shadow while marked or holding materials and `WIDE` once half built and as the raft;
+    - a raft at 0 draws no shadow;
+    - **the 1-player test:** on the sandbar and on the coast cay, one offline player sees the marked site lean with no shadow, then a beached raft whose bottom rows and shadow lie over land and whose origin (the prompt's anchor) is still on the hull.
+  - `test_terrain_view.gd`:
+    - `test_the_raft_site_holds_the_wide_shade_…` became `test_the_raft_site_has_no_decal_and_the_workbench_is_shaded`, on both islands;
+    - the coast cay's corner-set test no longer skips the two cells west of the site.
+  - `test_crossing_art.gd`: the deck stays on `deck_rect` while the beach raft has a look offset.
+  - `test_fx.py`: the 30×11 shadow is a soft, mirrored ellipse that fills its box, and the tracked file is the recipe's.
+- **The offset, measured.** I measured the leans that put every opaque pixel of a frame's bottom 8 rows over land:
+
+  | Site | Whole and worn | Breaking | Half-built site |
+  |---|---|---|---|
+  | Sandbar (31, 29) | 23 px or more | 24 px or more | 20 px or more |
+  | Coast cay (19, 45) | 7 px or more | 8 px or more | 4 px or more |
+  | Hidden cay (31, 17) | 23 px or more | 24 px or more | 20 px or more |
+
+  The breaking hull on the sandbar and the hidden cay binds, so `look_offsets` holds 24 px, the top of D3's 16 to 24 range, for `raft` and `raft_site`. There is no slack: a wider hull redraw needs a new measure.
+- **The direction.** `StructureArt.land_side` picks west when the cell west of the origin is land, else east, else none. Every shipped site has land to the west.
+  - `StructureLook` reads it every step from `CoopSession.of(structure).terrain`, not once. A site placed before its session's terrain is set still leans the right way once it is.
+  - Off a session, the ground is `TerrainQuery`'s featureless beach, as `Raft.work_offset` reads it.
+- **The shadow.**
+  - `DropShadow.Size.WIDE` is a 30×11 ellipse in black at alpha 78, like MetroCity's. `structure_art.tres` maps `raft` to it.
+  - The new `frame_shadows` gives the site's `half_built` stage its own `WIDE` shadow, data not code. The marked and materials stages keep the site's -1.
+  - Both centre 2 px above the origin (`shadow_offsets`) plus the lean, so the ellipse's lower rows show as a soft crescent under the middle of the hull.
+- **The decal goes.** `TerrainView` drops `WIDE_WEST`, `WIDE_EAST`, their offsets, the raft-site branch and `_build_decals`' `raft_site` parameter.
+  - Tiles (1, 4) and (2, 4) stay on `decals/shade.png` and in `decal_tiles.tres`, laid nowhere. Removing them would change the sheet, `terrain.py`'s recipe and the pinned tile counts for no visible gain.
+- **What stays.** The structure, its interactable, its work point and its prompt stay on the origin. The prompt still reads on the hull ("[E] Zarpar en la balsa" beside the built raft). The crossing deck reads `data.raft` itself and never the offset.
+- **Departures.**
+  - **The shadow is drawn by `fx.py`, not by hand.** D3 asks for a hand file. `fx.json` already draws the lying body's shadow in MetroCity's colour and alpha, so the 30×11 is a recipe piece beside it, and the integration rebuild covers it. `shadows/License.txt` names it.
+  - **Headless and off-screen, not windowed (task 5.4).** The owner asked on 2026-11-23 that runs be headless. The new step `art_pass_run.gd --only=raft` passed 21 of 21 headless. The captures came from one off-screen launch (`--position -32000,-32000 --resolution 640x360`), which passed the same 21.
+  - **No sea in this group.** The site still stands on its B cell, a beach cell at the shore. The lean is look-only, as D3 asks.
+- **Checks.**
+  - `check.py`: 0 problems on the art and the fixes.
+  - The Python art tests: 257 OK.
+  - Import twice: the second is clean. Smoke: 0 problems.
+  - GUT: 2,873 of 2,873 pass locally. The run took 757 s on a busy machine; CI ran main's suite in 329 s.
+- **Images:**
+  - `docs/art-pass/terrain-polish/c14_raft_stages_before_after_x4.png`: `before/raft_stages.png` above. Below, the same four stages now, from the solo run (marked, materials, half built, built), each a 128×72 world rect centred on the hull. The solo player stands in the shallows at the hull's east end, where the prompt check put them.
+  - `docs/art-pass/terrain-polish/c14_cay_landing_before_after_x2.png`: `before/cay_day_landing.png` above and the raft landed on the coast cay now below, from the solo view without the HUD.
