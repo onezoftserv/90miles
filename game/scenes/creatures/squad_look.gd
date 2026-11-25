@@ -7,13 +7,14 @@ extends Node2D
 ##   dark outline, a cap and a flashlight's glint on the side it faces.
 ## - A patrol boat whose squad is out draws its dinghy: a small placeholder hull on the line from the
 ##   boat to the landing, `dinghy_t` of the way (synced at the creatures' 10 Hz).
-## - A patrol boat speaks its squad's calls: when its `squad_serial` changes, a speech bubble shows for
-##   BUBBLE_S over one of its soldiers with a line of `squad_<call>_lines_<locale>` (formal Spanish in
+## - A patrol boat speaks its squad's calls: when its `squad_serial` changes, a call window (art-guardacostas
+##   D6, the session's `show_call`) shows over one of its soldiers a line of `squad_<call>_lines_<locale>` (formal Spanish in
 ##   Spanish), picked by `squad_serial` mod the line count so every peer shows the same line. A landing
 ##   or leaving call shows over the soldier nearest the landing, a spot call over a soldier giving chase.
 ## CreatureRig processes no frames, so tests drive `step` themselves.
 
-const BUBBLE_S: float = 3.0
+## The top of a drawn soldier over its origin, where a call window's tail points (art-guardacostas D6).
+const SOLDIER_TOP_Y: float = -13.0
 ## How long a call waits for a soldier to show over (a client's soldiers can arrive after the call).
 const PENDING_S: float = 2.0
 const UNIFORM: Color = Color(0.36, 0.42, 0.24)
@@ -87,7 +88,7 @@ func _draw_soldier(facing: Vector2) -> void:
 	draw_rect(Rect2(side, -6.0, 1.0, 1.0), GLINT)
 
 
-# A new squad call: a speech bubble over one of this boat's soldiers. On a client the call can arrive
+# A new squad call: a call window over one of this boat's soldiers. On a client the call can arrive
 # a frame before the soldiers do, so a call with nobody to show over waits for one, up to PENDING_S.
 func _speak(creature: Creature) -> void:
 	var serial: int = creature.squad_serial
@@ -109,7 +110,7 @@ func _speak(creature: Creature) -> void:
 	last_call = lines[serial % lines.size()]
 	last_caller = caller
 	calls_shown += 1
-	session.show_bubble(caller, last_call, null, BUBBLE_S)
+	session.show_call(caller, last_call)
 
 
 static func _lines(patrol: PatrolData, call: int, locale: String) -> PackedStringArray:

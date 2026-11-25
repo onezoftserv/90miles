@@ -36,8 +36,12 @@ func _pair_in_run() -> Array[GameShell]:
 	return [host, papo]
 
 
+# `shell` confirms "Abandonar". In the game, back_to_title() closes the peer through NetManager in
+# the same call; the harness closes the branch's peer in the same deferred flush, right after it, so
+# no packet reaches a run that is already freed.
 func _confirm_abandon(shell: GameShell) -> void:
 	var menu: PauseMenu = shell.hud.pause_menu
+	menu.abandon_confirmed.connect(func() -> void: shells.go_home(shell), CONNECT_DEFERRED)
 	menu.open()
 	menu.ask_abandon()
 	(menu.view as ConfirmBox).confirm_button.pressed.emit()
@@ -90,8 +94,6 @@ func test_the_host_abandoning_sends_the_client_to_host_lost() -> void:
 	_confirm_abandon(host)
 	assert_true(await shells.wait(func() -> bool: return host.flow == GameShell.Flow.TITLE), "the host is on the title")
 	assert_null(host.session, "the host's run is gone")
-	# NetManager.leave() closes the game's peer; the harness closes the branch's.
-	shells.go_home(host)
 	assert_true(await shells.wait(func() -> bool: return papo.flow == GameShell.Flow.HOST_LOST), "Papo shows host-lost")
 	var lost: HostLostScreen = papo.host_lost_screen
 	assert_not_null(lost)
@@ -115,7 +117,6 @@ func test_a_client_abandoning_leaves_its_player_waiting_on_the_host() -> void:
 	var papo: GameShell = pair[1]
 	_confirm_abandon(papo)
 	assert_true(await shells.wait(func() -> bool: return papo.flow == GameShell.Flow.TITLE), "Papo is on the title")
-	shells.go_home(papo)
 	var dropped := func() -> bool: return _row(host.hud, "Papo").ends_with("Desconectado")
 	assert_true(await shells.wait(dropped), "the host lists Papo as Desconectado: %s" % _row(host.hud, "Papo"))
 	assert_eq(host.flow, GameShell.Flow.RUN, "the host's run goes on")

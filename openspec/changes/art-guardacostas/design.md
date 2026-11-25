@@ -310,3 +310,12 @@ None. The owner chose (a) for QG1–QG4 on 2026-11-23 (proposal.md).
 ## Build Notes
 
 - **2026-11-23, gate.** The owner chose (a) for QG1–QG4. PR #105 (the outline family check) is merged; main is at 041e711. Each build PR branches from the main of its day, and the shared files are re-read there.
+- **2026-11-23, HUD PR (groups 1–3), from main 041e711.** Re-read `run_hud.gd`/`.tscn`, `patrol_look.gd`, `patrol_horizon.gd` and the art JSON there; no other session had changed them. Before captures: `capture_patrol.tscn`, `capture_squad.gd` and `capture_la_captura.tscn` at 1x from main, plus the review's own captures (halved to 1x).
+  - **Departures.**
+    - The chip's off beat needs a hollow outline, so the kit has a third piece, `boat_chip_outline` (D8 named two).
+    - The kit pieces are referred to by the theme as icons (`HudMarks/icons/eye_open_plate`, `HudHorizon/icons/boat_chip_*`), as `HudDigits/icons/atlas` is, so `check.py` finds them in use. The call window's `HudCall` variation shares the `hud_panel_thin` stylebox.
+    - The bar's empty cells are the HUD track blue (#3f3f74), so a low meter still reads as a bar.
+    - The chip's blink adds 0.1 ms to the clock before the beat test: a clock summed from 0.1 s ticks drifts just below a beat's edge.
+    - Until the sprites PR, the call window points at the polygon hull's top (`PatrolLook.TOP_Y` = −9) and the placeholder soldier's cap (`SquadLook.SOLDIER_TOP_Y` = −13).
+    - `RunHud.top_window_rects()` (panels whose top is above y 20) feeds the chip; `RunHud.call_avoid_rects()` (every panel plus the prompt) feeds the call windows.
+  - **Measured.** The longest shipped call, 71 characters, wraps to 3 rows; every call of `patrol_boat.tres` (14 lines in two languages) fits. The plated eye is 11×9 and the chips 9×7.
