@@ -310,6 +310,21 @@ Stranded means alive, with an almost-built raft and no way to finish it on islan
 
 **The owner chose (a) on 2026-11-24.** Its reruns are under "Stress runs after Q4 (a)".
 
+### Stress runs after Q4 (a) (2026-11-24, on main 9f3ec68)
+
+The same four runs, headless, with slow work at 0 energy. None strands: every one launches at night and is alive at the summary, with 0 errors.
+
+| Variant | Slow work from | Raft built | Launch | Lowest thirst on the sandbar | Checks |
+|---|---|---|---|---|---|
+| baseline | never | 15:31 | 20:15 | 49.2 | 8 of 8 |
+| `--run` | never (9 coconuts eaten, 4 taken by gulls) | 20:48 | 20:51 | 51.1 | 7 of 8: thirst stayed above 50 |
+| `--lose=3` | 18:38, at 110 of 120 s | 20:48 | 20:51 | 28.8 | 8 of 8 |
+| `--run --lose=3` | 16:28, at 101 of 120 s | 19:50 | 21:30 | 36.3 | 8 of 8 |
+
+**The one check missed:** the running variant ate 9 coconuts, so its thirst stayed above 50. That target is a measure of pressure, not of being stranded.
+
+**The price of running dry:** a player who runs out of energy finishes the raft later, then waits out the light, and arrives thirstier.
+
 ## Two processes (task 6.3, 2026-11-24, on main f8a6c75)
 
 `tests/manual/island_pressure_coop_run.gd` ran headless on UDP 7799, host first. Host 18 of 18 and client 9 of 9 passed, with 0 errors on either:
