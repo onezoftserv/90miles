@@ -2,7 +2,8 @@ extends GutTest
 ## guardacostas-capture, group 12 (design.md §14, spec "Capture cues"), solo and host plus client: the
 ## rope mark over a captive on both peers (gone once freed), the "[E] Soltar" prompt hidden while a
 ## soldier is within 3 tiles of the captive, the squad's landing, spot and leaving calls in formal
-## Spanish over a soldier, the open eye filling under a soldier's sight, and the soldier and dinghy
+## Spanish in call windows over a soldier (art-guardacostas D6), the same spot call on both peers, the
+## open eye filling under a soldier's sight, and the soldier and dinghy
 ## drawn from the synced state.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
@@ -166,9 +167,12 @@ func test_a_solo_player_sees_the_squads_landing_spot_and_leaving_calls_in_formal
 	assert_eq(look.calls_shown, 1, "the landing call")
 	assert_true(patrol.squad_land_lines_es.has(look.last_call), look.last_call)
 	assert_true(look.last_caller is Creature and (look.last_caller as Creature).data.id == &"shore_soldier", "over a soldier")
-	var bubble := look.last_caller.get_node_or_null(NodePath(CoopSession.BUBBLE_NAME)) as SpeechBubble
-	assert_not_null(bubble)
-	assert_eq(bubble.text, look.last_call)
+	# art-guardacostas D6: in a call window over the soldier, not a speech bubble.
+	assert_null(look.last_caller.get_node_or_null(NodePath(CoopSession.BUBBLE_NAME)), "no speech bubble")
+	var windows: CallWindows = shell.hud.call_windows
+	assert_eq(windows.count(), 1, "a call window")
+	assert_eq(windows.speaker_of(0), look.last_caller, "over the soldier")
+	assert_eq(windows.text_of(0), look.last_call)
 	var brain := boat.brain as PatrolRoute
 	var soldier: Creature = brain.soldiers[0]
 	(soldier.brain as SearchCapture).spot(soldier, shell.session.body(1))
@@ -176,6 +180,8 @@ func test_a_solo_player_sees_the_squads_landing_spot_and_leaving_calls_in_formal
 	assert_eq(look.calls_shown, 2, "the spot call")
 	assert_true(patrol.squad_spot_lines_es.has(look.last_call))
 	assert_eq(look.last_caller, soldier, "over the soldier giving chase")
+	assert_eq(windows.text_of(windows.count() - 1), look.last_call, "the latest window holds the spot call")
+	assert_eq(windows.speaker_of(windows.count() - 1), soldier)
 	brain.plan.elapsed_s = patrol.search_duration_s
 	boat.advance(0.1)
 	look.step(0.0)
@@ -215,3 +221,68 @@ func test_the_soldier_and_the_dinghy_are_drawn_from_the_synced_state() -> void:
 	soldier_look.step(0.0)
 	assert_false(soldier_look.dinghy_visible, "a soldier has no dinghy")
 	assert_true(soldier.is_in_group(FreeHandle.SOLDIER_GROUP))
+
+
+# --- the calls (host plus client) ---------------------------------------------------------------------
+
+# The host's spawner on the sandbar by day for one player; its boat docked by a spot on land, with its
+# squad ashore.
+func _squad_ashore(host: CoopSession) -> Creature:
+	var spawner := CreatureSpawner.new()
+	spawner.name = SandbarIsland.CREATURES_NAME
+	host.add_child(spawner)
+	spawner.setup(host, load("res://resources/islands/sandbar.tres") as IslandLayoutData)
+	spawner.party_size = 1
+	spawner.world.phase = DataEnums.DayPhase.DAY
+	spawner.world.weather_override = GameState.content.get_entry(&"weather", &"calm") as WeatherData
+	spawner.spawn_permanent()
+	var boat: Creature = spawner.creatures(&"patrol_boat")[0]
+	var brain := boat.brain as PatrolRoute
+	brain.set_clock(patrol.horizon_warning_s + 10.0)
+	boat.advance(0.0)
+	var body := host.body(CoopSession.HOST_ID)
+	body.global_position = IslandLayout.cell_center(IslandLayout.build(load("res://resources/islands/sandbar.tres") as IslandLayoutData).solo_spawn)
+	brain.spot(body, &"sight")
+	for i: int in 100:
+		if boat.squad_state == PatrolRoute.Squad.ASHORE:
+			break
+		boat.advance(0.1)
+	assert_eq(boat.squad_state, PatrolRoute.Squad.ASHORE)
+	return boat
+
+
+# Spec "A client reads the squad's call".
+func test_both_peers_show_the_same_spot_call_over_the_soldier_giving_chase() -> void:
+	var pair := await _pair()
+	var host := pair[0]
+	var client := pair[1]
+	var id: int = net.peer_id(client)
+	var host_hud := _hud(host, CoopSession.HOST_ID)
+	var client_hud := _hud(client, id)
+	var boat := _squad_ashore(host)
+	var soldier: Creature = (boat.brain as PatrolRoute).soldiers[0]
+	var theirs := func(node: Node) -> Node2D: return client.entities.get_node_or_null(NodePath(node.name)) as Node2D
+	assert_true(await wait_until(func() -> bool: return theirs.call(soldier) != null and theirs.call(boat) != null, TIMEOUT_S), "the client has the squad")
+	await wait_seconds(0.5)
+	var serial: int = boat.squad_serial
+	(soldier.brain as SearchCapture).spot(soldier, host.body(id))
+	assert_ne(boat.squad_serial, serial, "a spot call")
+	var host_look := boat.get_node(^"SquadLook") as SquadLook
+	var shown := func(hud: RunHud, speaker: Node2D) -> bool:
+		var windows: CallWindows = hud.call_windows
+		for i: int in windows.count():
+			if windows.speaker_of(i) == speaker and patrol.squad_spot_lines_es.has(windows.text_of(i)):
+				return true
+		return false
+	assert_true(await wait_until(func() -> bool: return shown.call(host_hud, soldier), TIMEOUT_S), "the host shows the spot call over the soldier")
+	assert_true(await wait_until(func() -> bool: return shown.call(client_hud, theirs.call(soldier)), TIMEOUT_S), "the client shows it over the same soldier")
+	var host_text: String = ""
+	var client_text: String = ""
+	for i: int in host_hud.call_windows.count():
+		if host_hud.call_windows.speaker_of(i) == soldier:
+			host_text = host_hud.call_windows.text_of(i)
+	for i: int in client_hud.call_windows.count():
+		if client_hud.call_windows.speaker_of(i) == theirs.call(soldier):
+			client_text = client_hud.call_windows.text_of(i)
+	assert_eq(client_text, host_text, "the same line on both peers")
+	assert_eq(host_text, host_look.last_call)

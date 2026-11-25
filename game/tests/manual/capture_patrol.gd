@@ -2,9 +2,11 @@ extends Node
 ## Manual capture for guardacostas-stealth task 9.2, run windowed (it needs a real renderer, so never
 ## headless and never in CI). A solo sandbar run at night: the patrol boat is held in its lap with its
 ## searchlight on open sand, the player stands in the beam with half a spot meter (the open eye), and the
-## window is saved; then the boat is put on the horizon and the HUD band's light is saved:
+## window is saved; then the boat is put on the horizon and the HUD band's light is saved. art-guardacostas
+## adds the alert's call window at night and the warning chip by day:
 ##   godot --path game res://tests/manual/capture_patrol.tscn -- --out=<dir> [--scale=2]
-## Writes <dir>/sandbar_night_beam.png and <dir>/horizon_light_night.png.
+## Writes <dir>/sandbar_night_beam.png, <dir>/horizon_light_night.png, <dir>/patrol_alert_night.png and
+## <dir>/horizon_chip_day.png.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://capture_patrol.cfg"
@@ -13,6 +15,8 @@ const MAX_SCALE: int = 4
 const SETTLE_FRAMES: int = 30
 ## weather-daynight: 440.1 s after dawn is Noche.
 const NIGHT_S: float = 440.1
+## Mid-morning.
+const DAY_S: float = 100.0
 const TILE: float = 16.0
 const LAPS_TO_TRY: Array[float] = [5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0]
 
@@ -53,8 +57,10 @@ func _ready() -> void:
 	_boat.set_physics_process(false)
 	_brain = _boat.brain as PatrolRoute
 	_patrol = _boat.data.patrol
+	await _capture_day_horizon()
 	await _capture_horizon()
 	await _capture_beam()
+	await _capture_alert()
 	_shell.back_to_title()
 	get_tree().quit()
 
@@ -115,6 +121,27 @@ func _capture_beam() -> void:
 		await _save("sandbar_night_beam.png")
 		return
 	push_error("capture_patrol: no clock of the lap lights open sand")
+
+
+# art-guardacostas: the boat, still held where it lit the player, spots them: its loudhailer line shows
+# in a call window over the boat. This boat lands no squad.
+func _capture_alert() -> void:
+	_boat.world.spawner = Callable()
+	_brain.spot(_body, &"sight")
+	await _frames(SETTLE_FRAMES)
+	await _save("patrol_alert_night.png")
+
+
+# art-guardacostas: by day, the boat 2 s into its horizon warning: the grey chip on the HUD band. Then
+# back to night for the other captures.
+func _capture_day_horizon() -> void:
+	WeatherManager.sky.start_at(DAY_S)
+	_hold(2.0)
+	await _frames(SETTLE_FRAMES)
+	_hold(2.0)
+	await _save("horizon_chip_day.png")
+	WeatherManager.sky.start_at(NIGHT_S)
+	await _frames(5)
 
 
 # Open sand (BEACH, no roof) the held light covers, 4 to 8 tiles from the boat, in reading order.

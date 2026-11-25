@@ -38,6 +38,8 @@ const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudPanelT
 ## HUD pieces that are not HUD panels but that the interact prompt keeps clear of too (secret-cay's
 ## needle and note join it).
 const AVOID_GROUP: StringName = &"hud_avoid"
+## A HUD panel whose top is above this is one of the top windows (art-guardacostas D8).
+const TOP_WINDOW_Y: float = 20.0
 ## HUD windows another layer draws for this run (the crossing's strip and line, crossing-gameplay;
 ## hud-window-kit D14), counted like this HUD's own while they show, for this session only.
 const OUTSIDE_PANEL_GROUP: StringName = &"hud_panel_outside"
@@ -87,6 +89,9 @@ var floats: ChangeFloats = ChangeFloats.new()
 ## guardacostas-capture: the scene panel (la_captura's speaker and line), made here and bound to the
 ## session's capture scene.
 var scene_panel: ScenePanel = null
+## art-guardacostas D6: the coast guard's calls, each in a small window over its speaker, made here and
+## fed by the session's `call_shown`.
+var call_windows: CallWindows = null
 @onready var phase_label: Label = %Phase
 @onready var clock: ClockStrip = $PhasePanel/Clock
 @onready var objective_row: ObjectiveRow = $ObjectiveRow
@@ -150,6 +155,7 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	session.roster_updated.connect(_rename_tags)
 	session.player_rebound.connect(_on_player_rebound)
 	marks.bind(session)
+	patrol_horizon.avoid = top_window_rects
 	patrol_horizon.bind(session, local_peer_id)
 	site_arrow.session = session
 	site_arrow.local_peer = local_peer_id
@@ -158,6 +164,14 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	scene_panel = ScenePanel.new()
 	add_child(scene_panel)
 	scene_panel.bind(session)
+	call_windows = CallWindows.new()
+	call_windows.name = &"CallWindows"
+	add_child(call_windows)
+	move_child(call_windows, floats.get_index() + 1)
+	call_windows.to_hud = world_to_hud
+	call_windows.avoid = call_avoid_rects
+	call_windows.screen_shown = screen_shown
+	call_windows.bind(session)
 	for peer_id: int in session.peer_ids():
 		_follow(peer_id)
 	refresh()
@@ -245,6 +259,8 @@ func set_screen_shown(value: bool) -> void:
 	floats.screen_shown = value
 	if scene_panel != null:
 		scene_panel.screen_shown = value
+	if call_windows != null:
+		call_windows.screen_shown = value
 	refresh_watching()
 
 
@@ -269,6 +285,24 @@ func panel_rects() -> Array[Rect2]:
 		var box := node as Control
 		if box != null and session != null and box.is_visible_in_tree() and CoopSession.of(box) == session:
 			rects.append(box.get_global_rect())
+	return rects
+
+
+## The HUD panels on show along the top of the view (the meters, phase, weather and teammates windows),
+## which the patrol warning chip slides clear of (art-guardacostas D8).
+func top_window_rects() -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	for rect: Rect2 in panel_rects():
+		if rect.position.y < TOP_WINDOW_Y:
+			rects.append(rect)
+	return rects
+
+
+## What a call window keeps clear of: every HUD panel on show and the interact prompt while it shows.
+func call_avoid_rects() -> Array[Rect2]:
+	var rects: Array[Rect2] = panel_rects()
+	if prompt.panel.is_visible_in_tree():
+		rects.append(prompt.panel.get_global_rect())
 	return rects
 
 

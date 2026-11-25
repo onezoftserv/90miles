@@ -2,12 +2,13 @@ extends GutTest
 ## guardacostas-stealth, group 9 (design.md decision 11; spec "Patrol cues"): the three cues and the
 ## patrol look, with exactly 1 player offline (the game shell on the real sandbar) and with a host plus a
 ## client over ENet on localhost (NetHarness).
-## - The horizon light shows on the HUD band for exactly the 20 s of HORIZON (a light at night, a grey hull
-##   by day), clamped to the band, and goes when the lap starts.
-## - The open eye shows over a player whose shown spot fraction is above 0, half filled at 1 s, on both
-##   peers; the closed eye wins; it goes at 0.
-## - The loudhailer shows a Spanish alert line over the boat when an alert starts and a give-up line when
-##   it ends, the same line on both peers.
+## - The warning chip (art-guardacostas D8) shows on the HUD band for exactly the 20 s of HORIZON (a lit
+##   hull at night, a grey hull by day, 9×7), blinking at 2 Hz and at 4 Hz in the last 5 s from the synced
+##   clock, slid clear of the top windows, and goes when the lap starts.
+## - The plated open eye (art-guardacostas D7) shows over a player whose shown spot fraction is above 0,
+##   its bar half filled at 1 s, on both peers; the closed eye wins; it goes at 0.
+## - The loudhailer shows a Spanish alert line in a call window over the boat when an alert starts and a
+##   give-up line when it ends, the same line on both peers (art-guardacostas D6).
 ## - The look: a hull and a PointLight2D cone rotated to the beam, only while the light is on; a client's
 ##   first frame after a mid-lap join already has the boat and its cone in place.
 ## - The cues have no text of their own: the lines come from PatrolData.
@@ -127,10 +128,12 @@ func test_a_solo_player_sees_the_horizon_light_for_20_s_at_night_and_it_goes_whe
 	var hud: RunHud = shell.hud
 	assert_eq(boat.state_name(), &"HORIZON")
 	assert_true(_band_has_a_mark(hud))
-	assert_false(hud.patrol_horizon.is_hull(0), "a light at night")
-	assert_eq(hud.patrol_horizon.mark_rect(0).size, Vector2(3.0, 2.0))
+	assert_false(hud.patrol_horizon.is_hull(0), "the lit hull at night")
+	assert_eq(hud.patrol_horizon.mark_rect(0).size, Vector2(9.0, 7.0), "a 9×7 chip")
+	assert_true(hud.patrol_horizon.is_lit(0), "its colours at the warning's start")
+	assert_eq(hud.patrol_horizon.chip_texture(0).resource_path, "res://assets/art/ui/boat_chip_night.png")
 	var ticks: int = _horizon_ticks(hud, 400)
-	assert_eq(ticks, 200, "the light shows for exactly the 20 s of the horizon warning")
+	assert_eq(ticks, 200, "the chip shows for exactly the 20 s of the horizon warning")
 	assert_eq(boat.state_name(), &"LAP")
 	assert_false(_band_has_a_mark(hud), "and goes when the lap starts")
 	_run(101.0)
@@ -138,13 +141,38 @@ func test_a_solo_player_sees_the_horizon_light_for_20_s_at_night_and_it_goes_whe
 	assert_false(_band_has_a_mark(hud))
 
 
-func test_by_day_the_horizon_mark_is_a_grey_5_by_2_hull() -> void:
+func test_by_day_the_chip_is_a_grey_9_by_7_hull_that_blinks_faster_in_the_last_5_s() -> void:
 	await _start(DAY_S)
 	var hud: RunHud = shell.hud
 	assert_eq(WeatherManager.phase(), DataEnums.DayPhase.DAY)
 	assert_true(_band_has_a_mark(hud))
 	assert_true(hud.patrol_horizon.is_hull(0), "a hull by day")
-	assert_eq(hud.patrol_horizon.mark_rect(0).size, Vector2(5.0, 2.0))
+	assert_eq(hud.patrol_horizon.mark_rect(0).size, Vector2(9.0, 7.0))
+	assert_eq(hud.patrol_horizon.chip_texture(0).resource_path, "res://assets/art/ui/boat_chip_day.png")
+	# 2 Hz: 0.3 s of colours, 0.2 s of outline; the 0.1 s ticks read on, on, on, off, off.
+	var early: Array[bool] = []
+	for i: int in 10:
+		hud.patrol_horizon.tick()
+		early.append(hud.patrol_horizon.is_lit(0))
+		boat.advance(STEP_S)
+	assert_eq(early, [true, true, true, false, false, true, true, true, false, false] as Array[bool], "2 Hz from the synced clock")
+	assert_eq(hud.patrol_horizon.chip_texture(0).resource_path, "res://assets/art/ui/boat_chip_outline.png", "the outline alone on the off beat")
+	assert_false(PatrolHorizon.chip_lit(0.35, 20.0))
+	# 4 Hz in the last 5 s: 0.15 s on, 0.1 s off.
+	assert_true(PatrolHorizon.chip_lit(15.0, 20.0))
+	assert_true(PatrolHorizon.chip_lit(15.1, 20.0))
+	assert_false(PatrolHorizon.chip_lit(15.2, 20.0))
+	assert_true(PatrolHorizon.chip_lit(15.26, 20.0))
+	assert_false(PatrolHorizon.chip_lit(15.45, 20.0))
+	var fast_switches: int = 0
+	var last: bool = PatrolHorizon.chip_lit(15.0, 20.0)
+	for i: int in 100:
+		var now: bool = PatrolHorizon.chip_lit(15.0 + i * 0.05, 20.0)
+		if now != last:
+			fast_switches += 1
+		last = now
+	assert_eq(fast_switches, 39, "8 switches a second over the last 5 s")
+	_clock(0.0)
 	assert_eq(_horizon_ticks(hud, 400), 200)
 
 
@@ -154,17 +182,27 @@ func test_the_horizon_mark_is_placed_by_the_laps_start_bearing_and_clamped_to_th
 	assert_eq(PatrolHorizon.bearing_x(Vector2(-100.0, 0.0)), 0.0, "west is the left edge")
 	assert_eq(PatrolHorizon.bearing_x(Vector2(0.0, 100.0)), 640.0, "behind clamps to an edge")
 	assert_between(PatrolHorizon.bearing_x(Vector2(100.0, -100.0)), 479.9, 480.1, "north-east is three quarters across")
+	# art-guardacostas D8: slid along the band to the nearer side clear of a top window.
+	var phase := Rect2(260.0, 4.0, 120.0, 14.0)
+	assert_eq(PatrolHorizon.slide(316.0, [phase] as Array[Rect2]), 381.0, "the nearer side, right")
+	assert_eq(PatrolHorizon.slide(300.0, [phase] as Array[Rect2]), 250.0, "the nearer side, left")
+	assert_eq(PatrolHorizon.slide(500.0, [phase] as Array[Rect2]), 500.0, "clear already")
+	var meters := Rect2(4.0, 4.0, 130.0, 66.0)
+	assert_eq(PatrolHorizon.slide(0.0, [meters] as Array[Rect2]), 135.0, "off the band's edge: the far side")
 	await _start(NIGHT_S)
 	var hud: RunHud = shell.hud
 	assert_true(_band_has_a_mark(hud))
 	var rect: Rect2 = hud.patrol_horizon.mark_rect(0)
 	assert_gte(rect.position.x, 0.0)
 	assert_lte(rect.end.x, 640.0, "clamped to the band")
-	assert_between(rect.position.y, 0.0, 6.0)
+	assert_eq(rect.position.y, 1.0, "the chip's top at y 1")
+	for window: Rect2 in hud.top_window_rects():
+		assert_false(rect.intersects(window), "clear of the top window %s" % window)
 	# The lap starts at the island's most easterly point: east of the player, so right of the middle.
 	var start: Vector2 = boat.view().start_px()
 	var gap: Vector2 = start - body.global_position
-	assert_almost_eq(rect.position.x + rect.size.x / 2.0, clampf(PatrolHorizon.bearing_x(gap), rect.size.x / 2.0, 640.0 - rect.size.x / 2.0), 1.0)
+	var left: float = clampf(roundf(PatrolHorizon.bearing_x(gap) - 4.5), 0.0, 631.0)
+	assert_eq(rect.position.x, PatrolHorizon.slide(left, hud.top_window_rects()), "by bearing, then slid")
 	assert_gt(gap.x, 0.0)
 	assert_gt(rect.position.x, 320.0)
 
@@ -182,11 +220,18 @@ func test_a_solo_player_with_a_half_meter_shows_a_half_filled_open_eye_and_the_c
 	marks.tick()
 	assert_true(marks.has_open_eye(body))
 	assert_almost_eq(marks.eye_fill(body), 0.5, 0.0001, "half filled")
-	assert_eq(marks.eye_rect(body).size, Vector2(7.0, 5.0))
-	assert_eq(BodyMarks.iris_pixels(0.5), 5, "half of the 9 iris pixels, rounded up")
-	assert_eq(BodyMarks.iris_pixels(0.0), 0)
-	assert_eq(BodyMarks.iris_pixels(0.01), 1)
-	assert_eq(BodyMarks.iris_pixels(1.0), 9)
+	# art-guardacostas D7: the 11×7 plate and its bar under it, 11×9 in all.
+	assert_eq(marks.eye_rect(body).size, Vector2(11.0, 9.0))
+	assert_eq(BodyMarks.bar_cells(0.5), 5, "round(9 × 0.5)")
+	assert_eq(BodyMarks.bar_cells(0.0), 0)
+	assert_eq(BodyMarks.bar_cells(0.25), 2)
+	assert_eq(BodyMarks.bar_cells(1.0), 9)
+	assert_eq(BodyMarks.bar_color(0.49), HudStyle.CREAM, "cream below half")
+	assert_eq(BodyMarks.bar_color(0.5), HudStyle.ORANGE, "orange from half")
+	assert_eq(BodyMarks.bar_color(0.74), HudStyle.ORANGE)
+	assert_eq(BodyMarks.bar_color(0.75), HudStyle.ALERT, "the alert red from three quarters")
+	assert_not_null(marks.plate_texture(), "the plate is the kit's eye_open_plate")
+	assert_eq(marks.plate_texture().get_size(), Vector2(11.0, 7.0))
 	assert_false(marks.has_mark(body), "the closed eye is not shown")
 	body.stealth_state = HIDDEN
 	marks.tick()
@@ -198,6 +243,20 @@ func test_a_solo_player_with_a_half_meter_shows_a_half_filled_open_eye_and_the_c
 	marks.tick()
 	assert_false(marks.has_open_eye(body), "it goes at 0")
 	assert_eq(marks.eye_fill(body), 0.0)
+
+
+# Spec "A solo player reads the meter": 1.5 s of a 2 s spot.
+func test_a_solo_player_lit_past_three_quarters_shows_a_bar_more_than_three_quarters_full_in_red() -> void:
+	await _start(NIGHT_S)
+	var marks: BodyMarks = shell.hud.marks
+	body.spot_meter.value = 1.5
+	body.net._physics_process(DT)
+	assert_almost_eq(body.spot_shown, 0.75, 0.0001, "1.5 s of a 2 s meter")
+	marks.tick()
+	assert_true(marks.has_open_eye(body))
+	var fill: float = marks.eye_fill(body)
+	assert_gt(BodyMarks.bar_cells(fill) / float(BodyMarks.BAR_CELLS), 0.75, "more than three quarters full")
+	assert_eq(BodyMarks.bar_color(fill), HudStyle.ALERT, "in the alarm colour")
 
 
 # --- the loudhailer ---------------------------------------------------------------------------------
@@ -214,16 +273,19 @@ func test_the_loudhailer_calls_a_formal_spanish_alert_line_and_then_a_give_up_li
 	assert_eq(boat.alert_serial, 1)
 	_look().step(0.0)
 	assert_eq(_look().lines_shown, 1)
-	var bubble := boat.get_node_or_null(NodePath(CoopSession.BUBBLE_NAME)) as SpeechBubble
-	assert_not_null(bubble, "a speech bubble over the boat")
-	assert_true(patrol.alert_lines_es.has(bubble.text), "one of the boat's Spanish alert lines")
-	assert_eq(bubble.text, patrol.alert_lines_es[1 % patrol.alert_lines_es.size()], "picked by alert_serial mod the count")
-	assert_false(bubble.text.contains("pa'"), "the loudhailer is official: formal Spanish")
-	assert_eq(bubble.show_s, 3.0)
-	bubble._process(2.9)
-	assert_false(bubble.is_queued_for_deletion(), "still there at 2.9 s")
-	bubble._process(0.2)
-	assert_true(bubble.is_queued_for_deletion(), "gone after 3 s")
+	# art-guardacostas D6: the line shows in a call window over the boat, not in a speech bubble.
+	assert_null(boat.get_node_or_null(NodePath(CoopSession.BUBBLE_NAME)), "no speech bubble over the boat")
+	var windows: CallWindows = shell.hud.call_windows
+	assert_eq(windows.count(), 1, "a call window")
+	assert_eq(windows.speaker_of(0), boat, "over the boat")
+	var text: String = windows.text_of(0)
+	assert_true(patrol.alert_lines_es.has(text), "one of the boat's Spanish alert lines")
+	assert_eq(text, patrol.alert_lines_es[1 % patrol.alert_lines_es.size()], "picked by alert_serial mod the count")
+	assert_false(text.contains("pa'"), "the loudhailer is official: formal Spanish")
+	windows.tick(2.9)
+	assert_eq(windows.count(), 1, "still there at 2.9 s")
+	windows.tick(CallWindows.show_s(text) - 2.9 + 0.05)
+	assert_eq(windows.count(), 0, "gone after its time")
 	# The give-up: hidden, the lock breaks, 20 s of searching, then the boat resumes its lap.
 	body.stealth_state = HIDDEN
 	_run(22.0)
@@ -458,6 +520,8 @@ func test_both_peers_show_the_same_loudhailer_line_at_an_alerts_start_and_end() 
 	var host := net.add_host(_setup)
 	var client := await net.join(_setup)
 	_client_bodies_are_not_players(client)
+	var host_hud: RunHud = _hud(host)
+	var client_hud: RunHud = _hud(client)
 	var made: Creature = _spawn_boat(host)
 	_lap_at(made, 5.0)
 	assert_true(await _client_has(client, made))
@@ -483,6 +547,12 @@ func test_both_peers_show_the_same_loudhailer_line_at_an_alerts_start_and_end() 
 	assert_eq(client_look.lines_shown, 1)
 	assert_eq(client_look.last_line, host_look.last_line, "the same line on both peers")
 	assert_true(patrol.alert_lines_es.has(client_look.last_line), "a Spanish alert line")
+	# art-guardacostas D6: in a call window over the boat on both peers.
+	assert_eq(host_hud.call_windows.count(), 1)
+	assert_eq(client_hud.call_windows.count(), 1)
+	assert_eq(host_hud.call_windows.speaker_of(0), made)
+	assert_eq(client_hud.call_windows.speaker_of(0), theirs)
+	assert_eq(client_hud.call_windows.text_of(0), host_hud.call_windows.text_of(0))
 	# The lock breaks and the 20 s search is run out: the give-up line.
 	brain.forget_lock()
 	brain._search_s = patrol.alert_s - 0.05

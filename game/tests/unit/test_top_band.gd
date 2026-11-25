@@ -8,10 +8,9 @@ extends GutTest
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/run_hud.tscn")
 const NEEDLE_RECT: Rect2 = Rect2(384.0, 20.0, 24.0, 24.0)
-## crossing-gameplay #75's CrossingHud.STRIP_RECT and LINE_RECT, copied as constants so this test runs
-## whether or not that change has landed.
-const CROSSING_STRIP: Rect2 = Rect2(220.0, 68.0, 200.0, 12.0)
-const CROSSING_LINE: Rect2 = Rect2(160.0, 81.0, 320.0, 10.0)
+## crossing-gameplay's strip and line (#75).
+const CROSSING_STRIP: Rect2 = CrossingHud.STRIP_RECT
+const CROSSING_LINE: Rect2 = CrossingHud.LINE_RECT
 ## The teammate list's column.
 const TEAMMATES: Rect2 = Rect2(502.0, 4.0, 134.0, 86.0)
 const NOTE_LABEL: Rect2 = Rect2(140.0, 46.0, 360.0, 20.0)

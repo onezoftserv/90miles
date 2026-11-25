@@ -5,14 +5,15 @@ extends Node2D
 ## placeholder hull until the art pass makes the boat, and, while the boat's light is on, the searchlight
 ## as a PointLight2D with the generated cone texture (PatrolCone) rotated to the beam: under the night
 ## CanvasModulate a light brightens the sand it covers, which reads as a searchlight. It also speaks the
-## loudhailer: when the boat's `alert_serial` changes, a speech bubble over the boat shows for BUBBLE_S
-## with a line of its PatrolData in the session's language: `alert_lines_<locale>` when the boat is
+## loudhailer: when the boat's `alert_serial` changes, a call window over the boat (art-guardacostas D6,
+## the session's `show_call`) shows a line of its PatrolData in the session's language: `alert_lines_<locale>` when the boat is
 ## alerting after the change (PatrolRoute.is_alert_state: a lock, a search, a chase or a docked boat), else `give_up_lines_<locale>`, picked by
 ## `alert_serial` mod the line count so every peer shows the same line. It reads the creature's synced
 ## position, facing, state, clock, beam, light and serial and never writes any of them. A creature that
 ## is not a patrol boat draws nothing. CreatureRig processes no frames, so tests drive `step` themselves.
 
-const BUBBLE_S: float = 3.0
+## The top of the drawn boat over its origin, where a call window's tail points (art-guardacostas D6).
+const TOP_Y: float = -9.0
 const HULL_FILL: Color = Color(0.62, 0.67, 0.72)
 const CABIN_FILL: Color = Color(0.86, 0.88, 0.9)
 const HULL_LINE: Color = Color(0.1, 0.12, 0.18)
@@ -110,7 +111,7 @@ func _speak(creature: Creature, state: int) -> void:
 		return
 	last_line = text
 	lines_shown += 1
-	session.show_bubble(creature, text, null, BUBBLE_S)
+	session.show_call(creature, text)
 
 
 ## The loudhailer line for `serial`: the alert lines while the boat is alerting, else the give-up lines,
