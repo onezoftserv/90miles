@@ -329,3 +329,15 @@ None. The owner chose (a) for QG1–QG4 on 2026-11-23 (proposal.md).
     - `outfit_uniform` keeps Outfit5's shoes, recoloured to #222034 boots; `hair_cap` is band 7 with a generated overlay (crown, a 2-row visor to the front and side, crown only from behind). The cap reads tall: rough first, to be refined in a later pass.
   - **Measured.** Hull frames 86–94 × 36–37 opaque against the raft's 64×32 frame; dinghy 24×13 rowing, 28×14 beached.
   - **Two-process run on UDP 7803** (`tests/manual/guardacostas_art_run.gd`, headless): host and client both draw the launch at the docked boat, the dinghy beached on the landing cell, three soldiers in `soldada`, `soldado_1` and `soldado_2`, and the landing call in a call window; 0 engine errors on either peer.
+- **2026-11-24, La captura PR (groups 7–9), stacked on the sprites PR, branch `claude/art-guardacostas-la-captura`.**
+  - **Departures.**
+    - The card has a cue row under the text: the arrow and "[E]" at its right, the client's drain bar along it. In the first capture the key sat on the act's last line. The card is one row taller (the act's card is 58 px).
+    - The kit's arrow is cream; on the light note card it is tinted the card text's dark (#222034).
+    - The stage puts the framed point 30 px above the view's centre (`CaptureStage.FRAME_LIFT_PX`), in the open space between the top bar and the panel; centred, the boat sat behind the panel.
+    - `RunHud.set_staged` hides by transparency (`modulate.a`), so the panels' own per-frame refreshes and their input stay as they are.
+    - After main brought hud-clarity (#120: the objective row, the clock, the Calor and Sangrando rows, the site arrow), the staging hides every piece of the HUD but a keep-list (the scene panel, the stage, the run menu and the quick-chat wheel) instead of a list of names, and gives each piece back the alpha it had; a piece a later change adds hides too. Tested solo, host plus client, and in the two-process run (host and client 13 of 13).
+    - A plea's portrait is the whole 32×32 `idle_down` frame (the figure, head to feet), its key ramp swapped to the slot's row.
+    - The host keeps `CaptureScene.last_report` (peer → ids) for the record; the notice text is `hud_text.tres`'s `confiscated` line ("Te quitaron: %s" / "They took: %s").
+    - `tools/art/portraits.py` imports `creatures.py`'s and `rim.py`'s helpers and changes no shared tool.
+  - **Measured.** The act (`captura_act_singular_acta`) holds 10 s instead of 5.4 s; the longest scene line, a Médico plea, holds 11.5 s. Every la_captura line fits 7 rows at 49 glyphs in both languages.
+  - **Two-process run on UDP 7803, extended:** the host (a fosforera, 40 morale) and the client (a coconut) are caught together; both stage the scene, the client sees the drain bar over the Spanish hold and no arrow, and after landing only the host's notice reads "Te quitaron: Fosforera". Host 11 of 11, client 11 of 11, 0 engine errors.

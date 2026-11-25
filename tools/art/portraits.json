@@ -1,0 +1,10 @@
+{
+  "portraits": [
+    {
+      "id": "rodriguez",
+      "hand": "rodriguez.png",
+      "size": [32, 32],
+      "outline": "#000000"
+    }
+  ]
+}

@@ -239,12 +239,87 @@ func test_the_player_is_out_of_play_while_the_scene_plays() -> void:
 	assert_false(body.visible)
 	assert_eq(shell.travel.check(), IslandTravel.Outcome.PLAYING, "nothing else moves the party meanwhile")
 	assert_eq(shell.flow, GameShell.Flow.RUN)
-	# The scene holds each line for its reveal at 40 chars/s plus 2 s.
+	# art-guardacostas D12: each line holds 1 s plus 1 s per 15 characters, never less than its reveal at
+	# 40 chars/s plus 2 s.
 	var text: String = keeper.current_text("es")
-	assert_almost_eq(CaptureScene.hold_s(text), text.length() / 40.0 + 2.0, 0.000001)
+	assert_almost_eq(CaptureScene.hold_s(text), maxf(text.length() / 40.0 + 2.0, 1.0 + text.length() / 15.0), 0.000001)
 	await _play_out()
 	assert_false(keeper.playing)
 	assert_false(body.left_island)
+
+
+# art-guardacostas D12 (spec "Capture line pacing"): the 135-character act holds 10 s, a 20-character
+# line keeps 2.5 s.
+func test_a_line_holds_1_s_plus_1_s_per_15_characters_and_never_less_than_before() -> void:
+	assert_almost_eq(CaptureScene.hold_s("x".repeat(135)), 10.0, 0.000001, "the act")
+	assert_almost_eq(CaptureScene.hold_s("x".repeat(20)), 2.5, 0.000001, "a short line keeps today's hold")
+	assert_almost_eq(CaptureScene.hold_s(""), 2.0, 0.000001)
+	var scene := GameState.content.get_entry(&"dialogue", &"beat_la_captura") as DialogueData
+	var act: String = ""
+	for entry: DialogueStateData in scene.states:
+		for line: DialogueLineData in entry.lines:
+			if line.id == &"captura_act_singular_acta":
+				act = line.text_es
+			assert_gte(CaptureScene.hold_s(line.text_es), line.text_es.length() / 40.0 + 2.0, line.id)
+			assert_almost_eq(CaptureScene.hold_s(line.text_es), maxf(line.text_es.length() / 40.0 + 2.0, 1.0 + line.text_es.length() / 15.0), 0.000001, line.id)
+	assert_gte(act.length(), 130, "the act is found")
+	assert_gte(CaptureScene.hold_s(act), 9.6, "the act now holds about 10 s, against %.1f s before" % (act.length() / 40.0 + 2.0))
+
+
+# --- the confiscation report (art-guardacostas D13) ----------------------------------------------
+
+func test_the_losses_are_every_kind_whose_count_fell_in_slot_order() -> void:
+	var before: Dictionary[StringName, int] = {&"rope": 3, &"lighter": 1, &"knife": 1}
+	var after: Dictionary[StringName, int] = {&"rope": 2, &"knife": 1}
+	assert_eq(CaptureScene.losses(before, after), PackedStringArray(["rope", "lighter"]), "a TAKE_ITEM and a capability, by id")
+	assert_eq(CaptureScene.losses(before, before), PackedStringArray(), "nothing lost")
+
+
+# Spec "Solo confiscation": a solo player with a fosforera and a coconut whose capture restarts loses
+# the fosforera and is told so in the notice row for 5 s after landing.
+func test_a_solo_restart_reports_the_fosforera_and_not_the_coconut() -> void:
+	_start()
+	await _go(&"chain_b")
+	await _go(&"chain_c")
+	body.meters.morale = 40.0
+	body.inventory.add(&"lighter", 1)
+	body.inventory.add(&"coco", 1)
+	var shown: Array[PackedStringArray] = []
+	keeper.confiscation_shown.connect(func(ids: PackedStringArray) -> void: shown.append(ids))
+	await _capture()
+	await _play_out()
+	assert_eq(shell.island.layout.id, &"chain_b", "the restart")
+	assert_eq(keeper.last_report.get(CoopSession.HOST_ID, PackedStringArray()), PackedStringArray(["lighter"]), "the host's record")
+	assert_eq(shown.size(), 1, "shown once")
+	assert_eq(keeper.confiscated, PackedStringArray(["lighter"]), "the fosforera, not the coconut")
+	await wait_process_frames(2)
+	assert_eq(shell.hud.notice.shown_text(), "Te quitaron: Fosforera", "in the notice row after landing")
+	assert_true(shell.hud.notice.visible)
+
+
+func test_a_release_reports_nothing() -> void:
+	_start()
+	FixtureBackgrounds.give(body, &"medico")
+	body.meters.morale = 65.0
+	body.inventory.add(&"lighter", 1)
+	var shown: Array[PackedStringArray] = []
+	keeper.confiscation_shown.connect(func(ids: PackedStringArray) -> void: shown.append(ids))
+	await _capture()
+	await _play_out()
+	assert_eq(body.inventory.count_id(&"lighter"), 1, "a release takes nothing")
+	assert_eq(shown.size(), 0, "and reports nothing")
+	assert_false(shell.hud.notice.shown_text().begins_with("Te quitaron"))
+
+
+func test_unknown_ids_are_dropped_and_at_most_16_kept() -> void:
+	_start()
+	keeper.show_confiscated(PackedStringArray(["lighter", "no_such_item", "rope"]))
+	assert_eq(keeper.confiscated, PackedStringArray(["lighter", "rope"]))
+	var many := PackedStringArray()
+	for i: int in 20:
+		many.append("rope")
+	keeper.show_confiscated(many)
+	assert_eq(keeper.confiscated.size(), CaptureScene.MAX_CONFISCATED)
 
 
 # --- the speaker ----------------------------------------------------------------------------------

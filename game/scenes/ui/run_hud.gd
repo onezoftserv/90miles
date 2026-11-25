@@ -40,6 +40,7 @@ const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudPanelT
 const AVOID_GROUP: StringName = &"hud_avoid"
 ## A HUD panel whose top is above this is one of the top windows (art-guardacostas D8).
 const TOP_WINDOW_Y: float = 20.0
+
 ## Half the width of a player's drawn figure, which a call window keeps clear of (art-guardacostas D6).
 const FIGURE_HALF_PX: float = 8.0
 ## HUD windows another layer draws for this run (the crossing's strip and line, crossing-gameplay;
@@ -96,6 +97,12 @@ var scene_panel: ScenePanel = null
 ## art-guardacostas D6: the coast guard's calls, each in a small window over its speaker, made here and
 ## fed by the session's `call_shown`.
 var call_windows: CallWindows = null
+## art-guardacostas D9: La captura's staging (the bars, the framing and the closing notice), made here.
+var capture_stage: CaptureStage = null
+## True while La captura is staged: every piece of this HUD but the ones `staged_kept` names is hidden.
+var staged: bool = false
+# Each piece the staging hid, with the alpha it had, to give back at the end.
+var _staged_alpha: Dictionary[CanvasItem, float] = {}
 @onready var phase_label: Label = %Phase
 @onready var clock: ClockStrip = $PhasePanel/Clock
 @onready var objective_row: ObjectiveRow = $ObjectiveRow
@@ -176,6 +183,12 @@ func bind(run_session: CoopSession, local_peer_id: int, is_solo: bool) -> void:
 	call_windows.avoid = call_avoid_rects
 	call_windows.screen_shown = screen_shown
 	call_windows.bind(session)
+	scene_panel.device = device
+	capture_stage = CaptureStage.new()
+	capture_stage.name = &"CaptureStage"
+	add_child(capture_stage)
+	move_child(capture_stage, scene_panel.get_index())
+	capture_stage.bind(self, session)
 	for peer_id: int in session.peer_ids():
 		_follow(peer_id)
 	refresh()
@@ -221,6 +234,8 @@ func _input(event: InputEvent) -> void:
 		strip.set_device(device)
 		prompt.set_device(device)
 		sign_note.set_device(device)
+		if scene_panel != null:
+			scene_panel.device = device
 	if _step_spectate(event):
 		get_viewport().set_input_as_handled()
 		return
@@ -266,6 +281,54 @@ func set_screen_shown(value: bool) -> void:
 	if call_windows != null:
 		call_windows.screen_shown = value
 	refresh_watching()
+
+
+## art-guardacostas D9: La captura starts (true) or ends. Every piece of this HUD but the scene panel,
+## the stage, the run menu and the quick-chat wheel (`staged_kept`) is hidden by transparency, so a piece
+## a later change adds hides too, and each piece's own refresh and input stay as they are; at the end
+## each gets back the alpha it had.
+func set_staged(value: bool) -> void:
+	staged = value
+	for child: Node in get_children():
+		var piece := child as CanvasItem
+		if piece == null or staged_kept(piece):
+			continue
+		if value:
+			if not _staged_alpha.has(piece):
+				_staged_alpha[piece] = piece.modulate.a
+			piece.modulate.a = 0.0
+		elif _staged_alpha.has(piece):
+			piece.modulate.a = _staged_alpha[piece]
+	if not value:
+		_staged_alpha.clear()
+
+
+## The pieces La captura's staging keeps on show: the scene panel, the stage itself, the run menu and the
+## quick-chat wheel.
+func staged_kept(piece: Node) -> bool:
+	return piece == scene_panel or piece == capture_stage or piece == pause_menu or piece == wheel
+
+
+## True while `node` is hidden by the staging: it or a piece of this HUD it lies under is transparent.
+func is_staged_hidden(node: CanvasItem) -> bool:
+	var at: Node = node
+	while at != null and at != self:
+		var item := at as CanvasItem
+		if item != null and item.modulate.a <= 0.0:
+			return true
+		at = at.get_parent()
+	return false
+
+
+## Every piece La captura's staging hides: each direct piece of this HUD that `staged_kept` does not
+## name (the rows nested in them, such as the clock and the Calor and Sangrando rows, hide with them).
+func staged_pieces() -> Array[CanvasItem]:
+	var pieces: Array[CanvasItem] = []
+	for child: Node in get_children():
+		var piece := child as CanvasItem
+		if piece != null and not staged_kept(piece):
+			pieces.append(piece)
+	return pieces
 
 
 ## A point of the world's canvas (the world view's pixels, camera applied) in HUD pixels.

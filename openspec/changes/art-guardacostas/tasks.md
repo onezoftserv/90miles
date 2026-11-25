@@ -85,7 +85,7 @@
   - the tests from 3.1 pass;
   - `test_patrol_cues.gd`'s two-process horizon test passes;
   - `check.py` is clean.
-- [ ] 3.3 Capture the "after" HUD frames: the call window at night, the plated eye, and the chip by day and by night, at 1x and x3. Open the HUD PR with before and after images, and send its link to the coordinating session. Done when the PR is green.
+- [x] 3.3 Capture the "after" HUD frames: the call window at night, the plated eye, and the chip by day and by night, at 1x and x3. Open the HUD PR with before and after images, and send its link to the coordinating session. Done when the PR is green.
 
 ## 4. Soldiers (D2, D5) — sprites PR
 
@@ -143,11 +143,11 @@
   - the hull drawn at the docked boat.
 
   Then run host plus client locally with `coop_playground.tscn` and watch them. Done when the test passes and the run is noted.
-- [ ] 6.4 Capture the "after" sprite frames: the squad ashore, the dinghy rowing in and beached, the boat by day, and the cone at night, at 1x and x3. Open the sprites PR with before and after images, and send the link. Done when the PR is green.
+- [x] 6.4 Capture the "after" sprite frames: the squad ashore, the dinghy rowing in and beached, the boat by day, and the cone at night, at 1x and x3. Open the sprites PR with before and after images, and send the link. Done when the PR is green.
 
 ## 7. Pacing, portrait and advance cue (D10, D11, D12) — La captura PR
 
-- [ ] 7.1 Write these first and see them fail:
+- [x] 7.1 Write these first and see them fail:
   - `test_capture_scene.gd`: `hold_s` is `max(length / 40 + 2, 1 + length / 15)`; the act holds 10 s and a 20-character line 2.5 s;
   - the panel is 440 px wide at x 100 with a 36×36 portrait frame, its bottom at y 330;
   - every la_captura line fits 7 rows at 49 glyphs in both languages;
@@ -155,7 +155,7 @@
   - the arrow and "[E]" show once the line is revealed, blinking, on the host and in solo only;
   - a client shows the drain bar from the Spanish text's hold;
   - the 1-player test: a solo player's capture shows the portrait, then the arrow, and interact shows the next line.
-- [ ] 7.2 Make the art:
+- [x] 7.2 Make the art:
   - draw `tools/art/fixes/portraits/rodriguez.png`;
   - add `tools/art/portraits.py`, `portraits.json` and `test_portraits.py`;
   - build `game/assets/art/portraits/rodriguez.png` with its `License.txt`;
@@ -163,39 +163,39 @@
   - add the portraits folder to `docs/ASSETS.md`.
 
   Verify that `check.py` is clean and that `test_art_tracked.gd` and `test_art_credits.gd` pass.
-- [ ] 7.3 Change `hold_s`, then lay out the panel's portrait, arrow and drain bar. Pass `RunHud.device` to the panel. Verify the tests from 7.1 pass.
+- [x] 7.3 Change `hold_s`, then lay out the panel's portrait, arrow and drain bar. Pass `RunHud.device` to the panel. Verify the tests from 7.1 pass.
 
 ## 8. Staging (D9) — La captura PR
 
-- [ ] 8.1 Write these first and see them fail, in a new `test_capture_stage.gd`:
+- [x] 8.1 Write these first and see them fail, in a new `test_capture_stage.gd`:
   - on `scene_started` the bars slide in over 0.5 s;
   - `RunHud.set_staged(true)` hides the meters, phase, weather, teammates, strip, prompt, marks, floats and chips, keeps the scene panel and the run menu, and leaves input open;
   - the camera offset eases to the docked boat and its landing midpoint, and back to 0 at the end;
   - with no boat in sight the offset stays 0;
   - the 1-player test: a solo player caught by a soldier on the sandbar sees the bars, a HUD with only the panel, and a view that frames the docked boat and the beached dinghy; after the scene the HUD is back.
-- [ ] 8.2 Build the feature: add `scenes/ui/capture_stage.gd`, created in `RunHud.bind`, and `RunHud.set_staged`. Add `CaptureStage` to `test_art_sim_invariance`. Verify the tests from 8.1 pass, along with every `test_capture_*.gd`.
+- [x] 8.2 Build the feature: add `scenes/ui/capture_stage.gd`, created in `RunHud.bind`, and `RunHud.set_staged`. Add `CaptureStage` to `test_art_sim_invariance`. Verify the tests from 8.1 pass, along with every `test_capture_*.gd`.
 
 ## 9. The confiscation notice (D13) — La captura PR
 
-- [ ] 9.1 Write these first and see them fail:
+- [x] 9.1 Write these first and see them fail:
   - `test_capture_scene.gd`: the report holds what the outcome removed; the release reports nothing;
   - a `TAKE_ITEM` outcome in a fixture is reported by id;
   - a non-host call is ignored, and unknown ids are dropped;
   - the 1-player test: a solo player with a fosforera and a coconut whose capture restarts sees "Te quitaron: Fosforera" in the notice row for 5 s after landing.
-- [ ] 9.2 Build the feature:
+- [x] 9.2 Build the feature:
   - add the record and `show_confiscated` to `CaptureScene`;
   - add the notice text keys to `hud_text.tres`;
   - make `CaptureStage` write the row.
 
   Verify the tests from 9.1 pass.
-- [ ] 9.3 Two-process check on UDP 7803. A host with a lighter and a client with nothing that lights fire are caught together: after landing, only the host's notice names the lighter. Then run host plus client locally and watch. Done when the test passes and the run is noted.
-- [ ] 9.4 Update `docs/GAME_DESIGN.md` §9 "Guardacostas and stealth": "in a minimal scene panel" becomes "in a staged scene panel with Rodríguez's portrait, each line held long enough to read", and add the notice. Done when the doc reads so.
+- [x] 9.3 Two-process check on UDP 7803. A host with a lighter and a client with nothing that lights fire are caught together: after landing, only the host's notice names the lighter. Then run host plus client locally and watch. Done when the test passes and the run is noted.
+- [x] 9.4 Update `docs/GAME_DESIGN.md` §9 "Guardacostas and stealth": "in a minimal scene panel" becomes "in a staged scene panel with Rodríguez's portrait, each line held long enough to read", and add the notice. Done when the doc reads so.
 - [ ] 9.5 Capture the "after" frames of La captura: the letterbox with the portrait at line 1, the act at line 3 with the arrow, the plea with the player's figure, and the closing notice after landing. Open the La captura PR with before and after images, and send the link. Done when the PR is green.
 
 ## 10. Integration
 
 - [ ] 10.1 Rebuild every touched sheet to scratch and `cmp` each against the tracked file. Run `check.py`, the art unittests, the import twice, smoke and GUT. Done when all are clean.
-- [ ] 10.2 Tick `TASKS.md`'s coast guard art items, and add the follow-ups below under the current milestone. Record the measured sizes and departures in design.md's build notes. Run `openspec validate art-guardacostas --strict`. Done when it passes.
+- [x] 10.2 Tick `TASKS.md`'s coast guard art items, and add the follow-ups below under the current milestone. Record the measured sizes and departures in design.md's build notes. Run `openspec validate art-guardacostas --strict`. Done when it passes.
 
 ## Workflow follow-up
 

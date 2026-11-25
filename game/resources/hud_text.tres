@@ -126,6 +126,7 @@ refusals = Dictionary[StringName, PackedStringArray]({
 lines = Dictionary[StringName, PackedStringArray]({
 &"carried": PackedStringArray("%d/%d %s", "%d/%d %s"),
 &"close_note": PackedStringArray("[%s] Cerrar", "[%s] Close"),
+&"confiscated": PackedStringArray("Te quitaron: %s", "They took: %s"),
 &"count": PackedStringArray("%s x%d", "%s x%d"),
 &"cured": PackedStringArray("Sin %s", "No more %s"),
 &"decimal_point": PackedStringArray(",", "."),
