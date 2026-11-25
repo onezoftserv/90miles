@@ -84,6 +84,7 @@ static func attempt_island(run_seed: int, index: int, chain: ChainData, catalog:
 		island.layout = IslandLayoutWriter.emit(chain, index, placer, catalog)
 		island.built = IslandLayout.build(island.layout)
 		island.island_hash = IslandLayoutWriter.digest(island.layout)
+		island.layout.set_meta(IslandSource.ART_KEY_META, StringName(island.island_hash))
 		failures.append_array(IslandValidator.check(chain, island.built, island.pois, catalog))
 	island.report["failures"] = failures
 	return island
@@ -104,4 +105,5 @@ static func _renamed(spare: GeneratedIsland, chain: ChainData, index: int, catal
 	island.layout = renamed
 	island.built = IslandLayout.build(renamed)
 	island.island_hash = IslandLayoutWriter.digest(renamed)
+	renamed.set_meta(IslandSource.ART_KEY_META, StringName(island.island_hash))
 	return island

@@ -57,6 +57,14 @@ var _results: Array[CrossingResult] = []
 # Peers a joiner or rejoined player is told are waiting; held as their bodies appear.
 var _waiting_peers: Array[int] = []
 var _travel_queued: bool = false
+## Tests only (island-generator "A mismatched client takes the host's island"): chain templates this
+## peer uses in place of the catalog's, by id.
+var chain_overrides: Dictionary[StringName, ChainData] = {}
+# Client: the travel waiting for the host's text of an island whose hash differs from the host's:
+# {island_id, arrivals, raft, index, island_hash}; empty when none.
+var _pending: Dictionary = {}
+# Client: islands built from the host's text, by island hash.
+var _received: Dictionary[String, IslandLayoutData] = {}
 
 
 ## The island keeper of `of_session` (its IslandTravel child, whatever its name), or null.
@@ -74,8 +82,10 @@ func setup(for_session: CoopSession, current: SandbarIsland) -> void:
 	session = for_session
 	island = current
 	if history.entries.is_empty() and island.layout != null:
-		history.arrive(island.layout.id, 1, island.layout.off_graph)
+		history.arrive(IslandSource.source_id(island.layout), 1, island.layout.off_graph)
 	session.island_travel_requested.connect(_load)
+	session.island_text_requested.connect(_on_island_text_requested)
+	session.island_text_received.connect(_on_island_text_received)
 	session.off_the_chain_requested.connect(end_off_the_chain)
 	session.party_travel_requested.connect(_on_party_travel)
 	session.capture_state_changed.connect(_on_changed)
@@ -141,7 +151,9 @@ func travel(next_id: StringName) -> void:
 	if not session.multiplayer.is_server():
 		return
 	var cells: Dictionary[int, Vector2i] = {}
-	var next_layout := GameState.content.get_entry(&"islands", next_id) as IslandLayoutData
+	var index: int = _next_index(next_id)
+	var resolved: Dictionary = resolve(next_id, index)
+	var next_layout: IslandLayoutData = resolved.get("layout")
 	if next_layout != null:
 		cells = ArrivalScatter.pick(IslandLayout.build(next_layout), _scatter_by_peer(), _landing_seed(next_id), _dead_peers())
 	var arrivals: Dictionary = {}
@@ -151,8 +163,26 @@ func travel(next_id: StringName) -> void:
 		if cells.has(peer_id):
 			arrival["cell"] = cells[peer_id]
 		arrivals[peer_id] = arrival
-	var off_graph: bool = next_layout != null and next_layout.off_graph
-	session.travel_to.rpc(String(next_id), arrivals, _beached_integrity(), history.next_index(off_graph))
+	session.travel_to.rpc(String(next_id), index, resolved.get("island_hash", ""), arrivals, _beached_integrity())
+
+
+## The island `island_id` names as island number `index` of this run (island-generator design §6):
+## a handmade layout, or the chain's island generated from the run seed. See IslandSource.resolve.
+func resolve(island_id: StringName, index: int) -> Dictionary:
+	return IslandSource.resolve(island_id, index, run_seed(), null, chain_overrides)
+
+
+## The run's seed, from the world state the host keeps and every joiner receives (0 when unset).
+func run_seed() -> int:
+	var value: Variant = session.world_state.get("run_seed", 0)
+	return value if value is int else 0
+
+
+# The index an island reached by a route or a release gets: an off-graph layout keeps the current
+# one, anything else (a chain included) is one more.
+func _next_index(island_id: StringName) -> int:
+	var handmade := GameState.content.get_entry(&"islands", island_id) as IslandLayoutData
+	return history.next_index(handmade != null and handmade.off_graph)
 
 
 ## Host: the previous island (guardacostas-capture "Island history"): the last on-graph island before
@@ -177,11 +207,10 @@ func release() -> void:
 	if not session.multiplayer.is_server():
 		return
 	var next_id: StringName = island.layout.next_island
-	var next_layout := GameState.content.get_entry(&"islands", next_id) as IslandLayoutData if not next_id.is_empty() else null
-	if next_layout == null:
+	if next_id.is_empty() or resolve(next_id, _next_index(next_id)).is_empty():
 		session.end_off_the_chain.rpc()
 		return
-	_relocate(next_id, history.next_index(next_layout.off_graph))
+	_relocate(next_id, _next_index(next_id))
 
 
 ## Every peer, from the host (CoopSession.end_off_the_chain): the party was released from an island
@@ -203,14 +232,16 @@ func _on_party_travel(onward: bool) -> void:
 		restart()
 
 
-# Host: every player in the session lands on `layout_id` at its landing cells in peer order (no
-# scatter), with their health and energy, as island number `index`, with no vessel beached.
-func _relocate(layout_id: StringName, index: int) -> void:
+# Host: every player in the session lands on `island_id` at its landing cells in peer order (no
+# scatter), with their health and energy, as island number `index`, with no vessel beached. A chain
+# is regenerated from the run seed, so the same reference gives the same island.
+func _relocate(island_id: StringName, index: int) -> void:
 	var arrivals: Dictionary = {}
 	for peer_id: int in session.peer_ids():
 		var meters := session.body(peer_id).meters
 		arrivals[peer_id] = {"health": meters.health, "energy": meters.energy}
-	session.travel_to.rpc(String(layout_id), arrivals, 0.0, index)
+	var resolved: Dictionary = resolve(island_id, index)
+	session.travel_to.rpc(String(island_id), index, resolved.get("island_hash", ""), arrivals, 0.0)
 
 
 ## Client: a joiner or rejoined player hears which island the host is on and who waits there. It
@@ -219,9 +250,15 @@ func follow(state: Dictionary) -> void:
 	if session.multiplayer.is_server():
 		return
 	var id: Variant = state.get("island")
-	if id is StringName and not (id as StringName).is_empty() and id != island.layout.id:
+	var index: Variant = state.get("island_index", history.current_index())
+	var island_hash: Variant = state.get("island_hash", &"")
+	if not index is int:
+		index = history.current_index()
+	if id is StringName and not (id as StringName).is_empty() and (id != history.current_id() or index != history.current_index()):
 		var raft: Variant = state.get("raft")
-		_load(id, {}, raft if raft is float else 0.0)
+		var wanted: String = String(island_hash) if island_hash is StringName else ""
+		if CoopSession.is_travel(id, index, wanted):
+			_load(id, {}, raft if raft is float else 0.0, index, wanted)
 	var islands: Variant = state.get("islands")
 	if islands is int and islands >= 1:
 		islands_reached = islands
@@ -245,7 +282,11 @@ func _join_extras() -> Dictionary:
 	var integrity: float = 0.0
 	if raft != null and raft.get(&"integrity") is float:
 		integrity = raft.get(&"integrity")
-	return {"island": island.layout.id, "waiting": waiting, "raft": integrity, "islands": islands_reached}
+	return {
+		"island": history.current_id(), "island_index": history.current_index(),
+		"island_hash": StringName(IslandSource.hash_of(island.layout)), "waiting": waiting, "raft": integrity,
+		"islands": islands_reached,
+	}
 
 
 # The sturdiest raft that ended a crossing intact lies on the next island's build site; any other
@@ -342,11 +383,22 @@ func _travel_when_idle() -> void:
 
 
 # Every peer, from the host's travel_to: the old level goes, the next one is built and the players
-# land on it.
-func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float, index: int = 0) -> void:
-	var next_layout := GameState.content.get_entry(&"islands", layout_id) as IslandLayoutData
+# land on it. A chain's island is generated here from the run seed; when its hash is not the host's
+# `island_hash`, the client warns, asks the host for its text once and lands when it arrives
+# (island-generator design §6).
+func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float, index: int = 0, island_hash: String = "") -> void:
+	if index <= 0:
+		index = _next_index(layout_id)
+	var resolved: Dictionary = resolve(layout_id, index)
+	var next_layout: IslandLayoutData = resolved.get("layout")
 	if next_layout == null:
 		return
+	if resolved["chain"] and resolved["island_hash"] != island_hash:
+		next_layout = _received.get(island_hash)
+		if next_layout == null:
+			_ask_for(layout_id, arrivals, raft_integrity, index, island_hash, String(resolved["island_hash"]))
+			return
+	_pending.clear()
 	var with_creatures: bool = island.with_creatures
 	_clear_level()
 	var fresh := ISLAND_SCENE.instantiate() as SandbarIsland
@@ -365,9 +417,48 @@ func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float, i
 	# The host's message names the island's index (0 from an older caller: the next index). An
 	# off-graph layout (the secret cay) is never an island reached (endings-progression), and the
 	# islands reached are the highest index, so a restart counts nothing twice.
-	history.arrive(layout_id, index if index > 0 else history.next_index(next_layout.off_graph), next_layout.off_graph)
+	history.arrive(layout_id, index, next_layout.off_graph)
 	islands_reached = maxi(islands_reached, history.reached())
 	island_loaded.emit(fresh)
+
+
+# Client: the island built here differs from the host's; warn, keep the travel and ask once.
+func _ask_for(island_id: StringName, arrivals: Dictionary, raft: float, index: int, island_hash: String, ours: String) -> void:
+	if session.multiplayer.is_server():
+		push_error("island-generator: the host's own %s %d does not match its hash" % [island_id, index])
+		return
+	var asked: bool = not _pending.is_empty() and _pending["island_hash"] == island_hash
+	_pending = {"island_id": island_id, "arrivals": arrivals, "raft": raft, "index": index, "island_hash": island_hash}
+	if asked:
+		return
+	push_warning("island-generator: %s %d built here as %s, the host's is %s; asking the host for it" % [island_id, index, ours, island_hash])
+	session.request_island.rpc_id(CoopSession.HOST_ID, String(island_id), index)
+
+
+# Host: a client asked for the text of `island_id` number `index`; it gets the host's island.
+func _on_island_text_requested(peer_id: int, island_id: StringName, index: int) -> void:
+	var resolved: Dictionary = resolve(island_id, index)
+	if resolved.get("chain", false):
+		session.receive_island.rpc_id(peer_id, IslandLayoutWriter.write(resolved["layout"]))
+
+
+# Client: the host's text. It parses with its size limit, must hash to the host's hash, and then the
+# waiting travel lands on it.
+func _on_island_text_received(text: String) -> void:
+	if _pending.is_empty():
+		return
+	var island_hash: String = _pending["island_hash"]
+	if text.sha256_text() != island_hash:
+		push_warning("island-generator: the host's island text does not match its hash; ignored")
+		return
+	var layout := IslandLayoutWriter.parse(text, GameState.content)
+	if layout == null:
+		push_warning("island-generator: the host's island text does not read; ignored")
+		return
+	layout.set_meta(IslandSource.ART_KEY_META, StringName(island_hash))
+	_received[island_hash] = layout
+	var waiting: Dictionary = _pending
+	_load(waiting["island_id"], waiting["arrivals"], waiting["raft"], waiting["index"], island_hash)
 
 
 # Frees the old island and everything it put in the session (its workbench, routes, build site,

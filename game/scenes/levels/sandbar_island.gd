@@ -97,6 +97,8 @@ func _place_shelter() -> void:
 func _exit_tree() -> void:
 	if WeatherManager.weather_changed.is_connected(_on_weather_changed):
 		WeatherManager.weather_changed.disconnect(_on_weather_changed)
+	if WeatherManager.phase_changed.is_connected(_on_phase_changed):
+		WeatherManager.phase_changed.disconnect(_on_phase_changed)
 
 
 ## Where players appear: the solo spawn point near the hut, or the co-op ones in join order.
@@ -136,6 +138,7 @@ func furnish(session: CoopSession) -> void:
 		_place_creatures()
 	_weather_id = WeatherManager.weather_id()
 	WeatherManager.weather_changed.connect(_on_weather_changed)
+	WeatherManager.phase_changed.connect(_on_phase_changed)
 
 
 # The lagoon's shore and the flavour signs, named by their order in the layout.
@@ -235,22 +238,81 @@ func _on_route_started(route_id: StringName, _peer_ids: Array[int]) -> void:
 	_place_raft_site()
 
 
-## Host: lays down every pick-up, one per placed entry, carrying the entry's count.
+## Host: lays down every pick-up, one per placed entry, carrying the entry's count. A glyph that
+## scales with the party (island-generator design §7, generated islands only) keeps fewer of its
+## cells for each living, connected player past the first, read as the creature spawner reads them;
+## the raft recipe's inputs never drop below its amounts. The layout and its hash never change.
 func place_pickups(session: CoopSession) -> void:
-	for spec: Dictionary in built.pickups:
+	var recipe := GameState.content.get_entry(&"recipes", RAFT_RECIPE_ID) as RecipeData
+	for spec: Dictionary in party_pickups(built.pickups, session.island_difficulty().players, recipe):
 		_placed.append({"spec": spec, "node": null})
-	_refill(session, true)
+	_refill(session, -1)
 
 
-# Puts back every taken pick-up of `spec` that comes back (all of them on the first call).
-func _refill(session: CoopSession, everything: bool) -> void:
+## The pick-ups of `pickups` (in reading order) a party of `players` gets: for each glyph whose
+## scaling is below 1, the first floor(cells × scaling^(players − 1)) of its cells; then, for each
+## input of `recipe`, its dropped cells come back in reading order until the island holds the
+## recipe's amount. With 1 player, or no scaled glyph, every pick-up stays.
+static func party_pickups(pickups: Array[Dictionary], players: int, recipe: RecipeData) -> Array[Dictionary]:
+	var extra: int = maxi(0, players - 1)
+	var cells_of: Dictionary[String, int] = {}
+	for spec: Dictionary in pickups:
+		var key: String = _glyph_key(spec)
+		cells_of[key] = cells_of.get(key, 0) + 1
+	var kept_of: Dictionary[String, int] = {}
+	var keep: Array[bool] = []
+	for spec: Dictionary in pickups:
+		var key: String = _glyph_key(spec)
+		var scaling: float = spec.get("scaling", 1.0)
+		var allowed: int = cells_of[key]
+		if scaling < 1.0 and extra > 0:
+			allowed = floori(cells_of[key] * pow(scaling, extra) + 0.000001)
+		var used: int = kept_of.get(key, 0)
+		keep.append(used < allowed)
+		kept_of[key] = used + 1
+	if recipe != null:
+		for item_id: StringName in recipe.inputs:
+			var units: int = 0
+			for i: int in pickups.size():
+				if keep[i] and pickups[i]["item_id"] == item_id:
+					units += pickups[i]["count"]
+			for i: int in pickups.size():
+				if units >= recipe.inputs[item_id]:
+					break
+				if not keep[i] and pickups[i]["item_id"] == item_id:
+					keep[i] = true
+					units += pickups[i]["count"]
+	var placed: Array[Dictionary] = []
+	for i: int in pickups.size():
+		if keep[i]:
+			placed.append(pickups[i])
+	return placed
+
+
+# One glyph's cells share every field but the cell.
+static func _glyph_key(spec: Dictionary) -> String:
+	return "%s|%d|%d|%s|%s" % [spec["item_id"], spec["count"], spec["respawn"], spec["group"], spec.get("scaling", 1.0)]
+
+
+# Puts back every taken pick-up whose respawn is `trigger` (every pick-up for -1, the first call).
+# One still lying on its cell is never doubled.
+func _refill(session: CoopSession, trigger: int) -> void:
 	for entry: Dictionary in _placed:
 		var spec: Dictionary = entry["spec"]
 		var node: Variant = entry["node"]
 		var lying: bool = is_instance_valid(node) and not (node as Node).is_queued_for_deletion()
-		if lying or not everything and spec["respawn"] != DataEnums.RespawnTrigger.SQUALL:
+		if lying or trigger >= 0 and spec["respawn"] != trigger:
 			continue
 		entry["node"] = session.spawn_pickup(spec["item_id"], spec["count"], IslandLayout.cell_center(spec["cell"]))
+
+
+# island-generator design §7: when dawn begins, the host puts back every taken DAILY pick-up (the
+# reef's seep). A client runs this too and places nothing.
+func _on_phase_changed(phase: DataEnums.DayPhase) -> void:
+	if phase != DataEnums.DayPhase.DAWN:
+		return
+	if is_instance_valid(_session) and _session.multiplayer.is_server():
+		_refill(_session, DataEnums.RespawnTrigger.DAILY)
 
 
 func _on_weather_changed(weather_id: StringName) -> void:
@@ -259,5 +321,5 @@ func _on_weather_changed(weather_id: StringName) -> void:
 	if was != SQUALL_ID or weather_id == SQUALL_ID:
 		return
 	if is_instance_valid(_session) and _session.multiplayer.is_server():
-		_refill(_session, false)
+		_refill(_session, DataEnums.RespawnTrigger.SQUALL)
 

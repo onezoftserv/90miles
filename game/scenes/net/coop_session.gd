@@ -43,10 +43,16 @@ signal run_started
 signal removal_recorded(peer_id: int, player_name: String)
 ## A rejoined player took back its body: it now belongs to `new_peer` (on every peer).
 signal player_rebound(old_peer: int, new_peer: int, body: PlayerBody)
-## Every peer: the host loads island `layout_id` with these arrivals (peer id -> {health, energy})
-## and a beached raft of `raft_integrity` (0: none), as island number `index` of the run (0: the next
-## one; guardacostas-capture "Island history"). IslandTravel does it.
-signal island_travel_requested(layout_id: StringName, arrivals: Dictionary, raft_integrity: float, index: int)
+## Every peer: the host loads island `island_id` (a handmade layout, or a chain generated as island
+## number `index` from the run seed, whose hash must be `island_hash`) with these arrivals (peer id
+## -> {health, energy}) and a beached raft of `raft_integrity` (0: none), as island number `index` of
+## the run (guardacostas-capture "Island history"). IslandTravel does it.
+signal island_travel_requested(island_id: StringName, arrivals: Dictionary, raft_integrity: float, index: int, island_hash: String)
+## Host (island-generator design §6): `peer_id` built another island than the host's `island_id`
+## number `index` and asks for its canonical text, once per island.
+signal island_text_requested(peer_id: int, island_id: StringName, index: int)
+## Client: the host's canonical text of the island it asked for.
+signal island_text_received(text: String)
 ## Every peer: the host released the party from an island that names no next one (guardacostas-capture
 ## "Release at the next island"); IslandTravel ends the run as leaving that island does.
 signal off_the_chain_requested
@@ -109,9 +115,12 @@ const WORLD_STATE_TYPES: Dictionary[String, int] = {
 	"weather_left_s": TYPE_FLOAT,
 	"pending": TYPE_STRING_NAME,
 	"pending_in_s": TYPE_FLOAT,
-	# The island the host is on (an id in game/resources/islands/) and the peers waiting out of
-	# play on it, for a joiner or a rejoined player.
+	# The island the host is on (an id in game/resources/islands/, or a chain in chains/ for a
+	# generated island, with its index and hash) and the peers waiting out of play on it, for a
+	# joiner or a rejoined player.
 	"island": TYPE_STRING_NAME,
+	"island_index": TYPE_INT,
+	"island_hash": TYPE_STRING_NAME,
 	"waiting": TYPE_ARRAY,
 	"raft": TYPE_FLOAT,
 }
@@ -119,8 +128,11 @@ const WORLD_STATE_TYPES: Dictionary[String, int] = {
 ## not the player cap. Dropped bodies hold no place in the cap, so four connected players and dropped
 ## ones waiting can arrive together (dropped-teammate-state D5).
 const MAX_ARRIVALS: int = 2 * MAX_PLAYERS
-## The highest island index a travel message may carry: a sanity bound on a host message.
-const MAX_ISLAND_INDEX: int = 999
+## The highest island index a travel message may carry (island-generator design §6): a run's chain
+## is far shorter, and a chain's island is generated from its index.
+const MAX_ISLAND_INDEX: int = 8
+## The longest island text a client accepts from the host: 128 rows of 128 cells and the legend.
+const MAX_ISLAND_TEXT: int = 65536
 
 ## Where players appear, in join order (the host first). Set by the level.
 @export var spawn_points: Array[Vector2] = [Vector2.ZERO]
@@ -165,6 +177,10 @@ var run_record: RunRecord = RunRecord.new()  # Host: this run's flags, creature 
 var carried_looks: Dictionary[int, int] = {}
 
 var _bodies: Dictionary[int, PlayerBody] = {}
+## Host: the island asks already answered ("peer|island|index"); request_island answers each once.
+var _island_asks: Dictionary[String, bool] = {}
+## The most island asks the host keeps: a sanity bound, far above a run's islands and peers.
+const MAX_ISLAND_ASKS: int = 256
 ## Host: each peer's rate limits.
 var _limits: Dictionary[int, PeerLimits] = {}
 ## Host: seconds left before each dropped client's player is removed.
@@ -989,21 +1005,58 @@ func _is_unsafe_node_name(node_name: String) -> bool:
 	return false
 
 
-## Every peer: the host loads the island `layout_id` for everyone, with `arrivals` (peer id ->
-## {health, energy}) landing on its landing cells in peer order and `raft_integrity` for the raft
-## beached at its build site (0: none), as island number `index` of the run (0: the next one), so
-## every peer counts the same islands reached. Anything not from the host, or not shaped like this,
-## is ignored: a client never loads an island on its own.
+## Every peer: the host loads the island `island_id` for everyone, as island number `island_index`
+## of the run (1 to MAX_ISLAND_INDEX), with `arrivals` (peer id -> {health, energy}) landing on its
+## landing cells in peer order and `raft_integrity` for the raft beached at its build site (0: none),
+## so every peer counts the same islands reached. A handmade layout's `island_hash` is empty; a
+## chain's is the 64 lowercase hex characters of the island the host generated (island-generator
+## design §6). Anything not from the host, or not shaped like this, is ignored: a client never loads
+## an island on its own.
 @rpc("authority", "call_local", "reliable")
-func travel_to(layout_id: String, arrivals: Dictionary, raft_integrity: float, index: int = 0) -> void:
+func travel_to(island_id: String, island_index: int, island_hash: String, arrivals: Dictionary, raft_integrity: float) -> void:
 	if not _is_from_host():
 		return
-	var id := StringName(layout_id)
+	var id := StringName(island_id)
 	var clean: Variant = checked_arrivals(arrivals)
-	# get_entry, not has_entry: a test's fixture island lives in the catalog's cache, not its folder.
-	if clean == null or not is_finite(raft_integrity) or not GameState.content.get_entry(&"islands", id) is IslandLayoutData:
+	if clean == null or not is_finite(raft_integrity) or not is_travel(id, island_index, island_hash):
 		return
-	island_travel_requested.emit(id, clean, maxf(raft_integrity, 0.0), clampi(index, 0, MAX_ISLAND_INDEX))
+	island_travel_requested.emit(id, clean, maxf(raft_integrity, 0.0), island_index, island_hash)
+
+
+## Whether a travel message may name (`island_id`, `index`, `island_hash`): a known handmade layout
+## with an empty hash, or a known chain with a well-formed one, at an index from 1 to MAX_ISLAND_INDEX.
+static func is_travel(island_id: StringName, index: int, island_hash: String) -> bool:
+	if index < 1 or index > MAX_ISLAND_INDEX:
+		return false
+	# get_entry, not has_entry: a test's fixture island lives in the catalog's cache, not its folder.
+	if GameState.content.get_entry(&"islands", island_id) is IslandLayoutData:
+		return island_hash.is_empty()
+	return IslandSource.is_chain(island_id) and IslandSource.is_digest(island_hash)
+
+
+## Host, from a client whose island's hash differs from the host's (island-generator design §6):
+## answered once per peer and island with the host's canonical text; any other ask is ignored.
+@rpc("any_peer", "call_remote", "reliable")
+func request_island(island_id: String, index: int) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender: int = multiplayer.get_remote_sender_id()
+	var key: String = "%d|%s|%d" % [sender, island_id, index]
+	if sender == 0 or _island_asks.has(key) or _island_asks.size() >= MAX_ISLAND_ASKS:
+		return
+	if index < 1 or index > MAX_ISLAND_INDEX or not IslandSource.is_chain(StringName(island_id)):
+		return
+	_island_asks[key] = true
+	island_text_requested.emit(sender, StringName(island_id), index)
+
+
+## Client, from the host: the canonical text of the island it asked for. IslandTravel parses it with
+## its size limit and checks it against the host's hash before building it.
+@rpc("authority", "call_remote", "reliable")
+func receive_island(text: String) -> void:
+	if not _is_from_host() or multiplayer.is_server() or text.length() > MAX_ISLAND_TEXT:
+		return
+	island_text_received.emit(text)
 
 
 ## Every peer, from the host (guardacostas-capture "Release at the next island"): the party was

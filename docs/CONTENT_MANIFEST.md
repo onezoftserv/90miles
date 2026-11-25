@@ -46,11 +46,11 @@ The grapefruit steak is `toronja.cooks_into`, not a recipe.
 
 ## game/resources/chains/ (9 chains × 2 variants = 18) — `docs/ISLANDS.md`
 
-- [ ] sandbar_crescent · sandbar_twin · coast_bunker · coast_village · mangrove_maze · mangrove_river · reef_traps · reef_bluehole · rock_colony · rock_quarry · lighthouse_caridad · lighthouse_dark · storm_family · storm_resort · wreck_freighter · wreck_yachts · final_sandbar · final_buoy
+- [ ] sandbar_crescent · sandbar_twin · coast_bunker · coast_village · mangrove_maze · mangrove_river · reef_traps (done: the first generated chain, `island-generator`) · reef_bluehole · rock_colony · rock_quarry · lighthouse_caridad · lighthouse_dark · storm_family · storm_resort · wreck_freighter · wreck_yachts · final_sandbar · final_buoy
 
 ## game/resources/pois/ (~50)
 
-- [ ] one per POI row in `docs/ISLANDS.md` chain tables (ruined_hut, palm_grove, flotsam_line, tide_pools, … , captains_cabin, engine_room, galley, hull_camp, sons_raft, the_buoy)
+- [ ] one per POI row in `docs/ISLANDS.md` chain tables (ruined_hut, palm_grove, flotsam_line, tide_pools, … , captains_cabin, engine_room, galley, hull_camp, sons_raft, the_buoy). Done: lobster_traps · limestone_cave · flotsam_line · palm_grove (the reef cay's, `island-generator`)
 - [ ] balsero lore (5, content-batch-12): almendron_varado · caseta_alquiler · balsa_se_vende · balsa_marcada · balsa_vacia (the piling is a landmark inside its set piece, not a POI)
 
 ## game/resources/set_pieces/ (17)

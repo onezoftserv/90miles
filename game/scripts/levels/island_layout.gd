@@ -270,7 +270,7 @@ func _read_cell(cell: Vector2i, glyph: String, spawns: Dictionary[String, Vector
 			signs.append({"cell": cell, "sign": sign_data})
 	for entry: IslandGlyphData in _layout.pickups:
 		if entry.glyph == glyph:
-			pickups.append({"cell": cell, "item_id": entry.item_id, "count": entry.count, "respawn": entry.respawn, "group": entry.group})
+			pickups.append({"cell": cell, "item_id": entry.item_id, "count": entry.count, "respawn": entry.respawn, "group": entry.group, "scaling": entry.party_scaling_per_extra_player})
 
 
 # The coconuts go round the palms in reading order, so the first palms hold the extra ones.

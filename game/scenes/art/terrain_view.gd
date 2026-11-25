@@ -27,7 +27,7 @@ const HUT_SHADE_BANDS: int = 3
 ## How far the sea reaches past the grid on each side, in px, for a camera at the island's edge.
 const SEA_MARGIN_PX: float = 640.0
 
-## What the last build read: the layout id, the grid's columns and rows, and its two masks.
+## What the last build read: the art key (the island hash of a generated island, else the layout id), the grid's columns and rows, and its two masks.
 var layout_id: StringName = &""
 var grid_size: Vector2i = Vector2i.ZERO
 var depth_bytes: PackedByteArray = PackedByteArray()
@@ -82,7 +82,7 @@ func _build(source: Node, grid: GridTerrain) -> void:
 	else:
 		grid_size = _extent(grid)
 	var layout := source.get(&"layout") as IslandLayoutData
-	layout_id = layout.id if layout != null else StringName(String(source.name).to_snake_case())
+	layout_id = IslandSource.art_key(layout) if layout != null else StringName(String(source.name).to_snake_case())
 	for layer: StringName in LAND_LAYERS:
 		var tiles := get_node(NodePath(layer)) as TileMapLayer
 		tiles.clear()
