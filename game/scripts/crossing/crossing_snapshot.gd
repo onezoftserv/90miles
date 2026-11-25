@@ -4,7 +4,7 @@ extends RefCounted
 ## peer that joins mid-crossing needs to build it. The host makes one with of() and sends
 ## to_dict(); a joiner checks what arrived with from_dict() and gives it to Crossing.restore().
 
-const KEYS: Array[String] = ["serial", "route", "riders", "plan", "elapsed_s", "maximum", "value", "broken", "states", "positions", "boards", "steer", "leaks", "taken", "shooed", "fins"]
+const KEYS: Array[String] = ["serial", "route", "riders", "plan", "elapsed_s", "maximum", "value", "broken", "states", "positions", "boards", "steer", "leaks", "taken", "shooed", "fins", "fittings"]
 
 ## The crossing's number: its node name and where its sea lies.
 var serial: int = 0
@@ -27,6 +27,9 @@ var boards: Dictionary[int, float] = {}
 ## [lateral position, velocity], "leaks" the open leaks as [[id, vessel, x, y], ...], "taken" the
 ## flotsam taken as {beat index: peer}.
 var play: Dictionary = {}
+## The fittings on a raft's shared vessel (island-stop "Fittings ride with the raft"): what a
+## joiner draws and what the host's hits and shade read. Unknown ids are dropped.
+var fittings: Array[StringName] = []
 
 
 ## Host: `crossing` as it is now.
@@ -48,6 +51,7 @@ static func of(crossing: Crossing) -> CrossingSnapshot:
 		if crossing.boards.has(peer):
 			snapshot.boards[peer] = crossing.boards[peer].value
 	snapshot.play = crossing.play_state()
+	snapshot.fittings = crossing.fittings.duplicate()
 	return snapshot
 
 
@@ -78,6 +82,7 @@ func to_dict() -> Dictionary:
 		"taken": play.get("taken", {}),
 		"shooed": play.get("shooed", []),
 		"fins": play.get("fins", {}),
+		"fittings": _fitting_names(),
 	}
 
 
@@ -107,7 +112,18 @@ static func from_dict(data: Variant) -> CrossingSnapshot:
 		return null
 	if not snapshot._read_shark(raw.get("shooed"), raw.get("fins")):
 		return null
+	if not raw.get("fittings") is Array:
+		return null
+	snapshot.fittings = VesselFittings.checked(raw.get("fittings"), VesselFittings.MAX)
 	return snapshot
+
+
+# Plain strings, so nothing depends on how StringNames travel.
+func _fitting_names() -> Array:
+	var names: Array = []
+	for id: StringName in fittings:
+		names.append(String(id))
+	return names
 
 
 func _read_head(raw: Dictionary) -> bool:

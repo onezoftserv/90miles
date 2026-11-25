@@ -197,6 +197,14 @@ func beach_raft(integrity: float) -> void:
 	raft.integrity = integrity
 
 
+## Host: the beached raft keeps the fittings its crossing left on it (island-stop "Fittings ride
+## with the raft"); nothing without a beached raft or fittings.
+func refit_raft(fitted: Array[StringName]) -> void:
+	var raft := _session.get_node_or_null(NodePath(RAFT_NAME)) as Raft if _session != null else null
+	if raft != null and not fitted.is_empty():
+		raft.refit(fitted)
+
+
 # Host: the creature spawner runs the island's crabs, gulls and shark. Clients only receive them.
 func _place_creatures() -> void:
 	var spawner := CreatureSpawner.new()

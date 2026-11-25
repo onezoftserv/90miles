@@ -67,7 +67,7 @@ func step() -> void:
 		StructureArt.KIND_RAFT_SITE:
 			_play(stages, StructureArt.site_stage(site.deposited, site.tags_deposited, site.progress()))
 		StructureArt.KIND_RAFT:
-			_play(data.raft, StructureArt.raft_frame((structure as Raft).integrity))
+			_play(data.raft, StructureArt.vessel_frame((structure as Raft).integrity, (structure as Raft).max_integrity))
 		StructureArt.KIND_STAKE:
 			if StructureArt.site_marker_shown(site.built):
 				_show_still(data.still_for(kind))

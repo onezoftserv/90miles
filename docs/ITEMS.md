@@ -93,16 +93,16 @@ Nine are unknown; sábila is always known (it ships as `aloe`, and the Médico s
 | --- | --- | --- |
 | Driftwood | Raft, fire, spear, shelter | Beaches; storms pile it on shingle |
 | Hardwood | Mast, oars, stronger raft (+50 integrity) | Mangrove hammock, casuarinas |
-| Inner tube | Raft flotation (2 per raft) | Flotsam, other balseros |
+| Inner tube | Raft flotation (2 per raft); the raft's defensas (1, with a rope) | Flotsam, other balseros |
 | Plastic jug | Water storage (4 cups), still, sealed stash | Flotsam |
 | Rope | Raft, snare, turtle harness, tie-down | Wrecks, traps, cache, Ramón |
 | Fishing line (spool) | Lines, snares, stitching | Traps, wrecks |
-| Tarp | Sail, shade, rain catcher, still | Hut, tourist wreck |
-| Nails | Repair the wreck (6), reinforce raft | Observation post, galley |
+| Tarp | Sail, shade, rain catcher, still; the raft's toldo (1, with 2 driftwood) | Hut, tourist wreck |
+| Nails | Repair the wreck (6); reinforce the raft, the clavazón (4: +20 to its maximum) | Observation post, galley |
 | Resin | Seal the wreck (2), waterproof | Casuarina sap + fire |
 | Dry grass / needles | Fire starting | Dunes, casuarinas |
 | Cloth (shirt, towel) | Gloves for oysters, bandages, sail patch | Wrecks, your own shirt (heat +) |
-| Tire | Sandals (craft), raft fender | Flotsam |
+| Tire | Sandals (craft); a raft fender later (today's defensas take an inner tube) | Flotsam |
 | Tanque de 55 (drum) | Float for the almendrón (4); weight 6; floats only, never fuel | Fishermen's houses (2), resort generator (2–4), the car (2) |
 | Propela | Welded to the car's drive shaft (1); shiny | The car |
 | Bidón de combustible (fuel jug) | Tags `fuel`, `container`; spent by each almendrón crossing, Caridad's lamp (2) and wreck repair; weight 4 | Village dock (1), resort generator (1–2) |

@@ -559,7 +559,9 @@ func _on_route_started(route_id: StringName, peer_ids: Array[int]) -> void:
 	if route == null:
 		return
 	var integrity: float = routes.departure_integrity.get(route_id, float(route.vessel_integrity))
-	var crossing := Crossing.launch(session, route, peer_ids, integrity, DataEnums.DistanceBand.COAST, _crossing_rng)
+	var fitted: Array[StringName] = []
+	fitted.assign(routes.departure_fittings.get(route_id, []))
+	var crossing := Crossing.launch(session, route, peer_ids, integrity, DataEnums.DistanceBand.COAST, _crossing_rng, fitted)
 	CrossingCreatures.attach(crossing, island.layout.chain_family, DataEnums.DistanceBand.COAST)
 	crossing.ended.connect(_on_crossing_ended.bind(crossing))
 	crossings.append(crossing)

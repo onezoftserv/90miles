@@ -63,6 +63,9 @@ var route: RouteData
 var plan: CrossingPlan
 var tuning: CrossingTuning = CrossingTuning.standard()
 var integrity: VesselIntegrity = VesselIntegrity.new()
+## The fittings on a raft's shared vessel (island-stop): the clavazón's maximum, the defensas' hazard
+## factor, the toldo's shade. Empty for every other vessel.
+var fittings: Array[StringName] = []
 ## Board routes: each rider's own board by peer (crossing "Per-rider boards"); empty otherwise.
 var boards: Dictionary[int, VesselIntegrity] = {}
 ## Replaceable: the reef shark (creatures-ai) resolves the shark pass; ScriptedThreats stays as the fallback.
@@ -113,7 +116,7 @@ var _shoo_points: Dictionary[int, RescuePoint] = {}
 
 ## Builds the crossing for `peer_ids` under `session`. The host rolls and sends the plan; a client
 ## waits for it. Called on every peer when `IslandRoutes.route_started` fires.
-static func launch(session: CoopSession, started: RouteData, peer_ids: Array[int], starting_integrity: float, band: DataEnums.DistanceBand, rng: RandomNumberGenerator) -> Crossing:
+static func launch(session: CoopSession, started: RouteData, peer_ids: Array[int], starting_integrity: float, band: DataEnums.DistanceBand, rng: RandomNumberGenerator, fitted: Array[StringName] = []) -> Crossing:
 	var number: int = next_serial(session)
 	session.set_meta(SESSION_SERIAL_META, number + 1)
 	var crossing := SCENE.instantiate() as Crossing
@@ -122,7 +125,7 @@ static func launch(session: CoopSession, started: RouteData, peer_ids: Array[int
 	var rolled: CrossingPlan = null
 	if session.multiplayer.is_server():
 		rolled = CrossingPlan.roll(started, band, WeatherManager.sky, rng, crossing.tuning, peer_ids.size())
-	crossing.setup(session, started, peer_ids, starting_integrity, rolled, number)
+	crossing.setup(session, started, peer_ids, starting_integrity, rolled, number, fitted)
 	if rolled != null:
 		# Every peer in the run heard the route start just before, so it has this crossing. A peer
 		# still joining gets the snapshot once its join is answered (IslandRoutes.send_progress).
@@ -130,7 +133,7 @@ static func launch(session: CoopSession, started: RouteData, peer_ids: Array[int
 			if session.roster.has(peer):
 				crossing.share_with(peer)
 		for peer: int in crossing._connected_recipients():
-			crossing.receive_plan.rpc_id(peer, rolled.to_array(), crossing.integrity.value)
+			crossing.receive_plan.rpc_id(peer, rolled.to_array(), crossing.integrity.value, crossing.integrity.maximum, crossing.fittings)
 	return crossing
 
 
@@ -148,7 +151,7 @@ static func restore(session: CoopSession, snapshot: CrossingSnapshot) -> Crossin
 		crossing = SCENE.instantiate() as Crossing
 		crossing.name = node_name_for(snapshot.serial)
 		session.add_child(crossing)
-		crossing.setup(session, started, snapshot.riders, snapshot.maximum, snapshot.plan, snapshot.serial)
+		crossing.setup(session, started, snapshot.riders, snapshot.maximum, snapshot.plan, snapshot.serial, snapshot.fittings)
 		crossing._fired_to_s = snapshot.elapsed_s + EPSILON_S
 	crossing.apply_snapshot(snapshot)
 	return crossing
@@ -179,7 +182,7 @@ static func node_name_for(number: int) -> String:
 	return "Crossing%d" % number
 
 
-func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], starting_integrity: float, rolled: CrossingPlan, number: int) -> void:
+func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], starting_integrity: float, rolled: CrossingPlan, number: int, fitted: Array[StringName] = []) -> void:
 	_session = session
 	route = started
 	plan = rolled
@@ -189,13 +192,18 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 	# Swimmers and board riders share no vessel: the shared one has no integrity, so no deck or lashing.
 	var shared: bool = not route.riders_swim and not is_board_route()
 	var starting: float = 0.0 if not shared else (starting_integrity if starting_integrity > 0.0 else float(route.vessel_integrity))
-	integrity = VesselIntegrity.create(starting, float(route.vessel_integrity) if shared else -1.0)
+	# Only a raft takes fittings (island-stop "Raft maximum and fittings at sea"); they raise its top.
+	fittings = []
+	if shared and route.vessel == DataEnums.Vessel.RAFT:
+		fittings = VesselFittings.checked(fitted, VesselFittings.MAX)
+	integrity = VesselIntegrity.create(starting, float(route.vessel_integrity) + VesselFittings.bonus(fittings) if shared else -1.0)
 	integrity.broke.connect(_on_broke)
 	session.player_rebound.connect(_on_player_rebound)
 	sea.default_terrain = DataEnums.Terrain.DEEP
 	sea.current = Vector2.ZERO
 	if integrity.intact():
 		sea.fill_rect(_deck_cells(), DataEnums.Terrain.BEACH)
+		_shade_deck()
 		_lash = _make_point(RescuePoint.Kind.LASH, 0, tuning.tie_hold_s)
 	if is_board_route():
 		for index: int in _peers.size():
@@ -207,6 +215,11 @@ func setup(session: CoopSession, started: RouteData, peer_ids: Array[int], start
 	var hud := CrossingHud.new()
 	hud.name = "Hud"
 	add_child(hud)
+	# Drawing only: a fitted raft's fittings over its deck (island-stop), just above the deck.
+	if shared and route.vessel == DataEnums.Vessel.RAFT:
+		var fitted_look := RaftFittingsLook.create()
+		fitted_look.z_index = -19
+		add_child(fitted_look)
 
 
 func peers() -> Array[int]:
@@ -336,6 +349,17 @@ func hit_vessel(amount: float, shark: bool = false) -> Vector2:
 	return hit_at
 
 
+## What a rock or a debris that hits takes, as a share of its usual loss: the defensas' factor on
+## a fitted raft (island-stop "Defensas at sea"), 1 otherwise. Squalls and sharks never use it.
+func hazard_factor() -> float:
+	return VesselFittings.factor(fittings, ModifierData.Stat.VESSEL_HAZARD_DAMAGE)
+
+
+## Whether the raft's deck is shade for riders aboard: it has a toldo (island-stop "Toldo at sea").
+func deck_shaded() -> bool:
+	return integrity.intact() and VesselFittings.has_flag(fittings, ModifierData.Stat.VESSEL_DECK_SHADE)
+
+
 ## Every vessel takes the hit at once (a squall): the shared one, or every intact board.
 func hit_every_vessel(amount: float) -> void:
 	integrity.hit(amount)
@@ -442,7 +466,7 @@ func hole_vessel(beat: CrossingBeat) -> void:
 	elif not integrity.intact():
 		return
 	var east: bool = beat.lane > steer.position + vessel_span_tiles().y + EPSILON_S
-	vessel.hit(tuning.debris_hit)
+	vessel.hit(tuning.debris_hit * (hazard_factor() if vessel == integrity else 1.0))
 	if vessel.intact():
 		leaks.open(vessel_peer, east, tuning.max_leaks)
 	_dirty = true
@@ -583,16 +607,22 @@ func bring_aboard(peer: int) -> void:
 	_set_state(peer, Rider.ABOARD)
 
 
-## Clients: the plan and the vessel's starting integrity, rolled by the host.
+## Clients: the plan, the vessel's starting integrity and, for a fitted raft, its maximum and
+## fittings (island-stop), rolled or read by the host.
 @rpc("authority", "call_remote", "reliable")
-func receive_plan(plan_data: Array, vessel_value: float) -> void:
-	if multiplayer.get_remote_sender_id() != HOST_ID or plan != null or not is_finite(vessel_value):
+func receive_plan(plan_data: Array, vessel_value: float, vessel_max: float = 0.0, vessel_fittings: Array = []) -> void:
+	if multiplayer.get_remote_sender_id() != HOST_ID or plan != null or not is_finite(vessel_value) or not is_finite(vessel_max):
 		return
 	var received := CrossingPlan.from_array(plan_data)
 	if received == null:
 		return
 	plan = received
 	if integrity.has_integrity():
+		if route.vessel == DataEnums.Vessel.RAFT and not is_board_route():
+			fittings = VesselFittings.checked(vessel_fittings, VesselFittings.MAX)
+			var top: float = float(route.vessel_integrity) + VesselFittings.bonus(fittings)
+			integrity.maximum = maxf(integrity.maximum, minf(vessel_max, top))
+			_shade_deck()
 		integrity.value = clampf(vessel_value, 0.0, integrity.maximum)
 
 
@@ -765,6 +795,21 @@ func _show_broken() -> void:
 
 func _sink_deck() -> void:
 	sea.fill_rect(_deck_cells(), DataEnums.Terrain.DEEP)
+	_unshade_deck()
+
+
+# The toldo's shade over the deck's cells while the raft has one (island-stop D7): the meters read it
+# aboard as they read the hut's shade on land.
+func _shade_deck() -> void:
+	if deck_shaded():
+		sea.set_shaded(_deck_cells())
+
+
+func _unshade_deck() -> void:
+	var cells := _deck_cells()
+	for y: int in range(cells.position.y, cells.end.y):
+		for x: int in range(cells.position.x, cells.end.x):
+			sea.shaded.erase(Vector2i(x, y))
 
 
 func _add_board(peer: int, index: int) -> void:
@@ -1273,6 +1318,8 @@ func _finish() -> void:
 	result.route_id = route.id
 	result.integrity = integrity.value
 	result.broken = integrity.broken
+	result.maximum = integrity.maximum
+	result.fittings = fittings.duplicate()
 	for peer: int in _peers:
 		var body := body_of(peer)
 		var state: Rider = rider_state(peer)

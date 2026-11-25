@@ -5,8 +5,10 @@ extends SceneTree
 ## 1. On the sandbar, the host builds the raft and wears it to 50.
 ## 2. The client opens a mend on it through its own request, as its raft list sends it.
 ## 3. Each player deposits one input and the client's player works it, to 70 on both processes.
-## 4. Both ride a quiet 20 s crossing to the coast cay, where the raft lies at 70 on both.
-## 5. There the client mends it again to 90.
+## 4. The client fits a toldo on it (island-stop PR 2), which both processes then show.
+## 5. Both ride a quiet 20 s crossing with the toldo's shaded deck on both, to the coast cay, where
+##    the raft lies at 70 with its toldo on both.
+## 6. There the client mends it again to 90.
 ##
 ## Headless, host first:
 ##   godot --headless --path game -s res://tests/manual/island_stop_run.gd -- --mode=host
@@ -24,6 +26,7 @@ const PORT: int = 7798
 const FLOW_RUN: int = 3
 const COAST: StringName = &"coast_cay"
 const MEND: StringName = &"raft_mend"
+const TOLDO: StringName = &"raft_toldo"
 const WORN: float = 50.0
 const CROSSING_S: float = 20.0
 const DEADLINE_S: float = 300.0
@@ -164,6 +167,11 @@ func _island_id() -> StringName:
 	return (island.get("layout") as Resource).get("id") if island != null else &""
 
 
+func _has_toldo() -> bool:
+	var raft := _raft()
+	return raft != null and (raft.get("fittings") as Array).has(TOLDO)
+
+
 func _carried(peer: int, id: StringName) -> int:
 	var body := _body(peer)
 	return body.get("inventory").call("count_id", id) if body != null else 0
@@ -207,6 +215,9 @@ func _host() -> void:
 	await _mend_here(other, WORN + 20.0, "sandbar")
 	if fails > 0:
 		return
+	await _toldo_here(other)
+	if fails > 0:
+		return
 	# Both ride the raft out on a quiet crossing.
 	_body(_me()).global_position = _raft().global_position
 	_body(other).global_position = _raft().global_position + Vector2(6.0, 0.0)
@@ -217,10 +228,31 @@ func _host() -> void:
 		return
 	crossings[0].set("plan", (load(PLAN_PATH) as Script).call("create", CROSSING_S))
 	_hooked("a quiet %d s crossing" % int(CROSSING_S))
+	_check("the toldo is aboard and the deck shaded on the host", (crossings[0].get("fittings") as Array).has(TOLDO) and crossings[0].call("deck_shaded") == true)
 	if not await _arrive():
 		return
 	await _seconds(2.0)
 	await _mend_here(other, WORN + 40.0, "coast cay")
+
+
+# Host: the client fits the sandbar's tarp with the host's 2 driftwood as a toldo, and the client's
+# player works it.
+func _toldo_here(other: int) -> void:
+	var point: Node2D = _raft().get("work_point")
+	_body(_me()).global_position = point.global_position
+	_body(other).global_position = point.global_position
+	_body(_me()).get("inventory").call("add", &"driftwood", 2)
+	_body(other).get("inventory").call("add", &"tarp", 1)
+	_hooked("both at the work point, the client with a tarp and the host with 2 driftwood")
+	if not await _wait_for("the client's toldo opened here", func() -> bool: return _job() != null, 30.0):
+		return
+	_check("the client's request opened a toldo", (_job().get("recipe") as Resource).get("id") == TOLDO)
+	session.call("deposit_for", _me(), session.get_path_to(_job()))
+	var all_in := func() -> bool: return _job() != null and _job().call("inputs_complete") == true
+	if not await _wait_for("the toldo's inputs in", all_in, 20.0):
+		return
+	_body(_me()).get("crafter").call("cancel")
+	_check("the raft has its toldo on the host", await _wait_for("the toldo done here", _has_toldo, 40.0))
 
 
 # Host: both players at the raft's work point, the client's with a rope and the host's with a
@@ -257,6 +289,7 @@ func _arrive() -> bool:
 	if not _check("on the coast cay with a beached raft", await _wait_for("the coast cay", landed, CROSSING_S + 40.0)):
 		return false
 	_check("the beached raft is at %d of 100" % int(WORN + 20.0), _integrity_is(WORN + 20.0) and is_equal_approx(float(_raft().get("max_integrity")), 100.0), "%s" % _raft().get("integrity"))
+	_check("the beached raft kept its toldo on the host", _has_toldo())
 	return true
 
 
@@ -272,11 +305,34 @@ func _client() -> void:
 	await _ask_and_feed(WORN + 20.0, "sandbar")
 	if fails > 0:
 		return
+	await _fit_toldo()
+	if fails > 0:
+		return
+	var launched := func() -> bool:
+		var crossings: Array = shell.get("crossings")
+		return not crossings.is_empty() and crossings[0].get("plan") != null
+	if await _wait_for("the crossing here", launched, 60.0):
+		var crossing: Node = shell.get("crossings")[0]
+		_check("the client's crossing has the toldo and a shaded deck", (crossing.get("fittings") as Array).has(TOLDO) and crossing.call("deck_shaded") == true)
 	var landed := func() -> bool: return _island_id() == COAST and _raft() != null and not _body(_me()).get("left_island")
 	if not _check("landed on the coast cay with a beached raft", await _wait_for("the coast cay", landed, CROSSING_S + 60.0)):
 		return
 	_check("the beached raft is at %d here too" % int(WORN + 20.0), _integrity_is(WORN + 20.0), "%s" % _raft().get("integrity"))
+	_check("and has its toldo here too", await _wait_for("the toldo on the beached raft here", _has_toldo, 10.0))
 	await _ask_and_feed(WORN + 40.0, "coast cay")
+
+
+# Client: once the host handed this player a tarp, ask for a toldo and deposit it; the host's 2
+# driftwood complete it.
+func _fit_toldo() -> void:
+	if not await _wait_for("a tarp from the host", func() -> bool: return _carried(_me(), &"tarp") == 1, 60.0):
+		return
+	await _seconds(0.5)
+	session.call("craft", TOLDO, session.get_path_to(_raft()))
+	if not _check("the toldo opened here", await _wait_for("the toldo job here", func() -> bool: return _job() != null, 20.0)):
+		return
+	session.call("deposit", session.get_path_to(_job()))
+	_check("the client sees the raft's toldo", await _wait_for("the toldo here", _has_toldo, 40.0))
 
 
 # Client: once the host handed this player a rope, ask for a mend on the raft as the raft's list

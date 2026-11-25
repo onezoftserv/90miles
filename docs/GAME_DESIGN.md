@@ -141,7 +141,12 @@ It counts as changing nothing only when every meter it raises is within 1 point 
 - There is one job on a raft at a time. Anyone deposits into it and anyone works it.
 - A launch ends an unfinished job and gives the deposits back.
 - An intact raft can always sail on at once: there is no gate. Its prompt shows its integrity and warns below half.
-- Stopping pays in mends now. The fittings (clavazón, defensas, toldo) follow in the change's second PR.
+- **Fittings** (`island-stop` PR 2) are worked the same way at the work point, once each per raft:
+  - **Clavazón:** 4 nails and 20 s. It adds 20 to the raft's maximum and to its integrity, so a worn 70 of 100 becomes 90 of 120.
+  - **Defensas:** 1 inner tube, 1 rope and 10 s. Rocks and debris that hit take three quarters of their loss.
+  - **Toldo:** 1 tarp, 2 driftwood and 15 s. The deck is shade for the riders aboard.
+- Fittings stay on the raft through the crossing and its beaching on the next island, and are lost when it breaks. A raft built later starts bare.
+- The sandbar's leftovers after its raft (the tarp and 2 driftwood) make exactly one toldo, and the coast cay's observation post holds the clavazón's 4 nails.
 
 ## 7. Escape routes
 
@@ -178,6 +183,12 @@ Swimmers in the water lose energy every second, moving or not (3 a second, times
 - **Flotsam.** Coconuts, driftwood, rope, plastic jugs, cloth, the odd inner tube and planks drift down lanes 2 to 5 tiles off the line. A rider aboard holds interact for 0.3 s as a piece passes within 1 tile of them, or a swimmer touches it: an item goes into their inventory (a full one leaves it in the sea), a plank is lashed on at once for +10, up to the route's full integrity (a raft launched at 70 can be mended to 100). Items still cannot be used at sea.
 - **The shark** is told 5 s ahead by its fin circling 1 tile off one side; a rider aboard who holds interact on it for 1 s before the strike shoos it off. When a press reaches several jobs, it goes to the fin, then a swimmer to pull, then flotsam, then a leak, then a paddle or the lashing.
 - **The crossing HUD** sits top-centre under the day phase: a strip from island to island with the vessel at the share of the crossing gone, the vessel's integrity ("Balsa 70/100", "A nado" for swimmers), and short shouted lines for the squall (30 s and 10 s before its hit), a fin and a leak.
+- **A fitted raft** (`island-stop`):
+  - It sails at the integrity and maximum it had on the beach, and planks stop at that maximum.
+  - It is drawn whole, worn or breaking by the share of that maximum it has left.
+  - The defensas take three quarters of every rock and debris that hits (the reef line's rocks included), never of a squall or a shark.
+  - The toldo makes the deck shade: a rider aboard at midday takes thirst at 6/min instead of 12 and their heat falls instead of rising, where a bare raft brings sunstroke at about 67 s in calm weather.
+  - Only a raft takes fittings.
 - **Pacing.** The host rolls no beat in the first 6 s, puts the first between 6 and 9 s and then one every 3 to 9 s (the 9 s ×0.9 for each rider past the first), with rocks, debris and flotsam weighted 0.12, 0.20 and 0.68 on the coast. The squall's blow (the 15 s after its hit, when paddling runs at half speed) holds no rolled beat, and a rock or debris falls in the 10 s before a hit, so tying down early costs a dodge. Every crossing ends with the reef line: two rocks 10 tiles apart, 4 s before the end, with the gap within 3 tiles of the line.
 
 ## 9. Threats

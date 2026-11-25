@@ -239,6 +239,12 @@ A broken raft yields no record. Peers of different builds are not supported, as 
 ### D7. The toldo works through shade
 When the vessel has `VESSEL_DECK_SHADE`, the crossing marks its deck cells as shaded on its `GridTerrain`. The meters then read shade aboard exactly as they do under the hut, so survival-meters needs no delta. A rider in the water is off the deck and follows the swimming rules. A tarp over the deck is drawn client-side and changes nothing in the simulation.
 
+**With island-pressure's sea heat cap** (built 2026-11-23, not merged when PR 2 was built). Its D6 caps a rider's heat at sea at 59 (`sea_heat_cap`, in `SurvivalRules.next_heat` behind `MeterContext.at_sea`) so nobody is sunstruck at sea. The owner chose that cap "until the toldo ships", so the toldo replaces it:
+- **Together, before the cap goes:** they compose without conflict. Under a toldo the deck is shade, so heat falls and the cap never binds. On a bare raft at midday the cap holds heat at 59.
+- **The cap goes when both are on main:** `sea_heat_cap` (its `survival_tuning.gd` field, its `.tres` value and the `at_sea` branch of `next_heat`) and its tests are removed. `MeterContext.at_sea` stays, because island-pressure's D7 last stand at sea reads it. Whichever change merges second makes that removal.
+- **After the cap goes:** a bare raft's midday rider is sunstruck at about 67 s in calm weather again, and the toldo is the counter. That is this change's scenario "The same crossing without the toldo", as tested on main.
+- **Boards and the car** take no toldo, so once the cap goes their riders can be sunstruck at midday too (both are fixtures only today).
+
 ### D8. Defensas in the hit
 In the crossing's hit resolution, a rock or debris that overlaps the vessel (crossing-gameplay "Scrolling hazards") takes `VESSEL_HAZARD_DAMAGE` times its loss. The leak still opens, and squalls and sharks are untouched. On `main` before crossing-gameplay, only the rock exists and the same multiplier applies.
 
@@ -262,7 +268,9 @@ In the crossing's hit resolution, a rock or debris that overlaps the vessel (cro
 ### D10. Build order
 1. **PR 1, the mend** (built 2026-11-15): the recipe, the raft's work point, the raft list and prompts, the job, the raft's state pushed to clients and asked for by joiners, and a raft beached on the coast cay with its integrity. It does not depend on crossing-gameplay.
    - The record of D6 moved to PR 2. In PR 1 the maximum is always the recipe's 100, so the float `travel_to` already carries is enough, and `island_travel.gd` stays untouched while capture-build edits it.
-2. **PR 2, the fittings:** the three recipes, the modifiers, the crossing effects (maximum, defensas, toldo), the record `{integrity, max, fittings}` of D6 and the snapshot key. It goes after crossing-gameplay's three PRs.
+2. **PR 2, the fittings** (built 2026-11-23 on main 3fbaad4): the three recipes, the modifiers, the crossing effects (maximum, defensas, toldo), the snapshot's required `fittings` key and the result's maximum and fittings.
+   - The record of D6 is built narrower than planned. `travel_to` and the join extras still carry the integrity float. The host refits its beached raft from the sturdiest raft's result (`IslandTravel._beached_fittings`, `Raft.refit`), and every client's raft asks the host for its state as it appears (PR 1's path), so no message between peers changed shape.
+   - The departure carries the fittings in `IslandRoutes.departure_fittings`, and `Crossing.launch` takes them. A client's crossing learns the maximum and fittings from `receive_plan`. It goes after crossing-gameplay's three PRs.
 3. **PR 3, the docs:** GAME_DESIGN §6 and §8, ITEMS.md, TASKS.md.
 
 ### D11. The crafter's background-skill rule (a decision made in PR 1)

@@ -48,6 +48,8 @@ func _ready() -> void:
 	interactable.interacted.connect(_on_interacted)
 	work_point.hold_time_s = 0.0
 	work_point.position = work_offset()
+	# Drawing only: the fittings on the raft (island-stop).
+	add_child(RaftFittingsLook.create())
 	ask_for_state()
 
 
@@ -128,6 +130,20 @@ func finish_job(recipe: RecipeData) -> void:
 	_push_state()
 
 
+## Host: this beached raft is the one a crossing left with `left_fittings` on it (crossing "Fittings
+## ride with the raft"): it keeps them, its maximum is the recipe's plus their bonuses, and every
+## client hears it.
+func refit(left_fittings: Array[StringName]) -> void:
+	if not multiplayer.is_server():
+		return
+	fittings = VesselFittings.checked(left_fittings, MAX_FITTINGS)
+	var recipe := GameState.content.get_entry(&"recipes", recipe_id) as RecipeData
+	var base: float = recipe.vessel_integrity if recipe != null else max_integrity
+	max_integrity = base + VesselFittings.bonus(fittings)
+	integrity = minf(integrity, max_integrity)
+	_push_state()
+
+
 ## Host: the raft is launching, so an unfinished job ends: each deposit goes back to the player who
 ## made it, or lies on the raft's cell when they cannot carry it all (island-stop "A launch ends an
 ## unfinished job"). The work done is lost.
@@ -155,13 +171,7 @@ func receive_state(new_integrity: float, new_max: float, new_fittings: Array, jo
 		return
 	max_integrity = new_max
 	integrity = clampf(new_integrity, 0.0, new_max)
-	var kept: Array[StringName] = []
-	for raw: Variant in new_fittings.slice(0, MAX_FITTINGS):
-		if raw is StringName or raw is String:
-			var fitting := GameState.content.get_entry(&"recipes", StringName(raw)) as RecipeData
-			if fitting != null and fitting.output_kind == RecipeData.OutputKind.VESSEL_UPGRADE and not kept.has(fitting.id):
-				kept.append(fitting.id)
-	fittings = kept
+	fittings = VesselFittings.checked(new_fittings, MAX_FITTINGS)
 	if job != null and (job_id.is_empty() or job.recipe.id != job_id):
 		_close_job()
 	if job == null and not job_id.is_empty():
