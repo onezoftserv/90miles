@@ -6,7 +6,9 @@ extends Node
 ## with the raft worn:
 ##   godot --path game res://tests/manual/capture_crossing.tscn -- --out=<dir>
 ## Writes <dir>/crossing_aboard_0.png, crossing_aboard_1.png, crossing_swimmer.png and
-## crossing_worn.png, each the 640×360 view.
+## crossing_worn.png, each the 640×360 view. Then (art-sprite-polish D3, D4) a shark pass from the
+## east: crossing_shark_tell.png while its fin circles beside the raft, crossing_shark_strike.png
+## after it struck.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const SETTINGS_PATH: String = "user://capture_crossing.cfg"
@@ -60,6 +62,12 @@ func _ready() -> void:
 	crossing.hit_vessel(45.0)
 	await _frames(SETTLE_FRAMES)
 	_save("crossing_worn")
+	# A shark pass from the east 4 s from now, so it is warned at once (its lead is 5 s).
+	crossing.plan = CrossingPlan.create(PLAN_S, [CrossingBeat.create(crossing.elapsed_s + 4.0, CrossingBeat.Kind.SHARK_PASS, 0, CrossingBeat.Side.EAST)])
+	await get_tree().create_timer(1.5).timeout
+	_save("crossing_shark_tell")
+	await get_tree().create_timer(3.0).timeout
+	_save("crossing_shark_strike")
 	get_tree().quit()
 
 
