@@ -70,7 +70,8 @@ func test_the_host_closing_the_lobby_asks_then_sends_the_client_to_host_lost() -
 	assert_eq(papo.flow, GameShell.Flow.LOBBY)
 	lobby.leave_button.pressed.emit()
 	lobby.confirm.confirm_button.pressed.emit()
-	assert_true(await shells.wait(func() -> bool: return host.flow == GameShell.Flow.TITLE), "the host is on the title")
-	# NetManager.leave() closes the game's peer; the harness closes the branch's.
+	assert_eq(host.flow, GameShell.Flow.TITLE, "the host is on the title")
+	# NetManager.leave() closes the game's peer in the same call; the harness closes the branch's
+	# now, before any packet can reach the freed lobby.
 	shells.go_home(host)
 	assert_true(await shells.wait(func() -> bool: return papo.flow == GameShell.Flow.HOST_LOST), "Papo shows host-lost")
