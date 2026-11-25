@@ -83,8 +83,8 @@
 
 ## 8. Integration
 
-- [ ] 8.1 Rebuild every touched sheet to scratch and `cmp` each against the tracked file, so the build is reproducible. Run `check.py`, `python -m unittest` in `tools/art`, the import twice, smoke and GUT. All must be clean.
-- [ ] 8.2 Update `TASKS.md`. Record the measured sizes, looks and placements in this design's build notes. Run `openspec validate art-prop-polish --strict`.
+- [x] 8.1 Rebuild every touched sheet to scratch and `cmp` each against the tracked file, so the build is reproducible. Run `check.py`, `python -m unittest` in `tools/art`, the import twice, smoke and GUT. All must be clean.
+- [x] 8.2 Update `TASKS.md`. Record the measured sizes, looks and placements in this design's build notes. Run `openspec validate art-prop-polish --strict`.
 
 ## Workflow follow-up
 

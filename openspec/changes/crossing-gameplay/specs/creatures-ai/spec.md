@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Crossing reef shark
-The crossing's shark pass SHALL be resolved by a reef shark from `reef_shark.tres` through the `CrossingThreats` hook: it appears at the pass's warning, 5 s before the strike, and circles 1 tile off the side the pass names (crossing "Shooing the shark"). At the strike, unless a rider shooed it, it applies the crossing's choice (a swimmer who meets its strike conditions, else an intact vessel, else nobody) through `bite_swimmer` and `hit_vessel`, then circles for its circle time and leaves. A shooed shark leaves at once and bites nothing. The crossing's numbers and "Shark pass event" scenarios are unchanged. With exactly 1 player, the lone player or their raft is the only target. (Adds the crossing tell to docs/BESTIARY.md "Reef shark".)
+The crossing's shark pass SHALL be resolved by a reef shark from `reef_shark.tres` through the `CrossingThreats` hook: it appears at the pass's warning, 5 s before the strike, and circles 1 tile off the side the pass names (crossing "Shooing the shark"). At the strike, unless a rider shooed it, it applies the crossing's choice (a swimmer who meets its strike conditions, else an intact vessel, else nobody) through `bite_swimmer` and `hit_vessel`, then circles for its circle time and leaves; a vessel strike lands 1 tile off the hit deck's (or board's) edge on the side the pass names, never on the planks. A shooed shark leaves at once and bites nothing. The crossing's numbers and "Shark pass event" scenarios are unchanged. With exactly 1 player, the lone player or their raft is the only target. (Adds the crossing tell to docs/BESTIARY.md "Reef shark".)
 
 #### Scenario: Solo crossing shark
 - GIVEN a 1-player raft crossing whose player swims at energy 15 beside an intact raft
@@ -14,6 +14,11 @@ The crossing's shark pass SHALL be resolved by a reef shark from `reef_shark.tre
 - **GIVEN** a 1-player raft crossing whose shark pass strikes at 30 s on the east side
 - **WHEN** the crossing reaches 25 s
 - **THEN** a reef shark circles 1 tile off the raft's east edge and has bitten and hit nothing yet
+
+#### Scenario: Solo strike lands beside the raft, not on it
+- **GIVEN** a 1-player raft crossing at integrity 100 whose shark pass strikes at 10 s on the east side, nobody in the water
+- **WHEN** the shark strikes
+- **THEN** the raft is at 80 and the reef shark circles 1 tile off the raft's east edge, level with its middle, not on the deck
 
 #### Scenario: Solo shoos the reef shark
 - **GIVEN** a 1-player raft crossing at integrity 100 whose reef shark circles the west side before a strike at 30 s

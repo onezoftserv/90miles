@@ -144,3 +144,56 @@ func test_host_lost_sits_in_a_centred_dark_window_with_its_tab() -> void:
 	assert_almost_eq(frame.get_center().y, 180.0, 1.0)
 	assert_true(window.get_global_rect().encloses(screen.back_button.get_global_rect()), "Volver inside the window")
 	assert_true(window.get_global_rect().encloses(screen.message.get_global_rect()), "the line inside the window")
+	# menu-clarity design D1: the line is body text, so it reads in Press Start 2P at 8.
+	assert_eq(screen.message.get_theme_font(&"font").resource_path, SMALL_FONT, "the host-lost line is body text")
+	assert_eq(screen.message.get_theme_font_size(&"font_size"), 8)
+
+
+const HEADINGS: Array[StringName] = [&"TitleLabel", &"HeadingLabel", &"PanelHeading"]
+
+
+func _is_heading(label: Label) -> bool:
+	return label.theme_type_variation in HEADINGS
+
+
+func test_headings_in_pixelify_and_every_other_line_and_control_in_press_start_2p() -> void:
+	# ui-shell "Shared theme" and "Readable HUD and menu text" (menu-clarity design D1, owner Q16):
+	# asked of the real nodes, so a per-node override would show here.
+	for key: String in SCREENS:
+		var screen := _open(key)
+		await wait_process_frames(2)
+		var labels: Array[Label] = []
+		_labels_under(screen, labels)
+		for label: Label in labels:
+			var path: String = label.get_theme_font(&"font").resource_path
+			var size: int = label.get_theme_font_size(&"font_size")
+			if _is_heading(label):
+				assert_eq(path, MENU_FONT, "%s: heading '%s' in Pixelify Sans" % [key, label.text])
+				assert_true(size in [16, 32], "%s: heading '%s' at 16 or 32" % [key, label.text])
+			else:
+				assert_eq(path, SMALL_FONT, "%s: '%s' in Press Start 2P" % [key, label.text])
+				assert_eq(size, 8, "%s: '%s' at 8" % [key, label.text])
+		for control: Control in screen.find_children("*", "BaseButton", true, false) + screen.find_children("*", "LineEdit", true, false):
+			if not control.is_visible_in_tree():
+				continue
+			assert_eq(control.get_theme_font(&"font").resource_path, SMALL_FONT, "%s: %s in Press Start 2P" % [key, control.name])
+			assert_eq(control.get_theme_font_size(&"font_size"), 8, "%s: %s at 8" % [key, control.name])
+
+
+func test_the_join_field_draws_an_address_in_press_start_2p() -> void:
+	# ui-shell "Shared theme", scenario "Digits in a text field", solo and offline.
+	var join := _open("join") as JoinScreen
+	join.address_field.text = "192.168.1.70"
+	await wait_process_frames(2)
+	var font: Font = join.address_field.get_theme_font(&"font")
+	assert_eq(font.resource_path, SMALL_FONT)
+	assert_eq(join.address_field.get_theme_font_size(&"font_size"), 8)
+	assert_eq(font.get_string_size("192.168.1.70", HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x, 96.0, "8 px a character")
+	assert_true(join.address_field.size.x >= 96.0 + 8.0, "the address fits its field")
+
+
+func test_the_title_buttons_stay_at_least_20_px_tall() -> void:
+	var title := _open("title") as TitleScreen
+	await wait_process_frames(2)
+	for button: Button in title.find_children("*", "Button", true, false):
+		assert_gte(button.size.y, 20.0, "'%s' at least 20 px tall" % button.text)

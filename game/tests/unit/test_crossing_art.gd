@@ -249,6 +249,21 @@ func test_the_deck_shows_the_raft_frame_for_its_integrity_and_is_gone_once_sunk(
 	assert_false(deck.visible, "a sunk deck is not drawn")
 
 
+## art-terrain-polish D3 (C14): the raft leans toward land on the beach only. The crossing deck reads
+## the raft's frames itself and never the look offset, so it stays on deck_rect.
+func test_the_deck_ignores_the_beachs_look_offset() -> void:
+	var offsets: Variant = StructureArtData.standard().get(&"look_offsets")
+	assert_true(offsets is Dictionary and (offsets as Dictionary).get(StructureArt.KIND_RAFT, Vector2.ZERO) != Vector2.ZERO, "the beach raft has a look offset")
+	_start_solo()
+	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0)
+	await wait_process_frames(2)
+	var deck := _deck_of(crossing)
+	assert_not_null(deck, "the deck")
+	if deck == null:
+		return
+	assert_eq(_deck_drawn_rect(deck), crossing.deck_rect(), "the deck stays on deck_rect")
+
+
 func test_a_solo_raft_crossing_with_a_squall_throw_in() -> void:
 	_start_solo()
 	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0, [CrossingRig.beat(0.5, SQUALL)])

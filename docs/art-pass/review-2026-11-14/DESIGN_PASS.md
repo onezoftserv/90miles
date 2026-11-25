@@ -280,7 +280,7 @@ Contrasts computed with `palette.luminance` (`AR/mockups/contrast.py`, `contrast
 - **LineEdit**: `line_edit.png`, content margins 4/3/4/3; focus ring as buttons.
 - **VScrollBar**: `scroll` = track, `grabber` / `grabber_highlight` / `grabber_pressed` = grabber (highlight via `modulate_color`). **PopupMenu**: `panel` = `window_dark`, `hover` = a `StyleBoxFlat` 1-row bar in #306082 with `anti_aliasing = false` and no radius, `font` = the menu FontVariation at 16, `font_color` #ffedde, `font_hover_color` #fbf236, radio icons from the set.
 - **Text.** HUD Label: `font_color` #ffedde, `font_shadow_color` #222034 at full alpha, shadow offset (1, 1). HudCount: outline 1 px #222034. PanelLabel #45283c, no shadow. PanelHeading (new, base HeadingLabel) #45283c at 16. ErrorLabel #ac3232, switched in at runtime only for errors.
-- **Fonts.** HUD: Press Start 2P 8 (unchanged). Menus: `menu_font.tres`, a FontVariation of Pixelify Sans with `spacing_space = 2`, at 16 and 32. The longer-term single proportional pixel font is decision Q16.
+- **Fonts.** HUD: Press Start 2P 8 (unchanged). Menus: `menu_font.tres`, a FontVariation of Pixelify Sans with `spacing_space = 2`, at 16 and 32. The longer-term single proportional pixel font is decision Q16. (Settled by the owner on 2026-11-23, after the Fable review: Press Start 2P for body text, fields and controls, Pixelify Sans only for the logo and headings; built by the `menu-clarity` change.)
 - **Spacing.** Screen margin 4 px; 4 px between windows; window padding 4 px sides, 3 px top and bottom; HUD line height 10 px; slots stay 26x26 at the pinned rects.
 
 ### 4.3 Colour moves (theme and `HudStyle` in one commit)

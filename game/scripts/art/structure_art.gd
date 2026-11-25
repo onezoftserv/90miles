@@ -107,6 +107,17 @@ static func vessel_frame(value: float, nominal: float) -> StringName:
 
 
 ## The offset of an uncentred sprite whose frame stands bottom-centre on its node's origin.
+## art-terrain-polish D3 (C14): which way a raft or its site leans toward land from its origin's cell
+## `cell`: -1 (west) when the west neighbour is land, else 1 (east) when the east one is, else 0.
+## It reads the session's terrain, the same on every peer.
+static func land_side(terrain: TerrainQuery, cell: Vector2i) -> int:
+	if not TerrainQuery.is_water(terrain.terrain_at(cell + Vector2i.LEFT)):
+		return -1
+	if not TerrainQuery.is_water(terrain.terrain_at(cell + Vector2i.RIGHT)):
+		return 1
+	return 0
+
+
 static func frame_offset(frame_size: Vector2) -> Vector2:
 	return Vector2(-floorf(frame_size.x / 2.0), -frame_size.y)
 
