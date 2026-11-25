@@ -40,13 +40,7 @@ const HUD_PANELS: Array[StringName] = [&"HudPanel", &"HudPanelThin", &"HudPanelT
 const AVOID_GROUP: StringName = &"hud_avoid"
 ## A HUD panel whose top is above this is one of the top windows (art-guardacostas D8).
 const TOP_WINDOW_Y: float = 20.0
-## art-guardacostas D9: what La captura's staging hides (by transparency, so their own refreshes and their
-## input stay as they are): the meters, phase, weather, teammates, needle, note, watching panel, strip,
-## prompt, marks, floats, patrol chips and call windows. The scene panel and the menus stay.
-const STAGED_HIDDEN: Array[StringName] = [
-	&"Meters", &"PhasePanel", &"WeatherPanel", &"TeammatesPanel", &"Needle", &"NoteLabel", &"WatchingPanel",
-	&"Strip", &"Prompt", &"Marks", &"Floats", &"PatrolHorizon", &"CallWindows",
-]
+
 ## Half the width of a player's drawn figure, which a call window keeps clear of (art-guardacostas D6).
 const FIGURE_HALF_PX: float = 8.0
 ## HUD windows another layer draws for this run (the crossing's strip and line, crossing-gameplay;
@@ -105,8 +99,10 @@ var scene_panel: ScenePanel = null
 var call_windows: CallWindows = null
 ## art-guardacostas D9: La captura's staging (the bars, the framing and the closing notice), made here.
 var capture_stage: CaptureStage = null
-## True while La captura is staged: everything in STAGED_HIDDEN is hidden, the scene panel stays.
+## True while La captura is staged: every piece of this HUD but the ones `staged_kept` names is hidden.
 var staged: bool = false
+# Each piece the staging hid, with the alpha it had, to give back at the end.
+var _staged_alpha: Dictionary[CanvasItem, float] = {}
 @onready var phase_label: Label = %Phase
 @onready var clock: ClockStrip = $PhasePanel/Clock
 @onready var objective_row: ObjectiveRow = $ObjectiveRow
@@ -287,19 +283,52 @@ func set_screen_shown(value: bool) -> void:
 	refresh_watching()
 
 
-## art-guardacostas D9: La captura starts (true) or ends: everything in STAGED_HIDDEN is hidden or shown
-## again. Input stays open and the scene panel stays.
+## art-guardacostas D9: La captura starts (true) or ends. Every piece of this HUD but the scene panel,
+## the stage, the run menu and the quick-chat wheel (`staged_kept`) is hidden by transparency, so a piece
+## a later change adds hides too, and each piece's own refresh and input stay as they are; at the end
+## each gets back the alpha it had.
 func set_staged(value: bool) -> void:
 	staged = value
-	for node_name: StringName in STAGED_HIDDEN:
-		var node := get_node_or_null(NodePath(node_name)) as CanvasItem
-		if node != null:
-			node.modulate.a = 0.0 if value else 1.0
+	for child: Node in get_children():
+		var piece := child as CanvasItem
+		if piece == null or staged_kept(piece):
+			continue
+		if value:
+			if not _staged_alpha.has(piece):
+				_staged_alpha[piece] = piece.modulate.a
+			piece.modulate.a = 0.0
+		elif _staged_alpha.has(piece):
+			piece.modulate.a = _staged_alpha[piece]
+	if not value:
+		_staged_alpha.clear()
 
 
-## True while `node` is hidden by the staging.
+## The pieces La captura's staging keeps on show: the scene panel, the stage itself, the run menu and the
+## quick-chat wheel.
+func staged_kept(piece: Node) -> bool:
+	return piece == scene_panel or piece == capture_stage or piece == pause_menu or piece == wheel
+
+
+## True while `node` is hidden by the staging: it or a piece of this HUD it lies under is transparent.
 func is_staged_hidden(node: CanvasItem) -> bool:
-	return node.modulate.a <= 0.0
+	var at: Node = node
+	while at != null and at != self:
+		var item := at as CanvasItem
+		if item != null and item.modulate.a <= 0.0:
+			return true
+		at = at.get_parent()
+	return false
+
+
+## Every piece La captura's staging hides: each direct piece of this HUD that `staged_kept` does not
+## name (the rows nested in them, such as the clock and the Calor and Sangrando rows, hide with them).
+func staged_pieces() -> Array[CanvasItem]:
+	var pieces: Array[CanvasItem] = []
+	for child: Node in get_children():
+		var piece := child as CanvasItem
+		if piece != null and not staged_kept(piece):
+			pieces.append(piece)
+	return pieces
 
 
 ## A point of the world's canvas (the world view's pixels, camera applied) in HUD pixels.

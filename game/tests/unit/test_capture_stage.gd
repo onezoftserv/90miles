@@ -88,6 +88,35 @@ func _capture() -> void:
 	await wait_process_frames(2)
 
 
+# Every piece of `hud` but the kept ones is hidden while staged (`hidden`), or shown again after, by name
+# for the HUD-clarity rows (the objective row, the clock, the Calor and Sangrando rows, the site arrow,
+# the horizon line) and for every other piece; the scene panel and the run menu are never hidden.
+func _assert_staged(hud: RunHud, hidden: bool) -> void:
+	var named: Dictionary[String, CanvasItem] = {
+		"the objective row": hud.objective_row,
+		"the clock": hud.clock,
+		"the Calor row": hud.meters.get_node(^"Panel/Bars/Heat") as CanvasItem,
+		"the Sangrando row": hud.meters.get_node(^"Panel/Bars/Bleeding") as CanvasItem,
+		"the site arrow": hud.site_arrow,
+		"the horizon line": hud.get_node(^"HorizonLine") as CanvasItem,
+		"the meters": hud.meters,
+		"the strip": hud.strip,
+		"the marks": hud.marks,
+		"the patrol chips": hud.patrol_horizon,
+		"the call windows": hud.call_windows,
+	}
+	for label: String in named:
+		assert_not_null(named[label], label)
+		if named[label] != null:
+			assert_eq(hud.is_staged_hidden(named[label]), hidden, "%s %s" % [label, "hidden" if hidden else "back"])
+	var pieces: Array[CanvasItem] = hud.staged_pieces()
+	assert_gt(pieces.size(), 15, "the HUD's pieces")
+	for piece: CanvasItem in pieces:
+		assert_eq(hud.is_staged_hidden(piece), hidden, "%s %s" % [piece.name, "hidden" if hidden else "back"])
+	assert_false(hud.is_staged_hidden(hud.scene_panel), "the scene panel stays")
+	assert_true(hud.staged_kept(hud.pause_menu), "the run menu stays (a layer of its own, never faded)")
+
+
 # Spec "A solo player's capture is staged".
 func test_a_solo_players_capture_is_staged_and_the_hud_comes_back() -> void:
 	_start()
@@ -108,11 +137,7 @@ func test_a_solo_players_capture_is_staged_and_the_hud_comes_back() -> void:
 	assert_eq(stage.bars_in, 1.0, "in after 0.5 s")
 	assert_eq(stage.bar_rects()[0], Rect2(0.0, 0.0, 640.0, 28.0))
 	assert_eq(stage.bar_rects()[1], Rect2(0.0, 332.0, 640.0, 28.0))
-	for node_name: StringName in RunHud.STAGED_HIDDEN:
-		var node := hud.get_node_or_null(NodePath(node_name)) as CanvasItem
-		if node != null:
-			assert_true(hud.is_staged_hidden(node), "%s is hidden" % node_name)
-	assert_false(hud.is_staged_hidden(hud.scene_panel), "the scene panel stays")
+	_assert_staged(hud, true)
 	hud.scene_panel.step(0.0)
 	assert_true(hud.scene_panel.visible)
 	assert_false(hud.screen_shown, "input stays open")
@@ -128,10 +153,7 @@ func test_a_solo_players_capture_is_staged_and_the_hud_comes_back() -> void:
 	await wait_process_frames(3)
 	assert_false(stage.staged)
 	assert_false(hud.staged)
-	for node_name: StringName in RunHud.STAGED_HIDDEN:
-		var node := hud.get_node_or_null(NodePath(node_name)) as CanvasItem
-		if node != null:
-			assert_false(hud.is_staged_hidden(node), "%s is back" % node_name)
+	_assert_staged(hud, false)
 	stage.tick(1.0)
 	assert_eq(stage.bars_in, 0.0, "the bars slid out")
 	assert_eq(body.camera.offset, Vector2.ZERO, "the camera is back on the player")
@@ -320,6 +342,9 @@ func test_only_the_host_whose_lighter_was_taken_is_told_so() -> void:
 		CaptureRules.capture(caught, mine, patrol)
 	CaptureScene.of(host).queue_check()
 	assert_true(await wait_until(func() -> bool: return CaptureScene.of(host).playing, TIMEOUT_S), "the scene plays")
+	assert_true(await wait_until(func() -> bool: return client_hud.staged, TIMEOUT_S), "staged on the client")
+	_assert_staged(host_hud, true)
+	_assert_staged(client_hud, true)
 	var guard: int = 0
 	while CaptureScene.of(host).playing and guard < 40:
 		CaptureScene.of(host).skip()
@@ -329,6 +354,8 @@ func test_only_the_host_whose_lighter_was_taken_is_told_so() -> void:
 	assert_eq(mine.inventory.count_id(&"lighter"), 0, "the lighter was taken")
 	assert_eq(CaptureScene.of(host).last_report.get(CoopSession.HOST_ID, PackedStringArray()), PackedStringArray(["lighter"]))
 	assert_false(CaptureScene.of(host).last_report.has(id), "the client lost nothing")
+	_assert_staged(host_hud, false)
+	_assert_staged(client_hud, false)
 	assert_eq(host_hud.notice.shown_text(), "Te quitaron: Fosforera", "the host is told")
 	assert_eq(client_shown.size(), 0, "the client is told nothing")
 	assert_false(client_hud.notice.shown_text().begins_with("Te quitaron"))

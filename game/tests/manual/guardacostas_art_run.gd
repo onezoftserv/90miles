@@ -220,6 +220,20 @@ func _hut() -> Vector2:
 	return _center(cells[cells.size() / 2])
 
 
+# Whether every piece the staging hides (each HUD piece but the scene panel, the stage, the run menu and
+# the wheel, and the HUD-clarity rows nested in them) is hidden (`hidden`) or back; the names of those
+# that are not.
+func _staged_wrong(hidden: bool) -> PackedStringArray:
+	var wrong := PackedStringArray()
+	var pieces: Array = hud.call("staged_pieces")
+	for extra: Node in [hud.get("objective_row"), hud.get("clock"), hud.get("site_arrow"), (hud.get("meters") as Node).get_node(^"Panel/Bars/Heat"), (hud.get("meters") as Node).get_node(^"Panel/Bars/Bleeding")]:
+		pieces.append(extra)
+	for piece: Node in pieces:
+		if bool(hud.call("is_staged_hidden", piece)) != hidden:
+			wrong.append(String(piece.name))
+	return wrong
+
+
 # What this peer draws of the docked boat, its dinghy and its squad, and its call windows.
 func _check_drawing(who: String) -> void:
 	var boat: Node2D = _boat()
@@ -311,6 +325,8 @@ func _host_confiscation() -> void:
 	await _frames(30)
 	var stage: Object = hud.get("capture_stage")
 	_check("host: the scene is staged (bars in, HUD hidden)", bool(stage.get("staged")) and bool(hud.get("staged")))
+	var still_shown: PackedStringArray = _staged_wrong(true)
+	_check("host: every HUD row is hidden under the letterbox (objective row, clock, Calor, Sangrando, ...)", still_shown.is_empty(), ", ".join(still_shown))
 	var panel: Object = hud.get("scene_panel")
 	_check("host: Rodríguez's portrait and no drain bar", panel.call("shown_portrait") != null and not bool(panel.call("drain_shown")))
 	await _seconds(3.0)
@@ -323,6 +339,8 @@ func _host_confiscation() -> void:
 		return
 	await _seconds(1.0)
 	var notice: String = String((hud.get("notice") as Object).call("shown_text"))
+	var not_back: PackedStringArray = _staged_wrong(false)
+	_check("host: every HUD row is back after the capture", not_back.is_empty(), ", ".join(not_back))
 	_check("host: the notice names the fosforera taken", notice == NOTICE, notice)
 	_check("host: the fosforera is gone", int((_my_body().get("inventory") as Object).call("count_id", &"lighter")) == 0)
 	await _wait_for("the client done again (crouching)", func() -> bool: return _body_of(client_peer) != null and bool(((_body_of(client_peer) as Object).get("intent") as Object).get("crouch")), 90.0)
@@ -350,12 +368,16 @@ func _client() -> void:
 	await _frames(30)
 	var panel: Object = hud.get("scene_panel")
 	_check("client: the scene is staged (bars in, HUD hidden)", bool((hud.get("capture_stage") as Object).get("staged")) and bool(hud.get("staged")))
+	var still_shown: PackedStringArray = _staged_wrong(true)
+	_check("client: every HUD row is hidden under the letterbox (objective row, clock, Calor, Sangrando, ...)", still_shown.is_empty(), ", ".join(still_shown))
 	_check("client: a drain bar and no arrow (only the host skips)", bool(panel.call("drain_shown")) and not bool(panel.call("arrow_shown")) and not bool(panel.call("key_shown")))
 	_check("client: the drain runs over the Spanish line's hold", absf(float(panel.call("hold_s")) - float(load("res://scripts/stealth/capture_scene.gd").call("hold_s", String(keeper.call("current_text", "es"))))) < 0.001)
 	if not await _wait_for("the scene over and my player landed", func() -> bool: return _refresh() and not bool(keeper.get("playing")) and _my_body() != null and not bool(_my_body().get("left_island")), 90.0):
 		return
 	await _seconds(2.0)
 	var notice: String = String((hud.get("notice") as Object).call("shown_text"))
+	var not_back: PackedStringArray = _staged_wrong(false)
+	_check("client: every HUD row is back after the capture", not_back.is_empty(), ", ".join(not_back))
 	_check("client: no confiscation notice (nothing taken from me)", not notice.begins_with("Te quitaron"), notice)
 	_check("client: my coconut is still mine", int((_my_body().get("inventory") as Object).call("count_id", &"coco")) == 1)
 	Input.action_press(&"crouch")

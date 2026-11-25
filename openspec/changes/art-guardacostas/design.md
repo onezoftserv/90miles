@@ -335,6 +335,7 @@ None. The owner chose (a) for QG1–QG4 on 2026-11-23 (proposal.md).
     - The kit's arrow is cream; on the light note card it is tinted the card text's dark (#222034).
     - The stage puts the framed point 30 px above the view's centre (`CaptureStage.FRAME_LIFT_PX`), in the open space between the top bar and the panel; centred, the boat sat behind the panel.
     - `RunHud.set_staged` hides by transparency (`modulate.a`), so the panels' own per-frame refreshes and their input stay as they are.
+    - After main brought hud-clarity (#120: the objective row, the clock, the Calor and Sangrando rows, the site arrow), the staging hides every piece of the HUD but a keep-list (the scene panel, the stage, the run menu and the quick-chat wheel) instead of a list of names, and gives each piece back the alpha it had; a piece a later change adds hides too. Tested solo, host plus client, and in the two-process run (host and client 13 of 13).
     - A plea's portrait is the whole 32×32 `idle_down` frame (the figure, head to feet), its key ramp swapped to the slot's row.
     - The host keeps `CaptureScene.last_report` (peer → ids) for the record; the notice text is `hud_text.tres`'s `confiscated` line ("Te quitaron: %s" / "They took: %s").
     - `tools/art/portraits.py` imports `creatures.py`'s and `rim.py`'s helpers and changes no shared tool.
