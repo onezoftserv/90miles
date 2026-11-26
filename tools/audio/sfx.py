@@ -11,6 +11,8 @@ Its parts are mixed, each from its "start" (s) for its "length" (s; default: to 
 is rendered crossfade_s longer and its tail folded over its head ("power" or "linear" crossfade),
 so the last sample runs straight on into the first. A loop's mix is DC-blocked; every mix is scaled so its peak
 is `peak` (default 0.89): the game sets each sound's level in its sound bank, not here.
+An id listed in tools/audio/recordings.json is an approved recording that recording.py writes
+instead (task 9.3), so build and --check skip it.
 
 A part, in the order it is applied:
 - wave: square [duty], triangle, sine, saw, noise (a new random value `freq` times a second, the
@@ -39,6 +41,7 @@ import wave
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 DEFAULT_RECIPE = HERE / "sounds.json"
+RECORDINGS = HERE / "recordings.json"
 DEFAULT_OUT = ROOT / "game" / "assets" / "audio"
 RATE = 22050
 FOLDERS = ("sfx", "loops")
@@ -54,6 +57,20 @@ def load_recipe(path=DEFAULT_RECIPE):
 
 
 # --- one part ------------------------------------------------------------------------------------
+
+def load_recordings(path=RECORDINGS):
+    """The approved recordings (tools/audio/recordings.json, task 9.3); [] when there is no list."""
+    path = pathlib.Path(path)
+    if not path.exists():
+        return []
+    with open(path, encoding="utf-8") as handle:
+        return list(json.load(handle).get("recordings", []))
+
+
+def recorded_ids(path=RECORDINGS):
+    """The ids recording.py writes from a recording; build and check leave them alone."""
+    return {str(rec["id"]) for rec in load_recordings(path)}
+
 
 def render_part(part, rate, default_length=None):
     """The part's samples, from its own start, `part["length"]` seconds long (or default_length)."""
@@ -347,11 +364,12 @@ def read_wav(data):
     return rate, [int.from_bytes(raw[i:i + 2], "little", signed=True) for i in range(0, len(raw), 2)]
 
 
-def build(recipe, out_root=DEFAULT_OUT, only=None):
-    """Writes every sound (or those in `only`) under out_root; returns the paths written."""
+def build(recipe, out_root=DEFAULT_OUT, only=None, skip=frozenset()):
+    """Writes every sound (or those in `only`) under out_root, but none in `skip` (the recorded
+    ones); returns the paths written."""
     written = []
     for sound in recipe["sounds"]:
-        if only is not None and sound["id"] not in only:
+        if (only is not None and sound["id"] not in only) or sound["id"] in skip:
             continue
         if sound["folder"] not in FOLDERS:
             raise ValueError(f"{sound['id']}: folder must be one of {FOLDERS}")
@@ -362,10 +380,13 @@ def build(recipe, out_root=DEFAULT_OUT, only=None):
     return written
 
 
-def check(recipe, out_root=DEFAULT_OUT):
-    """The ids whose tracked file is missing or differs from a fresh render by more than one step."""
+def check(recipe, out_root=DEFAULT_OUT, skip=frozenset()):
+    """The ids whose tracked file is missing or differs from a fresh render by more than one step,
+    leaving out those in `skip` (the recorded ones)."""
     stale = []
     for sound in recipe["sounds"]:
+        if sound["id"] in skip:
+            continue
         path = pathlib.Path(out_root) / sound["folder"] / f"{sound['id']}.wav"
         if not path.exists():
             stale.append(sound["id"])
@@ -385,13 +406,14 @@ def main(argv=None):
     parser.add_argument("--check", action="store_true", help="write nothing; fail if a tracked file is stale")
     args = parser.parse_args(argv)
     recipe = load_recipe(args.recipe)
+    skip = recorded_ids()
     if args.check:
-        stale = check(recipe, args.out)
+        stale = check(recipe, args.out, skip)
         for sid in stale:
             print(f"stale: {sid}")
         return 1 if stale else 0
     only = {s for s in args.only.split(",") if s} or None
-    for path in build(recipe, args.out, only):
+    for path in build(recipe, args.out, only, skip):
         print(path.relative_to(pathlib.Path(args.out)).as_posix())
     return 0
 

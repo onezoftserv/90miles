@@ -187,7 +187,10 @@ class RecipeTest(unittest.TestCase):
     def test_the_tracked_files_are_the_recipes(self):
         """Byte for byte on the machine that wrote them; elsewhere a different maths library may move
         a sample by one step of the last bit, never more."""
+        recorded = sfx.recorded_ids()
         for sid, samples in self.rendered.items():
+            if sid in recorded:
+                continue  # an approved recording: test_recording.py checks it instead
             path = sfx.DEFAULT_OUT / self.sounds[sid]["folder"] / f"{sid}.wav"
             self.assertTrue(path.exists(), f"{path} is missing: run python -I tools/audio/sfx.py")
             rate, tracked = sfx.read_wav(path.read_bytes())

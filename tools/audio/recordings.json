@@ -1,0 +1,4 @@
+{
+  "about": "The provenance list of the approved CC0 recordings that replace generated placeholders (openspec change sound-pass task 9.3, owner Q2 B). Only sea, wind and thunder, each after the owner approves the exact file. The raw download goes in the git-ignored game/assets/audio/ambience/<source>; python -I tools/audio/recording.py writes game/assets/audio/<folder>/<id>.wav from it, and sfx.py skips the id. Entry: {id, folder, source, start_s, length_s, loop, crossfade_s (loops), fade_out_s (one-shots), peak, title, author, licence, url}.",
+  "recordings": []
+}
