@@ -55,7 +55,7 @@ func resolve(event: CrossingBeat, crossing: Crossing) -> void:
 	match event.kind:
 		CrossingBeat.Kind.ROCK:
 			if crossing.beat_hits_vessel(event):
-				crossing.hit_vessel(crossing.tuning.rock_hit)
+				crossing.hit_vessel(crossing.hazard_damage(crossing.tuning.rock_hit))
 		CrossingBeat.Kind.DEBRIS:
 			if crossing.beat_hits_vessel(event):
 				crossing.hole_vessel(event)

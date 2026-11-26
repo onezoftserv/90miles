@@ -21,8 +21,6 @@ const JOB_SCENE_PATH: String = "res://scenes/structures/raft_job.tscn"
 const HOST_ID: int = 1
 ## The work point's side is the first of these with the most land around it, the same on every peer.
 const SIDES: Array[Vector2i] = [Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, -1)]
-## A raft takes at most this many fittings, whatever a forged message says.
-const MAX_FITTINGS: int = 8
 
 var climate: ClimateState = null
 var recipe_id: StringName = &""
@@ -155,13 +153,7 @@ func receive_state(new_integrity: float, new_max: float, new_fittings: Array, jo
 		return
 	max_integrity = new_max
 	integrity = clampf(new_integrity, 0.0, new_max)
-	var kept: Array[StringName] = []
-	for raw: Variant in new_fittings.slice(0, MAX_FITTINGS):
-		if raw is StringName or raw is String:
-			var fitting := GameState.content.get_entry(&"recipes", StringName(raw)) as RecipeData
-			if fitting != null and fitting.output_kind == RecipeData.OutputKind.VESSEL_UPGRADE and not kept.has(fitting.id):
-				kept.append(fitting.id)
-	fittings = kept
+	fittings = RaftRecord.checked_fittings(new_fittings)
 	if job != null and (job_id.is_empty() or job.recipe.id != job_id):
 		_close_job()
 	if job == null and not job_id.is_empty():

@@ -152,7 +152,8 @@ func travel(next_id: StringName) -> void:
 			arrival["cell"] = cells[peer_id]
 		arrivals[peer_id] = arrival
 	var off_graph: bool = next_layout != null and next_layout.off_graph
-	session.travel_to.rpc(String(next_id), arrivals, _beached_integrity(), history.next_index(off_graph))
+	var raft := _beached_raft()
+	session.travel_to.rpc(String(next_id), arrivals, raft.to_dict() if raft != null else {}, history.next_index(off_graph))
 
 
 ## Host: the previous island (guardacostas-capture "Island history"): the last on-graph island before
@@ -210,7 +211,7 @@ func _relocate(layout_id: StringName, index: int) -> void:
 	for peer_id: int in session.peer_ids():
 		var meters := session.body(peer_id).meters
 		arrivals[peer_id] = {"health": meters.health, "energy": meters.energy}
-	session.travel_to.rpc(String(layout_id), arrivals, 0.0, index)
+	session.travel_to.rpc(String(layout_id), arrivals, {}, index)
 
 
 ## Client: a joiner or rejoined player hears which island the host is on and who waits there. It
@@ -220,8 +221,7 @@ func follow(state: Dictionary) -> void:
 		return
 	var id: Variant = state.get("island")
 	if id is StringName and not (id as StringName).is_empty() and id != island.layout.id:
-		var raft: Variant = state.get("raft")
-		_load(id, {}, raft if raft is float else 0.0)
+		_load(id, {}, RaftRecord.from_dict(state.get("raft")))
 	var islands: Variant = state.get("islands")
 	if islands is int and islands >= 1:
 		islands_reached = islands
@@ -241,24 +241,24 @@ func _join_extras() -> Dictionary:
 		var player := session.body(peer_id)
 		if player.left_island and not player.meters.dead:
 			waiting.append(peer_id)
-	var raft := session.get_node_or_null(NodePath(RAFT_NAME))
-	var integrity: float = 0.0
-	if raft != null and raft.get(&"integrity") is float:
-		integrity = raft.get(&"integrity")
-	return {"island": island.layout.id, "waiting": waiting, "raft": integrity, "islands": islands_reached}
+	var raft := session.get_node_or_null(NodePath(RAFT_NAME)) as Raft
+	var record: Dictionary = RaftRecord.of_raft(raft).to_dict() if raft != null and raft.integrity > 0.0 else {}
+	return {"island": island.layout.id, "waiting": waiting, "raft": record, "islands": islands_reached}
 
 
 # The sturdiest raft that ended a crossing intact lies on the next island's build site; any other
 # vessel is lost (crossing "Beaching by vessel"): only a route whose vessel is a raft kept on
-# arrival beaches one, never a board, a car or swimmers.
-func _beached_integrity() -> float:
-	var best: float = 0.0
+# arrival beaches one, never a board, a car or swimmers. The sturdiest keeps its own maximum and
+# fittings (island-stop D6); null when no raft ended intact.
+func _beached_raft() -> RaftRecord:
+	var best: RaftRecord = null
 	for result: CrossingResult in _results:
 		var route := GameState.content.get_entry(&"routes", result.route_id) as RouteData
 		if route == null or route.vessel != DataEnums.Vessel.RAFT or not route.vessel_kept_on_arrival:
 			continue
-		if not result.broken and result.integrity > best:
-			best = result.integrity
+		var record := result.raft_record()
+		if record != null and (best == null or record.integrity > best.integrity):
+			best = record
 	return best
 
 
@@ -343,7 +343,7 @@ func _travel_when_idle() -> void:
 
 # Every peer, from the host's travel_to: the old level goes, the next one is built and the players
 # land on it.
-func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float, index: int = 0) -> void:
+func _load(layout_id: StringName, arrivals: Dictionary, raft: RaftRecord, index: int = 0) -> void:
 	var next_layout := GameState.content.get_entry(&"islands", layout_id) as IslandLayoutData
 	if next_layout == null:
 		return
@@ -358,7 +358,7 @@ func _load(layout_id: StringName, arrivals: Dictionary, raft_integrity: float, i
 	session.spawn_points = fresh.spawn_points(false)
 	_land(arrivals)
 	fresh.furnish(session)
-	fresh.beach_raft(raft_integrity)
+	fresh.beach_raft(raft)
 	if session.multiplayer.is_server():
 		fresh.place_pickups(session)
 	_results.clear()

@@ -15,6 +15,7 @@ Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
 Files: palm.png (the curved, ringed trunk and the crown's seven back and side fronds); palm_coconuts_1.png, palm_coconuts_2.png and palm_coconuts_3.png; palm_nest.png; fire.png (four flicker frames and the embers, over crossed logs); stake.png; lean_to.png (driftwood posts and a frond roof); the open barrel top of rain_catcher.png, the post of sign_post.png, the tools on workbench.png, and the inner tubes, lashings, stakes, string and damage of raft.png and raft_site.png; the car of car.png (a 1950s sedan from above with its rust, dents and damage, no maker's mark) and board.png (a rigged longboard with a tarp sail, worn and breaking). Made by tools/art/structures.py from tools/art/structure_sheets.json and the hand sources in tools/art/fixes/structures/.
+Files: raft_fittings.png (island-stop: the raft fittings drawn over raft.png's frames, 64x32 each: the clavazón's nail heads, the defensas' two tubes lashed along the front edge, and the toldo's tarp on four posts; drawn in the master palette's DB32 colours by tools/art/raft_fittings.py)
 
 Work: 90 Millas hidden cay decor
 Author: 90 Millas

@@ -918,7 +918,7 @@ func _lit_fire_beside() -> Node2D:
 # --only=cay: the run travels straight to the coast cay (the host's travel_to, as a crossing's end calls it),
 # then the coast cay steps run.
 func _cay_only() -> void:
-	session.call("travel_to", "coast_cay", {1: {"health": 100.0, "energy": 100.0}}, 100.0)
+	session.call("travel_to", "coast_cay", {1: {"health": 100.0, "energy": 100.0}}, {"integrity": 100.0, "max": 100.0, "fittings": []})
 	_hooked("travelled to the coast cay at once (CoopSession.travel_to)")
 	await _frames(30)
 	await _coast_cay()
@@ -991,7 +991,7 @@ func _hut_shade_view() -> void:
 # host's travel_to, as the shimmer's crossing ends), walks to the embers and shoots the scenery: every
 # decor cell draws its piece and none its colour square, and Platino stands beside the chest.
 func _hidden_only() -> void:
-	session.call("travel_to", "cayo_sin_norte", {1: {"health": 100.0, "energy": 100.0}}, 100.0)
+	session.call("travel_to", "cayo_sin_norte", {1: {"health": 100.0, "energy": 100.0}}, {"integrity": 100.0, "max": 100.0, "fittings": []})
 	_hooked("travelled to the hidden cay at once (CoopSession.travel_to)")
 	await _frames(30)
 	island = shell.get("island")
@@ -1025,7 +1025,7 @@ func _hidden_only() -> void:
 # the post's back row and shoots the garita with the player in front of it, then stands 2 tiles south
 # and shoots the post with its signs.
 func _post_only() -> void:
-	session.call("travel_to", "coast_cay", {1: {"health": 100.0, "energy": 100.0}}, 100.0)
+	session.call("travel_to", "coast_cay", {1: {"health": 100.0, "energy": 100.0}}, {"integrity": 100.0, "max": 100.0, "fittings": []})
 	_hooked("travelled to the coast cay at once (CoopSession.travel_to)")
 	await _frames(30)
 	island = shell.get("island")
@@ -1095,7 +1095,7 @@ func _raft_only() -> void:
 	await _world_image("raft_built")
 	_check("beside the built raft the prompt is the raft's own, on its hull", await _aim_at(raft), "prompt %s" % _prompt_lines())
 	await _world_image("raft_built_prompt")
-	session.call("travel_to", "coast_cay", {1: {"health": 100.0, "energy": 100.0}}, 100.0)
+	session.call("travel_to", "coast_cay", {1: {"health": 100.0, "energy": 100.0}}, {"integrity": 100.0, "max": 100.0, "fittings": []})
 	_hooked("travelled to the coast cay with the raft at 100 (CoopSession.travel_to)")
 	await _frames(30)
 	island = shell.get("island")

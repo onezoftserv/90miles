@@ -159,10 +159,10 @@ func test_the_detour_is_not_an_island_reached() -> void:
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
 	assert_eq(shell.travel.islands_reached, 1, "the sandbar")
-	shell.session.travel_to("cayo_sin_norte", {1: {"health": 100.0, "energy": 100.0}}, 0.0)
+	shell.session.travel_to("cayo_sin_norte", {1: {"health": 100.0, "energy": 100.0}}, {})
 	assert_eq(shell.travel.island.layout.id, &"cayo_sin_norte", "the party stands on the cay")
 	assert_eq(shell.travel.islands_reached, 1, "the cay is not counted")
-	shell.session.travel_to("coast_cay", {1: {"health": 100.0, "energy": 100.0}}, 0.0)
+	shell.session.travel_to("coast_cay", {1: {"health": 100.0, "energy": 100.0}}, {})
 	assert_eq(shell.travel.islands_reached, 2, "the island after it is island 2")
 	if FileAccess.file_exists(shell.settings_path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(shell.settings_path))

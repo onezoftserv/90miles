@@ -379,7 +379,7 @@ func test_a_solo_raft_on_the_sandbar_and_the_coast_cay_rests_on_land_with_its_wi
 		assert_eq(_drawn(site).frame(), StructureArt.SITE_MARKED, "%s: marked" % id)
 		_assert_rests_toward_land(_look(site), StructureArt.KIND_RAFT_SITE, side, "%s: the marked site" % id)
 		_assert_wide_shadow(_look(site), false, "%s: the marked site" % id)
-		island.beach_raft(100.0)
+		island.beach_raft(RaftRecord.bare(100.0))
 		await wait_process_frames(1)
 		var raft := shell.session.get_node_or_null(^"Raft") as Raft
 		assert_not_null(raft, "%s: a raft on the site" % id)

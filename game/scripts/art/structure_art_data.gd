@@ -33,6 +33,10 @@ const STANDARD_PATH: String = "res://assets/art/structures/structure_art.tres"
 ## A sign's look by IslandSignData.look (art-prop-polish D7): the radio, the crossed sticks, the slogan
 ## fragment. A sign with no look, or one this does not name, draws the sign board of `stills`.
 @export var sign_looks: Dictionary[StringName, Texture2D] = {}
+## A raft fitting's overlay by recipe id (island-stop task 3.6): 64x32, aligned to the raft's
+## frames and drawn over them, on the beach and at sea, in this order (the toldo last, on top). A
+## fitting this does not name draws nothing.
+@export var raft_fittings: Dictionary[StringName, Texture2D] = {}
 ## A build site's stages (SITE_MARKED, SITE_MATERIALS, SITE_HALF_BUILT) by recipe id; any other
 ## site is the stake marker.
 @export var site_frames: Dictionary[StringName, SpriteFrames] = {}
@@ -95,3 +99,12 @@ func shadow_for(kind: StringName, frame: StringName) -> int:
 ## The stages of the site of `recipe_id`, or null for a stake marker.
 func site_frames_for(recipe_id: StringName) -> SpriteFrames:
 	return site_frames.get(recipe_id, null) as SpriteFrames
+
+
+## The overlays of the fittings `fittings` has, in this data's draw order.
+func fitting_overlays(fittings: Array[StringName]) -> Array[Texture2D]:
+	var shown: Array[Texture2D] = []
+	for id: StringName in raft_fittings:
+		if fittings.has(id) and raft_fittings[id] != null:
+			shown.append(raft_fittings[id])
+	return shown

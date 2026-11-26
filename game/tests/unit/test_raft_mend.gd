@@ -34,7 +34,7 @@ func before_each() -> void:
 	island.with_creatures = false
 	island.furnish(session)
 	session.start()
-	island.beach_raft(48.0)
+	island.beach_raft(RaftRecord.bare(48.0))
 	raft = session.get_node("Raft") as Raft
 	body = session.body(1)
 	body.player_input.enabled = false
@@ -104,7 +104,7 @@ func test_solo_mends_on_the_coast_cay() -> void:
 	body.global_position = raft.global_position
 	assert_true(session.start_route_for(CoopSession.HOST_ID, &"raft"), "the mended raft launches")
 	var routes := session.get_node("Routes") as IslandRoutes
-	assert_eq(routes.departure_integrity[&"raft"], 68.0, "at 68")
+	assert_eq(routes.departure_raft[&"raft"].integrity, 68.0, "at 68")
 
 
 func test_the_mend_is_not_done_before_its_10_s() -> void:
@@ -194,7 +194,7 @@ func test_solo_launches_in_the_middle_of_a_mend() -> void:
 	body.global_position = raft.global_position
 	assert_true(session.start_route_for(CoopSession.HOST_ID, &"raft"), "a job never stops a launch")
 	var routes := session.get_node("Routes") as IslandRoutes
-	assert_eq(routes.departure_integrity[&"raft"], 60.0, "the crossing starts at 60")
+	assert_eq(routes.departure_raft[&"raft"].integrity, 60.0, "the crossing starts at 60")
 	assert_eq(body.inventory.count_id(&"driftwood"), 1, "the driftwood is back")
 
 

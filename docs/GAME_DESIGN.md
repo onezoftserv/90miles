@@ -146,7 +146,17 @@ It counts as changing nothing only when every meter it raises is within 1 point 
 - There is one job on a raft at a time. Anyone deposits into it and anyone works it.
 - A launch ends an unfinished job and gives the deposits back.
 - An intact raft can always sail on at once: there is no gate. Its prompt shows its integrity and warns below half.
-- Stopping pays in mends now. The fittings (clavazón, defensas, toldo) follow in the change's second PR.
+- Stopping pays in mends and in fittings.
+
+**Fitting the raft** (`island-stop`, PR 2). A built raft still on the island takes each fitting once, as a job at its work point like a mend (Building, twice as fast for a Mecánico). A fitting the raft has is refused. Fittings ride with the raft to the next beach, and a raft that breaks loses them.
+
+| Fitting | Inputs | Work | Effect |
+| --- | --- | --- | --- |
+| Clavazón | 4 nails | 20 s | Maximum and integrity +20 (100 → 120) |
+| Defensas | 1 inner tube, 1 rope | 10 s | Rocks and debris do three quarters (§8) |
+| Toldo | 1 tarp, 2 driftwood | 15 s | The deck is shade at sea (§8) |
+
+The tarp and 2 driftwood are exactly the sandbar's leftovers once the raft is built, so the sandbar's one tarp is a choice between rain and shade at sea. The 4 nails are exactly the coast cay's. A new fitting whose effects use existing stats is a recipe file with no script change.
 
 ## 7. Escape routes
 
@@ -172,6 +182,8 @@ The almendrón and the board are rolled extras on a few chains (`ISLANDS.md`), n
 ## 8. The crossing
 
 A 60–120 second sequence on a scrolling sea. Threats roll by distance from Cuba and weather: reef sharks follow blood; a squall line forces you to tie down; searchlights sweep from a cutter on the early chains; the Gulf Stream pushes east: anyone aboard slows the drift to 0.25 tile/s, and a *Maestro*, Navigation 2 or a compass with charts cancels it (the secret *Brújula rota* and *Mapa sin norte* never count as either, `ITEMS.md` "Secret items"). Drift pushes you sideways (up to 40 tiles, then you overshoot to a harder chain) but never makes the crossing longer. A car rides high and is hard to fall off (sharks ×0.6) but is loud under a searchlight (threats ×1.2). A board is its own small vessel: each rider has one (integrity 60) and it has no lashing, so nobody ties down on a board. A squall hits every board and dumps every board rider; a rock or a shark hits one board at a time, in turn through the riders, and a shark dumps that board's rider. A rider climbs back onto their own board as below, or a teammate on their own board pulls them onto it, and at 0 the board breaks and its rider swims the rest. Only a raft is ever beached on the next island: the board is lost on arrival, and the car is not beached yet. Board riders land 10–20 tiles apart instead of within 5, so a party finds each other on the next beach; a solo rider has nobody to look for. Falling in the water costs energy and attracts sharks; a swimmer climbs back aboard alone by holding interact for 3 s at the edge, or a teammate pulls them in 2 s. The raft takes damage; at 0 it breaks and everyone swims the rest or drowns.
+
+**A fitted raft at sea** (`island-stop`). A raft enters the crossing with the integrity, maximum and fittings it had on the beach, and a plank never mends it past its maximum. With the defensas a rock takes 30 instead of 40 and debris 3.75 instead of 5 (the leak still opens; squalls and sharks are unchanged). With the toldo the deck is shade for every rider aboard: no sun factor on thirst, and heat falls as it does in shade, so a midday crossing brings no sunstroke (75 s from 11:00 in calm: thirst −7.5 instead of −15). A rider in the water follows the swimming rules. Only a raft takes fittings; boards, the car and swimmers never do. The vessel's look reads its share of its maximum, so a nailed raft at 70 of 120 is drawn worn.
 
 Swimmers in the water lose energy every second, moving or not (3 a second, times the route's drain factor: 0.4 for binoculars-and-swim, so a solo swimmer at 100 ends a 60 s crossing with 28); at 0 energy they drown at 10 health a second. Falling in costs 10 energy.
 

@@ -225,7 +225,7 @@ func test_a_solo_player_on_the_hidden_cay_sees_every_piece_and_platino_on_the_ch
 	shell.settings_path = settings_path
 	add_child_autofree(shell)
 	(shell.screen as TitleScreen).solo_requested.emit()
-	shell.session.travel_to("cayo_sin_norte", {1: {"health": 100.0, "energy": 100.0}}, 0.0)
+	shell.session.travel_to("cayo_sin_norte", {1: {"health": 100.0, "energy": 100.0}}, {})
 	await wait_physics_frames(2)
 	var island := shell.travel.island
 	assert_eq(island.layout.id, &"cayo_sin_norte", "on the hidden cay")

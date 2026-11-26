@@ -45,8 +45,9 @@ func _setup(session: CoopSession) -> void:
 	routes.route_started.connect(func(id: StringName, peers: Array[int]) -> void:
 		starts[key] += 1
 		var route := GameState.content.get_entry(&"routes", id) as RouteData
-		var integrity: float = routes.departure_integrity.get(id, float(route.vessel_integrity))
-		Crossing.launch(session, route, peers, integrity, DataEnums.DistanceBand.COAST, rng))
+		var raft: RaftRecord = routes.departure_raft.get(id)
+		var integrity: float = raft.integrity if raft != null else float(route.vessel_integrity)
+		Crossing.launch(session, route, peers, integrity, DataEnums.DistanceBand.COAST, rng, raft))
 
 
 func _as(identity: PlayerIdentity) -> Callable:

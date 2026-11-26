@@ -4,7 +4,7 @@ extends RefCounted
 ## peer that joins mid-crossing needs to build it. The host makes one with of() and sends
 ## to_dict(); a joiner checks what arrived with from_dict() and gives it to Crossing.restore().
 
-const KEYS: Array[String] = ["serial", "route", "riders", "plan", "elapsed_s", "maximum", "value", "broken", "states", "positions", "boards", "steer", "leaks", "taken", "shooed", "fins"]
+const KEYS: Array[String] = ["serial", "route", "riders", "plan", "elapsed_s", "maximum", "value", "broken", "states", "positions", "boards", "steer", "leaks", "taken", "shooed", "fins", "raft"]
 
 ## The crossing's number: its node name and where its sea lies.
 var serial: int = 0
@@ -27,6 +27,9 @@ var boards: Dictionary[int, float] = {}
 ## [lateral position, velocity], "leaks" the open leaks as [[id, vessel, x, y], ...], "taken" the
 ## flotsam taken as {beat index: peer}.
 var play: Dictionary = {}
+## The raft that launched, with its maximum and fittings (island-stop D6); null for any other
+## vessel. Travels as "raft": the record's dict, or an empty one.
+var raft: RaftRecord = null
 
 
 ## Host: `crossing` as it is now.
@@ -48,6 +51,7 @@ static func of(crossing: Crossing) -> CrossingSnapshot:
 		if crossing.boards.has(peer):
 			snapshot.boards[peer] = crossing.boards[peer].value
 	snapshot.play = crossing.play_state()
+	snapshot.raft = crossing.fitted
 	return snapshot
 
 
@@ -78,12 +82,13 @@ func to_dict() -> Dictionary:
 		"taken": play.get("taken", {}),
 		"shooed": play.get("shooed", []),
 		"fins": play.get("fins", {}),
+		"raft": raft.to_dict() if raft != null else {},
 	}
 
 
 ## Null for malformed data (a joiner never trusts what arrives): a missing key, a serial outside
 ## 0..Crossing.MAX_SERIAL, a route not in the catalog, riders that are not 1 to 4 distinct peer
-## ids, a malformed plan or one of no length, a number that is not finite, a rider without a valid
+## ids, a "raft" that is neither empty nor a raft record, a malformed plan or one of no length, a number that is not finite, a rider without a valid
 ## state, a position that is not finite, or a board that is not a peer's finite number.
 ## In-range numbers are clamped (a board to 0..its route's vessel integrity); states, positions
 ## and boards of non-riders are dropped.
@@ -106,6 +111,8 @@ static func from_dict(data: Variant) -> CrossingSnapshot:
 	if not snapshot._read_leaks(raw.get("leaks")) or not snapshot._read_taken(raw.get("taken")):
 		return null
 	if not snapshot._read_shark(raw.get("shooed"), raw.get("fins")):
+		return null
+	if not snapshot._read_raft(raw.get("raft")):
 		return null
 	return snapshot
 
@@ -245,3 +252,14 @@ func _read_positions(raw_positions: Variant) -> bool:
 		if riders.has(peer):
 			positions[peer] = spot
 	return true
+
+
+# The raft: an empty dictionary for any other vessel, else a record (RaftRecord.from_dict).
+func _read_raft(raw_raft: Variant) -> bool:
+	if not raw_raft is Dictionary:
+		return false
+	if (raw_raft as Dictionary).is_empty():
+		raft = null
+		return true
+	raft = RaftRecord.from_dict(raw_raft)
+	return raft != null

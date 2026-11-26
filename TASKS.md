@@ -75,7 +75,13 @@ Ordered. Tick as you go; Claude Code keeps this file current. Each coding task m
     - the launch prompt shows "Balsa 48/100" and warns below half;
     - every peer and every joiner sees the raft's state;
     - 1-player, host-plus-client and two-process (UDP 7798, `tests/manual/island_stop_run.gd`) checks.
-  - [ ] PR 2, the fittings: clavazón (+20 maximum), defensas (rocks and debris ×0.75), toldo (the deck is shade), carried through the crossing to the next beach. It waits for `crossing-gameplay`'s three PRs.
+  - [x] PR 2, the fittings (built 2026-11-25):
+    - clavazón (4 nails, 20 s: +20 maximum and integrity), defensas (inner tube and rope, 10 s: rocks and debris ×0.75), toldo (tarp and 2 driftwood, 15 s: the deck is shade);
+    - the raft's record `{integrity, max, fittings}` replaces the beached-integrity float in the departure, the crossing result, `travel_to`, the join extras and the crossing snapshot (a new required key "raft");
+    - rough overlays for the three fittings on the beach and at sea (`tools/art/raft_fittings.py`);
+    - 1-player, host-plus-client and two-process (UDP 7798, `tests/manual/island_stop_run.gd`, host 24/24, client 16/16) checks.
+  - [ ] The owner's voice pass on the fittings' names and descriptions (drafts in design.md D9) and an art pass on the three overlays.
+  - [ ] Group 4: one solo run and one co-op run through the whole stop, played by hand.
   - [ ] Follow-ups (owner Q8): `night-ashore` (sleep in a shelter at night, +50 energy, wiring `sleep_night()`), then the patrol spotting a launch, with the cutter boss.
   - [ ] The Mecánico's 2× applies once a Mecánico background exists (the backgrounds change). Today the rule reads `BackgroundData.skills`, and only the Maestro and the Médico ship.
 - [x] `creatures-ai`: reef shark (patrol/circle/strike), crabs, gulls

@@ -4,7 +4,8 @@ extends Node2D
 ## design.md D18, D22, T6-T10): the `Look` child of a palm, fire, rain catcher, build site, raft,
 ## workbench or island sign, in `art_view`. Every frame it reads its structure's fields (a palm's
 ## coconuts, a fire's `lit`, a catcher's cups, a site's deposits, progress and `built`, a raft's
-## integrity) and shows the frame StructureArt picks, standing bottom-centre on the structure's
+## integrity and fittings) and shows the frame StructureArt picks (a raft's fittings drawn over it,
+## RaftFittingsLook), standing bottom-centre on the structure's
 ## origin, with the shadow its kind names. A raft and its site lean toward land by their look offset
 ## (art-terrain-polish D3), shadow and all. It never writes the structure. Each peer draws the state
 ## it holds: palm coconuts, fire burn-out and rain cups are host state a client does not receive
@@ -69,7 +70,8 @@ func step() -> void:
 		StructureArt.KIND_RAFT_SITE:
 			_play(stages, StructureArt.site_stage(site.deposited, site.tags_deposited, site.progress()), lean)
 		StructureArt.KIND_RAFT:
-			_play(data.raft, StructureArt.raft_frame((structure as Raft).integrity), lean)
+			_play(data.raft, StructureArt.vessel_frame((structure as Raft).integrity, (structure as Raft).max_integrity), lean)
+			RaftFittingsLook.of(sprite).show_fittings(data, (structure as Raft).fittings, sprite)
 		StructureArt.KIND_STAKE:
 			if StructureArt.site_marker_shown(site.built):
 				_show_still(data.still_for(kind))
