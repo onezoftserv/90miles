@@ -18,7 +18,7 @@ Each player SHALL have a `SurvivalMeters` node holding six floats (0–100): thi
 - **THEN** thirst, hunger, energy, morale and health are 100 and heat is 0
 
 ### Requirement: Thirst
-Thirst SHALL drain 0.1/s (6/min) at rest, ×2 in direct sun (day phase, on land, not in shade), ×3 while swimming instead of the sun factor, ×0.5 at night. At 0, health drains 2/s. Coconut +15, rain cup +25, still cup +40, well cup +30. Seawater +10 then −30 over 120 s. (Base rate changed from 1/min in `docs/GAME_DESIGN.md` §4.)
+Thirst SHALL drain 0.1/s (6/min) at rest, ×2 in direct sun (day phase, on land, not in shade), ×3 while swimming instead of the sun factor, ×0.5 at night. Work on a build that names a thirst cost adds that cost on top (a raft stage: +0.25/s, crafting-inventory "Work costs"). At 0, health drains 2/s. Coconut +15, rain cup +25, still cup +40, well cup +30. Seawater +10 then −30 over 120 s. (Base rate changed from 1/min in `docs/GAME_DESIGN.md` §4; the work cost adds to §4.)
 
 #### Scenario: Seawater
 - GIVEN a player resting in shade at night with thirst 50
@@ -45,6 +45,11 @@ Thirst SHALL drain 0.1/s (6/min) at rest, ×2 in direct sun (day phase, on land,
 - **WHEN** 10 s pass
 - **THEN** health is 80
 
+#### Scenario: Building the raft in the sun
+- **GIVEN** a solo player in direct sun with thirst 80 holding interact on a raft site whose stage inputs are in
+- **WHEN** 20 s pass
+- **THEN** thirst is 71
+
 ### Requirement: Hunger
 Hunger SHALL drain 0.05/s (3/min), ×2 while crafting or swimming. At 0, the energy cap is 50: energy above 50 drops to 50 and cannot rise past it until hunger is above 0. Foods restore per `docs/GAME_DESIGN.md`. Raw crab and raw fish have a 30% poison chance (−20 health over 30 s) unless the eater is a Pescador. (Rate changed from 0.5/min in `docs/GAME_DESIGN.md` §4.)
 
@@ -64,7 +69,7 @@ Hunger SHALL drain 0.05/s (3/min), ×2 while crafting or swimming. At 0, the ene
 - **THEN** hunger is 0 and energy is 50
 
 ### Requirement: Heat
-Heat SHALL rise 0.75/s (45/min) in direct sun between in-game 10:00 and 16:00, ×2 in scorching calm; fall 0.75/s in shade, in water or outside that window; and reset to 0 at night. At 100, sunstroke: screen blur and speed −40% until heat < 60. (Rates changed from +2/min and −4/min in `docs/GAME_DESIGN.md` §4; at 30 s per in-game hour the window is 3 real minutes.)
+Heat SHALL rise 0.75/s (45/min) in direct sun between in-game 10:00 and 16:00, ×2 in scorching calm; fall 0.75/s in shade, in water or outside that window; and reset to 0 at night. At 100, sunstroke: screen blur and speed −40% until heat < 60. A rider aboard a vessel in a crossing never gains heat past the sea cap, 59: above it their heat falls at the shade rate down to it, so nobody is sunstruck at sea; the island-stop toldo replaces this cap. (Rates changed from +2/min and −4/min in `docs/GAME_DESIGN.md` §4; at 30 s per in-game hour the window is 3 real minutes; the sea cap adds to §4.)
 
 #### Scenario: Sunstroke lingers
 - GIVEN a player whose heat reached 100
@@ -86,8 +91,23 @@ Heat SHALL rise 0.75/s (45/min) in direct sun between in-game 10:00 and 16:00, �
 - **WHEN** night falls
 - **THEN** heat is 0
 
+#### Scenario: Solo midday at sea
+- **GIVEN** a 1-player crossing launched at 11:00 in calm weather, the rider aboard the raft with heat 40
+- **WHEN** 60 s pass aboard
+- **THEN** their heat is 59 and they have no sunstroke
+
+#### Scenario: Boarding sunstruck
+- **GIVEN** a 1-player run whose player has heat 100 and sunstroke when their raft crossing starts at 12:00
+- **WHEN** 55 s pass aboard
+- **THEN** their heat is 59 and the sunstroke is over
+
+#### Scenario: Back on land
+- **GIVEN** a solo rider who arrived on the coast cay at 12:00 with heat 59
+- **WHEN** they stand 60 s in direct sun on the beach
+- **THEN** their heat is 100 and sunstroke has started
+
 ### Requirement: Energy
-Energy SHALL drain per activity (swim 3/s, build 1/s, run 0.5/s) and restore +50 per sleep (a full night in shelter) and +10 per meal, where a meal is anything that restores hunger. It does not regenerate otherwise. At 0, the player can only crawl.
+Energy SHALL drain per activity (swim 3/s, run 0.5/s, and work on a build at its work cost: 1/s on a raft stage, crafting-inventory "Work costs") and restore +50 per sleep (a full night in shelter) and +10 per meal, where a meal is anything that restores hunger. It does not regenerate otherwise. At 0, the player can only crawl and works a build that costs energy at its slow-work factor (a quarter speed on the raft), paying its thirst only. (`docs/GAME_DESIGN.md` §4 "building 1/s" is the raft's work cost.)
 
 #### Scenario: Running out of energy
 - GIVEN a player on land with energy 5
@@ -102,6 +122,11 @@ Energy SHALL drain per activity (swim 3/s, build 1/s, run 0.5/s) and restore +50
 #### Scenario: A night's sleep
 - **GIVEN** a player with energy 20
 - **WHEN** they sleep a full night in shelter
+- **THEN** energy is 70
+
+#### Scenario: A raft stage
+- **GIVEN** a solo player with energy 100 at a raft site whose first stage's inputs are in
+- **WHEN** they hold interact on it for its 30 s
 - **THEN** energy is 70
 
 ### Requirement: Morale
@@ -146,14 +171,14 @@ Health SHALL drop from attacks, thirst and poison. At 0 a player with another li
 - **THEN** the player is dead
 
 #### Scenario: Solo
-- **GIVEN** a solo player on run 1 with no downed-timer bonus
+- **GIVEN** a solo player on run 1 with no downed-timer bonus, on land
 - **WHEN** their health reaches 0
-- **THEN** they die at once, without a downed timer
+- **THEN** they are not downed but in a last stand, alive after 11.9 s and dead after 12 s
 
 #### Scenario: Last one alive
-- **GIVEN** a co-op player with no downed-timer bonus whose only teammate has died
+- **GIVEN** a co-op player with no downed-timer bonus whose only teammate has died, on land
 - **WHEN** their health reaches 0
-- **THEN** they die at once, without a downed timer
+- **THEN** they are in a 12 s last stand, without a 90 s downed timer
 
 #### Scenario: Experiencia lengthens the downed timer
 - **GIVEN** a co-op player with 10 s of downed-timer bonus
@@ -179,25 +204,35 @@ Every meter rule SHALL work for a single player: no meter needs a teammate to re
 - **THEN** thirst and hunger never reach 0, at most 10 coconuts are used and morale never drops below 20
 
 ### Requirement: Solo last stand
-At 0 health a player with no other living player SHALL get a last stand lasting 0 s plus their downed-timer bonuses (Experiencia levels and the point boost; endings-progression owns those numbers). They lie where they fell, still losing thirst and hunger, and can use a cup whose item revives on themselves to stand at 30 health. When the last stand ends they die; with no bonus (run 1) they die at once.
+At 0 health a player with no other living player SHALL get a last stand lasting 12 s on land plus their downed-timer bonuses (Experiencia levels and the point boost; endings-progression owns those numbers). A rider of a crossing gets the bonuses alone, since nothing can be used at sea. They lie where they fell, still losing thirst and hunger, and can use a cup whose item revives on themselves to stand at 30 health. When the last stand ends they die; at sea with no bonus (run 1) they die at once. (Changes the 0 s base of `docs/GAME_DESIGN.md` §4 "Last stand" and §14.)
 
 #### Scenario: Last stand with Experiencia
-- **GIVEN** a solo player with 15 s of downed-timer bonus (3 Experiencia levels)
+- **GIVEN** a solo player on land with 15 s of downed-timer bonus (3 Experiencia levels)
 - **WHEN** their health reaches 0
-- **THEN** they are in a last stand, alive after 14 s and dead after 15 s
+- **THEN** they are in a last stand, alive after 26 s and dead after 27 s
 
 #### Scenario: Saving yourself
 - **GIVEN** a solo player in a last stand with 5 s left and a rain cup
 - **WHEN** they use the rain cup on themselves
 - **THEN** they stand with health 30 and thirst +25
 
+#### Scenario: Run 1 alone and dry
+- **GIVEN** a 1-player run, offline, on run 1, a player on the sandbar with thirst 0, health 2, a coconut and a knife
+- **WHEN** 1 s passes and then they drink the coconut
+- **THEN** they were in a last stand and stand again at 30 health with thirst 15
+
+#### Scenario: Run 1 at sea
+- **GIVEN** a 1-player crossing on run 1 whose rider swims at 0 energy and 10 health
+- **WHEN** 1 s passes
+- **THEN** the rider is dead, with no last stand
+
 ### Requirement: Free revive
 A player holding an unused free revive (the Medalla de la Caridad keepsake: one per run) SHALL, when their health reaches 0, stand at 30 health instead of going down, starting a last stand or dying, and the free revive is used up. It needs no reviver, so it works solo.
 
 #### Scenario: The Medalla saves a solo player once
-- **GIVEN** a solo player on run 1 holding the Medalla with its revive unused
+- **GIVEN** a solo player on run 1 on land holding the Medalla with its revive unused
 - **WHEN** their health reaches 0, and later reaches 0 again
-- **THEN** the first time they stand at 30 health and the revive is used up; the second time they die
+- **THEN** the first time they stand at 30 health and the revive is used up; the second time they are in a 12 s last stand
 
 #### Scenario: The Medalla in co-op
 - **GIVEN** a co-op player holding the Medalla with its revive unused
@@ -257,8 +292,8 @@ While the local player bleeds, their screen SHALL show a red "Sangrando" tag in 
 When a player dies the host SHALL record one cause id for the death: the cause of the health loss that took health to 0. A downed player, or a player in a solo last stand, keeps the cause of the loss that put them down until they die; a revive forgets it, and a free revive records nothing. Clients show the host's cause and already have it when their copy of the player dies. The rule is the same for 1 player and in co-op.
 
 #### Scenario: A solo player dies of thirst
-- **GIVEN** a solo player on run 1 with thirst 0 and health 2
-- **WHEN** 1 s passes
+- **GIVEN** a solo player on run 1 on land with thirst 0 and health 2
+- **WHEN** 13 s pass
 - **THEN** the player is dead and the cause is `thirst`
 
 #### Scenario: Downed by a shark, dry while down
@@ -267,13 +302,13 @@ When a player dies the host SHALL record one cause id for the death: the cause o
 - **THEN** the player is dead and the cause is `reef_shark`
 
 #### Scenario: Revived, then dry
-- **GIVEN** a co-op player downed by a reef shark and revived at 30 health with thirst 0, who is now the last one alive
-- **WHEN** 15 s pass
+- **GIVEN** a co-op player on land downed by a reef shark and revived at 30 health with thirst 0, who is now the last one alive
+- **WHEN** 27 s pass
 - **THEN** the player is dead and the cause is `thirst`
 
 #### Scenario: A solo last stand keeps its cause
-- **GIVEN** a solo player with 15 s of downed-timer bonus pinched to 0 health by a land crab
-- **WHEN** the 15 s run out
+- **GIVEN** a solo player on land with 15 s of downed-timer bonus pinched to 0 health by a land crab
+- **WHEN** the 27 s run out
 - **THEN** the player is dead and the cause is `land_crab`
 
 #### Scenario: The Medalla records nothing
@@ -300,9 +335,9 @@ Every loss of health SHALL name one cause id: `thirst` (health lost while thirst
 - **THEN** the rider is dead and the cause is `reef_shark`
 
 #### Scenario: Poison
-- **GIVEN** a solo player with health 10
-- **WHEN** they are poisoned (20 health over 30 s) and 15 s pass
-- **THEN** the player is dead and the cause is `other`
+- **GIVEN** a solo player on land with health 10
+- **WHEN** they are poisoned (20 health over 30 s) and 27 s pass
+- **THEN** the player is dead and the cause is `other`, and after 16 s they were in a last stand
 
 #### Scenario: Empty meters that do not kill
 - **GIVEN** a solo player with hunger, energy and morale at 0, heat 100 and thirst full

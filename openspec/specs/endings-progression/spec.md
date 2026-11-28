@@ -152,17 +152,17 @@ A `devuelto` ending (every living player captured on the final crossing) SHALL e
 - THEN the profile is at level 3, carries 20 fishing XP, and has the Devuelto keepsake unlocked
 
 ### Requirement: Solo last stand from Experiencia
-For a player with no other living player (a 1-player run, or the last one alive), the downed-timer rewards SHALL lengthen the solo last-stand window that survival-meters defines: 0 s base, +5 s per Experiencia level and +10 s with the downed-timer boost. The Medalla de la Caridad revive goes with this window but fires at 0 health before it starts (survival-meters), so it works on run 1 too. (Changes docs/GAME_DESIGN.md §14.)
+For a player with no other living player (a 1-player run, or the last one alive), the downed-timer rewards SHALL lengthen the solo last-stand window that survival-meters defines: 12 s base on land (none at sea), +5 s per Experiencia level and +10 s with the downed-timer boost. The Medalla de la Caridad revive goes with this window but fires at 0 health before it starts (survival-meters), so it works on run 1 too. (Changes docs/GAME_DESIGN.md §14, whose base was 0 s.)
 
 #### Scenario: Run 1 solo
 - GIVEN a new profile with Experiencia level 0 and no boosts
 - WHEN a 1-player run starts
-- THEN the player's last-stand window is 0 s
+- THEN the player's last-stand window is 12 s on land and 0 s at sea
 
 #### Scenario: Eased solo
 - GIVEN a profile at Experiencia level 4 that bought the +10 s downed-timer boost
 - WHEN a 1-player run starts
-- THEN the player's last-stand window is 30 s
+- THEN the player's last-stand window is 42 s on land and 30 s at sea
 
 ### Requirement: Cause of death on the run summary
 The run summary SHALL show one row per player: the name and fate, then for a player who died their cause (survival-meters "Cause ids", or `removed`) with a Cuban one-liner for it, then one tip line that stays empty and hidden until something sets it. Each row's entry SHALL carry the cause as the field `cause`, empty for a survivor, whose row shows the route they left by and no one-liner. Solo shows the one row; co-op shows living players in peer order, then removed players in removal order.
