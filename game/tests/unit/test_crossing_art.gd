@@ -264,6 +264,191 @@ func test_the_deck_ignores_the_beachs_look_offset() -> void:
 	assert_eq(_deck_drawn_rect(deck), crossing.deck_rect(), "the deck stays on deck_rect")
 
 
+# --- art-mood-pass C35 (D6, D7, D8): life on the open sea ----------------------------------------
+
+const CRESTS_Z: int = -38
+const WAKE_Z: int = -35
+## The deep ramp and the one lighter blue a crest may hold: never the fin's, the ring's or the
+## wake's white and pale blue.
+const CREST_COLOURS: PackedStringArray = ["#2a5578", "#306082", "#35678a", "#3a6f92", "#4a85a8"]
+const WAKE_COLOURS: PackedStringArray = ["#cbdbfc", "#9badb7"]
+const FLOTSAM := CrossingBeat.Kind.FLOTSAM
+
+
+# The colours of every opaque texel of `texture`.
+func _colours_of(texture: Texture2D) -> PackedStringArray:
+	var image: Image = ArtChecks.read_png(texture.resource_path)
+	var seen: PackedStringArray = []
+	for y: int in image.get_height():
+		for x: int in image.get_width():
+			var colour: Color = image.get_pixel(x, y)
+			if colour.a8 > 0 and not seen.has(ArtChecks.hex(colour)):
+				seen.append(ArtChecks.hex(colour))
+	return seen
+
+
+func _only(colours: PackedStringArray, allowed: PackedStringArray) -> PackedStringArray:
+	var other: PackedStringArray = []
+	for colour: String in colours:
+		if not allowed.has(colour):
+			other.append(colour)
+	return other
+
+
+## art-mood-pass 5.1, one player offline: on a raft crossing at 100, CrossingCrests at z -38 shows
+## crests in the deep ramp and #4a85a8 only, inside the sea, moving with the water.
+func test_a_solo_raft_crossing_shows_crests_in_deep_colours_that_move_with_the_water() -> void:
+	_start_solo()
+	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0)
+	CrossingRig.run(crossing, 1.0)
+	await wait_process_frames(2)
+	var crests := crossing.get_node_or_null(^"Crests") as CrossingCrests
+	assert_not_null(crests, "the crossing has its crests")
+	if crests == null:
+		return
+	assert_true(crests.is_in_group(&"art_view"))
+	assert_eq(DrawOrder.absolute_z(crests), CRESTS_Z)
+	assert_eq(_only(_colours_of(crests.texture), CREST_COLOURS), PackedStringArray(), "crests in the deep ramp and #4a85a8 only")
+	var shown: Array = crests.shown()
+	assert_gt(shown.size(), 3, "crests on the open sea")
+	for crest: Dictionary in shown:
+		assert_true(crossing.sea_rect().has_point(crest["at"]), "%s inside the sea" % crest["at"])
+		assert_between(int(crest["frame"]), 0, 2)
+	var before: Array = shown.duplicate(true)
+	CrossingRig.run(crossing, 0.5)
+	assert_ne(crests.shown(), before, "the crests move with the water")
+
+
+## art-mood-pass 5.1, one player offline: CrossingWake at z -35 shows a bow wake on the deck's north
+## edge and a stern wake trailing south, both inside the deck's x span, in #cbdbfc and #9badb7.
+func test_a_solo_raft_crossing_shows_a_bow_and_a_stern_wake_inside_the_deck() -> void:
+	_start_solo()
+	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0)
+	CrossingRig.run(crossing, 0.5)
+	await wait_process_frames(2)
+	var wake := crossing.get_node_or_null(^"Wake") as CrossingWake
+	assert_not_null(wake, "the crossing has its wake")
+	if wake == null:
+		return
+	assert_true(wake.is_in_group(&"art_view"))
+	assert_eq(DrawOrder.absolute_z(wake), WAKE_Z)
+	for texture: Texture2D in [wake.bow_texture, wake.stern_texture]:
+		assert_eq(_only(_colours_of(texture), WAKE_COLOURS), PackedStringArray(), "%s in #cbdbfc and #9badb7 only" % texture.resource_path)
+	assert_eq(ArtTuning.standard().wake_steps % 6, 0, "the wake's steps per wrap divide by its 2 bow and 3 stern frames")
+	var shown: Array = wake.shown()
+	assert_eq(shown.size(), 1, "one wake for the raft")
+	if shown.is_empty():
+		return
+	var deck := crossing.deck_rect()
+	var one: Dictionary = shown[0]
+	assert_false(bool(one["small"]), "the raft's is the full wake")
+	for part: String in ["bow", "stern"]:
+		var rect: Rect2 = one[part]
+		assert_true(rect.position.x >= deck.position.x and rect.end.x <= deck.end.x, "the %s wake %s inside the deck's x span %s" % [part, rect, deck])
+	assert_lte((one["bow"] as Rect2).end.y, deck.position.y + 1.0, "the bow wake on the deck's north edge")
+	assert_gte((one["stern"] as Rect2).end.y, deck.end.y + 16.0, "the stern wake trails south of the deck")
+
+
+## art-mood-pass 5.1, one player offline: a swimmers' route and a sunk deck show no wake.
+func test_no_wake_on_a_swim_or_once_the_deck_has_sunk() -> void:
+	_start_solo()
+	var swim := CrossingRig.make(self, &"binoculars_swim", 1, 0.0, 90.0)
+	CrossingRig.run(swim, 0.5)
+	assert_true((swim.get_node(^"Wake") as CrossingWake).shown().is_empty(), "no vessel, no wake")
+	var raft := CrossingRig.make(self, &"raft", 1, 100.0, 90.0)
+	raft.hit_vessel(100.0)
+	CrossingRig.run(raft, 0.2)
+	assert_true((raft.get_node(^"Wake") as CrossingWake).shown().is_empty(), "a sunk deck has no wake")
+
+
+## art-mood-pass 5.1: a board route shows one small wake per intact board, inside that board's span.
+func test_a_board_route_shows_one_small_wake_per_intact_board() -> void:
+	_start_solo()
+	FixtureRoutes.put_in()
+	var crossing := CrossingRig.make(self, &"test_board", 2, 0.0, 90.0)
+	CrossingRig.run(crossing, 0.2)
+	var wake := crossing.get_node(^"Wake") as CrossingWake
+	var shown: Array = wake.shown()
+	assert_eq(shown.size(), 2, "one per board")
+	for one: Dictionary in shown:
+		assert_true(bool(one["small"]), "a board's wake is small")
+		var deck: Rect2 = one["deck"]
+		for part: String in ["bow", "stern"]:
+			var rect: Rect2 = one[part]
+			assert_true(rect.position.x >= deck.position.x and rect.end.x <= deck.end.x, "the board's %s wake inside its span" % part)
+	crossing.boards[2].hit(crossing.boards[2].maximum)
+	assert_eq(wake.shown().size(), 1, "a broken board has none")
+	FixtureRoutes.take_out()
+
+
+# A solo raft crossing with flotsam of `item` in lane 3 reaching the deck at 6 s, run until it is on
+# the sea; the crossing and the beat.
+func _flotsam_crossing(item: StringName) -> Array:
+	_start_solo()
+	var index: int = CrossingTuning.standard().flotsam_items.find(item) if item != CrossingTuning.PLANK_ID else CrossingTuning.standard().flotsam_items.find(CrossingTuning.PLANK_ID)
+	var beat := CrossingBeat.create(6.0, FLOTSAM, 3, index)
+	var crossing := CrossingRig.make(self, &"raft", 1, 100.0, 90.0, [beat])
+	CrossingRig.run(crossing, 3.0)
+	return [crossing, beat]
+
+
+## art-mood-pass 5.1 (D8), one player offline: a coconut in lane 3 is drawn from the coconut's icon,
+## cut at its waterline with at least 9 rows above it, with a ring at the line, bobbing at most 1 px,
+## centred on the beat where the GRAB point's piece is.
+func test_a_solo_coconut_piece_is_drawn_from_its_icon_above_its_waterline_with_a_ring() -> void:
+	var made := _flotsam_crossing(&"coco")
+	var crossing: Crossing = made[0]
+	var beat: CrossingBeat = made[1]
+	var hazards := crossing.get_node(^"Hazards") as CrossingHazards
+	var coco := GameState.content.get_entry(&"items", &"coco") as ItemData
+	var bobs: Dictionary[int, bool] = {}
+	for step: int in 12:
+		var look: Dictionary = hazards.piece_look(beat)
+		assert_same(look["texture"], coco.sprite, "drawn from the coconut's own icon")
+		var region: Rect2 = look["region"]
+		var image: Image = ArtChecks.read_png(coco.sprite.resource_path)
+		var top: int = int(region.end.y)
+		for y: int in image.get_height():
+			for x: int in image.get_width():
+				if image.get_pixel(x, y).a8 > 0:
+					top = mini(top, y)
+		assert_gte(int(region.end.y) - top, 9, "at least 9 rows of the icon above the line")
+		assert_lt(int(region.end.y), image.get_height(), "the rows under the line are cut")
+		assert_not_null(look["ring"], "a ring at the line")
+		var centre: Vector2 = (look["at"] as Vector2) + Vector2(image.get_width(), 0.0) / 2.0 + Vector2(0.0, image.get_height() / 2.0)
+		var drawn_off: Vector2 = centre - (crossing.beat_center(beat) - hazards.global_position)
+		assert_lte(absf(drawn_off.x), 0.5, "centred on the beat")
+		assert_lte(absf(drawn_off.y), 1.5, "bobbing at most 1 px off the beat")
+		bobs[int(look["bob"])] = true
+		CrossingRig.run(crossing, 0.1)
+	assert_true(bobs.keys().all(func(b: int) -> bool: return b == 0 or b == 1), "a 1 px bob: %s" % [bobs.keys()])
+
+
+## art-mood-pass D8: every flotsam item keeps at least 9 rows of its icon above the line.
+func test_every_flotsam_item_keeps_9_rows_above_its_waterline() -> void:
+	var tuning := CrossingTuning.standard()
+	for item: StringName in tuning.flotsam_items:
+		if item == CrossingTuning.PLANK_ID:
+			continue
+		var data := GameState.content.get_entry(&"items", item) as ItemData
+		var image: Image = ArtChecks.read_png(data.sprite.resource_path)
+		var cut: Rect2i = CrossingArt.waterline_cut(image, ArtTuning.standard())
+		var top: int = image.get_height()
+		for y: int in image.get_height():
+			for x: int in image.get_width():
+				if image.get_pixel(x, y).a8 > 0:
+					top = mini(top, y)
+		assert_gte(cut.end.y - top, 9, "%s keeps 9 rows above its line" % item)
+
+
+## art-mood-pass 5.1 (D8), one player offline: the plank piece is drawn from sea/plank.png.
+func test_a_solo_plank_piece_uses_the_plank_art() -> void:
+	var made := _flotsam_crossing(CrossingTuning.PLANK_ID)
+	var hazards := (made[0] as Crossing).get_node(^"Hazards") as CrossingHazards
+	var look: Dictionary = hazards.piece_look(made[1])
+	assert_eq((look["texture"] as Texture2D).resource_path, "res://assets/art/sea/plank.png")
+
+
 # --- art-sprite-polish D2 (C22, SP5): a swimmer north of the deck goes under it ------------------
 
 ## Between the crossing's sea (-40) and its deck (-20): a swimmer just north of a drawn deck.
@@ -543,6 +728,11 @@ func test_host_and_client_draw_riders_and_the_shark_over_the_sea_and_the_deck() 
 	var line := func() -> bool: return _water_line_on(client_crossing.body_of(client_id))
 	assert_true(await wait_until(line, TIMEOUT_S), "the client draws its own swimmer at the water line")
 	assert_true(_water_line_on(host_crossing.body_of(client_id)), "so does the host")
+	# art-mood-pass D6: the client's crests are the host's at the client's plan time and position, so
+	# both peers draw the same crests from the clock and the position they share.
+	var client_crests: Array = (client_crossing.get_node(^"Crests") as CrossingCrests).shown()
+	assert_false(client_crests.is_empty(), "the client draws crests")
+	assert_eq(CrossingArt.crests_at(host_crossing, client_crossing.elapsed_s, client_crossing.steer.position), client_crests, "the host's crests at the client's time and position")
 
 
 func test_a_late_joiner_draws_the_deck_at_the_host_integrity() -> void:

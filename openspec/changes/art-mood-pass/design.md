@@ -304,3 +304,40 @@ Measured values (the final tints, light energy and flicker table, paces, the rai
 - **Capture (4.6).** `art_pass_run.gd --mode=solo --only=squall` (new step, windowed, 20 checks pass, no engine error): by day the paces reach 1.80 and 1.60 in 4 s and no clock moved faster than 1.80× a frame's time; the crouched player and the pick-ups read through both stages; the label sits beside the phase. At night a lit fire's pool lights the rain. Image: `docs/art-pass/mood/squall_before_light_heavy_night.png` (calm by day, the light stage, the heavy stage, night by a fire; half size). Compare `docs/art-pass/review-2026-11-14/before/sandbar_squall_day.png` and `before/sandbar_night_squall_fire.png`.
   - A squall puts out an unsheltered fire in 5 s (`fire_extinguish_s`), so the night shot is 1 s into it, in the light stage; at night the light streaks are dim except inside the fire's pool, which is the intended read.
   - The whole windowed solo run (`--mode=solo`) passed every step after the squall starts. Its two night checks had read the tint 1 s into the night, which with C33a's brighter dusk is still mostly dusk: the night darkening read ×0.84 (limit 0.8), and a later shore view lost its foam under the patrol's beam. The run now waits out `blend_s` before its night views; `--only=foam` then passed 40 of 40, all four night views included.
+
+**C35, life on the open sea (group 5, D6–D8).** Stacked on art-sprite-polish group 7 (#127), which is stacked on group 6 (#123), from main f8a6c75, after crossing-gameplay (#70, #75).
+- **Gate (0.2).** crossing-gameplay's merged code was re-read:
+  - `CrossingHazards` draws the lane beats from `shown_beats()` at z −30;
+  - a lane beat sits at `lane − steer.position` across and its time to come up the sea (`Crossing.beat_center`);
+  - flotsam pieces come from the tuning's `flotsam_items`, `coco` and `PLANK_ID` among them, with a GRAB point half a tile toward the deck from the piece (`_refresh_play_points`).
+- **Tests first.** In `test_crossing_art.gd`; they failed for the right reasons against a compile-only skeleton:
+  - **crests:** the solo raft crossing's `Crests` is at z −38, in `art_view`, its texture only the deep ramp and #4a85a8, and it shows several crests inside the sea that move as the water does;
+  - **the wake:** `Wake` is at z −35, its textures only #cbdbfc and #9badb7. The raft gets one full wake, with the bow on the deck's north edge and the stern trailing at least a tile south, both inside the deck's x span. Its steps per wrap divide by 2 and 3;
+  - **no wake** on the binoculars swim or once the deck has sunk;
+  - **boards:** a 2-board `test_board` route shows two small wakes, each inside its board's span, and one once a board breaks;
+  - **host and client:** in the two-peer test, the client's crests equal the host's computed at the client's plan time and position;
+  - **the coconut:** a coconut in lane 3 is drawn from its own icon, with at least 9 rows above its waterline, the rows under it cut, and a ring. It sits within 0.5 px across and 1.5 px down of its beat over 12 steps, its bob 0 or 1. Every flotsam item keeps 9 rows;
+  - **the plank** piece is `sea/plank.png`.
+  - `test_draw_order.gd`: the crests and the wake lie over the sea and under the hazards.
+  - `test_mood.py`: the tracked list gains the five sea pieces.
+- **Crests (D6).** `CrossingCrests` draws what `CrossingArt.crests` gives. A lattice of 3×3-tile cells lies on the water. Each cell shows at most one crest, in the 1.6 s slots its hash passes a density of 0.3 (`ArtTuning.crest_*`). Where in the cell and when in the slot come from the same hash.
+  - **Departure:** the water's drift is the route's scroll speed times the plan clock, unwrapped, plus `steer.position` sideways, not `scroll_px()`. That scroll is accumulated on each peer and wraps at 64 px, which is no multiple of the 48 px lattice, so crests keyed to it would differ between peers and jump at each wrap. Both move at the same speed.
+  - `sea/crests.png`: 3 frames of 8×3, a light #4a85a8 top over a #2a5578 trough. The first draft used mid-ramp blues and barely showed against the water.
+- **The wake (D7).** `CrossingWake` draws what `CrossingArt.wakes` gives for each deck `CrossingArt.drawn_decks` names (group 7's rule):
+  - the bow ripple, 2 frames of 16×3, laid across the deck's width just north of its edge;
+  - the stern V, 3 frames of 32×24, from 2 px under the stern;
+  - a board's small V is the full V's top middle 16×12;
+  - the frames step 12 times per scroll wrap (`ArtTuning.wake_steps`), so the wrap never shows and a faster route's wake runs faster.
+  - **Departure:** two files, `sea/wake_bow.png` and `sea/wake_stern.png`, not one `wake.png`, because `mood.py` takes one frame size per piece.
+- **Flotsam (D8).** `CrossingHazards._draw_piece` now draws what `piece_look(beat)` gives:
+  - the item's icon, cut 3 rows above its lowest opaque row but keeping at least 9 rows (`ArtTuning.flotsam_cut_rows`, `flotsam_min_rows`);
+  - a 0 or 1 px bob from the beat's index and the plan clock, every 0.5 s;
+  - a 2-frame dashed ring at the line.
+  - The plank is `sea/plank.png`, 16×5 with two nails. The piece stays centred on its beat, so the GRAB point stays where crossing-gameplay put it. Rocks, debris and leaks keep crossing-gameplay's placeholders.
+  - **The clamp, measured:** cut 3 rows above its bottom, the cloth would keep 8 rows, so the cut stops at 9. The coconut keeps 9, the inner tube 10, the driftwood, rope and jug 11.
+  - **Departure:** the plank's outline is black, not #222034. Black is the outline the item icons beside it carry (art-prop-polish D1's actor family), and its ring reaches 3.34:1 on the deep where #222034 reaches 2.52:1.
+  - **Departure:** the ring is a recipe piece, `sea/flotsam_ring.png` (2 frames of 18×5), so its colours are checked, though D9 did not list it.
+- **The recipe.** `mood_fx.json` adds the five pieces with their colour sets and the plank's closed outline; `mood.py` builds 7 files. The own-work blocks are in `sea/License.txt` and the fixes' licence. The new textures are named by `crossing.tscn` (`Crests`, `Wake` and the hazards' `plank_texture` and `ring_texture`), as `check.py` asks.
+- **A shared helper.** `CrossingArt` (`scripts/art/crossing_art.gd`, from art-sprite-polish group 7) holds the crests, the wakes, the waterline cut and the bob as pure reads, so the tests read what is drawn rather than pixels.
+- **Capture (5.3),** off-screen per the owner's 2026-11-23 rule: `capture_crossing.tscn` adds `crossing_flotsam.png`, with a coconut and a plank drifting past. The board route ran in GUT only, headless: `test_a_board_route_shows_one_small_wake_per_intact_board`. The capture scene runs the real shell, which has no board route outside the test fixture.
+- **Image:** `docs/art-pass/mood/crossing_sea_before_after_x3.png`. Above, `before/crossing_raft_aboard_x3.png`. Below, the same view now: the stern wake trailing the raft, faint crests on the open water, and the plank and the coconut on their rings.

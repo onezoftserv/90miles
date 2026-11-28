@@ -145,9 +145,9 @@ class TrackedTests(unittest.TestCase):
 
     def test_the_tracked_sources_build_and_match_the_tracked_art(self):
         images = mood.build(mood.load_recipe(), mood.DEFAULT_FIXES, palette.load_palette())
-        # The crests, the wake and the plank join with the crossing's nodes (group 5); check.py refuses
-        # tracked art that no scene draws.
-        self.assertEqual(sorted(images), ["fx/rain.png", "fx/splash.png"])
+        # art-mood-pass group 5 adds the crossing's crests, wake, flotsam ring and plank.
+        self.assertEqual(sorted(images), ["fx/rain.png", "fx/splash.png", "sea/crests.png", "sea/flotsam_ring.png",
+                                          "sea/plank.png", "sea/wake_bow.png", "sea/wake_stern.png"])
         for target, image in images.items():
             self.assertEqual(png.read_png(palette.ART / target), image, f"{target} is the recipe's")
 

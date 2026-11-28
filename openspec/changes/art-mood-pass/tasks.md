@@ -24,7 +24,7 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
 - [x] 0.1 Wait until art-coast-pass (art wave 1) has merged into `main` and the coordinating session says go. Branch from `main`.
   - Re-read the merged `world_sea.gdshader`, `shore.gdshader`, `sea_mask.gd` and `SeaShaderChecks`.
   - Re-sync this change's MODIFIED "Scrolling sea" block with the archived art-pass spec. If art-coast-pass is not archived yet, sync with its delta.
-- [ ] 0.2 Groups 1 to 4 need only art-coast-pass. Group 5 waits until crossing-gameplay has merged. Before group 5, re-read its `crossing_hazards.gd`, `crossing.tscn` and how it exposes the vessel's lateral position.
+- [x] 0.2 Groups 1 to 4 need only art-coast-pass. Group 5 waits until crossing-gameplay has merged. Before group 5, re-read its `crossing_hazards.gd`, `crossing.tscn` and how it exposes the vessel's lateral position.
 - [x] 0.3 Before group 4, check whether hud-window-kit has landed.
   - If it has, re-read its `run_hud.tscn` rects and its `HudPanel` and `HudPanelThin` sizes.
   - If not, build on today's.
@@ -110,16 +110,16 @@ A group that touches `tools/art/` also runs `python -m unittest` in `tools/art` 
 
 ## 5. C35: life on the open sea (after crossing-gameplay)
 
-- [ ] 5.1 In `test_crossing_art.gd`, write these first and see them fail:
+- [x] 5.1 In `test_crossing_art.gd`, write these first and see them fail:
   - on a solo raft crossing at integrity 100, `CrossingCrests` (z −38) shows crests whose texture pixels are only deep-ramp colours and #4a85a8, and `CrossingWake` (z −35) shows a bow and a stern wake inside the deck's x span;
   - a swimmers' route and a sunk deck show no wake;
   - a board route shows one small wake per intact board;
   - host and client draw the same crest list at the same plan time, scroll and position;
   - a coconut piece in lane 3 is drawn from the coconut's icon with at least 9 rows above its waterline and a ring, its bob at most 1 px, and the GRAB point at the piece's position;
   - the plank piece uses `sea/plank.png`.
-- [ ] 5.2 Add `scenes/crossing/crossing_crests.gd` and `crossing_wake.gd` to `crossing.tscn` (design D6 and D7, the z table). Replace `CrossingHazards._draw_piece` (design D8), leaving rocks, debris and leaks as crossing-gameplay drew them.
+- [x] 5.2 Add `scenes/crossing/crossing_crests.gd` and `crossing_wake.gd` to `crossing.tscn` (design D6 and D7, the z table). Replace `CrossingHazards._draw_piece` (design D8), leaving rocks, debris and leaks as crossing-gameplay drew them.
   - Verify 5.1, `test_palette_swap.gd`, `test_art_palette.gd` (water.png keeps the deep ramp) and crossing-gameplay's flotsam and art tests.
-- [ ] 5.3 Windowed 1-player capture: a solo raft crossing with flotsam passing. Compare with the review's `before/crossing_raft_aboard_x3.png`:
+- [x] 5.3 Windowed 1-player capture: a solo raft crossing with flotsam passing. Compare with the review's `before/crossing_raft_aboard_x3.png`:
   - crests that never read as a fin;
   - the wake under the deck;
   - the coconut readable as loot.

@@ -232,6 +232,18 @@ func test_the_crossing_sea_and_deck_lie_under_its_riders() -> void:
 	assert_eq(DrawOrder.absolute_z(sea), CROSSING_SEA_Z)
 	assert_eq(DrawOrder.absolute_z(deck), CROSSING_DECK_Z)
 	assert_true(DrawOrder.drawn_after(deck, sea), "the deck over the sea")
+	# art-mood-pass's z table: crests (-38) and the wake (-35) over the sea, under the hazards (-30).
+	var crests := crossing.get_node_or_null(^"Crests") as CanvasItem
+	var wake := crossing.get_node_or_null(^"Wake") as CanvasItem
+	var hazards := crossing.get_node_or_null(^"Hazards") as CanvasItem
+	assert_not_null(crests, "the crossing's crests")
+	assert_not_null(wake, "the crossing's wake")
+	if crests != null and wake != null and hazards != null:
+		assert_eq(DrawOrder.absolute_z(crests), -38)
+		assert_eq(DrawOrder.absolute_z(wake), -35)
+		assert_true(DrawOrder.drawn_after(crests, sea), "crests over the sea")
+		assert_true(DrawOrder.drawn_after(wake, crests), "the wake over the crests")
+		assert_true(DrawOrder.drawn_after(hazards, wake), "the hazards over the wake")
 	assert_true(DrawOrder.drawn_after(rider, deck), "a rider aboard over the deck")
 	crossing.throw_in(1)
 	assert_true(DrawOrder.drawn_after(rider, sea), "a rider in the water over the sea")

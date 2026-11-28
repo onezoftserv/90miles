@@ -1,6 +1,11 @@
 {
   "pieces": [
     {"source": "rain.png", "to": "fx/rain.png", "frame": [64, 64], "frames": 2, "colours": ["#cbdbfc", "#9badb7"], "cover": [0.12, 0.25], "seamless": true},
-    {"source": "splash.png", "to": "fx/splash.png", "frame": [5, 3], "frames": 3, "colours": ["#cbdbfc"]}
+    {"source": "splash.png", "to": "fx/splash.png", "frame": [5, 3], "frames": 3, "colours": ["#cbdbfc"]},
+    {"source": "crests.png", "to": "sea/crests.png", "frame": [8, 3], "frames": 3, "colours": ["#2a5578", "#306082", "#35678a", "#3a6f92", "#4a85a8"]},
+    {"source": "wake_bow.png", "to": "sea/wake_bow.png", "frame": [16, 3], "frames": 2, "colours": ["#cbdbfc", "#9badb7"]},
+    {"source": "wake_stern.png", "to": "sea/wake_stern.png", "frame": [32, 24], "frames": 3, "colours": ["#cbdbfc", "#9badb7"]},
+    {"source": "flotsam_ring.png", "to": "sea/flotsam_ring.png", "frame": [18, 5], "frames": 2, "colours": ["#cbdbfc", "#9badb7"]},
+    {"source": "plank.png", "to": "sea/plank.png", "frame": [16, 5], "frames": 1, "outline": "#000000"}
   ]
 }
