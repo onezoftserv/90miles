@@ -40,6 +40,12 @@ const ALL_METERS: Array[DataEnums.Meter] = [
 ## Seconds added to the downed timer and to a solo last stand: Experiencia levels and the point
 ## boost. endings-progression sets it; the meters never compute it.
 @export var downed_bonus_s: float = 0.0
+## Host: the player rides a crossing (MeterContext.at_sea, taken from each tick): a last stand there has
+## no base, only the downed-timer bonuses (island-pressure D7).
+var at_sea: bool = false
+## Host: asks the owner whether the player rides a crossing right now (PlayerBody sets it), so a harm
+## between ticks reads where the player is; without one, the last tick's `at_sea` says.
+var at_sea_source: Callable = Callable()
 ## Unused free revives this run (the Medalla de la Caridad's holder gets 1). The keepsake system
 ## sets it; each one stands the player at revive_health once instead of going down or dying.
 @export var free_revives: int = 0
@@ -177,6 +183,7 @@ var bleeding_left_s: float = 0.0
 func tick(delta: float, context: MeterContext) -> void:
 	if dead or delta < 0.0:
 		return
+	at_sea = context.at_sea
 	if downed or last_stand:
 		downed_time_left_s = maxf(downed_time_left_s - delta, 0.0)
 		if downed_time_left_s <= EMPTY_EPSILON:
@@ -452,7 +459,8 @@ func _on_health_empty() -> void:
 		downed_time_left_s = tuning.downed_s + downed_bonus_s
 		downed = true
 		return
-	var window_s: float = tuning.solo_last_stand_s + downed_bonus_s
+	var sea: bool = bool(at_sea_source.call()) if at_sea_source.is_valid() else at_sea
+	var window_s: float = (0.0 if sea else tuning.solo_last_stand_s) + downed_bonus_s
 	if window_s <= EMPTY_EPSILON:
 		_die(_down_cause)
 		return

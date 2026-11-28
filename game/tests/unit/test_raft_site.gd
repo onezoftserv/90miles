@@ -1,6 +1,7 @@
 extends GutTest
 ## escape-routes "Raft build site": the shared site on the sandbar takes 6 driftwood, 2 tubes
-## and 3 rope from any player and advances only while someone works it.
+## and 3 rope from any player and advances only while someone holds interact on it (island-pressure:
+## 120 s of work in four stages, 1 energy per second; test_build_stages has the stage rules).
 
 const ISLAND_SCENE: PackedScene = preload("res://scenes/levels/sandbar_island.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
@@ -48,6 +49,7 @@ func _filled() -> PlayerBody:
 	body.inventory.add(&"inner_tube", 2)
 	body.inventory.add(&"rope", 3)
 	site.deposit(body)
+	body.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
 	return body
 
 
@@ -77,16 +79,19 @@ func test_progress_advances_only_while_someone_works() -> void:
 	body.crafter.advance(10.0)
 	assert_eq(site.progress(), 0.0, "nobody works it")
 	assert_true(body.crafter.start_work(site))
-	body.crafter.advance(30.0)
+	body.crafter.advance(60.0)
 	assert_almost_eq(site.progress(), 0.5, 0.001)
 	body.global_position += Vector2(10 * PlayerBody.TILE_SIZE, 0)
 	body.crafter.advance(10.0)
 	assert_almost_eq(site.progress(), 0.5, 0.001, "out of reach, no work")
 
 
-func test_60_seconds_of_work_make_a_raft() -> void:
+func test_120_seconds_of_work_make_a_raft() -> void:
 	var body := _filled()
 	body.crafter.start_work(site)
+	body.crafter.advance(60.0)
+	# 120 s of work cost 120 energy: a meal's worth of energy stands in for eating mid-build.
+	body.meters.energy = 100.0
 	body.crafter.advance(60.0)
 	var raft := session.get_node_or_null("Raft") as Raft
 	assert_not_null(raft)

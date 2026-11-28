@@ -1,6 +1,43 @@
 [gd_resource type="Resource" script_class="RecipeData" format=3]
 
 [ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1_recipe"]
+[ext_resource type="Script" path="res://scripts/data/build_stage_data.gd" id="2_stage"]
+
+[sub_resource type="Resource" id="Resource_tubes"]
+script = ExtResource("2_stage")
+name_es = "Amarrar las cámaras"
+name_en = "Lash the tubes"
+inputs = Dictionary[StringName, int]({
+&"inner_tube": 2,
+&"rope": 1
+})
+time_s = 30.0
+
+[sub_resource type="Resource" id="Resource_deck"]
+script = ExtResource("2_stage")
+name_es = "Armar el piso"
+name_en = "Build the deck"
+inputs = Dictionary[StringName, int]({
+&"driftwood": 4,
+&"rope": 1
+})
+time_s = 30.0
+
+[sub_resource type="Resource" id="Resource_rail"]
+script = ExtResource("2_stage")
+name_es = "Amarrar la baranda"
+name_en = "Lash the rail"
+inputs = Dictionary[StringName, int]({
+&"driftwood": 2,
+&"rope": 1
+})
+time_s = 30.0
+
+[sub_resource type="Resource" id="Resource_knots"]
+script = ExtResource("2_stage")
+name_es = "Apretar los nudos"
+name_en = "Tighten the knots"
+time_s = 30.0
 
 [resource]
 script = ExtResource("1_recipe")
@@ -13,9 +50,13 @@ inputs = Dictionary[StringName, int]({
 })
 station = 0
 build_site = true
-time_s = 60.0
+time_s = 120.0
 skill = 2
 skill_speed_multiplier = 2.0
+stages = Array[ExtResource("2_stage")]([SubResource("Resource_tubes"), SubResource("Resource_deck"), SubResource("Resource_rail"), SubResource("Resource_knots")])
+work_energy_per_s = 1.0
+work_thirst_per_s = 0.25
+exhausted_work_factor = 0.25
 output_kind = 2
 vessel_integrity = 100.0
 id = &"raft"

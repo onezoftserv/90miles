@@ -124,9 +124,9 @@
 
 ## 10. Integration
 
-- [ ] 10.1 Rebuild every terrain, sea, decal and shadow sheet to scratch, and `cmp` each against the tracked file, so the build is reproducible byte for byte. Then run `check.py`, `python -m unittest` in `tools/art`, the import twice, smoke and GUT. All must be clean.
-- [ ] 10.2 Re-shoot `docs/art-pass/sandbar_day.png`, `coast_cay_day.png` and `sandbar_night.png` with `tests/manual/capture_terrain.tscn`, and read the run logs for shader errors.
-- [ ] 10.3 Update `TASKS.md`. Record the measured offsets, colours, pick shares and counts in this design's build notes. Run `openspec validate art-terrain-polish --strict`.
+- [x] 10.1 Rebuild every terrain, sea, decal and shadow sheet to scratch, and `cmp` each against the tracked file, so the build is reproducible byte for byte. Then run `check.py`, `python -m unittest` in `tools/art`, the import twice, smoke and GUT. All must be clean.
+- [x] 10.2 Re-shoot `docs/art-pass/sandbar_day.png`, `coast_cay_day.png` and `sandbar_night.png` with `tests/manual/capture_terrain.tscn`, and read the run logs for shader errors.
+- [x] 10.3 Update `TASKS.md`. Record the measured offsets, colours, pick shares and counts in this design's build notes. Run `openspec validate art-terrain-polish --strict`.
 
 ## Workflow follow-up
 

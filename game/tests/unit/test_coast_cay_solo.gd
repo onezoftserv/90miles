@@ -138,6 +138,10 @@ func test_the_beached_raft_launches_again() -> void:
 	var body := shell.session.body(1)
 	var raft := shell.session.get_node("Raft") as Raft
 	body.global_position = raft.global_position
+	# island-pressure: by day the cay's patrol would see the launch; this test is about the relaunch.
+	for boat: Creature in LaunchSight.boats_of(shell.session):
+		boat.get_parent().remove_child(boat)
+		boat.queue_free()
 	raft.interactable.interacted.emit(body)
 	assert_eq(shell.crossings.size(), 1, "a second crossing starts")
 	var second := shell.crossings[0] as Crossing

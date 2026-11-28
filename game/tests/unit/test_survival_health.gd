@@ -54,14 +54,17 @@ func test_nobody_comes_and_the_player_dies_after_90_s() -> void:
 	assert_signal_emitted(meters, "died")
 
 
-func test_solo_player_dies_at_once() -> void:
+func test_solo_player_gets_a_12_s_last_stand_not_a_downed_timer() -> void:
 	meters.solo = true
 	watch_signals(meters)
 	_go_down()
-	assert_true(meters.dead)
+	assert_true(meters.last_stand, "island-pressure: a 12 s last stand on land")
 	assert_false(meters.downed, "no downed timer")
-	assert_signal_emitted(meters, "died")
+	assert_eq(meters.downed_time_left_s, 12.0)
 	assert_signal_not_emitted(meters, "downed_changed")
+	_run(12.0)
+	assert_true(meters.dead)
+	assert_signal_emitted(meters, "died")
 
 
 func test_empty_thirst_eventually_downs_the_player() -> void:
@@ -96,6 +99,8 @@ func test_revive_is_refused_when_not_downed() -> void:
 func test_revive_is_refused_once_dead() -> void:
 	meters.solo = true
 	_go_down()
+	_run(12.0)
+	assert_true(meters.dead)
 	assert_false(meters.revive())
 	assert_eq(meters.health, 0.0)
 
@@ -118,6 +123,10 @@ func test_going_down_again_restarts_the_timer() -> void:
 func test_dead_meters_stop_changing() -> void:
 	meters.solo = true
 	_go_down()
+	_run(12.0)
+	assert_true(meters.dead)
+	meters.thirst = 100.0
+	meters.hunger = 100.0
 	_run(60.0)
 	meters.add(M.THIRST, -50.0)
 	meters.eat(20.0)

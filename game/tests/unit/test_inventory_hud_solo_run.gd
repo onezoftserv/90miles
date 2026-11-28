@@ -5,7 +5,9 @@ extends GutTest
 ## would, reading only what the HUD shows (the prompt's target, the strip). The player picks up the
 ## hut's knife, climbs a palm that is not a gull's nest, drinks its coconut out of the gulls' sight,
 ## places a fire site from the bench's crafting list and builds it, gathers and deposits the raft's
-## 6 driftwood, 2 inner tubes and 3 rope, works the raft and launches it.
+## 6 driftwood, 2 inner tubes and 3 rope, holds E on the raft site, lets go to eat coconuts when its
+## energy runs low (island-pressure: 120 s of work at 1 energy a second), waits for the night the day
+## launch warning asks for, and launches it.
 ## The sandbar holds 8 driftwood and the fire and the raft take 9, so, as in a real solo run, the
 ## player sits out one squall, whose end puts the beach driftwood back (sandbar-island); the weather
 ## rolls are switched off and that squall is started and ended by the test, so the run is the same
@@ -33,6 +35,8 @@ const MOVES: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"mov
 const INTERACT: StringName = &"interact"
 const USE: StringName = &"use_item"
 const RAFT_INPUTS: Dictionary[StringName, int] = {&"driftwood": 6, &"inner_tube": 2, &"rope": 3}
+## The player lets go of the raft site and eats before running dry: at 0 energy they could only crawl.
+const LOW_ENERGY: float = 10.0
 
 var shell: GameShell
 var session: CoopSession
@@ -221,28 +225,32 @@ func _nest_spots() -> Array[Vector2]:
 	return spots
 
 
-func _out_of_gull_sight(at: Vector2) -> bool:
+func _out_of_gull_sight(at: Vector2, extra_px: float = 0.0) -> bool:
 	for nest: Vector2 in _nest_spots():
-		if at.distance_to(nest) <= (GULL_SIGHT_TILES + SIGHT_MARGIN_TILES) * TILE:
+		if at.distance_to(nest) <= (GULL_SIGHT_TILES + SIGHT_MARGIN_TILES) * TILE + extra_px:
 			return false
 	return true
 
 
-# The nearest land cell out of the gulls' sight.
+# The land cell out of the gulls' sight nearest the player by walking (a breadth-first search over the
+# land grid, so a cell across water is never picked).
 func _safe_spot() -> Vector2:
-	var best := body.global_position
-	var best_distance: float = INF
-	for y: int in island.built.size.y:
-		for x: int in island.built.size.x:
-			var cell := Vector2i(x, y)
-			var spot := IslandLayout.cell_center(cell)
-			if land.is_point_solid(cell) or not _out_of_gull_sight(spot):
+	var start: Vector2i = _cell_of(body.global_position)
+	var seen: Dictionary[Vector2i, bool] = {start: true}
+	var queue: Array[Vector2i] = [start]
+	var steps: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]
+	while not queue.is_empty():
+		var cell: Vector2i = queue.pop_front()
+		# A half tile more than the sight check, so arriving within a few pixels of the centre is out of it.
+		if _out_of_gull_sight(IslandLayout.cell_center(cell), TILE / 2.0):
+			return IslandLayout.cell_center(cell)
+		for step: Vector2i in steps:
+			var next: Vector2i = cell + step
+			if seen.has(next) or not land.is_in_boundsv(next) or land.is_point_solid(next):
 				continue
-			var distance: float = body.global_position.distance_to(spot)
-			if distance < best_distance:
-				best = spot
-				best_distance = distance
-	return best
+			seen[next] = true
+			queue.append(next)
+	return body.global_position
 
 
 # The palm with coconuts nearest the player that is not a gull's nest.
@@ -386,14 +394,28 @@ func _climb_and_drink() -> bool:
 		assert_true(_walk_to(_safe_spot()), "walked out of the gulls' sight")
 	assert_true(_out_of_gull_sight(body.global_position), "more than 8 tiles from both nests")
 	var thirst: float = body.meters.thirst
+	var knife_uses: int = body.inventory.slots[_slot_of(&"knife")].uses_left
 	var coconut_slot: int = _slot_of(&"coco")
 	_tap(StringName("slot_%d" % (coconut_slot + 1)))
 	assert_eq(hud.strip.selected, coconut_slot, "the coconut's slot is selected")
 	_hold(USE, 2.2)
 	assert_eq(body.inventory.count_id(&"coco"), 0, "F drank the coconut")
 	assert_gt(body.meters.thirst, thirst, "and it quenched thirst")
-	assert_eq(body.inventory.slots[_slot_of(&"knife")].uses_left, 39, "opened with the knife")
+	assert_eq(body.inventory.slots[_slot_of(&"knife")].uses_left, knife_uses - 1, "opened with the knife")
 	return true
+
+
+# A coconut carried to the raft site (out of the gulls' sight), drunk from its slot with the knife: a
+# meal, +10 energy. False when it was not drunk.
+func _drink_a_carried_coconut() -> bool:
+	body.inventory.add(&"coco", 1)
+	var energy: float = body.meters.energy
+	var coconut_slot: int = _slot_of(&"coco")
+	_tap(StringName("slot_%d" % (coconut_slot + 1)))
+	_hold(USE, 2.2)
+	assert_eq(body.inventory.count_id(&"coco"), 0, "F drank the carried coconut")
+	assert_gt(body.meters.energy, energy, "a meal: energy back")
+	return body.inventory.count_id(&"coco") == 0
 
 
 # The raft's inputs: every beach driftwood, the flotsam tubes and rope; one short, a squall passes
@@ -421,19 +443,35 @@ func _build_and_launch_the_raft() -> Crossing:
 	assert_true(_walk_to(raft_site.global_position), "walked to the raft site")
 	_frame()
 	assert_same(hud.prompt.target, raft_site.interactable, "the prompt is over the raft site")
-	_tap(INTERACT)
-	assert_true(raft_site.inputs_complete(), "E deposited the raft's inputs")
 	var raft: Raft = null
-	for i: int in ceili(70.0 / DT):
-		raft = session.get_node_or_null(^"Raft") as Raft
+	for attempt: int in 4:
+		_act(INTERACT, true)
+		for i: int in ceili(130.0 / DT):
+			raft = session.get_node_or_null(^"Raft") as Raft
+			if raft != null or body.meters.energy <= LOW_ENERGY:
+				break
+			_frame()
+		_act(INTERACT, false)
+		_frame()
+		assert_true(raft_site.inputs_complete() or raft != null, "E deposited the raft's inputs")
 		if raft != null:
 			break
+		# Low on strength: three meals from coconuts carried along (put in hand here: the palms near the
+		# site are in the gulls' sight, which this run does not play out), drunk with the slot key and F.
+		for meal: int in 3:
+			if not _drink_a_carried_coconut():
+				return null
 		_frame()
 	assert_not_null(raft, "the raft is built")
 	if raft == null:
 		return null
 	_frame()
 	assert_same(hud.prompt.target, raft.interactable, "the prompt is over the raft")
+	assert_true(hud.prompt.lines().has("De día te ve la lancha."), "by day the launch would be seen: %s" % hud.prompt.lines())
+	# The player waits for the night the warning asks for.
+	WeatherManager.sky.start_at(16.0 * 30.0)
+	_frame()
+	assert_false(hud.prompt.lines().has("De día te ve la lancha."), "at night, out of the light, no warning")
 	_hold(INTERACT, Raft.LAUNCH_HOLD_S + 0.2)
 	assert_eq(shell.crossings.size(), 1, "the raft launched")
 	return shell.crossings[0] as Crossing if not shell.crossings.is_empty() else null

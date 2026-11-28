@@ -1,5 +1,5 @@
 extends GutTest
-## content-data: the data model's 37 classes in game/scripts/data. The 12 folders are
+## content-data: the data model's 38 classes in game/scripts/data. The 12 folders are
 ## registered, every class builds on the right base, every reference field is a stored id
 ## field pointing at a registered folder (for every kind), every typed container survives a
 ## .tres round trip, and ContentValidator checks real content down to ids inside parts.
@@ -26,7 +26,7 @@ const FOLDER_CLASSES: Dictionary[StringName, StringName] = {
 const ITEM_SUBCLASSES: Array[StringName] = [&"KeepsakeData", &"TextData"]
 ## Classes embedded inside content files, never files of their own.
 const PART_CLASSES: Array[StringName] = [
-	&"ChainRouteEntryData", &"ChoiceData", &"CompanionData", &"CompanionStatusData",
+	&"BuildStageData", &"ChainRouteEntryData", &"ChoiceData", &"CompanionData", &"CompanionStatusData",
 	&"ConditionData", &"CreatureCounterData", &"CreatureSpawnRuleData", &"DialogueLineData",
 	&"DialogueStateData", &"EffectData", &"EndingRoleData", &"GrabData", &"IslandGlyphData", &"IslandSignData", &"ItemUseData",
 	&"ModifierData", &"NpcHookData", &"NpcSpawnRuleData", &"PatrolData", &"QuestData",
@@ -85,7 +85,7 @@ func test_default_types_register_exactly_the_twelve_folders() -> void:
 
 
 func test_data_folder_declares_exactly_the_model_classes() -> void:
-	assert_eq(_model_classes().size(), 37, "the data model has 37 classes")
+	assert_eq(_model_classes().size(), 38, "the data model has 38 classes")
 	var expected: Array[StringName] = _model_classes()
 	expected.append_array(SUPPORT_CLASSES)
 	expected.sort_custom(_by_text)

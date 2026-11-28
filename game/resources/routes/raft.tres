@@ -17,6 +17,7 @@ capacity_mode = 0
 starter_kind = 0
 starter_id = &"raft"
 starts_discovered = true
+seen_at_launch = true
 vessel = 0
 vessel_integrity = 100
 duration_s = Vector2(60, 90)

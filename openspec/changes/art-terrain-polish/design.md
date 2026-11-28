@@ -381,3 +381,33 @@ Measured values and departures are recorded here as the tasks ship.
 - **Images:**
   - `docs/art-pass/terrain-polish/c14_raft_stages_before_after_x4.png`: `before/raft_stages.png` above. Below, the same four stages now, from the solo run (marked, materials, half built, built), each a 128×72 world rect centred on the hull. The solo player stands in the shallows at the hull's east end, where the prompt check put them.
   - `docs/art-pass/terrain-polish/c14_cay_landing_before_after_x2.png`: `before/cay_day_landing.png` above and the raft landed on the coast cay now below, from the solo view without the HUD.
+
+**Group 10, integration (2026-11-24).** From main acddafe, with every group merged.
+- **The rebuild (10.1).** Every recipe tool was run into scratch from the read-only packs and the tracked hand sources: `terrain.py`, `structures.py`, `creatures.py`, `items.py`, `compose.py`, `fx.py`, `mood.py` and `ui.py`.
+  - 171 files were built, and each `cmp`s equal to the tracked file, the 18 terrain, sea, decal and shadow sheets among them.
+  - The shadows with no recipe (12×7, 8×4, 6×3) are art-pass's. C14's 30×11 is built by `fx.py`.
+- **Checks (10.1).**
+  - `check.py`: 0 problems on the art and on the fixes.
+  - The Python art tests: 270 OK.
+  - Import twice: the second is clean. Smoke: 10 frames, 0 problems.
+  - GUT: 3,053 of 3,053 pass (332 scripts, 653 s locally).
+- **The re-shoots (10.2).** `capture_terrain.tscn` ran once off-screen (`--position -32000,-32000 --resolution 640x360`), per the owner's 2026-11-23 rule, not windowed.
+  - `docs/art-pass/sandbar_day.png`, `coast_cay_day.png` and `sandbar_night.png` are replaced, each the same size as before (1280×1152, 1408×1024, 1280×1152).
+  - The log has no shader or script error, only the engine's usual leak report at exit.
+- **Measured on the integrated build (10.3),** each island built for one offline player and read from its tile layers:
+
+  | Island | Sand | Today's full sand tile | Dune | Rock (plain) | Shore | Brush | Decals |
+  |---|---|---|---|---|---|---|---|
+  | Sandbar | 998 | 497 of 734 full tiles (67.7%) | 425 | 0 | 264 | 84 | 21 |
+  | Coast cay | 1,018 | 508 of 729 (69.7%) | 366 | 229 | 289 | 33 | 31 |
+  | Hidden cay | 224 | 112 of 152 (73.7%) | 107 | 0 | 72 | 106 | 11 |
+
+  - The sand's pick shares sit near C11's 70/10/10/10 weights: the other three picks share the rest about evenly (79, 79 and 79 on the sandbar).
+  - The sandbar's dune count is C9's 425.
+  - The offsets and colours are as each group recorded above:
+    - C14's 24 px lean;
+    - C13's #8fe0f0 still foam;
+    - C12's #323c39 rim and #9badb7 lip;
+    - C7's 1.6:1 sand over the shallows and 1.4:1 shallows over brackish;
+    - D9's corners on their arcs.
+- **TASKS.md** records the wave as built. The archive waits for art-coast-pass's archive and for the owner to see the captures.

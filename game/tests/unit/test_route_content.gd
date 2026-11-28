@@ -37,7 +37,7 @@ func test_the_raft_recipe_takes_6_driftwood_2_tubes_3_rope() -> void:
 	assert_not_null(recipe)
 	assert_eq(recipe.inputs, {&"driftwood": 6, &"inner_tube": 2, &"rope": 3})
 	assert_true(recipe.build_site)
-	assert_eq(recipe.time_s, 60.0)
+	assert_eq(recipe.time_s, 120.0, "four 30 s stages (island-pressure)")
 	assert_eq(recipe.output_kind, RecipeData.OutputKind.VESSEL)
 
 
