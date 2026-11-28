@@ -2,7 +2,9 @@ class_name BuildSite
 extends Node2D
 ## A shared build (crafting-inventory "Shared builds"): any player deposits the recipe's inputs
 ## from their own inventory, progress is shared, and work advances only once every input is in.
-## One player can deposit everything and do all the work. When it completes it becomes the
+## One player can deposit everything and do all the work. A recipe with stages (island-pressure) is
+## worked stage by stage: progress stays one shared value, the stage being worked is derived from it,
+## and work stops at the end of the last stage whose inputs are in. When it completes it becomes the
 ## structure scene named by the recipe id (game/scenes/structures/<id>.tscn).
 ## A synced site (the level's raft site, or one placed at a bench) has the host push its item and
 ## tag deposits and its progress to every client, and a client asks for the live state when it is
@@ -19,6 +21,8 @@ const STRUCTURE_PATH: String = "res://scenes/structures/%s.tscn"
 ## A synced site pushes its state to the clients each time progress moved this much (1/120 of
 ## the build; provisional).
 const PUSH_EVERY: float = 1.0 / 120.0
+## Progress this close to a stage's end counts as at it.
+const STAGE_EPSILON: float = 0.000001
 
 var recipe: RecipeData
 var climate: ClimateState = null
@@ -107,16 +111,110 @@ func progress() -> float:
 	return _progress
 
 
-## Adds `fraction` of the build. Does nothing (false) until every input is deposited.
+## How many stages the recipe lists (crafting-inventory "Build stages"); 0 for a build without.
+func stage_count() -> int:
+	return recipe.stages.size() if recipe != null else 0
+
+
+## The progress (0 to 1) at which stage `index` ends: the stage times so far over the whole time.
+func stage_end(index: int) -> float:
+	var count: int = stage_count()
+	if count == 0 or index >= count - 1:
+		return 1.0
+	var total: float = 0.0
+	var upto: float = 0.0
+	for i: int in count:
+		total += recipe.stages[i].time_s
+		if i <= index:
+			upto += recipe.stages[i].time_s
+	return upto / total if total > 0.0 else 1.0
+
+
+## The stage being worked, 0-based: the first whose end lies above the progress (the last once
+## built). Derived from the shared progress, so every peer reads the same stage. 0 without stages.
+func stage_index() -> int:
+	var count: int = stage_count()
+	for i: int in count:
+		if stage_end(i) > _progress + STAGE_EPSILON:
+			return i
+	return maxi(count - 1, 0)
+
+
+## How far the stage being worked is done, 0 to 1 (the whole build's progress without stages).
+func stage_progress() -> float:
+	if stage_count() == 0:
+		return _progress
+	var index: int = stage_index()
+	var start: float = stage_end(index - 1) if index > 0 else 0.0
+	var end: float = stage_end(index)
+	return clampf((_progress - start) / (end - start), 0.0, 1.0) if end > start else 1.0
+
+
+## What stage `index` (the one being worked, by default) still needs before it can be worked: its
+## inputs and every earlier stage's, less what is deposited, in the recipe's input order. Without
+## stages, the whole recipe's missing items.
+func stage_missing_items(index: int = -1) -> Dictionary[StringName, int]:
+	if stage_count() == 0:
+		return missing_items()
+	var upto: int = stage_index() if index < 0 else mini(index, stage_count() - 1)
+	var needed: Dictionary[StringName, int] = {}
+	for i: int in upto + 1:
+		var stage: BuildStageData = recipe.stages[i]
+		for id: StringName in stage.inputs:
+			needed[id] = needed.get(id, 0) + stage.inputs[id]
+	var missing: Dictionary[StringName, int] = {}
+	for id: StringName in recipe.inputs:
+		var short: int = needed.get(id, 0) - deposited.get(id, 0)
+		if short > 0:
+			missing[id] = short
+	return missing
+
+
+## The furthest the progress may go now: the end of the last stage whose inputs (and every earlier
+## stage's) are in. Without stages, the whole build once every input is in, else where it stands.
+func work_limit() -> float:
+	if stage_count() == 0:
+		return 1.0 if inputs_complete() else _progress
+	var limit: float = 0.0
+	for i: int in stage_count():
+		if not stage_missing_items(i).is_empty():
+			break
+		limit = stage_end(i)
+	return maxf(limit, _progress)
+
+
+## How much of the build (0 to 1) can be worked before the limit.
+func work_room() -> float:
+	return 0.0 if built else maxf(work_limit() - _progress, 0.0)
+
+
+## True when `player` cannot work this site for want of energy: its recipe costs energy and the
+## player has none (inventory-hud "Sin fuerzas").
+func needs_strength(player: PlayerBody) -> bool:
+	return recipe != null and recipe.work_energy_per_s > 0.0 and player != null and player.meters.energy <= SurvivalMeters.EMPTY_EPSILON
+
+
+## Adds `fraction` of the build, never past `work_limit()`. Does nothing (false) while the inputs
+## of the stage being worked (every input, without stages) are not all in.
 func work(fraction: float) -> bool:
-	if built or not inputs_complete():
+	if built:
 		return false
-	_progress = minf(_progress + fraction, 1.0)
+	var limit: float = work_limit()
+	if _progress >= limit - STAGE_EPSILON:
+		return false
+	_progress = minf(_progress + fraction, limit)
 	if _progress >= 1.0 - 0.000001:
 		_complete()
-	elif _progress - _pushed_progress >= PUSH_EVERY:
+	elif _progress >= limit - STAGE_EPSILON or _progress - _pushed_progress >= PUSH_EVERY:
+		# At a stage's end the clients hear at once, so their prompt asks for the next stage's inputs.
 		_push_state()
 	return true
+
+
+## Host: sends the state now (a held build's work just stopped), so every peer shows where it stopped.
+func sync_now() -> void:
+	if not built and _progress != _pushed_progress:
+		_push_state()
 
 
 ## Clients: the host's item and tag deposits, progress and whether it is built, each clamped to

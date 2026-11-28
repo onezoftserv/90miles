@@ -60,6 +60,7 @@ func test_a_solo_player_completes_every_recipe_alone() -> void:
 		body.global_position = Vector2.ZERO
 		_give_everything(body, recipe)
 		var done: bool = false
+		var placed: BuildSite = null
 		if Raft.is_job_recipe(recipe):
 			# island-stop: a mend or a fitting is worked on a raft, here one worn to 50.
 			var raft := _raft()
@@ -68,14 +69,22 @@ func test_a_solo_player_completes_every_recipe_alone() -> void:
 				raft.job.deposit(body)
 				done = body.crafter.start_work(raft.job)
 		elif recipe.build_site:
-			var site := body.crafter.place_site(recipe, Vector2(8, 8), arena)
-			site.deposit(body)
-			done = body.crafter.start_work(site)
+			placed = body.crafter.place_site(recipe, Vector2(8, 8), arena)
+			placed.deposit(body)
+			done = body.crafter.start_work(placed)
 		elif recipe.station == RecipeData.Station.WORKBENCH:
 			done = body.crafter.start(recipe, bench)
 		assert_true(done, "%s starts with one player" % id)
-		body.crafter.advance(recipe.time_s + 1.0)
+		# island-pressure: a staged build is worked by holding interact, and its work costs energy (the
+		# raft's 120 s cost 120, more than a full bar: a meal's worth stands in halfway).
+		body.intent = MoveIntent.create(Vector2.ZERO, false, false, recipe.is_staged())
+		body.crafter.advance((recipe.time_s + 1.0) / 2.0)
+		body.meters.energy = SurvivalMeters.MAX_ENERGY
+		body.crafter.advance((recipe.time_s + 1.0) / 2.0)
+		body.intent = MoveIntent.new()
 		assert_false(body.crafter.is_crafting(), "%s completes" % id)
+		if placed != null:
+			assert_true(not is_instance_valid(placed) or placed.built, "%s is built, not just let go" % id)
 	assert_eq(multiplayer.get_peers(), PackedInt32Array(), "no second peer")
 
 

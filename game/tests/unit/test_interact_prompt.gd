@@ -78,12 +78,14 @@ func _all() -> Array[Interactable]:
 	return found
 
 
-# The head of the prompt as one string: its key, verb and target, over two lines when too wide.
+# The head of the prompt as one string: its key, verb and target, over two lines when too wide (a
+# site's own lines, "Falta:" and a stage line, are not the head's).
 func _first_line() -> String:
 	var lines := hud.prompt.lines()
 	if lines.is_empty():
 		return ""
-	if lines.size() > 1 and not lines[1].begins_with(HudText.load_default().line(&"missing")):
+	var words := HudText.load_default()
+	if lines.size() > 1 and not lines[1].begins_with(words.line(&"missing")) and not lines[1].begins_with("Etapa "):
 		return "%s %s" % [lines[0], lines[1]]
 	return lines[0]
 
@@ -333,15 +335,16 @@ func test_a_gamepad_button_turns_e_into_a() -> void:
 
 # --- a build site's lines --------------------------------------------------------------------------
 
-func test_the_raft_site_lists_what_it_still_needs() -> void:
+# island-pressure, inventory-hud "The raft site": the stage line, then what that stage still needs.
+func test_the_raft_site_lists_what_its_stage_still_needs() -> void:
 	var body := _run()
 	var site := session.get_node("RaftSite") as BuildSite
 	body.inventory.add(&"driftwood", 2)
 	_stand(body, site.global_position)
-	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "Falta: Madera de la costa x6", "Cámara x2", "Soga x3"]), "nothing deposited yet")
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "Etapa 1/4: Amarrar las cámaras", "Falta: Cámara x2", "Soga x1"]), "nothing deposited yet")
 	_hold(body, STEP_S)
 	assert_eq(site.deposited.get(&"driftwood", 0), 2, "the press deposited the 2 driftwood")
-	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "Falta: Madera de la costa x4", "Cámara x2", "Soga x3"]))
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "Etapa 1/4: Amarrar las cámaras", "Falta: Cámara x2", "Soga x1"]))
 	assert_lt(hud.prompt.bar_progress(), 0.0, "no bar while inputs are missing")
 
 
@@ -364,8 +367,66 @@ func test_with_every_input_in_the_site_shows_its_progress_as_a_bar() -> void:
 	body.inventory.add(&"inner_tube", 2)
 	body.inventory.add(&"rope", 3)
 	site.deposit(body)
-	site.work(0.5)
+	site.work(45.0 / 120.0)
 	_stand(body, site.global_position)
-	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "50 %"]), "no Falta: line, the bar at 50 %")
+	assert_eq(hud.prompt.lines(), PackedStringArray(["[E] Construir Balsa", "Etapa 2/4: Armar el piso", "50 %"]), "no Falta: line, the stage's bar at 50 %")
 	assert_almost_eq(hud.prompt.bar_progress(), 0.5, 0.001)
 	assert_true(hud.prompt.bar.visible)
+
+
+# island-pressure, inventory-hud "Solo out of strength".
+func test_solo_out_of_strength() -> void:
+	var body := _run()
+	var site := session.get_node("RaftSite") as BuildSite
+	body.inventory.add(&"driftwood", 6)
+	body.inventory.add(&"inner_tube", 2)
+	body.inventory.add(&"rope", 3)
+	body.global_position = site.global_position
+	site.deposit(body)
+	body.meters.energy = 0.0
+	_stand(body, site.global_position)
+	assert_true(hud.prompt.lines().has("Sin fuerzas: come algo."), "lines: %s" % hud.prompt.lines())
+	body.meters.energy = 10.0
+	_tick()
+	assert_false(hud.prompt.lines().has("Sin fuerzas: come algo."), "gone with energy")
+
+
+# island-pressure, inventory-hud "Launch warning": a built raft on the sandbar with its patrol boat.
+func _raft_with_boat(at_s: float) -> PlayerBody:
+	var body := _run(true)
+	await wait_process_frames(2)
+	WeatherManager.sky.start_at(at_s)
+	var site := session.get_node("RaftSite") as BuildSite
+	for id: StringName in site.recipe.inputs:
+		site.deposited[id] = site.recipe.inputs[id]
+	site.work(1.0)
+	assert_eq(LaunchSight.boats_of(session).size(), 1, "the sandbar's patrol boat")
+	_stand(body, (session.get_node("Raft") as Raft).global_position)
+	return body
+
+
+func test_solo_by_day_the_launch_prompt_warns() -> void:
+	await _raft_with_boat(8.0 * 30.0)
+	var lines := hud.prompt.lines()
+	assert_eq(lines[0], "[E] Zarpar en la balsa")
+	assert_true(lines.has("De día te ve la lancha."), "lines: %s" % lines)
+	assert_true(lines.has("Sal de noche o con turbonada."))
+
+
+func test_solo_at_night_out_of_the_light_no_warning() -> void:
+	await _raft_with_boat(16.0 * 30.0)
+	var lines := hud.prompt.lines()
+	assert_eq(lines[0], "[E] Zarpar en la balsa")
+	assert_false(lines.has("De día te ve la lancha."), "lines: %s" % lines)
+	assert_false(lines.has("La luz te 'tá alumbrando."))
+
+
+func test_solo_at_night_in_the_light_the_night_warning() -> void:
+	var body := await _raft_with_boat(16.0 * 30.0)
+	var boat: Creature = LaunchSight.boats_of(session)[0]
+	boat.state_id = PatrolRoute.State.LAP
+	boat.position = body.global_position + Vector2(0.0, 4.0 * TILE)
+	boat.beam = -90.0
+	boat.light_on = true
+	_tick()
+	assert_true(hud.prompt.lines().has("La luz te 'tá alumbrando."), "lines: %s" % hud.prompt.lines())

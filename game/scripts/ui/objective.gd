@@ -75,31 +75,22 @@ static func for_site(site: BuildSite, inventory: Inventory, text: HudText, local
 	return Goal.new(Step.WORK, text.objective_line(&"work", locale) % floori(site.progress() * 100.0 + 0.000001))
 
 
-## Whether a launch now would be seen (island-pressure's day rule, owner 2026-11-23): a patrol boat
-## is out among the session's entities and the phase is one in which its searchlight is off, while
-## the weather neither keeps patrols in port (a squall) nor blinds sight. island-pressure's
-## LaunchSight.seen_by answers the same for the host; whichever change merges second makes this call it.
+## Whether the launch must wait for the dark: island-pressure's LaunchSight sees a launch from the
+## raft now, and the boat that sees it has its searchlight off in this phase (by day the guard watches
+## the whole sea). The objective and the launch prompt's warning read the same rule, so they never
+## disagree; a searchlight on the raft at night is the prompt's warning alone, never "wait for the dark".
 static func launch_waits(session: CoopSession) -> bool:
-	var weather: WeatherData = _weather(session)
-	if weather != null and (weather.patrols_in_port or weather.disabled_senses.has(DataEnums.Sense.SIGHT)):
-		return false
-	var phase: DataEnums.DayPhase = session.climate.phase
-	for node: Node in session.entities.get_children():
-		var boat := node as Creature
-		if boat == null or boat.is_queued_for_deletion() or not boat.is_patrol():
-			continue
-		if not boat.data.patrol.searchlight_phases.has(phase):
-			return true
-	return false
+	var boat: Creature = LaunchSight.seen_in(session, _launch_point(session))
+	return boat != null and not boat.data.patrol.searchlight_phases.has(session.climate.phase)
 
 
-# The weather falling now: the session's sky (the host's, which clients follow), else the climate's.
-static func _weather(session: CoopSession) -> WeatherData:
-	if session.sky != null and session.sky.weather != null and session.sky.weather.current != null:
-		return session.sky.weather.current
-	if session.climate.weather_id.is_empty():
-		return null
-	return GameState.content.get_entry(&"weather", session.climate.weather_id) as WeatherData
+# Where the raft launches from: the built raft, else the level's site.
+static func _launch_point(session: CoopSession) -> Vector2:
+	var raft := session.get_node_or_null(RAFT_NAME) as Node2D
+	if raft != null:
+		return raft.global_position
+	var site := session.get_node_or_null(RAFT_SITE_NAME) as Node2D
+	return site.global_position if site != null else Vector2.ZERO
 
 
 static func _noun(id: StringName, locale: String) -> String:

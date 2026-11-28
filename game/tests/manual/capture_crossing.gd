@@ -92,6 +92,11 @@ func _launch_raft(session: CoopSession) -> Crossing:
 	builder.inventory.add(&"rope", 3)
 	site.deposit(builder)
 	site.work(1.0)
+	# island-pressure: by day the patrol sees a raft launch. This run is about the crossing, so the
+	# sandbar's patrol boats are taken away before it launches.
+	for boat: Creature in LaunchSight.boats_of(session):
+		boat.get_parent().remove_child(boat)
+		boat.queue_free()
 	if not session.start_route_for(1, &"raft"):
 		return null
 	var crossing := session.get_node_or_null(NodePath(Crossing.node_name_for(0))) as Crossing

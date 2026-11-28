@@ -89,6 +89,7 @@ func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	refresh_local()
 	add_to_group(GROUP)
+	meters.at_sea_source = _departed
 	meters.downed_changed.connect(set_downed)
 	meters.last_stand_changed.connect(_on_last_stand_changed)
 	meters.died.connect(_on_died)
@@ -246,7 +247,23 @@ func _meter_context() -> MeterContext:
 	context.teammate_nearby = _has_living_teammate(radius_px)
 	context.near_fire = _near_lit_fire(radius_px)
 	context.crafting = crafter.is_crafting()
+	context.at_sea = _departed()
 	return context
+
+
+## This player rides a crossing: they left the island by a route (the session's departures, the rule
+## UsePlan refuses item use at sea by), or they walk on a crossing's sea under way in the session. Read
+## by duck typing: naming the crossing's class here would preload its scene from the player's script.
+func _departed() -> bool:
+	var session := CoopSession.of(self)
+	if session == null:
+		return false
+	if session.has_left(session.peer_of(self)):
+		return true
+	for child: Node in session.get_children():
+		if child.has_method(&"body_of") and child.get(&"sea") == terrain and not child.get(&"finished"):
+			return true
+	return false
 
 
 ## Another player who is not dead (downed counts) and not waiting out of play, within `within_px`.

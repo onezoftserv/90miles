@@ -145,13 +145,17 @@ func test_dead_body_stays_down_and_cannot_be_dragged() -> void:
 	assert_false(body.drag_handle.enabled)
 
 
-func test_a_lone_body_dies_at_0_health_without_a_downed_timer() -> void:
+func test_a_lone_body_gets_a_12_s_last_stand_without_a_downed_timer() -> void:
 	var body := _spawn()
 	_step([body], DT)
 	assert_true(body.meters.solo, "no other player in the run")
 	body.meters.add(M.HEALTH, -100.0)
-	assert_true(body.meters.dead)
+	assert_true(body.meters.last_stand, "island-pressure: 12 s on land")
 	assert_false(body.meters.downed, "no timer nobody could answer")
+	assert_true(body.downed, "the body lies down")
+	assert_false(body.drag_handle.enabled)
+	_step([body], 12.0)
+	assert_true(body.meters.dead)
 	assert_true(body.downed, "the body stays down")
 	assert_false(body.drag_handle.enabled)
 
@@ -179,6 +183,9 @@ func test_the_last_one_alive_dies_at_0_health() -> void:
 	_step([survivor], DT)
 	assert_true(survivor.meters.solo)
 	survivor.meters.add(M.HEALTH, -100.0)
+	assert_true(survivor.meters.last_stand, "the last one alive gets the 12 s last stand")
+	assert_eq(survivor.meters.downed_time_left_s, 12.0)
+	_step([survivor], 12.0)
 	assert_true(survivor.meters.dead)
 
 
