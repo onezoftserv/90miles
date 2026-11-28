@@ -1,7 +1,7 @@
 class_name DialogueData
 extends ContentData
 ## One handwritten line set, flat in game/resources/dialogue/: <npc_id>, beat_<id>, ending_<id>,
-## quick_chat, death_one_liners, hallucinations. es and en sit on the same line, which keys
+## quick_chat, death_one_liners, survivor_one_liners, hallucinations. es and en sit on the same line, which keys
 ## lines by NPC id, state and language. Names are optional editor labels. See npcs-dialogue.
 
 ## What the set is for.
@@ -12,6 +12,8 @@ enum Kind {
 	QUICK_CHAT,
 	DEATH_LINES,
 	HALLUCINATION,
+	## The survivor one-liners (endings-progression "Survivor one-liners"), one state per route id.
+	SURVIVOR_LINES,
 }
 
 ## What the set is for.

@@ -58,32 +58,37 @@ theme_override_constants/separation = 4
 
 [node name="Solo" type="Button" parent="Menu"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 20)
 text = "Jugar solo"
 
 [node name="Host" type="Button" parent="Menu"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 20)
 text = "Hospedar partida"
 
 [node name="Join" type="Button" parent="Menu"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 20)
 text = "Unirse"
 
 [node name="Settings" type="Button" parent="Menu"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 20)
 text = "Ajustes"
+
+[node name="Controls" type="Button" parent="Menu"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 20)
+text = "Controles"
 
 [node name="Credits" type="Button" parent="Menu"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 20)
 text = "Créditos"
 
 [node name="Quit" type="Button" parent="Menu"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 20)
 text = "Salir"
 
 [node name="DescriptionPanel" type="PanelContainer" parent="."]
@@ -98,6 +103,17 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 theme_type_variation = &"PanelLabel"
+autowrap_mode = 2
+
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 300.0
+offset_top = 232.0
+offset_right = 568.0
+offset_bottom = 248.0
+theme_type_variation = &"ErrorLabel"
 autowrap_mode = 2
 
 [node name="Version" type="Label" parent="."]

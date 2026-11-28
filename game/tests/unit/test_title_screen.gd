@@ -1,9 +1,10 @@
 extends GutTest
 ## ui-shell "Title screen": the menu, the description of the focused option and the version.
-## art-pass adds "Créditos" before "Salir" (design.md P8).
+## art-pass adds "Créditos" before "Salir" (design.md P8); run-menu adds "Controles" between
+## "Ajustes" and "Créditos" (design D6).
 
 const TITLE_SCENE: PackedScene = preload("res://scenes/shell/title_screen.tscn")
-const LABELS: Array[String] = ["Jugar solo", "Hospedar partida", "Unirse", "Ajustes", "Créditos", "Salir"]
+const LABELS: Array[String] = ["Jugar solo", "Hospedar partida", "Unirse", "Ajustes", "Controles", "Créditos", "Salir"]
 
 
 func _title() -> TitleScreen:
@@ -37,7 +38,7 @@ func test_focus_describes_the_option() -> void:
 func test_each_button_asks_the_shell_for_its_screen() -> void:
 	var title := _title()
 	watch_signals(title)
-	var expected: Array[String] = ["solo_requested", "host_requested", "join_requested", "settings_requested", "credits_requested", "quit_requested"]
+	var expected: Array[String] = ["solo_requested", "host_requested", "join_requested", "settings_requested", "controls_requested", "credits_requested", "quit_requested"]
 	for i: int in expected.size():
 		title.buttons()[i].pressed.emit()
 		assert_signal_emitted(title, expected[i])
@@ -56,3 +57,17 @@ func test_the_sea_moves() -> void:
 	var title := _title()
 	assert_not_null(title.sea)
 	assert_true(title.sea.material is ShaderMaterial, "an animated sea shader")
+
+
+func test_focus_on_controles_describes_the_card() -> void:
+	var title := _title()
+	title.buttons()[4].grab_focus()
+	assert_eq(title.buttons()[4].text, "Controles")
+	assert_string_contains(title.description.text, "teclas")
+
+
+func test_focus_can_be_put_back_on_a_button() -> void:
+	var title := _title()
+	title.focus_button(&"Controls")
+	assert_eq(get_viewport().gui_get_focus_owner(), title.buttons()[4])
+	assert_string_contains(title.description.text, "mando")

@@ -8,9 +8,10 @@ extends GutTest
 const HUD_SCENE := "res://scenes/ui/meters_hud.tscn"
 const FONT_PATH := "res://assets/fonts/PressStart2P-Regular.ttf"
 const M := DataEnums.Meter
-const ORDER: Array[DataEnums.Meter] = [M.HEALTH, M.THIRST, M.HUNGER, M.HEAT, M.ENERGY, M.MORALE]
-const LABELS: Array[String] = ["Salud", "Sed", "Hambre", "Calor", "Energía", "Ánimo"]
-const RAMPS: Array[String] = ["health", "thirst", "hunger", "heat", "energy", "morale"]
+## hud-clarity: Calor moves last, as a thermometer.
+const ORDER: Array[DataEnums.Meter] = [M.HEALTH, M.THIRST, M.HUNGER, M.ENERGY, M.MORALE, M.HEAT]
+const LABELS: Array[String] = ["Salud", "Sed", "Hambre", "Energía", "Ánimo", "Calor"]
+const RAMPS: Array[String] = ["health", "thirst", "hunger", "energy", "morale", "heat"]
 const WINDOW_BUDGET: Rect2 = Rect2(4.0, 4.0, 132.0, 86.0)
 
 var hud: MetersHud
@@ -153,8 +154,9 @@ func test_binding_a_bleeding_player_shows_the_tag_at_once() -> void:
 func test_the_bleeding_tag_is_red_under_the_bars_in_the_pixel_font() -> void:
 	var tag := hud.bleeding_tag()
 	var health := hud.bar_for(M.HEALTH)
-	assert_same(tag.get_parent(), health.get_parent(), "in the bars panel")
-	assert_gt(tag.get_index(), health.get_index(), "under the last bar")
+	var row := tag.get_parent()
+	assert_same(row.get_parent(), health.get_parent(), "its row is in the bars panel")
+	assert_gt(row.get_index(), hud.bar_for(M.HEAT).get_index(), "under the last bar")
 	var color := tag.get_theme_color(&"font_color")
 	assert_gt(color.r, 0.7, "red")
 	assert_lt(color.g, 0.4)
@@ -223,7 +225,12 @@ func test_each_bar_fills_from_its_ramp_over_its_darkest_step() -> void:
 		var strip: Image = fill.texture.get_image()
 		assert_true(strip.get_pixel(0, 1).is_equal_approx(bar.fill_color), "%s: fill_color is the ramp's base" % bar.label_text)
 		var empty := bar.bar.get_theme_stylebox(&"background") as StyleBoxFlat
-		assert_true(empty.bg_color.is_equal_approx(bar.empty_color), bar.label_text)
+		if bar.zones.is_empty():
+			assert_true(empty != null and empty.bg_color.is_equal_approx(bar.empty_color), bar.label_text)
+		else:
+			# hud-clarity: the thermometer's first zone is the ramp's darkest step.
+			assert_false(bar.empty_shown(), "%s: zone tints, not the plain empty colour" % bar.label_text)
+			assert_true(bar.zones[0].is_equal_approx(bar.empty_color), bar.label_text)
 		var float_color: Color = tuning.meter_colors.get(bar.meter, Color.MAGENTA)
 		assert_true(float_color.is_equal_approx(bar.fill_color), "%s: the floats' colour is the ramp's base" % bar.label_text)
 
@@ -269,13 +276,12 @@ func test_a_sliver_is_a_shade_column_and_a_half_pixel_rounds_up() -> void:
 	assert_eq(thirst.full_columns(), 38)
 
 
-func test_the_heat_bar_marks_75() -> void:
+# hud-clarity: the heat bar's old tick at 75 became notches at 50 and 75 just outside the box.
+func test_the_heat_bar_marks_50_and_75() -> void:
 	var heat := hud.bar_for(M.HEAT)
-	var tick := heat.bar.get_node(^"Tick") as ColorRect
-	assert_true(tick.visible)
-	assert_eq(tick.position.x, 28.0, "75 of 100 on 38 px")
-	assert_true(tick.color.is_equal_approx(HudStyle.ALERT))
-	assert_false((hud.bar_for(M.THIRST).bar.get_node(^"Tick") as ColorRect).visible, "heat only")
+	assert_null(heat.bar.get_node_or_null(^"Tick"), "no tick inside the bar")
+	assert_eq(heat.notch_xs(), [19.0, 28.0] as Array[float], "50 and 75 of 100 on 38 px")
+	assert_eq(hud.bar_for(M.THIRST).notch_xs(), [] as Array[float], "heat only")
 
 
 func test_solo_meters_read_salud_first_and_step_with_one_player() -> void:

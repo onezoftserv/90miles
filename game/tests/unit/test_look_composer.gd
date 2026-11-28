@@ -254,6 +254,31 @@ func test_every_shipped_body_outfit_and_hair_composes_with_closed_outlines() -> 
 			assert_eq(ArtChecks.check_outline(label, image, outline, CELL, ArtChecks.family_rule(ROOT.path_join("look.png"))), PackedStringArray())
 
 
+## art-guardacostas D2: every soldier look composes with closed black outlines and none of the key ramp
+## (a soldier is drawn with no slot shader, so its clothes are palette olives as built).
+func test_every_soldier_look_composes_outlined_in_black_without_the_key_ramp() -> void:
+	var art := GuardacostasArt.standard()
+	assert_eq(art.soldier_looks.size(), 3)
+	var outline: Dictionary = ArtChecks.family_outline(ROOT.path_join("look.png"), _tuning().outline_colors)
+	var ramps: Image = ArtChecks.read_png(_tuning().player_ramps.resource_path)
+	var key_colors: Dictionary = {}
+	for shade: int in PaletteSwap.SHADES:
+		key_colors[ArtChecks.rgb_key(ramps.get_pixel(shade, PaletteSwap.KEY_ROW))] = true
+	for look: PlayerLookData in art.soldier_looks:
+		var composed := LookComposer.compose(look)
+		assert_eq(composed.fallbacks, PackedStringArray(), "%s has every part" % look.id)
+		var image: Image = _image(composed)
+		assert_eq(ArtChecks.check_outline(look.id, image, outline, CELL, ArtChecks.family_rule(ROOT.path_join("look.png"))), PackedStringArray())
+		var keyed: int = 0
+		for y: int in image.get_height():
+			for x: int in image.get_width():
+				var pixel: Color = image.get_pixel(x, y)
+				if pixel.a8 > 0 and key_colors.has(ArtChecks.rgb_key(pixel)):
+					keyed += 1
+		assert_eq(keyed, 0, "%s keeps no key-ramp colour" % look.id)
+	assert_gt(key_colors.size(), 0, "the key ramp was read")
+
+
 ## The 1-player test of art-prop-polish 1.1: a solo player's look, as the run composes it, has
 ## only black outline pixels in every frame.
 func test_a_solo_players_composed_look_is_outlined_in_black() -> void:

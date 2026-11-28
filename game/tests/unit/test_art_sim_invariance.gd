@@ -151,6 +151,13 @@ func _add_call_windows() -> void:
 	session.add_child(call_windows)
 	if call_windows.has_method(&"bind"):
 		call_windows.call(&"bind", session)
+	# art-guardacostas D9: La captura's staging bound to the run's capture scene, so its frames run too.
+	var stage := CaptureStage.new()
+	stage.name = &"CaptureStage"
+	stage.add_to_group(ART_GROUP)
+	session.add_child(stage)
+	if stage.has_method(&"bind"):
+		stage.call(&"bind", null, session)
 
 
 # How many calls the run's call windows showed (0 without them).
@@ -242,9 +249,10 @@ func _squad_art() -> Dictionary:
 		if look == null or not _in_run(look):
 			continue
 		var creature := look.get_parent() as Creature
-		if creature != null and creature.data.behavior == CreatureData.Behavior.SEARCH_CAPTURE:
+		# art-guardacostas D2, D3: a soldier's figure and the boat's DinghyLook.
+		if creature != null and creature.data.behavior == CreatureData.Behavior.SEARCH_CAPTURE and look.soldier_sprite != null:
 			soldiers += 1
-		dinghy = dinghy or look.dinghy_visible
+		dinghy = dinghy or (look.dinghy_visible and look.dinghy != null)
 		calls += look.calls_shown
 	return {"soldiers": soldiers, "dinghy": dinghy, "calls": calls}
 

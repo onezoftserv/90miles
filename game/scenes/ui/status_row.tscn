@@ -1,0 +1,53 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/status_row.gd" id="1_row"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_outline"]
+bg_color = Color(0.24705882, 0.24705882, 0.45490196, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.13333333, 0.1254902, 0.20392157, 1)
+anti_aliasing = false
+
+[node name="StatusRow" type="HBoxContainer"]
+mouse_filter = 2
+theme_override_constants/separation = 2
+script = ExtResource("1_row")
+
+[node name="Icon" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(7, 10)
+layout_mode = 2
+mouse_filter = 2
+stretch_mode = 3
+
+[node name="Word" type="Label" parent="."]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_type_variation = &"AlertLabel"
+vertical_alignment = 1
+clip_text = true
+
+[node name="Cell" type="Control" parent="."]
+custom_minimum_size = Vector2(32, 10)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Box" type="Panel" parent="Cell"]
+layout_mode = 0
+offset_top = 1.0
+offset_right = 32.0
+offset_bottom = 8.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_outline")
+
+[node name="Fill" type="ColorRect" parent="Cell/Box"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 31.0
+offset_bottom = 6.0
+mouse_filter = 2

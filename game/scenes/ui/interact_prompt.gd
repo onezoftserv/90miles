@@ -115,8 +115,23 @@ static func head_parts(on: Interactable, by: Node, key: String, words: HudText, 
 		lead = "%s %s" % [lead, verb]
 	var named: String = "" if on.hides_contents else on.prompt_target(by, locale)
 	if named.is_empty():
+		# inventory-hud "Vessel words in crossing prompts" (menu-clarity design D8): the route's
+		# own vessel first ("tie_down.car"), else the plain words (the raft's).
+		var vessel: String = vessel_key(on)
+		if not vessel.is_empty():
+			named = words.prompt_label(StringName("%s.%s" % [id, vessel]), locale)
+	if named.is_empty():
 		named = words.prompt_label(id, locale)
 	return PackedStringArray([lead, named])
+
+
+## The vessel of the crossing `on` belongs to, as a lowercase key ("raft", "car", "board"), or ""
+## for anything that is not a crossing's rescue point.
+static func vessel_key(on: Interactable) -> String:
+	var point := on as RescuePoint
+	if point == null or not is_instance_valid(point.crossing) or point.crossing.route == null:
+		return ""
+	return String(DataEnums.Vessel.keys()[point.crossing.route.vessel]).to_lower()
 
 
 ## Where a prompt of `box` size goes for a target at `anchor` (HUD pixels): centred over it with its

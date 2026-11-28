@@ -12,6 +12,10 @@ signal back_requested
 const MODIFIED_MARK: String = " (modificado)"
 ## The second line of a CC BY entry: the licence's address, CC BY 4.0 §3(a)(1).
 const LICENCE_LINE: String = "Licencia: %s"
+## The CC BY group's heading, with the licence's address once under it (menu-clarity design D9).
+const ATTRIBUTION_HEADING: String = "Con licencia CC BY 4.0"
+## Under the list while more of it lies below.
+const MORE_BELOW: String = "▼ Más abajo"
 ## How far one press of up or down moves the list.
 const SCROLL_STEP_PX: int = 24
 
@@ -19,25 +23,28 @@ var credits: ArtCredits
 
 @onready var scroll: ScrollContainer = %Scroll
 @onready var back_button: Button = %Back
+@onready var more: Label = %More
 @onready var _list: VBoxContainer = %List
 ## One list per ArtCredit.Group, in the screen's order, each under its heading.
 @onready var _groups: Array[VBoxContainer] = [%Attribution as VBoxContainer, %Courtesy as VBoxContainer, %Fonts as VBoxContainer]
 @onready var _headings: Array[Label] = [%AttributionHeading as Label, %CourtesyHeading as Label, %FontsHeading as Label]
 
 
-## The text the screen shows for `entry`: its Spanish line, marked when modified, and for a
-## CC BY pack the licence's address on a line of its own.
+## The text the screen shows for `entry`: its Spanish line, marked when modified. A CC BY pack's
+## licence address is given once, under its group's heading (menu-clarity design D9).
 static func entry_text(entry: ArtCredit) -> String:
 	var text: String = entry.line_es
 	if entry.modified:
 		text += MODIFIED_MARK
-	if entry.attribution_required and not entry.licence_url.is_empty():
-		text += "\n" + LICENCE_LINE % entry.licence_url
 	return text
 
 
 func _ready() -> void:
 	back_button.pressed.connect(back_requested.emit)
+	more.text = MORE_BELOW
+	scroll.get_v_scroll_bar().value_changed.connect(func(_value: float) -> void: _show_more())
+	_list.resized.connect(_show_more)
+	scroll.resized.connect(_show_more)
 	back_button.grab_focus()
 
 
@@ -54,6 +61,22 @@ func show_credits(shown: ArtCredits) -> void:
 	for i: int in _groups.size():
 		_headings[i].visible = _groups[i].get_child_count() > 0
 		_groups[i].visible = _headings[i].visible
+	_headings[0].text = ATTRIBUTION_HEADING
+	for entry: ArtCredit in shown.in_screen_order():
+		if entry.attribution_required and not entry.licence_url.is_empty():
+			_headings[0].text = "%s\n%s" % [ATTRIBUTION_HEADING, entry.licence_url]
+			break
+	_show_more.call_deferred()
+
+
+## Whether more of the list lies below the view.
+func more_below() -> bool:
+	return float(scroll.scroll_vertical) + scroll.size.y < _list.size.y - 1.0
+
+
+func _show_more() -> void:
+	if is_node_ready():
+		more.visible = more_below()
 
 
 ## The entry labels, top to bottom.
@@ -65,6 +88,17 @@ func entry_labels() -> Array[Label]:
 			if label != null:
 				found.append(label)
 	return found
+
+
+## Every line the list shows, headings included, top to bottom.
+func list_texts() -> Array[String]:
+	var texts: Array[String] = []
+	for i: int in _groups.size():
+		if _headings[i].visible:
+			texts.append(_headings[i].text)
+		for child: Node in _groups[i].get_children():
+			texts.append((child as Label).text)
+	return texts
 
 
 ## The entries' texts, top to bottom.

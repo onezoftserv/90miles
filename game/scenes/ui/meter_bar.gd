@@ -15,6 +15,10 @@ extends HBoxContainer
 ## also shakes the bar box of a bar that `shows_losses`; a drain lights the box's outline of a bar
 ## that `glows_on_drain`; a jump shows its gained part in the ramp's highlight and flashes the bar
 ## once. The cue nodes are made here, inside the bar and its box. Drawing only.
+## hud-clarity (survival-meters "HUD bars"): a bar with `zones` (Calor) is a thermometer: its empty
+## track shows a dark tint per zone (below 50, 50 to 75, 75 and up) instead of the plain empty colour,
+## and 1 px notches stand just above and below the box at the warning and critical steps, orange and
+## alert red.
 
 ## At or below this a meter is critical; heat is the other way round.
 const CRITICAL_LOW: float = 25.0
@@ -42,6 +46,9 @@ enum Step { CALM, WARNING, CRITICAL }
 @export var ramp: Texture2D = null
 ## The empty part of the bar: the darkest step of the meter's ramp.
 @export var empty_color: Color = HudStyle.OUTLINE
+## The thermometer's dark track tints, one per zone (below WARN_HEAT, to CRITICAL_HEAT, and up);
+## empty for a plain bar.
+@export var zones: PackedColorArray = PackedColorArray()
 ## Losses show their lost part, and a hit shakes the bar (the health row).
 @export var shows_losses: bool = false
 ## A drain lights the bar's frame (the health row).
@@ -80,7 +87,8 @@ var _lost: ColorRect = ColorRect.new()
 var _gain: ColorRect = ColorRect.new()
 var _flash: ColorRect = ColorRect.new()
 var _edge: ColorRect = ColorRect.new()
-var _tick: ColorRect = ColorRect.new()
+var _zone_rects: Array[ColorRect] = []
+var _notches: Array[ColorRect] = []
 var _glow: Panel = Panel.new()
 
 
@@ -252,10 +260,14 @@ func _losing() -> bool:
 # The fill from the ramp (each row keeps its colour when stretched across), the empty part flat.
 func _style_bar() -> void:
 	bar.custom_minimum_size = Vector2.ZERO
-	var empty := StyleBoxFlat.new()
-	empty.bg_color = empty_color
-	empty.anti_aliasing = false
-	bar.add_theme_stylebox_override(&"background", empty)
+	if zones.is_empty():
+		var empty := StyleBoxFlat.new()
+		empty.bg_color = empty_color
+		empty.anti_aliasing = false
+		bar.add_theme_stylebox_override(&"background", empty)
+	else:
+		bar.add_theme_stylebox_override(&"background", StyleBoxEmpty.new())
+		_make_zones()
 	if ramp != null:
 		var fill := StyleBoxTexture.new()
 		fill.texture = ramp
@@ -306,15 +318,66 @@ func _stop_shake() -> void:
 	box.position.x = _shake_home_x
 
 
+# The thermometer: a tint per zone under the bar (the fill covers the full part), drawn in the box
+# before the bar, and a notch at each step's column, 1 px above and 1 px below the box.
+func _make_zones() -> void:
+	var edges: Array[float] = [0.0, WARN_HEAT, CRITICAL_HEAT, bar.max_value]
+	for i: int in mini(zones.size(), edges.size() - 1):
+		var tint := ColorRect.new()
+		tint.name = &"Zone%d" % i
+		tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tint.color = zones[i]
+		var from: float = floorf(edges[i] / bar.max_value * FILL_SIZE.x)
+		var to: float = floorf(edges[i + 1] / bar.max_value * FILL_SIZE.x)
+		tint.position = bar.position + Vector2(from, 0.0)
+		tint.size = Vector2(to - from, FILL_SIZE.y)
+		box.add_child(tint)
+		box.move_child(tint, bar.get_index())
+		_zone_rects.append(tint)
+	var cell := box.get_parent() as Control
+	for step: Array in [[WARN_HEAT, HudStyle.ORANGE], [CRITICAL_HEAT, HudStyle.ALERT]]:
+		var x: float = box.position.x + bar.position.x + floorf(float(step[0]) / bar.max_value * FILL_SIZE.x)
+		for y: float in [box.position.y - 1.0, box.position.y + box.size.y]:
+			var notch := ColorRect.new()
+			notch.name = &"Notch"
+			notch.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			notch.color = step[1]
+			notch.position = Vector2(x, y)
+			notch.size = Vector2.ONE
+			cell.add_child(notch)
+			_notches.append(notch)
+
+
+## The thermometer's zone tints as rects in the bar's own pixels, left to right; empty for a plain bar.
+func zone_rects() -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	for tint: ColorRect in _zone_rects:
+		rects.append(Rect2(tint.position - bar.position, tint.size))
+	return rects
+
+
+## Whether the track's plain empty colour shows (false on a thermometer).
+func empty_shown() -> bool:
+	return not bar.get_theme_stylebox(&"background") is StyleBoxEmpty
+
+
+## The notches' columns in the bar's own pixels, one per step.
+func notch_xs() -> Array[float]:
+	var xs: Array[float] = []
+	for notch: ColorRect in _notches:
+		var x: float = notch.position.x - box.position.x - bar.position.x
+		if not xs.has(x):
+			xs.append(x)
+	return xs
+
+
 func _make_cue_nodes() -> void:
-	for node: Control in [_edge, _tick, _lost, _gain, _flash] as Array[Control]:
+	for node: Control in [_edge, _lost, _gain, _flash] as Array[Control]:
 		node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		node.visible = false
 		bar.add_child(node)
 	_edge.name = &"Edge"
 	_edge.color = _shade
-	_tick.name = &"Tick"
-	_tick.color = HudStyle.ALERT
 	_lost.name = &"Lost"
 	_lost.color = _tuning.loss_color
 	_gain.name = &"Gain"
@@ -339,10 +402,6 @@ func _place_cues() -> void:
 	var width: float = FILL_SIZE.x
 	var span: float = bar.max_value - bar.min_value
 	_place_edge(width)
-	_tick.visible = meter == DataEnums.Meter.HEAT
-	if _tick.visible:
-		_tick.position = Vector2(floorf(CRITICAL_HEAT / span * width), 0.0)
-		_tick.size = Vector2(1.0, FILL_SIZE.y)
 	_lost.visible = _losing()
 	if _lost.visible:
 		_place(_lost, bar.value, _lost_top, width, span)

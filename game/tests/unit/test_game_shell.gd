@@ -115,6 +115,8 @@ func test_end_of_a_solo_run() -> void:
 	assert_eq(summary.rows().size(), 1)
 	assert_string_contains(summary.rows()[0], "Balsero")
 	assert_string_contains(summary.rows()[0], "Murió")
+	# As if the 0.8 s gate had passed (menu-clarity design D5).
+	summary.shown_at_s -= SummaryScreen.ACCEPT_DELAY_S
 	summary.home_button.pressed.emit()
 	assert_eq(shell.flow, GameShell.Flow.TITLE)
 	assert_null(shell.session, "the run is over")
@@ -309,3 +311,43 @@ func test_the_settings_panel_still_fits_640x360() -> void:
 	await wait_process_frames(2)
 	var panel := shell.screen.get_node("Panel") as Control
 	assert_true(Rect2(0.0, 0.0, 640.0, 360.0).encloses(panel.get_global_rect()), "settings panel %s" % panel.get_global_rect())
+
+
+# ui-shell "Abandoning a run", scenario "Solo abandons" (run-menu design D5): exactly 1 player,
+# offline; the title shows, no summary was shown, the game is offline and nothing stays frozen.
+func test_a_solo_player_abandons_from_the_run_menu() -> void:
+	var shell := _shell()
+	shell.start_solo()
+	assert_eq(shell.flow, GameShell.Flow.RUN)
+	var menu: PauseMenu = shell.hud.pause_menu
+	assert_eq(menu.settings, shell.settings, "Ajustes saves into the install's settings")
+	assert_true(menu.open())
+	assert_true(get_tree().paused)
+	var flows: Array[GameShell.Flow] = []
+	menu.ask_abandon()
+	(menu.view as ConfirmBox).confirm_button.pressed.emit()
+	assert_false(get_tree().paused, "the run is not left frozen")
+	await wait_process_frames(2)
+	flows.append(shell.flow)
+	assert_eq(shell.flow, GameShell.Flow.TITLE)
+	assert_true(shell.screen is TitleScreen)
+	assert_null(shell.session, "the run is gone")
+	assert_null(shell.hud)
+	assert_true(shell.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "offline")
+	assert_false(flows.has(GameShell.Flow.SUMMARY), "no summary")
+
+
+# ui-shell "Run menu", scenario "Settings from a run": "Reducir destellos" ticked in the run's
+# Ajustes applies at once.
+func test_ajustes_in_a_solo_run_applies_reduce_flashes_at_once() -> void:
+	var shell := _shell()
+	shell.start_solo()
+	var menu: PauseMenu = shell.hud.pause_menu
+	menu.open()
+	menu.open_settings()
+	var screen := menu.view as SettingsScreen
+	screen.reduce_flashes_box.button_pressed = true
+	assert_true(HurtCues.reduce_flashes, "applied at once")
+	assert_true(GameSettings.load_from(settings_path).reduce_flashes, "and kept")
+	screen.reduce_flashes_box.button_pressed = false
+	menu.resume()

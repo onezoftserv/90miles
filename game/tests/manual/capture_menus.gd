@@ -6,15 +6,19 @@ extends Node
 ## (640x360) with its own settings file in user://; each shot is the whole 640x360 picture enlarged
 ## ×2 with nearest filtering. The machine's LAN addresses are replaced by an example so the
 ## pictures can be shared. Shots (names are stable across runs, so before/after pairs line up):
-##   menu_title, menu_settings, menu_credits, menu_join, menu_join_failed, menu_lobby_host,
-##   menu_pause_solo, menu_summary_death.
-## The solo run is started through the shell; its player is killed with a thirst hit by a hook.
+##   menu_name_prompt (a first launch), menu_title, menu_settings, menu_controls, menu_credits,
+##   menu_join, menu_join_failed, menu_lobby_host, menu_pause_solo, menu_run_settings,
+##   menu_run_controls, menu_run_abandon, menu_summary_death, menu_pause_coop (a host alone in a
+##   run), menu_host_lost; menu-clarity adds menu_title_error, menu_lobby_rematch (a staged
+##   two-player roster), menu_lobby_confirm and menu_summary_arrival (a staged raft survivor).
+## The solo run is started through the shell; its player is killed with a thirst hit by a hook. The
+## host-lost screen is shown by calling the shell's handler, as a client's session would.
 
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 const BASE: Vector2i = Vector2i(640, 360)
 const SCALE: int = 2
 const EXAMPLE_ADDRESS: String = "192.168.1.70"
-const WATCHDOG_S: float = 90.0
+const WATCHDOG_S: float = 300.0
 const RUN_WAIT_S: float = 15.0
 
 var out_dir: String = ""
@@ -35,8 +39,7 @@ func _ready() -> void:
 		get_tree().quit(2))
 	var settings_path: String = "user://capture_menus.cfg"
 	var config := ConfigFile.new()
-	config.set_value("player", "name", "Yuni")
-	config.set_value("player", "name_asked", true)
+	# A first launch: the default name, never asked (run-menu "First-launch name").
 	config.set_value("display", "fullscreen", false)
 	config.set_value("display", "ui_scale", 1)
 	config.set_value("display", "pixel_filter", 0)
@@ -55,10 +58,25 @@ func _ready() -> void:
 
 
 func _menus() -> void:
+	var title := shell.screen as TitleScreen
+	if title != null and title.name_prompt != null:
+		title.name_prompt.field.text = "Yuni"
+		await _frames(4)
+		await _shot("menu_name_prompt")
+		title.name_prompt.give()
+		await _frames(4)
 	await _shot("menu_title")
+	if _wanted("menu_title_error") and (shell.screen as TitleScreen).has_method("show_error"):
+		(shell.screen as TitleScreen).call("show_error", "No se pudo abrir el puerto 7777.")
+		await _frames(4)
+		await _shot("menu_title_error")
 	shell.show_settings()
 	await _frames(10)
 	await _shot("menu_settings")
+	if shell.has_method("show_controls"):
+		shell.call("show_controls")
+		await _frames(10)
+		await _shot("menu_controls")
 	shell.show_credits()
 	await _frames(10)
 	await _shot("menu_credits")
@@ -84,6 +102,14 @@ func _menus() -> void:
 			lobby.addresses.text = "Tu IP: %s" % EXAMPLE_ADDRESS
 		await _frames(4)
 		await _shot("menu_lobby_host")
+		if lobby.has_method("ask_close"):
+			lobby.set("rematch", true)
+			lobby.show_roster({1: "Yuni", 5: "Papo"} as Dictionary[int, String])
+			await _frames(4)
+			await _shot("menu_lobby_rematch")
+			lobby.call("ask_close")
+			await _frames(4)
+			await _shot("menu_lobby_confirm")
 	shell.back_to_title()
 	await _frames(6)
 
@@ -99,10 +125,21 @@ func _run() -> void:
 		push_error("capture_menus: the solo run did not start")
 		return
 	await _frames(30)
-	shell.hud.pause_menu.open()
+	var menu: PauseMenu = shell.hud.pause_menu
+	menu.open()
 	await _frames(6)
 	await _shot("menu_pause_solo")
-	shell.hud.pause_menu.resume()
+	if menu.has_method("open_settings"):
+		menu.call("open_settings")
+		await _frames(6)
+		await _shot("menu_run_settings")
+		menu.call("open_controls")
+		await _frames(6)
+		await _shot("menu_run_controls")
+		menu.call("ask_abandon")
+		await _frames(6)
+		await _shot("menu_run_abandon")
+	menu.resume()
 	await _frames(6)
 	var body: PlayerBody = shell.session.body(multiplayer.get_unique_id())
 	body.meters.harm(1000.0, &"thirst")
@@ -111,6 +148,41 @@ func _run() -> void:
 		await _frames(1)
 	await _frames(10)
 	await _shot("menu_summary_death")
+	var summary := shell.screen as SummaryScreen
+	if summary != null and _wanted("menu_summary_arrival"):
+		var made := RunSummary.new()
+		made.islands_reached = 2
+		made.days = 3
+		made.length_s = 1260.0
+		var arrivals := DeathLines.from_catalog(GameState.content, &"survivor_one_liners")
+		made.add_survivor("Yuni", 1, &"raft", 0, arrivals, GameState.content)
+		summary.show_summary(made, "Otra vez", 1)
+		await _frames(6)
+		await _shot("menu_summary_arrival")
+	await _host_alone()
+
+
+func _host_alone() -> void:
+	if not (_wanted("menu_pause_coop") or _wanted("menu_host_lost")):
+		return
+	shell.back_to_title()
+	await _frames(4)
+	shell.port = 0
+	shell.start_host()
+	await _frames(10)
+	if shell.session == null or not shell.session.begin_run():
+		push_error("capture_menus: the host's run did not start")
+		return
+	var deadline: int = Time.get_ticks_msec() + int(RUN_WAIT_S * 1000.0)
+	while (shell.flow != GameShell.Flow.RUN or shell.hud == null) and Time.get_ticks_msec() < deadline:
+		await _frames(1)
+	await _frames(30)
+	shell.hud.pause_menu.open()
+	await _frames(6)
+	await _shot("menu_pause_coop")
+	shell.call("_on_host_lost")
+	await _frames(10)
+	await _shot("menu_host_lost")
 
 
 func _wanted(file: String) -> bool:
@@ -123,6 +195,7 @@ func _frames(count: int) -> void:
 
 
 func _shot(file: String) -> void:
+	print("capture_menus: at %s (flow %s, %d ms)" % [file, GameShell.Flow.keys()[shell.flow], Time.get_ticks_msec()])
 	if not _wanted(file):
 		return
 	await RenderingServer.frame_post_draw

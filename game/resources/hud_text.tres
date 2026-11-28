@@ -45,6 +45,8 @@ prompt_verbs = Dictionary[StringName, PackedStringArray]({
 })
 prompt_labels = Dictionary[StringName, PackedStringArray]({
 &"climb_aboard": PackedStringArray("a la balsa", "aboard the raft"),
+&"climb_aboard.board": PackedStringArray("a tu tabla", "onto your board"),
+&"climb_aboard.car": PackedStringArray("al almendrón", "aboard the car"),
 &"climb_palm": PackedStringArray("Mata de coco", "Coconut palm"),
 &"grab": PackedStringArray("el tablón", "the plank"),
 &"launch": PackedStringArray("en la balsa", "on the raft"),
@@ -56,7 +58,9 @@ prompt_labels = Dictionary[StringName, PackedStringArray]({
 &"raft_job": PackedStringArray("la balsa", "the raft"),
 &"raft_work": PackedStringArray("la balsa", "the raft"),
 &"tie_down": PackedStringArray("a la balsa", "to the raft"),
+&"tie_down.car": PackedStringArray("al almendrón", "to the car"),
 &"untie": PackedStringArray("de la balsa", "from the raft"),
+&"untie.car": PackedStringArray("del almendrón", "from the car"),
 &"workbench": PackedStringArray("en el banco", "at the bench")
 })
 tag_names = Dictionary[int, PackedStringArray]({
@@ -122,6 +126,7 @@ refusals = Dictionary[StringName, PackedStringArray]({
 lines = Dictionary[StringName, PackedStringArray]({
 &"carried": PackedStringArray("%d/%d %s", "%d/%d %s"),
 &"close_note": PackedStringArray("[%s] Cerrar", "[%s] Close"),
+&"confiscated": PackedStringArray("Te quitaron: %s", "They took: %s"),
 &"count": PackedStringArray("%s x%d", "%s x%d"),
 &"cured": PackedStringArray("Sin %s", "No more %s"),
 &"decimal_point": PackedStringArray(",", "."),
@@ -216,4 +221,23 @@ wasted_statuses = Dictionary[int, PackedStringArray]({
 6: PackedStringArray("No tienes picada.", "You haven't been stung."),
 7: PackedStringArray("No 'tás quemao.", "You're not sunburnt."),
 8: PackedStringArray("No 'tás alucinando.", "You're not hallucinating.")
+})
+clock_words = Dictionary[StringName, PackedStringArray]({
+&"dawn": PackedStringArray("Amanecer", "Dawn"),
+&"morning": PackedStringArray("Mañana", "Morning"),
+&"midday": PackedStringArray("Mediodía", "Midday"),
+&"afternoon": PackedStringArray("Tarde", "Afternoon"),
+&"dusk": PackedStringArray("Atardecer", "Dusk"),
+&"night": PackedStringArray("Noche", "Night"),
+&"day": PackedStringArray("Día %d", "Day %d"),
+&"hours": PackedStringArray("%dh", "%dh"),
+&"minutes": PackedStringArray("%dm", "%dm")
+})
+objective_lines = Dictionary[StringName, PackedStringArray]({
+&"gather": PackedStringArray("Arma la balsa: %d/%d %s", "Build the raft: %d/%d %s"),
+&"deliver": PackedStringArray("Lleva to' pa' la balsa", "Take it all to the raft"),
+&"work": PackedStringArray("Dale a la balsa: %d%%", "Work the raft: %d%%"),
+&"wait_dark": PackedStringArray("Espera la noche pa' zarpar", "Wait for dark to set off"),
+&"launch_default": PackedStringArray("Zarpa pa'l norte", "Set off north"),
+&"at_sea": PackedStringArray("Aguanta hasta tierra", "Hold on till land")
 })

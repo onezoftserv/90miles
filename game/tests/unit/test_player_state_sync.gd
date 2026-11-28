@@ -18,6 +18,8 @@ const SHADOW_FIELDS: Array[String] = [
 	"PlayerNet:net_stealth",
 	# survival-meters values the client only shows (energy travels as net_energy, because the
 	# client's prediction spends it).
+	# hud-clarity: the bleeding time, so a client's "Sangrando" bar drains with the host's.
+	"SurvivalMeters:bleeding_left_s",
 	"SurvivalMeters:dead",
 	"SurvivalMeters:death_cause",
 	"SurvivalMeters:downed",

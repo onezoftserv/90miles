@@ -2,4 +2,4 @@ Work: 90 Millas player part fixes
 Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
-Files: body_man.png and body_woman.png (hand-fix overlays on the frame layout, blended last by compose.py: knees bent in the crouch cells, eyes shut in the dead cell; #ff00ff erases); terrain/ has its own License.txt
+Files: body_man.png and body_woman.png (hand-fix overlays on the frame layout, blended last by compose.py: knees bent in the crouch cells, eyes shut in the dead cell; #ff00ff erases); hair_cap.png (art-guardacostas D2: the patrol cap overlay on the band-7 hair, drawn on the walk cells and carried to the made cells by the pose rules); terrain/ has its own License.txt

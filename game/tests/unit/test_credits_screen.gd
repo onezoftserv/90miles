@@ -9,7 +9,7 @@ extends GutTest
 const SHELL_SCENE: PackedScene = preload("res://scenes/shell/game_shell.tscn")
 var settings_path: String = UserTmp.path("test_credits_screen_settings.cfg")
 const SCREEN_RECT: Rect2 = Rect2(0.0, 0.0, 640.0, 360.0)
-const CREDITS_INDEX: int = 4
+const CREDITS_INDEX: int = 5
 const CC_BY: String = "CC BY 4.0"
 const CC_BY_URL: String = "https://creativecommons.org/licenses/by/4.0/"
 const PRESS_START_2P: String = "res://assets/fonts/PressStart2P-Regular.ttf"
@@ -28,6 +28,10 @@ func after_each() -> void:
 
 
 func _shell() -> GameShell:
+	# An install that was already asked its name, so the title's buttons take the focus (run-menu D7).
+	var config := ConfigFile.new()
+	config.set_value("player", "name_asked", true)
+	config.save(settings_path)
 	var shell := SHELL_SCENE.instantiate() as GameShell
 	shell.settings_path = settings_path
 	add_child_autofree(shell)
@@ -80,8 +84,8 @@ func test_the_title_offers_credits_before_quit_inside_the_screen() -> void:
 	var shell := _shell()
 	await wait_frames(LAYOUT_FRAMES)
 	var buttons := (shell.screen as TitleScreen).buttons()
-	assert_eq(buttons.size(), 6)
-	assert_eq(buttons[CREDITS_INDEX - 1].text, "Ajustes")
+	assert_eq(buttons.size(), 7)
+	assert_eq(buttons[CREDITS_INDEX - 1].text, "Controles")
 	assert_eq(buttons[CREDITS_INDEX].text, "Créditos")
 	assert_eq(buttons[CREDITS_INDEX + 1].text, "Salir")
 	for button: Button in buttons:
@@ -122,7 +126,6 @@ func test_the_cc_by_packs_come_first_with_the_licence_address_and_source() -> vo
 		var entry := attribution[i]
 		assert_string_contains(texts[i], entry.line_es)
 		assert_string_contains(texts[i], CC_BY)
-		assert_string_contains(texts[i], CC_BY_URL)
 		assert_string_contains(texts[i], _bare(entry.source))
 	var first_three := "\n".join(PackedStringArray(texts.slice(0, attribution.size())))
 	for part: String in ["DawnLike", "DragonDePlatino", "paleta de DawnBringer", "Tiny, Tiny Heroes - Animals", "Kacper Woźniak", "Kyrise's Free 16x16 RPG Icon Pack"]:
@@ -209,3 +212,28 @@ func test_a_solo_player_reads_the_credits_then_plays() -> void:
 	assert_eq(shell.flow, GameShell.Flow.RUN)
 	assert_true(shell.multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "solo opens no port")
 	assert_eq(shell.session.peer_ids(), [1] as Array[int])
+
+
+
+# art-pass "Credits screen", scenarios "The address once" and "More below" (menu-clarity design D9).
+func test_the_licence_address_shows_once_under_its_heading() -> void:
+	var shell := _shell()
+	var screen := _open_credits(shell)
+	var all := "\n".join(PackedStringArray(screen.list_texts()))
+	assert_eq(all.count(CC_BY_URL), 1, "the address appears exactly once")
+	assert_eq(screen.list_texts()[0], "Con licencia CC BY 4.0\n" + CC_BY_URL, "under the CC BY heading")
+	assert_false(all.contains("Licencia: "), "no address per entry")
+
+
+func test_a_cue_shows_while_more_lies_below() -> void:
+	var shell := _shell()
+	var screen := _open_credits(shell)
+	await wait_frames(LAYOUT_FRAMES)
+	assert_eq(screen.more.text, "▼ Más abajo")
+	assert_true(screen.more.visible, "at the top of a longer list")
+	assert_eq(screen.more.get_theme_font(&"font").resource_path, PRESS_START_2P)
+	assert_eq(screen.more.get_theme_font_size(&"font_size"), 8)
+	assert_true(SCREEN_RECT.encloses(screen.more.get_global_rect()), "inside the screen")
+	screen.scroll.scroll_vertical = 100000
+	await wait_frames(LAYOUT_FRAMES)
+	assert_false(screen.more.visible, "gone at the end")

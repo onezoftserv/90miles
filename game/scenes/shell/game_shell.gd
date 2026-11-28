@@ -24,11 +24,13 @@ enum Flow {
 	SETTINGS,
 	HOST_LOST,
 	CREDITS,
+	CONTROLS,
 }
 
 const TITLE_SCENE: PackedScene = preload("res://scenes/shell/title_screen.tscn")
 const SETTINGS_SCENE: PackedScene = preload("res://scenes/shell/settings_screen.tscn")
 const CREDITS_SCENE: PackedScene = preload("res://scenes/shell/credits_screen.tscn")
+const CONTROLS_SCENE: PackedScene = preload("res://scenes/shell/controls_card.tscn")
 const JOIN_SCENE: PackedScene = preload("res://scenes/shell/join_screen.tscn")
 const SUMMARY_SCENE: PackedScene = preload("res://scenes/shell/summary_screen.tscn")
 const SESSION_SCENE: PackedScene = preload("res://scenes/net/coop_session.tscn")
@@ -72,6 +74,8 @@ var clock: Callable
 var seed_source: Callable
 ## The death one-liners the summary picks from (the content's unless a test sets others).
 var death_lines: DeathLines
+## endings-progression "Survivor one-liners": one line set per route id.
+var arrival_lines: DeathLines
 ## The host's rematch call, on a child named "Rematch" that outlives every run (design D2).
 var rematch: RunRematch
 var _run_started_s: float = 0.0
@@ -83,6 +87,9 @@ var _request: NetRequest
 # A join of this shell is under way: from the request until it fails, is cancelled, or its lobby
 # or run shows.
 var _joining: bool = false
+# The next lobby is a rematch (the host's "Otra vez"): it says so, until the run starts or the
+# player goes home (menu-clarity design D7).
+var _rematch_lobby: bool = false
 
 ## The world's own 640×360 view (ui-shell "Pixel filter"); the HUD and screens are outside it.
 @onready var world_view: SubViewportContainer = $WorldView
@@ -106,6 +113,7 @@ func _ready() -> void:
 	NetManager.host_failed.connect(_on_host_failed)
 	NetManager.outside_join_requested.connect(_on_outside_join)
 	death_lines = DeathLines.from_catalog(GameState.content)
+	arrival_lines = DeathLines.from_catalog(GameState.content, DeathLines.SURVIVOR_ID)
 	rematch = RunRematch.new()
 	rematch.name = "Rematch"
 	add_child(rematch)
@@ -155,8 +163,12 @@ func show_title() -> void:
 	title.host_requested.connect(start_host)
 	title.join_requested.connect(show_join)
 	title.settings_requested.connect(show_settings)
+	title.controls_requested.connect(show_controls)
 	title.credits_requested.connect(show_credits)
 	title.quit_requested.connect(func() -> void: get_tree().quit())
+	# ui-shell "First-launch name": once per install, while the name is still the default.
+	if settings.player_name == GameSettings.DEFAULT_NAME and not settings.name_asked:
+		title.ask_name(settings)
 	# A join from outside the game kept during a lobby or a run (or one from the launch line)
 	# starts now. Deferred: the title may show inside a NetManager signal.
 	_take_outside_join.call_deferred()
@@ -168,6 +180,7 @@ func show_settings() -> void:
 	settings_screen.back_requested.connect(show_title)
 	settings_screen.display_changed.connect(_on_display_changed)
 	settings_screen.flashes_changed.connect(apply_flashes)
+	settings_screen.volume_changed.connect(apply_volume)
 
 
 ## art-pass "Credits screen": who made the art and fonts, offline; Volver and Esc go back to the
@@ -176,6 +189,15 @@ func show_credits() -> void:
 	var credits_screen := _show(CREDITS_SCENE, Flow.CREDITS) as CreditsScreen
 	credits_screen.show_credits(load(ArtCredits.STANDARD_PATH) as ArtCredits)
 	credits_screen.back_requested.connect(show_title)
+
+
+## ui-shell "Controles card" (run-menu design D6): on paper, offline; Volver and Esc go back to the
+## title with "Controles" focused.
+func show_controls() -> void:
+	var card := _show(CONTROLS_SCENE, Flow.CONTROLS) as ControlsCard
+	card.back_requested.connect(func() -> void:
+		show_title()
+		(screen as TitleScreen).focus_button(&"Controls"))
 
 
 ## damage-feedback "Reducir destellos": every hit and change cue reads it from HurtCues.
@@ -223,6 +245,7 @@ func show_lobby(is_host: bool) -> void:
 	_joining = false
 	var lobby := _show(LOBBY_SCENE, Flow.LOBBY) as LobbyScreen
 	lobby.is_host = is_host
+	lobby.rematch = _rematch_lobby
 	lobby.show_roster(session.roster)
 	if is_host:
 		# How others join comes from the backend: the port opened and, on ENet, the LAN addresses.
@@ -312,7 +335,7 @@ func _show_host_failure() -> void:
 	if title == null:
 		return
 	var text: String = NetManager.failure_text(NetManager.last_failure, NetManager.last_failure_args)
-	title.description.text = text if not text.is_empty() else HOST_FAILED % port
+	title.show_error(text if not text.is_empty() else HOST_FAILED % port)
 
 
 # Hosting failed after the request returned: back to the title, which says why.
@@ -381,6 +404,9 @@ func _on_host_lost() -> void:
 		_end_run.call_deferred()
 		return
 	_close_screen()
+	# An open run menu closes first, so it neither keeps the focus nor holds the input (design D8).
+	if hud != null and hud.pause_menu != null:
+		hud.pause_menu.resume()
 	flow = Flow.HOST_LOST
 	host_lost_screen = HOST_LOST_SCENE.instantiate() as HostLostScreen
 	add_child(host_lost_screen)
@@ -429,6 +455,7 @@ func _rematch() -> void:
 		return
 	var kept_looks: Dictionary[int, int] = session.look_slots()
 	_end_run()
+	_rematch_lobby = true
 	rematch.call_party()
 	_on_hosting(kept_looks)
 
@@ -441,6 +468,7 @@ func _rematch() -> void:
 func _on_rematch_called() -> void:
 	if session == null or session.multiplayer.is_server():
 		return
+	_rematch_lobby = true
 	_on_joining()
 	show_lobby(false)
 
@@ -449,6 +477,7 @@ func _on_rematch_called() -> void:
 func back_to_title() -> void:
 	_request = null
 	_joining = false
+	_rematch_lobby = false
 	_end_run()
 	NetManager.leave()
 	show_title()
@@ -492,6 +521,7 @@ func _build_run(as_client: bool = false) -> void:
 
 func _enter_run() -> void:
 	_joining = false
+	_rematch_lobby = false
 	if flow == Flow.RUN:
 		return
 	_close_screen()
@@ -509,6 +539,15 @@ func _enter_run() -> void:
 	hud.world_view = world_view
 	add_child(hud)
 	hud.bind(session, session.multiplayer.get_unique_id(), session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer)
+	# The run menu (run-menu design D1): its Ajustes saves into these settings, and "Abandonar"
+	# leaves as "Volver al inicio" does, for every role (design D5). Deferred: the menu is freed
+	# with the HUD.
+	var menu: PauseMenu = hud.pause_menu
+	menu.settings = settings
+	menu.abandon_confirmed.connect(back_to_title, CONNECT_DEFERRED)
+	menu.display_changed.connect(_on_display_changed)
+	menu.flashes_changed.connect(apply_flashes)
+	menu.volume_changed.connect(apply_volume)
 	# sound-pass: this peer's cues; freed with the HUD, which stops every loop when the run ends.
 	var sounds := RunSounds.new()
 	hud.add_child(sounds)
@@ -618,7 +657,7 @@ func _check_run_over() -> void:
 		return
 	var solo: bool = session.multiplayer.multiplayer_peer is OfflineMultiplayerPeer
 	var made := RunSummary.collect(session, travel.islands_reached, WeatherManager.sky.clock.day,
-			clock.call() - _run_started_s, death_lines, GameState.content)
+			clock.call() - _run_started_s, death_lines, GameState.content, arrival_lines)
 	WeatherManager.stop()
 	# The HUD (and its pause menu) goes with the run: nothing under the summary can pause it. It
 	# stops taking input first, so no key reaches it in the frame before it is freed (inventory-hud).
@@ -629,8 +668,10 @@ func _check_run_over() -> void:
 	_wait_label = null
 	var hosting: bool = not solo and session.multiplayer.is_server()
 	var summary := _show(SUMMARY_SCENE, Flow.SUMMARY) as SummaryScreen
-	# Solo starts again alone; a co-op host starts a rematch; a client waits for the host.
-	summary.show_summary(made, "Otra vez" if solo or hosting else "")
+	# Solo starts again alone; a co-op host starts a rematch; a client waits for the host. The
+	# heading reads this peer's own fate, and the 0.8 s gate runs on the shell's clock.
+	summary.clock = clock
+	summary.show_summary(made, "Otra vez" if solo or hosting else "", session.multiplayer.get_unique_id())
 	if not solo and not hosting:
 		summary.show_waiting_for_host()
 	summary.home_requested.connect(back_to_title)
@@ -684,6 +725,11 @@ func _show(scene: PackedScene, next: Flow) -> Control:
 
 func _close_screen() -> void:
 	if screen != null:
+		# A screen on its way out keeps no focus: a text field it held (the first-launch name)
+		# would otherwise read as typing until it is freed (run-menu design D7).
+		var focused: Control = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+		if focused != null and screen.is_ancestor_of(focused):
+			focused.release_focus()
 		screen.queue_free()
 		screen = null
 	_backdrop.visible = false

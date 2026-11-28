@@ -24,6 +24,6 @@ No key, mouse button or gamepad button is bound to two of these actions (`test_i
 | `list_down` | Crafting list: row down | Arrow down | D-pad down (button 12) |
 | `quick_chat` | Quick-chat wheel while held (co-op only) | Q | RB (button 10) |
 | `toggle_fullscreen` | Fullscreen on or off | F11 or Alt+Enter | none |
-| `pause` | Close the crafting list; else pause (solo only) | Esc | Start (button 6) |
+| `pause` | Close the crafting list; else open or close the run menu (Seguir, Ajustes, Controles, Abandonar viaje), which freezes the run in solo only (run-menu) | Esc | Start (button 6) |
 
 Slots 1 to 12 have no gamepad default: D-pad left and right cycle through every slot that holds an item, and the 13th (Experiencia) slot has no number key, so the wheel, the D-pad and a click reach it. A left click on a slot selects it.

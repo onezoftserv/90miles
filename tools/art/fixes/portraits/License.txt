@@ -1,0 +1,7 @@
+Pipeline source for tools/art/portraits.py (art-guardacostas D10): never drawn by the game.
+
+Work: 90 Millas portrait hand work
+Author: 90 Millas
+Licence: All rights reserved (see LICENSE)
+Source: 90 Millas (own work)
+Files: rodriguez.png (art-guardacostas D10: Rodríguez's whole 32x32 bust portrait, drawn by hand in the master palette with its black outline: an olive patrol cap with a dark visor, greying temples and moustache, heavy lids and bags under the eyes, warm skin from the skin ramps, and an olive collar with plain shoulder boards; a fictional officer, no real insignia, rank mark, flag, lettering or logo)

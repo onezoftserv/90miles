@@ -25,12 +25,12 @@ static func frames_problems(data: CreatureData) -> PackedStringArray:
 	var problems: PackedStringArray = []
 	if data.boss_kind == CreatureData.BossKind.WEATHER or data.boss_kind == CreatureData.BossKind.CROSSING:
 		return problems
-	# guardacostas-stealth: the patrol boat is drawn by the patrol look (a placeholder hull until
-	# the art pass hand-pixels the boat), so it has no frames yet.
+	# art-guardacostas D3, D5: the patrol boat is drawn by the patrol look from GuardacostasArt's hull
+	# frames, so it keeps no frames of its own (CreatureLook would draw them in every state).
 	if data.behavior == CreatureData.Behavior.PATROL_ROUTE and data.sprite_frames == null:
 		return problems
-	# guardacostas-capture: the shore soldier is drawn by the soldier look (a placeholder body until
-	# the art pass), so it has no frames yet either.
+	# art-guardacostas D2: the shore soldier is drawn by the squad look as a composed person, so it keeps
+	# no creature frames either.
 	if data.behavior == CreatureData.Behavior.SEARCH_CAPTURE and data.sprite_frames == null:
 		return problems
 	if data.sprite_frames == null:

@@ -1,7 +1,8 @@
 class_name CompassNeedle
 extends Control
 ## The broken compass's needle (secret-cay "Needle on the carrier's HUD", "Needle target", "Needle
-## bands"; design.md decision 5): a 24x24 dial top-centre under the day phase, on the HUD of the
+## bands"; design.md decision 5): a 24x24 dial at (384,20), under the weather window and right of the
+## objective row (hud-clarity), on the HUD of the
 ## local player only, shown while that player carries an item that points to secrets. It points
 ## from the carrier to the nearest concealed item lying in the session, else the island's unopened
 ## chest, else spins. It ignores north: it is never a compass. Its swing narrows band by band with
