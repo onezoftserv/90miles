@@ -129,6 +129,16 @@ func _hooked(text: String) -> void:
 	print("CGRUN set %s" % text)
 
 
+# island-pressure: by day the patrol sees a raft launch. This run is about what follows the launch, so
+# the island's patrol boats are taken away before it (a printed hook).
+func _clear_patrol() -> void:
+	var boats: Array = (load("res://scripts/stealth/launch_sight.gd") as Script).call("boats_of", session)
+	for boat: Node in boats:
+		boat.get_parent().remove_child(boat)
+		boat.queue_free()
+	_hooked("the island's %d patrol boat(s) taken away, so the day launch is not seen" % boats.size())
+
+
 func _seconds(seconds: float) -> void:
 	for i: int in ceili(seconds * physics_hz):
 		await physics_frame
@@ -212,6 +222,7 @@ func _host() -> void:
 	site.call("deposit", builder)
 	site.call("work", 1.0)
 	_hooked("the raft built, both beside it")
+	_clear_patrol()
 	if not _check("the raft leaves with both", session.call("start_route_for", _me(), &"raft") == true):
 		return
 	var crossings: Array = shell.get("crossings")

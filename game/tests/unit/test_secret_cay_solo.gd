@@ -132,7 +132,11 @@ func test_enough_for_the_raft_and_leaving_alone() -> void:
 	var site := scene.session.get_node("RaftSite") as BuildSite
 	body.global_position = site.global_position
 	assert_true(scene.session.deposit_for(CoopSession.HOST_ID, NodePath("RaftSite")), "deposits in the raft site")
-	body.crafter.advance(raft_recipe.time_s)
+	# island-pressure: held work at 1 energy a second; a meal's worth stands in mid-build.
+	body.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	body.crafter.advance(raft_recipe.time_s / 2.0)
+	body.meters.energy = 100.0
+	body.crafter.advance(raft_recipe.time_s / 2.0)
 	var raft := scene.session.get_node_or_null("Raft") as Raft
 	assert_not_null(raft, "one player built the raft alone")
 	if raft == null:

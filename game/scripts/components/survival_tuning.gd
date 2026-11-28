@@ -34,6 +34,10 @@ extends Resource
 @export var sunstroke_ends_below: float
 ## Speed multiplier during sunstroke.
 @export var sunstroke_speed_factor: float
+## A rider at sea never gains heat past this, and above it falls at the shade rate down to it
+## (island-pressure D6; below sunstroke_ends_below, so nobody is sunstruck at sea). Negative turns the
+## cap off; SurvivalRules.sea_heat_capped is its one switch, which the island-stop toldo replaces.
+@export var sea_heat_cap: float
 
 @export_group("Energy")
 ## Energy from a meal: anything that restores hunger.
@@ -58,7 +62,8 @@ extends Resource
 ## Seconds a downed co-op player waits for a revive before dying, before downed-timer bonuses.
 @export var downed_s: float
 @export var revive_health: float
-## Seconds a solo player's last stand lasts before downed-timer bonuses (0: death at once).
+## Seconds a solo player's last stand lasts on land before downed-timer bonuses (0: death at once).
+## At sea there is no base: a rider gets the bonuses alone (island-pressure D7).
 @export var solo_last_stand_s: float
 
 @export_group("Statuses")

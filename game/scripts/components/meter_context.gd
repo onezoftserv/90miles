@@ -21,6 +21,9 @@ var teammate_nearby: bool = false
 var near_fire: bool = false
 ## Weather multiplier on heat gain: 2 in scorching calm.
 var heat_factor: float = 1.0
+## A rider of a crossing (left the island by a route, the rule that also refuses item use at sea):
+## heat stops at the sea cap and a last stand has no base (island-pressure D6, D7).
+var at_sea: bool = false
 
 
 ## Day phase, on land, not in shade.

@@ -184,6 +184,38 @@ func spot(body: PlayerBody, cause: StringName) -> void:
 	_respond(cause, body)
 
 
+## island-pressure D5 (guardacostas-stealth "A seen launch is a spot"): LaunchSight saw `body` launch.
+## A boat out of sight (away or on the horizon) first comes onto its lap at the loop point nearest the
+## starter, so its dinghy rows from the loop and not from off the map; then the launch is a spot on
+## land, cause `launch`, as any other: it docks and lands the squad when it can, otherwise it locks on.
+## A boat already alerting (docked, locked, searching) takes it as its own spot rule says.
+func launch_seen(body: PlayerBody) -> void:
+	if _creature == null or _loop == null or _patrol == null or body == null or not is_instance_valid(body):
+		return
+	if not in_sight():
+		_restart_wait_s = 0.0
+		_in_port = false
+		clock_s = _patrol.horizon_warning_s + _nearest_lap_time(body.global_position)
+		_follow_loop()
+		_creature.state_id = state
+	spot(body, &"launch")
+
+
+# Seconds into the lap at which the loop passes nearest `point_px`.
+func _nearest_lap_time(point_px: Vector2) -> float:
+	var point: Vector2 = point_px / TILE
+	var best: int = 0
+	for i: int in _loop.samples.size():
+		if _loop.samples[i].distance_squared_to(point) < _loop.samples[best].distance_squared_to(point):
+			best = i
+	var along: float = 0.0
+	for i: int in best:
+		along += _loop.samples[i].distance_to(_loop.samples[i + 1])
+	var speed: float = _loop.speed_tiles_s()
+	var along_s: float = along / speed if speed > 0.0 else 0.0
+	return clampf(along_s, 0.0, maxf(_loop.lap_s - EPSILON * 10.0, 0.0))
+
+
 ## The lock breaks: the boat searches round the last known position.
 func forget_lock() -> void:
 	if state != State.ALERT_LOCK:

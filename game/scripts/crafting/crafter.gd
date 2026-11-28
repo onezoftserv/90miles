@@ -115,7 +115,8 @@ func place_site(recipe: RecipeData, at: Vector2, parent: Node) -> BuildSite:
 	return site
 
 
-## Starts working `site`; the work advances while this player stays in reach.
+## Starts working `site`; the work advances while this player stays in reach (and, on a staged site,
+## holds interact).
 func start_work(site: BuildSite) -> bool:
 	if site == null or not is_instance_valid(site) or site.built or not _in_reach(site):
 		return false
@@ -151,19 +152,71 @@ func _advance_station(delta: float) -> void:
 		crafted.emit(recipe)
 
 
+# A staged site is worked only while the body holds interact and can act (island-pressure D2); letting
+# go ends the work and keeps the progress. Work never runs past the site's limit, and a recipe with a
+# work cost charges each second actually worked (D3): no energy, no work.
 func _advance_site(delta: float) -> void:
 	if not is_instance_valid(_site) or _site.built or not _in_reach(_site):
-		cancel()
+		_end_site_work()
 		return
 	var recipe := _site.recipe
+	if recipe.is_staged() and not _holding():
+		_end_site_work()
+		return
 	var seconds := recipe_time(recipe)
 	var fast_used: bool = _fast_item(recipe) != null
-	_site.work(1.0 if seconds <= 0.0 else delta / seconds)
+	var work_s: float = delta * _speed(recipe)
+	if seconds > 0.0:
+		work_s = minf(work_s, _site.work_room() * seconds)
+		if work_s <= 0.0:
+			return
+		work_s = _pay_for_work(recipe, work_s)
+		if work_s <= 0.0:
+			return
+	_site.work(1.0 if seconds <= 0.0 else work_s / seconds)
 	if _site.built:
 		if fast_used:
 			body.inventory.spend_use(body.inventory.capability_slot(recipe.fast_tool))
 		cancel()
 		crafted.emit(recipe)
+
+
+# Charges `work_s` seconds of `recipe`'s work cost and returns the seconds of work done. With energy,
+# each second worked costs the energy and the thirst (fewer seconds when the energy runs out). With
+# none, the hold works at the recipe's slow-work factor and costs the thirst alone (owner Q4 (a)).
+func _pay_for_work(recipe: RecipeData, work_s: float) -> float:
+	var meters := body.meters
+	if recipe.work_energy_per_s > 0.0 and meters.energy <= SurvivalMeters.EMPTY_EPSILON:
+		if recipe.exhausted_work_factor <= 0.0:
+			return 0.0
+		var held_s: float = work_s / recipe.exhausted_work_factor
+		if recipe.work_thirst_per_s > 0.0:
+			meters.add(DataEnums.Meter.THIRST, -recipe.work_thirst_per_s * held_s)
+		return work_s
+	if recipe.work_energy_per_s > 0.0:
+		work_s = meters.spend_energy(recipe.work_energy_per_s * work_s) / recipe.work_energy_per_s
+	if recipe.work_thirst_per_s > 0.0 and work_s > 0.0:
+		meters.add(DataEnums.Meter.THIRST, -recipe.work_thirst_per_s * work_s)
+	return work_s
+
+
+# The share of a second's work a second held does: 1, or the slow-work factor with no energy.
+func _speed(recipe: RecipeData) -> float:
+	if recipe.work_energy_per_s > 0.0 and body.meters.energy <= SurvivalMeters.EMPTY_EPSILON:
+		return recipe.exhausted_work_factor
+	return 1.0
+
+
+# The body holds interact and can act: not downed (a solo last stand lies down too), not captive.
+func _holding() -> bool:
+	return body.intent.interact_held and not body.downed and not body.captive and not body.meters.dead
+
+
+# The work on a site stops: the site tells every peer where it stopped.
+func _end_site_work() -> void:
+	if is_instance_valid(_site):
+		_site.sync_now()
+	cancel()
 
 
 # Consumes the inputs, spends tool wear and adds the output. If the output does not fit the

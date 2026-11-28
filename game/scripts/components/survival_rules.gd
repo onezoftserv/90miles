@@ -27,9 +27,20 @@ static func hunger_drain(context: MeterContext, tuning: SurvivalTuning) -> float
 static func next_heat(heat: float, context: MeterContext, tuning: SurvivalTuning, delta: float) -> float:
 	if context.phase == DataEnums.DayPhase.NIGHT:
 		return 0.0
+	var next: float = heat - tuning.heat_fall_per_s * delta
 	if context.midday and context.in_direct_sun():
-		return heat + tuning.heat_rise_per_s * context.heat_factor * delta
-	return heat - tuning.heat_fall_per_s * delta
+		next = heat + tuning.heat_rise_per_s * context.heat_factor * delta
+	if sea_heat_capped(context, tuning) and next > tuning.sea_heat_cap:
+		# Never past the cap, and above it heat falls at the shade rate (no slower) down to it.
+		return maxf(minf(next, heat - tuning.heat_fall_per_s * delta), tuning.sea_heat_cap)
+	return next
+
+
+## island-pressure D6: whether the sea cap holds `context`'s heat: a rider at sea, with the cap on. The
+## one switch for it: the island-stop toldo turns it off here (or a negative `sea_heat_cap` turns it off
+## for everyone).
+static func sea_heat_capped(context: MeterContext, tuning: SurvivalTuning) -> bool:
+	return context.at_sea and tuning.sea_heat_cap >= 0.0
 
 
 ## Morale change per second: a teammate restores; at night, having neither a teammate nor a lit

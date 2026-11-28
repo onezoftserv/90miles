@@ -9,6 +9,8 @@ extends Node
 signal route_started(route_id: StringName, peer_ids: Array[int])
 ## Host: a route became known.
 signal route_discovered(route_id: StringName)
+## Host: `peer`'s launch of `route_id` was seen by a patrol and did not start (island-pressure).
+signal launch_seen(route_id: StringName, peer: int)
 ## A joiner: the host's departures and crossings under way arrived (crossing-late-join);
 ## `restored` are the crossings this peer built or refreshed from them.
 signal progress_received(restored: Array[Crossing])
@@ -68,8 +70,9 @@ func route_left_by(peer_id: int) -> StringName:
 
 
 ## Host: starts `route_id` for `peer`'s player. False, changing nothing, when the route is not
-## offered or not discovered, the player is not on the island, out of reach of the starter, or the
-## requirements or rider rules refuse.
+## offered or not discovered, the player is not on the island, out of reach of the starter, the
+## requirements or rider rules refuse, or a patrol boat sees a launch marked as seen (LaunchSight; that
+## boat then raises an alert on the sender).
 func start_for(peer: int, route_id: StringName) -> bool:
 	if not is_instance_valid(_session) or not _session.multiplayer.is_server():
 		return false
@@ -81,6 +84,14 @@ func start_for(peer: int, route_id: StringName) -> bool:
 	var anchor: Variant = _anchor(route, sender)
 	if anchor == null or not RouteLauncher.can_start(route, sender):
 		return false
+	# island-pressure: a launch the patrol sees does not start, spends nothing and is a spot.
+	if route.seen_at_launch:
+		var seen_by: Creature = LaunchSight.seen_in(_session, sender.global_position)
+		if seen_by != null:
+			if seen_by.brain is PatrolRoute:
+				(seen_by.brain as PatrolRoute).launch_seen(sender)
+			launch_seen.emit(route_id, peer)
+			return false
 	var riders := RouteLauncher.riders(route, sender, _on_island(), anchor)
 	if riders.is_empty():
 		return false

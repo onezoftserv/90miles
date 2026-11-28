@@ -48,7 +48,47 @@ static func _validate_type(catalog: ContentCatalog, type: StringName) -> PackedS
 		errors.append_array(_check_patrol(where, data))
 		errors.append_array(_check_squad(catalog, where, data))
 		errors.append_array(_check_vessel_recipe(where, data))
+		errors.append_array(_check_staged_recipe(where, data))
 		errors.append_array(_check_hud_words(where, data))
+	return errors
+
+
+# island-pressure (crafting-inventory "Build stages", "Work costs"): a staged recipe is a build site
+# whose stages add up to its inputs and its time, each stage with work time and names in both
+# languages; stages take items only, never tags. A work cost is never negative.
+static func _check_staged_recipe(where: String, data: ContentData) -> PackedStringArray:
+	var errors: PackedStringArray = []
+	var recipe := data as RecipeData
+	if recipe == null:
+		return errors
+	if recipe.work_energy_per_s < 0.0 or recipe.work_thirst_per_s < 0.0:
+		errors.append("%s: a work cost is never negative" % where)
+	if recipe.exhausted_work_factor < 0.0 or recipe.exhausted_work_factor > 1.0:
+		errors.append("%s: the slow-work factor is between 0 and 1" % where)
+	if not recipe.is_staged():
+		return errors
+	if not recipe.build_site:
+		errors.append("%s: only a build site has stages" % where)
+	if not recipe.input_tags.is_empty():
+		errors.append("%s: a staged recipe takes items only, no tag inputs" % where)
+	var summed: Dictionary[StringName, int] = {}
+	var time_s: float = 0.0
+	for i: int in recipe.stages.size():
+		var stage: BuildStageData = recipe.stages[i]
+		if stage == null:
+			errors.append("%s: stage %d is empty" % [where, i + 1])
+			continue
+		if stage.name_es.strip_edges().is_empty() or stage.name_en.strip_edges().is_empty():
+			errors.append("%s: stage %d needs a Spanish and an English name" % [where, i + 1])
+		if stage.time_s <= 0.0:
+			errors.append("%s: stage %d has no work time (time_s must be above 0)" % [where, i + 1])
+		time_s += stage.time_s
+		for id: StringName in stage.inputs:
+			summed[id] = summed.get(id, 0) + stage.inputs[id]
+	if summed != recipe.inputs:
+		errors.append("%s: the stages' inputs %s do not add up to the recipe's %s" % [where, summed, recipe.inputs])
+	if absf(time_s - recipe.time_s) > 0.001:
+		errors.append("%s: the stages' times add up to %s s, not the recipe's %s s" % [where, time_s, recipe.time_s])
 	return errors
 
 

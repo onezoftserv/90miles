@@ -73,6 +73,10 @@ func test_solo_builds_and_launches_the_raft() -> void:
 	var body := _run()
 	_fill(body, session.get_node("RaftSite") as BuildSite)
 	assert_true(session.deposit_for(1, NodePath("RaftSite")))
+	# island-pressure: 120 s of held work at 1 energy a second; a meal's worth stands in mid-build.
+	body.intent = MoveIntent.create(Vector2.ZERO, false, false, true)
+	body.crafter.advance(60.0)
+	body.meters.energy = 100.0
 	body.crafter.advance(60.0)
 	var raft := session.get_node("Raft") as Raft
 	assert_not_null(raft)
