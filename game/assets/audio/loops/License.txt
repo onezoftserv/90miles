@@ -1,5 +1,17 @@
+Pack: kephalonia sea loop.wav (Freesound sound 416325)
+Author: johnnyguitar01
+Licence: CC0 1.0 (Creative Commons 0)
+Source: https://freesound.org/people/johnnyguitar01/sounds/416325/
+Files: sea.wav (from 416325__johnnyguitar01__kephalonia-sea-loop.wav, surf recorded on Avathos Beach; made by tools/audio/recordings.py from tools/audio/recordings.json, owner Q2 B: one whole turn of the seamless loop, mixed to mono, resampled to 22 050 Hz, its offset removed and its level set)
+
+Pack: Wind at Ocean shore. (Freesound sound 659004)
+Author: Tom_Kaszuba
+Licence: CC0 1.0 (Creative Commons 0)
+Source: https://freesound.org/people/Tom_Kaszuba/sounds/659004/
+Files: wind.wav (from 659004__tom_kaszuba__wind-at-ocean-shore.wav; made by tools/audio/recordings.py from tools/audio/recordings.json, owner Q2 B: 16 s from 18.0 s, mixed to mono, resampled to 22 050 Hz, its tail crossfaded over its head into a 14 s loop and its level set)
+
 Work: 90 Millas generated sound loops
 Author: 90 Millas
 Licence: All rights reserved (see LICENSE)
 Source: 90 Millas (own work)
-Files: sea.wav, wind.wav, night.wav, patrol_motor.wav (made by tools/audio/sfx.py from tools/audio/sounds.json, openspec change sound-pass D1: synthesized from square, saw, sine and seeded noise voices, each folded into a seamless loop; sea.wav and wind.wav are placeholders until CC0 recordings are approved, owner Q2 B)
+Files: night.wav, patrol_motor.wav (made by tools/audio/sfx.py from tools/audio/sounds.json, openspec change sound-pass D1: synthesized from square, saw, sine and seeded noise voices, each folded into a seamless loop)

@@ -159,12 +159,12 @@ Voice acting, cloned voices, runtime TTS, challenges, seeded and daily runs, and
 
   The bank is data (`sound_bank.tres`). AudioManager plays ids and loop levels. `RunSounds` reads each peer's own state, so a player hears their own events and everyone hears the world. Audio never changes the simulation. Owner, 2026-11-23:
   - Q1 A: one "Volumen" row in Ajustes, 0 to 100 %, default 80 %. The key and API are here; the row is the run-menu session's.
-  - Q2 B: CC0 recordings for the sea, wind and thunder, once the owner approves each candidate file. Until then the generated three are placeholders.
+  - Q2 B: CC0 recordings for the sea, wind and thunder. On 2026-11-23 the owner approved Freesound 416325, 659004 and 536903, and they replaced the generated three on 2026-11-24 (`claude/sound-recordings`). `tools/audio/recordings.py` trims them using `recordings.json`.
 
   Checked with 1 player offline (from the shell, and the same 600 frames with and without sound), with host plus client in one process, and in two processes on UDP 7802 three times. Follow-ups:
-  - the CC0 recordings (change task group 9; the candidates are with the coordinator);
   - the "Volumen" row in Ajustes (run-menu session; the key and `GameShell.apply_volume` are in);
-  - the owner listening to every sound and retuning levels in `sound_bank.tres` or `sounds.json`.
+  - the owner listening to every sound and retuning levels in `sound_bank.tres`, `sounds.json` or `recordings.json`. The recordings' levels only match the placeholders' RMS: sea is raised 3.2 dB in the bank because its wave peaks held it under, and thunder 1 dB;
+  - the three recordings as CC0 courtesy lines on the in-game credits screen (`assets/art/credits.tres`, which art-pass owns).
 - [ ] Profanity toggle, English localization pass
 - [ ] Set pieces (Brogue machines): six from `docs/ISLANDS.md`
 - [x] A dead co-op player spectates a living teammate, a key cycling between them, instead of watching their own body (owner, 2026-11-08; `dead-spectate`, 2026-11-14, merged (#52), archived 2026-11-15)
