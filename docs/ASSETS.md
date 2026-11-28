@@ -77,12 +77,14 @@ Download each itch.io pack's archive into the folder it names, then run the scri
 python -I tools/art/remap.py <in.png> <out.png> [--map map.json] [--strict] --packs game/assets
 python -I tools/art/rim.py <in.png> <out.png> [--cell N] [--outline "#000000"] [--over body.png] [--grow] --packs game/assets
 python -I tools/art/compose.py [part ids] --packs game/assets
+python -I tools/art/fx.py
 python -I tools/art/check.py game/assets/art
 ```
 
 - `remap.py` maps a piece to the master palette, or through a colour map (`--map`, the only way to write a clothing key colour; `--strict` fails on an unmapped colour), drops half-transparent pixels outside `shadows/` and `decals/`, and prints every change.
 - `rim.py` gives a piece its closed 1 px outline: it recolours the piece's own edge ring to the nearest outline colour (or the one `--outline` colour), so the piece keeps its size; `--grow` grows a ring round a piece with none, and `--over` rims an overlay against the body sheet it is drawn on. For example, MetroCity's walk sheet in 32 px cells, read through the packs root: `python -I tools/art/rim.py "itch/metrocity/extracted/MetroCity/MetroCity/CharacterModel/Character Model.png" <out.png> --cell 32 --outline "#000000" --packs game/assets`.
 - `compose.py` builds the player part sheets listed in `tools/art/look_parts.json` into `game/assets/art/characters/parts/`: cut the walk frames, apply the pose rules of `poses.py`, blend the part's hand fixes, remap, then rim. It fails naming the part and cell when a rule would lose a pixel.
+- `fx.py` draws the small effect sprites listed in `tools/art/fx.json` from palette colours alone, with no pack and no hand source: the swim ring (`fx/swim_ring.png`, 3 frames of a 20×5 dashed oval in #ffffff and #cbdbfc, art-sprite-polish D1) and the soft ellipse shadows that have no MetroCity source (`shadows/shadow_23x5.png` for a lying body, D8, and `shadows/shadow_30x11.png` for the raft, art-terrain-polish D3), each in MetroCity's black at alpha 78. A re-run writes the same bytes.
 - `check.py` runs the licence, palette, alpha, outline (by family) and import rules over a folder and exits non-zero naming each failing file (`--licence-only` for a folder of pipeline source such as `tools/art/fixes/`).
 - `png.py`, `poses.py` and `palette.py` are the tools' shared modules.
 

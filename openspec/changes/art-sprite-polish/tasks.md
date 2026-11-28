@@ -75,9 +75,9 @@ Rebuilds: `python -I tools/art/compose.py --packs C:/Users/liann/src/90miles/gam
 
 ## 8. Integration
 
-- [ ] 8.1 Rebuild every touched sheet to scratch and `cmp` it against the tracked ones, so the build is byte-for-byte reproducible. Run `check.py`, `python -m unittest` in `tools/art`, the import twice, smoke and GUT. All must be clean.
-- [ ] 8.2 Re-shoot `docs/art-pass/looks_swim.png`, `looks_downed.png`, `looks_crouch.png` and `crossing.png` with `tests/manual/capture_looks.tscn` and `capture_crossing.tscn`. Read the run logs for shader errors.
-- [ ] 8.3 Update `TASKS.md` and `docs/ASSETS.md` (the fx recipe), record the measured sizes and anchors in this design's build notes, and run `openspec validate art-sprite-polish --strict`.
+- [x] 8.1 Rebuild every touched sheet to scratch and `cmp` it against the tracked ones, so the build is byte-for-byte reproducible. Run `check.py`, `python -m unittest` in `tools/art`, the import twice, smoke and GUT. All must be clean.
+- [x] 8.2 Re-shoot `docs/art-pass/looks_swim.png`, `looks_downed.png`, `looks_crouch.png` and `crossing.png` with `tests/manual/capture_looks.tscn` and `capture_crossing.tscn`. Read the run logs for shader errors.
+- [x] 8.3 Update `TASKS.md` and `docs/ASSETS.md` (the fx recipe), record the measured sizes and anchors in this design's build notes, and run `openspec validate art-sprite-polish --strict`.
 
 ## Workflow follow-up
 
