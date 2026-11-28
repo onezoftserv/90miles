@@ -69,7 +69,7 @@ Hunger SHALL drain 0.05/s (3/min), ×2 while crafting or swimming. At 0, the ene
 - **THEN** hunger is 0 and energy is 50
 
 ### Requirement: Heat
-Heat SHALL rise 0.75/s (45/min) in direct sun between in-game 10:00 and 16:00, ×2 in scorching calm; fall 0.75/s in shade, in water or outside that window; and reset to 0 at night. At 100, sunstroke: screen blur and speed −40% until heat < 60. A rider aboard a vessel in a crossing never gains heat past the sea cap, 59: above it their heat falls at the shade rate down to it, so nobody is sunstruck at sea; the island-stop toldo replaces this cap. (Rates changed from +2/min and −4/min in `docs/GAME_DESIGN.md` §4; at 30 s per in-game hour the window is 3 real minutes; the sea cap adds to §4.)
+Heat SHALL rise 0.75/s (45/min) in direct sun between in-game 10:00 and 16:00, ×2 in scorching calm; fall 0.75/s in shade, in water or outside that window; and reset to 0 at night. At 100, sunstroke: screen blur and speed −40% until heat < 60. Aboard a vessel in a crossing heat never rises past the sea cap, 59, and above it falls at the shade rate; the island-stop toldo replaces this cap. (Rates changed from +2/min and −4/min in `docs/GAME_DESIGN.md` §4; the sea cap adds to §4.)
 
 #### Scenario: Sunstroke lingers
 - GIVEN a player whose heat reached 100
@@ -107,7 +107,7 @@ Heat SHALL rise 0.75/s (45/min) in direct sun between in-game 10:00 and 16:00, �
 - **THEN** their heat is 100 and sunstroke has started
 
 ### Requirement: Energy
-Energy SHALL drain per activity (swim 3/s, run 0.5/s, and work on a build at its work cost: 1/s on a raft stage, crafting-inventory "Work costs") and restore +50 per sleep (a full night in shelter) and +10 per meal, where a meal is anything that restores hunger. It does not regenerate otherwise. At 0, the player can only crawl and works a build that costs energy at its slow-work factor (a quarter speed on the raft), paying its thirst only. (`docs/GAME_DESIGN.md` §4 "building 1/s" is the raft's work cost.)
+Energy SHALL drain per activity (swim 3/s, run 0.5/s, and work on a build at its work cost: 1/s on a raft stage, crafting-inventory "Work costs") and restore +50 per sleep (a full night in shelter) and +10 per meal (anything that restores hunger). It does not regenerate otherwise. At 0 the player can only crawl, and works a build that costs energy at its slow-work factor (raft: a quarter speed), paying only its thirst. (`docs/GAME_DESIGN.md` §4 "building 1/s" is the raft's work cost.)
 
 #### Scenario: Running out of energy
 - GIVEN a player on land with energy 5
@@ -204,7 +204,7 @@ Every meter rule SHALL work for a single player: no meter needs a teammate to re
 - **THEN** thirst and hunger never reach 0, at most 10 coconuts are used and morale never drops below 20
 
 ### Requirement: Solo last stand
-At 0 health a player with no other living player SHALL get a last stand lasting 12 s on land plus their downed-timer bonuses (Experiencia levels and the point boost; endings-progression owns those numbers). A rider of a crossing gets the bonuses alone, since nothing can be used at sea. They lie where they fell, still losing thirst and hunger, and can use a cup whose item revives on themselves to stand at 30 health. When the last stand ends they die; at sea with no bonus (run 1) they die at once. (Changes the 0 s base of `docs/GAME_DESIGN.md` §4 "Last stand" and §14.)
+At 0 health a player with no other living player SHALL get a last stand of 12 s on land plus their downed-timer bonuses (Experiencia and the point boost: endings-progression); a crossing's rider gets the bonuses alone. They lie where they fell, still losing thirst and hunger, and can use a reviving cup on themselves to stand at 30 health. When it ends they die; at sea with no bonus (run 1) they die at once. (Changes the 0 s base of `docs/GAME_DESIGN.md` §4 "Last stand" and §14.)
 
 #### Scenario: Last stand with Experiencia
 - **GIVEN** a solo player on land with 15 s of downed-timer bonus (3 Experiencia levels)
